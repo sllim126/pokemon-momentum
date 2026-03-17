@@ -1,35 +1,27 @@
 import duckdb
-import pandas as pd
 
-DATA_DIR = "/app/data/extracted"
-PRICES = f"{DATA_DIR}/pokemon_prices_all_days.csv"
-PRODUCTS = f"{DATA_DIR}/pokemon_products.csv"
-GROUPS = f"{DATA_DIR}/pokemon_groups.csv"
-OUT = f"{DATA_DIR}/top200_30d_min5_named.csv"
+EXTRACTED_DIR = "/app/data/extracted"
+PROCESSED_DIR = "/app/data/processed"
+DB_PATH = f"{PROCESSED_DIR}/prices_db.duckdb"
+OUT = f"{EXTRACTED_DIR}/top200_30d_min5_named.csv"
+TABLE_NAME = "top200_30d_min5_named"
 
-con = duckdb.connect()
+con = duckdb.connect(DB_PATH)
 
-df = con.execute(f"""
-WITH prices AS (
-  SELECT
-    CAST(date AS DATE) AS d,
-    CAST(groupId AS BIGINT) AS groupId,
-    CAST(productId AS BIGINT) AS productId,
-    subTypeName,
-    CAST(marketPrice AS DOUBLE) AS marketPrice
-  FROM read_csv_auto('{PRICES}', ignore_errors=true)
-  WHERE marketPrice IS NOT NULL
-),
-latest_date AS (SELECT MAX(d) AS d FROM prices),
+con.execute(f"""
+CREATE OR REPLACE TABLE {TABLE_NAME} AS
+WITH latest_date AS (SELECT MAX(date) AS d FROM pokemon_prices),
 latest AS (
   SELECT groupId, productId, subTypeName, marketPrice AS p_latest
-  FROM prices
-  WHERE d = (SELECT d FROM latest_date)
+  FROM pokemon_prices
+  WHERE date = (SELECT d FROM latest_date)
+    AND marketPrice IS NOT NULL
 ),
 prior AS (
   SELECT productId, subTypeName, marketPrice AS p_prior
-  FROM prices
-  WHERE d = (SELECT d FROM latest_date) - INTERVAL 30 DAY
+  FROM pokemon_prices
+  WHERE date = (SELECT d FROM latest_date) - INTERVAL 30 DAY
+    AND marketPrice IS NOT NULL
 ),
 movers AS (
   SELECT
@@ -45,24 +37,28 @@ movers AS (
   ORDER BY pct_change_30d DESC
   LIMIT 200
 ),
-products AS (
-  SELECT CAST(productId AS BIGINT) AS productId, name AS productName
-  FROM read_csv_auto('{PRODUCTS}', ignore_errors=true)
-),
-groups AS (
-  SELECT CAST(groupId AS BIGINT) AS groupId, name AS groupName
-  FROM read_csv_auto('{GROUPS}', ignore_errors=true)
-)
 SELECT
   m.*,
-  g.groupName,
-  pr.productName
+  g.name AS groupName,
+  pr.name AS productName
 FROM movers m
-LEFT JOIN groups g USING(groupId)
-LEFT JOIN products pr USING(productId)
+LEFT JOIN pokemon_groups g USING(groupId)
+LEFT JOIN pokemon_products pr USING(groupId, productId)
 ORDER BY pct_change_30d DESC
-""").fetchdf()
+""")
+con.execute(
+    f"""
+    COPY (
+      SELECT *
+      FROM {TABLE_NAME}
+      ORDER BY pct_change_30d DESC
+    ) TO '{OUT}' WITH (HEADER, DELIMITER ',')
+    """
+)
+df = con.execute(f"SELECT * FROM {TABLE_NAME} ORDER BY pct_change_30d DESC").fetchdf()
+con.close()
 
-df.to_csv(OUT, index=False)
 print("Wrote:", OUT)
+print("DuckDB table:", TABLE_NAME)
+print("Database:", DB_PATH)
 print(df.head(10))

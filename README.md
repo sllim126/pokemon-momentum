@@ -119,3 +119,43 @@ python scripts/dashboards/build_roc_dashboard_v3.py
 ```
 
 Generated CSVs and dashboards are rebuildable outputs and should not be committed to Git.
+
+## Automated daily update
+
+Use the pipeline runner inside the container to execute the working update sequence in order:
+
+```bash
+python scripts/pipeline/run_daily_update.py
+```
+
+Useful flags:
+
+```bash
+# Catch up only the newest 12 missing days
+python scripts/pipeline/run_daily_update.py --latest-first --limit-days 12
+
+# Skip network-heavy metadata refresh
+python scripts/pipeline/run_daily_update.py --skip-metadata
+
+# Skip parquet export
+python scripts/pipeline/run_daily_update.py --skip-parquet
+
+# Print commands without running them
+python scripts/pipeline/run_daily_update.py --dry-run
+```
+
+Current automated sequence:
+
+1. Download and extract new archives
+2. Load new price data into DuckDB
+3. Refresh group metadata
+4. Refresh product metadata
+5. Rebuild joined name export
+6. Build top-200 universe
+7. Build top-200 lookup
+8. Build top-200 indicators
+9. Build top-200 named movers
+10. Build top-200 timeseries
+11. Build ROC 7/30/90 snapshot
+12. Build product signal snapshot
+13. Export parquet partitions

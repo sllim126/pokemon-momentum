@@ -1,34 +1,29 @@
 import duckdb
-import pandas as pd
 
-DATA_DIR = "/app/data/extracted"
-CSV_PATH = f"{DATA_DIR}/pokemon_prices_all_days.csv"
-OUT_CSV = f"{DATA_DIR}/top200_universe.csv"
+EXTRACTED_DIR = "/app/data/extracted"
+PROCESSED_DIR = "/app/data/processed"
+DB_PATH = f"{PROCESSED_DIR}/prices_db.duckdb"
+OUT_CSV = f"{EXTRACTED_DIR}/top200_universe.csv"
+TABLE_NAME = "top200_universe"
 
-con = duckdb.connect()
+con = duckdb.connect(DB_PATH)
 
-df = con.execute(f"""
-WITH prices AS (
-  SELECT
-    CAST(date AS DATE) AS d,
-    CAST(productId AS BIGINT) AS productId,
-    subTypeName,
-    CAST(marketPrice AS DOUBLE) AS marketPrice
-  FROM read_csv_auto('{CSV_PATH}', ignore_errors=true)
-  WHERE marketPrice IS NOT NULL
-),
-latest_date AS (
-  SELECT MAX(d) AS d FROM prices
+con.execute(f"""
+CREATE OR REPLACE TABLE {TABLE_NAME} AS
+WITH latest_date AS (
+  SELECT MAX(date) AS d FROM pokemon_prices
 ),
 latest AS (
   SELECT productId, subTypeName, marketPrice AS latest_price
-  FROM prices
-  WHERE d = (SELECT d FROM latest_date)
+  FROM pokemon_prices
+  WHERE date = (SELECT d FROM latest_date)
+    AND marketPrice IS NOT NULL
 ),
 prior AS (
   SELECT productId, subTypeName, marketPrice AS prior_price
-  FROM prices
-  WHERE d = (SELECT d FROM latest_date) - INTERVAL 30 DAY
+  FROM pokemon_prices
+  WHERE date = (SELECT d FROM latest_date) - INTERVAL 30 DAY
+    AND marketPrice IS NOT NULL
 )
 SELECT
   l.productId,
@@ -41,9 +36,21 @@ JOIN prior p USING(productId, subTypeName)
 WHERE p.prior_price >= 5
 ORDER BY pct_change_30d DESC
 LIMIT 200
-""").fetchdf()
+""")
+con.execute(
+    f"""
+    COPY (
+      SELECT *
+      FROM {TABLE_NAME}
+      ORDER BY pct_change_30d DESC
+    ) TO '{OUT_CSV}' WITH (HEADER, DELIMITER ',')
+    """
+)
+df = con.execute(f"SELECT * FROM {TABLE_NAME} ORDER BY pct_change_30d DESC").fetchdf()
+con.close()
 
-df.to_csv(OUT_CSV, index=False)
 print("Wrote:", OUT_CSV)
+print("DuckDB table:", TABLE_NAME)
+print("Database:", DB_PATH)
 print("Rows:", len(df))
 print(df.head(10))

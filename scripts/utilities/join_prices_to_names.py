@@ -1,34 +1,50 @@
 import csv
+import duckdb
+from pathlib import Path
 
 DATA_DIR = "/app/data/extracted"
 PRICES_CSV = f"{DATA_DIR}/pokemon_prices_all_days.csv"
 GROUPS_CSV = f"{DATA_DIR}/pokemon_groups.csv"
 PRODUCTS_CSV = f"{DATA_DIR}/pokemon_products.csv"
 OUT_CSV = f"{DATA_DIR}/pokemon_prices_named.csv"
+PROCESSED_DIR = Path("/app/data/processed")
+DB_PATH = PROCESSED_DIR / "prices_db.duckdb"
+TABLE_NAME = "pokemon_prices_named"
 
-# groupId -> groupName
-groups = {}
-with open(GROUPS_CSV, "r", encoding="utf-8") as f:
-    for row in csv.DictReader(f):
-        groups[int(row["groupId"])] = row["name"]
-
-# productId -> productName
-products = {}
-with open(PRODUCTS_CSV, "r", encoding="utf-8") as f:
-    for row in csv.DictReader(f):
-        products[int(row["productId"])] = row["name"]
-
-with open(PRICES_CSV, "r", encoding="utf-8") as fin, open(OUT_CSV, "w", newline="", encoding="utf-8") as fout:
-    reader = csv.DictReader(fin)
-    fieldnames = reader.fieldnames + ["groupName", "productName"]
-    writer = csv.DictWriter(fout, fieldnames=fieldnames)
-    writer.writeheader()
-
-    for row in reader:
-        gid = int(row["groupId"])
-        pid = int(row["productId"])
-        row["groupName"] = groups.get(gid, "")
-        row["productName"] = products.get(pid, "")
-        writer.writerow(row)
+PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+con = duckdb.connect(str(DB_PATH))
+con.execute(
+    f"""
+    CREATE OR REPLACE TABLE {TABLE_NAME} AS
+    SELECT
+        p.date,
+        p.categoryId,
+        p.groupId,
+        p.productId,
+        p.subTypeName,
+        p.lowPrice,
+        p.midPrice,
+        p.highPrice,
+        p.marketPrice,
+        p.directLowPrice,
+        g.name AS groupName,
+        pr.name AS productName
+    FROM pokemon_prices p
+    LEFT JOIN pokemon_groups g USING (groupId)
+    LEFT JOIN pokemon_products pr USING (groupId, productId)
+    """
+)
+con.execute(
+    f"""
+    COPY (
+        SELECT *
+        FROM {TABLE_NAME}
+        ORDER BY date, groupId, productId, subTypeName
+    ) TO '{OUT_CSV}' WITH (HEADER, DELIMITER ',')
+    """
+)
+con.close()
 
 print("Wrote:", OUT_CSV)
+print("DuckDB table:", TABLE_NAME)
+print("Database:", DB_PATH)

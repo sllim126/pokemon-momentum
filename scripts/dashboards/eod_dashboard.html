@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pokemon EOD Dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --panel: #fffdf8;
+      --line: #ddd2bf;
+      --ink: #231d16;
+      --muted: #6d6458;
+      --accent: #0e6d69;
+      --accent-2: #c65f2d;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Georgia, "Times New Roman", serif; background: var(--bg); color: var(--ink); }
+    .shell { max-width: 1500px; margin: 0 auto; padding: 24px; }
+    .hero, .main { display: grid; gap: 18px; }
+    .hero { grid-template-columns: 1.2fr 0.8fr; }
+    .main { grid-template-columns: 420px 1fr; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 18px; }
+    h1, h2 { margin: 0; }
+    .muted { color: var(--muted); }
+    .field-label { display:block; margin-bottom:6px; color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:0.08em; }
+    select, button { width: 100%; border: 1px solid var(--line); border-radius: 14px; background: #fffefb; color: var(--ink); padding: 11px 12px; font: inherit; }
+    button { cursor: pointer; }
+    .days-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .days-row button.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .stats { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:12px; margin-top: 16px; }
+    .stat { border:1px solid var(--line); border-radius:16px; padding:12px; }
+    .stat-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+    .stat-value { margin-top: 6px; font-size: 26px; font-weight: bold; }
+    #chart { width: 100%; height: 620px; border: 1px solid var(--line); border-radius: 18px; background: #fffefb; margin-top: 18px; }
+    .table-wrap { border: 1px solid var(--line); border-radius: 18px; overflow: hidden; max-height: 58vh; overflow-y: auto; }
+    table { width:100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #ece2d2; text-align: left; vertical-align: top; }
+    th { position: sticky; top: 0; background: #fbf4e7; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; }
+    tr:hover { background: #fff7eb; cursor: pointer; }
+    pre { white-space: pre-wrap; font-size: 12px; margin: 0; }
+    @media (max-width: 1080px) { .hero, .main { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="panel">
+        <div class="field-label">Adapter-driven dashboard</div>
+        <h1>Pokemon EOD Dashboard</h1>
+        <p class="muted" style="margin-top:12px;">
+          This view uses the rewritten <code>pokemon_eodhistoricaldata_api.py</code> adapter as the data source.
+          Pick a set, select a component, and inspect the time series plus fundamentals in the same shape a stock-style app would expect.
+        </p>
+      </div>
+      <div class="panel">
+        <div class="field-label">Market</div>
+        <div id="marketDetails" class="muted">Loading market details...</div>
+      </div>
+    </section>
+
+    <section class="main">
+      <aside class="panel">
+        <label class="field-label" for="setPicker">Set</label>
+        <select id="setPicker"></select>
+
+        <label class="field-label" for="componentPicker" style="margin-top:14px;">Component</label>
+        <select id="componentPicker"></select>
+
+        <div style="margin-top:14px;">
+          <div class="field-label">Chart Window</div>
+          <div class="days-row">
+            <button type="button" data-days="30">30D</button>
+            <button type="button" data-days="90">90D</button>
+            <button type="button" data-days="365" class="active">1Y</button>
+            <button type="button" data-days="730">2Y</button>
+            <button type="button" data-days="5000">Full</button>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-label">Close</div>
+            <div class="stat-value" id="statClose">-</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Change %</div>
+            <div class="stat-value" id="statChange">-</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Set</div>
+            <div class="stat-value" id="statSet">-</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Subtype</div>
+            <div class="stat-value" id="statSubtype">-</div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel">
+        <h2 id="title">Loading...</h2>
+        <div class="muted" id="subtitle" style="margin-top:6px;"></div>
+        <div id="chart"></div>
+        <div style="margin-top:18px;" class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Number</th>
+                <th>Rarity</th>
+                <th>Subtype</th>
+                <th>Latest</th>
+              </tr>
+            </thead>
+            <tbody id="componentBody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:18px;">
+          <div class="field-label">Fundamentals</div>
+          <pre id="fundamentals"></pre>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <script>
+    const apiBase = window.location.origin;
+    const setPicker = document.getElementById("setPicker");
+    const componentPicker = document.getElementById("componentPicker");
+    const componentBody = document.getElementById("componentBody");
+    const fundamentalsEl = document.getElementById("fundamentals");
+    const titleEl = document.getElementById("title");
+    const subtitleEl = document.getElementById("subtitle");
+    const marketDetailsEl = document.getElementById("marketDetails");
+    const statClose = document.getElementById("statClose");
+    const statChange = document.getElementById("statChange");
+    const statSet = document.getElementById("statSet");
+    const statSubtype = document.getElementById("statSubtype");
+
+    let currentDays = 365;
+    let currentSet = null;
+    let currentCode = null;
+    let componentRows = [];
+
+    async function getJson(path) {
+      const res = await fetch(apiBase + path);
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res.json();
+    }
+
+    function fmt(value, digits = 2) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) return "n/a";
+      return Number(value).toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: digits });
+    }
+
+    function populateSetPicker(indexes) {
+      setPicker.innerHTML = "";
+      for (const idx of indexes) {
+        const opt = document.createElement("option");
+        if (typeof idx === "string") {
+          opt.value = idx;
+          opt.textContent = idx;
+        } else {
+          opt.value = idx.value;
+          opt.textContent = idx.label || idx.value;
+        }
+        setPicker.appendChild(opt);
+      }
+      if (indexes.length) {
+        currentSet = typeof indexes[0] === "string" ? indexes[0] : indexes[0].value;
+        setPicker.value = currentSet;
+      }
+    }
+
+    function populateComponents(rows) {
+      componentRows = rows;
+      componentPicker.innerHTML = "";
+      componentBody.innerHTML = "";
+      for (const row of rows) {
+        const opt = document.createElement("option");
+        opt.value = row.Code;
+        opt.textContent = `${row.Name} | ${row.Subtype || ""}`;
+        componentPicker.appendChild(opt);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.Name || ""}</td>
+          <td>${row.Number || ""}</td>
+          <td>${row.Rarity || ""}</td>
+          <td>${row.Subtype || ""}</td>
+          <td>${fmt(row.LatestPrice)}</td>
+        `;
+        tr.addEventListener("click", async () => {
+          currentCode = row.Code;
+          componentPicker.value = currentCode;
+          await loadSeries();
+        });
+        componentBody.appendChild(tr);
+      }
+      if (rows.length) {
+        currentCode = rows[0].Code;
+        componentPicker.value = currentCode;
+      }
+    }
+
+    async function loadMarketDetails() {
+      const details = await getJson("/eod/market_details");
+      marketDetailsEl.textContent = `Rows: ${fmt(details.Rows, 0)} | Groups: ${fmt(details.Groups, 0)} | Products: ${fmt(details.Products, 0)} | Range: ${details.From} -> ${details.To}`;
+    }
+
+    async function loadSets() {
+      const payload = await getJson("/eod/index_list");
+      populateSetPicker(payload.indexes || []);
+    }
+
+    async function loadComponents() {
+      if (!currentSet) return;
+      const payload = await getJson(`/eod/index_components?index=${encodeURIComponent(currentSet)}`);
+      titleEl.textContent = payload.general.Name || currentSet;
+      subtitleEl.textContent = `Code ${payload.general.Code || currentSet} | Release ${payload.general.ReleaseDate || "n/a"}`;
+      populateComponents(payload.components || []);
+    }
+
+    async function loadSeries() {
+      if (!currentCode) return;
+      const payload = await getJson(`/eod/series?code=${encodeURIComponent(currentCode)}&days=${currentDays}`);
+      const rows = payload.rows || [];
+      const dates = rows.map((r) => r[0]);
+      const closes = rows.map((r) => r[1]);
+      const sma7 = rows.map((r) => r[2]);
+      const sma30 = rows.map((r) => r[3]);
+
+      Plotly.react("chart", [
+        { x: dates, y: closes, name: "Close", mode: "lines", line: { color: "#c65f2d", width: 3 } },
+        { x: dates, y: sma7, name: "SMA7", mode: "lines", line: { color: "#0e6d69", width: 2 } },
+        { x: dates, y: sma30, name: "SMA30", mode: "lines", line: { color: "#7c6f64", width: 2, dash: "dot" } }
+      ], {
+        paper_bgcolor: "#fffefb",
+        plot_bgcolor: "#fffefb",
+        margin: { l: 50, r: 18, t: 24, b: 44 },
+        legend: { orientation: "h" },
+        hovermode: "x unified",
+        xaxis: { title: "Date", gridcolor: "#f1e6d7" },
+        yaxis: { title: "Price", gridcolor: "#f1e6d7" }
+      }, { displaylogo: false, responsive: true });
+
+      const live = payload.live || {};
+      const fundamentals = payload.fundamentals || {};
+      titleEl.textContent = fundamentals.General?.Name || currentCode;
+      subtitleEl.textContent = `${fundamentals.General?.Set || currentSet || "Unknown Set"} | ${fundamentals.General?.Subtype || ""}`;
+      statClose.textContent = fmt(live.close);
+      statChange.textContent = `${fmt(live.change_p)}%`;
+      statSet.textContent = fundamentals.General?.Set || "n/a";
+      statSubtype.textContent = fundamentals.General?.Subtype || "n/a";
+      fundamentalsEl.textContent = JSON.stringify(fundamentals, null, 2);
+    }
+
+    function bindEvents() {
+      setPicker.addEventListener("change", async () => {
+        currentSet = setPicker.value;
+        await loadComponents();
+        await loadSeries();
+      });
+
+      componentPicker.addEventListener("change", async () => {
+        currentCode = componentPicker.value;
+        await loadSeries();
+      });
+
+      document.querySelectorAll(".days-row button").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          document.querySelectorAll(".days-row button").forEach((x) => x.classList.remove("active"));
+          btn.classList.add("active");
+          currentDays = Number(btn.dataset.days);
+          await loadSeries();
+        });
+      });
+    }
+
+    async function init() {
+      try {
+        await loadMarketDetails();
+        await loadSets();
+        bindEvents();
+        await loadComponents();
+        await loadSeries();
+      } catch (err) {
+        titleEl.textContent = "EOD dashboard failed to load";
+        subtitleEl.textContent = err.message;
+        fundamentalsEl.textContent = err.stack || String(err);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

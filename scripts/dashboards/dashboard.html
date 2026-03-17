@@ -3,229 +3,389 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pokemon Momentum Dashboard</title>
+  <title>Pokemon Momentum Terminal</title>
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <style>
     :root {
-      --bg: #f5efe2;
-      --panel: rgba(255, 252, 246, 0.92);
-      --panel-strong: #fffaf0;
-      --ink: #1e1b16;
-      --muted: #6b6257;
-      --line: #d8cdbb;
-      --accent: #c05a2b;
-      --accent-2: #175c58;
-      --good: #157347;
-      --warn: #8f3b1b;
-      --shadow: 0 18px 40px rgba(73, 56, 30, 0.12);
+      --bg: #11192f;
+      --bg-2: #15203a;
+      --panel: #1d2840;
+      --panel-2: #202d49;
+      --panel-3: #172137;
+      --line: rgba(140, 163, 199, 0.18);
+      --line-2: rgba(94, 116, 148, 0.28);
+      --ink: #e6efff;
+      --muted: #8d9dbc;
+      --accent: #22b0ff;
+      --accent-2: #25d0a5;
+      --good: #2fd386;
+      --warn: #ff8a5b;
+      --pill: #24365c;
+      --shadow: 0 18px 48px rgba(5, 10, 22, 0.35);
+      --radius: 24px;
     }
 
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      font-family: Georgia, "Times New Roman", serif;
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
       color: var(--ink);
       background:
-        radial-gradient(circle at top left, rgba(255,255,255,0.8), transparent 26%),
-        radial-gradient(circle at top right, rgba(192,90,43,0.18), transparent 22%),
-        linear-gradient(180deg, #efe7d6 0%, #f7f2e8 45%, #f3ecdf 100%);
+        radial-gradient(circle at top left, rgba(34, 176, 255, 0.08), transparent 20%),
+        radial-gradient(circle at top right, rgba(37, 208, 165, 0.08), transparent 16%),
+        linear-gradient(180deg, #11192f 0%, #0f1830 100%);
     }
 
     .shell {
-      max-width: 1500px;
-      margin: 0 auto;
-      padding: 24px;
+      min-height: 100vh;
+      padding: 22px;
     }
 
-    .hero {
+    .layout {
       display: grid;
-      grid-template-columns: 1.4fr 1fr;
+      grid-template-columns: 360px minmax(0, 1fr) 320px;
       gap: 18px;
-      margin-bottom: 18px;
-    }
-
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      box-shadow: var(--shadow);
-      padding: 18px;
-      backdrop-filter: blur(12px);
-    }
-
-    .hero h1 {
-      margin: 0;
-      font-size: clamp(28px, 5vw, 52px);
-      line-height: 0.95;
-      letter-spacing: -0.04em;
-    }
-
-    .hero p {
-      color: var(--muted);
-      max-width: 58ch;
-      margin: 12px 0 0 0;
-      font-size: 16px;
-    }
-
-    .stat-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .stat {
-      background: var(--panel-strong);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 14px;
-    }
-
-    .stat-label {
-      color: var(--muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .stat-value {
-      margin-top: 6px;
-      font-size: 28px;
-      font-weight: bold;
-    }
-
-    .main {
-      display: grid;
-      grid-template-columns: 420px 1fr;
-      gap: 18px;
-    }
-
-    .controls {
-      display: grid;
-      gap: 14px;
-      align-content: start;
-    }
-
-    .field-label {
-      display: block;
-      margin-bottom: 6px;
-      color: var(--muted);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    select, input, button {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fffdf8;
-      color: var(--ink);
-      padding: 11px 12px;
-      font: inherit;
-    }
-
-    .days-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-    }
-
-    .days-row button {
-      cursor: pointer;
-      transition: transform 0.12s ease, background 0.12s ease;
-    }
-
-    .days-row button.active {
-      background: var(--accent);
-      color: white;
-      border-color: var(--accent);
-    }
-
-    .days-row button:hover,
-    .tab-bar button:hover {
-      transform: translateY(-1px);
-    }
-
-    .details {
-      display: grid;
-      grid-template-columns: 116px 1fr;
-      gap: 14px;
       align-items: start;
     }
 
-    .cover {
-      width: 116px;
-      height: 116px;
-      border-radius: 18px;
-      object-fit: cover;
+    .panel {
+      background: linear-gradient(180deg, rgba(35, 47, 73, 0.94), rgba(24, 34, 56, 0.96));
       border: 1px solid var(--line);
-      background: #efe5d2;
-      display: none;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
     }
 
-    .title {
-      font-size: 30px;
-      line-height: 1.05;
+    .left-rail,
+    .right-rail {
+      position: sticky;
+      top: 22px;
+      max-height: calc(100vh - 44px);
+      overflow: auto;
+      padding: 18px;
+    }
+
+    .center-stage {
+      display: grid;
+      gap: 18px;
+      min-width: 0;
+    }
+
+    .section-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+
+    .rail-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .rail-title h2,
+    .stage-title h1,
+    .stack h3,
+    .detail-card h3 {
       margin: 0;
+      font-weight: 700;
+    }
+
+    .stage-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .stage-title h1 {
+      font-size: clamp(28px, 3vw, 42px);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      margin-top: 8px;
     }
 
     .subtitle {
       color: var(--muted);
-      margin-top: 6px;
+      margin-top: 10px;
+      font-size: 15px;
     }
 
-    .chips {
+    .price-block {
+      text-align: right;
+      min-width: 150px;
+    }
+
+    .price-main {
+      font-size: 42px;
+      line-height: 0.9;
+      letter-spacing: -0.04em;
+    }
+
+    .price-pill,
+    .chip,
+    .tag-badge,
+    .mini-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+    }
+
+    .price-pill.good,
+    .chip.good,
+    .mini-badge.good {
+      background: rgba(47, 211, 134, 0.12);
+      color: #77f0af;
+      border-color: rgba(47, 211, 134, 0.22);
+    }
+
+    .price-pill.warn,
+    .chip.warn,
+    .mini-badge.warn {
+      background: rgba(255, 138, 91, 0.12);
+      color: #ffb39a;
+      border-color: rgba(255, 138, 91, 0.22);
+    }
+
+    .price-pill.neutral,
+    .chip.neutral,
+    .tag-badge,
+    .mini-badge.neutral {
+      background: var(--pill);
+      color: var(--ink);
+    }
+
+    .hero,
+    .chart-panel,
+    .signal-panel {
+      padding: 22px;
+    }
+
+    .toolbar,
+    .picker-grid,
+    .tab-bar,
+    .segment-bar,
+    .tag-actions,
+    .chart-window {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
+    }
+
+    .segment-bar button,
+    .tab-bar button,
+    .chart-window button,
+    .tag-actions button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--panel-3);
+      color: var(--muted);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font: inherit;
+      cursor: pointer;
+      transition: 0.14s ease;
+    }
+
+    .segment-bar button.active,
+    .tab-bar button.active,
+    .chart-window button.active,
+    .tag-actions button.active {
+      background: rgba(34, 176, 255, 0.14);
+      color: #8dddff;
+      border-color: rgba(34, 176, 255, 0.32);
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.12);
+    }
+
+    .picker-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .picker-grid label {
+      display: block;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    select {
+      width: 100%;
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--panel-3);
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 12px;
+      font: inherit;
+    }
+
+    .status-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .status-card {
+      min-width: 120px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(19, 28, 47, 0.6);
+    }
+
+    .status-card .value {
+      margin-top: 6px;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .mover-list {
+      display: grid;
+      gap: 14px;
       margin-top: 12px;
     }
 
-    .chip {
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      background: #fffdf8;
-      padding: 7px 10px;
-      font-size: 13px;
+    .mover-card {
+      border: 1px solid var(--line-2);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(34, 45, 70, 0.94), rgba(24, 34, 56, 0.98));
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
     }
 
-    .chart-wrap {
-      margin-top: 18px;
+    .mover-card:hover,
+    .mover-card.active {
+      transform: translateY(-1px);
+      border-color: rgba(34, 176, 255, 0.5);
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.28);
+    }
+
+    .mover-head,
+    .mover-meta,
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .mover-name {
+      font-size: 28px;
+      line-height: 0.9;
+      margin-top: 4px;
+      letter-spacing: -0.04em;
+    }
+
+    .mover-set {
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.35;
+    }
+
+    .mover-price {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .mover-price strong {
+      display: block;
+      font-size: 30px;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .sparkline-shell {
+      margin-top: 14px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(20, 31, 51, 0.9), rgba(17, 26, 43, 0.95)),
+        linear-gradient(90deg, rgba(37, 208, 165, 0.18), transparent);
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sparkline-label {
+      color: #627498;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 10px;
+    }
+
+    .sparkline-bar {
+      height: 44px;
+      border-radius: 14px;
+      background:
+        linear-gradient(180deg, rgba(37, 208, 165, 0.32), rgba(37, 208, 165, 0.02)),
+        linear-gradient(90deg, rgba(37, 208, 165, 0.9) 0%, rgba(37, 208, 165, 0.65) 70%, rgba(37, 208, 165, 0.3) 100%);
+      clip-path: polygon(0% 85%, 8% 82%, 16% 76%, 24% 70%, 32% 66%, 40% 61%, 48% 58%, 56% 52%, 64% 49%, 72% 43%, 80% 38%, 88% 28%, 94% 22%, 100% 12%, 100% 100%, 0% 100%);
+      opacity: 0.9;
+    }
+
+    .mover-meta {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      align-items: center;
+    }
+
+    .mover-meta .mini-badge {
+      margin-left: 6px;
     }
 
     #chart {
       width: 100%;
-      height: 560px;
-      border-radius: 18px;
+      height: 620px;
+      border-radius: 20px;
       overflow: hidden;
       border: 1px solid var(--line);
-      background: #fffefb;
+      background: #121a2c;
+      margin-top: 18px;
     }
 
-    .tab-bar {
+    .signal-panel {
+      min-width: 0;
+    }
+
+    .signal-topline {
       display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
       margin-bottom: 14px;
     }
 
-    .tab-bar button {
-      width: auto;
-      padding: 10px 14px;
-      cursor: pointer;
-    }
-
-    .tab-bar button.active {
-      background: var(--accent-2);
-      color: white;
-      border-color: var(--accent-2);
+    .signal-topline p {
+      margin: 0;
+      color: var(--muted);
     }
 
     .table-wrap {
       border: 1px solid var(--line);
-      border-radius: 18px;
+      border-radius: 20px;
       overflow: hidden;
-      background: #fffefb;
+      background: rgba(16, 23, 39, 0.72);
     }
 
     table {
@@ -235,187 +395,396 @@
     }
 
     th, td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #ece2d2;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(91, 112, 146, 0.16);
       text-align: left;
       vertical-align: top;
     }
 
     th {
-      background: #fbf4e7;
-      color: var(--muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
       position: sticky;
       top: 0;
       z-index: 1;
+      background: #18233b;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
     }
 
-    tr:hover {
-      background: #fff7eb;
-    }
-
-    tr.clickable {
+    tbody tr {
       cursor: pointer;
+      transition: background 0.12s ease;
+    }
+
+    tbody tr:hover {
+      background: rgba(34, 176, 255, 0.06);
+    }
+
+    .empty {
+      padding: 20px 16px;
+      color: var(--muted);
+    }
+
+    .stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .detail-card {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(20, 28, 47, 0.76);
+    }
+
+    .detail-copy {
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .tag-row,
+    .badge-row,
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .stats-list {
+      margin-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+
+    .detail-row {
+      padding: 11px 0;
+      border-bottom: 1px solid rgba(91, 112, 146, 0.16);
+      font-size: 14px;
+    }
+
+    .detail-row:last-child {
+      border-bottom: 0;
+    }
+
+    .detail-row .label {
+      color: var(--muted);
+    }
+
+    .detail-row .value {
+      text-align: right;
+      font-weight: 700;
+    }
+
+    .notes {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(16, 23, 39, 0.64);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      line-height: 1.55;
+      min-height: 120px;
     }
 
     .status {
       color: var(--muted);
-      font-size: 14px;
+      font-size: 13px;
     }
 
-    .empty {
-      padding: 22px 14px;
-      color: var(--muted);
-    }
+    .good { color: #77f0af; }
+    .warn { color: #ffb39a; }
 
-    .num-good { color: var(--good); font-weight: bold; }
-    .num-warn { color: var(--warn); font-weight: bold; }
+    @media (max-width: 1400px) {
+      .layout {
+        grid-template-columns: 320px minmax(0, 1fr);
+      }
+
+      .right-rail {
+        position: static;
+        max-height: none;
+        grid-column: 1 / -1;
+      }
+    }
 
     @media (max-width: 1080px) {
-      .hero, .main {
+      .layout {
         grid-template-columns: 1fr;
+      }
+
+      .left-rail,
+      .right-rail {
+        position: static;
+        max-height: none;
+      }
+
+      .stage-title,
+      .signal-topline {
+        flex-direction: column;
+      }
+
+      .picker-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #chart {
+        height: 480px;
       }
     }
   </style>
 </head>
 <body>
   <div class="shell">
-    <section class="hero">
-      <div class="panel">
-        <div class="field-label">Live Screener</div>
-        <h1>Pokemon Momentum Dashboard</h1>
-        <p>
-          Live API-backed charting for top movers, breakouts, watchlist holds, and confirmed uptrends.
-          Click any table row to load the product chart instantly.
-        </p>
-      </div>
-      <div class="panel">
-        <div class="stat-grid">
-          <div class="stat">
-            <div class="stat-label">Rows</div>
-            <div class="stat-value" id="statRows">-</div>
+    <div class="layout">
+      <aside class="panel left-rail">
+        <div class="rail-title">
+          <div>
+            <div class="section-label">Momentum Rail</div>
+            <h2>Trending Up</h2>
           </div>
-          <div class="stat">
-            <div class="stat-label">Latest Date</div>
-            <div class="stat-value" id="statLatest">-</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Source</div>
-            <div class="stat-value" id="statSource">-</div>
-          </div>
-          <div class="stat">
-            <div class="stat-label">Universe</div>
-            <div class="stat-value" id="statUniverse">-</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="main">
-      <aside class="controls">
-        <div class="panel">
-          <label class="field-label" for="picker">Card Picker</label>
-          <select id="picker"></select>
+          <div class="mini-badge neutral" id="leftStatus">Loading</div>
         </div>
 
-        <div class="panel">
-          <div class="field-label">Chart Window</div>
-          <div class="days-row">
-            <button type="button" data-days="90">90D</button>
-            <button type="button" data-days="180">180D</button>
-            <button type="button" data-days="365" class="active">1Y</button>
-            <button type="button" data-days="730">2Y</button>
-          </div>
+        <div class="segment-bar" id="railSegments">
+          <button type="button" data-segment="cards" class="active">Cards</button>
+          <button type="button" data-segment="sealed">Sealed</button>
         </div>
 
-        <div class="panel">
-          <div class="field-label">Leaderboard Tabs</div>
-          <div class="tab-bar" id="tabs">
-            <button type="button" data-tab="top_movers" class="active">Top Movers</button>
-            <button type="button" data-tab="breakouts">Breakouts</button>
-            <button type="button" data-tab="sma30_holds">SMA30 Holds</button>
-            <button type="button" data-tab="confirmed_uptrends">Confirmed Uptrends</button>
-          </div>
-          <div class="status" id="tableStatus">Loading screener...</div>
+        <div class="status" style="margin-top:12px;">
+          Top movers over the last 30 days. Click any item to load the full chart and detail stack.
         </div>
+
+        <div class="mover-list" id="moverList"></div>
       </aside>
 
-      <section class="panel">
-        <div class="details">
-          <img id="cardImage" class="cover" alt="Card image">
-          <div>
-            <h2 class="title" id="cardTitle">Loading...</h2>
-            <div class="subtitle" id="cardSubtitle"></div>
-            <div class="chips" id="metricChips"></div>
+      <main class="center-stage">
+        <section class="panel hero">
+          <div class="stage-title">
+            <div>
+              <div class="section-label">Live Screener</div>
+              <h1 id="cardTitle">Loading...</h1>
+              <div class="subtitle" id="cardSubtitle">Fetching product history and metadata.</div>
+            </div>
+            <div class="price-block">
+              <div class="section-label">Selected Price</div>
+              <div class="price-main" id="headlinePrice">-</div>
+              <div style="margin-top:10px;" id="headlineChangeWrap"></div>
+            </div>
           </div>
-        </div>
 
-        <div class="chart-wrap">
+          <div class="picker-grid">
+            <label>
+              <span class="field-label">Card Picker</span>
+              <select id="picker"></select>
+            </label>
+            <label>
+              <span class="field-label">Set Browser</span>
+              <select id="groupPicker"></select>
+            </label>
+          </div>
+
+          <div class="status-strip">
+            <div class="status-card">
+              <div class="section-label">Rows</div>
+              <div class="value" id="statRows">-</div>
+            </div>
+            <div class="status-card">
+              <div class="section-label">Latest Date</div>
+              <div class="value" id="statLatest">-</div>
+            </div>
+            <div class="status-card">
+              <div class="section-label">Source</div>
+              <div class="value" id="statSource">-</div>
+            </div>
+            <div class="status-card">
+              <div class="section-label">Universe</div>
+              <div class="value" id="statUniverse">-</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel chart-panel">
+          <div class="signal-topline">
+            <div>
+              <div class="section-label">Price Action</div>
+              <p id="chartLabel">Price, SMA7, and SMA30 for the selected product.</p>
+            </div>
+            <div class="chart-window">
+              <button type="button" data-days="30">30D</button>
+              <button type="button" data-days="90">90D</button>
+              <button type="button" data-days="180">180D</button>
+              <button type="button" data-days="365" class="active">1Y</button>
+              <button type="button" data-days="730">2Y</button>
+              <button type="button" data-days="5000">Full</button>
+            </div>
+          </div>
+
           <div id="chart"></div>
-        </div>
+        </section>
 
-        <div style="margin-top:18px;" class="table-wrap">
-          <table>
-            <thead id="tableHead"></thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-          <div id="emptyState" class="empty" style="display:none;">No rows returned.</div>
+        <section class="panel signal-panel">
+          <div class="signal-topline">
+            <div>
+              <div class="section-label">Signal Feed</div>
+              <p id="tableStatus">Loading screener...</p>
+            </div>
+            <div class="tab-bar" id="tabs">
+              <button type="button" data-tab="top_movers" class="active">Top Movers</button>
+              <button type="button" data-tab="breakouts">Breakouts</button>
+              <button type="button" data-tab="sma30_holds">SMA30 Holds</button>
+              <button type="button" data-tab="confirmed_uptrends">Uptrends</button>
+              <button type="button" data-tab="product_signals">Signals</button>
+              <button type="button" data-tab="group_products">Set Browser</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead id="tableHead"></thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+            <div id="emptyState" class="empty" style="display:none;">No rows returned.</div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="panel right-rail">
+        <div class="stack">
+          <section class="detail-card">
+            <div class="section-label">Tracking</div>
+            <h3>Badges & Favorites</h3>
+            <div class="detail-copy">
+              Draft local-only tracking controls. This is the place to persist favorites, tags, or watch states later.
+            </div>
+            <div class="tag-actions" id="tagActions">
+              <button type="button" data-tag="favorite">Favorite</button>
+              <button type="button" data-tag="watchlist">Watchlist</button>
+              <button type="button" data-tag="sealed">Sealed</button>
+              <button type="button" data-tag="research">Research</button>
+            </div>
+            <div class="badge-row" id="activeTags"></div>
+          </section>
+
+          <section class="detail-card">
+            <div class="section-label">Selection</div>
+            <h3>Key Stats</h3>
+            <div class="stats-list" id="detailStats"></div>
+          </section>
+
+          <section class="detail-card">
+            <div class="section-label">Signal Snapshot</div>
+            <h3>Momentum Read</h3>
+            <div class="chip-row" id="metricChips"></div>
+          </section>
+
+          <section class="detail-card">
+            <div class="section-label">Notes</div>
+            <h3>Context</h3>
+            <div class="notes" id="detailNotes"></div>
+          </section>
         </div>
-      </section>
-    </section>
+      </aside>
+    </div>
   </div>
 
   <script>
     const apiBase = window.location.origin;
-    const universeLimit = 12000;
+    const universeLimit = 50000;
     const picker = document.getElementById("picker");
+    const groupPicker = document.getElementById("groupPicker");
     const tableHead = document.getElementById("tableHead");
     const tableBody = document.getElementById("tableBody");
     const emptyState = document.getElementById("emptyState");
     const tableStatus = document.getElementById("tableStatus");
     const tabsEl = document.getElementById("tabs");
+    const moverList = document.getElementById("moverList");
+    const railSegments = document.getElementById("railSegments");
+    const leftStatus = document.getElementById("leftStatus");
     const cardTitle = document.getElementById("cardTitle");
     const cardSubtitle = document.getElementById("cardSubtitle");
+    const chartLabel = document.getElementById("chartLabel");
+    const headlinePrice = document.getElementById("headlinePrice");
+    const headlineChangeWrap = document.getElementById("headlineChangeWrap");
     const metricChips = document.getElementById("metricChips");
-    const cardImage = document.getElementById("cardImage");
+    const detailStats = document.getElementById("detailStats");
+    const detailNotes = document.getElementById("detailNotes");
+    const tagActions = document.getElementById("tagActions");
+    const activeTags = document.getElementById("activeTags");
 
     const universeByKey = new Map();
-    const labelToKey = new Map();
+    const groupsById = new Map();
+    const localTags = new Map();
 
     let currentKey = null;
     let currentDays = 365;
     let currentTab = "top_movers";
+    let currentGroupId = null;
+    let currentSegment = "cards";
+    let topMoverRows = [];
+    let currentSeriesPayload = null;
 
     const tabConfig = {
       top_movers: {
-        path: "/top_movers?days=30&limit=100&min_prior=5",
-        columns: ["productId", "subTypeName", "productName", "groupName", "p_now", "p_prior", "roc_pct"],
-        title: "Top movers over the last 30 days."
+        path: "/top_movers?days=30&limit=120&min_prior=5",
+        columns: ["productName", "groupName", "number", "subTypeName", "p_now", "p_prior", "roc_pct"],
+        title: "Largest 30-day movers in the current universe."
       },
       breakouts: {
-        path: "/breakouts?days=90&limit=100&min_price=5",
-        columns: ["productId", "subTypeName", "productName", "groupName", "latest_price", "high_window"],
-        title: "Items at fresh 90-day highs."
+        path: "/breakouts?days=90&limit=120&min_price=5",
+        columns: ["productName", "groupName", "number", "subTypeName", "latest_price", "high_window"],
+        title: "Fresh 90-day highs across the live Pokemon universe."
       },
       sma30_holds: {
-        path: "/sma30_holds?days_required=7&limit=100&min_price=5",
-        columns: ["productId", "subTypeName", "productName", "groupName", "cross_date", "hold_days", "latest_price", "latest_sma30", "pct_vs_sma30"],
-        title: "Watchlist candidates holding above the 30-day average."
+        path: "/sma30_holds?days_required=7&limit=120&min_price=5",
+        columns: ["productName", "groupName", "number", "subTypeName", "cross_date", "hold_days", "latest_price", "latest_sma30", "pct_vs_sma30"],
+        title: "Watchlist names reclaiming and holding their 30-day average."
       },
       confirmed_uptrends: {
-        path: "/confirmed_uptrends?days_required=5&limit=100&min_price=5",
-        columns: ["productId", "subTypeName", "productName", "groupName", "bullish_streak", "latest_price", "latest_sma7", "latest_sma30", "pct_vs_sma30"],
-        title: "Active momentum where price and SMA7 remain above SMA30."
+        path: "/confirmed_uptrends?days_required=5&limit=120&min_price=5",
+        columns: ["productName", "groupName", "number", "subTypeName", "bullish_streak", "latest_price", "latest_sma7", "latest_sma30", "pct_vs_sma30"],
+        title: "Confirmed momentum where price and SMA7 are both above SMA30."
+      },
+      product_signals: {
+        path: "/product_signals?limit=250&min_price=1",
+        columns: ["productName", "groupName", "number", "subTypeName", "latest_price", "roc_7d_pct", "roc_30d_pct", "price_vs_sma30_pct", "breakout_90d_flag", "trend_score"],
+        title: "Latest product-level signal snapshot and ranking stack."
+      },
+      group_products: {
+        columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "latest_date"],
+        title: "Browse every product available inside the selected set."
       }
     };
 
+    function getStoredTags() {
+      try {
+        const raw = localStorage.getItem("pokemon-momentum-tags");
+        if (!raw) return {};
+        return JSON.parse(raw);
+      } catch (err) {
+        return {};
+      }
+    }
+
+    function saveStoredTags() {
+      const obj = {};
+      for (const [key, tags] of localTags.entries()) {
+        obj[key] = Array.from(tags);
+      }
+      localStorage.setItem("pokemon-momentum-tags", JSON.stringify(obj));
+    }
+
+    function hydrateStoredTags() {
+      const obj = getStoredTags();
+      Object.entries(obj).forEach(([key, tags]) => {
+        localTags.set(key, new Set(tags));
+      });
+    }
+
     async function getJson(path) {
       const res = await fetch(apiBase + path);
-      if (!res.ok) {
-        throw new Error(`${res.status} ${res.statusText}`);
-      }
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       return res.json();
     }
 
@@ -425,50 +794,108 @@
 
     function formatNumber(value, digits = 2) {
       if (value === null || value === undefined || Number.isNaN(Number(value))) return "n/a";
-      return Number(value).toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: digits });
+      return Number(value).toLocaleString(undefined, {
+        maximumFractionDigits: digits,
+        minimumFractionDigits: digits
+      });
     }
 
-    function formatMaybePct(value) {
-      if (value === null || value === undefined || Number.isNaN(Number(value))) return "n/a";
+    function formatPercent(value) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) {
+        return { text: "n/a", cls: "neutral" };
+      }
       const n = Number(value);
-      const cls = n >= 0 ? "num-good" : "num-warn";
-      const sign = n >= 0 ? "+" : "";
-      return `<span class="${cls}">${sign}${formatNumber(n, 2)}%</span>`;
+      return {
+        text: `${n >= 0 ? "+" : ""}${formatNumber(n, 2)}%`,
+        cls: n >= 0 ? "good" : "warn"
+      };
+    }
+
+    function classifyItem(item) {
+      const name = String(item.productName || "").toLowerCase();
+      const subtype = String(item.subTypeName || "").toLowerCase();
+      const sealedWords = [
+        "booster", "booster box", "booster pack", "bundle", "elite trainer",
+        "etb", "tin", "blister", "collection", "deck", "premium", "figure",
+        "mini tin", "box set", "case", "sleeved", "playmat", "trainer box",
+        "poster", "anniversary collection"
+      ];
+      const looksSealed = sealedWords.some((word) => name.includes(word));
+      const hasCardHints = Boolean(item.number) || Boolean(item.rarity) || ["normal", "holofoil", "reverse holofoil", "1st edition", "unlimited holofoil"].includes(subtype);
+      return looksSealed && !hasCardHints ? "sealed" : "cards";
     }
 
     function enrichRows(payload) {
       const columns = payload.columns || [];
       return (payload.rows || []).map((row) => {
         const item = {};
-        columns.forEach((col, idx) => item[col] = row[idx]);
-        const key = keyOf(item.productId, item.subTypeName);
-        const meta = universeByKey.get(key) || {};
+        columns.forEach((col, idx) => { item[col] = row[idx]; });
+        item.key = keyOf(item.productId, item.subTypeName);
+        const meta = universeByKey.get(item.key) || {};
         item.productName = meta.productName || item.productName || `productId ${item.productId}`;
         item.groupName = meta.groupName || item.groupName || "";
-        item.imageUrl = meta.imageUrl || "";
-        item.key = key;
+        item.imageUrl = meta.imageUrl || item.imageUrl || "";
+        item.rarity = meta.rarity || item.rarity || "";
+        item.number = meta.number || item.number || "";
+        item.segment = classifyItem(item);
         return item;
       });
     }
 
+    function ensurePickerOption(item) {
+      if (!universeByKey.has(item.key)) {
+        universeByKey.set(item.key, {
+          productId: item.productId,
+          subTypeName: item.subTypeName,
+          groupName: item.groupName || "Unknown Group",
+          productName: item.productName || `productId ${item.productId}`,
+          imageUrl: item.imageUrl || "",
+          rarity: item.rarity || "",
+          number: item.number || ""
+        });
+      }
+
+      if (![...picker.options].some((opt) => opt.value === item.key)) {
+        const opt = document.createElement("option");
+        opt.value = item.key;
+        opt.textContent = `${item.productName} | ${item.groupName || "Unknown Group"} | ${item.subTypeName}`;
+        picker.appendChild(opt);
+      }
+    }
+
     function fillPicker() {
+      picker.innerHTML = "";
       const options = Array.from(universeByKey.entries()).map(([key, meta]) => ({
         key,
         label: `${meta.productName || `productId ${meta.productId}`} | ${meta.groupName || "Unknown Group"} | ${meta.subTypeName}`
       }));
       options.sort((a, b) => a.label.localeCompare(b.label));
-      for (const opt of options) {
+      for (const option of options) {
         const el = document.createElement("option");
-        el.value = opt.key;
-        el.textContent = opt.label;
+        el.value = option.key;
+        el.textContent = option.label;
         picker.appendChild(el);
-        labelToKey.set(opt.label, opt.key);
       }
       if (options.length > 0) {
-        currentKey = options[0].key;
+        currentKey = currentKey || options[0].key;
         picker.value = currentKey;
       }
       document.getElementById("statUniverse").textContent = options.length.toLocaleString();
+    }
+
+    function fillGroupPicker() {
+      groupPicker.innerHTML = "";
+      const groups = Array.from(groupsById.values()).sort((a, b) => a.groupName.localeCompare(b.groupName));
+      for (const group of groups) {
+        const opt = document.createElement("option");
+        opt.value = String(group.groupId);
+        opt.textContent = `${group.groupName} (${group.productCount})`;
+        groupPicker.appendChild(opt);
+      }
+      if (groups.length > 0) {
+        currentGroupId = currentGroupId || groups[0].groupId;
+        groupPicker.value = String(currentGroupId);
+      }
     }
 
     function renderHeader(columns) {
@@ -478,60 +905,140 @@
     function displayCell(col, item) {
       if (col === "productName") return item.productName;
       if (col === "groupName") return item.groupName;
-      if (col === "roc_pct" || col === "pct_vs_sma30") return formatMaybePct(item[col]);
+      if (col === "number") return item.number || "";
+      if (col === "breakout_90d_flag") return Number(item[col]) === 1 ? "Yes" : "No";
+      if (["roc_pct", "pct_vs_sma30", "roc_7d_pct", "roc_30d_pct", "roc_90d_pct", "roc_365d_pct", "price_vs_sma30_pct", "price_vs_sma90_pct"].includes(col)) {
+        const pct = formatPercent(item[col]);
+        return `<span class="${pct.cls}">${pct.text}</span>`;
+      }
+      if (col === "trend_score") return formatNumber(item[col], 1);
       if (["p_now", "p_prior", "latest_price", "latest_sma7", "latest_sma30", "high_window"].includes(col)) {
         return formatNumber(item[col], 2);
       }
       return item[col] ?? "";
     }
 
-    function renderTable(tabName, rows) {
-      const cfg = tabConfig[tabName];
+    function renderTable(rows) {
+      const cfg = tabConfig[currentTab];
       renderHeader(cfg.columns);
       tableBody.innerHTML = "";
       emptyState.style.display = rows.length ? "none" : "block";
-
       for (const item of rows) {
         const tr = document.createElement("tr");
-        tr.className = "clickable";
         tr.innerHTML = cfg.columns.map((col) => `<td>${displayCell(col, item)}</td>`).join("");
         tr.addEventListener("click", () => {
-          if (!universeByKey.has(item.key)) return;
-          picker.value = item.key;
+          ensurePickerOption(item);
           currentKey = item.key;
+          picker.value = currentKey;
           loadSeries();
         });
         tableBody.appendChild(tr);
       }
     }
 
+    function renderMoverRail() {
+      const rows = topMoverRows.filter((row) => row.segment === currentSegment).slice(0, 18);
+      moverList.innerHTML = "";
+      leftStatus.textContent = `${rows.length} live`;
+      rows.forEach((item, idx) => {
+        const pct = formatPercent(item.roc_pct);
+        const div = document.createElement("article");
+        div.className = `mover-card${item.key === currentKey ? " active" : ""}`;
+        div.innerHTML = `
+          <div class="mover-head">
+            <div>
+              <div class="section-label">${currentSegment === "sealed" ? "Sealed mover" : "Card mover"} #${idx + 1}</div>
+              <div class="mover-name">${item.productName}</div>
+              <div class="mover-set">${item.groupName || "Unknown Set"}<br>${item.subTypeName || ""}</div>
+            </div>
+            <div class="mover-price">
+              <strong>${formatNumber(item.p_now, 2)}</strong>
+              <span class="price-pill ${pct.cls}">${pct.text}</span>
+            </div>
+          </div>
+          <div class="sparkline-shell">
+            <div class="sparkline-label">Price trend</div>
+            <div class="sparkline-bar"></div>
+          </div>
+          <div class="mover-meta">
+            <div>
+              ${item.number ? `#${item.number}` : "Catalog mover"}
+              <span class="mini-badge neutral">${item.rarity || "Unclassified"}</span>
+            </div>
+            <div>Prior ${formatNumber(item.p_prior, 2)}</div>
+          </div>
+        `;
+        div.addEventListener("click", () => {
+          ensurePickerOption(item);
+          currentKey = item.key;
+          picker.value = currentKey;
+          renderMoverRail();
+          loadSeries();
+        });
+        moverList.appendChild(div);
+      });
+    }
+
     function renderSummary(meta, series) {
-      cardTitle.textContent = meta.productName || `productId ${meta.productId}`;
-      cardSubtitle.textContent = `${meta.groupName || "Unknown Group"} | ${meta.subTypeName} | productId ${meta.productId}`;
-
-      if (meta.imageUrl) {
-        cardImage.src = meta.imageUrl;
-        cardImage.style.display = "block";
-      } else {
-        cardImage.style.display = "none";
-      }
-
-      const last = series.rows[series.rows.length - 1] || [];
+      const rows = series.rows || [];
+      const last = rows[rows.length - 1] || [];
       const latestPrice = last[1];
       const latestSma7 = last[2];
       const latestSma30 = last[3];
       const pctVsSma30 = latestPrice && latestSma30 ? ((latestPrice / latestSma30) - 1) * 100 : null;
+      const pct = formatPercent(pctVsSma30);
 
-      metricChips.innerHTML = `
-        <div class="chip">Latest ${series.latest}</div>
-        <div class="chip">Price ${formatNumber(latestPrice, 2)}</div>
-        <div class="chip">SMA7 ${formatNumber(latestSma7, 2)}</div>
-        <div class="chip">SMA30 ${formatNumber(latestSma30, 2)}</div>
-        <div class="chip">${pctVsSma30 === null ? "n/a" : `${formatNumber(pctVsSma30, 2)}% vs SMA30`}</div>
-      `;
+      cardTitle.textContent = meta.productName || `productId ${meta.productId}`;
+      cardSubtitle.textContent = `${meta.groupName || "Unknown Set"} | ${meta.subTypeName} | ${meta.number ? `#${meta.number}` : "No card number"}`;
+      chartLabel.textContent = `Showing ${rows.length.toLocaleString()} daily observations across the selected chart window.`;
+      headlinePrice.textContent = formatNumber(latestPrice, 2);
+      headlineChangeWrap.innerHTML = `<span class="price-pill ${pct.cls}">${pct.text === "n/a" ? "vs SMA30 n/a" : `${pct.text} vs SMA30`}</span>`;
+
+      metricChips.innerHTML = "";
+      [
+        `Latest ${series.latest || "-"}`,
+        `Price ${formatNumber(latestPrice, 2)}`,
+        `SMA7 ${formatNumber(latestSma7, 2)}`,
+        `SMA30 ${formatNumber(latestSma30, 2)}`,
+        meta.rarity ? meta.rarity : "No rarity",
+        meta.number ? `Card ${meta.number}` : "Catalog product"
+      ].forEach((text, idx) => {
+        const el = document.createElement("div");
+        el.className = `chip ${idx === 1 ? "good" : "neutral"}`;
+        el.textContent = text;
+        metricChips.appendChild(el);
+      });
+
+      detailStats.innerHTML = "";
+      const details = [
+        ["Set", meta.groupName || "Unknown Set"],
+        ["Subtype", meta.subTypeName || "n/a"],
+        ["Rarity", meta.rarity || "n/a"],
+        ["Number", meta.number || "n/a"],
+        ["Latest Price", formatNumber(latestPrice, 2)],
+        ["SMA7", formatNumber(latestSma7, 2)],
+        ["SMA30", formatNumber(latestSma30, 2)],
+        ["Vs SMA30", pct.text],
+        ["Window", `${currentDays} days`]
+      ];
+      details.forEach(([label, value]) => {
+        const row = document.createElement("div");
+        row.className = "detail-row";
+        row.innerHTML = `<div class="label">${label}</div><div class="value">${value}</div>`;
+        detailStats.appendChild(row);
+      });
+
+      detailNotes.textContent = [
+        `${meta.productName || "This product"} is currently being viewed inside the draft terminal layout.`,
+        `Set: ${meta.groupName || "Unknown Set"}.`,
+        `Subtype: ${meta.subTypeName || "n/a"}.`,
+        meta.rarity ? `Rarity: ${meta.rarity}.` : "Rarity metadata is not available for this item.",
+        meta.number ? `Card number: ${meta.number}.` : "This item does not present a card number and may be sealed or non-card inventory.",
+        "Favorites and tracking badges are local-only in this draft, but the layout is ready for persistent tags later."
+      ].join(" ");
     }
 
-    function renderChart(meta, series) {
+    function renderChart(series) {
       const dates = [];
       const prices = [];
       const sma7 = [];
@@ -549,33 +1056,70 @@
           y: prices,
           name: "Price",
           mode: "lines",
-          line: { color: "#c05a2b", width: 3 }
+          line: { color: "#0ec0ff", width: 3 },
+          fill: "tozeroy",
+          fillcolor: "rgba(14, 192, 255, 0.18)"
         },
         {
           x: dates,
           y: sma7,
           name: "SMA7",
           mode: "lines",
-          line: { color: "#175c58", width: 2 }
+          line: { color: "#25d0a5", width: 2 }
         },
         {
           x: dates,
           y: sma30,
           name: "SMA30",
           mode: "lines",
-          line: { color: "#7c6f64", width: 2, dash: "dot" }
+          line: { color: "#89a3c7", width: 2, dash: "dot" }
         }
       ], {
-        paper_bgcolor: "#fffefb",
-        plot_bgcolor: "#fffefb",
-        margin: { l: 50, r: 18, t: 24, b: 44 },
-        legend: { orientation: "h" },
+        paper_bgcolor: "#121a2c",
+        plot_bgcolor: "#121a2c",
+        margin: { l: 52, r: 18, t: 20, b: 42 },
+        legend: {
+          orientation: "h",
+          y: 1.06,
+          font: { color: "#c4d4f1" }
+        },
         hovermode: "x unified",
-        xaxis: { title: "Date", gridcolor: "#f1e6d7" },
-        yaxis: { title: "Price", gridcolor: "#f1e6d7" }
+        xaxis: {
+          title: "",
+          gridcolor: "rgba(99, 123, 160, 0.12)",
+          zerolinecolor: "rgba(99, 123, 160, 0.12)",
+          tickfont: { color: "#8d9dbc" }
+        },
+        yaxis: {
+          title: "",
+          gridcolor: "rgba(99, 123, 160, 0.12)",
+          zerolinecolor: "rgba(99, 123, 160, 0.12)",
+          tickfont: { color: "#8d9dbc" }
+        }
       }, {
         displaylogo: false,
         responsive: true
+      });
+    }
+
+    function updateTagButtons() {
+      const tags = localTags.get(currentKey) || new Set();
+      tagActions.querySelectorAll("button").forEach((btn) => {
+        btn.classList.toggle("active", tags.has(btn.dataset.tag));
+      });
+      activeTags.innerHTML = "";
+      if (!tags.size) {
+        const empty = document.createElement("div");
+        empty.className = "tag-badge";
+        empty.textContent = "No active tags";
+        activeTags.appendChild(empty);
+        return;
+      }
+      Array.from(tags).sort().forEach((tag) => {
+        const el = document.createElement("div");
+        el.className = "tag-badge";
+        el.textContent = tag;
+        activeTags.appendChild(el);
       });
     }
 
@@ -586,16 +1130,33 @@
       document.getElementById("statSource").textContent = health.source || "-";
     }
 
+    async function loadGroups() {
+      const payload = await getJson("/groups?limit=2000");
+      const columns = payload.columns || [];
+      for (const row of payload.rows || []) {
+        const item = {};
+        columns.forEach((col, idx) => { item[col] = row[idx]; });
+        groupsById.set(Number(item.groupId), item);
+      }
+      fillGroupPicker();
+    }
+
     async function loadUniverse() {
       const payload = await getJson(`/universe?limit=${universeLimit}`);
       const columns = payload.columns || [];
       for (const row of payload.rows || []) {
         const item = {};
-        columns.forEach((col, idx) => item[col] = row[idx]);
+        columns.forEach((col, idx) => { item[col] = row[idx]; });
         const key = keyOf(item.productId, item.subTypeName);
         universeByKey.set(key, item);
       }
       fillPicker();
+    }
+
+    async function loadTopMovers() {
+      const payload = await getJson(tabConfig.top_movers.path);
+      topMoverRows = enrichRows(payload);
+      renderMoverRail();
     }
 
     async function loadSeries() {
@@ -608,16 +1169,22 @@
         days: String(currentDays)
       });
       const series = await getJson(`/series?${qs.toString()}`);
+      currentSeriesPayload = series;
       renderSummary(meta, series);
-      renderChart(meta, series);
+      renderChart(series);
+      updateTagButtons();
+      renderMoverRail();
     }
 
     async function loadTable() {
       const cfg = tabConfig[currentTab];
       tableStatus.textContent = cfg.title;
-      const payload = await getJson(cfg.path);
+      const path = currentTab === "group_products"
+        ? `/group_products?groupId=${encodeURIComponent(currentGroupId)}&limit=5000`
+        : cfg.path;
+      const payload = await getJson(path);
       const rows = enrichRows(payload);
-      renderTable(currentTab, rows);
+      renderTable(rows);
     }
 
     function bindEvents() {
@@ -626,9 +1193,16 @@
         await loadSeries();
       });
 
-      document.querySelectorAll(".days-row button").forEach((btn) => {
+      groupPicker.addEventListener("change", async () => {
+        currentGroupId = Number(groupPicker.value);
+        if (currentTab === "group_products") {
+          await loadTable();
+        }
+      });
+
+      document.querySelectorAll(".chart-window button").forEach((btn) => {
         btn.addEventListener("click", async () => {
-          document.querySelectorAll(".days-row button").forEach((x) => x.classList.remove("active"));
+          document.querySelectorAll(".chart-window button").forEach((x) => x.classList.remove("active"));
           btn.classList.add("active");
           currentDays = Number(btn.dataset.days);
           await loadSeries();
@@ -643,18 +1217,46 @@
           await loadTable();
         });
       });
+
+      railSegments.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          railSegments.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
+          btn.classList.add("active");
+          currentSegment = btn.dataset.segment;
+          renderMoverRail();
+        });
+      });
+
+      tagActions.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (!currentKey) return;
+          if (!localTags.has(currentKey)) {
+            localTags.set(currentKey, new Set());
+          }
+          const tags = localTags.get(currentKey);
+          if (tags.has(btn.dataset.tag)) {
+            tags.delete(btn.dataset.tag);
+          } else {
+            tags.add(btn.dataset.tag);
+          }
+          saveStoredTags();
+          updateTagButtons();
+        });
+      });
     }
 
     async function init() {
       try {
-        await loadHealth();
-        await loadUniverse();
+        hydrateStoredTags();
         bindEvents();
-        await Promise.all([loadSeries(), loadTable()]);
+        await Promise.all([loadHealth(), loadGroups(), loadUniverse()]);
+        await Promise.all([loadTopMovers(), loadSeries(), loadTable()]);
       } catch (err) {
+        leftStatus.textContent = "Error";
         tableStatus.textContent = `Dashboard error: ${err.message}`;
         cardTitle.textContent = "Dashboard failed to load";
         cardSubtitle.textContent = err.message;
+        detailNotes.textContent = err.message;
       }
     }
 

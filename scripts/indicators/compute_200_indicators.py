@@ -1,26 +1,27 @@
 import duckdb
 import pandas as pd
 
-DATA_DIR = "/app/data/extracted"
-DATA_PATH = f"{DATA_DIR}/pokemon_prices_all_days.csv"
-UNIVERSE_PATH = f"{DATA_DIR}/top200_universe.csv"
-OUT_PATH = f"{DATA_DIR}/top200_indicators.csv"
+EXTRACTED_DIR = "/app/data/extracted"
+PROCESSED_DIR = "/app/data/processed"
+DB_PATH = f"{PROCESSED_DIR}/prices_db.duckdb"
+OUT_PATH = f"{EXTRACTED_DIR}/top200_indicators.csv"
+TABLE_NAME = "top200_indicators"
 
-con = duckdb.connect()
+con = duckdb.connect(DB_PATH)
 
 df = con.execute(f"""
 WITH universe AS (
     SELECT productId, subTypeName
-    FROM read_csv_auto('{UNIVERSE_PATH}')
+    FROM top200_universe
 ),
 
 filtered AS (
     SELECT
-        CAST(date AS DATE) AS d,
+        date AS d,
         productId,
         subTypeName,
-        CAST(marketPrice AS DOUBLE) AS price
-    FROM read_csv_auto('{DATA_PATH}', ignore_errors=true)
+        marketPrice AS price
+    FROM pokemon_prices
     WHERE marketPrice IS NOT NULL
 )
 
@@ -46,5 +47,13 @@ def trend_state(row):
 
 df["trend_state"] = df.apply(trend_state, axis=1)
 
+con.execute(f"DROP TABLE IF EXISTS {TABLE_NAME}")
+con.register("top200_indicators_df", df)
+con.execute(f"CREATE TABLE {TABLE_NAME} AS SELECT * FROM top200_indicators_df")
+con.unregister("top200_indicators_df")
 df.to_csv(OUT_PATH, index=False)
+con.close()
+
 print("Wrote:", OUT_PATH)
+print("DuckDB table:", TABLE_NAME)
+print("Database:", DB_PATH)
