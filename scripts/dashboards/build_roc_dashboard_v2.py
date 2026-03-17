@@ -4,11 +4,12 @@ from pathlib import Path
 import math
 
 # ---------------- CONFIG ----------------
-TIMESERIES_CSV = Path(r"F:\Pokemon historical data extracted\top200_timeseries.csv")
-ROC_SNAPSHOT_CSV = Path(r"F:\Pokemon historical data extracted\roc_snapshot_7_30_90.csv")
-LOOKUP_CSV = Path(r"F:\Pokemon historical data extracted\top200_lookup.csv")  # or pokemon_products.csv
-GROUPS_CSV = Path(r"F:\Pokemon historical data extracted\pokemon_groups.csv")  # optional
-OUT_HTML = Path(r"F:\Pokemon historical data extracted\roc_dashboard.html")
+DATA_DIR = Path("/app/data/extracted")
+TIMESERIES_CSV = DATA_DIR / "top200_timeseries.csv"
+ROC_SNAPSHOT_CSV = DATA_DIR / "roc_snapshot_7_30_90.csv"
+LOOKUP_CSV = DATA_DIR / "top200_lookup.csv"  # or pokemon_products.csv
+GROUPS_CSV = DATA_DIR / "pokemon_groups.csv"  # optional
+OUT_HTML = Path("/app/output/roc_dashboard.html")
 
 # Timeseries columns (edit if yours differ)
 COL_DATE = "date"

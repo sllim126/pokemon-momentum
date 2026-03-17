@@ -1,9 +1,10 @@
 import pandas as pd
 
 # ---------- CONFIG ----------
-PRICES_FILE = r"F:\Pokemon historical data extracted\pokemon_prices_all_days.csv"
-UNIVERSE_FILE = r"F:\Pokemon historical data extracted\top200_universe.csv"
-OUT_FILE = r"F:\Pokemon historical data extracted\top200_timeseries.csv"
+DATA_DIR = "/app/data/extracted"
+PRICES_FILE = f"{DATA_DIR}/pokemon_prices_all_days.csv"
+UNIVERSE_FILE = f"{DATA_DIR}/top200_universe.csv"
+OUT_FILE = f"{DATA_DIR}/top200_timeseries.csv"
 
 PRICE_COL = "marketPrice"
 DATE_COL = "date"

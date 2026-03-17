@@ -1,9 +1,10 @@
 import pandas as pd
 from pathlib import Path
 
-UNIVERSE = Path(r"F:\Pokemon historical data extracted\top200_universe.csv")
-PRODUCTS = Path(r"F:\Pokemon historical data extracted\pokemon_products.csv")
-OUT = Path(r"F:\Pokemon historical data extracted\top200_lookup.csv")
+DATA_DIR = Path("/app/data/extracted")
+UNIVERSE = DATA_DIR / "top200_universe.csv"
+PRODUCTS = DATA_DIR / "pokemon_products.csv"
+OUT = DATA_DIR / "top200_lookup.csv"
 
 u = pd.read_csv(UNIVERSE)
 p = pd.read_csv(PRODUCTS)

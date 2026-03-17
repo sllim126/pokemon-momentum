@@ -1,0 +1,22 @@
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+
+# Large rebuildable outputs and local datasets should not be part of the image build context.
+data/
+output/
+
+# Local editor and OS noise
+.vscode/
+.idea/
+.DS_Store

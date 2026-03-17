@@ -1,7 +1,8 @@
 import duckdb
 
-TS  = r"F:\Pokemon historical data extracted\group_23237_timeseries.csv"
-OUT = r"F:\Pokemon historical data extracted\group_23237_indicators.csv"
+DATA_DIR = "/app/data/extracted"
+TS  = f"{DATA_DIR}/group_23237_timeseries.csv"
+OUT = f"{DATA_DIR}/group_23237_indicators.csv"
 
 con = duckdb.connect()
 

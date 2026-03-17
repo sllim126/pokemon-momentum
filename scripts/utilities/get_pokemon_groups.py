@@ -9,7 +9,8 @@ r = requests.get(URL, timeout=60)
 r.raise_for_status()
 data = r.json()["results"]
 
-out_csv = r"F:\Pokemon historical data extracted\pokemon_groups.csv"
+DATA_DIR = "/app/data/extracted"
+out_csv = f"{DATA_DIR}/pokemon_groups.csv"
 
 with open(out_csv, "w", newline="", encoding="utf-8") as f:
     w = csv.writer(f)

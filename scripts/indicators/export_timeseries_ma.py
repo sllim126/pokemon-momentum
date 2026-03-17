@@ -1,12 +1,13 @@
 import duckdb
 import pandas as pd
 
-CSV_PATH = r"F:\Pokemon historical data extracted\pokemon_prices_all_days.csv"
+DATA_DIR = "/app/data/extracted"
+CSV_PATH = f"{DATA_DIR}/pokemon_prices_all_days.csv"
 
 PRODUCT_ID = 662184
 SUBTYPE = "Holofoil"  # change this to the subtype you saw
 
-OUT_CSV = r"C:\Users\ISI\OneDrive - isislc.com\ADAM\Desktop\charizard_timeseries.csv"
+OUT_CSV = "/app/output/charizard_timeseries.csv"
 
 con = duckdb.connect()
 

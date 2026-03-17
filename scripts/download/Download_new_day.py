@@ -11,9 +11,10 @@ from urllib.error import HTTPError, URLError
 START_DATE = date(2024, 2, 8)
 END_DATE = date.today()
 
-ARCHIVES_DIR = Path(r"F:\Pokemon historical data archives")
-EXTRACT_ROOT = Path(r"F:\Pokemon historical data extracted")
-SEVEN_ZIP = Path(r"C:\Program Files\7-Zip\7z.exe")
+DATA_DIR = Path("/app/data")
+ARCHIVES_DIR = DATA_DIR / "raw"
+EXTRACT_ROOT = DATA_DIR / "extracted"
+SEVEN_ZIP = "7z"
 
 
 def ensure_dir(p: Path) -> None:
@@ -73,9 +74,9 @@ def main() -> int:
     ensure_dir(ARCHIVES_DIR)
     ensure_dir(EXTRACT_ROOT)
 
-    if not SEVEN_ZIP.exists():
+    if shutil.which(SEVEN_ZIP) is None:
         print(f"ERROR: 7-Zip not found at: {SEVEN_ZIP}")
-        print("Update SEVEN_ZIP to the correct path.")
+        print("Install p7zip or update SEVEN_ZIP to the correct command.")
         return 1
 
     new_downloads: list[Path] = []

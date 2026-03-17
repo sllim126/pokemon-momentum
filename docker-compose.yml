@@ -1,0 +1,12 @@
+services:
+  pokemon-momentum:
+    build: .
+    container_name: pokemon-momentum
+    working_dir: /app
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./:/app
+    stdin_open: true
+    tty: true
+    restart: unless-stopped

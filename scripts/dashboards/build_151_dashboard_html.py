@@ -2,9 +2,10 @@ import json
 import pandas as pd
 from pathlib import Path
 
-INDICATORS = Path(r"F:\Pokemon historical data extracted\group_23237_indicators.csv")
-LOOKUP     = Path(r"F:\Pokemon historical data extracted\group_23237_lookup.csv")
-OUT_HTML   = Path(r"F:\Pokemon historical data extracted\151_dashboard.html")
+DATA_DIR = Path("/app/data/extracted")
+INDICATORS = DATA_DIR / "group_23237_indicators.csv"
+LOOKUP     = DATA_DIR / "group_23237_lookup.csv"
+OUT_HTML   = Path("/app/output/151_dashboard.html")
 
 # Load data
 df = pd.read_csv(INDICATORS)

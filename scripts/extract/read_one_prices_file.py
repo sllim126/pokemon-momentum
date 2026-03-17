@@ -1,7 +1,7 @@
 import json
 import pandas as pd
 
-OUT_CSV = r"C:\Users\ISI\OneDrive - isislc.com\ADAM\Desktop\one_prices_file.csv"
+OUT_CSV = "/app/output/one_prices_file.csv"
 
 with open(PRICES_FILE, "r", encoding="utf-8", errors="ignore") as f:
     data = json.loads(f.read())

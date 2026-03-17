@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pokemon Momentum Dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg: #f5efe2;
+      --panel: rgba(255, 252, 246, 0.92);
+      --panel-strong: #fffaf0;
+      --ink: #1e1b16;
+      --muted: #6b6257;
+      --line: #d8cdbb;
+      --accent: #c05a2b;
+      --accent-2: #175c58;
+      --good: #157347;
+      --warn: #8f3b1b;
+      --shadow: 0 18px 40px rgba(73, 56, 30, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.8), transparent 26%),
+        radial-gradient(circle at top right, rgba(192,90,43,0.18), transparent 22%),
+        linear-gradient(180deg, #efe7d6 0%, #f7f2e8 45%, #f3ecdf 100%);
+    }
+
+    .shell {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      backdrop-filter: blur(12px);
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(28px, 5vw, 52px);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      color: var(--muted);
+      max-width: 58ch;
+      margin: 12px 0 0 0;
+      font-size: 16px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat {
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat-value {
+      margin-top: 6px;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 18px;
+    }
+
+    .controls {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    select, input, button {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fffdf8;
+      color: var(--ink);
+      padding: 11px 12px;
+      font: inherit;
+    }
+
+    .days-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .days-row button {
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.12s ease;
+    }
+
+    .days-row button.active {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .days-row button:hover,
+    .tab-bar button:hover {
+      transform: translateY(-1px);
+    }
+
+    .details {
+      display: grid;
+      grid-template-columns: 116px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .cover {
+      width: 116px;
+      height: 116px;
+      border-radius: 18px;
+      object-fit: cover;
+      border: 1px solid var(--line);
+      background: #efe5d2;
+      display: none;
+    }
+
+    .title {
+      font-size: 30px;
+      line-height: 1.05;
+      margin: 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .chip {
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fffdf8;
+      padding: 7px 10px;
+      font-size: 13px;
+    }
+
+    .chart-wrap {
+      margin-top: 18px;
+    }
+
+    #chart {
+      width: 100%;
+      height: 560px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #fffefb;
+    }
+
+    .tab-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .tab-bar button {
+      width: auto;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    .tab-bar button.active {
+      background: var(--accent-2);
+      color: white;
+      border-color: var(--accent-2);
+    }
+
+    .table-wrap {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background: #fffefb;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #ece2d2;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #fbf4e7;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:hover {
+      background: #fff7eb;
+    }
+
+    tr.clickable {
+      cursor: pointer;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .empty {
+      padding: 22px 14px;
+      color: var(--muted);
+    }
+
+    .num-good { color: var(--good); font-weight: bold; }
+    .num-warn { color: var(--warn); font-weight: bold; }
+
+    @media (max-width: 1080px) {
+      .hero, .main {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="panel">
+        <div class="field-label">Live Screener</div>
+        <h1>Pokemon Momentum Dashboard</h1>
+        <p>
+          Live API-backed charting for top movers, breakouts, watchlist holds, and confirmed uptrends.
+          Click any table row to load the product chart instantly.
+        </p>
+      </div>
+      <div class="panel">
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-label">Rows</div>
+            <div class="stat-value" id="statRows">-</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Latest Date</div>
+            <div class="stat-value" id="statLatest">-</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Source</div>
+            <div class="stat-value" id="statSource">-</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Universe</div>
+            <div class="stat-value" id="statUniverse">-</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="main">
+      <aside class="controls">
+        <div class="panel">
+          <label class="field-label" for="picker">Card Picker</label>
+          <select id="picker"></select>
+        </div>
+
+        <div class="panel">
+          <div class="field-label">Chart Window</div>
+          <div class="days-row">
+            <button type="button" data-days="90">90D</button>
+            <button type="button" data-days="180">180D</button>
+            <button type="button" data-days="365" class="active">1Y</button>
+            <button type="button" data-days="730">2Y</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="field-label">Leaderboard Tabs</div>
+          <div class="tab-bar" id="tabs">
+            <button type="button" data-tab="top_movers" class="active">Top Movers</button>
+            <button type="button" data-tab="breakouts">Breakouts</button>
+            <button type="button" data-tab="sma30_holds">SMA30 Holds</button>
+            <button type="button" data-tab="confirmed_uptrends">Confirmed Uptrends</button>
+          </div>
+          <div class="status" id="tableStatus">Loading screener...</div>
+        </div>
+      </aside>
+
+      <section class="panel">
+        <div class="details">
+          <img id="cardImage" class="cover" alt="Card image">
+          <div>
+            <h2 class="title" id="cardTitle">Loading...</h2>
+            <div class="subtitle" id="cardSubtitle"></div>
+            <div class="chips" id="metricChips"></div>
+          </div>
+        </div>
+
+        <div class="chart-wrap">
+          <div id="chart"></div>
+        </div>
+
+        <div style="margin-top:18px;" class="table-wrap">
+          <table>
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+          <div id="emptyState" class="empty" style="display:none;">No rows returned.</div>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <script>
+    const apiBase = window.location.origin;
+    const universeLimit = 12000;
+    const picker = document.getElementById("picker");
+    const tableHead = document.getElementById("tableHead");
+    const tableBody = document.getElementById("tableBody");
+    const emptyState = document.getElementById("emptyState");
+    const tableStatus = document.getElementById("tableStatus");
+    const tabsEl = document.getElementById("tabs");
+    const cardTitle = document.getElementById("cardTitle");
+    const cardSubtitle = document.getElementById("cardSubtitle");
+    const metricChips = document.getElementById("metricChips");
+    const cardImage = document.getElementById("cardImage");
+
+    const universeByKey = new Map();
+    const labelToKey = new Map();
+
+    let currentKey = null;
+    let currentDays = 365;
+    let currentTab = "top_movers";
+
+    const tabConfig = {
+      top_movers: {
+        path: "/top_movers?days=30&limit=100&min_prior=5",
+        columns: ["productId", "subTypeName", "productName", "groupName", "p_now", "p_prior", "roc_pct"],
+        title: "Top movers over the last 30 days."
+      },
+      breakouts: {
+        path: "/breakouts?days=90&limit=100&min_price=5",
+        columns: ["productId", "subTypeName", "productName", "groupName", "latest_price", "high_window"],
+        title: "Items at fresh 90-day highs."
+      },
+      sma30_holds: {
+        path: "/sma30_holds?days_required=7&limit=100&min_price=5",
+        columns: ["productId", "subTypeName", "productName", "groupName", "cross_date", "hold_days", "latest_price", "latest_sma30", "pct_vs_sma30"],
+        title: "Watchlist candidates holding above the 30-day average."
+      },
+      confirmed_uptrends: {
+        path: "/confirmed_uptrends?days_required=5&limit=100&min_price=5",
+        columns: ["productId", "subTypeName", "productName", "groupName", "bullish_streak", "latest_price", "latest_sma7", "latest_sma30", "pct_vs_sma30"],
+        title: "Active momentum where price and SMA7 remain above SMA30."
+      }
+    };
+
+    async function getJson(path) {
+      const res = await fetch(apiBase + path);
+      if (!res.ok) {
+        throw new Error(`${res.status} ${res.statusText}`);
+      }
+      return res.json();
+    }
+
+    function keyOf(productId, subTypeName) {
+      return `${productId}||${subTypeName}`;
+    }
+
+    function formatNumber(value, digits = 2) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) return "n/a";
+      return Number(value).toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: digits });
+    }
+
+    function formatMaybePct(value) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) return "n/a";
+      const n = Number(value);
+      const cls = n >= 0 ? "num-good" : "num-warn";
+      const sign = n >= 0 ? "+" : "";
+      return `<span class="${cls}">${sign}${formatNumber(n, 2)}%</span>`;
+    }
+
+    function enrichRows(payload) {
+      const columns = payload.columns || [];
+      return (payload.rows || []).map((row) => {
+        const item = {};
+        columns.forEach((col, idx) => item[col] = row[idx]);
+        const key = keyOf(item.productId, item.subTypeName);
+        const meta = universeByKey.get(key) || {};
+        item.productName = meta.productName || item.productName || `productId ${item.productId}`;
+        item.groupName = meta.groupName || item.groupName || "";
+        item.imageUrl = meta.imageUrl || "";
+        item.key = key;
+        return item;
+      });
+    }
+
+    function fillPicker() {
+      const options = Array.from(universeByKey.entries()).map(([key, meta]) => ({
+        key,
+        label: `${meta.productName || `productId ${meta.productId}`} | ${meta.groupName || "Unknown Group"} | ${meta.subTypeName}`
+      }));
+      options.sort((a, b) => a.label.localeCompare(b.label));
+      for (const opt of options) {
+        const el = document.createElement("option");
+        el.value = opt.key;
+        el.textContent = opt.label;
+        picker.appendChild(el);
+        labelToKey.set(opt.label, opt.key);
+      }
+      if (options.length > 0) {
+        currentKey = options[0].key;
+        picker.value = currentKey;
+      }
+      document.getElementById("statUniverse").textContent = options.length.toLocaleString();
+    }
+
+    function renderHeader(columns) {
+      tableHead.innerHTML = `<tr>${columns.map((c) => `<th>${c.replaceAll("_", " ")}</th>`).join("")}</tr>`;
+    }
+
+    function displayCell(col, item) {
+      if (col === "productName") return item.productName;
+      if (col === "groupName") return item.groupName;
+      if (col === "roc_pct" || col === "pct_vs_sma30") return formatMaybePct(item[col]);
+      if (["p_now", "p_prior", "latest_price", "latest_sma7", "latest_sma30", "high_window"].includes(col)) {
+        return formatNumber(item[col], 2);
+      }
+      return item[col] ?? "";
+    }
+
+    function renderTable(tabName, rows) {
+      const cfg = tabConfig[tabName];
+      renderHeader(cfg.columns);
+      tableBody.innerHTML = "";
+      emptyState.style.display = rows.length ? "none" : "block";
+
+      for (const item of rows) {
+        const tr = document.createElement("tr");
+        tr.className = "clickable";
+        tr.innerHTML = cfg.columns.map((col) => `<td>${displayCell(col, item)}</td>`).join("");
+        tr.addEventListener("click", () => {
+          if (!universeByKey.has(item.key)) return;
+          picker.value = item.key;
+          currentKey = item.key;
+          loadSeries();
+        });
+        tableBody.appendChild(tr);
+      }
+    }
+
+    function renderSummary(meta, series) {
+      cardTitle.textContent = meta.productName || `productId ${meta.productId}`;
+      cardSubtitle.textContent = `${meta.groupName || "Unknown Group"} | ${meta.subTypeName} | productId ${meta.productId}`;
+
+      if (meta.imageUrl) {
+        cardImage.src = meta.imageUrl;
+        cardImage.style.display = "block";
+      } else {
+        cardImage.style.display = "none";
+      }
+
+      const last = series.rows[series.rows.length - 1] || [];
+      const latestPrice = last[1];
+      const latestSma7 = last[2];
+      const latestSma30 = last[3];
+      const pctVsSma30 = latestPrice && latestSma30 ? ((latestPrice / latestSma30) - 1) * 100 : null;
+
+      metricChips.innerHTML = `
+        <div class="chip">Latest ${series.latest}</div>
+        <div class="chip">Price ${formatNumber(latestPrice, 2)}</div>
+        <div class="chip">SMA7 ${formatNumber(latestSma7, 2)}</div>
+        <div class="chip">SMA30 ${formatNumber(latestSma30, 2)}</div>
+        <div class="chip">${pctVsSma30 === null ? "n/a" : `${formatNumber(pctVsSma30, 2)}% vs SMA30`}</div>
+      `;
+    }
+
+    function renderChart(meta, series) {
+      const dates = [];
+      const prices = [];
+      const sma7 = [];
+      const sma30 = [];
+      for (const row of series.rows || []) {
+        dates.push(row[0]);
+        prices.push(row[1]);
+        sma7.push(row[2]);
+        sma30.push(row[3]);
+      }
+
+      Plotly.react("chart", [
+        {
+          x: dates,
+          y: prices,
+          name: "Price",
+          mode: "lines",
+          line: { color: "#c05a2b", width: 3 }
+        },
+        {
+          x: dates,
+          y: sma7,
+          name: "SMA7",
+          mode: "lines",
+          line: { color: "#175c58", width: 2 }
+        },
+        {
+          x: dates,
+          y: sma30,
+          name: "SMA30",
+          mode: "lines",
+          line: { color: "#7c6f64", width: 2, dash: "dot" }
+        }
+      ], {
+        paper_bgcolor: "#fffefb",
+        plot_bgcolor: "#fffefb",
+        margin: { l: 50, r: 18, t: 24, b: 44 },
+        legend: { orientation: "h" },
+        hovermode: "x unified",
+        xaxis: { title: "Date", gridcolor: "#f1e6d7" },
+        yaxis: { title: "Price", gridcolor: "#f1e6d7" }
+      }, {
+        displaylogo: false,
+        responsive: true
+      });
+    }
+
+    async function loadHealth() {
+      const health = await getJson("/health");
+      document.getElementById("statRows").textContent = Number(health.rows || 0).toLocaleString();
+      document.getElementById("statLatest").textContent = health.latest || "-";
+      document.getElementById("statSource").textContent = health.source || "-";
+    }
+
+    async function loadUniverse() {
+      const payload = await getJson(`/universe?limit=${universeLimit}`);
+      const columns = payload.columns || [];
+      for (const row of payload.rows || []) {
+        const item = {};
+        columns.forEach((col, idx) => item[col] = row[idx]);
+        const key = keyOf(item.productId, item.subTypeName);
+        universeByKey.set(key, item);
+      }
+      fillPicker();
+    }
+
+    async function loadSeries() {
+      if (!currentKey) return;
+      const meta = universeByKey.get(currentKey);
+      if (!meta) return;
+      const qs = new URLSearchParams({
+        productId: String(meta.productId),
+        subTypeName: meta.subTypeName,
+        days: String(currentDays)
+      });
+      const series = await getJson(`/series?${qs.toString()}`);
+      renderSummary(meta, series);
+      renderChart(meta, series);
+    }
+
+    async function loadTable() {
+      const cfg = tabConfig[currentTab];
+      tableStatus.textContent = cfg.title;
+      const payload = await getJson(cfg.path);
+      const rows = enrichRows(payload);
+      renderTable(currentTab, rows);
+    }
+
+    function bindEvents() {
+      picker.addEventListener("change", async () => {
+        currentKey = picker.value;
+        await loadSeries();
+      });
+
+      document.querySelectorAll(".days-row button").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          document.querySelectorAll(".days-row button").forEach((x) => x.classList.remove("active"));
+          btn.classList.add("active");
+          currentDays = Number(btn.dataset.days);
+          await loadSeries();
+        });
+      });
+
+      tabsEl.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          tabsEl.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
+          btn.classList.add("active");
+          currentTab = btn.dataset.tab;
+          await loadTable();
+        });
+      });
+    }
+
+    async function init() {
+      try {
+        await loadHealth();
+        await loadUniverse();
+        bindEvents();
+        await Promise.all([loadSeries(), loadTable()]);
+      } catch (err) {
+        tableStatus.textContent = `Dashboard error: ${err.message}`;
+        cardTitle.textContent = "Dashboard failed to load";
+        cardSubtitle.textContent = err.message;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,7 +1,8 @@
 import pandas as pd
 
-PRICES_CSV = r"F:\Pokemon historical data extracted\pokemon_prices_all_days.csv"
-OUT_GROUP_IDS = r"F:\Pokemon historical data extracted\group_ids_in_archive.txt"
+DATA_DIR = "/app/data/extracted"
+PRICES_CSV = f"{DATA_DIR}/pokemon_prices_all_days.csv"
+OUT_GROUP_IDS = f"{DATA_DIR}/group_ids_in_archive.txt"
 
 df = pd.read_csv(PRICES_CSV, usecols=["groupId"])
 group_ids = sorted(df["groupId"].dropna().astype(str).unique())

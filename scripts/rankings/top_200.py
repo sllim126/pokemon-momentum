@@ -1,8 +1,9 @@
 import duckdb
 import pandas as pd
 
-CSV_PATH = r"F:\Pokemon historical data extracted\pokemon_prices_all_days.csv"
-OUT_CSV = r"F:\Pokemon historical data extracted\top200_universe.csv"
+DATA_DIR = "/app/data/extracted"
+CSV_PATH = f"{DATA_DIR}/pokemon_prices_all_days.csv"
+OUT_CSV = f"{DATA_DIR}/top200_universe.csv"
 
 con = duckdb.connect()
 

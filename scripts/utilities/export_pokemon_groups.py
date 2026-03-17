@@ -2,7 +2,8 @@ import csv
 import requests
 
 CATEGORY_ID = 3
-OUT_CSV = r"F:\Pokemon historical data extracted\pokemon_groups.csv"
+DATA_DIR = "/app/data/extracted"
+OUT_CSV = f"{DATA_DIR}/pokemon_groups.csv"
 
 url = f"https://tcgcsv.com/tcgplayer/{CATEGORY_ID}/groups"
 r = requests.get(url, timeout=60)

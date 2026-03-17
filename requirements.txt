@@ -1,0 +1,12 @@
+pandas
+numpy
+duckdb
+pyarrow
+fastparquet
+fastapi
+uvicorn
+requests
+jupyterlab
+matplotlib
+plotly
+python-dotenv

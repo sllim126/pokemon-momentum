@@ -1,10 +1,11 @@
 import duckdb
 import pandas as pd
 
-PRICES = r"F:\Pokemon historical data extracted\pokemon_prices_all_days.csv"
-PRODUCTS = r"F:\Pokemon historical data extracted\pokemon_products.csv"
-GROUPS = r"F:\Pokemon historical data extracted\pokemon_groups.csv"
-OUT = r"F:\Pokemon historical data extracted\top200_30d_min5_named.csv"
+DATA_DIR = "/app/data/extracted"
+PRICES = f"{DATA_DIR}/pokemon_prices_all_days.csv"
+PRODUCTS = f"{DATA_DIR}/pokemon_products.csv"
+GROUPS = f"{DATA_DIR}/pokemon_groups.csv"
+OUT = f"{DATA_DIR}/top200_30d_min5_named.csv"
 
 con = duckdb.connect()
 

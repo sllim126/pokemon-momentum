@@ -1,14 +1,17 @@
 import csv
 import requests
+from pathlib import Path
 
 CATEGORY_ID = 3
-OUT_CSV = r"F:\Pokemon historical data extracted\pokemon_groups_lookup.csv"
+DATA_DIR = Path("/app/data/extracted")
+OUT_CSV = DATA_DIR / "pokemon_groups_lookup.csv"
 
 url = f"https://tcgcsv.com/tcgplayer/{CATEGORY_ID}/groups"
 r = requests.get(url, timeout=60)
 r.raise_for_status()
 
 groups = r.json()["results"]
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 with open(OUT_CSV, "w", newline="", encoding="utf-8") as f:
     w = csv.writer(f)

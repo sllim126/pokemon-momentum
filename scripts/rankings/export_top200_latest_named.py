@@ -1,8 +1,9 @@
 import duckdb
 
-INDICATORS = r"F:\Pokemon historical data extracted\top200_indicators.csv"
-LOOKUP     = r"F:\Pokemon historical data extracted\top200_lookup.csv"
-OUT        = r"F:\Pokemon historical data extracted\top200_indicators_latest_named.csv"
+DATA_DIR = "/app/data/extracted"
+INDICATORS = f"{DATA_DIR}/top200_indicators.csv"
+LOOKUP     = f"{DATA_DIR}/top200_lookup.csv"
+OUT        = f"{DATA_DIR}/top200_indicators_latest_named.csv"
 
 con = duckdb.connect()
 

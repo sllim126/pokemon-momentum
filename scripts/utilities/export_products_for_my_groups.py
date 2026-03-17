@@ -1,8 +1,9 @@
 import csv
 import requests
 
-PRICES_CSV = r"F:\Pokemon historical data extracted\pokemon_prices_all_days.csv"
-OUT_CSV = r"F:\Pokemon historical data extracted\pokemon_products.csv"
+DATA_DIR = "/app/data/extracted"
+PRICES_CSV = f"{DATA_DIR}/pokemon_prices_all_days.csv"
+OUT_CSV = f"{DATA_DIR}/pokemon_products.csv"
 CATEGORY_ID = 3
 
 def get_unique_group_ids(prices_csv_path: str) -> list[int]:

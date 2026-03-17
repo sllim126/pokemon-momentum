@@ -2,12 +2,11 @@ import json
 import csv
 from pathlib import Path
 
-# 1) CHANGE THIS to the folder where you extracted the archive.
-# It should contain many date folders like 2024-02-08, 2024-02-09, etc.
-ARCHIVE_ROOT = Path(r"C:\Users\ISI\OneDrive - isislc.com\Poke6s\Historical Pricing Data")
+DATA_DIR = Path("/app/data")
+ARCHIVE_ROOT = DATA_DIR / "extracted"
 
 CATEGORY_ID = "3"  # Pokemon
-OUT_CSV = Path(r"C:\Users\ISI\OneDrive - isislc.com\poke6s\historical pricing data\pokemon_prices_all.csv")
+OUT_CSV = DATA_DIR / "extracted" / "pokemon_prices_all.csv"
 
 def to_float(x):
     try:
@@ -19,6 +18,8 @@ def to_float(x):
 
 rows_written = 0
 files_read = 0
+
+OUT_CSV.parent.mkdir(parents=True, exist_ok=True)
 
 with OUT_CSV.open("w", newline="", encoding="utf-8") as f_out:
     writer = csv.writer(f_out)

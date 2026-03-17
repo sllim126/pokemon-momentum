@@ -1,9 +1,10 @@
 import csv
 
-PRICES_CSV = r"F:\Pokemon historical data extracted\pokemon_prices_all_days.csv"
-GROUPS_CSV = r"F:\Pokemon historical data extracted\pokemon_groups.csv"
-PRODUCTS_CSV = r"F:\Pokemon historical data extracted\pokemon_products.csv"
-OUT_CSV = r"F:\Pokemon historical data extracted\pokemon_prices_named.csv"
+DATA_DIR = "/app/data/extracted"
+PRICES_CSV = f"{DATA_DIR}/pokemon_prices_all_days.csv"
+GROUPS_CSV = f"{DATA_DIR}/pokemon_groups.csv"
+PRODUCTS_CSV = f"{DATA_DIR}/pokemon_products.csv"
+OUT_CSV = f"{DATA_DIR}/pokemon_prices_named.csv"
 
 # groupId -> groupName
 groups = {}
