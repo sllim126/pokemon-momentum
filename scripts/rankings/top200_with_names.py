@@ -36,7 +36,7 @@ movers AS (
   WHERE p.p_prior >= 5
   ORDER BY pct_change_30d DESC
   LIMIT 200
-),
+)
 SELECT
   m.*,
   g.name AS groupName,

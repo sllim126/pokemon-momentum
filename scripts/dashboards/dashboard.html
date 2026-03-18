@@ -44,7 +44,7 @@
 
     .layout {
       display: grid;
-      grid-template-columns: 360px minmax(0, 1fr) 320px;
+      grid-template-columns: 328px minmax(0, 1fr) 320px;
       gap: 18px;
       align-items: start;
     }
@@ -63,6 +63,24 @@
       max-height: calc(100vh - 44px);
       overflow: auto;
       padding: 18px;
+    }
+
+    .left-rail {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .left-rail::-webkit-scrollbar {
+      display: none;
+    }
+
+    .right-rail {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .right-rail::-webkit-scrollbar {
+      display: none;
     }
 
     .center-stage {
@@ -116,7 +134,7 @@
 
     .price-block {
       text-align: right;
-      min-width: 150px;
+      min-width: 132px;
     }
 
     .price-main {
@@ -161,6 +179,10 @@
     .mini-badge.neutral {
       background: var(--pill);
       color: var(--ink);
+    }
+
+    .freshness-badge {
+      margin-top: 12px;
     }
 
     .hero,
@@ -264,6 +286,10 @@
       margin-top: 12px;
     }
 
+    body.public-mode .status-strip {
+      display: none;
+    }
+
     .mover-card {
       border: 1px solid var(--line-2);
       border-radius: 22px;
@@ -288,11 +314,17 @@
       gap: 12px;
     }
 
+    .mover-head > div:first-child {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
     .mover-name {
-      font-size: 28px;
+      font-size: 24px;
       line-height: 0.9;
       margin-top: 4px;
       letter-spacing: -0.04em;
+      overflow-wrap: anywhere;
     }
 
     .mover-set {
@@ -304,11 +336,12 @@
     .mover-price {
       text-align: right;
       flex-shrink: 0;
+      min-width: 92px;
     }
 
     .mover-price strong {
       display: block;
-      font-size: 30px;
+      font-size: 24px;
       line-height: 0.95;
       letter-spacing: -0.04em;
     }
@@ -333,14 +366,28 @@
       margin-bottom: 10px;
     }
 
-    .sparkline-bar {
-      height: 44px;
+    .sparkline-body {
+      height: 56px;
       border-radius: 14px;
-      background:
-        linear-gradient(180deg, rgba(37, 208, 165, 0.32), rgba(37, 208, 165, 0.02)),
-        linear-gradient(90deg, rgba(37, 208, 165, 0.9) 0%, rgba(37, 208, 165, 0.65) 70%, rgba(37, 208, 165, 0.3) 100%);
-      clip-path: polygon(0% 85%, 8% 82%, 16% 76%, 24% 70%, 32% 66%, 40% 61%, 48% 58%, 56% 52%, 64% 49%, 72% 43%, 80% 38%, 88% 28%, 94% 22%, 100% 12%, 100% 100%, 0% 100%);
-      opacity: 0.9;
+      background: rgba(13, 20, 35, 0.72);
+      border: 1px solid rgba(99, 123, 160, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .sparkline-body svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .sparkline-empty {
+      color: #627498;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
     }
 
     .mover-meta {
@@ -348,6 +395,7 @@
       color: var(--muted);
       font-size: 12px;
       align-items: center;
+      flex-wrap: wrap;
     }
 
     .mover-meta .mini-badge {
@@ -571,6 +619,9 @@
               <div class="section-label">Selected Price</div>
               <div class="price-main" id="headlinePrice">-</div>
               <div style="margin-top:10px;" id="headlineChangeWrap"></div>
+              <div class="freshness-badge" id="freshnessBadgeWrap">
+                <span class="chip neutral" id="freshnessBadge">Latest data: -</span>
+              </div>
             </div>
           </div>
 
@@ -585,7 +636,7 @@
             </label>
           </div>
 
-          <div class="status-strip">
+          <div class="status-strip" id="statusStrip">
             <div class="status-card">
               <div class="section-label">Rows</div>
               <div class="value" id="statRows">-</div>
@@ -634,8 +685,10 @@
               <button type="button" data-tab="top_movers" class="active">Top Movers</button>
               <button type="button" data-tab="breakouts">Breakouts</button>
               <button type="button" data-tab="sma30_holds">SMA30 Holds</button>
+              <button type="button" data-tab="early_uptrends">Early Uptrends</button>
               <button type="button" data-tab="confirmed_uptrends">Uptrends</button>
               <button type="button" data-tab="product_signals">Signals</button>
+              <button type="button" data-tab="group_signals">Group Signals</button>
               <button type="button" data-tab="group_products">Set Browser</button>
             </div>
           </div>
@@ -691,6 +744,10 @@
 
   <script>
     const apiBase = window.location.origin;
+    const isDevMode = window.location.pathname === "/dashboard-dev" || new URLSearchParams(window.location.search).get("mode") === "dev";
+    if (!isDevMode) {
+      document.body.classList.add("public-mode");
+    }
     const universeLimit = 50000;
     const picker = document.getElementById("picker");
     const groupPicker = document.getElementById("groupPicker");
@@ -707,6 +764,7 @@
     const chartLabel = document.getElementById("chartLabel");
     const headlinePrice = document.getElementById("headlinePrice");
     const headlineChangeWrap = document.getElementById("headlineChangeWrap");
+    const freshnessBadge = document.getElementById("freshnessBadge");
     const metricChips = document.getElementById("metricChips");
     const detailStats = document.getElementById("detailStats");
     const detailNotes = document.getElementById("detailNotes");
@@ -716,13 +774,21 @@
     const universeByKey = new Map();
     const groupsById = new Map();
     const localTags = new Map();
+    const sparklineCache = new Map();
 
     let currentKey = null;
     let currentDays = 365;
     let currentTab = "top_movers";
     let currentGroupId = null;
     let currentSegment = "cards";
-    let topMoverRows = [];
+    const moverFeeds = {
+      cards: [],
+      sealed: []
+    };
+    const moverFeedLoading = {
+      cards: false,
+      sealed: false
+    };
     let currentSeriesPayload = null;
 
     const tabConfig = {
@@ -741,6 +807,11 @@
         columns: ["productName", "groupName", "number", "subTypeName", "cross_date", "hold_days", "latest_price", "latest_sma30", "pct_vs_sma30"],
         title: "Watchlist names reclaiming and holding their 30-day average."
       },
+      early_uptrends: {
+        path: "/early_uptrends?days_required=3&limit=120&min_price=5&max_price_vs_sma30_pct=15",
+        columns: ["productName", "groupName", "number", "subTypeName", "early_streak", "latest_price", "latest_sma3", "latest_sma7", "latest_sma30", "pct_vs_sma30"],
+        title: "Early momentum: SMA3 > SMA7 > SMA30 for a few days without already being overextended."
+      },
       confirmed_uptrends: {
         path: "/confirmed_uptrends?days_required=5&limit=120&min_price=5",
         columns: ["productName", "groupName", "number", "subTypeName", "bullish_streak", "latest_price", "latest_sma7", "latest_sma30", "pct_vs_sma30"],
@@ -750,6 +821,11 @@
         path: "/product_signals?limit=250&min_price=1",
         columns: ["productName", "groupName", "number", "subTypeName", "latest_price", "roc_7d_pct", "roc_30d_pct", "price_vs_sma30_pct", "breakout_90d_flag", "trend_score"],
         title: "Latest product-level signal snapshot and ranking stack."
+      },
+      group_signals: {
+        path: "/group_signals?limit=250&min_items=5",
+        columns: ["groupName", "item_count", "card_count", "sealed_count", "avg_30d_pct", "avg_90d_pct", "pct_above_sma30", "pct_at_90d_high", "sealed_vs_cards_30d_divergence", "breadth_score"],
+        title: "Set-level breadth and momentum ranking snapshot."
       },
       group_products: {
         columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "latest_date"],
@@ -811,7 +887,37 @@
       };
     }
 
+    function formatProductClassLabel(item) {
+      if (item.number) return `#${item.number}`;
+      const cls = String(item.productClass || item.productKind || "").trim();
+      if (!cls) return "Catalog product";
+      return cls
+        .replaceAll("_", " ")
+        .replace(/\b\w/g, (ch) => ch.toUpperCase());
+    }
+
+    function formatProductBadgeLabel(item) {
+      const cls = String(item.productClass || "").trim();
+      if (!cls) return String(item.productKind || "Unclassified");
+      if (cls === "sealed_booster_box") return "Booster Box";
+      if (cls === "sealed_booster_pack") return "Booster Pack";
+      if (cls === "mcap") return "MCAP";
+      if (cls === "card") return item.rarity || "Card";
+      if (cls === "other") return "Other";
+      return cls.replaceAll("_", " ").replace(/\b\w/g, (ch) => ch.toUpperCase());
+    }
+
+    function getSparklineDays() {
+      if (currentDays >= 5000) return 365;
+      if (currentDays >= 365) return 365;
+      if (currentDays >= 180) return 180;
+      return currentDays;
+    }
+
     function classifyItem(item) {
+      if (item.productKind === "card" || item.productKind === "sealed") {
+        return item.productKind === "sealed" ? "sealed" : "cards";
+      }
       const name = String(item.productName || "").toLowerCase();
       const subtype = String(item.subTypeName || "").toLowerCase();
       const sealedWords = [
@@ -837,6 +943,8 @@
         item.imageUrl = meta.imageUrl || item.imageUrl || "";
         item.rarity = meta.rarity || item.rarity || "";
         item.number = meta.number || item.number || "";
+        item.productClass = meta.productClass || item.productClass || null;
+        item.productKind = meta.productKind || item.productKind || null;
         item.segment = classifyItem(item);
         return item;
       });
@@ -851,7 +959,9 @@
           productName: item.productName || `productId ${item.productId}`,
           imageUrl: item.imageUrl || "",
           rarity: item.rarity || "",
-          number: item.number || ""
+          number: item.number || "",
+          productClass: item.productClass || null,
+          productKind: item.productKind || null
         });
       }
 
@@ -903,15 +1013,21 @@
     }
 
     function displayCell(col, item) {
-      if (col === "productName") return item.productName;
       if (col === "groupName") return item.groupName;
+      if (col === "productName") return item.productName;
       if (col === "number") return item.number || "";
       if (col === "breakout_90d_flag") return Number(item[col]) === 1 ? "Yes" : "No";
+      if (["item_count", "card_count", "sealed_count"].includes(col)) return formatNumber(item[col], 0);
       if (["roc_pct", "pct_vs_sma30", "roc_7d_pct", "roc_30d_pct", "roc_90d_pct", "roc_365d_pct", "price_vs_sma30_pct", "price_vs_sma90_pct"].includes(col)) {
         const pct = formatPercent(item[col]);
         return `<span class="${pct.cls}">${pct.text}</span>`;
       }
+      if (["avg_30d_pct", "avg_90d_pct", "pct_above_sma30", "pct_above_sma90", "pct_at_90d_high", "avg_acceleration_7d_vs_30d", "sealed_vs_cards_30d_divergence", "sealed_vs_cards_90d_divergence"].includes(col)) {
+        const pct = formatPercent(item[col]);
+        return `<span class="${pct.cls}">${pct.text}</span>`;
+      }
       if (col === "trend_score") return formatNumber(item[col], 1);
+      if (col === "breadth_score") return formatNumber(item[col], 1);
       if (["p_now", "p_prior", "latest_price", "latest_sma7", "latest_sma30", "high_window"].includes(col)) {
         return formatNumber(item[col], 2);
       }
@@ -926,7 +1042,21 @@
       for (const item of rows) {
         const tr = document.createElement("tr");
         tr.innerHTML = cfg.columns.map((col) => `<td>${displayCell(col, item)}</td>`).join("");
-        tr.addEventListener("click", () => {
+        tr.addEventListener("click", async () => {
+          if (currentTab === "group_signals") {
+            currentGroupId = Number(item.groupId);
+            if (!Number.isNaN(currentGroupId)) {
+              groupPicker.value = String(currentGroupId);
+            }
+            currentTab = "group_products";
+            tabsEl.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
+            const setBrowserBtn = tabsEl.querySelector('[data-tab="group_products"]');
+            if (setBrowserBtn) {
+              setBrowserBtn.classList.add("active");
+            }
+            await loadTable();
+            return;
+          }
           ensurePickerOption(item);
           currentKey = item.key;
           picker.value = currentKey;
@@ -937,9 +1067,10 @@
     }
 
     function renderMoverRail() {
-      const rows = topMoverRows.filter((row) => row.segment === currentSegment).slice(0, 18);
+      const rows = (moverFeeds[currentSegment] || []).slice(0, 18);
       moverList.innerHTML = "";
-      leftStatus.textContent = `${rows.length} live`;
+      leftStatus.textContent = moverFeedLoading[currentSegment] ? "Loading" : `${rows.length} live`;
+      const sparklineDays = getSparklineDays();
       rows.forEach((item, idx) => {
         const pct = formatPercent(item.roc_pct);
         const div = document.createElement("article");
@@ -957,13 +1088,15 @@
             </div>
           </div>
           <div class="sparkline-shell">
-            <div class="sparkline-label">Price trend</div>
-            <div class="sparkline-bar"></div>
+            <div class="sparkline-label">Price trend ${sparklineDays >= 365 ? "1Y" : `${Math.round(sparklineDays / 30)}M`}</div>
+            <div class="sparkline-body" data-sparkline="${item.key}">
+              <div class="sparkline-empty">Loading trend</div>
+            </div>
           </div>
           <div class="mover-meta">
             <div>
-              ${item.number ? `#${item.number}` : "Catalog mover"}
-              <span class="mini-badge neutral">${item.rarity || "Unclassified"}</span>
+              ${formatProductClassLabel(item)}
+              <span class="mini-badge neutral">${formatProductBadgeLabel(item)}</span>
             </div>
             <div>Prior ${formatNumber(item.p_prior, 2)}</div>
           </div>
@@ -977,6 +1110,64 @@
         });
         moverList.appendChild(div);
       });
+      hydrateMoverSparklines(rows, sparklineDays);
+    }
+
+    function renderSparklineSvg(values) {
+      if (!values || values.length < 2) {
+        return `<div class="sparkline-empty">No trend</div>`;
+      }
+      const width = 260;
+      const height = 56;
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const span = max - min || 1;
+      const points = values.map((value, idx) => {
+        const x = (idx / Math.max(values.length - 1, 1)) * width;
+        const y = height - (((value - min) / span) * (height - 10) + 5);
+        return `${x.toFixed(2)},${y.toFixed(2)}`;
+      }).join(" ");
+      const area = [`0,${height}`, points, `${width},${height}`].join(" ");
+      return `
+        <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
+          <polygon points="${area}" fill="rgba(37,208,165,0.18)"></polygon>
+          <polyline
+            points="${points}"
+            fill="none"
+            stroke="#25d0a5"
+            stroke-width="2.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></polyline>
+        </svg>
+      `;
+    }
+
+    async function fetchSparklineSeries(item, days) {
+      const cacheKey = `${item.key}|${days}`;
+      if (sparklineCache.has(cacheKey)) {
+        return sparklineCache.get(cacheKey);
+      }
+      const qs = new URLSearchParams({
+        productId: String(item.productId),
+        subTypeName: item.subTypeName,
+        days: String(days)
+      });
+      const promise = getJson(`/series?${qs.toString()}`)
+        .then((payload) => (payload.rows || []).map((row) => row[1]).filter((value) => value !== null && value !== undefined))
+        .catch(() => []);
+      sparklineCache.set(cacheKey, promise);
+      return promise;
+    }
+
+    async function hydrateMoverSparklines(rows, days) {
+      const tasks = rows.map(async (item) => {
+        const el = moverList.querySelector(`[data-sparkline="${CSS.escape(item.key)}"]`);
+        if (!el) return;
+        const values = await fetchSparklineSeries(item, days);
+        el.innerHTML = renderSparklineSvg(values);
+      });
+      await Promise.all(tasks);
     }
 
     function renderSummary(meta, series) {
@@ -1128,6 +1319,7 @@
       document.getElementById("statRows").textContent = Number(health.rows || 0).toLocaleString();
       document.getElementById("statLatest").textContent = health.latest || "-";
       document.getElementById("statSource").textContent = health.source || "-";
+      freshnessBadge.textContent = `Latest data: ${health.latest || "-"}`;
     }
 
     async function loadGroups() {
@@ -1153,9 +1345,16 @@
       fillPicker();
     }
 
-    async function loadTopMovers() {
-      const payload = await getJson(tabConfig.top_movers.path);
-      topMoverRows = enrichRows(payload);
+    async function loadTopMovers(segment = currentSegment, force = false) {
+      if (!force && moverFeeds[segment] && moverFeeds[segment].length > 0) {
+        if (segment === currentSegment) renderMoverRail();
+        return;
+      }
+      moverFeedLoading[segment] = true;
+      if (segment === currentSegment) renderMoverRail();
+      const payload = await getJson(`${tabConfig.top_movers.path}&product_kind=${encodeURIComponent(segment === "sealed" ? "sealed" : "card")}`);
+      moverFeeds[segment] = enrichRows(payload);
+      moverFeedLoading[segment] = false;
       renderMoverRail();
     }
 
@@ -1219,11 +1418,11 @@
       });
 
       railSegments.querySelectorAll("button").forEach((btn) => {
-        btn.addEventListener("click", () => {
+        btn.addEventListener("click", async () => {
           railSegments.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
           btn.classList.add("active");
           currentSegment = btn.dataset.segment;
-          renderMoverRail();
+          await loadTopMovers(currentSegment);
         });
       });
 
@@ -1250,7 +1449,7 @@
         hydrateStoredTags();
         bindEvents();
         await Promise.all([loadHealth(), loadGroups(), loadUniverse()]);
-        await Promise.all([loadTopMovers(), loadSeries(), loadTable()]);
+        await Promise.all([loadTopMovers(currentSegment), loadSeries(), loadTable()]);
       } catch (err) {
         leftStatus.textContent = "Error";
         tableStatus.textContent = `Dashboard error: ${err.message}`;

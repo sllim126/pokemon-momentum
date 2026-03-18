@@ -1,0 +1,13 @@
+[Unit]
+Description=Pokemon Momentum Daily Update
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/pokemon-momentum
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/opt/pokemon-momentum/scripts/pipeline/run_daily_update_host.sh
+User=root
+Group=root

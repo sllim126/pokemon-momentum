@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Pokemon Momentum Daily Update Once Per Day
+
+[Timer]
+OnCalendar=*-*-* 02:00:00 UTC
+Persistent=true
+Unit=pokemon-momentum-daily-update.service
+
+[Install]
+WantedBy=timers.target

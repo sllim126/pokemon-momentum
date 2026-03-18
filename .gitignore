@@ -211,9 +211,11 @@ __marimo__/
 # -----------------------------
 
 # Data folders (too large for Git)
+data/parquet/*
 data/raw/*
 data/extracted/*
 data/processed/*
+.locks/
 output/
 
 # Archives

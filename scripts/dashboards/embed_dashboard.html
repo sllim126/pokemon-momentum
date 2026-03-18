@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pokemon Momentum Embed</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1629;
+      --bg-2: #13203a;
+      --panel: rgba(27, 39, 65, 0.94);
+      --panel-2: rgba(20, 31, 53, 0.96);
+      --line: rgba(133, 162, 208, 0.16);
+      --line-2: rgba(133, 162, 208, 0.08);
+      --ink: #e9f1ff;
+      --muted: #92a3c2;
+      --accent: #1fb1ff;
+      --accent-2: #28d39f;
+      --good: #36d88d;
+      --warn: #ff8d64;
+      --radius: 22px;
+      --shadow: 0 16px 40px rgba(2, 7, 17, 0.36);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(31, 177, 255, 0.1), transparent 18%),
+        radial-gradient(circle at top right, rgba(40, 211, 159, 0.08), transparent 16%),
+        linear-gradient(180deg, var(--bg) 0%, #0a1224 100%);
+    }
+
+    .shell {
+      padding: 14px;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .frame {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 14px;
+      height: calc(100vh - 28px);
+      min-height: 0;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      min-width: 0;
+      height: 100%;
+    }
+
+    .rail {
+      display: grid;
+      grid-template-rows: auto auto auto minmax(0, 1fr);
+      min-height: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .panel-pad {
+      padding: 16px;
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .embed-title {
+      margin: 8px 0 0;
+      font-size: 22px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .segmented,
+    .feed-tabs,
+    .window-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .segmented button,
+    .feed-tabs button,
+    .window-tabs button,
+    .feed-item button,
+    .cta {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(18, 28, 49, 0.92);
+      color: var(--muted);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font: inherit;
+      cursor: pointer;
+      transition: 0.14s ease;
+    }
+
+    .segmented button.active,
+    .feed-tabs button.active,
+    .window-tabs button.active,
+    .cta.active {
+      color: #a7e2ff;
+      background: rgba(31, 177, 255, 0.14);
+      border-color: rgba(31, 177, 255, 0.34);
+    }
+
+    .feed-scroll {
+      min-height: 0;
+      overflow: auto;
+      padding: 0 10px 10px 10px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .feed-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .feed-item {
+      border: 1px solid var(--line);
+      background: rgba(19, 29, 49, 0.9);
+      border-radius: 18px;
+      padding: 14px;
+      margin: 10px 4px;
+      cursor: pointer;
+      transition: 0.14s ease;
+    }
+
+    .feed-item:hover,
+    .feed-item.active {
+      border-color: rgba(31, 177, 255, 0.38);
+      box-shadow: inset 0 0 0 1px rgba(31, 177, 255, 0.14);
+      background: rgba(24, 36, 62, 0.96);
+    }
+
+    .feed-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .feed-name {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .feed-set {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .feed-price {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .feed-price-main {
+      font-size: 24px;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .pill.good {
+      color: #7af0b8;
+      background: rgba(54, 216, 141, 0.1);
+      border-color: rgba(54, 216, 141, 0.22);
+    }
+
+    .pill.neutral {
+      color: var(--ink);
+      background: rgba(49, 67, 104, 0.92);
+    }
+
+    .feed-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      min-height: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .stage-top {
+      padding: 18px 18px 0 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .stage-name {
+      margin: 8px 0 0;
+      font-size: clamp(28px, 3vw, 42px);
+      line-height: 0.96;
+      letter-spacing: -0.05em;
+    }
+
+    .stage-subtitle {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .hero-price {
+      text-align: right;
+      min-width: 130px;
+    }
+
+    .hero-price .big {
+      font-size: clamp(34px, 3.3vw, 48px);
+      line-height: 0.9;
+      letter-spacing: -0.05em;
+    }
+
+    .toolbar {
+      padding: 14px 18px 0 18px;
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    #chart {
+      width: calc(100% - 36px);
+      height: 100%;
+      margin: 16px 18px 0 18px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(12, 20, 37, 0.94);
+      min-height: 320px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      padding: 10px 18px 18px 18px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(14, 22, 40, 0.72);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .stat-value {
+      margin-top: 6px;
+      font-size: 22px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .empty {
+      padding: 24px 16px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 1100px) {
+      .frame {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .rail {
+        height: 420px;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        padding: 10px;
+      }
+
+      .stage-top {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-price {
+        text-align: left;
+      }
+
+      .stats {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      #chart {
+        min-height: 280px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="frame">
+      <aside class="panel rail">
+        <div class="panel-pad">
+          <div class="eyebrow">Embed View</div>
+          <h1 class="embed-title">Pokemon Momentum</h1>
+          <div class="muted" style="margin-top:8px;">Compact trend feed for iframe embeds.</div>
+        </div>
+
+        <div class="panel-pad" style="padding-top:0;">
+          <div class="segmented" id="segmentTabs">
+            <button type="button" data-segment="card" class="active">Cards</button>
+            <button type="button" data-segment="sealed">Sealed</button>
+          </div>
+        </div>
+
+        <div class="panel-pad" style="padding-top:0;">
+          <div class="feed-tabs" id="feedTabs">
+            <button type="button" data-feed="top_movers" class="active">Top Movers</button>
+            <button type="button" data-feed="early_uptrends">Early Uptrends</button>
+          </div>
+        </div>
+
+        <div class="feed-scroll" id="feedList">
+          <div class="empty">Loading feed…</div>
+        </div>
+      </aside>
+
+      <main class="panel stage">
+        <div class="stage-top">
+          <div>
+            <div class="eyebrow" id="itemClass">Momentum</div>
+            <h2 class="stage-name" id="itemName">Loading…</h2>
+            <div class="stage-subtitle" id="itemSubtitle">Waiting for feed.</div>
+          </div>
+          <div class="hero-price">
+            <div class="big" id="heroPrice">-</div>
+            <div style="margin-top:10px;">
+              <span class="pill neutral" id="heroChange">No change</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <div class="window-tabs" id="windowTabs">
+            <button type="button" data-days="30">30D</button>
+            <button type="button" data-days="90">90D</button>
+            <button type="button" data-days="180">6M</button>
+            <button type="button" data-days="365" class="active">1Y</button>
+            <button type="button" data-days="5000">Full</button>
+          </div>
+          <a class="cta" id="openFull" href="/dashboard" target="_blank" rel="noreferrer">Open Full Dashboard</a>
+        </div>
+
+        <div id="chart"></div>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="stat-label">Signal</div>
+            <div class="stat-value" id="statSignal">-</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Set</div>
+            <div class="stat-value" id="statSet">-</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Subtype</div>
+            <div class="stat-value" id="statSubtype">-</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Detail</div>
+            <div class="stat-value" id="statDetail">-</div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const apiBase = window.location.origin;
+    const feedListEl = document.getElementById("feedList");
+    const segmentTabs = document.getElementById("segmentTabs");
+    const feedTabs = document.getElementById("feedTabs");
+    const windowTabs = document.getElementById("windowTabs");
+    const itemClassEl = document.getElementById("itemClass");
+    const itemNameEl = document.getElementById("itemName");
+    const itemSubtitleEl = document.getElementById("itemSubtitle");
+    const heroPriceEl = document.getElementById("heroPrice");
+    const heroChangeEl = document.getElementById("heroChange");
+    const statSignalEl = document.getElementById("statSignal");
+    const statSetEl = document.getElementById("statSet");
+    const statSubtypeEl = document.getElementById("statSubtype");
+    const statDetailEl = document.getElementById("statDetail");
+    const openFullEl = document.getElementById("openFull");
+
+    const search = new URLSearchParams(window.location.search);
+    let currentSegment = search.get("segment") || "card";
+    let currentFeed = search.get("feed") || "top_movers";
+    let currentDays = Number(search.get("days") || 365);
+    let currentRows = [];
+    let selectedItem = null;
+    const feedCache = new Map();
+
+    function keyOf(item) {
+      return `${item.productId}||${item.subTypeName || ""}`;
+    }
+
+    async function getJson(path) {
+      const res = await fetch(apiBase + path);
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res.json();
+    }
+
+    function formatNumber(value, digits = 2) {
+      const num = Number(value);
+      if (value === null || value === undefined || Number.isNaN(num)) return "n/a";
+      return num.toLocaleString(undefined, {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      });
+    }
+
+    function formatPercent(value, digits = 2) {
+      const num = Number(value);
+      if (value === null || value === undefined || Number.isNaN(num)) return "n/a";
+      const sign = num > 0 ? "+" : "";
+      return `${sign}${num.toLocaleString(undefined, {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      })}%`;
+    }
+
+    function formatProductClassLabel(item) {
+      const value = item.productClass || item.productKind || "";
+      if (!value) return "Momentum";
+      const map = {
+        card: "Card",
+        sealed_booster_box: "Booster Box",
+        sealed_booster_pack: "Booster Pack",
+        mcap: "MCAP",
+        sealed: "Sealed",
+        other: "Other",
+      };
+      return map[value] || value;
+    }
+
+    function rowObjects(payload) {
+      const columns = payload.columns || [];
+      return (payload.rows || []).map((row) => Object.fromEntries(columns.map((col, i) => [col, row[i]])));
+    }
+
+    function classifyItem(item) {
+      if (item.productKind === "card" || item.productClass === "card") return "card";
+      if (item.productKind === "sealed" || item.productClass === "sealed_booster_box" || item.productClass === "sealed_booster_pack") return "sealed";
+      const name = `${item.productName || ""} ${item.groupName || ""}`.toLowerCase();
+      if (item.number || item.rarity) return "card";
+      if (
+        name.includes("booster box") ||
+        name.includes("elite trainer box") ||
+        name.includes("etb") ||
+        name.includes("booster pack") ||
+        name.includes("booster bundle") ||
+        name.includes("bundle") ||
+        name.includes("blister") ||
+        name.includes("figure collection") ||
+        name.includes("premium figure")
+      ) {
+        return "sealed";
+      }
+      return "card";
+    }
+
+    function setActiveButton(groupEl, attr, value) {
+      for (const button of groupEl.querySelectorAll("button")) {
+        button.classList.toggle("active", button.dataset[attr] === String(value));
+      }
+    }
+
+    function syncControls() {
+      setActiveButton(segmentTabs, "segment", currentSegment);
+      setActiveButton(feedTabs, "feed", currentFeed);
+      setActiveButton(windowTabs, "days", currentDays);
+    }
+
+    function feedUrl() {
+      if (currentFeed === "early_uptrends") {
+        return `/early_uptrends?limit=80&min_price=5`;
+      }
+      return `/top_movers?days=30&limit=80&min_prior=5&product_kind=${encodeURIComponent(currentSegment)}`;
+    }
+
+    function renderFeed() {
+      if (!currentRows.length) {
+        feedListEl.innerHTML = `<div class="empty">No ${currentSegment} results for this feed.</div>`;
+        return;
+      }
+      feedListEl.innerHTML = "";
+      for (const item of currentRows) {
+        const el = document.createElement("article");
+        el.className = "feed-item" + (selectedItem && keyOf(selectedItem) === keyOf(item) ? " active" : "");
+        const price = item.latest_price ?? item.latestPrice ?? item.price_now ?? item.latestPrice;
+        const roc = item.roc_pct ?? item.roc_30d_pct ?? item.pct_vs_sma30 ?? null;
+        const detail = item.number || formatProductClassLabel(item);
+        el.innerHTML = `
+          <div class="feed-head">
+            <div>
+              <div class="feed-name">${item.productName || `Product ${item.productId}`}</div>
+              <div class="feed-set">${item.groupName || "Unknown Set"}</div>
+            </div>
+            <div class="feed-price">
+              <div class="feed-price-main">${formatNumber(price)}</div>
+              <div style="margin-top:8px;"><span class="pill ${Number(roc) >= 0 ? "good" : "neutral"}">${formatPercent(roc)}</span></div>
+            </div>
+          </div>
+          <div class="feed-meta">
+            <span>${item.subTypeName || "Standard"}</span>
+            <span>${detail}</span>
+          </div>
+        `;
+        el.addEventListener("click", async () => {
+          selectedItem = item;
+          renderFeed();
+          await loadSeries();
+        });
+        feedListEl.appendChild(el);
+      }
+    }
+
+    function updateDetailCards(series) {
+      const latest = series[series.length - 1] || {};
+      const previous = series.length > 1 ? series[series.length - 2] : null;
+      const close = Number(latest.price);
+      const prior = previous ? Number(previous.price) : null;
+      const change = prior && Number.isFinite(close) ? ((close / prior) - 1) * 100 : null;
+      const detailMetric = currentFeed === "early_uptrends"
+        ? `${selectedItem.early_streak || 0}d setup`
+        : formatPercent(selectedItem.roc_pct ?? selectedItem.roc_30d_pct);
+
+      itemClassEl.textContent = formatProductClassLabel(selectedItem);
+      itemNameEl.textContent = selectedItem.productName || `Product ${selectedItem.productId}`;
+      itemSubtitleEl.textContent = `${selectedItem.groupName || "Unknown Set"} | ${selectedItem.subTypeName || "Standard"}`;
+      heroPriceEl.textContent = formatNumber(close);
+      heroChangeEl.textContent = change === null ? "No change" : `${formatPercent(change)} daily`;
+      heroChangeEl.className = `pill ${change !== null && change >= 0 ? "good" : "neutral"}`;
+
+      statSignalEl.textContent = detailMetric === "n/a" ? "-" : detailMetric;
+      statSetEl.textContent = selectedItem.groupName || "n/a";
+      statSubtypeEl.textContent = selectedItem.subTypeName || "n/a";
+      statDetailEl.textContent = selectedItem.number || formatProductClassLabel(selectedItem);
+      openFullEl.href = `/dashboard?productId=${encodeURIComponent(selectedItem.productId)}&subTypeName=${encodeURIComponent(selectedItem.subTypeName || "")}`;
+    }
+
+    function renderChart(series) {
+      const x = series.map((row) => row.date);
+      const price = series.map((row) => row.price);
+      const sma7 = series.map((row) => row.sma7);
+      const sma30 = series.map((row) => row.sma30);
+
+      Plotly.react("chart", [
+        {
+          x,
+          y: price,
+          name: "Price",
+          mode: "lines",
+          line: { color: "#1fb1ff", width: 3 },
+          fill: "tozeroy",
+          fillcolor: "rgba(31, 177, 255, 0.14)",
+        },
+        {
+          x,
+          y: sma7,
+          name: "SMA7",
+          mode: "lines",
+          line: { color: "#28d39f", width: 2 },
+        },
+        {
+          x,
+          y: sma30,
+          name: "SMA30",
+          mode: "lines",
+          line: { color: "#ff8d64", width: 2, dash: "dot" },
+        },
+      ], {
+        paper_bgcolor: "rgba(12, 20, 37, 0)",
+        plot_bgcolor: "rgba(12, 20, 37, 0)",
+        margin: { l: 52, r: 18, t: 20, b: 40 },
+        legend: { orientation: "h", x: 0, y: 1.12, font: { color: "#92a3c2" } },
+        hovermode: "x unified",
+        xaxis: { gridcolor: "rgba(133, 162, 208, 0.08)", color: "#92a3c2" },
+        yaxis: { gridcolor: "rgba(133, 162, 208, 0.08)", color: "#92a3c2" },
+        font: { color: "#e9f1ff" },
+      }, { responsive: true, displaylogo: false });
+    }
+
+    async function loadFeed(force = false) {
+      syncControls();
+      const cacheKey = `${currentFeed}:${currentSegment}`;
+      if (!force && feedCache.has(cacheKey)) {
+        currentRows = feedCache.get(cacheKey);
+        if (!selectedItem || !currentRows.find((row) => keyOf(row) === keyOf(selectedItem))) {
+          selectedItem = currentRows[0] || null;
+        }
+        renderFeed();
+        if (selectedItem) await loadSeries();
+        return;
+      }
+
+      feedListEl.innerHTML = `<div class="empty">Loading ${currentSegment} feed…</div>`;
+      const payload = await getJson(feedUrl());
+      let rows = rowObjects(payload);
+      if (currentFeed === "early_uptrends") {
+        rows = rows.filter((row) => classifyItem(row) === currentSegment);
+      }
+      feedCache.set(cacheKey, rows);
+      currentRows = rows;
+      selectedItem = rows[0] || null;
+      renderFeed();
+      if (selectedItem) {
+        await loadSeries();
+      } else {
+        itemNameEl.textContent = "No results";
+        itemSubtitleEl.textContent = "Try a different segment or feed.";
+      }
+    }
+
+    async function loadSeries() {
+      if (!selectedItem) return;
+      const params = new URLSearchParams({
+        productId: selectedItem.productId,
+        subTypeName: selectedItem.subTypeName || "",
+        days: currentDays,
+      });
+      const payload = await getJson(`/series?${params.toString()}`);
+      const series = rowObjects(payload);
+      renderFeed();
+      renderChart(series);
+      updateDetailCards(series);
+      syncControls();
+    }
+
+    function bindEvents() {
+      segmentTabs.addEventListener("click", async (event) => {
+        const button = event.target.closest("button[data-segment]");
+        if (!button) return;
+        currentSegment = button.dataset.segment;
+        await loadFeed();
+      });
+
+      feedTabs.addEventListener("click", async (event) => {
+        const button = event.target.closest("button[data-feed]");
+        if (!button) return;
+        currentFeed = button.dataset.feed;
+        await loadFeed();
+      });
+
+      windowTabs.addEventListener("click", async (event) => {
+        const button = event.target.closest("button[data-days]");
+        if (!button) return;
+        currentDays = Number(button.dataset.days || 365);
+        await loadSeries();
+      });
+    }
+
+    async function init() {
+      bindEvents();
+      syncControls();
+      await loadFeed();
+    }
+
+    init().catch((err) => {
+      feedListEl.innerHTML = `<div class="empty">${err.message}</div>`;
+      itemNameEl.textContent = "Embed load failed";
+      itemSubtitleEl.textContent = err.message;
+    });
+  </script>
+</body>
+</html>

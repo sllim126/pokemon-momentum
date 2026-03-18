@@ -30,6 +30,12 @@ def parse_args() -> argparse.Namespace:
         help="Also rebuild pokemon_prices_all_days.csv during the price-load step.",
     )
     parser.add_argument(
+        "--workers",
+        type=int,
+        default=4,
+        help="Worker count for the DuckDB price-load step. Keep this modest for daily incremental runs.",
+    )
+    parser.add_argument(
         "--skip-download",
         action="store_true",
         help="Skip downloading/extracting new archives.",
@@ -43,6 +49,11 @@ def parse_args() -> argparse.Namespace:
         "--skip-metadata",
         action="store_true",
         help="Skip group/product metadata refresh and joined-name export.",
+    )
+    parser.add_argument(
+        "--full-metadata-refresh",
+        action="store_true",
+        help="Force a full product metadata refresh instead of incremental metadata fetches.",
     )
     parser.add_argument(
         "--skip-analytics",
@@ -64,12 +75,13 @@ def parse_args() -> argparse.Namespace:
 
 def build_price_load_command(args: argparse.Namespace) -> list[str]:
     cmd = ["python", "scripts/extract/build_pokemon_prices_all_days.py"]
+    cmd.extend(["--workers", str(max(1, args.workers))])
+    if args.refresh_csv or not args.skip_analytics:
+        cmd.append("--refresh-csv")
     if args.limit_days > 0:
         cmd.extend(["--limit-days", str(args.limit_days)])
     if args.latest_first:
         cmd.append("--latest-first")
-    if args.refresh_csv:
-        cmd.append("--refresh-csv")
     return cmd
 
 
@@ -82,10 +94,13 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     steps.append(("Load new price data into DuckDB", build_price_load_command(args)))
 
     if not args.skip_metadata:
+        product_refresh_cmd = ["python", "scripts/utilities/export_products_for_my_groups.py"]
+        if args.full_metadata_refresh:
+            product_refresh_cmd.append("--full-refresh")
         steps.extend(
             [
                 ("Refresh group metadata", ["python", "scripts/utilities/export_pokemon_groups.py"]),
-                ("Refresh product metadata", ["python", "scripts/utilities/export_products_for_my_groups.py"]),
+                ("Refresh product metadata", product_refresh_cmd),
                 ("Rebuild joined price/name export", ["python", "scripts/utilities/join_prices_to_names.py"]),
             ]
         )

@@ -159,3 +159,46 @@ Current automated sequence:
 11. Build ROC 7/30/90 snapshot
 12. Build product signal snapshot
 13. Export parquet partitions
+
+### Schedule it once per day
+
+Use the host-side wrapper to run the pipeline safely through Docker with a lockfile and append-only log:
+
+```bash
+/opt/pokemon-momentum/scripts/pipeline/run_daily_update_host.sh
+```
+
+That wrapper:
+
+1. Stops the `pokemon-momentum` app container to release the DuckDB write lock
+2. Runs `python scripts/pipeline/run_daily_update.py --workers 4` in a one-off container
+3. Brings the app container back up automatically on exit
+4. Prevents overlapping runs with `flock`
+5. Appends logs to `logs/daily_update.log`
+
+Recommended production setup is a `systemd` timer on the host.
+
+Install the provided unit files:
+
+```bash
+sudo cp deploy/systemd/pokemon-momentum-daily-update.service /etc/systemd/system/
+sudo cp deploy/systemd/pokemon-momentum-daily-update.timer /etc/systemd/system/
+sudo cp deploy/systemd/pokemon-momentum-weekly-refresh.service /etc/systemd/system/
+sudo cp deploy/systemd/pokemon-momentum-weekly-refresh.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now pokemon-momentum-daily-update.timer
+sudo systemctl enable --now pokemon-momentum-weekly-refresh.timer
+```
+
+Check status:
+
+```bash
+sudo systemctl status pokemon-momentum-daily-update.timer
+sudo systemctl status pokemon-momentum-weekly-refresh.timer
+sudo systemctl list-timers | grep pokemon-momentum
+tail -f /opt/pokemon-momentum/logs/daily_update.log
+```
+
+The default timer runs daily at `02:00 UTC`, which is `7:00 PM MST` (fixed UTC-7). Edit [pokemon-momentum-daily-update.timer](/opt/pokemon-momentum/deploy/systemd/pokemon-momentum-daily-update.timer) if you want a different schedule.
+
+There is also a weekly full metadata refresh timer that runs Sundays at `11:00 UTC`, which is `4:00 AM MST` (fixed UTC-7). That job uses the same pipeline path but adds `--full-metadata-refresh` so product metadata is fully refreshed once per week instead of only incrementally.
