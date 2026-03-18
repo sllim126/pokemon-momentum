@@ -1,22 +1,62 @@
+import argparse
+import sys
+from pathlib import Path
+
 import duckdb
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.common.category_config import get_category_config
+
 
 EXTRACTED_DIR = "/app/data/extracted"
 PROCESSED_DIR = "/app/data/processed"
 DB_PATH = f"{PROCESSED_DIR}/prices_db.duckdb"
-OUT_CSV = f"{EXTRACTED_DIR}/product_signal_snapshot.csv"
-TABLE_NAME = "product_signal_snapshot"
 
-con = duckdb.connect(DB_PATH)
 
-con.execute(f"""
-CREATE OR REPLACE TABLE {TABLE_NAME} AS
+def parse_args() -> argparse.Namespace:
+    """Parse the category to snapshot into the per-product signal table."""
+    parser = argparse.ArgumentParser(
+        description="Build the per-product momentum signal snapshot for a category."
+    )
+    parser.add_argument(
+        "--category-id",
+        type=int,
+        default=3,
+        help="Category ID to snapshot. Default: 3 (Pokemon).",
+    )
+    return parser.parse_args()
+
+
+def main() -> int:
+    """Build the latest per-product momentum snapshot used by API screens and dashboards."""
+    args = parse_args()
+    category = get_category_config(args.category_id)
+    out_csv = f"{EXTRACTED_DIR}/{category.product_signal_csv}"
+    table_name = category.product_signal_table
+
+    con = duckdb.connect(DB_PATH)
+
+    # Expected input state:
+    # - pokemon_prices contains historical fact rows for this category
+    # - category-specific group and product metadata tables already exist
+    #
+    # Expected output state:
+    # - one latest-row snapshot per product/subtype with momentum, trend, and
+    #   product classification fields ready for API consumption.
+    con.execute(f"""
+CREATE OR REPLACE TABLE {table_name} AS
 WITH latest_date AS (
+    -- Establish the as-of date for the entire snapshot.
     SELECT MAX(date) AS latest_date
     FROM pokemon_prices
-    WHERE categoryId = 3
+    WHERE categoryId = {category.category_id}
       AND marketPrice IS NOT NULL
 ),
 base AS (
+    -- Historical price rows for just this category. Every later CTE builds on this slice.
     SELECT
         date,
         categoryId,
@@ -25,10 +65,11 @@ base AS (
         subTypeName,
         marketPrice AS price
     FROM pokemon_prices
-    WHERE categoryId = 3
+    WHERE categoryId = {category.category_id}
       AND marketPrice IS NOT NULL
 ),
 with_ma AS (
+    -- Add moving averages and rolling highs so the final snapshot can score trend strength.
     SELECT
         date,
         categoryId,
@@ -54,11 +95,13 @@ with_ma AS (
     FROM base
 ),
 latest_rows AS (
+    -- Reduce to the latest available observation for each product/subtype pair.
     SELECT *
     FROM with_ma
     WHERE date = (SELECT latest_date FROM latest_date)
 ),
 prior_7 AS (
+    -- Most recent observation at least 7 days old, used to compute 7d ROC.
     SELECT groupId, productId, subTypeName, price AS price_7d
     FROM (
         SELECT
@@ -76,6 +119,7 @@ prior_7 AS (
     WHERE rn = 1
 ),
 prior_30 AS (
+    -- Most recent observation at least 30 days old, used to compute 30d ROC.
     SELECT groupId, productId, subTypeName, price AS price_30d
     FROM (
         SELECT
@@ -93,6 +137,7 @@ prior_30 AS (
     WHERE rn = 1
 ),
 prior_90 AS (
+    -- Most recent observation at least 90 days old, used to compute 90d ROC.
     SELECT groupId, productId, subTypeName, price AS price_90d
     FROM (
         SELECT
@@ -110,6 +155,7 @@ prior_90 AS (
     WHERE rn = 1
 ),
 prior_365 AS (
+    -- Most recent observation at least 365 days old, used to compute 1y ROC.
     SELECT groupId, productId, subTypeName, price AS price_365d
     FROM (
         SELECT
@@ -127,6 +173,8 @@ prior_365 AS (
     WHERE rn = 1
 ),
 enriched AS (
+    -- Join in metadata and classify each product so downstream screens can split
+    -- cards vs sealed vs MCAP without repeating this logic in the API.
     SELECT
         l.date AS latest_date,
         l.categoryId,
@@ -217,13 +265,15 @@ enriched AS (
       ON p365.groupId = l.groupId
      AND p365.productId = l.productId
      AND p365.subTypeName = l.subTypeName
-    LEFT JOIN pokemon_products p
+    LEFT JOIN {category.products_table} p
       ON p.groupId = l.groupId
      AND p.productId = l.productId
-    LEFT JOIN pokemon_groups g
+    LEFT JOIN {category.groups_table} g
       ON g.groupId = l.groupId
 )
 SELECT
+    -- Final snapshot result: one row per product/subtype with price, ROC, moving
+    -- average context, breakout state, and a composite trend score.
     latest_date,
     categoryId,
     groupId,
@@ -289,22 +339,28 @@ FROM enriched
 ORDER BY trend_score DESC, roc_30d_pct DESC, latest_price DESC
 """)
 
-con.execute(
-    f"""
-    COPY (
-        SELECT *
-        FROM {TABLE_NAME}
-        ORDER BY trend_score DESC, roc_30d_pct DESC, latest_price DESC
-    ) TO '{OUT_CSV}' WITH (HEADER, DELIMITER ',')
-    """
-)
+    con.execute(
+        f"""
+        COPY (
+            SELECT *
+            FROM {table_name}
+            ORDER BY trend_score DESC, roc_30d_pct DESC, latest_price DESC
+        ) TO '{out_csv}' WITH (HEADER, DELIMITER ',')
+        """
+    )
 
-rows = con.execute(f"SELECT COUNT(*) FROM {TABLE_NAME}").fetchone()[0]
-latest = con.execute(f"SELECT MAX(latest_date) FROM {TABLE_NAME}").fetchone()[0]
-con.close()
+    rows = con.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+    latest = con.execute(f"SELECT MAX(latest_date) FROM {table_name}").fetchone()[0]
+    con.close()
 
-print("Wrote:", OUT_CSV)
-print("DuckDB table:", TABLE_NAME)
-print("Database:", DB_PATH)
-print("Latest date:", latest)
-print("Rows:", rows)
+    print(f"Category: {category.label} ({category.category_id})")
+    print("Wrote:", out_csv)
+    print("DuckDB table:", table_name)
+    print("Database:", DB_PATH)
+    print("Latest date:", latest)
+    print("Rows:", rows)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

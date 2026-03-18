@@ -75,6 +75,21 @@
       padding: 16px;
     }
 
+    .market-row {
+      margin-top: 12px;
+    }
+
+    .market-row select {
+      width: 100%;
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(18, 28, 49, 0.92);
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+
     .eyebrow {
       color: var(--muted);
       font-size: 11px;
@@ -357,6 +372,9 @@
           <div class="eyebrow">Embed View</div>
           <h1 class="embed-title">Pokemon Momentum</h1>
           <div class="muted" style="margin-top:8px;">Compact trend feed for iframe embeds.</div>
+          <div class="market-row">
+            <select id="marketPicker" aria-label="Market"></select>
+          </div>
         </div>
 
         <div class="panel-pad" style="padding-top:0;">
@@ -444,23 +462,72 @@
     const statSubtypeEl = document.getElementById("statSubtype");
     const statDetailEl = document.getElementById("statDetail");
     const openFullEl = document.getElementById("openFull");
+    const marketPicker = document.getElementById("marketPicker");
 
     const search = new URLSearchParams(window.location.search);
     let currentSegment = search.get("segment") || "card";
     let currentFeed = search.get("feed") || "top_movers";
     let currentDays = Number(search.get("days") || 365);
+    let currentCategoryId = Number(search.get("category_id") || 3);
     let currentRows = [];
     let selectedItem = null;
     const feedCache = new Map();
+    const categoryOptions = [];
 
+    // The embed view intentionally keeps less state than the full dashboard: one feed,
+    // one segment, one chart window, and one selected item for iframe-friendly rendering.
     function keyOf(item) {
       return `${item.productId}||${item.subTypeName || ""}`;
     }
 
+    function withCategory(path) {
+      // Centralize category propagation so the embed can switch English/Japanese cleanly.
+      const url = new URL(path, apiBase);
+      if (!url.searchParams.has("category_id")) {
+        url.searchParams.set("category_id", String(currentCategoryId));
+      }
+      return `${url.pathname}${url.search}`;
+    }
+
+    function syncUrlState() {
+      const url = new URL(window.location.href);
+      url.searchParams.set("category_id", String(currentCategoryId));
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    }
+
+    function resetFeedState() {
+      // Market switches should discard cached feed rows so the iframe never mixes categories.
+      currentRows = [];
+      selectedItem = null;
+      feedCache.clear();
+      feedListEl.innerHTML = `<div class="empty">Loading feed…</div>`;
+    }
+
     async function getJson(path) {
-      const res = await fetch(apiBase + path);
+      const res = await fetch(apiBase + withCategory(path));
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       return res.json();
+    }
+
+    async function loadCategories() {
+      // Populate the compact market selector before loading the initial feed.
+      const res = await fetch(apiBase + "/categories");
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const payload = await res.json();
+      categoryOptions.length = 0;
+      categoryOptions.push(...(payload.items || []));
+      marketPicker.innerHTML = "";
+      for (const item of categoryOptions) {
+        const opt = document.createElement("option");
+        opt.value = String(item.category_id);
+        opt.textContent = item.label;
+        marketPicker.appendChild(opt);
+      }
+      if (!categoryOptions.some((item) => Number(item.category_id) === currentCategoryId)) {
+        currentCategoryId = Number(categoryOptions[0]?.category_id || 3);
+      }
+      marketPicker.value = String(currentCategoryId);
+      syncUrlState();
     }
 
     function formatNumber(value, digits = 2) {
@@ -497,6 +564,7 @@
     }
 
     function rowObjects(payload) {
+      // Embed endpoints share the same columns/rows payload shape as the full dashboard.
       const columns = payload.columns || [];
       return (payload.rows || []).map((row) => Object.fromEntries(columns.map((col, i) => [col, row[i]])));
     }
@@ -542,6 +610,8 @@
     }
 
     function renderFeed() {
+      // The left embed rail is the lightweight discovery list. Selecting any row is expected
+      // to refresh the hero text, chart, and stat cards without navigating away.
       if (!currentRows.length) {
         feedListEl.innerHTML = `<div class="empty">No ${currentSegment} results for this feed.</div>`;
         return;
@@ -599,7 +669,7 @@
       statSetEl.textContent = selectedItem.groupName || "n/a";
       statSubtypeEl.textContent = selectedItem.subTypeName || "n/a";
       statDetailEl.textContent = selectedItem.number || formatProductClassLabel(selectedItem);
-      openFullEl.href = `/dashboard?productId=${encodeURIComponent(selectedItem.productId)}&subTypeName=${encodeURIComponent(selectedItem.subTypeName || "")}`;
+      openFullEl.href = `/dashboard?category_id=${encodeURIComponent(currentCategoryId)}&productId=${encodeURIComponent(selectedItem.productId)}&subTypeName=${encodeURIComponent(selectedItem.subTypeName || "")}`;
     }
 
     function renderChart(series) {
@@ -645,6 +715,8 @@
     }
 
     async function loadFeed(force = false) {
+      // Feed rows are cached per segment/feed combination so toggling between Cards/Sealed
+      // or Movers/Early Uptrends stays responsive inside an iframe.
       syncControls();
       const cacheKey = `${currentFeed}:${currentSegment}`;
       if (!force && feedCache.has(cacheKey)) {
@@ -676,6 +748,7 @@
     }
 
     async function loadSeries() {
+      // The chart payload is the single source of truth for the embed hero and stat footer.
       if (!selectedItem) return;
       const params = new URLSearchParams({
         productId: selectedItem.productId,
@@ -691,6 +764,7 @@
     }
 
     function bindEvents() {
+      // Bind the small set of embed controls: segment, feed, window, and market.
       segmentTabs.addEventListener("click", async (event) => {
         const button = event.target.closest("button[data-segment]");
         if (!button) return;
@@ -711,9 +785,17 @@
         currentDays = Number(button.dataset.days || 365);
         await loadSeries();
       });
+
+      marketPicker.addEventListener("change", async () => {
+        currentCategoryId = Number(marketPicker.value || 3);
+        syncUrlState();
+        resetFeedState();
+        await loadFeed(true);
+      });
     }
 
     async function init() {
+      await loadCategories();
       bindEvents();
       syncControls();
       await loadFeed();

@@ -1,29 +1,66 @@
+import argparse
+import sys
+from pathlib import Path
+
 import duckdb
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.common.category_config import get_category_config
+
 
 EXTRACTED_DIR = "/app/data/extracted"
 PROCESSED_DIR = "/app/data/processed"
 DB_PATH = f"{PROCESSED_DIR}/prices_db.duckdb"
-OUT_CSV = f"{EXTRACTED_DIR}/group_signal_snapshot.csv"
-TABLE_NAME = "group_signal_snapshot"
 
-con = duckdb.connect(DB_PATH)
 
-tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
-if "product_signal_snapshot" not in tables:
-    raise RuntimeError(
-        "product_signal_snapshot does not exist. Run scripts/indicators/build_product_signal_snapshot.py first."
+def parse_args() -> argparse.Namespace:
+    """Parse the category whose set-level breadth snapshot should be rebuilt."""
+    parser = argparse.ArgumentParser(
+        description="Build the per-group momentum signal snapshot for a category."
     )
+    parser.add_argument(
+        "--category-id",
+        type=int,
+        default=3,
+        help="Category ID to snapshot. Default: 3 (Pokemon).",
+    )
+    return parser.parse_args()
 
-con.execute(
-    f"""
-    CREATE OR REPLACE TABLE {TABLE_NAME} AS
+
+def main() -> int:
+    """Roll the latest product snapshot up into one row per set/group."""
+    args = parse_args()
+    category = get_category_config(args.category_id)
+    out_csv = f"{EXTRACTED_DIR}/{category.group_signal_csv}"
+    table_name = category.group_signal_table
+    product_signal_table = category.product_signal_table
+
+    con = duckdb.connect(DB_PATH)
+
+    # This snapshot is intentionally downstream of the product snapshot: it summarizes
+    # the latest product-level signals into a set-level breadth and momentum view.
+    tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
+    if product_signal_table not in tables:
+        raise RuntimeError(
+            f"{product_signal_table} does not exist. Run scripts/indicators/build_product_signal_snapshot.py first."
+        )
+
+    con.execute(
+        f"""
+    CREATE OR REPLACE TABLE {table_name} AS
     WITH latest_snapshot AS (
+        -- Use only the most recent product snapshot rows for this category.
         SELECT *
-        FROM product_signal_snapshot
-        WHERE latest_date = (SELECT MAX(latest_date) FROM product_signal_snapshot)
-          AND categoryId = 3
+        FROM {product_signal_table}
+        WHERE latest_date = (SELECT MAX(latest_date) FROM {product_signal_table})
+          AND categoryId = {category.category_id}
     ),
     grouped AS (
+        -- Aggregate product-level strength into set-level participation, trend, and
+        -- card-vs-sealed comparisons.
         SELECT
             latest_date,
             groupId,
@@ -52,6 +89,7 @@ con.execute(
         GROUP BY latest_date, groupId, groupName
     )
     SELECT
+        -- Final result: one set-level summary row suitable for rankings and dashboard tabs.
         latest_date,
         groupId,
         groupName,
@@ -92,24 +130,31 @@ con.execute(
     FROM grouped
     ORDER BY breadth_score DESC, avg_30d_pct DESC, pct_above_sma30 DESC, groupName
     """
-)
+    )
 
-con.execute(
-    f"""
-    COPY (
-        SELECT *
-        FROM {TABLE_NAME}
-        ORDER BY breadth_score DESC, avg_30d_pct DESC, pct_above_sma30 DESC, groupName
-    ) TO '{OUT_CSV}' WITH (HEADER, DELIMITER ',')
-    """
-)
+    # Export the ranked set snapshot to CSV so it can be inspected without querying DuckDB.
+    con.execute(
+        f"""
+        COPY (
+            SELECT *
+            FROM {table_name}
+            ORDER BY breadth_score DESC, avg_30d_pct DESC, pct_above_sma30 DESC, groupName
+        ) TO '{out_csv}' WITH (HEADER, DELIMITER ',')
+        """
+    )
 
-rows = con.execute(f"SELECT COUNT(*) FROM {TABLE_NAME}").fetchone()[0]
-latest = con.execute(f"SELECT MAX(latest_date) FROM {TABLE_NAME}").fetchone()[0]
-con.close()
+    rows = con.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+    latest = con.execute(f"SELECT MAX(latest_date) FROM {table_name}").fetchone()[0]
+    con.close()
 
-print("Wrote:", OUT_CSV)
-print("DuckDB table:", TABLE_NAME)
-print("Database:", DB_PATH)
-print("Latest date:", latest)
-print("Rows:", rows)
+    print(f"Category: {category.label} ({category.category_id})")
+    print("Wrote:", out_csv)
+    print("DuckDB table:", table_name)
+    print("Database:", DB_PATH)
+    print("Latest date:", latest)
+    print("Rows:", rows)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,298 @@
+Pokemon Momentum Dashboard: How To Use
+
+What This Is
+This dashboard is a research and discovery tool built around Pokemon market data.
+It takes a large amount of price history and turns it into something easier to scan, compare, and act on.
+
+Instead of digging through raw exports, price pages, or disconnected spreadsheets, this site puts the most important signals in one place.
+It helps answer simple but important questions:
+- what is moving right now
+- what may be starting to move before it becomes obvious
+- which sets are showing broad strength
+- whether cards and sealed products are behaving differently
+
+Why We Have It
+The main purpose of this site is to make decision-making faster and clearer.
+It was created to help spot momentum earlier, reduce noise, and make it easier to focus on the products that actually deserve attention.
+
+For the owner, it helps:
+- identify cards or sealed products that may be trending upward
+- compare movement across products and sets more quickly
+- build a repeatable research process instead of relying on memory or guesswork
+- connect market insight to buying, selling, and inventory decisions
+
+For visitors, it helps:
+- show what is active in the market in a clear visual way
+- surface products they may not have thought to check
+- make price movement easier to understand at a glance
+- create a more useful and engaging experience than a static catalog alone
+
+Overview
+This dashboard is designed to help you scan for momentum across Pokemon cards and sealed products, then drill into a single item quickly.
+The layout is split into three main areas:
+- left rail
+- main chart and signal feed
+- right rail
+
+
+Left Rail: Trending Up
+The left rail is your fast watchlist.
+It shows the current top movers for the selected segment:
+- Cards
+- Sealed
+
+Each card in the rail includes:
+- product name
+- set name
+- subtype
+- current price
+- 30-day move
+- mini price trend sparkline
+
+What to do here:
+- click a mover card to load it into the main chart
+- switch between Cards and Sealed to see a different momentum feed
+- use it as a fast shortlist of names worth reviewing in more detail
+
+The mini graph is only meant to be a quick visual trend summary.
+The full detail view always lives in the main chart area.
+
+
+Main Chart Area
+The center of the dashboard is the detailed view for the currently selected item.
+This is where you spend most of your time once something catches your attention.
+
+The top of the chart area shows:
+- selected product name
+- set and subtype
+- image, if available
+- current price
+- latest data date
+
+The large chart shows:
+- daily price history
+- SMA7
+- SMA30
+
+Chart window buttons
+These buttons change how much history is shown:
+- 30D: last 30 days
+- 90D: last 90 days
+- 180D: last 180 days
+- 1Y: last 365 days
+- 2Y: last 730 days
+- Full: full available history
+
+Use short windows when you want to see recent acceleration.
+Use longer windows when you want to understand the broader trend.
+
+
+Signal Feed
+Below the main chart is the signal feed and product browser area.
+This section is used to scan lists of opportunities and then click through to a specific name.
+
+Tabs in the signal feed:
+
+Top Movers
+Shows the strongest recent movers by 30-day change.
+This is useful for seeing what is already moving the most.
+
+Breakouts
+Shows products at or near fresh 90-day highs.
+This helps identify names pushing into new highs rather than just bouncing.
+
+SMA30 Holds
+Shows products that reclaimed and held above the 30-day moving average.
+This is useful for finding names that may be stabilizing into a trend.
+
+Early Uptrends
+Shows names where short-term momentum is starting to line up.
+This is meant to catch products that may be moving upward before they become obvious spikes.
+
+Uptrends
+Shows more confirmed momentum names.
+These are generally stronger trend candidates than the earliest setups.
+
+Signals
+Shows the broader product-level snapshot ranking.
+This includes multiple momentum and moving-average measures in one view.
+
+Group Signals
+Shows set-level breadth and momentum.
+This is helpful when you want to know which sets are strong overall, not just which single card is moving.
+
+Set Browser
+Shows all products in the currently selected set from the Set Browser dropdown.
+Use this when you want to browse one set directly rather than only relying on the screener tabs.
+
+
+What the Indicators Mean
+These indicators are simple momentum tools, not guarantees.
+They are meant to help you narrow attention.
+
+SMA7
+7-day simple moving average.
+This is a short-term trend line.
+
+SMA30
+30-day simple moving average.
+This is a medium-term trend line.
+
+Price above SMA30
+Usually means the item is trading above its recent average.
+That is often a constructive trend sign.
+
+SMA7 above SMA30
+Usually means short-term trend is stronger than medium-term trend.
+That is a stronger momentum confirmation.
+
+Early Uptrend idea
+The dashboard uses short-term trend alignment to surface names that may be beginning to move up without already being fully extended.
+
+Breakout
+A breakout generally means the product is reaching or exceeding a recent high window.
+That can indicate strength, but it can also mean the move is already more mature.
+
+Top Movers
+This is mostly a ranking view.
+It tells you what already moved the most over the selected lookback logic.
+
+Group Signals
+These are set-level breadth metrics.
+They help answer whether strength is isolated to a few cards or spread across a set.
+
+
+Card Picker
+The Card Picker dropdown lets you jump directly to a specific product.
+Use this when you already know what card or sealed item you want to inspect.
+
+Selecting a product here updates:
+- main title
+- image
+- chart
+- right-rail details
+
+
+Set Browser Dropdown
+The Set Browser dropdown selects which set is used for the Set Browser tab.
+When the Set Browser tab is active, the table will show all products from the selected set.
+
+Typical use:
+1. choose a set in the Set Browser dropdown
+2. click the Set Browser tab
+3. review all products in that set
+4. click any row to load that product into the main chart
+
+
+Market Dropdown
+The Market dropdown switches between available data universes.
+Current options include:
+- Pokemon
+- Pokemon Japanese
+
+Changing market updates the dashboard queries so you are working inside that specific market.
+If something appears empty after switching, it usually means that feed has little or no qualifying data in that market yet.
+
+
+Right Rail
+The right rail is the detail stack for the currently selected product.
+It is meant to give context without leaving the chart.
+
+Sections include:
+- tracking / favorites
+- key stats
+- momentum read
+- notes
+
+Tracking / Favorites
+This is the local tag area.
+It lets you mark items such as:
+- Favorite
+- Watchlist
+- Sealed
+- Research
+
+Key Stats
+This shows the current summary numbers for the selected item, such as:
+- set
+- subtype
+- rarity
+- card number
+- latest price
+- SMA7
+- SMA30
+- price versus SMA30
+
+Momentum Read
+This is a compact chip summary of the current state of the selected product.
+It gives a quick read without needing to parse the entire chart.
+
+Notes
+This is descriptive context for the selected product.
+It is useful as a future place for richer commentary or saved research notes.
+
+
+Suggested Workflow
+1. Start on the left rail and click anything interesting.
+2. Review the main chart and compare price vs SMA7 and SMA30.
+3. Use the signal tabs to look for confirmation or earlier-stage setups.
+4. Use Set Browser to inspect neighboring items in the same set.
+5. Use the right rail to tag and keep track of names you want to revisit.
+
+
+Important Reminder
+This dashboard is a research and screening tool.
+It helps surface patterns and candidates.
+It does not guarantee that a card or product will continue moving higher.
+
+
+What To Look For If You Want To Buy Early
+If you are trying to find cards or products that are just starting an upward trend, the goal is usually to find real strength before the move becomes obvious to everyone else.
+
+The best early signs are often:
+- price above SMA30
+- SMA7 above SMA30
+- SMA3 above SMA7 above SMA30
+- several recent positive price changes
+- actual movement within the last few days
+- price not already too far extended above trend
+
+In practical terms, you usually want something that is:
+- starting to trend upward
+- showing repeated activity
+- not already fully spiked
+
+Best places to look in this dashboard:
+
+Early Uptrends
+This is usually the best first place to look for early setups.
+It is designed to surface names where short-term momentum is starting to line up before they become obvious top movers.
+
+SMA30 Holds
+This is useful for finding names that reclaimed and are holding above their 30-day trend.
+It can help identify products that may be stabilizing into an uptrend.
+
+Uptrends
+This is a stronger confirmation list.
+These names may be more developed than the earliest setups, but they are often higher-confidence trends.
+
+Group Signals
+This helps you see whether a whole set is strengthening.
+If a set is broadening, more products inside it may start to follow.
+
+Simple early-trend checklist
+- appears in Early Uptrends
+- price is above SMA30
+- SMA7 is above SMA30
+- there were real price changes in the last 3 to 5 days
+- the product is not already massively extended
+- ideally the set is also improving in Group Signals
+
+What to be careful of
+- one-day spikes with no follow-through
+- stale items that moved once and then stopped
+- sparse-history items with unreliable pricing
+- products that are already extremely far above SMA30
+
+The goal is not to buy everything that is moving.
+The goal is to find products that are beginning to trend upward while there is still room for the move to develop.

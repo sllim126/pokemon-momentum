@@ -1,0 +1,522 @@
+Pokemon Momentum Operator Runbook
+=================================
+
+What this is
+------------
+This runbook is for operating the system day to day.
+
+It answers:
+
+- how to check whether the app is healthy
+- how to rerun the pipeline
+- how to verify English and Japanese data
+- where to look when something fails
+- what the common recovery steps are
+
+
+Environment
+-----------
+Primary app path:
+
+- `/opt/pokemon-momentum`
+
+Main app/API:
+
+- FastAPI app served from:
+  - [api.py](/opt/pokemon-momentum/scripts/dashboards/api.py)
+
+Main dashboard URLs:
+
+- `http://localhost:8001/dashboard`
+- `http://localhost:8001/embed`
+
+Health checks:
+
+- `http://localhost:8001/health`
+- `http://localhost:8001/health?category_id=85`
+
+
+Normal daily operation
+----------------------
+The system is intended to run automatically.
+
+Daily timer:
+
+- `pokemon-momentum-daily-update.timer`
+
+Daily service:
+
+- `pokemon-momentum-daily-update.service`
+
+Weekly full metadata refresh:
+
+- `pokemon-momentum-weekly-refresh.timer`
+- `pokemon-momentum-weekly-refresh.service`
+
+Normal expectation:
+
+- the daily run appends new price data
+- refreshes metadata incrementally
+- rebuilds snapshots
+- exports new parquet partitions
+- restarts the app container afterward
+
+
+Quick health checklist
+----------------------
+If you just want to know whether the system is healthy, check these first.
+
+1. API responds
+
+```bash
+curl http://localhost:8001/health
+curl 'http://localhost:8001/health?category_id=85'
+```
+
+Healthy result:
+
+- JSON returns successfully
+- `rows` is nonzero
+- `latest` is a real date
+- `source` is either `parquet` or `duckdb`
+
+2. Main dashboards load
+
+- `/dashboard`
+- `/embed`
+
+Healthy result:
+
+- page renders
+- left rail loads
+- chart loads
+- market toggle works
+
+3. systemd timers are active
+
+```bash
+systemctl list-timers | grep pokemon-momentum
+```
+
+Healthy result:
+
+- daily timer listed
+- weekly timer listed
+
+
+Useful commands
+---------------
+
+Check Docker app health:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose ps
+sudo docker-compose logs -f pokemon-momentum
+```
+
+Check systemd automation:
+
+```bash
+sudo systemctl status pokemon-momentum-daily-update.timer
+sudo systemctl status pokemon-momentum-daily-update.service
+sudo systemctl status pokemon-momentum-weekly-refresh.timer
+sudo systemctl status pokemon-momentum-weekly-refresh.service
+```
+
+Check pipeline log:
+
+```bash
+tail -f /opt/pokemon-momentum/logs/daily_update.log
+```
+
+Restart app only:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose restart pokemon-momentum
+```
+
+Rebuild/restart app stack:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose up -d --build
+```
+
+
+Manual pipeline runs
+--------------------
+Run the same daily logic manually:
+
+```bash
+sudo systemctl start pokemon-momentum-daily-update.service
+```
+
+Watch it:
+
+```bash
+tail -f /opt/pokemon-momentum/logs/daily_update.log
+```
+
+Run the weekly full metadata refresh manually:
+
+```bash
+sudo systemctl start pokemon-momentum-weekly-refresh.service
+```
+
+
+Manual category runs inside Docker
+----------------------------------
+Use these when testing a category-specific pipeline path directly.
+
+English / category 3:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose run --rm pokemon-momentum bash -lc 'python scripts/pipeline/run_daily_update.py --category-id 3 --skip-download --workers 4'
+```
+
+Japanese / category 85:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose run --rm pokemon-momentum bash -lc 'python scripts/pipeline/run_daily_update.py --category-id 85 --skip-download --workers 4'
+```
+
+Validate outputs without running the whole pipeline:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose run --rm pokemon-momentum bash -lc 'python scripts/pipeline/validate_pipeline.py'
+sudo docker-compose run --rm pokemon-momentum bash -lc 'python scripts/pipeline/validate_pipeline.py --category-id 85'
+```
+
+
+What “healthy” looks like by layer
+----------------------------------
+
+Download/extract layer:
+
+- raw archives exist in `/app/data/raw`
+- extracted day folders exist in `/app/data/extracted`
+
+DuckDB layer:
+
+- `/app/data/processed/prices_db.duckdb` exists
+- `pokemon_prices` contains rows
+- category-specific metadata tables exist
+- category-specific signal snapshot tables exist
+
+Parquet layer:
+
+- `/app/data/parquet/date=YYYY-MM-DD/...` exists
+- latest day matches what you expect after a successful daily run
+
+API layer:
+
+- `/health` returns current latest date
+- category endpoints return rows
+
+Dashboard layer:
+
+- left rail loads
+- main chart loads
+- switching market updates content
+- set browser loads products
+
+
+Fast verification commands
+--------------------------
+
+English checks:
+
+```bash
+curl http://localhost:8001/health
+curl 'http://localhost:8001/groups?category_id=3&limit=5'
+curl 'http://localhost:8001/universe?category_id=3&limit=5'
+curl 'http://localhost:8001/top_movers?category_id=3&limit=5'
+curl 'http://localhost:8001/product_signals?category_id=3&limit=5'
+curl 'http://localhost:8001/group_signals?category_id=3&limit=5'
+```
+
+Japanese checks:
+
+```bash
+curl 'http://localhost:8001/health?category_id=85'
+curl 'http://localhost:8001/groups?category_id=85&limit=5'
+curl 'http://localhost:8001/universe?category_id=85&limit=5'
+curl 'http://localhost:8001/top_movers?category_id=85&limit=5'
+curl 'http://localhost:8001/product_signals?category_id=85&limit=5'
+curl 'http://localhost:8001/group_signals?category_id=85&limit=5'
+```
+
+
+If the app is down
+------------------
+Symptoms:
+
+- `/health` does not respond
+- dashboard page does not load
+
+Recovery:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose ps
+sudo docker-compose logs --tail=200 pokemon-momentum
+sudo docker-compose restart pokemon-momentum
+```
+
+If restart is not enough:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose up -d --build
+```
+
+
+If the latest date is stale
+---------------------------
+Symptoms:
+
+- dashboard shows an older latest date than expected
+- `/health` shows an older latest date
+
+Likely causes:
+
+- daily pipeline has not finished
+- parquet export did not run
+- app restarted before the export stage completed
+
+Checks:
+
+```bash
+tail -f /opt/pokemon-momentum/logs/daily_update.log
+curl http://localhost:8001/health
+```
+
+What you want to see in the log:
+
+- `Export parquet partitions`
+- successful completion after that step
+
+Manual recovery:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose run --rm pokemon-momentum bash -lc 'python scripts/utilities/export_parquet.py'
+sudo docker-compose restart pokemon-momentum
+curl http://localhost:8001/health
+```
+
+
+If the daily service fails immediately
+-------------------------------------
+Symptoms:
+
+- `systemctl start pokemon-momentum-daily-update.service` fails fast
+
+Checks:
+
+```bash
+sudo systemctl status pokemon-momentum-daily-update.service
+sudo journalctl -xeu pokemon-momentum-daily-update.service
+```
+
+Common causes:
+
+- bad service PATH
+- script error in the pipeline
+- Docker not available
+
+Recovery:
+
+- inspect the failing step in the journal
+- fix the script/config problem
+- rerun the service manually
+
+
+If the pipeline appears stuck
+----------------------------
+Symptoms:
+
+- `daily_update.log` stops advancing for a long time
+- memory pressure spikes
+
+Where this usually happens:
+
+- metadata fetches from tcgcsv
+- large price-load step
+
+Checks:
+
+```bash
+tail -f /opt/pokemon-momentum/logs/daily_update.log
+sudo docker stats
+free -h
+```
+
+Notes:
+
+- the daily path is now tuned to use a modest worker count
+- one-time backfills are intentionally heavier
+- metadata fetches can still be slow because they depend on tcgcsv responses
+
+Recommended action:
+
+- give the run time to finish if it is still advancing
+- only intervene if logs are fully stationary and the process clearly failed or was OOM-killed
+
+
+If DuckDB reports a file lock error
+-----------------------------------
+Symptoms:
+
+- error about conflicting lock on `prices_db.duckdb`
+
+Cause:
+
+- the app container is running and reading from the DB while a write process tries to start
+
+Normal design:
+
+- the host wrapper stops the app before pipeline writes
+
+Manual recovery:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose stop pokemon-momentum
+sudo docker-compose run --rm pokemon-momentum bash -lc 'python scripts/pipeline/run_daily_update.py --skip-download --workers 4'
+sudo docker-compose up -d pokemon-momentum
+```
+
+
+If Japanese category loads no history
+-------------------------------------
+Symptoms:
+
+- `product_signals?category_id=85` has rows
+- but `/health?category_id=85`, `/groups?category_id=85`, or `/universe?category_id=85` are empty
+
+Likely cause:
+
+- parquet does not yet contain category 85
+- API needs to fall back to DuckDB for that category
+
+Check:
+
+```bash
+curl 'http://localhost:8001/health?category_id=85'
+```
+
+Healthy behavior:
+
+- returns nonzero rows
+- source may be `duckdb` if parquet is not ready for category 85 yet
+
+
+If metadata looks wrong or missing
+----------------------------------
+Symptoms:
+
+- product names missing
+- sets missing
+- lots of placeholder names like `Product 123456`
+
+Recovery:
+
+Run metadata steps again:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose run --rm pokemon-momentum bash -lc 'python scripts/utilities/export_pokemon_groups.py --category-id 3'
+sudo docker-compose run --rm pokemon-momentum bash -lc 'python scripts/utilities/export_products_for_my_groups.py --category-id 3 --full-refresh'
+sudo docker-compose run --rm pokemon-momentum bash -lc 'python scripts/utilities/join_prices_to_names.py --category-id 3'
+```
+
+For Japanese:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose run --rm pokemon-momentum bash -lc 'python scripts/utilities/export_pokemon_groups.py --category-id 85'
+sudo docker-compose run --rm pokemon-momentum bash -lc 'python scripts/utilities/export_products_for_my_groups.py --category-id 85 --full-refresh'
+sudo docker-compose run --rm pokemon-momentum bash -lc 'python scripts/utilities/join_prices_to_names.py --category-id 85'
+```
+
+
+If dashboards load but feel wrong
+---------------------------------
+Symptoms:
+
+- empty rails
+- chart not updating
+- market switch empties the page
+- set browser does not load products
+
+Checks:
+
+1. API endpoints first
+
+```bash
+curl 'http://localhost:8001/categories'
+curl 'http://localhost:8001/health?category_id=3'
+curl 'http://localhost:8001/health?category_id=85'
+```
+
+2. restart app
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose restart pokemon-momentum
+```
+
+3. hard refresh browser
+
+- `Ctrl+Shift+R`
+
+
+Standard recovery sequence
+--------------------------
+If something is wrong and you want the safest basic recovery path:
+
+1. check `/health`
+2. check `daily_update.log`
+3. restart the app container
+4. rerun the daily service manually
+5. if latest date is still stale, run parquet export
+6. if metadata is wrong, rerun metadata refresh
+
+
+Useful file locations
+---------------------
+
+Main docs:
+
+- [dashboard_how_to.txt](/opt/pokemon-momentum/docs/dashboard_how_to.txt)
+- [data_flow.txt](/opt/pokemon-momentum/docs/data_flow.txt)
+
+Logs:
+
+- `/opt/pokemon-momentum/logs/daily_update.log`
+
+Core scripts:
+
+- [run_daily_update.py](/opt/pokemon-momentum/scripts/pipeline/run_daily_update.py)
+- [validate_pipeline.py](/opt/pokemon-momentum/scripts/pipeline/validate_pipeline.py)
+- [build_pokemon_prices_all_days.py](/opt/pokemon-momentum/scripts/extract/build_pokemon_prices_all_days.py)
+- [export_parquet.py](/opt/pokemon-momentum/scripts/utilities/export_parquet.py)
+- [api.py](/opt/pokemon-momentum/scripts/dashboards/api.py)
+
+
+End state to aim for
+--------------------
+On a healthy system:
+
+- timers are active
+- daily runs complete without manual intervention
+- latest date advances normally
+- English and Japanese both return API rows
+- dashboard and embed load without manual fixes
+- parquet and DuckDB stay in sync closely enough that the API shows the latest expected date

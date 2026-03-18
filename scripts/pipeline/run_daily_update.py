@@ -5,11 +5,24 @@ import sys
 import time
 from pathlib import Path
 
+ROOT_DIR = Path(__file__).resolve().parents[2]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from scripts.common.category_config import get_category_config
+
 
 ROOT = Path("/app")
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse the CLI options that shape one pipeline run.
+
+    Expected result:
+    - identifies which category to process
+    - determines which stages are skipped or forced
+    - controls whether the run is a cheap incremental pass or a broader rebuild
+    """
     parser = argparse.ArgumentParser(
         description="Run the Pokemon Momentum daily update pipeline."
     )
@@ -18,6 +31,12 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=0,
         help="Only load up to N missing days into DuckDB.",
+    )
+    parser.add_argument(
+        "--category-id",
+        type=int,
+        default=3,
+        help="Category ID to process. Default: 3 (Pokemon).",
     )
     parser.add_argument(
         "--latest-first",
@@ -74,7 +93,14 @@ def parse_args() -> argparse.Namespace:
 
 
 def build_price_load_command(args: argparse.Namespace) -> list[str]:
+    """Build the history-load command for the selected category.
+
+    Expected result:
+    - returns a command that loads any missing daily price rows into pokemon_prices
+    - optionally refreshes the category CSV when downstream analytics still use it
+    """
     cmd = ["python", "scripts/extract/build_pokemon_prices_all_days.py"]
+    cmd.extend(["--category-id", str(args.category_id)])
     cmd.extend(["--workers", str(max(1, args.workers))])
     if args.refresh_csv or not args.skip_analytics:
         cmd.append("--refresh-csv")
@@ -86,45 +112,106 @@ def build_price_load_command(args: argparse.Namespace) -> list[str]:
 
 
 def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
+    """Assemble the ordered pipeline stages for this run.
+
+    Expected result:
+    - each tuple describes one stage and the command that should produce its artifacts
+    - later stages assume earlier stages completed successfully
+    """
     steps: list[tuple[str, list[str]]] = []
+    category = get_category_config(args.category_id)
+    analytics_enabled = not args.skip_analytics and args.category_id == 3
 
     if not args.skip_download:
+        # Expected result: new daily archives are downloaded/extracted when they exist upstream.
         steps.append(("Download and extract new archives", ["python", "scripts/download/Download_new_day.py"]))
 
+    # Expected result: pokemon_prices contains all missing dates for the selected category.
     steps.append(("Load new price data into DuckDB", build_price_load_command(args)))
 
     if not args.skip_metadata:
-        product_refresh_cmd = ["python", "scripts/utilities/export_products_for_my_groups.py"]
+        product_refresh_cmd = [
+            "python",
+            "scripts/utilities/export_products_for_my_groups.py",
+            "--category-id",
+            str(args.category_id),
+        ]
         if args.full_metadata_refresh:
             product_refresh_cmd.append("--full-refresh")
         steps.extend(
             [
-                ("Refresh group metadata", ["python", "scripts/utilities/export_pokemon_groups.py"]),
+                # Expected result: category-specific set/group metadata exists in DuckDB and CSV form.
+                (
+                    "Refresh group metadata",
+                    ["python", "scripts/utilities/export_pokemon_groups.py", "--category-id", str(args.category_id)],
+                ),
+                # Expected result: category-specific product metadata exists in DuckDB and CSV form.
                 ("Refresh product metadata", product_refresh_cmd),
-                ("Rebuild joined price/name export", ["python", "scripts/utilities/join_prices_to_names.py"]),
+                # Expected result: a joined price/name export is available for inspection and downstream use.
+                (
+                    "Rebuild joined price/name export",
+                    ["python", "scripts/utilities/join_prices_to_names.py", "--category-id", str(args.category_id)],
+                ),
             ]
         )
 
-    if not args.skip_analytics:
+    if analytics_enabled:
         steps.extend(
             [
+                # Expected result: English-only top-200 candidate universe is rebuilt.
                 ("Build top-200 universe", ["python", "scripts/rankings/top_200.py"]),
+                # Expected result: top-200 lookup table is refreshed for the dashboard layer.
                 ("Build top-200 lookup", ["python", "scripts/rankings/make_top200_lookup.py"]),
+                # Expected result: top-200 indicator values are recomputed.
                 ("Build top-200 indicators", ["python", "scripts/indicators/compute_200_indicators.py"]),
+                # Expected result: named top-200 movers export is refreshed.
                 ("Build top-200 named movers", ["python", "scripts/rankings/top200_with_names.py"]),
+                # Expected result: timeseries export for the top-200 list is rebuilt.
                 ("Build top-200 timeseries", ["python", "scripts/rankings/build_top200_timeseries.py"]),
+                # Expected result: ROC snapshot used by legacy analytics is rebuilt.
                 ("Build ROC 7/30/90 snapshot", ["python", "scripts/indicators/compute_roc_7_30_90.py"]),
-                ("Build product signal snapshot", ["python", "scripts/indicators/build_product_signal_snapshot.py"]),
+                (
+                    # Expected result: product-level momentum snapshot exists for API and screener reads.
+                    "Build product signal snapshot",
+                    ["python", "scripts/indicators/build_product_signal_snapshot.py", "--category-id", str(args.category_id)],
+                ),
+                (
+                    # Expected result: group-level breadth/momentum snapshot exists for set ranking views.
+                    "Build group signal snapshot",
+                    ["python", "scripts/indicators/build_group_signal_snapshot.py", "--category-id", str(args.category_id)],
+                ),
+            ]
+        )
+    elif not args.skip_analytics:
+        steps.extend(
+            [
+                (
+                    # Expected result: non-English category still gets a product-level signal snapshot.
+                    f"Build {category.label} product signal snapshot",
+                    ["python", "scripts/indicators/build_product_signal_snapshot.py", "--category-id", str(args.category_id)],
+                ),
+                (
+                    # Expected result: non-English category still gets a group-level signal snapshot.
+                    f"Build {category.label} group signal snapshot",
+                    ["python", "scripts/indicators/build_group_signal_snapshot.py", "--category-id", str(args.category_id)],
+                ),
             ]
         )
 
     if not args.skip_parquet:
+        # Expected result: parquet history includes the latest processed dates for downstream reads.
         steps.append(("Export parquet partitions", ["python", "scripts/utilities/export_parquet.py"]))
 
     return steps
 
 
 def run_step(name: str, cmd: list[str], dry_run: bool) -> int:
+    """Execute one pipeline step and log its timing.
+
+    Expected result:
+    - returns the subprocess exit code
+    - prints the exact command so failures can be traced from logs alone
+    """
     rendered = " ".join(shlex.quote(part) for part in cmd)
     print(f"\n=== {name} ===")
     print(rendered)
@@ -140,11 +227,19 @@ def run_step(name: str, cmd: list[str], dry_run: bool) -> int:
 
 
 def main() -> int:
+    """Run the full ordered pipeline and stop on the first failure by default.
+
+    Expected result:
+    - returns 0 when every queued stage succeeds
+    - returns 1 when any stage fails, with the failing step reported to stdout
+    """
     args = parse_args()
     steps = build_steps(args)
+    category = get_category_config(args.category_id)
 
     print("Pokemon Momentum daily update pipeline")
     print(f"Working directory: {ROOT}")
+    print(f"Category: {category.label} ({category.category_id})")
     print(f"Steps queued: {len(steps)}")
 
     failures: list[tuple[str, int]] = []

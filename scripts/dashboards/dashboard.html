@@ -132,6 +132,46 @@
       font-size: 15px;
     }
 
+    .hero-visual {
+      display: flex;
+      gap: 16px;
+      align-items: stretch;
+      margin-left: auto;
+    }
+
+    .hero-image-card {
+      width: 188px;
+      min-height: 188px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at top, rgba(34, 176, 255, 0.14), transparent 50%),
+        linear-gradient(180deg, rgba(18, 28, 47, 0.98), rgba(12, 20, 35, 0.98));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .hero-image-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .hero-image-empty {
+      padding: 18px;
+      text-align: center;
+      color: #627498;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      line-height: 1.5;
+    }
+
     .price-block {
       text-align: right;
       min-width: 132px;
@@ -229,9 +269,8 @@
 
     .picker-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
-      margin-top: 18px;
     }
 
     .picker-grid label {
@@ -573,12 +612,34 @@
         flex-direction: column;
       }
 
+      .hero-visual {
+        width: 100%;
+        justify-content: space-between;
+        margin-left: 0;
+      }
+
       .picker-grid {
         grid-template-columns: 1fr;
       }
 
       #chart {
         height: 480px;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .hero-visual {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .hero-image-card {
+        width: 100%;
+        min-height: 160px;
+      }
+
+      .price-block {
+        text-align: left;
       }
     }
   </style>
@@ -615,25 +676,20 @@
               <h1 id="cardTitle">Loading...</h1>
               <div class="subtitle" id="cardSubtitle">Fetching product history and metadata.</div>
             </div>
-            <div class="price-block">
-              <div class="section-label">Selected Price</div>
-              <div class="price-main" id="headlinePrice">-</div>
-              <div style="margin-top:10px;" id="headlineChangeWrap"></div>
-              <div class="freshness-badge" id="freshnessBadgeWrap">
-                <span class="chip neutral" id="freshnessBadge">Latest data: -</span>
+            <div class="hero-visual">
+              <div class="hero-image-card" id="heroImageCard">
+                <div class="hero-image-empty" id="heroImageEmpty">No Image Available</div>
+                <img id="heroImage" alt="" hidden>
+              </div>
+              <div class="price-block">
+                <div class="section-label">Selected Price</div>
+                <div class="price-main" id="headlinePrice">-</div>
+                <div style="margin-top:10px;" id="headlineChangeWrap"></div>
+                <div class="freshness-badge" id="freshnessBadgeWrap">
+                  <span class="chip neutral" id="freshnessBadge">Latest data: -</span>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div class="picker-grid">
-            <label>
-              <span class="field-label">Card Picker</span>
-              <select id="picker"></select>
-            </label>
-            <label>
-              <span class="field-label">Set Browser</span>
-              <select id="groupPicker"></select>
-            </label>
           </div>
 
           <div class="status-strip" id="statusStrip">
@@ -693,6 +749,21 @@
             </div>
           </div>
 
+          <div class="picker-grid" style="margin-bottom:18px;">
+            <label>
+              <span class="field-label">Card Picker</span>
+              <select id="picker"></select>
+            </label>
+            <label>
+              <span class="field-label">Set Browser</span>
+              <select id="groupPicker"></select>
+            </label>
+            <label>
+              <span class="field-label">Market</span>
+              <select id="marketPicker"></select>
+            </label>
+          </div>
+
           <div class="table-wrap">
             <table>
               <thead id="tableHead"></thead>
@@ -744,6 +815,7 @@
 
   <script>
     const apiBase = window.location.origin;
+    // The public dashboard hides a few operational stats, while /dashboard-dev keeps them visible.
     const isDevMode = window.location.pathname === "/dashboard-dev" || new URLSearchParams(window.location.search).get("mode") === "dev";
     if (!isDevMode) {
       document.body.classList.add("public-mode");
@@ -751,6 +823,7 @@
     const universeLimit = 50000;
     const picker = document.getElementById("picker");
     const groupPicker = document.getElementById("groupPicker");
+    const marketPicker = document.getElementById("marketPicker");
     const tableHead = document.getElementById("tableHead");
     const tableBody = document.getElementById("tableBody");
     const emptyState = document.getElementById("emptyState");
@@ -761,6 +834,8 @@
     const leftStatus = document.getElementById("leftStatus");
     const cardTitle = document.getElementById("cardTitle");
     const cardSubtitle = document.getElementById("cardSubtitle");
+    const heroImage = document.getElementById("heroImage");
+    const heroImageEmpty = document.getElementById("heroImageEmpty");
     const chartLabel = document.getElementById("chartLabel");
     const headlinePrice = document.getElementById("headlinePrice");
     const headlineChangeWrap = document.getElementById("headlineChangeWrap");
@@ -775,12 +850,16 @@
     const groupsById = new Map();
     const localTags = new Map();
     const sparklineCache = new Map();
+    const categoryOptions = [];
 
+    // This shared UI state lets the left rail, chart, table, and right rail stay in sync
+    // around one selected product, one active feed tab, one chart window, and one market.
     let currentKey = null;
     let currentDays = 365;
     let currentTab = "top_movers";
     let currentGroupId = null;
     let currentSegment = "cards";
+    let currentCategoryId = Number(new URLSearchParams(window.location.search).get("category_id") || 3);
     const moverFeeds = {
       cards: [],
       sealed: []
@@ -792,6 +871,7 @@
     let currentSeriesPayload = null;
 
     const tabConfig = {
+      // Each tab maps to one API screen plus the columns that should be surfaced in the lower table.
       top_movers: {
         path: "/top_movers?days=30&limit=120&min_prior=5",
         columns: ["productName", "groupName", "number", "subTypeName", "p_now", "p_prior", "roc_pct"],
@@ -858,10 +938,68 @@
       });
     }
 
+    function withCategory(path) {
+      // All category-aware API calls flow through this helper so market switching does not
+      // require every endpoint path to manage category_id manually.
+      const url = new URL(path, apiBase);
+      if (!url.searchParams.has("category_id")) {
+        url.searchParams.set("category_id", String(currentCategoryId));
+      }
+      return `${url.pathname}${url.search}`;
+    }
+
+    function syncUrlState() {
+      const url = new URL(window.location.href);
+      url.searchParams.set("category_id", String(currentCategoryId));
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    }
+
+    function resetCategoryState() {
+      // Clear all market-specific caches before loading a different category. The next fetches
+      // are expected to repopulate universe, groups, top movers, and the current selection.
+      universeByKey.clear();
+      groupsById.clear();
+      sparklineCache.clear();
+      moverFeeds.cards = [];
+      moverFeeds.sealed = [];
+      moverFeedLoading.cards = false;
+      moverFeedLoading.sealed = false;
+      currentKey = null;
+      currentGroupId = null;
+      currentSeriesPayload = null;
+      picker.innerHTML = "";
+      groupPicker.innerHTML = "";
+      moverList.innerHTML = "";
+      tableBody.innerHTML = "";
+      tableHead.innerHTML = "";
+      emptyState.style.display = "none";
+    }
+
     async function getJson(path) {
-      const res = await fetch(apiBase + path);
+      const res = await fetch(apiBase + withCategory(path));
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       return res.json();
+    }
+
+    async function loadCategories() {
+      // Populate the market selector before any category-aware API calls run.
+      const res = await fetch(apiBase + "/categories");
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const payload = await res.json();
+      categoryOptions.length = 0;
+      categoryOptions.push(...(payload.items || []));
+      marketPicker.innerHTML = "";
+      for (const item of categoryOptions) {
+        const opt = document.createElement("option");
+        opt.value = String(item.category_id);
+        opt.textContent = item.label;
+        marketPicker.appendChild(opt);
+      }
+      if (!categoryOptions.some((item) => Number(item.category_id) === currentCategoryId)) {
+        currentCategoryId = Number(categoryOptions[0]?.category_id || 3);
+      }
+      marketPicker.value = String(currentCategoryId);
+      syncUrlState();
     }
 
     function keyOf(productId, subTypeName) {
@@ -932,6 +1070,8 @@
     }
 
     function enrichRows(payload) {
+      // API screens return different column sets. This normalizes them against the universe
+      // metadata cache so the table and left rail can render a consistent product shape.
       const columns = payload.columns || [];
       return (payload.rows || []).map((row) => {
         const item = {};
@@ -974,6 +1114,7 @@
     }
 
     function fillPicker() {
+      // The card picker is the canonical product selector for the main chart.
       picker.innerHTML = "";
       const options = Array.from(universeByKey.entries()).map(([key, meta]) => ({
         key,
@@ -994,6 +1135,7 @@
     }
 
     function fillGroupPicker() {
+      // The set browser drives the lower table and, when changed, now also advances the chart.
       groupPicker.innerHTML = "";
       const groups = Array.from(groupsById.values()).sort((a, b) => a.groupName.localeCompare(b.groupName));
       for (const group of groups) {
@@ -1035,6 +1177,8 @@
     }
 
     function renderTable(rows) {
+      // The lower table is intentionally task-based: it changes meaning based on the active tab,
+      // but clicking any product-like row should still funnel back into the main chart selection.
       const cfg = tabConfig[currentTab];
       renderHeader(cfg.columns);
       tableBody.innerHTML = "";
@@ -1066,7 +1210,18 @@
       }
     }
 
+    async function selectItem(item) {
+      // Central helper used by the table and set browser to move the full dashboard to one product.
+      if (!item) return;
+      ensurePickerOption(item);
+      currentKey = item.key;
+      picker.value = currentKey;
+      await loadSeries();
+    }
+
     function renderMoverRail() {
+      // The left rail is the discovery surface: compact ranked cards that should quickly load
+      // a full chart when clicked without touching the lower table first.
       const rows = (moverFeeds[currentSegment] || []).slice(0, 18);
       moverList.innerHTML = "";
       leftStatus.textContent = moverFeedLoading[currentSegment] ? "Loading" : `${rows.length} live`;
@@ -1184,6 +1339,17 @@
       chartLabel.textContent = `Showing ${rows.length.toLocaleString()} daily observations across the selected chart window.`;
       headlinePrice.textContent = formatNumber(latestPrice, 2);
       headlineChangeWrap.innerHTML = `<span class="price-pill ${pct.cls}">${pct.text === "n/a" ? "vs SMA30 n/a" : `${pct.text} vs SMA30`}</span>`;
+      if (meta.imageUrl) {
+        heroImage.src = meta.imageUrl;
+        heroImage.alt = meta.productName ? `${meta.productName} image` : "Product image";
+        heroImage.hidden = false;
+        heroImageEmpty.hidden = true;
+      } else {
+        heroImage.removeAttribute("src");
+        heroImage.alt = "";
+        heroImage.hidden = true;
+        heroImageEmpty.hidden = false;
+      }
 
       metricChips.innerHTML = "";
       [
@@ -1315,14 +1481,17 @@
     }
 
     async function loadHealth() {
+      // Health drives the lightweight freshness/source badges and operator stats.
       const health = await getJson("/health");
       document.getElementById("statRows").textContent = Number(health.rows || 0).toLocaleString();
       document.getElementById("statLatest").textContent = health.latest || "-";
       document.getElementById("statSource").textContent = health.source || "-";
       freshnessBadge.textContent = `Latest data: ${health.latest || "-"}`;
+      leftStatus.textContent = categoryOptions.find((item) => Number(item.category_id) === currentCategoryId)?.label || `Category ${currentCategoryId}`;
     }
 
     async function loadGroups() {
+      // Group metadata populates the set browser and supports group-signals drilldown.
       const payload = await getJson("/groups?limit=2000");
       const columns = payload.columns || [];
       for (const row of payload.rows || []) {
@@ -1334,6 +1503,7 @@
     }
 
     async function loadUniverse() {
+      // Universe load seeds the main product picker and provides enrichment data for every screen.
       const payload = await getJson(`/universe?limit=${universeLimit}`);
       const columns = payload.columns || [];
       for (const row of payload.rows || []) {
@@ -1346,6 +1516,8 @@
     }
 
     async function loadTopMovers(segment = currentSegment, force = false) {
+      // Cards and sealed are cached independently so the rail can switch segments without
+      // re-querying every time, while still allowing a forced refresh on market changes.
       if (!force && moverFeeds[segment] && moverFeeds[segment].length > 0) {
         if (segment === currentSegment) renderMoverRail();
         return;
@@ -1359,6 +1531,8 @@
     }
 
     async function loadSeries() {
+      // The chart is always driven by the current picker selection; summary cards and the
+      // right rail are refreshed from the same payload so the whole page stays coherent.
       if (!currentKey) return;
       const meta = universeByKey.get(currentKey);
       if (!meta) return;
@@ -1376,6 +1550,8 @@
     }
 
     async function loadTable() {
+      // The lower panel is the active signal feed. For Set Browser it swaps to the selected
+      // group's product list; otherwise it renders the configured screener endpoint.
       const cfg = tabConfig[currentTab];
       tableStatus.textContent = cfg.title;
       const path = currentTab === "group_products"
@@ -1384,9 +1560,11 @@
       const payload = await getJson(path);
       const rows = enrichRows(payload);
       renderTable(rows);
+      return rows;
     }
 
     function bindEvents() {
+      // Event wiring turns each control into either a selection change or a feed/window change.
       picker.addEventListener("change", async () => {
         currentKey = picker.value;
         await loadSeries();
@@ -1394,8 +1572,15 @@
 
       groupPicker.addEventListener("change", async () => {
         currentGroupId = Number(groupPicker.value);
-        if (currentTab === "group_products") {
-          await loadTable();
+        currentTab = "group_products";
+        tabsEl.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
+        const setBrowserBtn = tabsEl.querySelector('[data-tab="group_products"]');
+        if (setBrowserBtn) {
+          setBrowserBtn.classList.add("active");
+        }
+        const rows = await loadTable();
+        if (rows && rows.length) {
+          await selectItem(rows[0]);
         }
       });
 
@@ -1426,6 +1611,16 @@
         });
       });
 
+      marketPicker.addEventListener("change", async () => {
+        currentCategoryId = Number(marketPicker.value || 3);
+        syncUrlState();
+        resetCategoryState();
+        leftStatus.textContent = "Loading";
+        tableStatus.textContent = "Switching market...";
+        await Promise.all([loadHealth(), loadGroups(), loadUniverse()]);
+        await Promise.all([loadTopMovers(currentSegment, true), loadSeries(), loadTable()]);
+      });
+
       tagActions.querySelectorAll("button").forEach((btn) => {
         btn.addEventListener("click", () => {
           if (!currentKey) return;
@@ -1445,9 +1640,16 @@
     }
 
     async function init() {
+      // Expected page boot result:
+      // - categories loaded
+      // - health/group/universe caches ready
+      // - left rail populated
+      // - current chart selected
+      // - active signal table rendered
       try {
         hydrateStoredTags();
         bindEvents();
+        await loadCategories();
         await Promise.all([loadHealth(), loadGroups(), loadUniverse()]);
         await Promise.all([loadTopMovers(currentSegment), loadSeries(), loadTable()]);
       } catch (err) {

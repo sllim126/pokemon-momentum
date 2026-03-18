@@ -1,0 +1,563 @@
+Pokemon Momentum Data Flow
+==========================
+
+What this document is for
+-------------------------
+This file explains how data moves through the project from raw TCGCSV archives to the
+dashboard screens. It is meant to answer:
+
+- where the data comes from
+- where it is stored
+- which scripts are responsible for each stage
+- which files/tables are considered intermediate vs final
+- what the API and dashboards actually read from
+
+
+High-level flow
+---------------
+
+1. Download raw daily archives from TCGCSV
+2. Extract those archives to disk
+3. Load category-specific price history into DuckDB
+4. Refresh group and product metadata
+5. Build joined/named exports for inspection
+6. Build product-level and group-level signal snapshots
+7. Export partitioned parquet history
+8. Serve dashboards and API from DuckDB + parquet
+
+
+Core idea
+---------
+The long-term historical fact data is stored in two layers:
+
+- DuckDB
+  - working analytical database
+  - used for loading, joins, metadata, and snapshot tables
+
+- Parquet
+  - partitioned historical fact store
+  - used for large history reads when available
+
+In practice:
+
+- DuckDB is the working engine
+- parquet is the durable historical read layer
+- the API chooses parquet when a category exists there, otherwise it falls back to DuckDB
+
+
+Categories / markets
+--------------------
+The project is now category-aware.
+
+Current categories:
+
+- `3` = Pokemon
+- `85` = Pokemon Japanese
+
+Shared category naming is defined in:
+
+- [category_config.py](/opt/pokemon-momentum/scripts/common/category_config.py)
+
+That file determines the category-specific filenames and DuckDB table names, for example:
+
+- `pokemon_groups`
+- `pokemon_products`
+- `pokemon_product_signal_snapshot`
+- `pokemon_group_signal_snapshot`
+
+and for Japanese:
+
+- `pokemon_jp_groups`
+- `pokemon_jp_products`
+- `pokemon_jp_product_signal_snapshot`
+- `pokemon_jp_group_signal_snapshot`
+
+
+Stage 1: Raw download
+---------------------
+Script:
+
+- [Download_new_day.py](/opt/pokemon-momentum/scripts/download/Download_new_day.py)
+
+Purpose:
+
+- download daily `.7z` archives from TCGCSV
+- store them in `/app/data/raw`
+- extract only newly downloaded archives into `/app/data/extracted`
+
+Important detail:
+
+- this is not category-specific
+- one downloaded archive contains many category folders
+- category `3` and category `85` both come from the same extracted day package
+
+Result of this stage:
+
+- raw archive files in `/app/data/raw`
+- extracted folders like:
+  - `/app/data/extracted/prices-YYYY-MM-DD.ppmd/...`
+
+
+Stage 2: Historical price load
+------------------------------
+Script:
+
+- [build_pokemon_prices_all_days.py](/opt/pokemon-momentum/scripts/extract/build_pokemon_prices_all_days.py)
+
+Purpose:
+
+- read extracted day folders
+- read only the requested category subfolder
+- parse each group price file
+- bulk insert rows into DuckDB table `pokemon_prices`
+
+Main storage target:
+
+- DuckDB table: `pokemon_prices`
+
+Important detail:
+
+- this table is shared across categories
+- category separation happens through the `categoryId` column
+
+Optional export:
+
+- category-specific CSV like:
+  - `pokemon_prices_all_days.csv`
+  - `pokemon_jp_prices_all_days.csv`
+
+Those CSVs are mostly compatibility/debug artifacts now, not the preferred long-term store.
+
+Result of this stage:
+
+- DuckDB has historical fact rows for the selected category
+- missing dates are added incrementally
+
+
+Stage 3: Group metadata refresh
+-------------------------------
+Script:
+
+- [export_pokemon_groups.py](/opt/pokemon-momentum/scripts/utilities/export_pokemon_groups.py)
+
+Purpose:
+
+- fetch all group/set metadata for the selected category from TCGCSV
+- write category-specific CSV
+- write category-specific DuckDB table
+
+Outputs:
+
+- CSV:
+  - `pokemon_groups.csv`
+  - `pokemon_jp_groups.csv`
+- DuckDB tables:
+  - `pokemon_groups`
+  - `pokemon_jp_groups`
+
+Result of this stage:
+
+- set names, abbreviations, and metadata are available for joins and dashboard display
+
+
+Stage 4: Product metadata refresh
+---------------------------------
+Script:
+
+- [export_products_for_my_groups.py](/opt/pokemon-momentum/scripts/utilities/export_products_for_my_groups.py)
+
+Purpose:
+
+- look at which groups exist in `pokemon_prices` for the selected category
+- fetch product metadata only for those groups
+- by default, do this incrementally
+- optionally, do a full refresh
+
+Important detail:
+
+- daily runs are incremental
+- weekly runs force a full metadata refresh
+
+Outputs:
+
+- CSV:
+  - `pokemon_products.csv`
+  - `pokemon_jp_products.csv`
+- DuckDB tables:
+  - `pokemon_products`
+  - `pokemon_jp_products`
+
+Placeholder behavior:
+
+- if price history contains a productId that metadata does not return, a placeholder row is created
+- this keeps downstream joins from dropping priced products
+
+Result of this stage:
+
+- product names, images, rarity, and number metadata exist for the selected category
+
+
+Stage 5: Joined named history export
+------------------------------------
+Script:
+
+- [join_prices_to_names.py](/opt/pokemon-momentum/scripts/utilities/join_prices_to_names.py)
+
+Purpose:
+
+- join raw price history to set and product names
+- create a human-readable export for inspection and debugging
+
+Outputs:
+
+- CSV:
+  - `pokemon_prices_named.csv`
+  - `pokemon_jp_prices_named.csv`
+- DuckDB tables:
+  - `pokemon_prices_named`
+  - `pokemon_jp_prices_named`
+
+Result of this stage:
+
+- there is an easy-to-read historical export with both numeric IDs and human names
+
+
+Stage 6: Product signal snapshot
+--------------------------------
+Script:
+
+- [build_product_signal_snapshot.py](/opt/pokemon-momentum/scripts/indicators/build_product_signal_snapshot.py)
+
+Purpose:
+
+- take the latest available row for each product/subtype
+- compute moving-average context and rate-of-change values
+- classify product type
+- compute a product-level trend score
+
+Inputs:
+
+- `pokemon_prices`
+- category-specific groups table
+- category-specific products table
+
+Outputs:
+
+- CSV:
+  - `pokemon_product_signal_snapshot.csv`
+  - `pokemon_jp_product_signal_snapshot.csv`
+- DuckDB tables:
+  - `pokemon_product_signal_snapshot`
+  - `pokemon_jp_product_signal_snapshot`
+
+Important fields:
+
+- `roc_7d_pct`
+- `roc_30d_pct`
+- `roc_90d_pct`
+- `price_vs_sma30_pct`
+- `price_vs_sma90_pct`
+- `breakout_90d_flag`
+- `acceleration_7d_vs_30d`
+- `trend_score`
+- `productClass`
+- `productKind`
+
+Result of this stage:
+
+- the API can serve momentum-style product screens without recomputing every metric on each request
+
+
+Stage 7: Group signal snapshot
+------------------------------
+Script:
+
+- [build_group_signal_snapshot.py](/opt/pokemon-momentum/scripts/indicators/build_group_signal_snapshot.py)
+
+Purpose:
+
+- roll the product snapshot up to the set/group level
+- measure breadth and participation across a whole set
+
+Inputs:
+
+- category-specific product signal snapshot
+
+Outputs:
+
+- CSV:
+  - `pokemon_group_signal_snapshot.csv`
+  - `pokemon_jp_group_signal_snapshot.csv`
+- DuckDB tables:
+  - `pokemon_group_signal_snapshot`
+  - `pokemon_jp_group_signal_snapshot`
+
+Important fields:
+
+- `item_count`
+- `card_count`
+- `sealed_count`
+- `avg_30d_pct`
+- `avg_90d_pct`
+- `pct_above_sma30`
+- `pct_at_90d_high`
+- `breadth_score`
+
+Result of this stage:
+
+- the API can rank whole sets, not just individual cards/products
+
+
+Stage 8: Parquet export
+-----------------------
+Script:
+
+- [export_parquet.py](/opt/pokemon-momentum/scripts/utilities/export_parquet.py)
+
+Purpose:
+
+- export each date in the price fact table into a parquet partition
+
+Output location:
+
+- `/app/data/parquet/date=YYYY-MM-DD/data.parquet`
+
+Important detail:
+
+- parquet is partitioned by date, not by category
+- if a given date contains rows for categories `3` and `85`, both will be present in that date's parquet file
+
+Current API behavior:
+
+- prefer parquet for history reads when the category exists there
+- fall back to DuckDB if parquet does not yet contain that category
+
+Result of this stage:
+
+- large historical scans can use parquet rather than only the DuckDB fact table
+
+
+English-only legacy analytics
+-----------------------------
+Some ranking scripts are still English-only and only run for category `3`.
+
+Examples:
+
+- top-200 universe
+- top-200 lookup
+- top-200 indicators
+- top-200 timeseries
+- legacy ROC snapshot
+
+These are still part of the English pipeline, but not yet mirrored for Japanese.
+
+That means:
+
+- core ingest + metadata + snapshots work for both `3` and `85`
+- legacy top-200 ranking stack currently remains English-specific
+
+
+Automation flow
+---------------
+Primary pipeline runner:
+
+- [run_daily_update.py](/opt/pokemon-momentum/scripts/pipeline/run_daily_update.py)
+
+Host wrapper:
+
+- [run_daily_update_host.sh](/opt/pokemon-momentum/scripts/pipeline/run_daily_update_host.sh)
+
+Why the host wrapper exists:
+
+- stop the running app container
+- avoid DuckDB file-lock conflicts during writes
+- run the pipeline in a one-off container
+- start the app container again afterward
+
+Daily behavior:
+
+- incremental price load
+- incremental metadata refresh
+- snapshot rebuild
+- parquet export
+
+Weekly behavior:
+
+- same overall pipeline
+- but product metadata refresh is forced to full-refresh mode
+
+
+Validation / troubleshooting
+----------------------------
+Validation script:
+
+- [validate_pipeline.py](/opt/pokemon-momentum/scripts/pipeline/validate_pipeline.py)
+
+Purpose:
+
+- confirm required outputs exist
+- optionally run steps and validate each one after it completes
+- help pinpoint which pipeline stage failed
+
+Best places to check when something is wrong:
+
+1. raw download/extraction
+2. `pokemon_prices` row counts for the category
+3. group/product metadata tables
+4. product signal snapshot
+5. group signal snapshot
+6. parquet latest date
+7. API `/health`
+
+
+API layer
+---------
+Main API:
+
+- [api.py](/opt/pokemon-momentum/scripts/dashboards/api.py)
+
+What it does:
+
+- serves dashboard HTML files
+- exposes JSON endpoints for universe, groups, series, movers, signals, and set views
+- picks the best history source for each category
+
+Important helpers:
+
+- `prices_from(category_id)`
+  - chooses parquet if available for that category
+  - otherwise uses DuckDB table `pokemon_prices`
+
+- `products_from(category_id)`
+  - chooses category-specific metadata table or CSV fallback
+
+- `groups_from(category_id)`
+  - chooses category-specific groups table or CSV fallback
+
+- `product_signal_from(category_id)`
+  - chooses category-specific product signal table or CSV fallback
+
+- `group_signal_from(category_id)`
+  - chooses category-specific group signal table or CSV fallback
+
+Result:
+
+- dashboard code does not need to know where the storage currently lives
+- it only needs to pass `category_id`
+
+
+Dashboard flow
+--------------
+Main dashboard:
+
+- [dashboard.html](/opt/pokemon-momentum/scripts/dashboards/dashboard.html)
+
+Embed dashboard:
+
+- [embed_dashboard.html](/opt/pokemon-momentum/scripts/dashboards/embed_dashboard.html)
+
+General frontend flow:
+
+1. load available categories
+2. load `/health`
+3. load `/groups`
+4. load `/universe`
+5. load the left-rail feed
+6. load the selected product series
+7. load the active signal table
+
+Main dashboard responsibilities:
+
+- left rail = discovery / trending feed
+- center chart = selected product analysis
+- lower table = active screener / set browser
+- right rail = tracking and summary context
+
+Embed dashboard responsibilities:
+
+- compact feed for iframe/public use
+- one chart
+- minimal controls
+
+
+Source-of-truth guidance
+------------------------
+If you are trying to decide where something "really lives", use this mental model:
+
+- Raw upstream source:
+  - TCGCSV daily archives
+
+- Working historical fact table:
+  - DuckDB `pokemon_prices`
+
+- Durable/scalable historical read layer:
+  - parquet partitions in `/app/data/parquet`
+
+- Metadata:
+  - category-specific groups/products tables
+
+- Latest analytical state:
+  - category-specific product/group signal snapshot tables
+
+- UI/API:
+  - reads from parquet when it can
+  - reads from DuckDB when parquet does not yet cover that category or date
+
+
+Typical daily success path
+--------------------------
+On a normal successful daily run, the expected sequence is:
+
+1. new archive is downloaded if available
+2. new day is extracted if needed
+3. missing price rows are inserted into `pokemon_prices`
+4. group metadata is refreshed
+5. product metadata is refreshed
+6. joined named export is rebuilt
+7. product signal snapshot is rebuilt
+8. group signal snapshot is rebuilt
+9. new parquet partitions are exported
+10. API serves the new latest date
+
+
+Common failure patterns
+-----------------------
+
+If the dashboard latest date does not advance:
+
+- parquet probably has not been exported yet
+- or the category is missing from parquet and the API is still preferring it incorrectly
+
+If a category loads in snapshots but not in history endpoints:
+
+- snapshot tables exist
+- but parquet for that category may be missing
+- the API should then fall back to DuckDB
+
+If set/product names are missing:
+
+- metadata tables may not have refreshed
+- placeholder rows may be in use
+
+If the pipeline hangs during metadata:
+
+- tcgcsv product/group endpoints may be slow or flaky
+- incremental metadata refresh reduces this risk for daily runs
+
+
+Recommended long-term architecture
+----------------------------------
+The intended long-term shape of the system is:
+
+- TCGCSV archive download
+- extracted day folders
+- DuckDB ingest / metadata / snapshots
+- parquet as historical fact read layer
+- FastAPI as the query + presentation layer
+- dashboards as research/public views on top
+
+That means the project is not choosing between DuckDB or parquet.
+It is using both:
+
+- DuckDB for loading, joins, snapshots, and API-friendly analytics
+- parquet for large historical storage and scalable reads
