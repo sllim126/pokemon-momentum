@@ -13,7 +13,9 @@ from scripts.dashboards.query_support import (
     DB_PATH,
     PRODUCT_CLASS_SQL,
     PRODUCT_KIND_SQL,
+    build_generation_case,
     build_metadata_cte,
+    build_premium_rarity_filter,
     category_config,
     group_signal_from,
     groups_from,
@@ -392,15 +394,87 @@ def product_signals(limit: int = 500, min_price: float = 0.0, category_id: int =
     return {"columns": cols, "rows": rows}
 
 
-@app.get("/group_signals")
-def group_signals(limit: int = 500, min_items: int = 5, category_id: int = 3):
+@app.get("/good_buys")
+def good_buys(
+    limit: int = 250,
+    min_price: float = 5.0,
+    max_30d_pct: float = 0.0,
+    max_7d_pct: float = 5.0,
+    category_id: int = 3,
+):
     limit = max(1, min(limit, 5000))
-    min_items = max(1, min(min_items, 1000))
     category = category_config(category_id)
+    premium_rarity_filter = build_premium_rarity_filter("rarity")
 
     sql = f"""
     SELECT
       latest_date,
+      groupId,
+      groupName,
+      productId,
+      productName,
+      imageUrl,
+      rarity,
+      number,
+      productClass,
+      productKind,
+      subTypeName,
+      latest_price,
+      roc_7d_pct,
+      roc_30d_pct,
+      roc_90d_pct,
+      price_vs_sma30_pct,
+      trend_score
+    FROM {product_signal_from(category.category_id)}
+    WHERE latest_price >= {min_price}
+      AND productKind = 'card'
+      AND {premium_rarity_filter}
+      AND COALESCE(roc_30d_pct, 0) <= {max_30d_pct}
+      AND COALESCE(roc_7d_pct, 0) <= {max_7d_pct}
+    ORDER BY roc_30d_pct ASC, price_vs_sma30_pct ASC, latest_price DESC
+    LIMIT {limit}
+    """
+    cols, rows = q(sql)
+    return {"columns": cols, "rows": rows}
+
+
+@app.get("/group_signals")
+def group_signals(limit: int = 500, min_items: int = 5, generation: str | None = None, category_id: int = 3):
+    limit = max(1, min(limit, 5000))
+    min_items = max(1, min(min_items, 1000))
+    category = category_config(category_id)
+    generation_case = build_generation_case("g.name", "g.abbreviation", "g.publishedOn")
+    generation_filter = ""
+    if generation:
+        safe_generation = generation.replace("'", "''")
+        generation_filter = f"AND generation = '{safe_generation}'"
+
+    sql = f"""
+    WITH grouped AS (
+      SELECT
+        gs.latest_date,
+        gs.groupId,
+        gs.groupName,
+        {generation_case} AS generation,
+        gs.item_count,
+        gs.card_count,
+        gs.sealed_count,
+        gs.avg_30d_pct,
+        gs.avg_90d_pct,
+        gs.pct_above_sma30,
+        gs.pct_above_sma90,
+        gs.pct_at_90d_high,
+        gs.avg_acceleration_7d_vs_30d,
+        gs.sealed_vs_cards_30d_divergence,
+        gs.sealed_vs_cards_90d_divergence,
+        gs.breadth_score
+      FROM {group_signal_from(category.category_id)} gs
+      LEFT JOIN {groups_from(category.category_id)} g
+        ON g.groupId = gs.groupId
+    )
+    SELECT
+      latest_date,
+      generation,
       groupId,
       groupName,
       item_count,
@@ -415,9 +489,10 @@ def group_signals(limit: int = 500, min_items: int = 5, category_id: int = 3):
       sealed_vs_cards_30d_divergence,
       sealed_vs_cards_90d_divergence,
       breadth_score
-    FROM {group_signal_from(category.category_id)}
+    FROM grouped
     WHERE item_count >= {min_items}
-    ORDER BY breadth_score DESC, avg_30d_pct DESC, pct_above_sma30 DESC, groupName
+      {generation_filter}
+    ORDER BY generation, breadth_score DESC, avg_30d_pct DESC, pct_above_sma30 DESC, groupName
     LIMIT {limit}
     """
     cols, rows = q(sql)
@@ -477,8 +552,11 @@ def top_movers(
     min_prior: float = 5.0,
     min_signal_days: int = 3,
     min_daily_move_pct: float = 1.0,
+    min_recent_observations: int = 4,
+    min_recent_distinct_prices: int = 3,
+    recent_variation_window_days: int = 14,
     require_recent_change: bool = True,
-    recent_change_within_days: int = 5,
+    recent_change_within_days: int = 4,
     product_kind: str | None = None,
     category_id: int = 3,
 ):
@@ -488,6 +566,9 @@ def top_movers(
     if product_kind in {"card", "sealed"}:
         product_kind_filter = f"AND m.productKind = '{product_kind}'"
     metadata_cte = build_metadata_cte(category.category_id, include_classification=True, cte_name="metadata")
+    min_recent_observations = max(2, min(min_recent_observations, 30))
+    min_recent_distinct_prices = max(2, min(min_recent_distinct_prices, 15))
+    recent_variation_window_days = max(3, min(recent_variation_window_days, 30))
 
     sql = f"""
     WITH d AS (
@@ -538,6 +619,20 @@ def top_movers(
         FROM recent_changes
         GROUP BY groupId, productId, subTypeName
     ),
+    recent_variation AS (
+        SELECT
+            groupId,
+            productId,
+            subTypeName,
+            COUNT(*) FILTER (
+                WHERE date >= (SELECT max_date FROM d) - INTERVAL {recent_variation_window_days} DAY
+            ) AS recent_observations,
+            COUNT(DISTINCT marketPrice) FILTER (
+                WHERE date >= (SELECT max_date FROM d) - INTERVAL {recent_variation_window_days} DAY
+            ) AS recent_distinct_prices
+        FROM recent_changes
+        GROUP BY groupId, productId, subTypeName
+    ),
     latest_rows AS (
         SELECT
             groupId,
@@ -553,7 +648,7 @@ def top_movers(
         WHERE categoryId = {category.category_id}
           AND marketPrice IS NOT NULL
     ),
-    recent_window AS (
+    latest_window AS (
         SELECT
             groupId,
             productId,
@@ -593,18 +688,23 @@ def top_movers(
         b.p_prior,
         (b.p_now / b.p_prior - 1) * 100 AS roc_pct,
         a.signal_days,
-        rw.recent_points,
-        rw.recent_distinct_prices,
+        rv.recent_observations,
+        rv.recent_distinct_prices,
+        lw.recent_points,
         ra.last_change_date
     FROM base b
     LEFT JOIN activity a
       ON a.productId = b.productId
      AND a.subTypeName = b.subTypeName
      AND a.groupId = b.groupId
-    LEFT JOIN recent_window rw
-      ON rw.productId = b.productId
-     AND rw.subTypeName = b.subTypeName
-     AND rw.groupId = b.groupId
+    LEFT JOIN recent_variation rv
+      ON rv.productId = b.productId
+     AND rv.subTypeName = b.subTypeName
+     AND rv.groupId = b.groupId
+    LEFT JOIN latest_window lw
+      ON lw.productId = b.productId
+     AND lw.subTypeName = b.subTypeName
+     AND lw.groupId = b.groupId
     LEFT JOIN recent_activity ra
       ON ra.productId = b.productId
      AND ra.subTypeName = b.subTypeName
@@ -616,6 +716,8 @@ def top_movers(
       AND b.p_prior IS NOT NULL
       AND b.p_prior >= {min_prior}
       AND COALESCE(a.signal_days, 0) >= {min_signal_days}
+      AND COALESCE(rv.recent_observations, 0) >= {min_recent_observations}
+      AND COALESCE(rv.recent_distinct_prices, 0) >= {min_recent_distinct_prices}
       {product_kind_filter}
       AND (
         NOT {1 if require_recent_change else 0}

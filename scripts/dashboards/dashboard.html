@@ -132,18 +132,11 @@
       font-size: 15px;
     }
 
-    .hero-visual {
-      display: flex;
-      gap: 16px;
-      align-items: stretch;
-      margin-left: auto;
-    }
-
     .hero-image-card {
-      width: 188px;
-      min-height: 188px;
+      width: 100%;
+      min-height: 320px;
       border: 1px solid var(--line);
-      border-radius: 20px;
+      border-radius: 7px;
       background:
         radial-gradient(circle at top, rgba(34, 176, 255, 0.14), transparent 50%),
         linear-gradient(180deg, rgba(18, 28, 47, 0.98), rgba(12, 20, 35, 0.98));
@@ -163,7 +156,7 @@
     }
 
     .hero-image-empty {
-      padding: 18px;
+      padding: 22px;
       text-align: center;
       color: #627498;
       font-size: 12px;
@@ -175,6 +168,7 @@
     .price-block {
       text-align: right;
       min-width: 132px;
+      margin-left: auto;
     }
 
     .price-main {
@@ -443,7 +437,7 @@
 
     #chart {
       width: 100%;
-      height: 620px;
+      height: 465px;
       border-radius: 20px;
       overflow: hidden;
       border: 1px solid var(--line);
@@ -453,6 +447,9 @@
 
     .signal-panel {
       min-width: 0;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      min-height: 0;
     }
 
     .signal-topline {
@@ -468,11 +465,29 @@
       color: var(--muted);
     }
 
+    .dev-tab-help {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(16, 23, 39, 0.58);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
     .table-wrap {
       border: 1px solid var(--line);
       border-radius: 20px;
-      overflow: hidden;
+      overflow: auto;
       background: rgba(16, 23, 39, 0.72);
+      max-height: min(48vh, 720px);
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .table-wrap::-webkit-scrollbar {
+      display: none;
     }
 
     table {
@@ -508,6 +523,11 @@
       background: rgba(34, 176, 255, 0.06);
     }
 
+    tbody tr.active {
+      background: rgba(34, 176, 255, 0.12);
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.2);
+    }
+
     .empty {
       padding: 20px 16px;
       color: var(--muted);
@@ -530,6 +550,15 @@
       line-height: 1.55;
       font-size: 14px;
       margin-top: 10px;
+    }
+
+    .image-card {
+      position: sticky;
+      top: 0;
+    }
+
+    .image-card .detail-copy {
+      margin-bottom: 14px;
     }
 
     .tag-row,
@@ -563,17 +592,6 @@
     .detail-row .value {
       text-align: right;
       font-weight: 700;
-    }
-
-    .notes {
-      margin-top: 14px;
-      padding: 14px;
-      border-radius: 16px;
-      background: rgba(16, 23, 39, 0.64);
-      border: 1px solid var(--line);
-      color: var(--muted);
-      line-height: 1.55;
-      min-height: 120px;
     }
 
     .status {
@@ -612,34 +630,23 @@
         flex-direction: column;
       }
 
-      .hero-visual {
-        width: 100%;
-        justify-content: space-between;
-        margin-left: 0;
-      }
-
       .picker-grid {
         grid-template-columns: 1fr;
       }
 
       #chart {
-        height: 480px;
+        height: 360px;
+      }
+
+      .table-wrap {
+        max-height: none;
       }
     }
 
     @media (max-width: 760px) {
-      .hero-visual {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .hero-image-card {
-        width: 100%;
-        min-height: 160px;
-      }
-
       .price-block {
         text-align: left;
+        margin-left: 0;
       }
     }
   </style>
@@ -650,8 +657,8 @@
       <aside class="panel left-rail">
         <div class="rail-title">
           <div>
-            <div class="section-label">Momentum Rail</div>
-            <h2>Trending Up</h2>
+            <div class="section-label">Market Highlights</div>
+            <h2>Trending Now</h2>
           </div>
           <div class="mini-badge neutral" id="leftStatus">Loading</div>
         </div>
@@ -672,22 +679,16 @@
         <section class="panel hero">
           <div class="stage-title">
             <div>
-              <div class="section-label">Live Screener</div>
+              <div class="section-label">Market View</div>
               <h1 id="cardTitle">Loading...</h1>
               <div class="subtitle" id="cardSubtitle">Fetching product history and metadata.</div>
             </div>
-            <div class="hero-visual">
-              <div class="hero-image-card" id="heroImageCard">
-                <div class="hero-image-empty" id="heroImageEmpty">No Image Available</div>
-                <img id="heroImage" alt="" hidden>
-              </div>
-              <div class="price-block">
-                <div class="section-label">Selected Price</div>
-                <div class="price-main" id="headlinePrice">-</div>
-                <div style="margin-top:10px;" id="headlineChangeWrap"></div>
-                <div class="freshness-badge" id="freshnessBadgeWrap">
-                  <span class="chip neutral" id="freshnessBadge">Latest data: -</span>
-                </div>
+            <div class="price-block">
+              <div class="section-label">Selected Price</div>
+              <div class="price-main" id="headlinePrice">-</div>
+              <div style="margin-top:10px;" id="headlineChangeWrap"></div>
+              <div class="freshness-badge" id="freshnessBadgeWrap">
+                <span class="chip neutral" id="freshnessBadge">Latest data: -</span>
               </div>
             </div>
           </div>
@@ -706,7 +707,7 @@
               <div class="value" id="statSource">-</div>
             </div>
             <div class="status-card">
-              <div class="section-label">Universe</div>
+              <div class="section-label">Tracked Items</div>
               <div class="value" id="statUniverse">-</div>
             </div>
           </div>
@@ -734,33 +735,44 @@
         <section class="panel signal-panel">
           <div class="signal-topline">
             <div>
-              <div class="section-label">Signal Feed</div>
+              <div class="section-label">Market Signals</div>
               <p id="tableStatus">Loading screener...</p>
             </div>
             <div class="tab-bar" id="tabs">
               <button type="button" data-tab="top_movers" class="active">Top Movers</button>
               <button type="button" data-tab="breakouts">Breakouts</button>
+              <button type="button" data-tab="good_buys">Good Buys</button>
               <button type="button" data-tab="sma30_holds">SMA30 Holds</button>
               <button type="button" data-tab="early_uptrends">Early Uptrends</button>
               <button type="button" data-tab="confirmed_uptrends">Uptrends</button>
               <button type="button" data-tab="product_signals">Signals</button>
               <button type="button" data-tab="group_signals">Group Signals</button>
-              <button type="button" data-tab="group_products">Set Browser</button>
+              <button type="button" data-tab="group_products">Set Products</button>
             </div>
+            <div class="dev-tab-help" id="devTabHelp" hidden></div>
           </div>
 
           <div class="picker-grid" style="margin-bottom:18px;">
             <label>
-              <span class="field-label">Card Picker</span>
+              <span class="field-label">Product Picker</span>
               <select id="picker"></select>
             </label>
             <label>
-              <span class="field-label">Set Browser</span>
+              <span class="field-label">Set Picker</span>
               <select id="groupPicker"></select>
             </label>
             <label>
               <span class="field-label">Market</span>
               <select id="marketPicker"></select>
+            </label>
+          </div>
+
+          <div class="picker-grid" id="groupSignalFilters" style="margin-bottom:18px; display:none;">
+            <label>
+              <span class="field-label">Generation</span>
+              <select id="generationPicker">
+                <option value="all">All Generations</option>
+              </select>
             </label>
           </div>
 
@@ -776,6 +788,18 @@
 
       <aside class="panel right-rail">
         <div class="stack">
+          <section class="detail-card image-card">
+            <div class="section-label">Selected Product</div>
+            <h3>Image Preview</h3>
+            <div class="detail-copy">
+              The selected card or sealed product stays visible here while you browse the signal lists.
+            </div>
+            <div class="hero-image-card" id="heroImageCard">
+              <div class="hero-image-empty" id="heroImageEmpty">No Image Available</div>
+              <img id="heroImage" alt="" hidden>
+            </div>
+          </section>
+
           <section class="detail-card">
             <div class="section-label">Tracking</div>
             <h3>Badges & Favorites</h3>
@@ -802,12 +826,6 @@
             <h3>Momentum Read</h3>
             <div class="chip-row" id="metricChips"></div>
           </section>
-
-          <section class="detail-card">
-            <div class="section-label">Notes</div>
-            <h3>Context</h3>
-            <div class="notes" id="detailNotes"></div>
-          </section>
         </div>
       </aside>
     </div>
@@ -826,10 +844,14 @@
     const picker = document.getElementById("picker");
     const groupPicker = document.getElementById("groupPicker");
     const marketPicker = document.getElementById("marketPicker");
+    const groupSignalFilters = document.getElementById("groupSignalFilters");
+    const generationPicker = document.getElementById("generationPicker");
     const tableHead = document.getElementById("tableHead");
     const tableBody = document.getElementById("tableBody");
+    const tableWrap = document.querySelector(".table-wrap");
     const emptyState = document.getElementById("emptyState");
     const tableStatus = document.getElementById("tableStatus");
+    const devTabHelp = document.getElementById("devTabHelp");
     const tabsEl = document.getElementById("tabs");
     const moverList = document.getElementById("moverList");
     const railSegments = document.getElementById("railSegments");
@@ -844,7 +866,6 @@
     const freshnessBadge = document.getElementById("freshnessBadge");
     const metricChips = document.getElementById("metricChips");
     const detailStats = document.getElementById("detailStats");
-    const detailNotes = document.getElementById("detailNotes");
     const tagActions = document.getElementById("tagActions");
     const activeTags = document.getElementById("activeTags");
 
@@ -854,14 +875,16 @@
     const sparklineCache = new Map();
     const categoryOptions = [];
 
+    const initialParams = new URLSearchParams(window.location.search);
+
     // This shared UI state lets the left rail, chart, table, and right rail stay in sync
     // around one selected product, one active feed tab, one chart window, and one market.
-    let currentKey = null;
-    let currentDays = 365;
-    let currentTab = "top_movers";
-    let currentGroupId = null;
-    let currentSegment = "cards";
-    let currentCategoryId = Number(new URLSearchParams(window.location.search).get("category_id") || 3);
+    let currentKey = initialParams.get("product") || null;
+    let currentDays = Number(initialParams.get("days") || 365);
+    let currentTab = initialParams.get("tab") || "top_movers";
+    let currentGroupId = initialParams.get("group_id") ? Number(initialParams.get("group_id")) : null;
+    let currentSegment = initialParams.get("segment") || "cards";
+    let currentCategoryId = Number(initialParams.get("category_id") || 3);
     const moverFeeds = {
       cards: [],
       sealed: []
@@ -870,6 +893,9 @@
       cards: false,
       sealed: false
     };
+    let currentGeneration = initialParams.get("generation") || "all";
+    let activeTableRows = [];
+    let activeTableIndex = -1;
     let currentSeriesPayload = null;
 
     const tabConfig = {
@@ -877,12 +903,17 @@
       top_movers: {
         path: "/top_movers?days=30&limit=120&min_prior=5",
         columns: ["productName", "groupName", "number", "subTypeName", "p_now", "p_prior", "roc_pct"],
-        title: "Largest 30-day movers in the current universe."
+        title: "Largest 30-day movers across all tracked cards and products."
       },
       breakouts: {
         path: "/breakouts?days=90&limit=120&min_price=5",
         columns: ["productName", "groupName", "number", "subTypeName", "latest_price", "high_window"],
-        title: "Fresh 90-day highs across the live Pokemon universe."
+        title: "Fresh 90-day highs across all tracked cards and products."
+      },
+      good_buys: {
+        path: "/good_buys?limit=120&min_price=5&max_30d_pct=0&max_7d_pct=5",
+        columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "roc_7d_pct", "roc_30d_pct", "roc_90d_pct", "price_vs_sma30_pct"],
+        title: "Premium-rarity cards that have been drifting lower and may be entering buyable pullback territory."
       },
       sma30_holds: {
         path: "/sma30_holds?days_required=7&limit=120&min_price=5",
@@ -902,16 +933,16 @@
       product_signals: {
         path: "/product_signals?limit=250&min_price=1",
         columns: ["productName", "groupName", "number", "subTypeName", "latest_price", "roc_7d_pct", "roc_30d_pct", "price_vs_sma30_pct", "breakout_90d_flag", "trend_score"],
-        title: "Latest product-level signal snapshot and ranking stack."
+        title: "Latest product signal snapshot and ranking view."
       },
       group_signals: {
         path: "/group_signals?limit=250&min_items=5",
-        columns: ["groupName", "item_count", "card_count", "sealed_count", "avg_30d_pct", "avg_90d_pct", "pct_above_sma30", "pct_at_90d_high", "sealed_vs_cards_30d_divergence", "breadth_score"],
-        title: "Set-level breadth and momentum ranking snapshot."
+        columns: ["generation", "groupName", "item_count", "card_count", "sealed_count", "avg_30d_pct", "avg_90d_pct", "pct_above_sma30", "pct_at_90d_high", "sealed_vs_cards_30d_divergence", "breadth_score"],
+        title: "Set-level breadth and momentum snapshot."
       },
       group_products: {
         columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "latest_date"],
-        title: "Browse every product available inside the selected set."
+        title: "Browse every tracked product in the selected set."
       }
     };
 
@@ -945,7 +976,27 @@
     }
 
     function syncUrlState() {
-      Common.syncCategoryUrl(currentCategoryId);
+      const url = new URL(window.location.href);
+      url.searchParams.set("category_id", String(currentCategoryId));
+      url.searchParams.set("days", String(currentDays));
+      url.searchParams.set("tab", currentTab);
+      url.searchParams.set("segment", currentSegment);
+      if (currentGeneration && currentGeneration !== "all") {
+        url.searchParams.set("generation", currentGeneration);
+      } else {
+        url.searchParams.delete("generation");
+      }
+      if (currentKey) {
+        url.searchParams.set("product", currentKey);
+      } else {
+        url.searchParams.delete("product");
+      }
+      if (currentGroupId !== null && currentGroupId !== undefined && !Number.isNaN(currentGroupId)) {
+        url.searchParams.set("group_id", String(currentGroupId));
+      } else {
+        url.searchParams.delete("group_id");
+      }
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
     }
 
     function resetCategoryState() {
@@ -1059,8 +1110,11 @@
         picker.appendChild(el);
       }
       if (options.length > 0) {
-        currentKey = currentKey || options[0].key;
+        if (!currentKey || !options.some((option) => option.key === currentKey)) {
+          currentKey = options[0].key;
+        }
         picker.value = currentKey;
+        syncUrlState();
       }
       document.getElementById("statUniverse").textContent = options.length.toLocaleString();
     }
@@ -1076,16 +1130,66 @@
         groupPicker.appendChild(opt);
       }
       if (groups.length > 0) {
-        currentGroupId = currentGroupId || groups[0].groupId;
+        if (!currentGroupId || !groups.some((group) => Number(group.groupId) === Number(currentGroupId))) {
+          currentGroupId = groups[0].groupId;
+        }
         groupPicker.value = String(currentGroupId);
+        syncUrlState();
       }
     }
 
     function renderHeader(columns) {
-      tableHead.innerHTML = `<tr>${columns.map((c) => `<th>${c.replaceAll("_", " ")}</th>`).join("")}</tr>`;
+      const labels = {
+        p_now: "P Now",
+        p_prior: "P Prior (30D)",
+        roc_pct: "ROC %",
+      };
+      tableHead.innerHTML = `<tr>${columns.map((c) => `<th>${labels[c] || c.replaceAll("_", " ")}</th>`).join("")}</tr>`;
+    }
+
+    function updateDevTabHelp(tabKey = currentTab) {
+      if (!devTabHelp || !isDevMode) return;
+      const cfg = tabConfig[tabKey];
+      devTabHelp.hidden = false;
+      devTabHelp.textContent = cfg?.title || "No description available for this screen.";
+    }
+
+    function syncActiveTableRow(scrollIntoView = false) {
+      const rows = Array.from(tableBody.querySelectorAll("tr"));
+      rows.forEach((row, idx) => {
+        row.classList.toggle("active", idx === activeTableIndex);
+      });
+      if (!scrollIntoView || activeTableIndex < 0 || activeTableIndex >= rows.length) {
+        return;
+      }
+      const row = rows[activeTableIndex];
+      if (!row || !tableWrap) return;
+      const rowTop = row.offsetTop;
+      const rowBottom = rowTop + row.offsetHeight;
+      const viewTop = tableWrap.scrollTop;
+      const viewBottom = viewTop + tableWrap.clientHeight;
+      if (rowTop < viewTop) {
+        tableWrap.scrollTop = Math.max(rowTop - 8, 0);
+      } else if (rowBottom > viewBottom) {
+        tableWrap.scrollTop = rowBottom - tableWrap.clientHeight + 8;
+      }
+    }
+
+    function inferActiveTableIndex(rows) {
+      if (!rows.length) return -1;
+      if (currentTab === "group_signals" && currentGroupId !== null) {
+        const idx = rows.findIndex((item) => Number(item.groupId) === Number(currentGroupId));
+        if (idx >= 0) return idx;
+      }
+      if (currentKey) {
+        const idx = rows.findIndex((item) => item.key === currentKey);
+        if (idx >= 0) return idx;
+      }
+      return 0;
     }
 
     function displayCell(col, item) {
+      if (col === "generation") return item.generation || "Legacy";
       if (col === "groupName") return item.groupName;
       if (col === "productName") return item.productName;
       if (col === "number") return item.number || "";
@@ -1114,10 +1218,15 @@
       renderHeader(cfg.columns);
       tableBody.innerHTML = "";
       emptyState.style.display = rows.length ? "none" : "block";
-      for (const item of rows) {
+      activeTableRows = rows;
+      activeTableIndex = inferActiveTableIndex(rows);
+      rows.forEach((item, index) => {
         const tr = document.createElement("tr");
+        tr.dataset.index = String(index);
         tr.innerHTML = cfg.columns.map((col) => `<td>${displayCell(col, item)}</td>`).join("");
         tr.addEventListener("click", async () => {
+          activeTableIndex = index;
+          syncActiveTableRow(false);
           if (currentTab === "group_signals") {
             currentGroupId = Number(item.groupId);
             if (!Number.isNaN(currentGroupId)) {
@@ -1135,9 +1244,55 @@
           ensurePickerOption(item);
           currentKey = item.key;
           picker.value = currentKey;
+          syncUrlState();
           loadSeries();
         });
         tableBody.appendChild(tr);
+      });
+      syncActiveTableRow(false);
+    }
+
+    function updateGroupSignalFilterVisibility() {
+      if (!groupSignalFilters) return;
+      groupSignalFilters.style.display = currentTab === "group_signals" ? "grid" : "none";
+    }
+
+    function populateGenerationPicker(rows) {
+      if (!generationPicker) return;
+      const generations = Array.from(new Set(
+        (rows || [])
+          .map((item) => item.generation)
+          .filter(Boolean)
+      )).sort();
+      generationPicker.innerHTML = "";
+      const allOpt = document.createElement("option");
+      allOpt.value = "all";
+      allOpt.textContent = "All Generations";
+      generationPicker.appendChild(allOpt);
+      generations.forEach((generation) => {
+        const opt = document.createElement("option");
+        opt.value = generation;
+        opt.textContent = generation;
+        generationPicker.appendChild(opt);
+      });
+      if (![...generationPicker.options].some((opt) => opt.value === currentGeneration)) {
+        currentGeneration = "all";
+      }
+      generationPicker.value = currentGeneration;
+    }
+
+    async function moveTableSelection(delta) {
+      if (!activeTableRows.length) return;
+      const nextIndex = Math.max(0, Math.min(activeTableRows.length - 1, (activeTableIndex < 0 ? 0 : activeTableIndex) + delta));
+      if (nextIndex === activeTableIndex) {
+        syncActiveTableRow(true);
+        return;
+      }
+      activeTableIndex = nextIndex;
+      syncActiveTableRow(true);
+      const row = tableBody.querySelector(`tr[data-index="${activeTableIndex}"]`);
+      if (row) {
+        row.click();
       }
     }
 
@@ -1147,6 +1302,7 @@
       ensurePickerOption(item);
       currentKey = item.key;
       picker.value = currentKey;
+      syncUrlState();
       await loadSeries();
     }
 
@@ -1184,13 +1340,14 @@
               ${formatProductClassLabel(item)}
               <span class="mini-badge neutral">${formatProductBadgeLabel(item)}</span>
             </div>
-            <div>Prior ${formatNumber(item.p_prior, 2)}</div>
+            <div>P Prior (30D) ${formatNumber(item.p_prior, 2)}</div>
           </div>
         `;
         div.addEventListener("click", () => {
           ensurePickerOption(item);
           currentKey = item.key;
           picker.value = currentKey;
+          syncUrlState();
           renderMoverRail();
           loadSeries();
         });
@@ -1316,14 +1473,6 @@
         detailStats.appendChild(row);
       });
 
-      detailNotes.textContent = [
-        `${meta.productName || "This product"} is currently being viewed inside the draft terminal layout.`,
-        `Set: ${meta.groupName || "Unknown Set"}.`,
-        `Subtype: ${meta.subTypeName || "n/a"}.`,
-        meta.rarity ? `Rarity: ${meta.rarity}.` : "Rarity metadata is not available for this item.",
-        meta.number ? `Card number: ${meta.number}.` : "This item does not present a card number and may be sealed or non-card inventory.",
-        "Favorites and tracking badges are local-only in this draft, but the layout is ready for persistent tags later."
-      ].join(" ");
     }
 
     function renderChart(series) {
@@ -1485,11 +1634,19 @@
       // group's product list; otherwise it renders the configured screener endpoint.
       const cfg = tabConfig[currentTab];
       tableStatus.textContent = cfg.title;
-      const path = currentTab === "group_products"
+      updateDevTabHelp(currentTab);
+      let path = currentTab === "group_products"
         ? `/group_products?groupId=${encodeURIComponent(currentGroupId)}&limit=5000`
         : cfg.path;
+      if (currentTab === "group_signals" && currentGeneration !== "all") {
+        path += `&generation=${encodeURIComponent(currentGeneration)}`;
+      }
       const payload = await getJson(path);
       const rows = enrichRows(payload);
+      if (currentTab === "group_signals") {
+        populateGenerationPicker(rows);
+      }
+      updateGroupSignalFilterVisibility();
       renderTable(rows);
       return rows;
     }
@@ -1498,6 +1655,7 @@
       // Event wiring turns each control into either a selection change or a feed/window change.
       picker.addEventListener("change", async () => {
         currentKey = picker.value;
+        syncUrlState();
         await loadSeries();
       });
 
@@ -1509,10 +1667,20 @@
         if (setBrowserBtn) {
           setBrowserBtn.classList.add("active");
         }
+        syncUrlState();
         const rows = await loadTable();
         if (rows && rows.length) {
           await selectItem(rows[0]);
         }
+      });
+
+      generationPicker.addEventListener("change", async () => {
+        currentGeneration = generationPicker.value || "all";
+        syncUrlState();
+        if (tableWrap) {
+          tableWrap.scrollTop = 0;
+        }
+        await loadTable();
       });
 
       document.querySelectorAll(".chart-window button").forEach((btn) => {
@@ -1520,16 +1688,32 @@
           document.querySelectorAll(".chart-window button").forEach((x) => x.classList.remove("active"));
           btn.classList.add("active");
           currentDays = Number(btn.dataset.days);
+          syncUrlState();
           await loadSeries();
         });
       });
 
       tabsEl.querySelectorAll("button").forEach((btn) => {
+        const cfg = tabConfig[btn.dataset.tab];
+        if (cfg?.title) {
+          btn.title = cfg.title;
+        }
         btn.addEventListener("click", async () => {
+          const wasActive = currentTab === btn.dataset.tab;
           tabsEl.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
           btn.classList.add("active");
           currentTab = btn.dataset.tab;
-          await loadTable();
+          syncUrlState();
+          updateGroupSignalFilterVisibility();
+          updateDevTabHelp(currentTab);
+          const rows = await loadTable();
+          if (currentTab === "group_products" && wasActive && rows && rows.length) {
+            activeTableIndex = 0;
+            syncActiveTableRow(true);
+          }
+          if (currentTab === "group_products" && tableWrap) {
+            tableWrap.scrollTop = 0;
+          }
         });
       });
 
@@ -1538,6 +1722,7 @@
           railSegments.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
           btn.classList.add("active");
           currentSegment = btn.dataset.segment;
+          syncUrlState();
           await loadTopMovers(currentSegment);
         });
       });
@@ -1568,6 +1753,23 @@
           updateTagButtons();
         });
       });
+
+      document.addEventListener("keydown", async (event) => {
+        const target = event.target;
+        if (target instanceof HTMLElement && target.closest("select, input, textarea, button")) {
+          return;
+        }
+        if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+          return;
+        }
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          await moveTableSelection(1);
+        } else if (event.key === "ArrowUp") {
+          event.preventDefault();
+          await moveTableSelection(-1);
+        }
+      });
     }
 
     async function init() {
@@ -1580,15 +1782,32 @@
       try {
         hydrateStoredTags();
         bindEvents();
+        if (!tabConfig[currentTab]) currentTab = "top_movers";
+        if (!["cards", "sealed"].includes(currentSegment)) currentSegment = "cards";
+        if (![30, 90, 180, 365, 730, 5000].includes(currentDays)) currentDays = 365;
+        updateGroupSignalFilterVisibility();
+        if (devTabHelp) {
+          devTabHelp.hidden = !isDevMode;
+        }
+        document.querySelectorAll(".chart-window button").forEach((btn) => {
+          btn.classList.toggle("active", Number(btn.dataset.days) === currentDays);
+        });
+        tabsEl.querySelectorAll("button").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.tab === currentTab);
+        });
+        railSegments.querySelectorAll("button").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.segment === currentSegment);
+        });
+        updateDevTabHelp(currentTab);
         await loadCategories();
         await Promise.all([loadHealth(), loadGroups(), loadUniverse()]);
+        syncUrlState();
         await Promise.all([loadTopMovers(currentSegment), loadSeries(), loadTable()]);
       } catch (err) {
         leftStatus.textContent = "Error";
         tableStatus.textContent = `Dashboard error: ${err.message}`;
         cardTitle.textContent = "Dashboard failed to load";
         cardSubtitle.textContent = err.message;
-        detailNotes.textContent = err.message;
       }
     }
 

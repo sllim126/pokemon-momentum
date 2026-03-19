@@ -1,0 +1,40 @@
+Pokemon Momentum TODO
+=====================
+
+Near-Term UI / UX
+-----------------
+
+- Review the dashboard on iPad / tablet layouts.
+- Review the dashboard on iPhone / phone layouts.
+- Decide whether mobile should keep the same three-panel structure or switch to a more task-based stacked layout.
+- Review `/embed` on tablet and phone sizes after the main dashboard mobile pass.
+
+
+Set / Group Analysis
+--------------------
+
+- Build a historical `group_series` / set-level timeseries endpoint so sets can be graphed like products.
+- Decide which set-level lines are most useful to graph first:
+  - equal-weighted set index
+  - breadth score over time
+  - percent above SMA30
+  - percent at 90-day highs
+- Consider adding a set chart toggle directly from `Group Signals`.
+- Refine generation grouping beyond the first-pass era buckets if specific sets land in the wrong generation.
+
+
+Signals / Screening
+-------------------
+
+- Continue tuning `Good Buys` so it finds premium-rarity cards that are weakening but not broken.
+- Review whether `Good Buys` should prefer cards flattening over the last 7 days instead of still actively falling.
+- Continue refining `Top Movers` and `Early Uptrends` to reject stale one-sale jumps.
+- Consider a dedicated "pre-breakout accumulation" signal.
+
+
+Tracking / Workflow
+-------------------
+
+- Replace local-only tags with backend-persisted favorites/watchlists.
+- Decide whether tracking should be private to the operator or exposed in a lightweight public way.
+- Consider keyboard shortcuts beyond up/down row stepping.

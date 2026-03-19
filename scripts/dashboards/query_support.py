@@ -184,3 +184,65 @@ def build_metadata_cte(category_id: int, include_classification: bool = False, c
           ON g.groupId = p.groupId
     )
     """.strip()
+
+
+def build_premium_rarity_filter(column: str = "rarity") -> str:
+    """Return a SQL predicate matching the premium card rarities the dashboard treats as higher-end buys."""
+    lower_col = f"lower(COALESCE({column}, ''))"
+    return f"""(
+        {lower_col} LIKE '%double rare%'
+        OR {lower_col} LIKE '%illustration rare%'
+        OR {lower_col} LIKE '%special illustration rare%'
+        OR {lower_col} LIKE '%ultra rare%'
+        OR {lower_col} LIKE '%hyper rare%'
+        OR {lower_col} LIKE '%secret rare%'
+        OR {lower_col} LIKE '%amazing rare%'
+    )"""
+
+
+def build_generation_case(
+    name_column: str = "g.name",
+    abbreviation_column: str = "g.abbreviation",
+    published_on_column: str = "g.publishedOn",
+) -> str:
+    """Return a broad generation/era label for set-level grouping in the dashboard."""
+    name = f"upper(COALESCE({name_column}, ''))"
+    abbr = f"upper(COALESCE({abbreviation_column}, ''))"
+    published_on = f"CAST({published_on_column} AS DATE)"
+    return f"""
+CASE
+  WHEN {name} LIKE '%MEGA EVOLUTION%'
+    OR {name} LIKE 'ME:%'
+    OR {name} LIKE 'ME0%'
+    OR {name} LIKE 'MEE:%'
+    OR {abbr} LIKE 'ME%'
+    THEN 'MEG'
+  WHEN {published_on} >= DATE '2023-01-01'
+    OR {name} LIKE 'SV%'
+    OR {abbr} LIKE 'SV%'
+    THEN 'SV'
+  WHEN {published_on} >= DATE '2020-01-01'
+    OR {name} LIKE 'SWSH%'
+    OR {abbr} LIKE 'SWSH%'
+    THEN 'SWSH'
+  WHEN {published_on} >= DATE '2017-01-01'
+    OR {name} LIKE 'SM%'
+    OR {abbr} LIKE 'SM%'
+    THEN 'SM'
+  WHEN {published_on} >= DATE '2014-01-01'
+    OR {name} LIKE 'XY%'
+    OR {abbr} LIKE 'XY%'
+    THEN 'XY'
+  WHEN {published_on} >= DATE '2011-01-01'
+    OR {name} LIKE 'BW%'
+    OR {abbr} LIKE 'BW%'
+    THEN 'BW'
+  WHEN {published_on} >= DATE '2007-01-01'
+    OR {name} LIKE 'DP%'
+    OR {name} LIKE 'HGSS%'
+    OR {abbr} LIKE 'DP%'
+    OR {abbr} LIKE 'HGSS%'
+    THEN 'DP/HGSS'
+  ELSE 'Legacy'
+END
+""".strip()
