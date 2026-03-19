@@ -9,11 +9,14 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.common.category_config import get_category_config
+from scripts.common.product_classification import get_product_class_sql, get_product_kind_sql
 
 
 EXTRACTED_DIR = "/app/data/extracted"
 PROCESSED_DIR = "/app/data/processed"
 DB_PATH = f"{PROCESSED_DIR}/prices_db.duckdb"
+PRODUCT_CLASS_SQL = get_product_class_sql("p")
+PRODUCT_KIND_SQL = get_product_kind_sql("p")
 
 
 def parse_args() -> argparse.Namespace:
@@ -186,59 +189,8 @@ enriched AS (
         p.imageUrl,
         p.rarity,
         p.number,
-        CASE
-            WHEN COALESCE(NULLIF(p.number, ''), '') <> ''
-              OR COALESCE(NULLIF(p.rarity, ''), '') <> ''
-              THEN 'card'
-            WHEN lower(COALESCE(p.name, '')) LIKE '%ultra-premium collection%'
-              OR lower(COALESCE(p.name, '')) LIKE '%ultra premium collection%'
-              THEN 'mcap'
-            WHEN lower(COALESCE(p.name, '')) LIKE '%booster box%'
-              OR lower(COALESCE(p.name, '')) LIKE '%elite trainer box%'
-              OR lower(COALESCE(p.name, '')) LIKE '% etb%'
-              OR lower(COALESCE(p.name, '')) LIKE 'etb%'
-              THEN 'sealed_booster_box'
-            WHEN lower(COALESCE(p.name, '')) LIKE '%booster pack%'
-              OR lower(COALESCE(p.name, '')) LIKE '%booster bundle%'
-              OR lower(COALESCE(p.name, '')) LIKE '%bundle%'
-              OR lower(COALESCE(p.name, '')) LIKE '%mini tin%'
-              OR lower(COALESCE(p.name, '')) LIKE '% tin%'
-              OR lower(COALESCE(p.name, '')) LIKE 'tin%'
-              OR lower(COALESCE(p.name, '')) LIKE '%blister case%'
-              OR lower(COALESCE(p.name, '')) LIKE '%blister%'
-              OR lower(COALESCE(p.name, '')) LIKE '%premium figure collection%'
-              OR lower(COALESCE(p.name, '')) LIKE '%figure collection%'
-              OR lower(COALESCE(p.name, '')) LIKE '%premium figure set%'
-              OR lower(COALESCE(p.name, '')) LIKE '%sleeved%'
-              THEN 'sealed_booster_pack'
-            ELSE 'other'
-        END AS productClass,
-        CASE
-            WHEN COALESCE(NULLIF(p.number, ''), '') <> ''
-              OR COALESCE(NULLIF(p.rarity, ''), '') <> ''
-              THEN 'card'
-            WHEN lower(COALESCE(p.name, '')) LIKE '%booster box%'
-              OR lower(COALESCE(p.name, '')) LIKE '%elite trainer box%'
-              OR lower(COALESCE(p.name, '')) LIKE '% etb%'
-              OR lower(COALESCE(p.name, '')) LIKE 'etb%'
-              OR lower(COALESCE(p.name, '')) LIKE '%booster pack%'
-              OR lower(COALESCE(p.name, '')) LIKE '%booster bundle%'
-              OR lower(COALESCE(p.name, '')) LIKE '%bundle%'
-              OR lower(COALESCE(p.name, '')) LIKE '%mini tin%'
-              OR lower(COALESCE(p.name, '')) LIKE '% tin%'
-              OR lower(COALESCE(p.name, '')) LIKE 'tin%'
-              OR lower(COALESCE(p.name, '')) LIKE '%blister case%'
-              OR lower(COALESCE(p.name, '')) LIKE '%blister%'
-              OR lower(COALESCE(p.name, '')) LIKE '%premium figure collection%'
-              OR lower(COALESCE(p.name, '')) LIKE '%figure collection%'
-              OR lower(COALESCE(p.name, '')) LIKE '%premium figure set%'
-              OR lower(COALESCE(p.name, '')) LIKE '%sleeved%'
-              THEN 'sealed'
-            WHEN lower(COALESCE(p.name, '')) LIKE '%ultra-premium collection%'
-              OR lower(COALESCE(p.name, '')) LIKE '%ultra premium collection%'
-              THEN 'mcap'
-            ELSE 'other'
-        END AS productKind,
+        {PRODUCT_CLASS_SQL} AS productClass,
+        {PRODUCT_KIND_SQL} AS productKind,
         l.subTypeName,
         l.price AS latest_price,
         p7.price_7d,

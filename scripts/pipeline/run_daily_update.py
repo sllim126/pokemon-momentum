@@ -46,7 +46,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--refresh-csv",
         action="store_true",
-        help="Also rebuild pokemon_prices_all_days.csv during the price-load step.",
+        help="Also rebuild the category price CSV during the price-load step.",
     )
     parser.add_argument(
         "--workers",
@@ -77,7 +77,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--skip-analytics",
         action="store_true",
-        help="Skip ranking and indicator snapshot steps.",
+        help="Skip product/group indicator snapshot steps.",
     )
     parser.add_argument(
         "--continue-on-error",
@@ -97,12 +97,12 @@ def build_price_load_command(args: argparse.Namespace) -> list[str]:
 
     Expected result:
     - returns a command that loads any missing daily price rows into pokemon_prices
-    - optionally refreshes the category CSV when downstream analytics still use it
+    - optionally refreshes the category CSV for manual inspection or legacy compatibility
     """
     cmd = ["python", "scripts/extract/build_pokemon_prices_all_days.py"]
     cmd.extend(["--category-id", str(args.category_id)])
     cmd.extend(["--workers", str(max(1, args.workers))])
-    if args.refresh_csv or not args.skip_analytics:
+    if args.refresh_csv:
         cmd.append("--refresh-csv")
     if args.limit_days > 0:
         cmd.extend(["--limit-days", str(args.limit_days)])
@@ -120,7 +120,6 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     """
     steps: list[tuple[str, list[str]]] = []
     category = get_category_config(args.category_id)
-    analytics_enabled = not args.skip_analytics and args.category_id == 3
 
     if not args.skip_download:
         # Expected result: new daily archives are downloaded/extracted when they exist upstream.
@@ -155,43 +154,16 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             ]
         )
 
-    if analytics_enabled:
+    if not args.skip_analytics:
         steps.extend(
             [
-                # Expected result: English-only top-200 candidate universe is rebuilt.
-                ("Build top-200 universe", ["python", "scripts/rankings/top_200.py"]),
-                # Expected result: top-200 lookup table is refreshed for the dashboard layer.
-                ("Build top-200 lookup", ["python", "scripts/rankings/make_top200_lookup.py"]),
-                # Expected result: top-200 indicator values are recomputed.
-                ("Build top-200 indicators", ["python", "scripts/indicators/compute_200_indicators.py"]),
-                # Expected result: named top-200 movers export is refreshed.
-                ("Build top-200 named movers", ["python", "scripts/rankings/top200_with_names.py"]),
-                # Expected result: timeseries export for the top-200 list is rebuilt.
-                ("Build top-200 timeseries", ["python", "scripts/rankings/build_top200_timeseries.py"]),
-                # Expected result: ROC snapshot used by legacy analytics is rebuilt.
-                ("Build ROC 7/30/90 snapshot", ["python", "scripts/indicators/compute_roc_7_30_90.py"]),
                 (
                     # Expected result: product-level momentum snapshot exists for API and screener reads.
-                    "Build product signal snapshot",
-                    ["python", "scripts/indicators/build_product_signal_snapshot.py", "--category-id", str(args.category_id)],
-                ),
-                (
-                    # Expected result: group-level breadth/momentum snapshot exists for set ranking views.
-                    "Build group signal snapshot",
-                    ["python", "scripts/indicators/build_group_signal_snapshot.py", "--category-id", str(args.category_id)],
-                ),
-            ]
-        )
-    elif not args.skip_analytics:
-        steps.extend(
-            [
-                (
-                    # Expected result: non-English category still gets a product-level signal snapshot.
                     f"Build {category.label} product signal snapshot",
                     ["python", "scripts/indicators/build_product_signal_snapshot.py", "--category-id", str(args.category_id)],
                 ),
                 (
-                    # Expected result: non-English category still gets a group-level signal snapshot.
+                    # Expected result: group-level breadth/momentum snapshot exists for set ranking views.
                     f"Build {category.label} group signal snapshot",
                     ["python", "scripts/indicators/build_group_signal_snapshot.py", "--category-id", str(args.category_id)],
                 ),

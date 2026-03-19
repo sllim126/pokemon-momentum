@@ -87,7 +87,7 @@ def build_steps(category_id: int, workers: int, full_metadata_refresh: bool) -> 
 
     Expected result:
     - each StepSpec pairs a command with the files/tables/parquet state it should produce
-    - English category keeps the legacy top-200 stages, other categories skip those extras
+    - validation follows the active screener pipeline, not legacy top-200 compatibility steps
     """
     category = get_category_config(category_id)
     product_refresh_cmd = [
@@ -101,7 +101,7 @@ def build_steps(category_id: int, workers: int, full_metadata_refresh: bool) -> 
 
     steps = [
         StepSpec(
-            # Expected result: category rows exist in pokemon_prices and the category CSV exists.
+            # Expected result: category rows exist in pokemon_prices.
             name="Load new price data into DuckDB",
             command=[
                 "python",
@@ -110,9 +110,7 @@ def build_steps(category_id: int, workers: int, full_metadata_refresh: bool) -> 
                 str(category_id),
                 "--workers",
                 str(max(1, workers)),
-                "--refresh-csv",
             ],
-            file_outputs=(EXTRACTED_DIR / category.prices_csv,),
             table_outputs=("pokemon_prices",),
         ),
         StepSpec(
@@ -157,51 +155,6 @@ def build_steps(category_id: int, workers: int, full_metadata_refresh: bool) -> 
             requires_parquet=True,
         ),
     ]
-
-    if category_id == 3:
-        steps[4:4] = [
-            StepSpec(
-                # Expected result: top-200 universe table/CSV refreshed for the English workflow.
-                name="Build top-200 universe",
-                command=["python", "scripts/rankings/top_200.py"],
-                file_outputs=(EXTRACTED_DIR / "top200_universe.csv",),
-                table_outputs=("top200_universe",),
-            ),
-            StepSpec(
-                # Expected result: top-200 lookup table refreshed.
-                name="Build top-200 lookup",
-                command=["python", "scripts/rankings/make_top200_lookup.py"],
-                file_outputs=(EXTRACTED_DIR / "top200_lookup.csv",),
-                table_outputs=("top200_lookup",),
-            ),
-            StepSpec(
-                # Expected result: top-200 indicator export refreshed.
-                name="Build top-200 indicators",
-                command=["python", "scripts/indicators/compute_200_indicators.py"],
-                file_outputs=(EXTRACTED_DIR / "top200_indicators.csv",),
-                table_outputs=("top200_indicators",),
-            ),
-            StepSpec(
-                # Expected result: named top-200 movers export refreshed.
-                name="Build top-200 named movers",
-                command=["python", "scripts/rankings/top200_with_names.py"],
-                file_outputs=(EXTRACTED_DIR / "top200_30d_min5_named.csv",),
-                table_outputs=("top200_30d_min5_named",),
-            ),
-            StepSpec(
-                # Expected result: top-200 timeseries export rebuilt.
-                name="Build top-200 timeseries",
-                command=["python", "scripts/rankings/build_top200_timeseries.py"],
-                file_outputs=(EXTRACTED_DIR / "top200_timeseries.csv",),
-                table_outputs=("top200_timeseries",),
-            ),
-            StepSpec(
-                # Expected result: ROC snapshot CSV rebuilt for the English analytics path.
-                name="Build ROC 7/30/90 snapshot",
-                command=["python", "scripts/indicators/compute_roc_7_30_90.py"],
-                file_outputs=(EXTRACTED_DIR / "roc_snapshot_7_30_90.csv",),
-            ),
-        ]
 
     return steps
 

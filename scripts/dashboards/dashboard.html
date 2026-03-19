@@ -813,7 +813,9 @@
     </div>
   </div>
 
+  <script src="/dashboard-common.js"></script>
   <script>
+    const Common = window.DashboardCommon;
     const apiBase = window.location.origin;
     // The public dashboard hides a few operational stats, while /dashboard-dev keeps them visible.
     const isDevMode = window.location.pathname === "/dashboard-dev" || new URLSearchParams(window.location.search).get("mode") === "dev";
@@ -939,19 +941,11 @@
     }
 
     function withCategory(path) {
-      // All category-aware API calls flow through this helper so market switching does not
-      // require every endpoint path to manage category_id manually.
-      const url = new URL(path, apiBase);
-      if (!url.searchParams.has("category_id")) {
-        url.searchParams.set("category_id", String(currentCategoryId));
-      }
-      return `${url.pathname}${url.search}`;
+      return Common.withCategory(apiBase, currentCategoryId, path);
     }
 
     function syncUrlState() {
-      const url = new URL(window.location.href);
-      url.searchParams.set("category_id", String(currentCategoryId));
-      history.replaceState({}, "", `${url.pathname}${url.search}`);
+      Common.syncCategoryUrl(currentCategoryId);
     }
 
     function resetCategoryState() {
@@ -983,66 +977,31 @@
 
     async function loadCategories() {
       // Populate the market selector before any category-aware API calls run.
-      const res = await fetch(apiBase + "/categories");
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      const payload = await res.json();
+      const payload = await Common.fetchCategories(apiBase);
       categoryOptions.length = 0;
       categoryOptions.push(...(payload.items || []));
-      marketPicker.innerHTML = "";
-      for (const item of categoryOptions) {
-        const opt = document.createElement("option");
-        opt.value = String(item.category_id);
-        opt.textContent = item.label;
-        marketPicker.appendChild(opt);
-      }
-      if (!categoryOptions.some((item) => Number(item.category_id) === currentCategoryId)) {
-        currentCategoryId = Number(categoryOptions[0]?.category_id || 3);
-      }
-      marketPicker.value = String(currentCategoryId);
+      currentCategoryId = Common.populateCategoryPicker(marketPicker, categoryOptions, currentCategoryId);
       syncUrlState();
     }
 
     function keyOf(productId, subTypeName) {
-      return `${productId}||${subTypeName}`;
+      return Common.keyOf(productId, subTypeName);
     }
 
     function formatNumber(value, digits = 2) {
-      if (value === null || value === undefined || Number.isNaN(Number(value))) return "n/a";
-      return Number(value).toLocaleString(undefined, {
-        maximumFractionDigits: digits,
-        minimumFractionDigits: digits
-      });
+      return Common.formatNumber(value, digits);
     }
 
     function formatPercent(value) {
-      if (value === null || value === undefined || Number.isNaN(Number(value))) {
-        return { text: "n/a", cls: "neutral" };
-      }
-      const n = Number(value);
-      return {
-        text: `${n >= 0 ? "+" : ""}${formatNumber(n, 2)}%`,
-        cls: n >= 0 ? "good" : "warn"
-      };
+      return Common.formatPercentMeta(value, 2);
     }
 
     function formatProductClassLabel(item) {
-      if (item.number) return `#${item.number}`;
-      const cls = String(item.productClass || item.productKind || "").trim();
-      if (!cls) return "Catalog product";
-      return cls
-        .replaceAll("_", " ")
-        .replace(/\b\w/g, (ch) => ch.toUpperCase());
+      return Common.formatProductClassLabel(item, "Catalog product");
     }
 
     function formatProductBadgeLabel(item) {
-      const cls = String(item.productClass || "").trim();
-      if (!cls) return String(item.productKind || "Unclassified");
-      if (cls === "sealed_booster_box") return "Booster Box";
-      if (cls === "sealed_booster_pack") return "Booster Pack";
-      if (cls === "mcap") return "MCAP";
-      if (cls === "card") return item.rarity || "Card";
-      if (cls === "other") return "Other";
-      return cls.replaceAll("_", " ").replace(/\b\w/g, (ch) => ch.toUpperCase());
+      return Common.formatProductBadgeLabel(item);
     }
 
     function getSparklineDays() {
@@ -1053,41 +1012,13 @@
     }
 
     function classifyItem(item) {
-      if (item.productKind === "card" || item.productKind === "sealed") {
-        return item.productKind === "sealed" ? "sealed" : "cards";
-      }
-      const name = String(item.productName || "").toLowerCase();
-      const subtype = String(item.subTypeName || "").toLowerCase();
-      const sealedWords = [
-        "booster", "booster box", "booster pack", "bundle", "elite trainer",
-        "etb", "tin", "blister", "collection", "deck", "premium", "figure",
-        "mini tin", "box set", "case", "sleeved", "playmat", "trainer box",
-        "poster", "anniversary collection"
-      ];
-      const looksSealed = sealedWords.some((word) => name.includes(word));
-      const hasCardHints = Boolean(item.number) || Boolean(item.rarity) || ["normal", "holofoil", "reverse holofoil", "1st edition", "unlimited holofoil"].includes(subtype);
-      return looksSealed && !hasCardHints ? "sealed" : "cards";
+      return Common.classifySegment(item, "cards", "sealed");
     }
 
     function enrichRows(payload) {
       // API screens return different column sets. This normalizes them against the universe
       // metadata cache so the table and left rail can render a consistent product shape.
-      const columns = payload.columns || [];
-      return (payload.rows || []).map((row) => {
-        const item = {};
-        columns.forEach((col, idx) => { item[col] = row[idx]; });
-        item.key = keyOf(item.productId, item.subTypeName);
-        const meta = universeByKey.get(item.key) || {};
-        item.productName = meta.productName || item.productName || `productId ${item.productId}`;
-        item.groupName = meta.groupName || item.groupName || "";
-        item.imageUrl = meta.imageUrl || item.imageUrl || "";
-        item.rarity = meta.rarity || item.rarity || "";
-        item.number = meta.number || item.number || "";
-        item.productClass = meta.productClass || item.productClass || null;
-        item.productKind = meta.productKind || item.productKind || null;
-        item.segment = classifyItem(item);
-        return item;
-      });
+      return Common.enrichRows(payload, universeByKey, "cards", "sealed");
     }
 
     function ensurePickerOption(item) {

@@ -446,7 +446,9 @@
     </div>
   </div>
 
+  <script src="/dashboard-common.js"></script>
   <script>
+    const Common = window.DashboardCommon;
     const apiBase = window.location.origin;
     const feedListEl = document.getElementById("feedList");
     const segmentTabs = document.getElementById("segmentTabs");
@@ -481,18 +483,11 @@
     }
 
     function withCategory(path) {
-      // Centralize category propagation so the embed can switch English/Japanese cleanly.
-      const url = new URL(path, apiBase);
-      if (!url.searchParams.has("category_id")) {
-        url.searchParams.set("category_id", String(currentCategoryId));
-      }
-      return `${url.pathname}${url.search}`;
+      return Common.withCategory(apiBase, currentCategoryId, path);
     }
 
     function syncUrlState() {
-      const url = new URL(window.location.href);
-      url.searchParams.set("category_id", String(currentCategoryId));
-      history.replaceState({}, "", `${url.pathname}${url.search}`);
+      Common.syncCategoryUrl(currentCategoryId);
     }
 
     function resetFeedState() {
@@ -511,83 +506,32 @@
 
     async function loadCategories() {
       // Populate the compact market selector before loading the initial feed.
-      const res = await fetch(apiBase + "/categories");
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      const payload = await res.json();
+      const payload = await Common.fetchCategories(apiBase);
       categoryOptions.length = 0;
       categoryOptions.push(...(payload.items || []));
-      marketPicker.innerHTML = "";
-      for (const item of categoryOptions) {
-        const opt = document.createElement("option");
-        opt.value = String(item.category_id);
-        opt.textContent = item.label;
-        marketPicker.appendChild(opt);
-      }
-      if (!categoryOptions.some((item) => Number(item.category_id) === currentCategoryId)) {
-        currentCategoryId = Number(categoryOptions[0]?.category_id || 3);
-      }
-      marketPicker.value = String(currentCategoryId);
+      currentCategoryId = Common.populateCategoryPicker(marketPicker, categoryOptions, currentCategoryId);
       syncUrlState();
     }
 
     function formatNumber(value, digits = 2) {
-      const num = Number(value);
-      if (value === null || value === undefined || Number.isNaN(num)) return "n/a";
-      return num.toLocaleString(undefined, {
-        minimumFractionDigits: digits,
-        maximumFractionDigits: digits,
-      });
+      return Common.formatNumber(value, digits);
     }
 
     function formatPercent(value, digits = 2) {
-      const num = Number(value);
-      if (value === null || value === undefined || Number.isNaN(num)) return "n/a";
-      const sign = num > 0 ? "+" : "";
-      return `${sign}${num.toLocaleString(undefined, {
-        minimumFractionDigits: digits,
-        maximumFractionDigits: digits,
-      })}%`;
+      return Common.formatPercentMeta(value, digits).text;
     }
 
     function formatProductClassLabel(item) {
-      const value = item.productClass || item.productKind || "";
-      if (!value) return "Momentum";
-      const map = {
-        card: "Card",
-        sealed_booster_box: "Booster Box",
-        sealed_booster_pack: "Booster Pack",
-        mcap: "MCAP",
-        sealed: "Sealed",
-        other: "Other",
-      };
-      return map[value] || value;
+      return Common.formatProductClassLabel(item, "Momentum");
     }
 
     function rowObjects(payload) {
       // Embed endpoints share the same columns/rows payload shape as the full dashboard.
-      const columns = payload.columns || [];
-      return (payload.rows || []).map((row) => Object.fromEntries(columns.map((col, i) => [col, row[i]])));
+      return Common.rowObjects(payload);
     }
 
     function classifyItem(item) {
-      if (item.productKind === "card" || item.productClass === "card") return "card";
-      if (item.productKind === "sealed" || item.productClass === "sealed_booster_box" || item.productClass === "sealed_booster_pack") return "sealed";
-      const name = `${item.productName || ""} ${item.groupName || ""}`.toLowerCase();
-      if (item.number || item.rarity) return "card";
-      if (
-        name.includes("booster box") ||
-        name.includes("elite trainer box") ||
-        name.includes("etb") ||
-        name.includes("booster pack") ||
-        name.includes("booster bundle") ||
-        name.includes("bundle") ||
-        name.includes("blister") ||
-        name.includes("figure collection") ||
-        name.includes("premium figure")
-      ) {
-        return "sealed";
-      }
-      return "card";
+      return Common.classifySegment(item, "card", "sealed");
     }
 
     function setActiveButton(groupEl, attr, value) {

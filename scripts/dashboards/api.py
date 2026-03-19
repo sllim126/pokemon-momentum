@@ -1,5 +1,4 @@
 from datetime import timedelta
-from functools import lru_cache
 from pathlib import Path
 import sys
 import urllib.error
@@ -10,19 +9,26 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from scripts.common.category_config import get_category_config
+from scripts.dashboards.query_support import (
+    DB_PATH,
+    PRODUCT_CLASS_SQL,
+    PRODUCT_KIND_SQL,
+    build_metadata_cte,
+    category_config,
+    group_signal_from,
+    groups_from,
+    prices_from,
+    product_signal_from,
+    products_from,
+    q,
+    to_jsonable,
+)
 
-DATA_ROOT = Path("/app/data")
-EXTRACTED_DIR = DATA_ROOT / "extracted"
-PROCESSED_DIR = DATA_ROOT / "processed"
-DB_PATH = PROCESSED_DIR / "prices_db.duckdb"
 SCRIPT_DIR = Path(__file__).resolve().parent
 DASHBOARD_HTML = SCRIPT_DIR / "dashboard.html"
 EOD_DASHBOARD_HTML = SCRIPT_DIR / "eod_dashboard.html"
 EMBED_DASHBOARD_HTML = SCRIPT_DIR / "embed_dashboard.html"
-OUTPUT_DIR = Path("/app/output")
-PARQUET_ROOT = DATA_ROOT / "parquet"
-PARQUET_GLOB = str(PARQUET_ROOT / "**/*.parquet")
+DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
 MS_SCRIPTS_ROOT = Path("/app/MS_Scripts")
 if str(MS_SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(MS_SCRIPTS_ROOT))
@@ -30,180 +36,6 @@ if str(MS_SCRIPTS_ROOT) not in sys.path:
 from processor.utilities.pokemon_eodhistoricaldata_api import EodApi as PokemonEodApi
 
 EOD_API = PokemonEodApi("POKEMON")
-
-PRODUCT_CLASS_SQL = """
-CASE
-  WHEN COALESCE(NULLIF(p.number, ''), '') <> ''
-    OR COALESCE(NULLIF(p.rarity, ''), '') <> ''
-    THEN 'card'
-  WHEN lower(COALESCE(p.name, '')) LIKE '%ultra-premium collection%'
-    OR lower(COALESCE(p.name, '')) LIKE '%ultra premium collection%'
-    THEN 'mcap'
-  WHEN lower(COALESCE(p.name, '')) LIKE '%booster box%'
-    OR lower(COALESCE(p.name, '')) LIKE '%elite trainer box%'
-    OR lower(COALESCE(p.name, '')) LIKE '% etb%'
-    OR lower(COALESCE(p.name, '')) LIKE 'etb%'
-    THEN 'sealed_booster_box'
-  WHEN lower(COALESCE(p.name, '')) LIKE '%booster pack%'
-    OR lower(COALESCE(p.name, '')) LIKE '%booster bundle%'
-    OR lower(COALESCE(p.name, '')) LIKE '%bundle%'
-    OR lower(COALESCE(p.name, '')) LIKE '%mini tin%'
-    OR lower(COALESCE(p.name, '')) LIKE '% tin%'
-    OR lower(COALESCE(p.name, '')) LIKE 'tin%'
-    OR lower(COALESCE(p.name, '')) LIKE '%blister case%'
-    OR lower(COALESCE(p.name, '')) LIKE '%blister%'
-    OR lower(COALESCE(p.name, '')) LIKE '%premium figure collection%'
-    OR lower(COALESCE(p.name, '')) LIKE '%figure collection%'
-    OR lower(COALESCE(p.name, '')) LIKE '%premium figure set%'
-    OR lower(COALESCE(p.name, '')) LIKE '%sleeved%'
-    THEN 'sealed_booster_pack'
-  ELSE 'other'
-END
-"""
-
-PRODUCT_KIND_SQL = """
-CASE
-  WHEN COALESCE(NULLIF(p.number, ''), '') <> ''
-    OR COALESCE(NULLIF(p.rarity, ''), '') <> ''
-    THEN 'card'
-  WHEN lower(COALESCE(p.name, '')) LIKE '%booster box%'
-    OR lower(COALESCE(p.name, '')) LIKE '%elite trainer box%'
-    OR lower(COALESCE(p.name, '')) LIKE '% etb%'
-    OR lower(COALESCE(p.name, '')) LIKE 'etb%'
-    OR lower(COALESCE(p.name, '')) LIKE '%booster pack%'
-    OR lower(COALESCE(p.name, '')) LIKE '%booster bundle%'
-    OR lower(COALESCE(p.name, '')) LIKE '%bundle%'
-    OR lower(COALESCE(p.name, '')) LIKE '%mini tin%'
-    OR lower(COALESCE(p.name, '')) LIKE '% tin%'
-    OR lower(COALESCE(p.name, '')) LIKE 'tin%'
-    OR lower(COALESCE(p.name, '')) LIKE '%blister case%'
-    OR lower(COALESCE(p.name, '')) LIKE '%blister%'
-    OR lower(COALESCE(p.name, '')) LIKE '%premium figure collection%'
-    OR lower(COALESCE(p.name, '')) LIKE '%figure collection%'
-    OR lower(COALESCE(p.name, '')) LIKE '%premium figure set%'
-    OR lower(COALESCE(p.name, '')) LIKE '%sleeved%'
-    THEN 'sealed'
-  WHEN lower(COALESCE(p.name, '')) LIKE '%ultra-premium collection%'
-    OR lower(COALESCE(p.name, '')) LIKE '%ultra premium collection%'
-    THEN 'mcap'
-  ELSE 'other'
-END
-"""
-
-
-def has_parquet() -> bool:
-    """Check whether any partitioned price history exists on disk."""
-    return PARQUET_ROOT.exists() and any(PARQUET_ROOT.rglob("*.parquet"))
-
-
-@lru_cache(maxsize=16)
-def parquet_has_category(category_id: int) -> bool:
-    """Memoize whether a category is present in parquet so API requests stay cheap."""
-    if not has_parquet():
-        return False
-    con = duckdb.connect()
-    try:
-        row = con.execute(
-            f"""
-            SELECT 1
-            FROM read_parquet('{PARQUET_GLOB}')
-            WHERE categoryId = ?
-            LIMIT 1
-            """,
-            [category_id],
-        ).fetchone()
-        return row is not None
-    finally:
-        con.close()
-
-
-def prices_from(category_id: int | None = None) -> str:
-    """Prefer parquet for history reads, but fall back to DuckDB if a category is absent there."""
-    if has_parquet() and (category_id is None or parquet_has_category(category_id)):
-        return f"read_parquet('{PARQUET_GLOB}')"
-    return "pokemon_prices"
-
-
-def db_has_table(name: str) -> bool:
-    """Lightweight existence check for optional metadata/snapshot tables."""
-    if not DB_PATH.exists():
-        return False
-    con = duckdb.connect(str(DB_PATH), read_only=True)
-    try:
-        tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
-        return name in tables
-    finally:
-        con.close()
-
-
-def first_existing_path(*paths: Path) -> Path | None:
-    """Return the first available CSV fallback path for metadata-driven endpoints."""
-    for path in paths:
-        if path.exists():
-            return path
-    return None
-
-
-def category_config(category_id: int):
-    """Resolve per-category filenames, table names, and labels in one place."""
-    return get_category_config(category_id)
-
-
-def products_from(category_id: int) -> str:
-    """Return the product metadata source, preferring DuckDB and falling back to CSV."""
-    category = category_config(category_id)
-    if db_has_table(category.products_table):
-        return category.products_table
-    csv_path = first_existing_path(
-        EXTRACTED_DIR / category.products_csv,
-        OUTPUT_DIR / category.products_csv,
-    )
-    if csv_path is None:
-        raise HTTPException(status_code=500, detail=f"{category.products_table} metadata not found")
-    return f"read_csv_auto('{csv_path}')"
-
-
-def groups_from(category_id: int) -> str:
-    """Return the group/set metadata source, preferring DuckDB and falling back to CSV."""
-    category = category_config(category_id)
-    if db_has_table(category.groups_table):
-        return category.groups_table
-    csv_path = first_existing_path(
-        EXTRACTED_DIR / category.groups_csv,
-        OUTPUT_DIR / category.groups_csv,
-    )
-    if csv_path is None:
-        raise HTTPException(status_code=500, detail=f"{category.groups_table} metadata not found")
-    return f"read_csv_auto('{csv_path}')"
-
-
-def product_signal_from(category_id: int) -> str:
-    """Return the product signal snapshot source for this category."""
-    category = category_config(category_id)
-    if db_has_table(category.product_signal_table):
-        return category.product_signal_table
-    csv_path = EXTRACTED_DIR / category.product_signal_csv
-    if csv_path.exists():
-        return f"read_csv_auto('{csv_path}')"
-    raise HTTPException(status_code=500, detail=f"{category.product_signal_table} snapshot not found")
-
-
-def group_signal_from(category_id: int) -> str:
-    """Return the group signal snapshot source for this category."""
-    category = category_config(category_id)
-    if db_has_table(category.group_signal_table):
-        return category.group_signal_table
-    csv_path = EXTRACTED_DIR / category.group_signal_csv
-    if csv_path.exists():
-        return f"read_csv_auto('{csv_path}')"
-    raise HTTPException(status_code=500, detail=f"{category.group_signal_table} snapshot not found")
-
-
-def get_con():
-    """Open the read-only analytical connection used by API query helpers."""
-    if DB_PATH.exists():
-        return duckdb.connect(str(DB_PATH), read_only=True)
-    return duckdb.connect()
 
 
 app = FastAPI()
@@ -214,41 +46,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-def q(sql: str, params=None):
-    """Run a query and return column names plus row tuples for JSON serialization."""
-    con = get_con()
-    try:
-        if params is None:
-            cur = con.execute(sql)
-        else:
-            cur = con.execute(sql, params)
-        cols = [d[0] for d in cur.description]
-        rows = cur.fetchall()
-        return cols, rows
-    finally:
-        con.close()
-
-
-def to_jsonable(value):
-    """Normalize pandas and numpy values into plain JSON-friendly Python types."""
-    if isinstance(value, dict):
-        return {str(k): to_jsonable(v) for k, v in value.items()}
-    if isinstance(value, list):
-        return [to_jsonable(v) for v in value]
-    if isinstance(value, tuple):
-        return [to_jsonable(v) for v in value]
-    if pd.isna(value):
-        return None
-    if isinstance(value, pd.Timestamp):
-        return value.isoformat()
-    if hasattr(value, "item"):
-        try:
-            return value.item()
-        except Exception:
-            pass
-    return value
 
 
 @app.get("/")
@@ -274,6 +71,11 @@ def eod_dashboard():
 @app.get("/embed")
 def embed_dashboard():
     return FileResponse(EMBED_DASHBOARD_HTML)
+
+
+@app.get("/dashboard-common.js")
+def dashboard_common_js():
+    return FileResponse(DASHBOARD_COMMON_JS, media_type="application/javascript")
 
 
 @app.head("/embed")
@@ -430,6 +232,8 @@ def eod_series(code: str, days: int = 365):
 def universe(limit: int = 5000, category_id: int = 3):
     limit = max(1, min(limit, 50000))
     category = category_config(category_id)
+    price_source = prices_from(category.category_id)
+    metadata_cte = build_metadata_cte(category.category_id, include_classification=True, cte_name="metadata")
 
     sql = f"""
     WITH u AS (
@@ -437,27 +241,26 @@ def universe(limit: int = 5000, category_id: int = 3):
         productId,
         subTypeName,
         any_value(groupId) AS groupId
-      FROM {prices_from(category.category_id)}
+      FROM {price_source}
       WHERE categoryId = {category.category_id}
       GROUP BY productId, subTypeName
-    )
+    ),
+    {metadata_cte}
     SELECT
       u.productId,
       u.subTypeName,
       u.groupId,
-      COALESCE(g.name, 'Unknown Group') AS groupName,
-      COALESCE(p.name, p.cleanName, 'Product ' || CAST(u.productId AS VARCHAR)) AS productName,
-      p.imageUrl,
-      p.rarity,
-      p.number,
-      {PRODUCT_CLASS_SQL} AS productClass,
-      {PRODUCT_KIND_SQL} AS productKind
+      m.groupName,
+      m.productName,
+      m.imageUrl,
+      m.rarity,
+      m.number,
+      m.productClass,
+      m.productKind
     FROM u
-    LEFT JOIN {products_from(category.category_id)} p
-      ON p.productId = u.productId
-     AND p.groupId = u.groupId
-    LEFT JOIN {groups_from(category.category_id)} g
-      ON g.groupId = u.groupId
+    LEFT JOIN metadata m
+      ON m.productId = u.productId
+     AND m.groupId = u.groupId
     LIMIT {limit}
     """
     cols, rows = q(sql)
@@ -468,6 +271,7 @@ def universe(limit: int = 5000, category_id: int = 3):
 def groups(limit: int = 1000, category_id: int = 3):
     limit = max(1, min(limit, 5000))
     category = category_config(category_id)
+    price_source = prices_from(category.category_id)
 
     sql = f"""
     WITH active_groups AS (
@@ -475,7 +279,7 @@ def groups(limit: int = 1000, category_id: int = 3):
         groupId,
         COUNT(DISTINCT productId) AS productCount,
         MAX(date) AS latestDate
-      FROM {prices_from(category.category_id)}
+      FROM {price_source}
       WHERE categoryId = {category.category_id}
       GROUP BY groupId
     )
@@ -499,11 +303,13 @@ def groups(limit: int = 1000, category_id: int = 3):
 def group_products(groupId: int, limit: int = 2000, category_id: int = 3):
     limit = max(1, min(limit, 10000))
     category = category_config(category_id)
+    price_source = prices_from(category.category_id)
+    metadata_cte = build_metadata_cte(category.category_id, include_classification=True, cte_name="metadata")
 
     sql = f"""
     WITH latest_date AS (
       SELECT MAX(date) AS latestDate
-      FROM {prices_from(category.category_id)}
+      FROM {price_source}
       WHERE categoryId = {category.category_id}
         AND groupId = {groupId}
     ),
@@ -514,34 +320,33 @@ def group_products(groupId: int, limit: int = 2000, category_id: int = 3):
         subTypeName,
         marketPrice AS latest_price,
         date AS latest_date
-      FROM {prices_from(category.category_id)}
+      FROM {price_source}
       WHERE categoryId = {category.category_id}
         AND groupId = {groupId}
         AND date = (SELECT latestDate FROM latest_date)
         AND marketPrice IS NOT NULL
-    )
+    ),
+    {metadata_cte}
     SELECT
       lp.productId,
       lp.groupId,
-      COALESCE(g.name, 'Unknown Group') AS groupName,
-      COALESCE(p.name, p.cleanName, 'Product ' || CAST(lp.productId AS VARCHAR)) AS productName,
-      p.imageUrl,
-      p.rarity,
-      p.number,
-      {PRODUCT_CLASS_SQL} AS productClass,
-      {PRODUCT_KIND_SQL} AS productKind,
+      m.groupName,
+      m.productName,
+      m.imageUrl,
+      m.rarity,
+      m.number,
+      m.productClass,
+      m.productKind,
       lp.subTypeName,
       lp.latest_price,
       lp.latest_date
     FROM latest_prices lp
-    LEFT JOIN {products_from(category.category_id)} p
-      ON p.productId = lp.productId
-     AND p.groupId = lp.groupId
-    LEFT JOIN {groups_from(category.category_id)} g
-      ON g.groupId = lp.groupId
+    LEFT JOIN metadata m
+      ON m.productId = lp.productId
+     AND m.groupId = lp.groupId
     ORDER BY
-      CASE WHEN p.number IS NULL OR p.number = '' THEN 1 ELSE 0 END,
-      p.number,
+      CASE WHEN m.number IS NULL OR m.number = '' THEN 1 ELSE 0 END,
+      m.number,
       productName,
       lp.subTypeName
     LIMIT {limit}
@@ -624,10 +429,11 @@ def series(productId: int, subTypeName: str, days: int = 365, category_id: int =
     days = max(7, min(days, 5000))
     st = subTypeName.replace("'", "''")
     category = category_config(category_id)
+    price_source = prices_from(category.category_id)
 
     latest_sql = f"""
         SELECT MAX(date) AS latest
-        FROM {prices_from(category.category_id)}
+        FROM {price_source}
         WHERE categoryId = {category.category_id}
           AND productId = {productId}
           AND subTypeName = '{st}'
@@ -644,7 +450,7 @@ def series(productId: int, subTypeName: str, days: int = 365, category_id: int =
           SELECT
             date,
             marketPrice AS price
-          FROM {prices_from(category.category_id)}
+          FROM {price_source}
           WHERE categoryId = {category.category_id}
             AND productId = {productId}
             AND subTypeName = '{st}'
@@ -677,14 +483,16 @@ def top_movers(
     category_id: int = 3,
 ):
     category = category_config(category_id)
+    price_source = prices_from(category.category_id)
     product_kind_filter = ""
     if product_kind in {"card", "sealed"}:
         product_kind_filter = f"AND m.productKind = '{product_kind}'"
+    metadata_cte = build_metadata_cte(category.category_id, include_classification=True, cte_name="metadata")
 
     sql = f"""
     WITH d AS (
         SELECT MAX(date) AS max_date
-        FROM {prices_from(category.category_id)}
+        FROM {price_source}
         WHERE categoryId = {category.category_id}
           AND marketPrice IS NOT NULL
     ),
@@ -695,7 +503,7 @@ def top_movers(
             groupId,
             MAX(CASE WHEN date = (SELECT max_date FROM d) THEN marketPrice END) AS p_now,
             MAX(CASE WHEN date <= (SELECT max_date FROM d) - INTERVAL {days} DAY THEN marketPrice END) AS p_prior
-        FROM {prices_from(category.category_id)}
+        FROM {price_source}
         WHERE categoryId = {category.category_id}
           AND marketPrice IS NOT NULL
         GROUP BY groupId, productId, subTypeName
@@ -711,7 +519,7 @@ def top_movers(
                 PARTITION BY groupId, productId, subTypeName
                 ORDER BY date
             ) AS prev_price
-        FROM {prices_from(category.category_id)}
+        FROM {price_source}
         WHERE categoryId = {category.category_id}
           AND marketPrice IS NOT NULL
           AND date >= (SELECT max_date FROM d) - INTERVAL {days + 7} DAY
@@ -741,7 +549,7 @@ def top_movers(
                 PARTITION BY groupId, productId, subTypeName
                 ORDER BY date DESC
             ) AS rn
-        FROM {prices_from(category.category_id)}
+        FROM {price_source}
         WHERE categoryId = {category.category_id}
           AND marketPrice IS NOT NULL
     ),
@@ -769,21 +577,7 @@ def top_movers(
         FROM recent_changes
         GROUP BY groupId, productId, subTypeName
     ),
-    metadata AS (
-        SELECT
-            p.productId,
-            p.groupId,
-            COALESCE(p.name, p.cleanName, 'Product ' || CAST(p.productId AS VARCHAR)) AS productName,
-            p.imageUrl,
-            p.rarity,
-            p.number,
-            {PRODUCT_CLASS_SQL} AS productClass,
-            {PRODUCT_KIND_SQL} AS productKind,
-            COALESCE(g.name, 'Unknown Group') AS groupName
-        FROM {products_from(category.category_id)} p
-        LEFT JOIN {groups_from(category.category_id)} g
-          ON g.groupId = p.groupId
-    )
+    {metadata_cte}
     SELECT
         b.productId,
         b.subTypeName,
@@ -841,6 +635,8 @@ def top_movers(
 @app.get("/breakouts")
 def breakouts(days: int = 90, limit: int = 200, min_price: float = 5.0, category_id: int = 3):
     category = category_config(category_id)
+    price_source = prices_from(category.category_id)
+    metadata_cte = build_metadata_cte(category.category_id, cte_name="metadata")
     sql = f"""
     WITH base AS (
         SELECT
@@ -849,7 +645,7 @@ def breakouts(days: int = 90, limit: int = 200, min_price: float = 5.0, category
             subTypeName,
             date,
             marketPrice
-        FROM {prices_from(category.category_id)}
+        FROM {price_source}
         WHERE categoryId = {category.category_id}
           AND marketPrice IS NOT NULL
           AND marketPrice >= {min_price}
@@ -888,19 +684,7 @@ def breakouts(days: int = 90, limit: int = 200, min_price: float = 5.0, category
         WHERE b.date >= l.latest_date - INTERVAL {days} DAY
         GROUP BY b.productId, b.groupId, b.subTypeName
     ),
-    metadata AS (
-        SELECT
-            p.productId,
-            p.groupId,
-            COALESCE(p.name, p.cleanName, 'Product ' || CAST(p.productId AS VARCHAR)) AS productName,
-            p.imageUrl,
-            p.rarity,
-            p.number,
-            COALESCE(g.name, 'Unknown Group') AS groupName
-        FROM {products_from(category.category_id)} p
-        LEFT JOIN {groups_from(category.category_id)} g
-          ON g.groupId = p.groupId
-    )
+    {metadata_cte}
     SELECT
         w.productId,
         w.groupId,
@@ -934,6 +718,8 @@ def sma30_holds(days_required: int = 7, limit: int = 200, min_price: float = 5.0
     days_required = max(1, min(days_required, 30))
     limit = max(1, min(limit, 1000))
     category = category_config(category_id)
+    price_source = prices_from(category.category_id)
+    metadata_cte = build_metadata_cte(category.category_id, cte_name="metadata")
 
     sql = f"""
     WITH base AS (
@@ -943,7 +729,7 @@ def sma30_holds(days_required: int = 7, limit: int = 200, min_price: float = 5.0
             subTypeName,
             date,
             marketPrice AS price
-        FROM {prices_from(category.category_id)}
+        FROM {price_source}
         WHERE categoryId = {category.category_id}
           AND marketPrice IS NOT NULL
           AND marketPrice >= {min_price}
@@ -1029,19 +815,7 @@ def sma30_holds(days_required: int = 7, limit: int = 200, min_price: float = 5.0
           AND COALESCE(prev_above30, 0) = 0
         GROUP BY productId, groupId, subTypeName
     ),
-    metadata AS (
-        SELECT
-            p.productId,
-            p.groupId,
-            COALESCE(p.name, p.cleanName, 'Product ' || CAST(p.productId AS VARCHAR)) AS productName,
-            p.imageUrl,
-            p.rarity,
-            p.number,
-            COALESCE(g.name, 'Unknown Group') AS groupName
-        FROM {products_from(category.category_id)} p
-        LEFT JOIN {groups_from(category.category_id)} g
-          ON g.groupId = p.groupId
-    )
+    {metadata_cte}
     SELECT
         s.productId,
         s.groupId,
@@ -1077,6 +851,8 @@ def confirmed_uptrends(days_required: int = 5, limit: int = 200, min_price: floa
     days_required = max(1, min(days_required, 30))
     limit = max(1, min(limit, 1000))
     category = category_config(category_id)
+    price_source = prices_from(category.category_id)
+    metadata_cte = build_metadata_cte(category.category_id, cte_name="metadata")
 
     sql = f"""
     WITH base AS (
@@ -1086,7 +862,7 @@ def confirmed_uptrends(days_required: int = 5, limit: int = 200, min_price: floa
             subTypeName,
             date,
             marketPrice AS price
-        FROM {prices_from(category.category_id)}
+        FROM {price_source}
         WHERE categoryId = {category.category_id}
           AND marketPrice IS NOT NULL
           AND marketPrice >= {min_price}
@@ -1158,19 +934,7 @@ def confirmed_uptrends(days_required: int = 5, limit: int = 200, min_price: floa
           AND bullish_day = 1
         GROUP BY productId, groupId, subTypeName
     ),
-    metadata AS (
-        SELECT
-            p.productId,
-            p.groupId,
-            COALESCE(p.name, p.cleanName, 'Product ' || CAST(p.productId AS VARCHAR)) AS productName,
-            p.imageUrl,
-            p.rarity,
-            p.number,
-            COALESCE(g.name, 'Unknown Group') AS groupName
-        FROM {products_from(category.category_id)} p
-        LEFT JOIN {groups_from(category.category_id)} g
-          ON g.groupId = p.groupId
-    )
+    {metadata_cte}
     SELECT
         s.productId,
         s.groupId,
@@ -1215,11 +979,13 @@ def early_uptrends(
     min_recent_observations = max(2, min(min_recent_observations, 10))
     recent_change_within_days = max(1, min(recent_change_within_days, 15))
     category = category_config(category_id)
+    price_source = prices_from(category.category_id)
+    metadata_cte = build_metadata_cte(category.category_id, cte_name="metadata")
 
     sql = f"""
     WITH d AS (
         SELECT MAX(date) AS max_date
-        FROM {prices_from(category.category_id)}
+        FROM {price_source}
         WHERE categoryId = {category.category_id}
           AND marketPrice IS NOT NULL
     ),
@@ -1230,7 +996,7 @@ def early_uptrends(
             subTypeName,
             date,
             marketPrice AS price
-        FROM {prices_from(category.category_id)}
+        FROM {price_source}
         WHERE categoryId = {category.category_id}
           AND marketPrice IS NOT NULL
           AND marketPrice >= {min_price}
@@ -1261,7 +1027,7 @@ def early_uptrends(
                     PARTITION BY groupId, productId, subTypeName
                     ORDER BY date
                 ) AS prev_price
-            FROM {prices_from(category.category_id)}
+            FROM {price_source}
             WHERE categoryId = {category.category_id}
               AND marketPrice IS NOT NULL
               AND marketPrice >= {min_price}
@@ -1346,19 +1112,7 @@ def early_uptrends(
           AND early_bullish_day = 1
         GROUP BY productId, groupId, subTypeName
     ),
-    metadata AS (
-        SELECT
-            p.productId,
-            p.groupId,
-            COALESCE(p.name, p.cleanName, 'Product ' || CAST(p.productId AS VARCHAR)) AS productName,
-            p.imageUrl,
-            p.rarity,
-            p.number,
-            COALESCE(g.name, 'Unknown Group') AS groupName
-        FROM {products_from(category.category_id)} p
-        LEFT JOIN {groups_from(category.category_id)} g
-          ON g.groupId = p.groupId
-    )
+    {metadata_cte}
     SELECT
         s.productId,
         s.groupId,
