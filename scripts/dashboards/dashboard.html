@@ -386,6 +386,55 @@
       font: inherit;
     }
 
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--panel-3);
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 12px;
+      font: inherit;
+    }
+
+    .tracking-auth {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .tracking-auth-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .tracking-status {
+      min-height: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tracking-user {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(19, 28, 47, 0.6);
+    }
+
+    .tracking-user strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .tracking-user span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
     .status-strip {
       display: flex;
       flex-wrap: wrap;
@@ -941,13 +990,40 @@
             <div class="section-label">Tracking</div>
             <h3>Badges & Favorites</h3>
             <div class="detail-copy">
-              Draft local-only tracking controls. This is the place to persist favorites, tags, or watch states later.
+              Save lightweight product tags to a tracking account so they persist between sessions and devices. If you stay signed out, tags still work locally in this browser only.
+            </div>
+            <div class="tracking-auth">
+              <div id="trackingSignedOut">
+                <div class="tracking-auth-grid">
+                  <label>
+                    <span class="field-label">Tracking Username</span>
+                    <input id="trackingUsername" type="text" placeholder="your-name">
+                  </label>
+                  <label>
+                    <span class="field-label">PIN</span>
+                    <input id="trackingPin" type="password" inputmode="numeric" placeholder="4+ digits">
+                  </label>
+                </div>
+                <div class="tag-actions" style="margin-top:10px;">
+                  <button type="button" id="trackingLoginBtn">Sign In / Create</button>
+                </div>
+              </div>
+              <div class="tracking-user" id="trackingSignedIn" hidden>
+                <div>
+                  <strong id="trackingUserLabel">Signed in</strong>
+                  <span>Tracking tags sync to this account.</span>
+                </div>
+                <div class="tag-actions">
+                  <button type="button" id="trackingLogoutBtn">Sign Out</button>
+                </div>
+              </div>
+              <div class="tracking-status" id="trackingStatus">Local-only mode.</div>
             </div>
             <div class="tag-actions" id="tagActions">
               <button type="button" data-tag="favorite">Favorite</button>
               <button type="button" data-tag="watchlist">Watchlist</button>
-              <button type="button" data-tag="sealed">Sealed</button>
               <button type="button" data-tag="research">Research</button>
+              <button type="button" data-tag="owned">Owned</button>
             </div>
             <div class="badge-row" id="activeTags"></div>
           </section>
@@ -1005,6 +1081,14 @@
     const detailStats = document.getElementById("detailStats");
     const tagActions = document.getElementById("tagActions");
     const activeTags = document.getElementById("activeTags");
+    const trackingSignedOut = document.getElementById("trackingSignedOut");
+    const trackingSignedIn = document.getElementById("trackingSignedIn");
+    const trackingUsername = document.getElementById("trackingUsername");
+    const trackingPin = document.getElementById("trackingPin");
+    const trackingLoginBtn = document.getElementById("trackingLoginBtn");
+    const trackingLogoutBtn = document.getElementById("trackingLogoutBtn");
+    const trackingStatus = document.getElementById("trackingStatus");
+    const trackingUserLabel = document.getElementById("trackingUserLabel");
 
     const universeByKey = new Map();
     const groupsById = new Map();
@@ -1013,6 +1097,7 @@
     const categoryOptions = [];
 
     const initialParams = new URLSearchParams(window.location.search);
+    const trackingTokenKey = "pokemon-momentum-tracking-token";
 
     // This shared UI state lets the left rail, chart, table, and right rail stay in sync
     // around one selected product, one active feed tab, one chart window, one set context,
@@ -1037,6 +1122,8 @@
     let activeTableIndex = -1;
     let currentSeriesPayload = null;
     const hasExplicitProductSelection = initialParams.has("product");
+    let trackingToken = localStorage.getItem(trackingTokenKey) || "";
+    let trackingUser = null;
 
     const tabConfig = {
       // Each tab maps to one API screen plus the columns that should be surfaced in the lower table.
@@ -1109,6 +1196,151 @@
       Object.entries(obj).forEach(([key, tags]) => {
         localTags.set(key, new Set(tags));
       });
+    }
+
+    function trackingHeaders() {
+      return trackingToken ? { Authorization: `Bearer ${trackingToken}` } : {};
+    }
+
+    function setTrackingStatus(message, isWarn = false) {
+      trackingStatus.textContent = message;
+      trackingStatus.classList.toggle("warn", Boolean(isWarn));
+    }
+
+    function updateTrackingUi() {
+      const signedIn = Boolean(trackingUser && trackingToken);
+      trackingSignedOut.hidden = signedIn;
+      trackingSignedIn.hidden = !signedIn;
+      trackingUserLabel.textContent = signedIn ? trackingUser.username : "Signed in";
+      if (signedIn) {
+        setTrackingStatus(`Syncing tags for ${trackingUser.username}.`);
+      } else {
+        setTrackingStatus("Local-only mode.");
+      }
+    }
+
+    async function trackingJson(path, options = {}) {
+      const res = await fetch(apiBase + path, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...(options.headers || {}),
+          ...trackingHeaders(),
+        },
+      });
+      if (!res.ok) {
+        let detail = `${res.status} ${res.statusText}`;
+        try {
+          const payload = await res.json();
+          detail = payload.detail || detail;
+        } catch (_) {}
+        throw new Error(detail);
+      }
+      return res.json();
+    }
+
+    function getMetaForKey(key) {
+      return universeByKey.get(key) || null;
+    }
+
+    function buildLocalTrackingItems() {
+      const items = [];
+      for (const [key, tags] of localTags.entries()) {
+        const meta = getMetaForKey(key);
+        if (!meta || !tags.size) continue;
+        for (const tag of tags) {
+          items.push({
+            category_id: currentCategoryId,
+            product_id: meta.productId,
+            sub_type_name: meta.subTypeName || "",
+            tag,
+          });
+        }
+      }
+      return items;
+    }
+
+    async function loadRemoteTags() {
+      if (!trackingToken) return;
+      const payload = await trackingJson("/tracking/tags", { method: "GET" });
+      for (const item of payload.items || []) {
+        const key = keyOf(item.product_id, item.sub_type_name);
+        if (!localTags.has(key)) {
+          localTags.set(key, new Set());
+        }
+        localTags.get(key).add(item.tag);
+      }
+      saveStoredTags();
+      updateTagButtons();
+    }
+
+    async function restoreTrackingSession() {
+      if (!trackingToken) {
+        updateTrackingUi();
+        return;
+      }
+      try {
+        const payload = await trackingJson("/tracking/session", { method: "GET" });
+        trackingUser = payload.user || null;
+        updateTrackingUi();
+        await loadRemoteTags();
+      } catch (err) {
+        trackingToken = "";
+        trackingUser = null;
+        localStorage.removeItem(trackingTokenKey);
+        updateTrackingUi();
+      }
+    }
+
+    async function signInTracking() {
+      const username = trackingUsername.value.trim();
+      const pin = trackingPin.value.trim();
+      if (username.length < 3 || pin.length < 4) {
+        setTrackingStatus("Use a username of at least 3 characters and a PIN of at least 4 digits.", true);
+        return;
+      }
+      setTrackingStatus("Signing in...");
+      try {
+        const payload = await trackingJson("/tracking/session", {
+          method: "POST",
+          body: JSON.stringify({
+            username,
+            pin,
+            create_if_missing: true,
+          }),
+          headers: {},
+        });
+        trackingToken = payload.token;
+        trackingUser = payload.user || null;
+        localStorage.setItem(trackingTokenKey, trackingToken);
+        const localItems = buildLocalTrackingItems();
+        if (localItems.length) {
+          await trackingJson("/tracking/tags/merge", {
+            method: "POST",
+            body: JSON.stringify({ items: localItems }),
+            headers: {},
+          });
+        }
+        await loadRemoteTags();
+        trackingPin.value = "";
+        updateTrackingUi();
+      } catch (err) {
+        setTrackingStatus(`Tracking sign-in failed: ${err.message}`, true);
+      }
+    }
+
+    async function signOutTracking() {
+      try {
+        if (trackingToken) {
+          await trackingJson("/tracking/session", { method: "DELETE" });
+        }
+      } catch (_) {
+      } finally {
+        trackingToken = "";
+        trackingUser = null;
+        localStorage.removeItem(trackingTokenKey);
+        updateTrackingUi();
+      }
     }
 
     function withCategory(path) {
@@ -2127,13 +2359,22 @@
         startDeferredDashboardLoad();
       });
 
+      trackingLoginBtn.addEventListener("click", async () => {
+        await signInTracking();
+      });
+
+      trackingLogoutBtn.addEventListener("click", async () => {
+        await signOutTracking();
+      });
+
       tagActions.querySelectorAll("button").forEach((btn) => {
-        btn.addEventListener("click", () => {
+        btn.addEventListener("click", async () => {
           if (!currentKey) return;
           if (!localTags.has(currentKey)) {
             localTags.set(currentKey, new Set());
           }
           const tags = localTags.get(currentKey);
+          const enabled = !tags.has(btn.dataset.tag);
           if (tags.has(btn.dataset.tag)) {
             tags.delete(btn.dataset.tag);
           } else {
@@ -2141,6 +2382,26 @@
           }
           saveStoredTags();
           updateTagButtons();
+          if (trackingToken) {
+            const meta = universeByKey.get(currentKey);
+            if (!meta) return;
+            try {
+              await trackingJson("/tracking/tags", {
+                method: "PUT",
+                body: JSON.stringify({
+                  category_id: currentCategoryId,
+                  product_id: meta.productId,
+                  sub_type_name: meta.subTypeName || "",
+                  tag: btn.dataset.tag,
+                  enabled,
+                }),
+                headers: {},
+              });
+              setTrackingStatus(`Saved ${btn.dataset.tag} for ${trackingUser?.username || "account"}.`);
+            } catch (err) {
+              setTrackingStatus(`Tag sync failed: ${err.message}`, true);
+            }
+          }
         });
       });
 
@@ -2172,7 +2433,9 @@
       // - heavier universe/groups/table work continues in the background
       try {
         hydrateStoredTags();
+        updateTrackingUi();
         bindEvents();
+        await restoreTrackingSession();
         if (!tabConfig[currentTab]) currentTab = "top_movers";
         if (!["cards", "sealed"].includes(currentSegment)) currentSegment = "cards";
         if (![30, 90, 180, 365, 730, 5000].includes(currentDays)) currentDays = 365;

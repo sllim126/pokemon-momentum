@@ -5,7 +5,7 @@ import urllib.error
 
 import duckdb
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
@@ -24,6 +24,18 @@ from scripts.dashboards.query_support import (
     products_from,
     q,
     to_jsonable,
+)
+from scripts.dashboards.tracking_store import (
+    create_session,
+    create_user,
+    delete_session,
+    ensure_tracking_schema,
+    get_session_user,
+    get_tags_for_user,
+    get_user_by_username,
+    merge_tags,
+    set_tag,
+    verify_user,
 )
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -56,6 +68,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+ensure_tracking_schema()
 
 
 @app.get("/")
@@ -186,6 +200,94 @@ def categories():
             {"category_id": 85, "label": "Pokemon Japanese", "slug": "pokemon_jp"},
         ]
     }
+
+
+def require_tracking_user(authorization: str | None):
+    """Resolve a signed-in tracking user from the bearer token used by the dashboard UI."""
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Missing tracking session")
+    token = authorization.split(" ", 1)[1].strip()
+    session_user = get_session_user(token)
+    if session_user is None:
+        raise HTTPException(status_code=401, detail="Invalid tracking session")
+    return session_user
+
+
+@app.post("/tracking/session")
+def tracking_session(payload: dict):
+    """Create or resume a lightweight tracking account using username + PIN."""
+    username = str(payload.get("username", "")).strip()
+    pin = str(payload.get("pin", "")).strip()
+    create_if_missing = bool(payload.get("create_if_missing", True))
+    if len(username) < 3:
+        raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
+    if len(pin) < 4:
+        raise HTTPException(status_code=400, detail="PIN must be at least 4 characters")
+
+    user = verify_user(username, pin)
+    if user is None:
+        existing = get_user_by_username(username)
+        if existing is not None:
+            raise HTTPException(status_code=401, detail="Incorrect PIN")
+        if not create_if_missing:
+            raise HTTPException(status_code=404, detail="Tracking account not found")
+        user_id = create_user(username, pin)
+        username_out = username.strip().lower()
+    else:
+        user_id = int(user["id"])
+        username_out = user["username"]
+
+    token = create_session(user_id)
+    return {
+        "token": token,
+        "user": {
+            "username": username_out,
+        },
+    }
+
+
+@app.get("/tracking/session")
+def tracking_session_status(authorization: str | None = Header(default=None)):
+    session_user = require_tracking_user(authorization)
+    return {"user": {"username": session_user.username}}
+
+
+@app.delete("/tracking/session")
+def tracking_session_delete(authorization: str | None = Header(default=None)):
+    if authorization and authorization.lower().startswith("bearer "):
+        token = authorization.split(" ", 1)[1].strip()
+        delete_session(token)
+    return {"ok": True}
+
+
+@app.get("/tracking/tags")
+def tracking_tags(authorization: str | None = Header(default=None)):
+    session_user = require_tracking_user(authorization)
+    return {"items": get_tags_for_user(session_user.user_id)}
+
+
+@app.put("/tracking/tags")
+def tracking_tags_upsert(payload: dict, authorization: str | None = Header(default=None)):
+    session_user = require_tracking_user(authorization)
+    set_tag(
+        user_id=session_user.user_id,
+        category_id=int(payload.get("category_id", 3)),
+        product_id=int(payload["product_id"]),
+        sub_type_name=str(payload.get("sub_type_name", "")),
+        tag=str(payload["tag"]),
+        enabled=bool(payload.get("enabled", True)),
+    )
+    return {"ok": True}
+
+
+@app.post("/tracking/tags/merge")
+def tracking_tags_merge(payload: dict, authorization: str | None = Header(default=None)):
+    session_user = require_tracking_user(authorization)
+    items = payload.get("items", [])
+    if not isinstance(items, list):
+        raise HTTPException(status_code=400, detail="items must be a list")
+    merge_tags(session_user.user_id, items)
+    return {"ok": True, "count": len(items)}
 
 
 @app.get("/eod/index_components")

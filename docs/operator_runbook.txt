@@ -95,6 +95,7 @@ Healthy result:
 - refresh preserves current dashboard state
 - long signal/set lists scroll inside the lower panel
 - `set-explorer` loads and the set table populates
+- tracking sign-in works and tags persist after refresh
 
 3. systemd timers are active
 
@@ -261,6 +262,38 @@ curl 'http://localhost:8001/group_signals?category_id=85&limit=5'
 curl 'http://localhost:8001/group_series?category_id=85&groupId=24006&days=365'
 curl 'http://localhost:8001/set_baskets?category_id=85&min_cards=10&limit=5'
 ```
+
+
+Tracking checks
+---------------
+The main dashboard now supports lightweight account-backed tracking tags.
+
+Storage:
+
+- SQLite database:
+  - `/app/data/processed/tracking.sqlite3`
+
+Main endpoints:
+
+- `POST /tracking/session`
+- `GET /tracking/session`
+- `DELETE /tracking/session`
+- `GET /tracking/tags`
+- `PUT /tracking/tags`
+- `POST /tracking/tags/merge`
+
+Healthy UI result:
+
+- you can enter a username + PIN in the right rail
+- sign in or create the account
+- tag a product as `Favorite`, `Watchlist`, `Research`, or `Owned`
+- refresh the page
+- the tags remain
+
+Current scope:
+
+- only `/dashboard` uses the tracking account so far
+- `/embed` and `/set-explorer` are not wired to tracking yet
 
 
 Set explorer checks

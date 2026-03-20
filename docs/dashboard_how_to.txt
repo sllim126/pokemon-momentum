@@ -286,12 +286,25 @@ Sections include:
 - momentum read
 
 Tracking / Favorites
-This is the local tag area.
+This is the lightweight tracking area.
 It lets you mark items such as:
 - Favorite
 - Watchlist
-- Sealed
 - Research
+- Owned
+
+How it works now:
+- if you stay signed out, tags are saved locally in that browser only
+- if you sign in with a tracking username and PIN, tags sync to the tracking account and follow you between sessions and devices
+
+This is intentionally not a full collection tracker.
+It does not currently track:
+- quantity owned
+- cost basis
+- profit and loss
+- portfolio totals
+
+It is meant to save lightweight workflow states only.
 
 Key Stats
 This shows the current summary numbers for the selected item, such as:
@@ -319,6 +332,7 @@ Suggested Workflow
 3. Use the signal tabs to look for confirmation or earlier-stage setups.
 4. Use Set Browser to inspect neighboring items in the same set.
 5. Use the right rail to tag and keep track of names you want to revisit.
+6. If you want those tags on another device, sign in to the tracking account and let them sync.
 
 
 Important Reminder

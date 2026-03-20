@@ -53,6 +53,11 @@ workflow features:
   - it is meant for browsing set cost and value concentration questions without needing
     to interpret chart signals first
 
+- lightweight tracking accounts
+  - anonymous tags can still stay browser-local
+  - signed-in users can now sync `favorite`, `watchlist`, `research`, and `owned` tags
+    through a separate tracking store
+
 
 Core idea
 ---------
@@ -461,6 +466,7 @@ What it does:
   - `group_signals?generation=...`
   - `/group_series?groupId=...`
   - `/set_baskets`
+  - `/tracking/...`
 
 Set history endpoint:
 
@@ -486,6 +492,17 @@ Set explorer endpoint:
     - depth score
   - this powers the separate `/set-explorer` page
   - it is designed for "poke around in the set data" questions rather than live chart analysis
+
+Tracking endpoints:
+
+- `/tracking/session`
+  - creates or resumes a lightweight tracking account with username + PIN
+
+- `/tracking/tags`
+  - reads and writes saved workflow tags for one signed-in user
+
+- `/tracking/tags/merge`
+  - pushes locally-created tags into the saved account after sign-in
 
 Important helpers:
 
@@ -548,6 +565,7 @@ Additional dashboard behavior:
 - set selection automatically switches into the set-product view
 - the first product in a newly selected set is auto-loaded into the chart
 - keyboard stepping can walk the current list without repeated mouse clicks
+- tags can stay local-only or sync through the new tracking account flow
 
 Embed dashboard responsibilities:
 
@@ -581,6 +599,10 @@ If you are trying to decide where something "really lives", use this mental mode
 
 - Latest analytical state:
   - category-specific product/group signal snapshot tables
+
+- Tracking state:
+  - SQLite `tracking.sqlite3`
+  - intentionally separate from the price-history pipeline
 
 - UI/API:
   - reads from parquet when it can
