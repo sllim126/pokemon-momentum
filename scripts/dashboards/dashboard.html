@@ -109,32 +109,132 @@
       max-width: 58ch;
     }
 
-    .brandlinks {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
+    .brandactions {
+      display: grid;
       gap: 10px;
+      justify-items: end;
     }
 
-    .brandlinks a {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 40px;
-      padding: 10px 14px;
-      border-radius: 999px;
+    .tracking-header {
+      width: min(100%, 320px);
+      position: relative;
+    }
+
+    .tracking-toggle,
+    .tracking-header-actions button,
+    .tracking-header-user .tag-actions button,
+    .tracking-menu-link {
+      appearance: none;
       border: 1px solid var(--line);
       background: rgba(17, 26, 43, 0.84);
       color: var(--ink);
       text-decoration: none;
-      font-size: 13px;
-      font-weight: 700;
-      transition: 0.14s ease;
+      font: inherit;
+      min-height: 40px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
     }
 
-    .brandlinks a:hover {
-      border-color: rgba(34, 176, 255, 0.34);
-      color: #9fe6ff;
+    .tracking-toggle {
+      width: 100%;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .tracking-toggle .caret {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tracking-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 10px);
+      width: min(360px, 100vw - 44px);
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(28, 38, 61, 0.98), rgba(20, 29, 48, 0.99));
+      box-shadow: var(--shadow);
+      display: none;
+      z-index: 20;
+    }
+
+    .tracking-menu.open {
+      display: grid;
+      gap: 10px;
+    }
+
+    .tracking-header-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 96px;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .tracking-header-actions {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tracking-header-actions.split {
+      justify-content: space-between;
+      flex-wrap: nowrap;
+    }
+
+    .tracking-header-user {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(17, 26, 43, 0.84);
+    }
+
+    .tracking-header-user strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .tracking-header-user span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tracking-header-status {
+      width: 100%;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .tracking-menu-link {
+      width: 100%;
+      justify-content: flex-start;
+      border-radius: 14px;
+    }
+
+    .tag-actions.full-width button {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .tracking-header-actions.split .tracking-menu-link,
+    .tracking-header-actions.split button {
+      width: auto;
+      flex: 0 0 auto;
+      border-radius: 999px;
     }
 
     .layout {
@@ -398,14 +498,8 @@
 
     .tracking-auth {
       display: grid;
-      gap: 12px;
+      gap: 8px;
       margin-bottom: 14px;
-    }
-
-    .tracking-auth-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
     }
 
     .tracking-status {
@@ -696,6 +790,20 @@
       margin-top: 10px;
     }
 
+    #tagActions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px 14px;
+      margin-top: 18px;
+    }
+
+    #tagActions button,
+    .tag-actions.full-width button {
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+    }
+
     .image-card {
       position: sticky;
       top: 0;
@@ -752,11 +860,7 @@
 
     @media (max-width: 1400px) {
       .brandbar {
-        grid-template-columns: 320px minmax(0, 1fr);
-      }
-
-      .brandlinks {
-        display: none;
+        grid-template-columns: 320px minmax(0, 1fr) 320px;
       }
 
       .layout {
@@ -773,6 +877,13 @@
     @media (max-width: 1080px) {
       .brandbar {
         grid-template-columns: 1fr;
+      }
+
+      .brandactions,
+      .tracking-header,
+      .tracking-header-actions {
+        justify-items: start;
+        justify-content: flex-start;
       }
 
       .layout {
@@ -816,6 +927,10 @@
         text-align: left;
         margin-left: 0;
       }
+
+      .tracking-header-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -836,9 +951,47 @@
       <div class="brandcopy">
         <div class="brandtag">Data-driven Pokemon market screening for serious collectors, investors, and research-minded buyers.</div>
       </div>
-      <div class="brandlinks">
-        <a href="/" id="brandHomeLink">Main Dashboard</a>
-        <a href="/embed" id="brandEmbedLink">Embed View</a>
+      <div class="brandactions">
+        <div class="tracking-header">
+          <button type="button" class="tracking-toggle" id="trackingToggleBtn">
+            <span id="trackingToggleLabel">Account</span>
+            <span class="caret">▼</span>
+          </button>
+          <div class="tracking-menu" id="trackingMenu">
+            <div id="trackingSignedOut" class="tracking-header-signout">
+              <div class="tracking-header-grid">
+                <label>
+                  <span class="field-label">Username</span>
+                  <input id="trackingUsername" type="text" placeholder="your-name">
+                </label>
+                <label>
+                  <span class="field-label">PIN</span>
+                  <input id="trackingPin" type="password" inputmode="numeric" placeholder="4+ digits">
+                </label>
+              </div>
+              <div class="tracking-header-actions">
+                <button type="button" id="trackingSignInBtn">Sign In</button>
+                <button type="button" id="trackingCreateBtn">Create Account</button>
+              </div>
+            </div>
+            <div id="trackingSignedIn" hidden>
+              <div class="tracking-header-user">
+                <div>
+                  <strong id="trackingUserLabel">Signed in</strong>
+                  <span id="trackingUserSubtext">Tracking tags sync to this account.</span>
+                </div>
+              </div>
+              <div class="tracking-header-actions" style="justify-content: stretch;">
+                <button type="button" class="tracking-menu-link" id="trackingTrackedBtn">Tracked Items</button>
+              </div>
+              <div class="tracking-header-actions split">
+                <a class="tracking-menu-link" href="/account-settings" id="trackingSettingsLink">Account Settings</a>
+                <button type="button" id="trackingLogoutBtn">Sign Out</button>
+              </div>
+            </div>
+            <div class="tracking-header-status" id="trackingStatus">Local-only mode.</div>
+          </div>
+        </div>
       </div>
     </section>
     <div class="layout">
@@ -962,6 +1115,19 @@
             </label>
           </div>
 
+          <div class="picker-grid" id="trackedFilters" style="margin-bottom:18px; display:none;">
+            <label>
+              <span class="field-label">Tracked Tag</span>
+              <select id="trackedTagPicker">
+                <option value="all">All Tags</option>
+                <option value="favorite">Favorite</option>
+                <option value="watchlist">Watchlist</option>
+                <option value="research">Research</option>
+                <option value="owned">Buy List</option>
+              </select>
+            </label>
+          </div>
+
           <div class="table-wrap">
             <table>
               <thead id="tableHead"></thead>
@@ -975,11 +1141,6 @@
       <aside class="panel right-rail">
         <div class="stack">
           <section class="detail-card image-card">
-            <div class="section-label">Selected Product</div>
-            <h3>Image Preview</h3>
-            <div class="detail-copy">
-              The selected card or sealed product stays visible here while you browse the signal lists.
-            </div>
             <div class="hero-image-card" id="heroImageCard">
               <div class="hero-image-empty" id="heroImageEmpty">No Image Available</div>
               <img id="heroImage" alt="" hidden>
@@ -987,58 +1148,26 @@
           </section>
 
           <section class="detail-card">
-            <div class="section-label">Tracking</div>
-            <h3>Badges & Favorites</h3>
+            <h3>Track This Item</h3>
             <div class="detail-copy">
-              Save lightweight product tags to a tracking account so they persist between sessions and devices. If you stay signed out, tags still work locally in this browser only.
-            </div>
-            <div class="tracking-auth">
-              <div id="trackingSignedOut">
-                <div class="tracking-auth-grid">
-                  <label>
-                    <span class="field-label">Tracking Username</span>
-                    <input id="trackingUsername" type="text" placeholder="your-name">
-                  </label>
-                  <label>
-                    <span class="field-label">PIN</span>
-                    <input id="trackingPin" type="password" inputmode="numeric" placeholder="4+ digits">
-                  </label>
-                </div>
-                <div class="tag-actions" style="margin-top:10px;">
-                  <button type="button" id="trackingLoginBtn">Sign In / Create</button>
-                </div>
-              </div>
-              <div class="tracking-user" id="trackingSignedIn" hidden>
-                <div>
-                  <strong id="trackingUserLabel">Signed in</strong>
-                  <span>Tracking tags sync to this account.</span>
-                </div>
-                <div class="tag-actions">
-                  <button type="button" id="trackingLogoutBtn">Sign Out</button>
-                </div>
-              </div>
-              <div class="tracking-status" id="trackingStatus">Local-only mode.</div>
+              Click a tag to save it to this item. Click it again to remove it. Sign in from the account menu if you want your tracked items to follow you between sessions and devices.
             </div>
             <div class="tag-actions" id="tagActions">
               <button type="button" data-tag="favorite">Favorite</button>
               <button type="button" data-tag="watchlist">Watchlist</button>
               <button type="button" data-tag="research">Research</button>
-              <button type="button" data-tag="owned">Owned</button>
+              <button type="button" data-tag="owned">Buy List</button>
             </div>
-            <div class="badge-row" id="activeTags"></div>
+            <div class="tag-actions full-width" style="margin-top:14px;">
+              <button type="button" id="viewTrackedItemsBtn">View Tracked Items</button>
+            </div>
           </section>
 
           <section class="detail-card">
-            <div class="section-label">Selection</div>
             <h3>Key Stats</h3>
             <div class="stats-list" id="detailStats"></div>
           </section>
 
-          <section class="detail-card">
-            <div class="section-label">Signal Snapshot</div>
-            <h3>Momentum Read</h3>
-            <div class="chip-row" id="metricChips"></div>
-          </section>
         </div>
       </aside>
     </div>
@@ -1059,6 +1188,8 @@
     const marketPicker = document.getElementById("marketPicker");
     const groupSignalFilters = document.getElementById("groupSignalFilters");
     const generationPicker = document.getElementById("generationPicker");
+    const trackedFilters = document.getElementById("trackedFilters");
+    const trackedTagPicker = document.getElementById("trackedTagPicker");
     const tableHead = document.getElementById("tableHead");
     const tableBody = document.getElementById("tableBody");
     const tableWrap = document.querySelector(".table-wrap");
@@ -1077,18 +1208,23 @@
     const headlinePrice = document.getElementById("headlinePrice");
     const headlineChangeWrap = document.getElementById("headlineChangeWrap");
     const freshnessBadge = document.getElementById("freshnessBadge");
-    const metricChips = document.getElementById("metricChips");
     const detailStats = document.getElementById("detailStats");
     const tagActions = document.getElementById("tagActions");
-    const activeTags = document.getElementById("activeTags");
+    const trackingToggleBtn = document.getElementById("trackingToggleBtn");
+    const trackingToggleLabel = document.getElementById("trackingToggleLabel");
+    const trackingMenu = document.getElementById("trackingMenu");
     const trackingSignedOut = document.getElementById("trackingSignedOut");
     const trackingSignedIn = document.getElementById("trackingSignedIn");
     const trackingUsername = document.getElementById("trackingUsername");
     const trackingPin = document.getElementById("trackingPin");
-    const trackingLoginBtn = document.getElementById("trackingLoginBtn");
+    const trackingSignInBtn = document.getElementById("trackingSignInBtn");
+    const trackingCreateBtn = document.getElementById("trackingCreateBtn");
+    const trackingTrackedBtn = document.getElementById("trackingTrackedBtn");
+    const viewTrackedItemsBtn = document.getElementById("viewTrackedItemsBtn");
     const trackingLogoutBtn = document.getElementById("trackingLogoutBtn");
     const trackingStatus = document.getElementById("trackingStatus");
     const trackingUserLabel = document.getElementById("trackingUserLabel");
+    const trackingUserSubtext = document.getElementById("trackingUserSubtext");
 
     const universeByKey = new Map();
     const groupsById = new Map();
@@ -1118,12 +1254,14 @@
       sealed: false
     };
     let currentGeneration = initialParams.get("generation") || "all";
+    let currentTrackedTag = initialParams.get("tracked_tag") || "all";
     let activeTableRows = [];
     let activeTableIndex = -1;
     let currentSeriesPayload = null;
     const hasExplicitProductSelection = initialParams.has("product");
     let trackingToken = localStorage.getItem(trackingTokenKey) || "";
     let trackingUser = null;
+    let trackingMenuOpen = false;
 
     const tabConfig = {
       // Each tab maps to one API screen plus the columns that should be surfaced in the lower table.
@@ -1133,8 +1271,8 @@
         title: "Largest 30-day movers across all tracked cards and products."
       },
       breakouts: {
-        path: "/breakouts?days=90&limit=120&min_price=5",
-        columns: ["productName", "groupName", "number", "subTypeName", "latest_price", "high_window"],
+        path: "/breakouts?days=90&limit=120&min_price=5&min_recent_distinct_prices_30d=10",
+        columns: ["productName", "groupName", "number", "subTypeName", "latest_price", "prior_high_window", "breakout_pct", "recent_distinct_prices_30d"],
         title: "Fresh 90-day highs across all tracked cards and products."
       },
       good_buys: {
@@ -1166,6 +1304,10 @@
         path: "/group_signals?limit=250&min_items=5",
         columns: ["generation", "groupName", "item_count", "card_count", "sealed_count", "avg_30d_pct", "avg_90d_pct", "pct_above_sma30", "pct_at_90d_high", "sealed_vs_cards_30d_divergence", "breadth_score"],
         title: "Set-level breadth and momentum snapshot."
+      },
+      tracked_items: {
+        columns: ["tags", "productName", "groupName", "number", "rarity", "subTypeName"],
+        title: "Saved products from your tracking tags. Filter by one tag or browse everything you marked."
       },
       group_products: {
         columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "latest_date"],
@@ -1207,15 +1349,44 @@
       trackingStatus.classList.toggle("warn", Boolean(isWarn));
     }
 
+    function setTrackingMenuOpen(open) {
+      // The header account button behaves like a small site-style user menu rather than
+      // leaving auth controls visible in the right rail at all times.
+      trackingMenuOpen = Boolean(open);
+      trackingMenu.classList.toggle("open", trackingMenuOpen);
+      trackingToggleBtn.setAttribute("aria-expanded", trackingMenuOpen ? "true" : "false");
+    }
+
     function updateTrackingUi() {
       const signedIn = Boolean(trackingUser && trackingToken);
       trackingSignedOut.hidden = signedIn;
       trackingSignedIn.hidden = !signedIn;
+      trackingToggleLabel.textContent = signedIn ? (trackingUser?.username || "Account") : "Account";
       trackingUserLabel.textContent = signedIn ? trackingUser.username : "Signed in";
+      if (trackingUserSubtext) {
+        trackingUserSubtext.hidden = !isDevMode;
+      }
       if (signedIn) {
-        setTrackingStatus(`Syncing tags for ${trackingUser.username}.`);
+        setTrackingStatus(isDevMode ? `Syncing tags for ${trackingUser.username}.` : "");
       } else {
         setTrackingStatus("Local-only mode.");
+      }
+    }
+
+    async function openTrackedItemsView() {
+      setTrackingMenuOpen(false);
+      tabsEl.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
+      currentTab = "tracked_items";
+      currentChartMode = "product";
+      syncUrlState();
+      updateGroupSignalFilterVisibility();
+      updateTrackedFilterVisibility();
+      updateDevTabHelp(currentTab);
+      const rows = await loadTable();
+      if (rows && rows.length) {
+        await selectItem(rows[0]);
+        activeTableIndex = 0;
+        syncActiveTableRow(true);
       }
     }
 
@@ -1292,21 +1463,24 @@
       }
     }
 
-    async function signInTracking() {
+    async function beginTrackingAuth(action) {
+      // Sign in and account creation share the same lightweight username+PIN backend,
+      // but the explicit action keeps the UI messaging clear for "taken username" cases.
       const username = trackingUsername.value.trim();
       const pin = trackingPin.value.trim();
       if (username.length < 3 || pin.length < 4) {
         setTrackingStatus("Use a username of at least 3 characters and a PIN of at least 4 digits.", true);
         return;
       }
-      setTrackingStatus("Signing in...");
+      setTrackingStatus(action === "create" ? "Creating tracking account..." : "Signing in...");
       try {
         const payload = await trackingJson("/tracking/session", {
           method: "POST",
           body: JSON.stringify({
             username,
             pin,
-            create_if_missing: true,
+            action,
+            create_if_missing: action === "create",
           }),
           headers: {},
         });
@@ -1322,10 +1496,21 @@
           });
         }
         await loadRemoteTags();
+        if (currentTab === "tracked_items") {
+          await loadTable();
+        }
         trackingPin.value = "";
         updateTrackingUi();
+        setTrackingMenuOpen(false);
+        setTrackingStatus(
+          isDevMode
+            ? (action === "create"
+                ? `Tracking account created for ${trackingUser?.username || username}.`
+                : `Signed in as ${trackingUser?.username || username}.`)
+            : ""
+        );
       } catch (err) {
-        setTrackingStatus(`Tracking sign-in failed: ${err.message}`, true);
+        setTrackingStatus(err.message, true);
       }
     }
 
@@ -1358,6 +1543,11 @@
         url.searchParams.set("generation", currentGeneration);
       } else {
         url.searchParams.delete("generation");
+      }
+      if (currentTrackedTag && currentTrackedTag !== "all") {
+        url.searchParams.set("tracked_tag", currentTrackedTag);
+      } else {
+        url.searchParams.delete("tracked_tag");
       }
       if (currentKey) {
         url.searchParams.set("product", currentKey);
@@ -1529,6 +1719,7 @@
         p_now: "P Now",
         p_prior: "P Prior (30D)",
         roc_pct: "ROC %",
+        breakout_pct: "Breakout PCT (%)",
       };
       tableHead.innerHTML = `<tr>${columns.map((c) => `<th>${labels[c] || c.replaceAll("_", " ")}</th>`).join("")}</tr>`;
     }
@@ -1578,12 +1769,13 @@
 
     function displayCell(col, item) {
       if (col === "generation") return item.generation || "Legacy";
+      if (col === "tags") return item.tags || "";
       if (col === "groupName") return item.groupName;
       if (col === "productName") return item.productName;
       if (col === "number") return item.number || "";
       if (col === "breakout_90d_flag") return Number(item[col]) === 1 ? "Yes" : "No";
       if (["item_count", "card_count", "sealed_count"].includes(col)) return formatNumber(item[col], 0);
-      if (["roc_pct", "pct_vs_sma30", "roc_7d_pct", "roc_30d_pct", "roc_90d_pct", "roc_365d_pct", "price_vs_sma30_pct", "price_vs_sma90_pct"].includes(col)) {
+      if (["roc_pct", "breakout_pct", "pct_vs_sma30", "roc_7d_pct", "roc_30d_pct", "roc_90d_pct", "roc_365d_pct", "price_vs_sma30_pct", "price_vs_sma90_pct"].includes(col)) {
         const pct = formatPercent(item[col]);
         return `<span class="${pct.cls}">${pct.text}</span>`;
       }
@@ -1634,7 +1826,7 @@
         });
         tableBody.appendChild(tr);
       });
-      syncActiveTableRow(false);
+      syncActiveTableRow(currentTab === "group_signals");
     }
 
     function updateGroupSignalFilterVisibility() {
@@ -1668,6 +1860,44 @@
         currentGeneration = "all";
       }
       generationPicker.value = currentGeneration;
+    }
+
+    function updateTrackedFilterVisibility() {
+      if (!trackedFilters) return;
+      trackedFilters.style.display = currentTab === "tracked_items" ? "grid" : "none";
+      trackedTagPicker.value = currentTrackedTag;
+    }
+
+    function buildTrackedRows() {
+      // The Tracked tab is assembled client-side from the saved tag map plus loaded
+      // product metadata. That keeps it fast and works for both local-only and synced tags.
+      const rows = [];
+      for (const [key, tags] of localTags.entries()) {
+        if (!tags || !tags.size) continue;
+        const meta = universeByKey.get(key);
+        if (!meta) continue;
+        const tagList = Array.from(tags).sort();
+        if (currentTrackedTag !== "all" && !tagList.includes(currentTrackedTag)) continue;
+        rows.push({
+          key,
+          productId: meta.productId,
+          groupId: meta.groupId,
+          productName: meta.productName || `productId ${meta.productId}`,
+          groupName: meta.groupName || "",
+          number: meta.number || "",
+          rarity: meta.rarity || "",
+          subTypeName: meta.subTypeName || "",
+          tags: tagList.join(", "),
+        });
+      }
+      rows.sort((a, b) => {
+        const tagCompare = a.tags.localeCompare(b.tags);
+        if (tagCompare !== 0) return tagCompare;
+        const groupCompare = a.groupName.localeCompare(b.groupName);
+        if (groupCompare !== 0) return groupCompare;
+        return a.productName.localeCompare(b.productName);
+      });
+      return rows;
     }
 
     async function moveTableSelection(delta) {
@@ -1835,32 +2065,10 @@
       headlinePrice.textContent = formatNumber(latestPrice, 2);
       headlineChangeWrap.innerHTML = `<span class="price-pill ${pct.cls}">${pct.text === "n/a" ? "vs SMA30 n/a" : `${pct.text} vs SMA30`}</span>`;
       if (meta.imageUrl) {
-        heroImage.src = meta.imageUrl;
-        heroImage.alt = meta.productName ? `${meta.productName} image` : "Product image";
-        heroImage.hidden = false;
-        heroImageEmpty.hidden = true;
+        setHeroImageCandidates([meta.imageUrl], meta.productName ? `${meta.productName} image` : "Product image", "No Image Available");
       } else {
-        heroImage.removeAttribute("src");
-        heroImage.alt = "";
-        heroImage.hidden = true;
-        heroImageEmpty.hidden = false;
-        heroImageEmpty.textContent = "No Image Available";
+        clearHeroImage("No Image Available");
       }
-
-      metricChips.innerHTML = "";
-      [
-        `Latest ${series.latest || "-"}`,
-        `Price ${formatNumber(latestPrice, 2)}`,
-        `SMA7 ${formatNumber(latestSma7, 2)}`,
-        `SMA30 ${formatNumber(latestSma30, 2)}`,
-        meta.rarity ? meta.rarity : "No rarity",
-        meta.number ? `Card ${meta.number}` : "Catalog product"
-      ].forEach((text, idx) => {
-        const el = document.createElement("div");
-        el.className = `chip ${idx === 1 ? "good" : "neutral"}`;
-        el.textContent = text;
-        metricChips.appendChild(el);
-      });
 
       detailStats.innerHTML = "";
       const details = [
@@ -1883,6 +2091,49 @@
 
     }
 
+    function clearHeroImage(emptyText = "No Image Available") {
+      heroImage.removeAttribute("src");
+      heroImage.alt = "";
+      heroImage.hidden = true;
+      heroImageEmpty.hidden = false;
+      heroImageEmpty.textContent = emptyText;
+      heroImage.onload = null;
+      heroImage.onerror = null;
+    }
+
+    function setHeroImageCandidates(candidates, altText, emptyText = "No Image Available") {
+      const remaining = (candidates || []).filter(Boolean);
+      if (!remaining.length) {
+        clearHeroImage(emptyText);
+        return;
+      }
+      const tryNext = () => {
+        const src = remaining.shift();
+        if (!src) {
+          clearHeroImage(emptyText);
+          return;
+        }
+        heroImage.onload = () => {
+          heroImage.hidden = false;
+          heroImageEmpty.hidden = true;
+        };
+        heroImage.onerror = () => {
+          tryNext();
+        };
+        heroImage.alt = altText || "";
+        heroImage.hidden = false;
+        heroImageEmpty.hidden = true;
+        heroImage.src = src;
+      };
+      tryNext();
+    }
+
+    function groupLogoCandidates(groupId) {
+      if (!groupId && groupId !== 0) return [];
+      const gid = encodeURIComponent(String(groupId));
+      return ["png", "webp", "jpg", "jpeg", "svg"].map((ext) => `/images/logos/${gid}.${ext}`);
+    }
+
     function renderGroupSummary(groupMeta, series) {
       const rows = (series.rows || []).map((row) => ({
         date: row[0],
@@ -1903,26 +2154,11 @@
       headlinePrice.textContent = indexValue ? formatNumber(indexValue, 1) : "-";
       headlineChangeWrap.innerHTML = `<span class="price-pill ${breadth.cls}">${breadth.text === "n/a" ? "Breadth n/a" : `${breadth.text} above SMA30`}</span>`;
 
-      heroImage.removeAttribute("src");
-      heroImage.alt = "";
-      heroImage.hidden = true;
-      heroImageEmpty.hidden = false;
-      heroImageEmpty.textContent = "Set-Level View";
-
-      metricChips.innerHTML = "";
-      [
-        `Latest ${series.latest || "-"}`,
-        `Index ${indexValue ? formatNumber(indexValue, 1) : "n/a"}`,
-        `Breadth ${breadth.text === "n/a" ? "n/a" : breadth.text}`,
-        `Active ${last.active_items ? formatNumber(last.active_items, 0) : "n/a"}`,
-        `Avg Price ${last.avg_price ? formatNumber(last.avg_price, 2) : "n/a"}`,
-        `Median ${last.median_price ? formatNumber(last.median_price, 2) : "n/a"}`
-      ].forEach((text, idx) => {
-        const el = document.createElement("div");
-        el.className = `chip ${idx === 1 ? "good" : "neutral"}`;
-        el.textContent = text;
-        metricChips.appendChild(el);
-      });
+      setHeroImageCandidates(
+        groupLogoCandidates(groupMeta?.groupId ?? currentGroupId),
+        groupMeta?.groupName ? `${groupMeta.groupName} logo` : "Set logo",
+        "Set-Level View"
+      );
 
       detailStats.innerHTML = "";
       const details = [
@@ -2077,20 +2313,6 @@
       tagActions.querySelectorAll("button").forEach((btn) => {
         btn.classList.toggle("active", tags.has(btn.dataset.tag));
       });
-      activeTags.innerHTML = "";
-      if (!tags.size) {
-        const empty = document.createElement("div");
-        empty.className = "tag-badge";
-        empty.textContent = "No active tags";
-        activeTags.appendChild(empty);
-        return;
-      }
-      Array.from(tags).sort().forEach((tag) => {
-        const el = document.createElement("div");
-        el.className = "tag-badge";
-        el.textContent = tag;
-        activeTags.appendChild(el);
-      });
     }
 
     async function loadHealth() {
@@ -2228,6 +2450,15 @@
       const cfg = tabConfig[currentTab];
       tableStatus.textContent = cfg.title;
       updateDevTabHelp(currentTab);
+      if (currentTab === "tracked_items") {
+        if (!universeByKey.size) {
+          await loadUniverse();
+        }
+        updateTrackedFilterVisibility();
+        const rows = buildTrackedRows();
+        renderTable(rows);
+        return rows;
+      }
       let path = currentTab === "group_products"
         ? `/group_products?groupId=${encodeURIComponent(currentGroupId)}&limit=5000`
         : cfg.path;
@@ -2249,6 +2480,7 @@
         }
       }
       updateGroupSignalFilterVisibility();
+      updateTrackedFilterVisibility();
       renderTable(rows);
       return rows;
     }
@@ -2292,6 +2524,19 @@
         await loadTable();
       });
 
+      trackedTagPicker.addEventListener("change", async () => {
+        currentTrackedTag = trackedTagPicker.value || "all";
+        syncUrlState();
+        if (tableWrap) {
+          tableWrap.scrollTop = 0;
+        }
+        await loadTable();
+      });
+
+      trackingToggleBtn.addEventListener("click", () => {
+        setTrackingMenuOpen(!trackingMenuOpen);
+      });
+
       document.querySelectorAll(".chart-window button").forEach((btn) => {
         btn.addEventListener("click", async () => {
           document.querySelectorAll(".chart-window button").forEach((x) => x.classList.remove("active"));
@@ -2317,6 +2562,12 @@
           tabsEl.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
           btn.classList.add("active");
           currentTab = btn.dataset.tab;
+          if (currentTab === "group_signals") {
+            const selectedGroupId = Number(groupPicker.value);
+            if (!Number.isNaN(selectedGroupId)) {
+              currentGroupId = selectedGroupId;
+            }
+          }
           syncUrlState();
           updateGroupSignalFilterVisibility();
           updateDevTabHelp(currentTab);
@@ -2331,7 +2582,16 @@
             activeTableIndex = 0;
             syncActiveTableRow(true);
           }
+          if (currentTab === "tracked_items" && rows && rows.length) {
+            currentChartMode = "product";
+            await selectItem(rows[0]);
+            activeTableIndex = 0;
+            syncActiveTableRow(true);
+          }
           if (currentTab === "group_products" && tableWrap) {
+            tableWrap.scrollTop = 0;
+          }
+          if (currentTab === "tracked_items" && tableWrap) {
             tableWrap.scrollTop = 0;
           }
         });
@@ -2359,12 +2619,34 @@
         startDeferredDashboardLoad();
       });
 
-      trackingLoginBtn.addEventListener("click", async () => {
-        await signInTracking();
+      trackingSignInBtn.addEventListener("click", async () => {
+        await beginTrackingAuth("sign_in");
+      });
+
+      trackingCreateBtn.addEventListener("click", async () => {
+        await beginTrackingAuth("create");
+      });
+
+      trackingTrackedBtn.addEventListener("click", async () => {
+        await openTrackedItemsView();
+      });
+
+      viewTrackedItemsBtn.addEventListener("click", async () => {
+        await openTrackedItemsView();
       });
 
       trackingLogoutBtn.addEventListener("click", async () => {
         await signOutTracking();
+        setTrackingMenuOpen(false);
+      });
+
+      [trackingUsername, trackingPin].forEach((input) => {
+        input.addEventListener("keydown", async (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            await beginTrackingAuth("sign_in");
+          }
+        });
       });
 
       tagActions.querySelectorAll("button").forEach((btn) => {
@@ -2382,6 +2664,9 @@
           }
           saveStoredTags();
           updateTagButtons();
+          if (currentTab === "tracked_items") {
+            await loadTable();
+          }
           if (trackingToken) {
             const meta = universeByKey.get(currentKey);
             if (!meta) return;
@@ -2410,6 +2695,10 @@
         if (target instanceof HTMLElement && target.closest("select, input, textarea, button")) {
           return;
         }
+        if (event.key === "Escape" && trackingMenuOpen) {
+          setTrackingMenuOpen(false);
+          return;
+        }
         if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
           return;
         }
@@ -2419,6 +2708,15 @@
         } else if (event.key === "ArrowUp") {
           event.preventDefault();
           await moveTableSelection(-1);
+        }
+      });
+
+      document.addEventListener("click", (event) => {
+        if (!trackingMenuOpen) return;
+        const target = event.target;
+        if (!(target instanceof Node)) return;
+        if (!trackingMenu.contains(target) && !trackingToggleBtn.contains(target)) {
+          setTrackingMenuOpen(false);
         }
       });
     }
@@ -2440,6 +2738,7 @@
         if (!["cards", "sealed"].includes(currentSegment)) currentSegment = "cards";
         if (![30, 90, 180, 365, 730, 5000].includes(currentDays)) currentDays = 365;
         updateGroupSignalFilterVisibility();
+        updateTrackedFilterVisibility();
         if (devTabHelp) {
           devTabHelp.hidden = !isDevMode;
         }

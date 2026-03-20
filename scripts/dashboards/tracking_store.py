@@ -184,6 +184,37 @@ def delete_session(token: str) -> None:
         con.close()
 
 
+def update_user_pin(user_id: int, new_pin: str) -> None:
+    ensure_tracking_schema()
+    salt = secrets.token_hex(16)
+    now = utc_now_iso()
+    con = get_con()
+    try:
+        con.execute(
+            """
+            UPDATE tracking_users
+            SET pin_salt = ?, pin_hash = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            [salt, hash_pin(new_pin, salt), now, user_id],
+        )
+        con.commit()
+    finally:
+        con.close()
+
+
+def delete_user(user_id: int) -> None:
+    ensure_tracking_schema()
+    con = get_con()
+    try:
+        con.execute("DELETE FROM tracking_tags WHERE user_id = ?", [user_id])
+        con.execute("DELETE FROM tracking_sessions WHERE user_id = ?", [user_id])
+        con.execute("DELETE FROM tracking_users WHERE id = ?", [user_id])
+        con.commit()
+    finally:
+        con.close()
+
+
 def get_tags_for_user(user_id: int) -> list[dict]:
     ensure_tracking_schema()
     con = get_con()

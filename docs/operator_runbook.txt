@@ -149,6 +149,21 @@ cd /opt/pokemon-momentum
 sudo docker-compose up -d --build
 ```
 
+Sync uploaded set logos into runtime filenames:
+
+```bash
+cd /opt/pokemon-momentum
+python3 scripts/utilities/sync_set_logos.py
+sudo docker-compose restart pokemon-momentum
+```
+
+Expected result:
+
+- files in `/opt/pokemon-momentum/images/set logos`
+- copied into `/opt/pokemon-momentum/images/logos/<groupId>.<ext>`
+- Group Signals and Set Explorer can show local set logos when those files exist
+- shared-logo sets such as galleries or subset companions can intentionally reuse the same source logo
+
 
 Manual pipeline runs
 --------------------
@@ -229,6 +244,7 @@ Dashboard layer:
 - main chart loads
 - switching market updates content
 - set browser loads products
+- Group Signals and Set Explorer show uploaded set logos for mapped sets
 
 
 Fast verification commands
@@ -281,14 +297,24 @@ Main endpoints:
 - `GET /tracking/tags`
 - `PUT /tracking/tags`
 - `POST /tracking/tags/merge`
+- `POST /tracking/change_pin`
+- `DELETE /tracking/account`
 
 Healthy UI result:
 
-- you can enter a username + PIN in the right rail
+- you can open the `Account` dropdown in the upper-right header
 - sign in or create the account
-- tag a product as `Favorite`, `Watchlist`, `Research`, or `Owned`
+- tag a product as `Favorite`, `Watchlist`, `Research`, or `Buy List`
+- open `Tracked Items` from the account menu and see the saved list
 - refresh the page
 - the tags remain
+
+Account settings:
+
+- `/account-settings`
+- supports:
+  - change PIN
+  - delete tracking account
 
 Current scope:
 

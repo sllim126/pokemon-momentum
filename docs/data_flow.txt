@@ -53,10 +53,20 @@ workflow features:
   - it is meant for browsing set cost and value concentration questions without needing
     to interpret chart signals first
 
+- uploaded set-logo support
+  - local files from `/images/set logos` can now be synced into `/images/logos/<groupId>.<ext>`
+  - Group Signals and Set Explorer both look for those synced groupId-based logo files
+  - this keeps set imagery independent from individual product/card imagery
+
+- stricter breakout screening
+  - Breakouts no longer means "flat at the top of a range"
+  - the screen now requires a real break above the prior 90-day high plus recent distinct-price activity
+
 - lightweight tracking accounts
   - anonymous tags can still stay browser-local
-  - signed-in users can now sync `favorite`, `watchlist`, `research`, and `owned` tags
+  - signed-in users can now sync `favorite`, `watchlist`, `research`, and `buy list` tags
     through a separate tracking store
+  - the header account menu is now the main entry point for sign-in, tracked items, and settings
 
 
 Core idea
@@ -504,6 +514,12 @@ Tracking endpoints:
 - `/tracking/tags/merge`
   - pushes locally-created tags into the saved account after sign-in
 
+- `/tracking/change_pin`
+  - updates the lightweight tracking account PIN
+
+- `/tracking/account`
+  - deletes the tracking account, tags, and active sessions
+
 Important helpers:
 
 - `prices_from(category_id)`
@@ -566,6 +582,7 @@ Additional dashboard behavior:
 - the first product in a newly selected set is auto-loaded into the chart
 - keyboard stepping can walk the current list without repeated mouse clicks
 - tags can stay local-only or sync through the new tracking account flow
+- the account dropdown can jump directly into the `Tracked` tab
 
 Embed dashboard responsibilities:
 

@@ -600,16 +600,47 @@
       });
     }
 
+    function groupLogoCandidates(groupId) {
+      if (groupId == null) return [];
+      const gid = encodeURIComponent(String(groupId));
+      return ["png", "webp", "jpg", "jpeg", "svg"].map((ext) => `/images/logos/${gid}.${ext}`);
+    }
+
+    function renderSpotlightImage(row) {
+      const shell = document.createElement("div");
+      shell.className = "spotlight-image";
+      const img = document.createElement("img");
+      const candidates = [...groupLogoCandidates(row.groupId), row.top_hit_image].filter(Boolean);
+
+      const tryNext = () => {
+        const src = candidates.shift();
+        if (!src) {
+          shell.textContent = "Set Logo Unavailable";
+          return;
+        }
+        img.onload = () => {
+          shell.textContent = "";
+          shell.appendChild(img);
+        };
+        img.onerror = () => {
+          tryNext();
+        };
+        img.src = src;
+        img.alt = `${row.groupName} artwork`;
+      };
+
+      // Prefer local set-logo assets so the explorer feels like a set page first,
+      // but fall back to the top-hit image if no logo has been uploaded yet.
+      tryNext();
+      return shell;
+    }
+
     function renderSpotlight(row) {
       if (!row) {
         spotlightEl.innerHTML = `<div class="empty">No set selected.</div>`;
         return;
       }
-      const image = row.top_hit_image
-        ? `<img src="${row.top_hit_image}" alt="${row.top_hit_name || row.groupName}">`
-        : `Top Hit Image Unavailable`;
       spotlightEl.innerHTML = `
-        <div class="spotlight-image">${image}</div>
         <div class="chip">${row.generation} · ${int(row.card_count)} cards</div>
         <h2>${row.groupName}</h2>
         <p>This view is meant for curiosity and comparison: what it costs to build a tracked version of the set, how much of that value sits in the top hit, and whether the set feels broad or dominated by a few chase cards.</p>
@@ -624,6 +655,7 @@
           <div class="metric"><div class="label">Median card price</div><div class="value">${money(row.median_card_price)}</div></div>
         </div>
       `;
+      spotlightEl.prepend(renderSpotlightImage(row));
     }
 
     function render() {

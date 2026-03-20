@@ -14,6 +14,11 @@ Near-Term UI / UX
   - this is where to find the chart
   - this is where to browse sets
   - this is where to look for early movers
+- Make the onboarding walkthrough explain the Market Signals buttons in plain language:
+  - what each button shows
+  - what is usually a good sign
+  - what is usually a bad sign
+  - how to interpret the data without needing to already understand charts
 - Decide whether the guided tour should be:
   - public-facing only
   - optional for returning users
@@ -41,6 +46,34 @@ Signals / Screening
 - Consider a dedicated "pre-breakout accumulation" signal.
 
 
+Performance / Load Time
+-----------------------
+
+- Speed up hard refreshes and initial page loads across:
+  - `/dashboard`
+  - `/embed`
+  - `/set-explorer`
+- Reduce first-render time so the page feels usable quickly instead of taking 10-20 seconds on refresh.
+- Audit which API calls are still blocking first paint and defer anything non-essential.
+- Review whether:
+  - `universe`
+  - `groups`
+  - lower-table data
+  - sparklines
+  are still loading too early or too often.
+- Add lightweight caching where safe for:
+  - health
+  - group signals
+  - top movers
+  - universe metadata
+- Review expensive dashboard queries and decide what should move to snapshots instead of scanning larger history tables on demand.
+- Keep the dashboard focused on fast interaction after load:
+  - clicking rows
+  - switching tabs
+  - changing markets
+  - opening tracked items
+
+
 Tracking / Workflow
 -------------------
 
@@ -57,12 +90,15 @@ Tracking / Workflow
   - favorites
   - watchlist items
   - research tags
-  - owned
+  - buy list
 - Decide whether tags should be private-only or optionally shareable.
-- Define the first account-related behavior:
-  - keep current lightweight tracking accounts
-  - gate some features to signed-in users only
-  - optionally connect to a future site membership system
+- Decide whether to keep the current lightweight tracking-account model as the long-term approach, or later connect it to a broader site membership system.
+- Expand `Buy List` into a stronger sourcing / card-show workflow:
+  - save items you want to buy at shows or online
+  - generate a shopping list from tracked candidates
+  - open product links on TCGplayer or the storefront
+  - optionally add target buy prices and brief reasons
+  - avoid relying on unsupported direct cart automation
 
 
 LLM / Assistant Layer

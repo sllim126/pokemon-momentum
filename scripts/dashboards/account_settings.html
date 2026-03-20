@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Poke6s Account Settings</title>
+  <link rel="icon" type="image/png" href="/images/Favidon.png">
+  <style>
+    :root {
+      --bg: #11192f;
+      --panel: rgba(29, 40, 64, 0.96);
+      --panel-2: rgba(24, 34, 56, 0.98);
+      --line: rgba(140, 163, 199, 0.18);
+      --ink: #e6efff;
+      --muted: #8d9dbc;
+      --accent: #22b0ff;
+      --warn: #ff8a5b;
+      --radius: 24px;
+      --shadow: 0 18px 48px rgba(5, 10, 22, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(34, 176, 255, 0.08), transparent 20%),
+        linear-gradient(180deg, #11192f 0%, #0f1830 100%);
+    }
+    .shell {
+      width: min(920px, calc(100vw - 28px));
+      margin: 26px auto;
+      display: grid;
+      gap: 18px;
+    }
+    .panel {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+    .section-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+    h1, h2, p { margin: 0; }
+    h1 {
+      margin-top: 8px;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+    }
+    p {
+      color: var(--muted);
+      line-height: 1.55;
+      margin-top: 10px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    label {
+      display: grid;
+      gap: 8px;
+    }
+    .field-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+    input, button, a {
+      font: inherit;
+    }
+    input {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: rgba(23, 33, 55, 0.96);
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    button, .cta-link {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(23, 33, 55, 0.96);
+      color: var(--ink);
+      border-radius: 999px;
+      padding: 10px 14px;
+      cursor: pointer;
+      text-decoration: none;
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .danger {
+      border-color: rgba(255, 138, 91, 0.28);
+      color: #ffb39a;
+    }
+    .status {
+      margin-top: 14px;
+      color: var(--muted);
+      min-height: 20px;
+    }
+    .status.warn {
+      color: #ffb39a;
+    }
+    @media (max-width: 760px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="panel">
+      <div class="section-label">Account</div>
+      <h1 id="accountTitle">Tracking Settings</h1>
+      <p>Manage the lightweight tracking account used for synced favorites, watchlists, research tags, and buy-list markers. This page only controls the tracking account, not site-wide membership.</p>
+      <div class="actions">
+        <a class="cta-link" href="/dashboard">Back to Dashboard</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-label">Change PIN</div>
+      <div class="grid" style="margin-top: 14px;">
+        <label>
+          <span class="field-label">Current PIN</span>
+          <input id="currentPin" type="password" inputmode="numeric" placeholder="Current PIN">
+        </label>
+        <label>
+          <span class="field-label">New PIN</span>
+          <input id="newPin" type="password" inputmode="numeric" placeholder="New PIN">
+        </label>
+      </div>
+      <div class="actions">
+        <button type="button" id="changePinBtn">Change PIN</button>
+      </div>
+      <div class="status" id="pinStatus"></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-label">Delete Account</div>
+      <p>This deletes the tracking account, its saved tags, and all active tracking sessions.</p>
+      <div class="grid" style="margin-top: 14px;">
+        <label>
+          <span class="field-label">Confirm PIN</span>
+          <input id="deletePin" type="password" inputmode="numeric" placeholder="Enter PIN to confirm">
+        </label>
+      </div>
+      <div class="actions">
+        <button type="button" class="danger" id="deleteAccountBtn">Delete Tracking Account</button>
+      </div>
+      <div class="status" id="deleteStatus"></div>
+    </section>
+  </div>
+
+  <script>
+    const tokenKey = "pokemon-momentum-tracking-token";
+    const token = localStorage.getItem(tokenKey) || "";
+    const accountTitle = document.getElementById("accountTitle");
+    const pinStatus = document.getElementById("pinStatus");
+    const deleteStatus = document.getElementById("deleteStatus");
+    const currentPin = document.getElementById("currentPin");
+    const newPin = document.getElementById("newPin");
+    const deletePin = document.getElementById("deletePin");
+    const changePinBtn = document.getElementById("changePinBtn");
+    const deleteAccountBtn = document.getElementById("deleteAccountBtn");
+
+    function setStatus(el, message, isWarn = false) {
+      el.textContent = message;
+      el.classList.toggle("warn", isWarn);
+    }
+
+    async function api(path, options = {}) {
+      const res = await fetch(path, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(options.headers || {}),
+        },
+      });
+      if (!res.ok) {
+        let detail = `${res.status} ${res.statusText}`;
+        try {
+          const payload = await res.json();
+          detail = payload.detail || detail;
+        } catch (_) {}
+        throw new Error(detail);
+      }
+      return res.json();
+    }
+
+    async function init() {
+      // This page is intentionally minimal: it only manages the lightweight tracking
+      // account, not broader site membership or profile settings.
+      if (!token) {
+        accountTitle.textContent = "Tracking Sign-In Required";
+        setStatus(pinStatus, "Sign in on the dashboard first, then come back to this page.", true);
+        changePinBtn.disabled = true;
+        deleteAccountBtn.disabled = true;
+        return;
+      }
+      try {
+        const payload = await api("/tracking/session", { method: "GET" });
+        accountTitle.textContent = `Tracking Settings: ${payload.user.username}`;
+      } catch (err) {
+        localStorage.removeItem(tokenKey);
+        accountTitle.textContent = "Tracking Session Expired";
+        setStatus(pinStatus, "Sign in again on the dashboard, then reopen account settings.", true);
+        changePinBtn.disabled = true;
+        deleteAccountBtn.disabled = true;
+      }
+    }
+
+    changePinBtn.addEventListener("click", async () => {
+      setStatus(pinStatus, "Updating PIN...");
+      try {
+        await api("/tracking/change_pin", {
+          method: "POST",
+          body: JSON.stringify({
+            current_pin: currentPin.value.trim(),
+            new_pin: newPin.value.trim(),
+          }),
+        });
+        currentPin.value = "";
+        newPin.value = "";
+        setStatus(pinStatus, "PIN updated.");
+      } catch (err) {
+        setStatus(pinStatus, err.message, true);
+      }
+    });
+
+    deleteAccountBtn.addEventListener("click", async () => {
+      if (!confirm("Delete this tracking account and all saved tags?")) return;
+      setStatus(deleteStatus, "Deleting account...");
+      try {
+        await api("/tracking/account", {
+          method: "DELETE",
+          body: JSON.stringify({
+            pin: deletePin.value.trim(),
+          }),
+        });
+        localStorage.removeItem(tokenKey);
+        deletePin.value = "";
+        setStatus(deleteStatus, "Tracking account deleted.");
+        window.location.href = "/dashboard";
+      } catch (err) {
+        setStatus(deleteStatus, err.message, true);
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

@@ -19,6 +19,31 @@ PARQUET_GLOB = str(PARQUET_ROOT / "**/*.parquet")
 PRODUCT_CLASS_SQL = get_product_class_sql("p")
 PRODUCT_KIND_SQL = get_product_kind_sql("p")
 
+# Exact set-level overrides are safer than trying to keep stretching the era
+# heuristics to fit every promo, subset, or custom supplemental release.
+# This table is expected to grow as real-world metadata edge cases are found.
+GENERATION_OVERRIDES = {
+    17688: "SWSH",   # Crown Zenith
+    17689: "SWSH",   # Crown Zenith: Galarian Gallery
+    1384: "DP/HGSS", # Supreme Victors
+    1414: "POP",     # POP Series 7
+    1422: "POP",     # POP Series 1
+    1432: "POP",     # POP Series 6
+    1439: "POP",     # POP Series 5
+    1442: "POP",     # POP Series 3
+    1446: "POP",     # POP Series 9
+    1447: "POP",     # POP Series 2
+    1450: "POP",     # POP Series 8
+    1452: "POP",     # POP Series 4
+    24380: "MEG",    # ME01: Mega Evolution
+    24451: "MEG",    # ME: Mega Evolution Promo
+    24448: "MEG",    # ME02: Phantasmal Flames
+    24541: "MEG",    # ME: Ascended Heroes
+    24461: "MEG",    # MEE: Mega Evolution Energies
+    24587: "MEG",    # ME03: Perfect Order
+    24655: "MEG",    # ME04: Chaos Rising
+}
+
 
 def category_config(category_id: int):
     return get_category_config(category_id)
@@ -201,47 +226,110 @@ def build_premium_rarity_filter(column: str = "rarity") -> str:
 
 
 def build_generation_case(
+    group_id_column: str = "g.groupId",
     name_column: str = "g.name",
     abbreviation_column: str = "g.abbreviation",
     published_on_column: str = "g.publishedOn",
 ) -> str:
-    """Return a broad generation/era label for set-level grouping in the dashboard."""
+    """Return a broad generation/era label for set-level grouping in the dashboard.
+
+    The matching intentionally prefers exact program buckets and explicit era
+    prefixes in the set name (for example `SV:` or `SWSH:`) over loose
+    abbreviations or raw dates. Some real set abbreviations like `MEW` would
+    otherwise collide with the custom Mega bucket if we matched every `ME*`
+    abbreviation.
+    """
+    group_id = f"CAST({group_id_column} AS BIGINT)"
     name = f"upper(COALESCE({name_column}, ''))"
     abbr = f"upper(COALESCE({abbreviation_column}, ''))"
     published_on = f"CAST({published_on_column} AS DATE)"
+    override_clauses = "\n".join(
+        f"  WHEN {group_id} = {group_id_value} THEN '{generation}'"
+        for group_id_value, generation in sorted(GENERATION_OVERRIDES.items())
+    )
     return f"""
 CASE
+{override_clauses}
+  WHEN {name} LIKE 'MCDONALD%'
+    OR {abbr} LIKE 'M%'
+    AND {name} LIKE '%PROMO%'
+    THEN 'MCD'
+  WHEN {name} LIKE 'TRICK OR TRADE%'
+    OR {abbr} LIKE 'TT%'
+    THEN 'TOTT'
+  WHEN {name} LIKE '%PRIZE PACK%'
+    OR {name} LIKE 'PRIZE PACK SERIES%'
+    OR {abbr} LIKE 'PPS%'
+    THEN 'PRIZE'
+  WHEN {name} LIKE '%PROMO%'
+    OR {name} LIKE '%BLACK STAR%'
+    OR {abbr} IN ('SVP', 'SWSD', 'SMP', 'BWP', 'HSP', 'DPP', 'NP', 'WP', 'MEP')
+    THEN 'PROMO'
+  WHEN {name} LIKE 'SV:%'
+    OR {name} LIKE 'SV %'
+    OR {name} LIKE 'SCARLET & VIOLET%'
+    OR {published_on} >= DATE '2023-03-31'
+    THEN 'SV'
+  WHEN {name} LIKE 'SWSH:%'
+    OR {name} LIKE 'SWSH %'
+    OR {name} LIKE 'SWORD & SHIELD%'
+    OR {abbr} LIKE 'SWSH%'
+    OR {published_on} >= DATE '2020-02-07'
+    THEN 'SWSH'
+  WHEN {name} LIKE 'SM:%'
+    OR {name} LIKE 'SM %'
+    OR {name} LIKE 'SUN & MOON%'
+    OR {abbr} LIKE 'SM%'
+    OR {published_on} >= DATE '2017-02-03'
+    THEN 'SM'
+  WHEN {name} LIKE 'XY:%'
+    OR {name} LIKE 'XY %'
+    OR {abbr} LIKE 'XY%'
+    OR {published_on} >= DATE '2014-02-05'
+    THEN 'XY'
+  WHEN {name} LIKE 'BW:%'
+    OR {name} LIKE 'BW %'
+    OR {name} LIKE 'BLACK & WHITE%'
+    OR {abbr} LIKE 'BW%'
+    OR {published_on} >= DATE '2011-04-25'
+    THEN 'BW'
+  WHEN {name} LIKE 'POP SERIES%'
+    OR {abbr} = 'POP'
+    THEN 'POP'
   WHEN {name} LIKE '%MEGA EVOLUTION%'
     OR {name} LIKE 'ME:%'
     OR {name} LIKE 'ME0%'
     OR {name} LIKE 'MEE:%'
-    OR {abbr} LIKE 'ME%'
+    OR {abbr} = 'ME'
+    OR {abbr} LIKE 'ME0%'
+    OR {abbr} LIKE 'MEE%'
     THEN 'MEG'
-  WHEN {published_on} >= DATE '2023-01-01'
-    OR {name} LIKE 'SV%'
-    OR {abbr} LIKE 'SV%'
-    THEN 'SV'
-  WHEN {published_on} >= DATE '2020-01-01'
-    OR {name} LIKE 'SWSH%'
-    OR {abbr} LIKE 'SWSH%'
-    THEN 'SWSH'
-  WHEN {published_on} >= DATE '2017-01-01'
-    OR {name} LIKE 'SM%'
-    OR {abbr} LIKE 'SM%'
-    THEN 'SM'
-  WHEN {published_on} >= DATE '2014-01-01'
-    OR {name} LIKE 'XY%'
-    OR {abbr} LIKE 'XY%'
-    THEN 'XY'
-  WHEN {published_on} >= DATE '2011-01-01'
-    OR {name} LIKE 'BW%'
-    OR {abbr} LIKE 'BW%'
-    THEN 'BW'
-  WHEN {published_on} >= DATE '2007-01-01'
-    OR {name} LIKE 'DP%'
+  WHEN {name} LIKE 'EX %'
+    OR {name} IN (
+      'RUBY & SAPPHIRE',
+      'SANDSTORM',
+      'DRAGON',
+      'TEAM MAGMA VS TEAM AQUA',
+      'HIDDEN LEGENDS',
+      'FIRERED & LEAFGREEN',
+      'TEAM ROCKET RETURNS',
+      'DEOXYS',
+      'EMERALD',
+      'UNSEEN FORCES',
+      'DELTA SPECIES',
+      'LEGEND MAKER',
+      'HOLON PHANTOMS',
+      'CRYSTAL GUARDIANS',
+      'DRAGON FRONTIERS',
+      'POWER KEEPERS'
+    )
+    OR {published_on} >= DATE '2003-07-18' AND {published_on} < DATE '2007-05-23'
+    THEN 'EX'
+  WHEN {name} LIKE 'DP%'
     OR {name} LIKE 'HGSS%'
     OR {abbr} LIKE 'DP%'
     OR {abbr} LIKE 'HGSS%'
+    OR {published_on} >= DATE '2007-01-01'
     THEN 'DP/HGSS'
   ELSE 'Legacy'
 END

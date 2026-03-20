@@ -36,6 +36,7 @@ It is meant to answer questions like:
 - which sets are most expensive to build from tracked cards
 - which sets are carried by one or two chase cards
 - which sets have value spread more broadly across the checklist
+- what a set looks like visually when a local set logo has been uploaded
 
 It does not replace the main dashboard.
 Instead, it gives a simpler place to poke around in the set data without learning the chart and screener workflow first.
@@ -115,8 +116,8 @@ Shows the strongest recent movers by 30-day change.
 This is useful for seeing what is already moving the most.
 
 Breakouts
-Shows products at or near fresh 90-day highs.
-This helps identify names pushing into new highs rather than just bouncing.
+Shows products making a real fresh break above their prior 90-day high.
+This now also prefers names with repeated distinct prices in the last 30 days, which helps filter out flat cards merely sitting at the top of a range.
 
 Good Buys
 Shows premium-rarity cards that have been trending downward or pulling back.
@@ -143,6 +144,7 @@ Group Signals
 Shows set-level breadth and momentum.
 This is helpful when you want to know which sets are strong overall, not just which single card is moving.
 This view also supports generation filtering so you can narrow the set list to eras like SV, SWSH, SM, XY, and older groups.
+When a local set logo exists in the uploaded logo folder, the right-side image panel can show that logo instead of the generic set-view placeholder.
 
 Set Browser
 Shows all products in the currently selected set from the Set Browser dropdown.
@@ -241,6 +243,7 @@ Typical use:
 2. sort by most expensive, cheapest, most top-heavy, or deepest
 3. click a set row
 4. use the spotlight panel to see whether that set feels broad or chase-card driven
+5. if a local set logo has been uploaded and synced, the spotlight panel will show it before falling back to top-hit card art
 
 
 Card Picker
@@ -291,7 +294,9 @@ It lets you mark items such as:
 - Favorite
 - Watchlist
 - Research
-- Owned
+- Buy List
+
+Buy List is meant for cards and products you want to source soon, especially for card shows or targeted shopping runs.
 
 How it works now:
 - if you stay signed out, tags are saved locally in that browser only
@@ -299,12 +304,40 @@ How it works now:
 
 This is intentionally not a full collection tracker.
 It does not currently track:
-- quantity owned
+- quantities
 - cost basis
 - profit and loss
 - portfolio totals
 
 It is meant to save lightweight workflow states only.
+
+Account Menu
+The account controls now live in the upper-right header area, which is where most users expect sign-in controls to be.
+
+When signed out:
+- click `Account`
+- enter username and PIN
+- choose:
+  - `Sign In`
+  - `Create Account`
+
+When signed in:
+- click your username in the header
+- open:
+  - `Tracked Items`
+  - `Account Settings`
+  - `Sign Out`
+
+Tracked Items
+The `Tracked` tab in Market Signals is the saved-items list.
+It shows the products you marked with tracking tags and lets you filter by:
+- All Tags
+- Favorite
+- Watchlist
+- Research
+- Buy List
+
+Opening `Tracked` will automatically load the first tracked card into the main chart so the screen is immediately usable.
 
 Key Stats
 This shows the current summary numbers for the selected item, such as:

@@ -1,5 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import unquote
 import sys
 import urllib.error
 
@@ -28,6 +29,7 @@ from scripts.dashboards.query_support import (
 from scripts.dashboards.tracking_store import (
     create_session,
     create_user,
+    delete_user,
     delete_session,
     ensure_tracking_schema,
     get_session_user,
@@ -35,6 +37,7 @@ from scripts.dashboards.tracking_store import (
     get_user_by_username,
     merge_tags,
     set_tag,
+    update_user_pin,
     verify_user,
 )
 
@@ -42,6 +45,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 DASHBOARD_HTML = SCRIPT_DIR / "dashboard.html"
 ALT_DASHBOARD_HTML = SCRIPT_DIR / "dashboard_lab.html"
 SET_EXPLORER_HTML = SCRIPT_DIR / "set_explorer.html"
+ACCOUNT_SETTINGS_HTML = SCRIPT_DIR / "account_settings.html"
 EOD_DASHBOARD_HTML = SCRIPT_DIR / "eod_dashboard.html"
 EMBED_DASHBOARD_HTML = SCRIPT_DIR / "embed_dashboard.html"
 DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
@@ -93,6 +97,11 @@ def set_explorer():
     return FileResponse(SET_EXPLORER_HTML)
 
 
+@app.get("/account-settings")
+def account_settings():
+    return FileResponse(ACCOUNT_SETTINGS_HTML)
+
+
 @app.get("/dashboard-dev")
 def dashboard_dev():
     return FileResponse(DASHBOARD_HTML)
@@ -114,14 +123,21 @@ def dashboard_common_js():
 
 
 def resolve_image_path(filename: str) -> Path | None:
+    relative = Path(unquote(filename))
+    if relative.is_absolute() or ".." in relative.parts:
+        return None
     for directory in IMAGE_DIR_CANDIDATES:
-        path = directory / filename
+        path = (directory / relative).resolve()
+        try:
+            path.relative_to(directory.resolve())
+        except ValueError:
+            continue
         if path.exists() and path.is_file():
             return path
     return None
 
 
-@app.get("/images/{filename}")
+@app.get("/images/{filename:path}")
 def image_asset(filename: str):
     path = resolve_image_path(filename)
     if path is None:
@@ -129,7 +145,7 @@ def image_asset(filename: str):
     return FileResponse(path)
 
 
-@app.head("/images/{filename}")
+@app.head("/images/{filename:path}")
 def image_asset_head(filename: str):
     path = resolve_image_path(filename)
     if path is None:
@@ -218,17 +234,23 @@ def tracking_session(payload: dict):
     """Create or resume a lightweight tracking account using username + PIN."""
     username = str(payload.get("username", "")).strip()
     pin = str(payload.get("pin", "")).strip()
-    create_if_missing = bool(payload.get("create_if_missing", True))
+    action = str(payload.get("action", "auto")).strip().lower()
+    create_if_missing = bool(payload.get("create_if_missing", action in {"auto", "create"}))
     if len(username) < 3:
         raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
     if len(pin) < 4:
         raise HTTPException(status_code=400, detail="PIN must be at least 4 characters")
 
+    existing = get_user_by_username(username)
+    if action == "create" and existing is not None:
+        raise HTTPException(status_code=409, detail="That username already exists. Sign in or choose a different username.")
+    if action == "sign_in" and existing is None:
+        raise HTTPException(status_code=404, detail="Tracking account not found. Create it first or choose a different username.")
+
     user = verify_user(username, pin)
     if user is None:
-        existing = get_user_by_username(username)
         if existing is not None:
-            raise HTTPException(status_code=401, detail="Incorrect PIN")
+            raise HTTPException(status_code=401, detail="That username exists, but the PIN does not match.")
         if not create_if_missing:
             raise HTTPException(status_code=404, detail="Tracking account not found")
         user_id = create_user(username, pin)
@@ -288,6 +310,32 @@ def tracking_tags_merge(payload: dict, authorization: str | None = Header(defaul
         raise HTTPException(status_code=400, detail="items must be a list")
     merge_tags(session_user.user_id, items)
     return {"ok": True, "count": len(items)}
+
+
+@app.post("/tracking/change_pin")
+def tracking_change_pin(payload: dict, authorization: str | None = Header(default=None)):
+    session_user = require_tracking_user(authorization)
+    current_pin = str(payload.get("current_pin", "")).strip()
+    new_pin = str(payload.get("new_pin", "")).strip()
+    if len(new_pin) < 4:
+        raise HTTPException(status_code=400, detail="New PIN must be at least 4 characters")
+    verified = verify_user(session_user.username, current_pin)
+    if verified is None:
+        raise HTTPException(status_code=401, detail="Current PIN is incorrect")
+    update_user_pin(session_user.user_id, new_pin)
+    return {"ok": True}
+
+
+@app.delete("/tracking/account")
+def tracking_delete_account(payload: dict | None = None, authorization: str | None = Header(default=None)):
+    session_user = require_tracking_user(authorization)
+    payload = payload or {}
+    pin = str(payload.get("pin", "")).strip()
+    verified = verify_user(session_user.username, pin)
+    if verified is None:
+        raise HTTPException(status_code=401, detail="PIN is incorrect")
+    delete_user(session_user.user_id)
+    return {"ok": True}
 
 
 @app.get("/eod/index_components")
@@ -588,7 +636,7 @@ def group_signals(limit: int = 500, min_items: int = 5, generation: str | None =
     limit = max(1, min(limit, 5000))
     min_items = max(1, min(min_items, 1000))
     category = category_config(category_id)
-    generation_case = build_generation_case("g.name", "g.abbreviation", "g.publishedOn")
+    generation_case = build_generation_case("g.groupId", "g.name", "g.abbreviation", "g.publishedOn")
     generation_filter = ""
     if generation:
         safe_generation = generation.replace("'", "''")
@@ -764,7 +812,7 @@ def set_baskets(limit: int = 500, min_cards: int = 10, category_id: int = 3):
     limit = max(1, min(limit, 2000))
     min_cards = max(1, min(min_cards, 400))
     category = category_config(category_id)
-    generation_case = build_generation_case("g.name", "g.abbreviation", "g.publishedOn")
+    generation_case = build_generation_case("g.groupId", "g.name", "g.abbreviation", "g.publishedOn")
 
     sql = f"""
     WITH base AS (
@@ -1078,7 +1126,15 @@ def top_movers(
 
 
 @app.get("/breakouts")
-def breakouts(days: int = 90, limit: int = 200, min_price: float = 5.0, category_id: int = 3):
+def breakouts(
+    days: int = 90,
+    limit: int = 200,
+    min_price: float = 5.0,
+    min_breakout_pct: float = 1.0,
+    recent_change_within_days: int = 5,
+    min_recent_distinct_prices_30d: int = 10,
+    category_id: int = 3,
+):
     category = category_config(category_id)
     price_source = prices_from(category.category_id)
     metadata_cte = build_metadata_cte(category.category_id, cte_name="metadata")
@@ -1098,20 +1154,23 @@ def breakouts(days: int = 90, limit: int = 200, min_price: float = 5.0, category
     latest AS (
         SELECT
             productId,
+            groupId,
             subTypeName,
             MAX(date) AS latest_date
         FROM base
-        GROUP BY productId, subTypeName
+        GROUP BY productId, groupId, subTypeName
     ),
     win AS (
         SELECT
             b.productId,
+            b.groupId,
             b.subTypeName,
             l.latest_date,
             b.marketPrice
         FROM base b
         JOIN latest l
           ON b.productId = l.productId
+         AND b.groupId = l.groupId
          AND b.subTypeName = l.subTypeName
          AND b.date = l.latest_date
     ),
@@ -1129,6 +1188,39 @@ def breakouts(days: int = 90, limit: int = 200, min_price: float = 5.0, category
         WHERE b.date >= l.latest_date - INTERVAL {days} DAY
         GROUP BY b.productId, b.groupId, b.subTypeName
     ),
+    prior_hi AS (
+        SELECT
+            b.productId,
+            b.groupId,
+            b.subTypeName,
+            MAX(b.marketPrice) AS prior_high_n,
+            MAX(b.date) AS last_change_date
+        FROM base b
+        JOIN latest l
+          ON b.productId = l.productId
+         AND b.groupId = l.groupId
+         AND b.subTypeName = l.subTypeName
+        WHERE b.date >= l.latest_date - INTERVAL {days} DAY
+          AND b.date < l.latest_date
+        GROUP BY b.productId, b.groupId, b.subTypeName
+    ),
+    recent_activity AS (
+        -- Breakouts should reflect real price discovery, not a single flat print at a range high.
+        -- This 30-day activity slice lets the screener require repeated distinct prices.
+        SELECT
+            b.productId,
+            b.groupId,
+            b.subTypeName,
+            COUNT(*) AS recent_observations_30d,
+            COUNT(DISTINCT b.marketPrice) AS recent_distinct_prices_30d
+        FROM base b
+        JOIN latest l
+          ON b.productId = l.productId
+         AND b.groupId = l.groupId
+         AND b.subTypeName = l.subTypeName
+        WHERE b.date >= l.latest_date - INTERVAL 30 DAY
+        GROUP BY b.productId, b.groupId, b.subTypeName
+    ),
     {metadata_cte}
     SELECT
         w.productId,
@@ -1140,17 +1232,35 @@ def breakouts(days: int = 90, limit: int = 200, min_price: float = 5.0, category
         m.rarity,
         m.number,
         w.marketPrice AS latest_price,
-        h.high_n AS high_window
+        ph.prior_high_n AS prior_high_window,
+        ((w.marketPrice / NULLIF(ph.prior_high_n, 0)) - 1) * 100.0 AS breakout_pct,
+        ph.last_change_date,
+        ra.recent_observations_30d,
+        ra.recent_distinct_prices_30d
     FROM win w
     JOIN hi h
       ON w.productId = h.productId
      AND w.groupId = h.groupId
      AND w.subTypeName = h.subTypeName
+    JOIN prior_hi ph
+      ON w.productId = ph.productId
+     AND w.groupId = ph.groupId
+     AND w.subTypeName = ph.subTypeName
+    JOIN recent_activity ra
+      ON w.productId = ra.productId
+     AND w.groupId = ra.groupId
+     AND w.subTypeName = ra.subTypeName
     LEFT JOIN metadata m
       ON m.productId = w.productId
      AND m.groupId = w.groupId
+    -- A breakout now means "freshly above the previous 90-day high with recent activity",
+    -- not merely "equal to the highest observed price in the window."
     WHERE w.marketPrice >= h.high_n
-    ORDER BY w.marketPrice / h.high_n DESC
+      AND w.marketPrice > ph.prior_high_n
+      AND ((w.marketPrice / NULLIF(ph.prior_high_n, 0)) - 1) * 100.0 >= {min_breakout_pct}
+      AND ph.last_change_date >= w.latest_date - INTERVAL {recent_change_within_days} DAY
+      AND ra.recent_distinct_prices_30d >= {min_recent_distinct_prices_30d}
+    ORDER BY breakout_pct DESC, w.marketPrice DESC
     LIMIT {limit}
     """
 
