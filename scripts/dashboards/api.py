@@ -28,9 +28,16 @@ from scripts.dashboards.query_support import (
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DASHBOARD_HTML = SCRIPT_DIR / "dashboard.html"
+ALT_DASHBOARD_HTML = SCRIPT_DIR / "dashboard_lab.html"
 EOD_DASHBOARD_HTML = SCRIPT_DIR / "eod_dashboard.html"
 EMBED_DASHBOARD_HTML = SCRIPT_DIR / "embed_dashboard.html"
 DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
+IMAGE_DIR_CANDIDATES = [
+    SCRIPT_DIR.parents[2] / "images",
+    Path("/app/images"),
+    Path("/opt/pokemon-momentum/images"),
+    Path.cwd() / "images",
+]
 MS_SCRIPTS_ROOT = Path("/app/MS_Scripts")
 if str(MS_SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(MS_SCRIPTS_ROOT))
@@ -60,6 +67,11 @@ def dashboard_alias():
     return FileResponse(DASHBOARD_HTML)
 
 
+@app.get("/dashboard-lab")
+def dashboard_lab():
+    return FileResponse(ALT_DASHBOARD_HTML)
+
+
 @app.get("/dashboard-dev")
 def dashboard_dev():
     return FileResponse(DASHBOARD_HTML)
@@ -78,6 +90,30 @@ def embed_dashboard():
 @app.get("/dashboard-common.js")
 def dashboard_common_js():
     return FileResponse(DASHBOARD_COMMON_JS, media_type="application/javascript")
+
+
+def resolve_image_path(filename: str) -> Path | None:
+    for directory in IMAGE_DIR_CANDIDATES:
+        path = directory / filename
+        if path.exists() and path.is_file():
+            return path
+    return None
+
+
+@app.get("/images/{filename}")
+def image_asset(filename: str):
+    path = resolve_image_path(filename)
+    if path is None:
+        raise HTTPException(status_code=404, detail="Image not found")
+    return FileResponse(path)
+
+
+@app.head("/images/{filename}")
+def image_asset_head(filename: str):
+    path = resolve_image_path(filename)
+    if path is None:
+        raise HTTPException(status_code=404, detail="Image not found")
+    return FileResponse(path)
 
 
 @app.head("/embed")

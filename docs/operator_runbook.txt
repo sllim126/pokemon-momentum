@@ -91,6 +91,8 @@ Healthy result:
 - left rail loads
 - chart loads
 - market toggle works
+- refresh preserves current dashboard state
+- long signal/set lists scroll inside the lower panel
 
 3. systemd timers are active
 
@@ -236,8 +238,10 @@ curl http://localhost:8001/health
 curl 'http://localhost:8001/groups?category_id=3&limit=5'
 curl 'http://localhost:8001/universe?category_id=3&limit=5'
 curl 'http://localhost:8001/top_movers?category_id=3&limit=5'
+curl 'http://localhost:8001/good_buys?category_id=3&limit=5'
 curl 'http://localhost:8001/product_signals?category_id=3&limit=5'
 curl 'http://localhost:8001/group_signals?category_id=3&limit=5'
+curl 'http://localhost:8001/group_signals?category_id=3&generation=SV&limit=5'
 ```
 
 Japanese checks:
@@ -247,9 +251,39 @@ curl 'http://localhost:8001/health?category_id=85'
 curl 'http://localhost:8001/groups?category_id=85&limit=5'
 curl 'http://localhost:8001/universe?category_id=85&limit=5'
 curl 'http://localhost:8001/top_movers?category_id=85&limit=5'
+curl 'http://localhost:8001/good_buys?category_id=85&limit=5'
 curl 'http://localhost:8001/product_signals?category_id=85&limit=5'
 curl 'http://localhost:8001/group_signals?category_id=85&limit=5'
 ```
+
+
+Dashboard workflow checks
+-------------------------
+If the UI is loading but the experience feels wrong, these are the main checks for the
+newer dashboard workflow features.
+
+State persistence:
+
+- pick a product, tab, chart window, and market
+- refresh `/dashboard`
+- expected result:
+  - the same state is restored from the URL
+
+Keyboard stepping:
+
+- click anywhere in the lower signal/set table
+- use Arrow Down / Arrow Up
+- expected result:
+  - the active row highlight moves
+  - the selected product and chart update
+
+Group generation filter:
+
+- open `Group Signals`
+- change the generation dropdown
+- expected result:
+  - the set list narrows to that era
+  - the chart remains available above the lower list
 
 
 If the app is down

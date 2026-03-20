@@ -65,7 +65,6 @@ This is where you spend most of your time once something catches your attention.
 The top of the chart area shows:
 - selected product name
 - set and subtype
-- image, if available
 - current price
 - latest data date
 
@@ -86,6 +85,11 @@ These buttons change how much history is shown:
 Use short windows when you want to see recent acceleration.
 Use longer windows when you want to understand the broader trend.
 
+Important behavior:
+- the dashboard now keeps your current state in the URL
+- refreshes preserve the selected product, market, chart window, signal tab, rail segment, and selected set
+- this makes it easier to keep your place while reviewing many cards
+
 
 Signal Feed
 Below the main chart is the signal feed and product browser area.
@@ -100,6 +104,11 @@ This is useful for seeing what is already moving the most.
 Breakouts
 Shows products at or near fresh 90-day highs.
 This helps identify names pushing into new highs rather than just bouncing.
+
+Good Buys
+Shows premium-rarity cards that have been trending downward or pulling back.
+This is meant to surface high-end cards that may be moving into more interesting buy zones rather than already spiking.
+The first version focuses on rarities like Double Rare, Illustration Rare, Special Illustration Rare, Ultra Rare, Hyper Rare, and Secret Rare.
 
 SMA30 Holds
 Shows products that reclaimed and held above the 30-day moving average.
@@ -120,10 +129,18 @@ This includes multiple momentum and moving-average measures in one view.
 Group Signals
 Shows set-level breadth and momentum.
 This is helpful when you want to know which sets are strong overall, not just which single card is moving.
+This view also supports generation filtering so you can narrow the set list to eras like SV, SWSH, SM, XY, and older groups.
 
 Set Browser
 Shows all products in the currently selected set from the Set Browser dropdown.
 Use this when you want to browse one set directly rather than only relying on the screener tabs.
+
+Browsing behavior:
+- the lower table is now its own scroll region, so the main chart stays visible while you review long lists
+- you can step through the current table with the keyboard:
+  - Arrow Down selects the next row
+  - Arrow Up selects the previous row
+- selecting a set automatically switches to the set view and loads the first product in that set
 
 
 What the Indicators Mean
@@ -179,9 +196,9 @@ When the Set Browser tab is active, the table will show all products from the se
 
 Typical use:
 1. choose a set in the Set Browser dropdown
-2. click the Set Browser tab
-3. review all products in that set
-4. click any row to load that product into the main chart
+2. the dashboard automatically switches to the set product list
+3. the first product in the set is loaded into the main chart
+4. review the rest of the set in the lower list and click or arrow through rows
 
 
 Market Dropdown
@@ -199,10 +216,10 @@ The right rail is the detail stack for the currently selected product.
 It is meant to give context without leaving the chart.
 
 Sections include:
+- selected product image
 - tracking / favorites
 - key stats
 - momentum read
-- notes
 
 Tracking / Favorites
 This is the local tag area.
@@ -227,9 +244,9 @@ Momentum Read
 This is a compact chip summary of the current state of the selected product.
 It gives a quick read without needing to parse the entire chart.
 
-Notes
-This is descriptive context for the selected product.
-It is useful as a future place for richer commentary or saved research notes.
+Selected Product Image
+The selected card or sealed product image now lives in its own persistent panel on the right rail.
+This keeps the image visible while you scroll through long set lists or signal screens.
 
 
 Suggested Workflow

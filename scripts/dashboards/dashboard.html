@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pokemon Momentum Terminal</title>
+  <link rel="icon" type="image/png" href="/images/Favidon.png">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <style>
     :root {
@@ -40,6 +41,100 @@
     .shell {
       min-height: 100vh;
       padding: 22px;
+    }
+
+    .brandbar {
+      display: grid;
+      grid-template-columns: 328px minmax(0, 1fr) 320px;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .brandlockup {
+      display: block;
+      min-width: 0;
+    }
+
+    .brandmark {
+      width: 100%;
+      height: 90px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: linear-gradient(180deg, #00091B 0%, #00091B 100%);
+      border: 1px solid rgba(34, 176, 255, 0.24);
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.05);
+    }
+
+    .brandmark img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center center;
+      transform: scale(2.35);
+      transform-origin: center center;
+    }
+
+    .brandmark-fallback {
+      display: none;
+      width: 100%;
+      padding: 0 16px;
+      text-align: left;
+      font-size: 34px;
+      line-height: 1;
+      letter-spacing: -0.06em;
+      font-weight: 800;
+      color: #dff6ff;
+      white-space: nowrap;
+    }
+
+    .brandmark-fallback .accent {
+      color: #39c3ff;
+    }
+
+    .brandcopy {
+      min-width: 0;
+      align-self: center;
+    }
+
+    .brandtag {
+      color: var(--muted);
+      margin-top: 2px;
+      font-size: 14px;
+      line-height: 1.45;
+      max-width: 58ch;
+    }
+
+    .brandlinks {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .brandlinks a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 43, 0.84);
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      transition: 0.14s ease;
+    }
+
+    .brandlinks a:hover {
+      border-color: rgba(34, 176, 255, 0.34);
+      color: #9fe6ff;
     }
 
     .layout {
@@ -599,10 +694,22 @@
       font-size: 13px;
     }
 
+    .hero .signal-topline {
+      margin-top: 18px;
+    }
+
     .good { color: #77f0af; }
     .warn { color: #ffb39a; }
 
     @media (max-width: 1400px) {
+      .brandbar {
+        grid-template-columns: 320px minmax(0, 1fr);
+      }
+
+      .brandlinks {
+        display: none;
+      }
+
       .layout {
         grid-template-columns: 320px minmax(0, 1fr);
       }
@@ -615,6 +722,10 @@
     }
 
     @media (max-width: 1080px) {
+      .brandbar {
+        grid-template-columns: 1fr;
+      }
+
       .layout {
         grid-template-columns: 1fr;
       }
@@ -644,6 +755,14 @@
     }
 
     @media (max-width: 760px) {
+      .brandlockup {
+        align-items: start;
+      }
+
+      .brandmark {
+        height: 76px;
+      }
+
       .price-block {
         text-align: left;
         margin-left: 0;
@@ -653,6 +772,26 @@
 </head>
 <body>
   <div class="shell">
+    <section class="brandbar">
+      <div class="brandlockup">
+        <div class="brandmark" aria-hidden="true">
+          <img
+            src="/images/Logo.png"
+            alt="Poke6s logo"
+            onload="this.nextElementSibling.style.display='none'; this.style.display='block';"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+          >
+          <div class="brandmark-fallback">Poke<span class="accent">6</span>s</div>
+        </div>
+      </div>
+      <div class="brandcopy">
+        <div class="brandtag">Data-driven Pokemon market screening for serious collectors, investors, and research-minded buyers.</div>
+      </div>
+      <div class="brandlinks">
+        <a href="/" id="brandHomeLink">Main Dashboard</a>
+        <a href="/embed" id="brandEmbedLink">Embed View</a>
+      </div>
+    </section>
     <div class="layout">
       <aside class="panel left-rail">
         <div class="rail-title">
@@ -679,7 +818,7 @@
         <section class="panel hero">
           <div class="stage-title">
             <div>
-              <div class="section-label">Market View</div>
+              <div class="section-label">Selected Product</div>
               <h1 id="cardTitle">Loading...</h1>
               <div class="subtitle" id="cardSubtitle">Fetching product history and metadata.</div>
             </div>
@@ -692,6 +831,24 @@
               </div>
             </div>
           </div>
+
+          <div class="signal-topline">
+            <div>
+              <div class="section-label">Price Action</div>
+              <p id="chartLabel">Price, SMA7, and SMA30 for the selected product.</p>
+            </div>
+            <div class="chart-window">
+              <button type="button" data-days="30">30D</button>
+              <button type="button" data-days="90">90D</button>
+              <button type="button" data-days="180">180D</button>
+              <button type="button" data-days="365" class="active">1Y</button>
+              <button type="button" data-days="730">2Y</button>
+              <button type="button" data-days="5000">Full</button>
+            </div>
+          </div>
+
+          <div id="chart"></div>
+        </section>
 
           <div class="status-strip" id="statusStrip">
             <div class="status-card">
@@ -711,26 +868,6 @@
               <div class="value" id="statUniverse">-</div>
             </div>
           </div>
-        </section>
-
-        <section class="panel chart-panel">
-          <div class="signal-topline">
-            <div>
-              <div class="section-label">Price Action</div>
-              <p id="chartLabel">Price, SMA7, and SMA30 for the selected product.</p>
-            </div>
-            <div class="chart-window">
-              <button type="button" data-days="30">30D</button>
-              <button type="button" data-days="90">90D</button>
-              <button type="button" data-days="180">180D</button>
-              <button type="button" data-days="365" class="active">1Y</button>
-              <button type="button" data-days="730">2Y</button>
-              <button type="button" data-days="5000">Full</button>
-            </div>
-          </div>
-
-          <div id="chart"></div>
-        </section>
 
         <section class="panel signal-panel">
           <div class="signal-topline">
@@ -878,7 +1015,8 @@
     const initialParams = new URLSearchParams(window.location.search);
 
     // This shared UI state lets the left rail, chart, table, and right rail stay in sync
-    // around one selected product, one active feed tab, one chart window, and one market.
+    // around one selected product, one active feed tab, one chart window, one set context,
+    // one generation filter, and one market. It is URL-backed so refreshes restore the same view.
     let currentKey = initialParams.get("product") || null;
     let currentDays = Number(initialParams.get("days") || 365);
     let currentTab = initialParams.get("tab") || "top_movers";
@@ -897,6 +1035,7 @@
     let activeTableRows = [];
     let activeTableIndex = -1;
     let currentSeriesPayload = null;
+    const hasExplicitProductSelection = initialParams.has("product");
 
     const tabConfig = {
       // Each tab maps to one API screen plus the columns that should be surfaced in the lower table.
@@ -1110,11 +1249,12 @@
         picker.appendChild(el);
       }
       if (options.length > 0) {
-        if (!currentKey || !options.some((option) => option.key === currentKey)) {
-          currentKey = options[0].key;
+        if (currentKey && options.some((option) => option.key === currentKey)) {
+          picker.value = currentKey;
+          syncUrlState();
+        } else {
+          currentKey = null;
         }
-        picker.value = currentKey;
-        syncUrlState();
       }
       document.getElementById("statUniverse").textContent = options.length.toLocaleString();
     }
@@ -1138,6 +1278,17 @@
       }
     }
 
+    function syncGroupSelection(groupId) {
+      // Keep the Set Picker aligned with the currently selected product.
+      const nextGroupId = Number(groupId);
+      if (Number.isNaN(nextGroupId)) return;
+      currentGroupId = nextGroupId;
+      if ([...groupPicker.options].some((opt) => Number(opt.value) === nextGroupId)) {
+        groupPicker.value = String(nextGroupId);
+      }
+      syncUrlState();
+    }
+
     function renderHeader(columns) {
       const labels = {
         p_now: "P Now",
@@ -1148,6 +1299,8 @@
     }
 
     function updateDevTabHelp(tabKey = currentTab) {
+      // Dev mode surfaces the same per-tab descriptions as inline help text so the
+      // operator can remember what each signal screen is intended to show.
       if (!devTabHelp || !isDevMode) return;
       const cfg = tabConfig[tabKey];
       devTabHelp.hidden = false;
@@ -1244,7 +1397,7 @@
           ensurePickerOption(item);
           currentKey = item.key;
           picker.value = currentKey;
-          syncUrlState();
+          syncGroupSelection(item.groupId);
           loadSeries();
         });
         tableBody.appendChild(tr);
@@ -1253,11 +1406,15 @@
     }
 
     function updateGroupSignalFilterVisibility() {
+      // Generation filtering only applies to the Group Signals screen, so the extra
+      // control is hidden unless that screen is active.
       if (!groupSignalFilters) return;
       groupSignalFilters.style.display = currentTab === "group_signals" ? "grid" : "none";
     }
 
     function populateGenerationPicker(rows) {
+      // The generation filter options are derived from the currently returned set rows
+      // rather than being hard-coded in the browser.
       if (!generationPicker) return;
       const generations = Array.from(new Set(
         (rows || [])
@@ -1282,6 +1439,9 @@
     }
 
     async function moveTableSelection(delta) {
+      // Keyboard stepping should feel like moving through a screener. The lower table
+      // remains the source of truth, and arrow navigation simply triggers the same row
+      // selection path as a click.
       if (!activeTableRows.length) return;
       const nextIndex = Math.max(0, Math.min(activeTableRows.length - 1, (activeTableIndex < 0 ? 0 : activeTableIndex) + delta));
       if (nextIndex === activeTableIndex) {
@@ -1302,11 +1462,11 @@
       ensurePickerOption(item);
       currentKey = item.key;
       picker.value = currentKey;
-      syncUrlState();
+      syncGroupSelection(item.groupId);
       await loadSeries();
     }
 
-    function renderMoverRail() {
+    function renderMoverRail(hydrateSparklines = true) {
       // The left rail is the discovery surface: compact ranked cards that should quickly load
       // a full chart when clicked without touching the lower table first.
       const rows = (moverFeeds[currentSegment] || []).slice(0, 18);
@@ -1347,13 +1507,24 @@
           ensurePickerOption(item);
           currentKey = item.key;
           picker.value = currentKey;
-          syncUrlState();
-          renderMoverRail();
+          syncGroupSelection(item.groupId);
+          updateMoverRailActiveState();
           loadSeries();
         });
         moverList.appendChild(div);
       });
-      hydrateMoverSparklines(rows, sparklineDays);
+      if (hydrateSparklines) {
+        hydrateMoverSparklines(rows, sparklineDays);
+      }
+    }
+
+    function updateMoverRailActiveState() {
+      // Keep the left-rail selection highlight in sync without rebuilding the sparkline cards.
+      const cards = Array.from(moverList.querySelectorAll(".mover-card"));
+      cards.forEach((card, index) => {
+        const item = (moverFeeds[currentSegment] || [])[index];
+        card.classList.toggle("active", item?.key === currentKey);
+      });
     }
 
     function renderSparklineSvg(values) {
@@ -1414,6 +1585,8 @@
     }
 
     function renderSummary(meta, series) {
+      // The summary panel and persistent right-rail image are refreshed together from the
+      // same selected product payload so browsing long lists does not drop visual context.
       const rows = series.rows || [];
       const last = rows[rows.length - 1] || [];
       const latestPrice = last[1];
@@ -1595,26 +1768,65 @@
       fillPicker();
     }
 
-    async function loadTopMovers(segment = currentSegment, force = false) {
+    async function loadTopMovers(segment = currentSegment, force = false, hydrateSparklines = true) {
       // Cards and sealed are cached independently so the rail can switch segments without
       // re-querying every time, while still allowing a forced refresh on market changes.
       if (!force && moverFeeds[segment] && moverFeeds[segment].length > 0) {
-        if (segment === currentSegment) renderMoverRail();
+        if (segment === currentSegment) renderMoverRail(hydrateSparklines);
         return;
       }
       moverFeedLoading[segment] = true;
-      if (segment === currentSegment) renderMoverRail();
+      if (segment === currentSegment) renderMoverRail(false);
       const payload = await getJson(`${tabConfig.top_movers.path}&product_kind=${encodeURIComponent(segment === "sealed" ? "sealed" : "card")}`);
       moverFeeds[segment] = enrichRows(payload);
       moverFeedLoading[segment] = false;
-      renderMoverRail();
+      renderMoverRail(hydrateSparklines);
+    }
+
+    function adoptTopMoverSelection(segment = currentSegment) {
+      // Fresh loads should open on the most relevant mover in the active segment rather than
+      // the first alphabetically sorted product. If URL state already selected a product, keep it.
+      if (currentKey) return false;
+      const rows = moverFeeds[segment] || [];
+      if (!rows.length) return false;
+      const item = rows[0];
+      ensurePickerOption(item);
+      currentKey = item.key;
+      picker.value = currentKey;
+      syncGroupSelection(item.groupId);
+      return true;
+    }
+
+    function scheduleDeferredLoad(task) {
+      Promise.resolve().then(task).catch((err) => {
+        console.error(err);
+      });
+    }
+
+    function startDeferredDashboardLoad() {
+      // Fresh page load should become usable as soon as the selected chart is ready. Heavier
+      // list-building work is intentionally deferred so it does not block first paint.
+      scheduleDeferredLoad(async () => {
+        await Promise.all([loadGroups(), loadUniverse()]);
+        await loadTable();
+      });
+      scheduleDeferredLoad(async () => {
+        const rows = (moverFeeds[currentSegment] || []).slice(0, 18);
+        if (rows.length) {
+          await hydrateMoverSparklines(rows, getSparklineDays());
+        }
+      });
     }
 
     async function loadSeries() {
       // The chart is always driven by the current picker selection; summary cards and the
       // right rail are refreshed from the same payload so the whole page stays coherent.
       if (!currentKey) return;
-      const meta = universeByKey.get(currentKey);
+      let meta = universeByKey.get(currentKey);
+      if (!meta && hasExplicitProductSelection) {
+        await loadUniverse();
+        meta = universeByKey.get(currentKey);
+      }
       if (!meta) return;
       const qs = new URLSearchParams({
         productId: String(meta.productId),
@@ -1626,12 +1838,13 @@
       renderSummary(meta, series);
       renderChart(series);
       updateTagButtons();
-      renderMoverRail();
+      updateMoverRailActiveState();
     }
 
     async function loadTable() {
       // The lower panel is the active signal feed. For Set Browser it swaps to the selected
       // group's product list; otherwise it renders the configured screener endpoint.
+      // Group Signals can also be narrowed by generation/era without leaving the screen.
       const cfg = tabConfig[currentTab];
       tableStatus.textContent = cfg.title;
       updateDevTabHelp(currentTab);
@@ -1655,7 +1868,12 @@
       // Event wiring turns each control into either a selection change or a feed/window change.
       picker.addEventListener("change", async () => {
         currentKey = picker.value;
-        syncUrlState();
+        const meta = universeByKey.get(currentKey);
+        if (meta?.groupId !== undefined && meta?.groupId !== null) {
+          syncGroupSelection(meta.groupId);
+        } else {
+          syncUrlState();
+        }
         await loadSeries();
       });
 
@@ -1733,8 +1951,10 @@
         resetCategoryState();
         leftStatus.textContent = "Loading";
         tableStatus.textContent = "Switching market...";
-        await Promise.all([loadHealth(), loadGroups(), loadUniverse()]);
-        await Promise.all([loadTopMovers(currentSegment, true), loadSeries(), loadTable()]);
+        await Promise.all([loadHealth(), loadTopMovers(currentSegment, true, false)]);
+        adoptTopMoverSelection(currentSegment);
+        await loadSeries();
+        startDeferredDashboardLoad();
       });
 
       tagActions.querySelectorAll("button").forEach((btn) => {
@@ -1775,10 +1995,11 @@
     async function init() {
       // Expected page boot result:
       // - categories loaded
-      // - health/group/universe caches ready
-      // - left rail populated
-      // - current chart selected
-      // - active signal table rendered
+      // - health loaded
+      // - left rail movers loaded
+      // - default selection adopted from the top mover when no URL selection exists
+      // - selected chart rendered quickly
+      // - heavier universe/groups/table work continues in the background
       try {
         hydrateStoredTags();
         bindEvents();
@@ -1800,9 +2021,12 @@
         });
         updateDevTabHelp(currentTab);
         await loadCategories();
-        await Promise.all([loadHealth(), loadGroups(), loadUniverse()]);
+        await loadHealth();
         syncUrlState();
-        await Promise.all([loadTopMovers(currentSegment), loadSeries(), loadTable()]);
+        await loadTopMovers(currentSegment, false, false);
+        adoptTopMoverSelection(currentSegment);
+        await loadSeries();
+        startDeferredDashboardLoad();
       } catch (err) {
         leftStatus.textContent = "Error";
         tableStatus.textContent = `Dashboard error: ${err.message}`;

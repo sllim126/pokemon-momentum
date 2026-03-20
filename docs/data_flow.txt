@@ -26,6 +26,29 @@ High-level flow
 8. Serve dashboards and API from DuckDB + parquet
 
 
+Recent dashboard workflow additions
+----------------------------------
+The pipeline stages are unchanged, but the dashboard now uses the data with a few extra
+workflow features:
+
+- refresh-safe URL state
+  - the selected market, product, tab, chart window, rail segment, selected set, and
+    active group generation filter are stored in the URL
+  - refreshes reopen the same research context
+
+- persistent right-rail image preview
+  - the selected product image now stays visible in its own right-rail panel while the
+    user scrolls through long signal or set lists
+
+- keyboard list stepping
+  - the lower table can be navigated with Arrow Up / Arrow Down
+  - this is a frontend convenience layer on top of the same product-selection flow
+
+- new snapshot-driven screen: `Good Buys`
+  - this uses the product snapshot plus rarity metadata to surface premium-rarity cards
+    that have been trending down or pulling back
+
+
 Core idea
 ---------
 The long-term historical fact data is stored in two layers:
@@ -307,6 +330,13 @@ Result of this stage:
 
 - the API can rank whole sets, not just individual cards/products
 
+Recent API-side addition:
+
+- the dashboard now derives a broad generation/era label for each set when serving
+  `Group Signals`
+- this label is built from group metadata such as set name, abbreviation, and
+  publication date so the UI can filter set breadth screens by era
+
 
 Stage 8: Parquet export
 -----------------------
@@ -421,6 +451,9 @@ What it does:
 - serves dashboard HTML files
 - exposes JSON endpoints for universe, groups, series, movers, signals, and set views
 - picks the best history source for each category
+- exposes newer workflow endpoints like:
+  - `/good_buys`
+  - `group_signals?generation=...`
 
 Important helpers:
 
@@ -471,7 +504,14 @@ Main dashboard responsibilities:
 - left rail = discovery / trending feed
 - center chart = selected product analysis
 - lower table = active screener / set browser
-- right rail = tracking and summary context
+- right rail = persistent image preview, tracking, and summary context
+
+Additional dashboard behavior:
+
+- the lower table is now its own scroll region so the chart stays visible while browsing
+- set selection automatically switches into the set-product view
+- the first product in a newly selected set is auto-loaded into the chart
+- keyboard stepping can walk the current list without repeated mouse clicks
 
 Embed dashboard responsibilities:
 
@@ -518,6 +558,8 @@ On a normal successful daily run, the expected sequence is:
 8. group signal snapshot is rebuilt
 9. new parquet partitions are exported
 10. API serves the new latest date
+11. dashboards can immediately use the refreshed snapshot-driven screens, including
+    `Good Buys` and generation-filtered `Group Signals`
 
 
 Common failure patterns

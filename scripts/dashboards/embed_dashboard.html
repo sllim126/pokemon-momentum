@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Pokemon Momentum Embed</title>
+  <link rel="icon" type="image/png" href="/images/Favidon.png">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <style>
     :root {
@@ -73,6 +74,46 @@
 
     .panel-pad {
       padding: 16px;
+    }
+
+    .brandmark {
+      width: 100%;
+      height: 82px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: linear-gradient(180deg, var(--bg) 0%, #00091B 100%);
+      border: 1px solid rgba(31, 177, 255, 0.24);
+      box-shadow: inset 0 0 0 1px rgba(31, 177, 255, 0.05);
+    }
+
+    .brandmark img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center center;
+      transform: scale(2.35);
+      transform-origin: center center;
+    }
+
+    .brandmark-fallback {
+      display: none;
+      width: 100%;
+      padding: 0 16px;
+      text-align: center;
+      font-size: 30px;
+      line-height: 1;
+      letter-spacing: -0.06em;
+      font-weight: 800;
+      color: #dff6ff;
+      white-space: nowrap;
+    }
+
+    .brandmark-fallback .accent {
+      color: #39c3ff;
     }
 
     .market-row {
@@ -282,10 +323,15 @@
       align-items: center;
     }
 
+    .chart-shell {
+      min-height: 0;
+      padding: 16px 18px 0 18px;
+    }
+
     #chart {
-      width: calc(100% - 36px);
+      width: 100%;
       height: 100%;
-      margin: 16px 18px 0 18px;
+      margin: 0;
       border: 1px solid var(--line);
       border-radius: 18px;
       background: rgba(12, 20, 37, 0.94);
@@ -346,6 +392,10 @@
         padding: 10px;
       }
 
+      .brandmark {
+        height: 72px;
+      }
+
       .stage-top {
         grid-template-columns: 1fr;
       }
@@ -369,7 +419,16 @@
     <div class="frame">
       <aside class="panel rail">
         <div class="panel-pad">
-          <div class="eyebrow">Embed View</div>
+          <div class="brandmark" aria-hidden="true">
+            <img
+              src="/images/Logo.png"
+              alt="Poke6s logo"
+              onload="this.nextElementSibling.style.display='none'; this.style.display='block';"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+            >
+            <div class="brandmark-fallback">Poke<span class="accent">6</span>s</div>
+          </div>
+          <div class="eyebrow" style="margin-top:14px;">Embed View</div>
           <h1 class="embed-title">Pokemon Momentum</h1>
           <div class="muted" style="margin-top:8px;">Compact trend feed for iframe embeds.</div>
           <div class="market-row">
@@ -422,7 +481,9 @@
           <a class="cta" id="openFull" href="/dashboard" target="_blank" rel="noreferrer">Open Full Dashboard</a>
         </div>
 
-        <div id="chart"></div>
+        <div class="chart-shell">
+          <div id="chart"></div>
+        </div>
 
         <div class="stats">
           <div class="stat">

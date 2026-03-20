@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pokemon Momentum Lab</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4efe4;
+      --paper: rgba(255, 250, 242, 0.9);
+      --paper-2: rgba(248, 242, 230, 0.9);
+      --line: rgba(73, 63, 44, 0.14);
+      --ink: #1f2a22;
+      --muted: #6c6c61;
+      --accent: #0f766e;
+      --accent-2: #b45309;
+      --good: #147d53;
+      --warn: #b84d2f;
+      --shadow: 0 20px 60px rgba(37, 28, 16, 0.12);
+      --radius: 28px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      background:
+        radial-gradient(circle at top left, rgba(180, 83, 9, 0.12), transparent 24%),
+        radial-gradient(circle at top right, rgba(15, 118, 110, 0.12), transparent 18%),
+        linear-gradient(180deg, #f8f3e9 0%, #efe6d5 100%);
+    }
+
+    .shell {
+      min-height: 100vh;
+      padding: 22px;
+    }
+
+    .page {
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, var(--paper), var(--paper-2));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .masthead {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.8fr);
+      gap: 18px;
+      padding: 24px;
+      align-items: stretch;
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 11px;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    .title {
+      margin: 8px 0 10px;
+      font-size: clamp(38px, 5vw, 74px);
+      line-height: 0.92;
+      letter-spacing: -0.05em;
+    }
+
+    .lede {
+      max-width: 58ch;
+      color: #4a4f46;
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .meta-grid {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .meta-card {
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(73, 63, 44, 0.1);
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .meta-value {
+      margin-top: 6px;
+      font-size: 28px;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      font-weight: 700;
+    }
+
+    .control-stack {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .select,
+    .pill-button {
+      width: 100%;
+      appearance: none;
+      border: 1px solid rgba(73, 63, 44, 0.14);
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--ink);
+      border-radius: 16px;
+      padding: 12px 14px;
+      font: inherit;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .button-row button {
+      appearance: none;
+      border: 1px solid rgba(73, 63, 44, 0.14);
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 10px 13px;
+      font: inherit;
+      cursor: pointer;
+      transition: 0.14s ease;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      font-size: 13px;
+    }
+
+    .button-row button.active {
+      background: rgba(15, 118, 110, 0.12);
+      color: var(--accent);
+      border-color: rgba(15, 118, 110, 0.24);
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr) 340px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .queue,
+    .sets {
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+      max-height: calc(100vh - 210px);
+      overflow: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .queue::-webkit-scrollbar,
+    .sets::-webkit-scrollbar {
+      display: none;
+    }
+
+    .queue-card,
+    .set-card {
+      border: 1px solid rgba(73, 63, 44, 0.1);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.66);
+      padding: 15px;
+      cursor: pointer;
+      transition: 0.14s ease;
+    }
+
+    .queue-card:hover,
+    .queue-card.active,
+    .set-card:hover,
+    .set-card.active {
+      transform: translateY(-1px);
+      border-color: rgba(15, 118, 110, 0.24);
+      box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.08);
+    }
+
+    .queue-name,
+    .set-name {
+      font-size: 22px;
+      line-height: 0.98;
+      letter-spacing: -0.04em;
+      margin: 4px 0 0;
+    }
+
+    .queue-meta,
+    .set-meta {
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: 13px;
+      line-height: 1.45;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(73, 63, 44, 0.12);
+      background: rgba(255, 255, 255, 0.76);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    .chip.good { color: var(--good); }
+    .chip.warn { color: var(--warn); }
+
+    .spotlight {
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 300px;
+      border-radius: 26px;
+      border: 1px solid rgba(73, 63, 44, 0.1);
+      background:
+        linear-gradient(135deg, rgba(15, 118, 110, 0.14), rgba(180, 83, 9, 0.08)),
+        rgba(255, 255, 255, 0.72);
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) 240px;
+      gap: 18px;
+      padding: 20px;
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+    }
+
+    .hero-copy h2 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 52px);
+      line-height: 0.92;
+      letter-spacing: -0.05em;
+    }
+
+    .hero-sub {
+      color: #52554b;
+      font-size: 16px;
+      line-height: 1.55;
+      max-width: 50ch;
+    }
+
+    .hero-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .hero-price {
+      margin-top: 8px;
+      font-size: 44px;
+      line-height: 0.9;
+      letter-spacing: -0.05em;
+      font-weight: 700;
+    }
+
+    .hero-art {
+      position: relative;
+      z-index: 1;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(73, 63, 44, 0.12);
+      background: rgba(255, 255, 255, 0.74);
+      min-height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hero-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .hero-empty {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 11px;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    }
+
+    #chart {
+      width: 100%;
+      height: 420px;
+      border-radius: 22px;
+      overflow: hidden;
+      border: 1px solid rgba(73, 63, 44, 0.1);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .set-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .set-strip {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .mini-stat {
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(73, 63, 44, 0.1);
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .mini-stat .value {
+      margin-top: 5px;
+      font-size: 24px;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1280px) {
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .queue,
+      .sets {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 960px) {
+      .masthead {
+        grid-template-columns: 1fr;
+      }
+
+      .meta-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero-card {
+        grid-template-columns: 1fr;
+      }
+
+      #chart {
+        height: 340px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="page">
+      <section class="panel masthead">
+        <div>
+          <div class="eyebrow">Alternate Concept</div>
+          <h1 class="title">Market Atlas</h1>
+          <p class="lede">
+            A more editorial take on the same data. Instead of a terminal, this view treats the market
+            like a front page: one live spotlight, one active queue, and one set pulse column.
+          </p>
+          <div class="meta-grid">
+            <div class="meta-card">
+              <div class="eyebrow">Latest Date</div>
+              <div class="meta-value" id="statLatest">-</div>
+            </div>
+            <div class="meta-card">
+              <div class="eyebrow">Tracked Rows</div>
+              <div class="meta-value" id="statRows">-</div>
+            </div>
+            <div class="meta-card">
+              <div class="eyebrow">History Source</div>
+              <div class="meta-value" id="statSource">-</div>
+            </div>
+            <div class="meta-card">
+              <div class="eyebrow">Market</div>
+              <div class="meta-value" id="statMarket">-</div>
+            </div>
+          </div>
+        </div>
+        <div class="control-stack">
+          <div>
+            <div class="eyebrow">Market</div>
+            <select id="marketPicker" class="select"></select>
+          </div>
+          <div>
+            <div class="eyebrow">Screen</div>
+            <div class="button-row" id="feedTabs">
+              <button type="button" data-feed="top_movers" class="active">Top Movers</button>
+              <button type="button" data-feed="good_buys">Good Buys</button>
+              <button type="button" data-feed="early_uptrends">Early Uptrends</button>
+            </div>
+          </div>
+          <div>
+            <div class="eyebrow">Chart Window</div>
+            <div class="button-row" id="windowTabs">
+              <button type="button" data-days="30">30D</button>
+              <button type="button" data-days="90">90D</button>
+              <button type="button" data-days="180">180D</button>
+              <button type="button" data-days="365" class="active">1Y</button>
+              <button type="button" data-days="730">2Y</button>
+            </div>
+          </div>
+          <a class="pill-button" href="/dashboard" style="text-decoration:none; text-align:center;">Back To Main Dashboard</a>
+        </div>
+      </section>
+
+      <section class="content-grid">
+        <aside class="panel queue" id="queuePanel">
+          <div>
+            <div class="eyebrow">Active Queue</div>
+            <div class="queue-name" id="queueTitle">Loading...</div>
+            <div class="queue-meta" id="queueSubtitle">Fetching the current signal list.</div>
+          </div>
+          <div id="queueList"></div>
+        </aside>
+
+        <main class="panel spotlight">
+          <section class="hero-card">
+            <div class="hero-copy">
+              <div class="eyebrow">Live Spotlight</div>
+              <h2 id="heroTitle">Loading...</h2>
+              <div class="hero-sub" id="heroSubtitle">Waiting for the first product.</div>
+              <div class="hero-price" id="heroPrice">-</div>
+              <div class="hero-stats" id="heroStats"></div>
+            </div>
+            <div class="hero-art">
+              <div class="hero-empty" id="heroImageEmpty">No Image</div>
+              <img id="heroImage" alt="" hidden>
+            </div>
+          </section>
+          <div id="chart"></div>
+        </main>
+
+        <aside class="panel sets">
+          <div>
+            <div class="eyebrow">Set Pulse</div>
+            <div class="set-name" id="setTitle">Strongest Sets</div>
+            <div class="set-meta" id="setSubtitle">Breadth and momentum leaders across the active market.</div>
+          </div>
+          <div class="set-grid">
+            <div class="set-strip">
+              <div class="mini-stat">
+                <div class="eyebrow">Selected Set</div>
+                <div class="value" id="selectedSetName">-</div>
+              </div>
+              <div class="mini-stat">
+                <div class="eyebrow">Breadth</div>
+                <div class="value" id="selectedSetBreadth">-</div>
+              </div>
+            </div>
+            <div id="setList"></div>
+          </div>
+        </aside>
+      </section>
+    </div>
+  </div>
+
+  <script src="/dashboard-common.js"></script>
+  <script>
+    const Common = window.DashboardCommon;
+    const apiBase = window.location.origin;
+    const initialParams = new URLSearchParams(window.location.search);
+
+    const marketPicker = document.getElementById("marketPicker");
+    const queueTitle = document.getElementById("queueTitle");
+    const queueSubtitle = document.getElementById("queueSubtitle");
+    const queueList = document.getElementById("queueList");
+    const heroTitle = document.getElementById("heroTitle");
+    const heroSubtitle = document.getElementById("heroSubtitle");
+    const heroPrice = document.getElementById("heroPrice");
+    const heroStats = document.getElementById("heroStats");
+    const heroImage = document.getElementById("heroImage");
+    const heroImageEmpty = document.getElementById("heroImageEmpty");
+    const setList = document.getElementById("setList");
+    const selectedSetName = document.getElementById("selectedSetName");
+    const selectedSetBreadth = document.getElementById("selectedSetBreadth");
+    const statLatest = document.getElementById("statLatest");
+    const statRows = document.getElementById("statRows");
+    const statSource = document.getElementById("statSource");
+    const statMarket = document.getElementById("statMarket");
+
+    let currentCategoryId = Number(initialParams.get("category_id") || 3);
+    let currentFeed = initialParams.get("feed") || "top_movers";
+    let currentDays = Number(initialParams.get("days") || 365);
+    let currentKey = null;
+    let selectedSetId = null;
+    const categoryOptions = [];
+    const universeByKey = new Map();
+    let queueRows = [];
+    let setRows = [];
+
+    const feedConfig = {
+      top_movers: {
+        path: "/top_movers?days=30&limit=18&min_prior=5",
+        title: "Top Movers",
+        subtitle: "The hottest names in the current market window."
+      },
+      good_buys: {
+        path: "/good_buys?limit=18&min_price=5&max_30d_pct=0&max_7d_pct=5",
+        title: "Good Buys",
+        subtitle: "Premium-rarity pullbacks and possible re-entry candidates."
+      },
+      early_uptrends: {
+        path: "/early_uptrends?days_required=3&limit=18&min_price=5&max_price_vs_sma30_pct=15",
+        title: "Early Uptrends",
+        subtitle: "Names where momentum is just starting to line up."
+      }
+    };
+
+    function withCategory(path) {
+      return Common.withCategory(apiBase, currentCategoryId, path);
+    }
+
+    function syncUrl() {
+      const url = new URL(window.location.href);
+      url.searchParams.set("category_id", String(currentCategoryId));
+      url.searchParams.set("feed", currentFeed);
+      url.searchParams.set("days", String(currentDays));
+      if (currentKey) url.searchParams.set("product", currentKey);
+      if (selectedSetId) url.searchParams.set("group_id", String(selectedSetId));
+      history.replaceState({}, "", `${url.pathname}${url.search}`);
+    }
+
+    async function getJson(path) {
+      const res = await fetch(apiBase + withCategory(path));
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res.json();
+    }
+
+    async function loadCategories() {
+      const payload = await Common.fetchCategories(apiBase);
+      categoryOptions.length = 0;
+      categoryOptions.push(...(payload.items || []));
+      currentCategoryId = Common.populateCategoryPicker(marketPicker, categoryOptions, currentCategoryId);
+    }
+
+    async function loadUniverse() {
+      const payload = await getJson("/universe?limit=50000");
+      for (const item of Common.rowObjects(payload)) {
+        universeByKey.set(Common.keyOf(item.productId, item.subTypeName), item);
+      }
+    }
+
+    function enrichRows(payload) {
+      return Common.enrichRows(payload, universeByKey, "cards", "sealed");
+    }
+
+    function renderQueue() {
+      queueTitle.textContent = feedConfig[currentFeed].title;
+      queueSubtitle.textContent = feedConfig[currentFeed].subtitle;
+      queueList.innerHTML = "";
+      queueRows.forEach((item) => {
+        const pct = Common.formatPercentMeta(item.roc_pct ?? item.roc_30d_pct ?? item.pct_vs_sma30 ?? 0, 2);
+        const card = document.createElement("article");
+        card.className = `queue-card${item.key === currentKey ? " active" : ""}`;
+        card.innerHTML = `
+          <div class="eyebrow">${item.groupName || "Unknown Set"}</div>
+          <div class="queue-name">${item.productName}</div>
+          <div class="queue-meta">${item.subTypeName || ""}${item.number ? ` | #${item.number}` : ""}</div>
+          <div style="margin-top:10px; display:flex; justify-content:space-between; gap:10px; align-items:center;">
+            <span class="chip ${pct.cls}">${pct.text}</span>
+            <span class="chip">${Common.formatNumber(item.latest_price ?? item.p_now, 2)}</span>
+          </div>
+        `;
+        card.addEventListener("click", async () => {
+          currentKey = item.key;
+          selectedSetId = Number(item.groupId);
+          syncUrl();
+          renderQueue();
+          renderSets();
+          await loadSeries();
+        });
+        queueList.appendChild(card);
+      });
+    }
+
+    function renderSets() {
+      setList.innerHTML = "";
+      const selectedSet = setRows.find((row) => Number(row.groupId) === Number(selectedSetId)) || setRows[0];
+      selectedSetName.textContent = selectedSet?.groupName || "-";
+      selectedSetBreadth.textContent = selectedSet ? Common.formatNumber(selectedSet.breadth_score, 1) : "-";
+      setRows.slice(0, 12).forEach((item) => {
+        const breadth = Common.formatNumber(item.breadth_score, 1);
+        const avg30 = Common.formatPercentMeta(item.avg_30d_pct, 2);
+        const card = document.createElement("article");
+        card.className = `set-card${Number(item.groupId) === Number(selectedSetId) ? " active" : ""}`;
+        card.innerHTML = `
+          <div class="eyebrow">${item.generation || "Legacy"}</div>
+          <div class="set-name">${item.groupName}</div>
+          <div class="set-meta">${Common.formatNumber(item.item_count, 0)} tracked items | ${Common.formatNumber(item.card_count, 0)} cards</div>
+          <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+            <span class="chip ${avg30.cls}">${avg30.text} avg 30D</span>
+            <span class="chip">Breadth ${breadth}</span>
+          </div>
+        `;
+        card.addEventListener("click", () => {
+          selectedSetId = Number(item.groupId);
+          syncUrl();
+          renderSets();
+        });
+        setList.appendChild(card);
+      });
+    }
+
+    function renderHero(meta, series) {
+      const rows = series.rows || [];
+      const last = rows[rows.length - 1] || [];
+      const latestPrice = last[1];
+      const sma30 = last[3];
+      const pct = latestPrice && sma30 ? Common.formatPercentMeta(((latestPrice / sma30) - 1) * 100, 2) : { text: "n/a", cls: "neutral" };
+      heroTitle.textContent = meta.productName || "Unknown Product";
+      heroSubtitle.textContent = `${meta.groupName || "Unknown Set"} | ${meta.subTypeName || ""}${meta.number ? ` | #${meta.number}` : ""}`;
+      heroPrice.textContent = Common.formatNumber(latestPrice, 2);
+      heroStats.innerHTML = `
+        <span class="chip ${pct.cls}">${pct.text} vs SMA30</span>
+        <span class="chip">${meta.rarity || Common.formatProductBadgeLabel(meta)}</span>
+        <span class="chip">${series.latest || "-"}</span>
+      `;
+      if (meta.imageUrl) {
+        heroImage.src = meta.imageUrl;
+        heroImage.alt = meta.productName ? `${meta.productName} image` : "Product image";
+        heroImage.hidden = false;
+        heroImageEmpty.hidden = true;
+      } else {
+        heroImage.removeAttribute("src");
+        heroImage.alt = "";
+        heroImage.hidden = true;
+        heroImageEmpty.hidden = false;
+      }
+    }
+
+    function renderChart(series) {
+      const x = [];
+      const price = [];
+      const sma7 = [];
+      const sma30 = [];
+      for (const row of series.rows || []) {
+        x.push(row[0]);
+        price.push(row[1]);
+        sma7.push(row[2]);
+        sma30.push(row[3]);
+      }
+      Plotly.react("chart", [
+        { x, y: price, mode: "lines", name: "Price", line: { color: "#0f766e", width: 4 } },
+        { x, y: sma7, mode: "lines", name: "SMA7", line: { color: "#b45309", width: 2.5 } },
+        { x, y: sma30, mode: "lines", name: "SMA30", line: { color: "#6c6c61", width: 2, dash: "dot" } },
+      ], {
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(255,255,255,0.72)",
+        margin: { l: 48, r: 18, t: 14, b: 42 },
+        legend: { orientation: "h", y: 1.08, font: { color: "#4e4d45" } },
+        hovermode: "x unified",
+        xaxis: { gridcolor: "rgba(73, 63, 44, 0.08)", tickfont: { color: "#5a5a52" } },
+        yaxis: { gridcolor: "rgba(73, 63, 44, 0.08)", tickfont: { color: "#5a5a52" } },
+      }, { displaylogo: false, responsive: true });
+    }
+
+    async function loadSeries() {
+      if (!currentKey) return;
+      const meta = universeByKey.get(currentKey);
+      if (!meta) return;
+      const qs = new URLSearchParams({
+        productId: String(meta.productId),
+        subTypeName: meta.subTypeName,
+        days: String(currentDays),
+      });
+      const series = await getJson(`/series?${qs.toString()}`);
+      renderHero(meta, series);
+      renderChart(series);
+      renderQueue();
+    }
+
+    async function loadQueue() {
+      const payload = await getJson(feedConfig[currentFeed].path);
+      queueRows = enrichRows(payload);
+      if (!currentKey && queueRows.length) {
+        currentKey = queueRows[0].key;
+        selectedSetId = Number(queueRows[0].groupId);
+      }
+      renderQueue();
+    }
+
+    async function loadSets() {
+      const payload = await getJson("/group_signals?limit=24&min_items=5");
+      setRows = Common.rowObjects(payload);
+      if (!selectedSetId && setRows.length) {
+        selectedSetId = Number(setRows[0].groupId);
+      }
+      renderSets();
+    }
+
+    async function loadHealth() {
+      const health = await getJson("/health");
+      statLatest.textContent = health.latest || "-";
+      statRows.textContent = Number(health.rows || 0).toLocaleString();
+      statSource.textContent = health.source || "-";
+      statMarket.textContent = health.category || `Category ${currentCategoryId}`;
+    }
+
+    function bindEvents() {
+      document.querySelectorAll("#feedTabs button").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          document.querySelectorAll("#feedTabs button").forEach((el) => el.classList.remove("active"));
+          btn.classList.add("active");
+          currentFeed = btn.dataset.feed;
+          currentKey = null;
+          syncUrl();
+          await loadQueue();
+          await loadSeries();
+        });
+      });
+
+      document.querySelectorAll("#windowTabs button").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          document.querySelectorAll("#windowTabs button").forEach((el) => el.classList.remove("active"));
+          btn.classList.add("active");
+          currentDays = Number(btn.dataset.days);
+          syncUrl();
+          await loadSeries();
+        });
+      });
+
+      marketPicker.addEventListener("change", async () => {
+        currentCategoryId = Number(marketPicker.value || 3);
+        currentKey = null;
+        selectedSetId = null;
+        syncUrl();
+        await init();
+      });
+    }
+
+    async function init() {
+      try {
+        await loadCategories();
+        document.querySelectorAll("#feedTabs button").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.feed === currentFeed);
+        });
+        document.querySelectorAll("#windowTabs button").forEach((btn) => {
+          btn.classList.toggle("active", Number(btn.dataset.days) === currentDays);
+        });
+        await Promise.all([loadHealth(), loadUniverse(), loadQueue(), loadSets()]);
+        syncUrl();
+        await loadSeries();
+      } catch (err) {
+        heroTitle.textContent = "Dashboard failed to load";
+        heroSubtitle.textContent = err.message;
+      }
+    }
+
+    bindEvents();
+    init();
+  </script>
+</body>
+</html>

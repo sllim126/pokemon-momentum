@@ -20,6 +20,12 @@ Set / Group Analysis
   - percent above SMA30
   - percent at 90-day highs
 - Consider adding a set chart toggle directly from `Group Signals`.
+- Add master set / set completion basket metrics using tracked card prices.
+- Measure how concentrated a set's value is:
+  - top-hit share of total set value
+  - top-3 share of total set value
+  - whether the set is broad or carried by a few chase cards
+- Decide whether reverse holos, holos, and other variants should be included in the basket estimate by default or exposed as separate set-cost views.
 - Refine generation grouping beyond the first-pass era buckets if specific sets land in the wrong generation.
 
 
@@ -38,3 +44,60 @@ Tracking / Workflow
 - Replace local-only tags with backend-persisted favorites/watchlists.
 - Decide whether tracking should be private to the operator or exposed in a lightweight public way.
 - Consider keyboard shortcuts beyond up/down row stepping.
+- Decide how badges and favorites should persist:
+  - per browser session only
+  - per device via local storage
+  - per signed-in account
+- Decide whether users should be able to create personal accounts to save:
+  - favorites
+  - watchlist items
+  - research tags
+  - sealed tags
+- Decide whether tags should be private-only or optionally shareable.
+- Define the first account-related behavior:
+  - anonymous local-only tracking
+  - email/login-based saved tracking
+  - lightweight operator-only accounts
+
+
+LLM / Assistant Layer
+---------------------
+
+- Explore an LLM assistant on top of the screener data instead of replacing the deterministic filters.
+- Support budget-based sourcing prompts, for example:
+  - "I have $250, show me the best Illustrated Rare or higher cards between $3 and $5."
+  - "I want sealed products under $80 that are starting to trend upward."
+- Support collection-completion prompts using a user-supplied inventory list and a fixed budget.
+- Support entry / exit prompts:
+  - what looks buyable now
+  - what is flattening out
+  - what has likely reached a 15-20% resale target
+- Decide whether the LLM should operate:
+  - as a research-only explainer
+  - as a ranked recommender over screener results
+  - or as a portfolio / collection copilot
+- Decide what guardrails and disclaimers are needed so the assistant stays framed as research support rather than guaranteed investing advice.
+
+
+Condition / Resale Layer
+------------------------
+
+- Add condition-aware pricing support instead of relying only on one generic market price.
+- Track condition tiers where possible, especially:
+  - Near Mint
+  - Lightly Played
+  - Moderately Played
+- Measure condition spreads so the screener can show how far apart NM and LP pricing is for the same product.
+- Explore condition-aware buy logic:
+  - whether a lower-condition copy is still attractive for resale
+  - whether the condition spread leaves enough room for a 15-20% target gain after fees and shipping
+- Add resale-margin math that accounts for:
+  - buy price
+  - expected sale price
+  - condition
+  - platform fees
+  - shipping and packaging costs
+- Decide whether condition data should live as:
+  - extra product-level market fields
+  - inventory-aware store fields
+  - or a separate valuation layer on top of the screener
