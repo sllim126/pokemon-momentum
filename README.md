@@ -1,204 +1,143 @@
-# pokemon-momentum
-Momentum analysis and data pipeline for Pokemon TCG market data
+# Pokemon Momentum
 
-## Docker rebuild and run
+Pokemon Momentum is a market research and screening project for Pokemon TCG data.
 
-This project is set up to run inside Docker with the repo mounted into the container at `/app`.
+It combines:
+- a daily TCGCSV-backed pipeline
+- DuckDB and Parquet storage
+- a main research dashboard
+- a lighter set explorer
+- lightweight tracking tags for sourcing and review
 
-Build the image:
+The goal is simple: make it easier to spot what is moving, what may be starting to move, and which sets or products deserve attention.
+
+
+## Main Pages
+
+- `/dashboard`
+  - the main research dashboard
+- `/dashboard-dev`
+  - the same dashboard with extra operator help text
+- `/embed`
+  - a lighter embedded/public-style view
+- `/set-explorer`
+  - a simpler set-browsing page for cost and concentration questions
+- `/account-settings`
+  - lightweight tracking account management
+
+
+## What The Project Does
+
+- tracks historical Pokemon price data
+- serves screener views such as:
+  - `Top Movers`
+  - `Breakouts`
+  - `Good Buys`
+  - `SMA30 Holds`
+  - `Early Uptrends`
+  - `Uptrends`
+  - `Signals`
+  - `Group Signals`
+- supports set-level history through `/group_series`
+- supports set-cost and concentration browsing through `/set_baskets`
+- supports lightweight synced tags such as:
+  - `Favorite`
+  - `Watchlist`
+  - `Research`
+  - `Buy List`
+
+
+## Storage
+
+The project currently uses:
+
+- DuckDB
+  - working analytics database
+  - metadata and snapshot tables
+- Parquet
+  - partitioned historical fact store
+- CSV
+  - metadata/intermediate fallback layer in some parts of the pipeline
+
+In practice:
+- historical price reads prefer Parquet when available
+- the app falls back to DuckDB when needed
+
+
+## Run With Docker
+
+Build:
 
 ```bash
 docker compose build
 ```
 
-Start the container:
+Start:
 
 ```bash
 docker compose up -d
 ```
 
-Open a shell in the running container:
+App URL:
 
-```bash
-docker compose exec pokemon-momentum bash
+```text
+http://localhost:8001
 ```
 
-The project uses these folders inside the container:
 
-- `/app/data/raw` for downloaded `.7z` archives
-- `/app/data/extracted` for extracted data files and generated CSVs used by the pipeline
-- `/app/output` for generated reports and HTML dashboards
+## Daily Pipeline
 
-If you need a clean rebuild on a new Linux system:
-
-1. Clone the repository.
-2. Run `docker compose build`.
-3. Run `docker compose up -d`.
-4. Run the pipeline commands below from inside the container.
-
-## Current workflow
-
-Run these commands from inside the container shell opened with `docker compose exec pokemon-momentum bash`.
-
-1. Download and extract new daily archive files:
-
-```bash
-python scripts/download/Download_new_day.py
-```
-
-2. Build the consolidated price history CSV:
-
-```bash
-python scripts/extract/build_pokemon_prices_all_days.py
-```
-
-3. Refresh set metadata:
-
-```bash
-python scripts/utilities/export_pokemon_groups.py
-```
-
-4. Refresh product metadata for the groups found in the price history:
-
-```bash
-python scripts/utilities/export_products_for_my_groups.py
-```
-
-5. Join prices, groups, and products:
-
-```bash
-python scripts/utilities/join_prices_to_names.py
-```
-
-6. Optional single-card moving average export:
-
-```bash
-python scripts/indicators/single_card_moving_average.py
-```
-
-7. Build the top-200 universe:
-
-```bash
-python scripts/rankings/top_200.py
-```
-
-8. Compute indicators for the top-200 universe:
-
-```bash
-python scripts/indicators/compute_200_indicators.py
-```
-
-9. Add names to the top-200 output:
-
-```bash
-python scripts/rankings/top_200_with_names.py
-```
-
-10. Build the top-200 dashboard:
-
-```bash
-python scripts/dashboards/build_dashboard_html.py
-```
-
-11. Build the top-200 timeseries file:
-
-```bash
-python scripts/rankings/build_top200_timeseries.py
-```
-
-12. Build the 7/30/90 ROC snapshot:
-
-```bash
-python scripts/indicators/compute_roc_7_30_90.py
-```
-
-13. Build the ROC dashboard:
-
-```bash
-python scripts/dashboards/build_roc_dashboard_v3.py
-```
-
-Generated CSVs and dashboards are rebuildable outputs and should not be committed to Git.
-
-## Automated daily update
-
-Use the pipeline runner inside the container to execute the working update sequence in order:
+Run the pipeline manually:
 
 ```bash
 python scripts/pipeline/run_daily_update.py
 ```
 
-Useful flags:
+Validate outputs:
 
 ```bash
-# Catch up only the newest 12 missing days
-python scripts/pipeline/run_daily_update.py --latest-first --limit-days 12
-
-# Skip network-heavy metadata refresh
-python scripts/pipeline/run_daily_update.py --skip-metadata
-
-# Skip parquet export
-python scripts/pipeline/run_daily_update.py --skip-parquet
-
-# Print commands without running them
-python scripts/pipeline/run_daily_update.py --dry-run
+python scripts/pipeline/validate_pipeline.py
 ```
 
-Current automated sequence:
+The current daily flow is:
+1. download and extract new TCGCSV archives
+2. load price history into DuckDB
+3. refresh group metadata
+4. refresh product metadata
+5. rebuild joined/named exports
+6. build product signal snapshot
+7. build group signal snapshot
+8. export parquet history
 
-1. Download and extract new archives
-2. Load new price data into DuckDB
-3. Refresh group metadata
-4. Refresh product metadata
-5. Rebuild joined name export
-6. Build top-200 universe
-7. Build top-200 lookup
-8. Build top-200 indicators
-9. Build top-200 named movers
-10. Build top-200 timeseries
-11. Build ROC 7/30/90 snapshot
-12. Build product signal snapshot
-13. Export parquet partitions
 
-### Schedule it once per day
+## Set Logos
 
-Use the host-side wrapper to run the pipeline safely through Docker with a lockfile and append-only log:
+Uploaded source logos can live in:
+
+- `/opt/pokemon-momentum/images/set logos`
+
+Sync them into the runtime logo folder with:
 
 ```bash
-/opt/pokemon-momentum/scripts/pipeline/run_daily_update_host.sh
+python3 scripts/utilities/sync_set_logos.py
 ```
 
-That wrapper:
+The dashboards then read:
 
-1. Stops the `pokemon-momentum` app container to release the DuckDB write lock
-2. Runs `python scripts/pipeline/run_daily_update.py --workers 4` in a one-off container
-3. Brings the app container back up automatically on exit
-4. Prevents overlapping runs with `flock`
-5. Appends logs to `logs/daily_update.log`
+- `/opt/pokemon-momentum/images/logos/<groupId>.<ext>`
 
-Recommended production setup is a `systemd` timer on the host.
 
-Install the provided unit files:
+## Documentation
 
-```bash
-sudo cp deploy/systemd/pokemon-momentum-daily-update.service /etc/systemd/system/
-sudo cp deploy/systemd/pokemon-momentum-daily-update.timer /etc/systemd/system/
-sudo cp deploy/systemd/pokemon-momentum-weekly-refresh.service /etc/systemd/system/
-sudo cp deploy/systemd/pokemon-momentum-weekly-refresh.timer /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now pokemon-momentum-daily-update.timer
-sudo systemctl enable --now pokemon-momentum-weekly-refresh.timer
-```
+Detailed docs live here:
 
-Check status:
+- [docs/dashboard_how_to.txt](/opt/pokemon-momentum/docs/dashboard_how_to.txt)
+- [docs/data_flow.txt](/opt/pokemon-momentum/docs/data_flow.txt)
+- [docs/operator_runbook.txt](/opt/pokemon-momentum/docs/operator_runbook.txt)
+- [docs/todo.txt](/opt/pokemon-momentum/docs/todo.txt)
 
-```bash
-sudo systemctl status pokemon-momentum-daily-update.timer
-sudo systemctl status pokemon-momentum-weekly-refresh.timer
-sudo systemctl list-timers | grep pokemon-momentum
-tail -f /opt/pokemon-momentum/logs/daily_update.log
-```
 
-The default timer runs daily at `02:00 UTC`, which is `7:00 PM MST` (fixed UTC-7). Edit [pokemon-momentum-daily-update.timer](/opt/pokemon-momentum/deploy/systemd/pokemon-momentum-daily-update.timer) if you want a different schedule.
+## Notes
 
-There is also a weekly full metadata refresh timer that runs Sundays at `11:00 UTC`, which is `4:00 AM MST` (fixed UTC-7). That job uses the same pipeline path but adds `--full-metadata-refresh` so product metadata is fully refreshed once per week instead of only incrementally.
+- This project has moved beyond the old `top200` prototype workflow.
+- Generated outputs are rebuildable artifacts.
