@@ -8,24 +8,27 @@ Near-Term UI / UX
 - Review the dashboard on iPhone / phone layouts.
 - Decide whether mobile should keep the same three-panel structure or switch to a more task-based stacked layout.
 - Review `/embed` on tablet and phone sizes after the main dashboard mobile pass.
+- Add a first-time guided tour / onboarding flow for new users.
+- Highlight the major parts of the dashboard with simple prompts such as:
+  - click here
+  - this is where to find the chart
+  - this is where to browse sets
+  - this is where to look for early movers
+- Decide whether the guided tour should be:
+  - public-facing only
+  - optional for returning users
+  - dismissible and remembered between sessions
 
 
 Set / Group Analysis
 --------------------
 
-- Build a historical `group_series` / set-level timeseries endpoint so sets can be graphed like products.
-- Decide which set-level lines are most useful to graph first:
-  - equal-weighted set index
-  - breadth score over time
-  - percent above SMA30
-  - percent at 90-day highs
-- Consider adding a set chart toggle directly from `Group Signals`.
-- Add master set / set completion basket metrics using tracked card prices.
-- Measure how concentrated a set's value is:
-  - top-hit share of total set value
-  - top-3 share of total set value
-  - whether the set is broad or carried by a few chase cards
 - Decide whether reverse holos, holos, and other variants should be included in the basket estimate by default or exposed as separate set-cost views.
+- Decide whether the new set explorer should expose alternate basket modes such as:
+  - all tracked card variants
+  - non-bulk hits only
+  - master-set style completion baskets
+  - reverse holo / holo split views
 - Refine generation grouping beyond the first-pass era buckets if specific sets land in the wrong generation.
 
 

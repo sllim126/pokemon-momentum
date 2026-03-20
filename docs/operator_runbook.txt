@@ -29,6 +29,7 @@ Main dashboard URLs:
 
 - `http://localhost:8001/dashboard`
 - `http://localhost:8001/embed`
+- `http://localhost:8001/set-explorer`
 
 Health checks:
 
@@ -93,6 +94,7 @@ Healthy result:
 - market toggle works
 - refresh preserves current dashboard state
 - long signal/set lists scroll inside the lower panel
+- `set-explorer` loads and the set table populates
 
 3. systemd timers are active
 
@@ -242,6 +244,8 @@ curl 'http://localhost:8001/good_buys?category_id=3&limit=5'
 curl 'http://localhost:8001/product_signals?category_id=3&limit=5'
 curl 'http://localhost:8001/group_signals?category_id=3&limit=5'
 curl 'http://localhost:8001/group_signals?category_id=3&generation=SV&limit=5'
+curl 'http://localhost:8001/group_series?category_id=3&groupId=24325&days=365'
+curl 'http://localhost:8001/set_baskets?category_id=3&min_cards=10&limit=5'
 ```
 
 Japanese checks:
@@ -254,7 +258,44 @@ curl 'http://localhost:8001/top_movers?category_id=85&limit=5'
 curl 'http://localhost:8001/good_buys?category_id=85&limit=5'
 curl 'http://localhost:8001/product_signals?category_id=85&limit=5'
 curl 'http://localhost:8001/group_signals?category_id=85&limit=5'
+curl 'http://localhost:8001/group_series?category_id=85&groupId=24006&days=365'
+curl 'http://localhost:8001/set_baskets?category_id=85&min_cards=10&limit=5'
 ```
+
+
+Set explorer checks
+-------------------
+Use these when verifying the lighter set-comparison page.
+
+API checks:
+
+```bash
+curl 'http://localhost:8001/set_baskets?category_id=3&min_cards=10&limit=20'
+curl 'http://localhost:8001/set_baskets?category_id=85&min_cards=10&limit=20'
+```
+
+Healthy result:
+
+- rows return successfully
+- each row includes:
+  - `groupName`
+  - `generation`
+  - `total_set_cost`
+  - `top_hit_share_pct`
+  - `top3_share_pct`
+  - `depth_score`
+
+UI checks:
+
+- open `/set-explorer`
+- change the market dropdown
+- change the minimum-card filter
+- switch between:
+  - `Most Expensive`
+  - `Cheapest`
+  - `Most Top-Heavy`
+  - `Deepest Sets`
+- click a few set rows and confirm the spotlight panel updates
 
 
 Dashboard workflow checks
@@ -284,6 +325,18 @@ Group generation filter:
 - expected result:
   - the set list narrows to that era
   - the chart remains available above the lower list
+
+Set history chart:
+
+- open `Group Signals`
+- click any set row
+- expected result:
+  - the main chart switches to a set-level chart
+  - the title changes to the set name
+  - the chart shows:
+    - `Set Index`
+    - `% Above SMA30`
+  - changing the chart window reloads the same set-level chart instead of dropping back to one product
 
 
 If the app is down

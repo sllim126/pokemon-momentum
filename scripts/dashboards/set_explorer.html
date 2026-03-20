@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Poke6s Set Explorer</title>
+  <link rel="icon" type="image/png" href="/images/Favidon.png">
+  <style>
+    :root {
+      --bg: #0d1629;
+      --bg-2: #111b32;
+      --panel: rgba(29, 42, 68, 0.96);
+      --panel-2: rgba(21, 31, 53, 0.98);
+      --line: rgba(133, 162, 208, 0.16);
+      --ink: #e8f0ff;
+      --muted: #93a5c6;
+      --accent: #1fb1ff;
+      --accent-2: #28d39f;
+      --warn: #ffb266;
+      --radius: 24px;
+      --shadow: 0 18px 42px rgba(2, 7, 17, 0.38);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(31, 177, 255, 0.12), transparent 20%),
+        radial-gradient(circle at top right, rgba(40, 211, 159, 0.08), transparent 18%),
+        linear-gradient(180deg, var(--bg) 0%, #091121 100%);
+    }
+
+    .shell {
+      width: min(1440px, calc(100vw - 32px));
+      margin: 18px auto 30px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 20px;
+      align-items: center;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .brandmark {
+      width: 100%;
+      height: 120px;
+      border-radius: 22px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #11192f 0%, #0f1830 100%);
+      border: 1px solid rgba(31, 177, 255, 0.24);
+    }
+
+    .brandmark img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transform: scale(2.35);
+      transform-origin: center center;
+    }
+
+    .hero-copy h1 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+    }
+
+    .hero-copy p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1.45;
+      max-width: 780px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 220px 220px minmax(0, 1fr);
+      gap: 12px;
+      align-items: end;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+    }
+
+    .field label,
+    .section-label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    select,
+    input {
+      width: 100%;
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 47, 0.96);
+      color: var(--ink);
+      border-radius: 16px;
+      padding: 12px 14px;
+      font: inherit;
+    }
+
+    .sort-tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .sort-tabs button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(18, 28, 49, 0.92);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 12px 16px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .sort-tabs button.active {
+      color: #a7e2ff;
+      background: rgba(31, 177, 255, 0.14);
+      border-color: rgba(31, 177, 255, 0.34);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .summary-card {
+      padding: 18px;
+    }
+
+    .summary-card .value {
+      margin-top: 10px;
+      font-size: clamp(24px, 3vw, 38px);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      font-weight: 800;
+    }
+
+    .summary-card .subtle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .table-panel,
+    .spotlight {
+      padding: 18px;
+      min-height: 0;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: calc(100vh - 390px);
+      margin-top: 12px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: rgba(16, 25, 45, 0.98);
+      color: var(--muted);
+      text-align: left;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    th,
+    td {
+      padding: 13px 14px;
+      border-bottom: 1px solid rgba(133, 162, 208, 0.1);
+      vertical-align: top;
+    }
+
+    tbody tr {
+      background: rgba(15, 24, 43, 0.56);
+      cursor: pointer;
+    }
+
+    tbody tr:hover,
+    tbody tr.active {
+      background: rgba(28, 42, 70, 0.94);
+    }
+
+    .num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .group-cell {
+      display: grid;
+      gap: 4px;
+    }
+
+    .group-main {
+      font-weight: 700;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(31, 177, 255, 0.24);
+      background: rgba(31, 177, 255, 0.1);
+      color: #a9deff;
+      padding: 6px 10px;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .spotlight-card {
+      display: grid;
+      gap: 16px;
+    }
+
+    .spotlight-image {
+      width: 100%;
+      aspect-ratio: 5 / 7;
+      border-radius: 20px;
+      border: 1px solid rgba(31, 177, 255, 0.18);
+      background: linear-gradient(180deg, rgba(13, 22, 41, 0.92), rgba(10, 17, 34, 0.98));
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      text-align: center;
+      padding: 18px;
+    }
+
+    .spotlight-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .spotlight h2 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .spotlight p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .metric-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .metric {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: baseline;
+      border-top: 1px solid rgba(133, 162, 208, 0.12);
+      padding-top: 10px;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .metric .value {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      text-align: right;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 12px 0;
+    }
+
+    @media (max-width: 1100px) {
+      .hero,
+      .content {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .sort-tabs {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .table-wrap {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        width: min(100vw - 18px, 1440px);
+        margin: 10px auto 22px;
+      }
+
+      .hero,
+      .toolbar,
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .brandmark {
+        height: 92px;
+      }
+
+      table {
+        min-width: 820px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="panel hero">
+      <div class="brandmark">
+        <img src="/images/Logo.png" alt="Poke6s logo">
+      </div>
+      <div class="hero-copy">
+        <h1>Set Explorer</h1>
+        <p>Browse Pokemon sets like a collector curiosity tool instead of a trading terminal. See what each set costs to build from tracked card prices, how top-heavy it is, and whether the value is spread across the checklist or carried by a few chase cards.</p>
+      </div>
+    </section>
+
+    <section class="panel toolbar">
+      <div class="field">
+        <label for="market">Market</label>
+        <select id="market"></select>
+      </div>
+      <div class="field">
+        <label for="minCards">Minimum Cards</label>
+        <input id="minCards" type="number" min="1" max="400" step="1" value="10">
+      </div>
+      <div>
+        <div class="section-label">View</div>
+        <div class="sort-tabs" id="sortTabs"></div>
+      </div>
+    </section>
+
+    <section class="summary-grid" id="summaryGrid"></section>
+
+    <section class="content">
+      <div class="panel table-panel">
+        <div class="section-label">Set Table</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Set</th>
+                <th>Generation</th>
+                <th class="num">Cards</th>
+                <th class="num">Set Cost</th>
+                <th class="num">Top Hit</th>
+                <th class="num">Top Hit %</th>
+                <th class="num">Top 3 %</th>
+                <th class="num">Depth</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <aside class="panel spotlight">
+        <div class="section-label">Spotlight</div>
+        <div class="spotlight-card" id="spotlight"></div>
+      </aside>
+    </section>
+  </div>
+
+  <script>
+    // This page is intentionally lighter than the main screener. It uses precomputed
+    // product snapshot data to answer "fun" set questions quickly without requiring
+    // visitors to understand chart signals first.
+    const state = {
+      categoryId: 3,
+      minCards: 10,
+      sortMode: "expensive",
+      categories: [],
+      rows: [],
+      selectedGroupId: null,
+    };
+
+    const sortModes = [
+      { id: "expensive", label: "Most Expensive" },
+      { id: "cheap", label: "Cheapest" },
+      { id: "topheavy", label: "Most Top-Heavy" },
+      { id: "deep", label: "Deepest Sets" },
+    ];
+
+    const marketEl = document.getElementById("market");
+    const minCardsEl = document.getElementById("minCards");
+    const summaryGridEl = document.getElementById("summaryGrid");
+    const rowsEl = document.getElementById("rows");
+    const spotlightEl = document.getElementById("spotlight");
+    const sortTabsEl = document.getElementById("sortTabs");
+
+    function money(value) {
+      if (value == null || Number.isNaN(Number(value))) return "—";
+      return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(Number(value));
+    }
+
+    function pct(value) {
+      if (value == null || Number.isNaN(Number(value))) return "—";
+      return `${Number(value).toFixed(1)}%`;
+    }
+
+    function int(value) {
+      if (value == null || Number.isNaN(Number(value))) return "—";
+      return new Intl.NumberFormat("en-US").format(Number(value));
+    }
+
+    function hydrateRows(payload) {
+      return (payload.rows || []).map((row) => ({
+        groupId: row[0],
+        groupName: row[1],
+        generation: row[2] || "Unknown",
+        card_count: row[3],
+        total_set_cost: row[4],
+        avg_card_price: row[5],
+        median_card_price: row[6],
+        top_hit_name: row[7],
+        top_hit_image: row[8],
+        top_hit_price: row[9],
+        top_hit_share_pct: row[10],
+        top3_share_pct: row[11],
+        depth_score: row[12],
+      }));
+    }
+
+    function getSortedRows() {
+      const rows = [...state.rows];
+      if (state.sortMode === "cheap") {
+        return rows.sort((a, b) => a.total_set_cost - b.total_set_cost);
+      }
+      if (state.sortMode === "topheavy") {
+        return rows.sort((a, b) => b.top3_share_pct - a.top3_share_pct || b.top_hit_share_pct - a.top_hit_share_pct);
+      }
+      if (state.sortMode === "deep") {
+        return rows.sort((a, b) => b.depth_score - a.depth_score || b.card_count - a.card_count);
+      }
+      return rows.sort((a, b) => b.total_set_cost - a.total_set_cost);
+    }
+
+    function ensureSelection(sortedRows) {
+      if (!sortedRows.length) {
+        state.selectedGroupId = null;
+        return null;
+      }
+      const match = sortedRows.find((row) => row.groupId === state.selectedGroupId);
+      if (match) return match;
+      state.selectedGroupId = sortedRows[0].groupId;
+      return sortedRows[0];
+    }
+
+    function renderSortTabs() {
+      sortTabsEl.innerHTML = "";
+      sortModes.forEach((mode) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = mode.label;
+        button.className = mode.id === state.sortMode ? "active" : "";
+        button.addEventListener("click", () => {
+          state.sortMode = mode.id;
+          render();
+        });
+        sortTabsEl.appendChild(button);
+      });
+    }
+
+    function renderSummary(sortedRows) {
+      const highest = [...state.rows].sort((a, b) => b.total_set_cost - a.total_set_cost)[0];
+      const cheapest = [...state.rows].sort((a, b) => a.total_set_cost - b.total_set_cost)[0];
+      const topHeavy = [...state.rows].sort((a, b) => b.top3_share_pct - a.top3_share_pct)[0];
+      const deepest = [...state.rows].sort((a, b) => b.depth_score - a.depth_score)[0];
+
+      const cards = [
+        {
+          label: "Tracked Sets",
+          value: int(state.rows.length),
+          subtle: `Filtered to sets with at least ${int(state.minCards)} tracked cards.`,
+        },
+        {
+          label: "Most Expensive",
+          value: highest ? money(highest.total_set_cost) : "—",
+          subtle: highest ? `${highest.groupName}` : "No data",
+        },
+        {
+          label: "Cheapest",
+          value: cheapest ? money(cheapest.total_set_cost) : "—",
+          subtle: cheapest ? `${cheapest.groupName}` : "No data",
+        },
+        {
+          label: "Most Top-Heavy",
+          value: topHeavy ? pct(topHeavy.top3_share_pct) : "—",
+          subtle: topHeavy ? `${topHeavy.groupName} top-3 share` : "No data",
+        },
+      ];
+
+      summaryGridEl.innerHTML = cards.map((card) => `
+        <section class="panel summary-card">
+          <div class="section-label">${card.label}</div>
+          <div class="value">${card.value}</div>
+          <div class="subtle">${card.subtle}</div>
+        </section>
+      `).join("");
+    }
+
+    function renderRows(sortedRows, selected) {
+      rowsEl.innerHTML = "";
+      if (!sortedRows.length) {
+        rowsEl.innerHTML = `<tr><td colspan="8" class="empty">No sets matched the current filter.</td></tr>`;
+        return;
+      }
+      sortedRows.forEach((row) => {
+        const tr = document.createElement("tr");
+        if (selected && selected.groupId === row.groupId) tr.classList.add("active");
+        tr.innerHTML = `
+          <td>
+            <div class="group-cell">
+              <div class="group-main">${row.groupName}</div>
+              <div class="muted">${row.top_hit_name || "No top hit"}</div>
+            </div>
+          </td>
+          <td>${row.generation}</td>
+          <td class="num">${int(row.card_count)}</td>
+          <td class="num">${money(row.total_set_cost)}</td>
+          <td class="num">${money(row.top_hit_price)}</td>
+          <td class="num">${pct(row.top_hit_share_pct)}</td>
+          <td class="num">${pct(row.top3_share_pct)}</td>
+          <td class="num">${pct(row.depth_score)}</td>
+        `;
+        tr.addEventListener("click", () => {
+          state.selectedGroupId = row.groupId;
+          render();
+        });
+        rowsEl.appendChild(tr);
+      });
+    }
+
+    function renderSpotlight(row) {
+      if (!row) {
+        spotlightEl.innerHTML = `<div class="empty">No set selected.</div>`;
+        return;
+      }
+      const image = row.top_hit_image
+        ? `<img src="${row.top_hit_image}" alt="${row.top_hit_name || row.groupName}">`
+        : `Top Hit Image Unavailable`;
+      spotlightEl.innerHTML = `
+        <div class="spotlight-image">${image}</div>
+        <div class="chip">${row.generation} · ${int(row.card_count)} cards</div>
+        <h2>${row.groupName}</h2>
+        <p>This view is meant for curiosity and comparison: what it costs to build a tracked version of the set, how much of that value sits in the top hit, and whether the set feels broad or dominated by a few chase cards.</p>
+        <div class="metric-list">
+          <div class="metric"><div class="label">Estimated tracked set cost</div><div class="value">${money(row.total_set_cost)}</div></div>
+          <div class="metric"><div class="label">Top hit</div><div class="value">${row.top_hit_name || "—"}</div></div>
+          <div class="metric"><div class="label">Top hit price</div><div class="value">${money(row.top_hit_price)}</div></div>
+          <div class="metric"><div class="label">Top hit share of set value</div><div class="value">${pct(row.top_hit_share_pct)}</div></div>
+          <div class="metric"><div class="label">Top 3 share of set value</div><div class="value">${pct(row.top3_share_pct)}</div></div>
+          <div class="metric"><div class="label">Depth score</div><div class="value">${pct(row.depth_score)}</div></div>
+          <div class="metric"><div class="label">Average card price</div><div class="value">${money(row.avg_card_price)}</div></div>
+          <div class="metric"><div class="label">Median card price</div><div class="value">${money(row.median_card_price)}</div></div>
+        </div>
+      `;
+    }
+
+    function render() {
+      renderSortTabs();
+      const sortedRows = getSortedRows();
+      const selected = ensureSelection(sortedRows);
+      renderSummary(sortedRows);
+      renderRows(sortedRows, selected);
+      renderSpotlight(selected);
+    }
+
+    async function loadCategories() {
+      const res = await fetch("/categories");
+      const data = await res.json();
+      state.categories = data.items || [];
+      marketEl.innerHTML = state.categories.map((item) => `
+        <option value="${item.category_id}">${item.label}</option>
+      `).join("");
+      marketEl.value = String(state.categoryId);
+    }
+
+    async function loadData() {
+      // The explorer reads one condensed endpoint instead of raw history so the page
+      // feels more like a browse-and-compare toy than a research terminal.
+      const params = new URLSearchParams({
+        category_id: String(state.categoryId),
+        min_cards: String(state.minCards),
+        limit: "800",
+      });
+      const res = await fetch(`/set_baskets?${params.toString()}`);
+      const payload = await res.json();
+      state.rows = hydrateRows(payload);
+      render();
+    }
+
+    marketEl.addEventListener("change", async () => {
+      state.categoryId = Number(marketEl.value || 3);
+      state.selectedGroupId = null;
+      await loadData();
+    });
+
+    minCardsEl.addEventListener("change", async () => {
+      state.minCards = Math.max(1, Math.min(400, Number(minCardsEl.value || 10)));
+      minCardsEl.value = String(state.minCards);
+      state.selectedGroupId = null;
+      await loadData();
+    });
+
+    async function init() {
+      renderSortTabs();
+      await loadCategories();
+      await loadData();
+    }
+
+    init();
+  </script>
+</body>
+</html>

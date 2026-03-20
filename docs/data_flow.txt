@@ -48,6 +48,11 @@ workflow features:
   - this uses the product snapshot plus rarity metadata to surface premium-rarity cards
     that have been trending down or pulling back
 
+- new snapshot-driven companion page: `Set Explorer`
+  - this page is intentionally lighter than the main dashboard
+  - it is meant for browsing set cost and value concentration questions without needing
+    to interpret chart signals first
+
 
 Core idea
 ---------
@@ -454,6 +459,33 @@ What it does:
 - exposes newer workflow endpoints like:
   - `/good_buys`
   - `group_signals?generation=...`
+  - `/group_series?groupId=...`
+  - `/set_baskets`
+
+Set history endpoint:
+
+- `/group_series`
+  - builds an on-demand set-level time series from the raw daily history
+  - returns:
+    - equal-weight set index
+    - daily percent of items above SMA30
+    - active item count
+    - average and median set price
+  - this is what lets `Group Signals` drive the main chart without forcing an immediate drilldown to one product
+
+Set explorer endpoint:
+
+- `/set_baskets`
+  - builds a condensed set-comparison table from the latest product signal snapshot
+  - returns:
+    - tracked set cost
+    - card count
+    - top hit name and price
+    - top hit share of total set value
+    - top 3 share of total set value
+    - depth score
+  - this powers the separate `/set-explorer` page
+  - it is designed for "poke around in the set data" questions rather than live chart analysis
 
 Important helpers:
 
@@ -489,6 +521,10 @@ Embed dashboard:
 
 - [embed_dashboard.html](/opt/pokemon-momentum/scripts/dashboards/embed_dashboard.html)
 
+Set explorer:
+
+- [set_explorer.html](/opt/pokemon-momentum/scripts/dashboards/set_explorer.html)
+
 General frontend flow:
 
 1. load available categories
@@ -518,6 +554,13 @@ Embed dashboard responsibilities:
 - compact feed for iframe/public use
 - one chart
 - minimal controls
+
+Set explorer responsibilities:
+
+- answer set-level curiosity and comparison questions quickly
+- show basket-style set cost estimates from tracked cards
+- show how concentrated or broadly distributed a set's value is
+- avoid forcing the user into the full screener/chart workflow
 
 
 Source-of-truth guidance
@@ -559,7 +602,7 @@ On a normal successful daily run, the expected sequence is:
 9. new parquet partitions are exported
 10. API serves the new latest date
 11. dashboards can immediately use the refreshed snapshot-driven screens, including
-    `Good Buys` and generation-filtered `Group Signals`
+    `Good Buys`, generation-filtered `Group Signals`, and the lighter `Set Explorer`
 
 
 Common failure patterns

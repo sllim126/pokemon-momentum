@@ -27,6 +27,19 @@ For visitors, it helps:
 - make price movement easier to understand at a glance
 - create a more useful and engaging experience than a static catalog alone
 
+Set Explorer
+There is now also a lighter companion page for set browsing:
+- `/set-explorer`
+
+This page is for curiosity and comparison rather than signal hunting.
+It is meant to answer questions like:
+- which sets are most expensive to build from tracked cards
+- which sets are carried by one or two chase cards
+- which sets have value spread more broadly across the checklist
+
+It does not replace the main dashboard.
+Instead, it gives a simpler place to poke around in the set data without learning the chart and screener workflow first.
+
 Overview
 This dashboard is designed to help you scan for momentum across Pokemon cards and sealed products, then drill into a single item quickly.
 The layout is split into three main areas:
@@ -177,6 +190,57 @@ It tells you what already moved the most over the selected lookback logic.
 Group Signals
 These are set-level breadth metrics.
 They help answer whether strength is isolated to a few cards or spread across a set.
+
+Set Chart From Group Signals
+When you click a row in Group Signals, the main chart can switch into a set-level view instead of only showing one card.
+
+That set chart currently shows:
+- Set Index
+- % Above SMA30
+
+Set Index
+This is a normalized equal-weight set index.
+Each tracked item in the set is rebased to 100 at the start of the selected window, then averaged together.
+This helps show how the set is moving as a whole without letting one expensive chase card dominate the chart.
+
+% Above SMA30
+This is daily breadth.
+It shows what percent of tracked items in the set are trading above their own 30-day moving average on each day.
+
+How to read the set chart:
+- rising Set Index + rising % Above SMA30
+  usually means broad set strength
+- rising Set Index + weak % Above SMA30
+  usually means a narrower move driven by fewer cards
+- flat Set Index + rising % Above SMA30
+  can mean internal participation is improving before the set price picture looks obviously strong
+
+
+Set Explorer Page
+The Set Explorer is a separate page built for set-level questions.
+It uses snapshot data rather than full chart analysis, so it is quicker to understand at a glance.
+
+The main ideas on that page are:
+
+Tracked set cost
+- the sum of the latest tracked card prices in the set explorer basket
+- this is an estimate, not an exact TCGplayer cart optimizer total
+
+Top hit share
+- what percent of the tracked set cost comes from the single most expensive card
+
+Top 3 share
+- what percent comes from the three most expensive cards
+
+Depth score
+- a simple inverse concentration read
+- lower concentration means more of the set's value is spread across many cards
+
+Typical use:
+1. open `/set-explorer`
+2. sort by most expensive, cheapest, most top-heavy, or deepest
+3. click a set row
+4. use the spotlight panel to see whether that set feels broad or chase-card driven
 
 
 Card Picker

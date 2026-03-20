@@ -1023,6 +1023,7 @@
     let currentGroupId = initialParams.get("group_id") ? Number(initialParams.get("group_id")) : null;
     let currentSegment = initialParams.get("segment") || "cards";
     let currentCategoryId = Number(initialParams.get("category_id") || 3);
+    let currentChartMode = initialParams.get("chart_mode") || "product";
     const moverFeeds = {
       cards: [],
       sealed: []
@@ -1120,6 +1121,7 @@
       url.searchParams.set("days", String(currentDays));
       url.searchParams.set("tab", currentTab);
       url.searchParams.set("segment", currentSegment);
+      url.searchParams.set("chart_mode", currentChartMode);
       if (currentGeneration && currentGeneration !== "all") {
         url.searchParams.set("generation", currentGeneration);
       } else {
@@ -1150,6 +1152,7 @@
       moverFeedLoading.sealed = false;
       currentKey = null;
       currentGroupId = null;
+      currentChartMode = "product";
       currentSeriesPayload = null;
       picker.innerHTML = "";
       groupPicker.innerHTML = "";
@@ -1385,18 +1388,15 @@
             if (!Number.isNaN(currentGroupId)) {
               groupPicker.value = String(currentGroupId);
             }
-            currentTab = "group_products";
-            tabsEl.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
-            const setBrowserBtn = tabsEl.querySelector('[data-tab="group_products"]');
-            if (setBrowserBtn) {
-              setBrowserBtn.classList.add("active");
-            }
-            await loadTable();
+            currentChartMode = "group";
+            syncUrlState();
+            await loadGroupSeries(item);
             return;
           }
           ensurePickerOption(item);
           currentKey = item.key;
           picker.value = currentKey;
+          currentChartMode = "product";
           syncGroupSelection(item.groupId);
           loadSeries();
         });
@@ -1462,6 +1462,7 @@
       ensurePickerOption(item);
       currentKey = item.key;
       picker.value = currentKey;
+      currentChartMode = "product";
       syncGroupSelection(item.groupId);
       await loadSeries();
     }
@@ -1507,6 +1508,7 @@
           ensurePickerOption(item);
           currentKey = item.key;
           picker.value = currentKey;
+          currentChartMode = "product";
           syncGroupSelection(item.groupId);
           updateMoverRailActiveState();
           loadSeries();
@@ -1610,6 +1612,7 @@
         heroImage.alt = "";
         heroImage.hidden = true;
         heroImageEmpty.hidden = false;
+        heroImageEmpty.textContent = "No Image Available";
       }
 
       metricChips.innerHTML = "";
@@ -1646,6 +1649,66 @@
         detailStats.appendChild(row);
       });
 
+    }
+
+    function renderGroupSummary(groupMeta, series) {
+      const rows = (series.rows || []).map((row) => ({
+        date: row[0],
+        equal_weight_index: row[1],
+        pct_above_sma30: row[2],
+        active_items: row[3],
+        avg_price: row[4],
+        median_price: row[5]
+      }));
+      const last = rows[rows.length - 1] || {};
+      const indexValue = last.equal_weight_index;
+      const breadthPct = last.pct_above_sma30;
+      const breadth = formatPercent(breadthPct);
+
+      cardTitle.textContent = groupMeta?.groupName || `Group ${currentGroupId}`;
+      cardSubtitle.textContent = `${groupMeta?.generation ? `${groupMeta.generation} | ` : ""}Set-level equal-weight index and daily breadth participation.`;
+      chartLabel.textContent = `Showing ${rows.length.toLocaleString()} daily set observations across the selected chart window.`;
+      headlinePrice.textContent = indexValue ? formatNumber(indexValue, 1) : "-";
+      headlineChangeWrap.innerHTML = `<span class="price-pill ${breadth.cls}">${breadth.text === "n/a" ? "Breadth n/a" : `${breadth.text} above SMA30`}</span>`;
+
+      heroImage.removeAttribute("src");
+      heroImage.alt = "";
+      heroImage.hidden = true;
+      heroImageEmpty.hidden = false;
+      heroImageEmpty.textContent = "Set-Level View";
+
+      metricChips.innerHTML = "";
+      [
+        `Latest ${series.latest || "-"}`,
+        `Index ${indexValue ? formatNumber(indexValue, 1) : "n/a"}`,
+        `Breadth ${breadth.text === "n/a" ? "n/a" : breadth.text}`,
+        `Active ${last.active_items ? formatNumber(last.active_items, 0) : "n/a"}`,
+        `Avg Price ${last.avg_price ? formatNumber(last.avg_price, 2) : "n/a"}`,
+        `Median ${last.median_price ? formatNumber(last.median_price, 2) : "n/a"}`
+      ].forEach((text, idx) => {
+        const el = document.createElement("div");
+        el.className = `chip ${idx === 1 ? "good" : "neutral"}`;
+        el.textContent = text;
+        metricChips.appendChild(el);
+      });
+
+      detailStats.innerHTML = "";
+      const details = [
+        ["Set", groupMeta?.groupName || `Group ${currentGroupId}`],
+        ["Generation", groupMeta?.generation || "n/a"],
+        ["Equal-Weight Index", indexValue ? formatNumber(indexValue, 1) : "n/a"],
+        ["Pct Above SMA30", breadth.text],
+        ["Active Items", last.active_items ? formatNumber(last.active_items, 0) : "n/a"],
+        ["Average Price", last.avg_price ? formatNumber(last.avg_price, 2) : "n/a"],
+        ["Median Price", last.median_price ? formatNumber(last.median_price, 2) : "n/a"],
+        ["Window", `${currentDays} days`]
+      ];
+      details.forEach(([label, value]) => {
+        const row = document.createElement("div");
+        row.className = "detail-row";
+        row.innerHTML = `<div class="label">${label}</div><div class="value">${value}</div>`;
+        detailStats.appendChild(row);
+      });
     }
 
     function renderChart(series) {
@@ -1705,6 +1768,71 @@
           gridcolor: "rgba(99, 123, 160, 0.12)",
           zerolinecolor: "rgba(99, 123, 160, 0.12)",
           tickfont: { color: "#8d9dbc" }
+        }
+      }, {
+        displaylogo: false,
+        responsive: true
+      });
+    }
+
+    function renderGroupChart(series) {
+      const dates = [];
+      const indexValues = [];
+      const breadthValues = [];
+      for (const row of series.rows || []) {
+        dates.push(row[0]);
+        indexValues.push(row[1]);
+        breadthValues.push(row[2]);
+      }
+
+      Plotly.react("chart", [
+        {
+          x: dates,
+          y: indexValues,
+          name: "Set Index",
+          mode: "lines",
+          line: { color: "#0ec0ff", width: 3 },
+          fill: "tozeroy",
+          fillcolor: "rgba(14, 192, 255, 0.16)",
+          yaxis: "y"
+        },
+        {
+          x: dates,
+          y: breadthValues,
+          name: "% Above SMA30",
+          mode: "lines",
+          line: { color: "#25d0a5", width: 2.5 },
+          yaxis: "y2"
+        }
+      ], {
+        paper_bgcolor: "#121a2c",
+        plot_bgcolor: "#121a2c",
+        margin: { l: 52, r: 52, t: 20, b: 42 },
+        legend: {
+          orientation: "h",
+          y: 1.06,
+          font: { color: "#c4d4f1" }
+        },
+        hovermode: "x unified",
+        xaxis: {
+          title: "",
+          gridcolor: "rgba(99, 123, 160, 0.12)",
+          zerolinecolor: "rgba(99, 123, 160, 0.12)",
+          tickfont: { color: "#8d9dbc" }
+        },
+        yaxis: {
+          title: "",
+          gridcolor: "rgba(99, 123, 160, 0.12)",
+          zerolinecolor: "rgba(99, 123, 160, 0.12)",
+          tickfont: { color: "#8d9dbc" }
+        },
+        yaxis2: {
+          title: "",
+          overlaying: "y",
+          side: "right",
+          range: [0, 100],
+          tickfont: { color: "#8d9dbc" },
+          gridcolor: "rgba(0,0,0,0)"
         }
       }, {
         displaylogo: false,
@@ -1793,6 +1921,7 @@
       ensurePickerOption(item);
       currentKey = item.key;
       picker.value = currentKey;
+      currentChartMode = "product";
       syncGroupSelection(item.groupId);
       return true;
     }
@@ -1841,6 +1970,25 @@
       updateMoverRailActiveState();
     }
 
+    async function loadGroupSeries(groupRow = null) {
+      // Group Signals now has a set-chart mode: clicking a set keeps the user on the
+      // breadth screen and swaps the main chart to a set-level history instead of forcing
+      // an immediate drilldown into individual products.
+      if (currentGroupId === null || currentGroupId === undefined || Number.isNaN(currentGroupId)) return;
+      const qs = new URLSearchParams({
+        groupId: String(currentGroupId),
+        days: String(currentDays)
+      });
+      const series = await getJson(`/group_series?${qs.toString()}`);
+      currentSeriesPayload = series;
+      currentChartMode = "group";
+      const fallbackMeta = groupsById.get(Number(currentGroupId)) || null;
+      renderGroupSummary(groupRow || activeTableRows.find((row) => Number(row.groupId) === Number(currentGroupId)) || fallbackMeta, series);
+      renderGroupChart(series);
+      updateMoverRailActiveState();
+      syncUrlState();
+    }
+
     async function loadTable() {
       // The lower panel is the active signal feed. For Set Browser it swaps to the selected
       // group's product list; otherwise it renders the configured screener endpoint.
@@ -1858,6 +2006,15 @@
       const rows = enrichRows(payload);
       if (currentTab === "group_signals") {
         populateGenerationPicker(rows);
+        if (rows.length && !rows.some((row) => Number(row.groupId) === Number(currentGroupId))) {
+          currentGroupId = Number(rows[0].groupId);
+          if (!Number.isNaN(currentGroupId)) {
+            groupPicker.value = String(currentGroupId);
+          }
+        }
+        if (currentGroupId !== null && currentGroupId !== undefined && !Number.isNaN(currentGroupId)) {
+          await loadGroupSeries(rows.find((row) => Number(row.groupId) === Number(currentGroupId)) || null);
+        }
       }
       updateGroupSignalFilterVisibility();
       renderTable(rows);
@@ -1874,6 +2031,7 @@
         } else {
           syncUrlState();
         }
+        currentChartMode = "product";
         await loadSeries();
       });
 
@@ -1888,6 +2046,7 @@
         syncUrlState();
         const rows = await loadTable();
         if (rows && rows.length) {
+          currentChartMode = "product";
           await selectItem(rows[0]);
         }
       });
@@ -1907,7 +2066,11 @@
           btn.classList.add("active");
           currentDays = Number(btn.dataset.days);
           syncUrlState();
-          await loadSeries();
+          if (currentChartMode === "group" && currentTab === "group_signals") {
+            await loadGroupSeries();
+          } else {
+            await loadSeries();
+          }
         });
       });
 
@@ -1918,6 +2081,7 @@
         }
         btn.addEventListener("click", async () => {
           const wasActive = currentTab === btn.dataset.tab;
+          const previousTab = currentTab;
           tabsEl.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
           btn.classList.add("active");
           currentTab = btn.dataset.tab;
@@ -1925,6 +2089,12 @@
           updateGroupSignalFilterVisibility();
           updateDevTabHelp(currentTab);
           const rows = await loadTable();
+          if (currentTab !== "group_signals") {
+            currentChartMode = "product";
+            if (previousTab === "group_signals" && currentKey) {
+              await loadSeries();
+            }
+          }
           if (currentTab === "group_products" && wasActive && rows && rows.length) {
             activeTableIndex = 0;
             syncActiveTableRow(true);

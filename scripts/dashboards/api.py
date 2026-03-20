@@ -29,6 +29,7 @@ from scripts.dashboards.query_support import (
 SCRIPT_DIR = Path(__file__).resolve().parent
 DASHBOARD_HTML = SCRIPT_DIR / "dashboard.html"
 ALT_DASHBOARD_HTML = SCRIPT_DIR / "dashboard_lab.html"
+SET_EXPLORER_HTML = SCRIPT_DIR / "set_explorer.html"
 EOD_DASHBOARD_HTML = SCRIPT_DIR / "eod_dashboard.html"
 EMBED_DASHBOARD_HTML = SCRIPT_DIR / "embed_dashboard.html"
 DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
@@ -70,6 +71,12 @@ def dashboard_alias():
 @app.get("/dashboard-lab")
 def dashboard_lab():
     return FileResponse(ALT_DASHBOARD_HTML)
+
+
+@app.get("/set-explorer")
+def set_explorer():
+    """Serve the lighter-weight set explorer page used for basket and concentration browsing."""
+    return FileResponse(SET_EXPLORER_HTML)
 
 
 @app.get("/dashboard-dev")
@@ -533,6 +540,204 @@ def group_signals(limit: int = 500, min_items: int = 5, generation: str | None =
     """
     cols, rows = q(sql)
     return {"columns": cols, "rows": rows}
+
+
+@app.get("/group_series")
+def group_series(groupId: int, days: int = 365, category_id: int = 3):
+    """Return a set-level time series so groups can be graphed like individual products."""
+    days = max(30, min(days, 5000))
+    category = category_config(category_id)
+    price_source = prices_from(category.category_id)
+
+    latest_sql = f"""
+        SELECT MAX(date) AS latest
+        FROM {price_source}
+        WHERE categoryId = {category.category_id}
+          AND groupId = {groupId}
+          AND marketPrice IS NOT NULL
+    """
+    cols_l, rows_l = q(latest_sql)
+    latest = rows_l[0][0] if rows_l and rows_l[0] else None
+    if latest is None:
+        raise HTTPException(status_code=404, detail="No rows for that groupId")
+
+    start = latest - timedelta(days=days - 1)
+    padded_start = start - timedelta(days=35)
+
+    series_sql = f"""
+        WITH raw AS (
+            -- Pull the raw price history for every tracked product/subtype inside the set.
+            SELECT
+                productId,
+                subTypeName,
+                date,
+                marketPrice AS price
+            FROM {price_source}
+            WHERE categoryId = {category.category_id}
+              AND groupId = {groupId}
+              AND marketPrice IS NOT NULL
+              AND date >= DATE '{padded_start}'
+              AND date <= DATE '{latest}'
+        ),
+        with_ma AS (
+            -- Compute each item's SMA30 so daily set breadth can ask "how many products
+            -- are above their own medium-term trend?"
+            SELECT
+                productId,
+                subTypeName,
+                date,
+                price,
+                AVG(price) OVER (
+                    PARTITION BY productId, subTypeName
+                    ORDER BY date
+                    ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
+                ) AS sma30
+            FROM raw
+        ),
+        baseline AS (
+            -- Rebase each item to its first in-window price. This creates an equal-weight
+            -- set index where a single expensive chase card does not dominate the whole set.
+            SELECT
+                productId,
+                subTypeName,
+                price AS base_price
+            FROM (
+                SELECT
+                    productId,
+                    subTypeName,
+                    price,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY productId, subTypeName
+                        ORDER BY date
+                    ) AS rn
+                FROM with_ma
+                WHERE date >= DATE '{start}'
+            )
+            WHERE rn = 1
+        ),
+        windowed AS (
+            -- Carry both the rebasing baseline and SMA30 into the final daily aggregation.
+            SELECT
+                m.productId,
+                m.subTypeName,
+                m.date,
+                m.price,
+                m.sma30,
+                b.base_price
+            FROM with_ma m
+            JOIN baseline b
+              ON b.productId = m.productId
+             AND b.subTypeName = m.subTypeName
+            WHERE m.date >= DATE '{start}'
+        )
+        SELECT
+            date,
+            -- Equal-weight set index: 100 at the start of the selected window, then the
+            -- average rebased move across all active items in the set.
+            AVG((price / NULLIF(base_price, 0)) * 100.0) AS equal_weight_index,
+            -- Daily breadth: what percent of tracked items were above their own SMA30.
+            AVG(CASE WHEN sma30 IS NOT NULL AND price > sma30 THEN 1.0 ELSE 0.0 END) * 100.0 AS pct_above_sma30,
+            COUNT(*) AS active_items,
+            AVG(price) AS avg_price,
+            MEDIAN(price) AS median_price
+        FROM windowed
+        GROUP BY date
+        ORDER BY date
+    """
+    cols, rows = q(series_sql)
+    return {
+        "columns": cols,
+        "rows": rows,
+        "latest": str(latest),
+        "start": str(start),
+        "groupId": groupId,
+        "category_id": category.category_id,
+        "category": category.label,
+    }
+
+
+@app.get("/set_baskets")
+def set_baskets(limit: int = 500, min_cards: int = 10, category_id: int = 3):
+    """Return a lightweight set-completion and concentration view for the fun set explorer page."""
+    limit = max(1, min(limit, 2000))
+    min_cards = max(1, min(min_cards, 400))
+    category = category_config(category_id)
+    generation_case = build_generation_case("g.name", "g.abbreviation", "g.publishedOn")
+
+    sql = f"""
+    WITH base AS (
+        -- Use the latest product snapshot so set explorer questions stay fast and easy to browse.
+        SELECT
+            s.groupId,
+            s.groupName,
+            s.productId,
+            s.productName,
+            s.imageUrl,
+            s.rarity,
+            s.number,
+            s.subTypeName,
+            s.latest_price
+        FROM {product_signal_from(category.category_id)} s
+        WHERE COALESCE(s.productKind, '') = 'card'
+          AND s.latest_price IS NOT NULL
+          AND s.latest_price > 0
+    ),
+    ranked AS (
+        -- Rank cards inside each set by price so the explorer can show top-hit and top-3 concentration.
+        SELECT
+            b.*,
+            ROW_NUMBER() OVER (
+                PARTITION BY b.groupId
+                ORDER BY b.latest_price DESC, lower(b.productName), lower(COALESCE(b.subTypeName, ''))
+            ) AS rn
+        FROM base b
+    ),
+    grouped AS (
+        SELECT
+            r.groupId,
+            MAX(r.groupName) AS groupName,
+            COUNT(*) AS card_count,
+            SUM(r.latest_price) AS total_set_cost,
+            AVG(r.latest_price) AS avg_card_price,
+            MEDIAN(r.latest_price) AS median_card_price,
+            MAX(CASE WHEN r.rn = 1 THEN r.productName END) AS top_hit_name,
+            MAX(CASE WHEN r.rn = 1 THEN r.imageUrl END) AS top_hit_image,
+            MAX(CASE WHEN r.rn = 1 THEN r.latest_price END) AS top_hit_price,
+            SUM(CASE WHEN r.rn <= 3 THEN r.latest_price ELSE 0 END) AS top3_price
+        FROM ranked r
+        GROUP BY r.groupId
+    )
+    SELECT
+        a.groupId,
+        a.groupName,
+        {generation_case} AS generation,
+        a.card_count,
+        a.total_set_cost,
+        a.avg_card_price,
+        a.median_card_price,
+        a.top_hit_name,
+        a.top_hit_image,
+        a.top_hit_price,
+        (a.top_hit_price / NULLIF(a.total_set_cost, 0)) * 100.0 AS top_hit_share_pct,
+        (a.top3_price / NULLIF(a.total_set_cost, 0)) * 100.0 AS top3_share_pct,
+        -- Lower concentration means the set's value is spread more broadly across the checklist.
+        100.0 - ((a.top3_price / NULLIF(a.total_set_cost, 0)) * 100.0) AS depth_score
+    FROM grouped a
+    LEFT JOIN {groups_from(category.category_id)} g
+      ON g.groupId = a.groupId
+    WHERE a.card_count >= {min_cards}
+    ORDER BY a.total_set_cost DESC, a.card_count DESC, a.groupName
+    LIMIT {limit}
+    """
+    cols, rows = q(sql)
+    return {
+        "columns": cols,
+        "rows": rows,
+        "category_id": category.category_id,
+        "category": category.label,
+        "min_cards": min_cards,
+        "limit": limit,
+    }
 
 
 @app.get("/series")
