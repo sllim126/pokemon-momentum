@@ -1,0 +1,14 @@
+[Unit]
+Description=Pokemon Momentum Weekly Metadata Placeholder Refresh
+After=docker.service network-online.target pokemon-momentum-weekly-refresh.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/pokemon-momentum
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=CATEGORY_ID=3
+ExecStart=/opt/pokemon-momentum/scripts/pipeline/run_metadata_placeholder_refresh_host.sh
+User=root
+Group=root

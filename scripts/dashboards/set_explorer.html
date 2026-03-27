@@ -92,7 +92,7 @@
 
     .toolbar {
       display: grid;
-      grid-template-columns: 220px 220px minmax(0, 1fr);
+      grid-template-columns: 220px 220px minmax(260px, 320px) minmax(0, 1fr);
       gap: 12px;
       align-items: end;
       padding: 16px 18px;
@@ -119,6 +119,56 @@
       border-radius: 16px;
       padding: 12px 14px;
       font: inherit;
+    }
+
+    details.filter-menu {
+      position: relative;
+    }
+
+    details.filter-menu summary {
+      list-style: none;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 47, 0.96);
+      color: var(--ink);
+      border-radius: 16px;
+      padding: 12px 14px;
+      font: inherit;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    details.filter-menu summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .filter-panel {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      z-index: 5;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(16, 25, 45, 0.98);
+      box-shadow: var(--shadow);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      max-height: 320px;
+      overflow: auto;
+    }
+
+    .filter-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .filter-option input {
+      width: auto;
+      margin: 0;
     }
 
     .sort-tabs {
@@ -393,6 +443,13 @@
         <label for="minCards">Minimum Cards</label>
         <input id="minCards" type="number" min="1" max="400" step="1" value="10">
       </div>
+      <div class="field">
+        <label>Included Cards</label>
+        <details class="filter-menu" id="basketFilterMenu">
+          <summary id="basketFilterSummary">All</summary>
+          <div class="filter-panel" id="basketFilterPanel"></div>
+        </details>
+      </div>
       <div>
         <div class="section-label">View</div>
         <div class="sort-tabs" id="sortTabs"></div>
@@ -441,6 +498,7 @@
       categories: [],
       rows: [],
       selectedGroupId: null,
+      basketFilters: ["all"],
     };
 
     const sortModes = [
@@ -449,6 +507,22 @@
       { id: "topheavy", label: "Most Top-Heavy" },
       { id: "deep", label: "Deepest Sets" },
     ];
+    const basketFilters = [
+      { id: "all", label: "All" },
+      { id: "common", label: "Common" },
+      { id: "uncommon", label: "Uncommon" },
+      { id: "rare", label: "Rare" },
+      { id: "reverse_holo", label: "Reverse Holo" },
+      { id: "holo_rare", label: "Holo Rare" },
+      { id: "double_rare", label: "Double Rare" },
+      { id: "illustration_rare", label: "Illustration Rare" },
+      { id: "special_illustration_rare", label: "Special Illustration Rare" },
+      { id: "ultra_rare", label: "Ultra Rare" },
+      { id: "hyper_rare", label: "Hyper Rare" },
+      { id: "secret_rare", label: "Secret Rare" },
+      { id: "promo", label: "Promo" },
+      { id: "stamped", label: "Stamped" },
+    ];
 
     const marketEl = document.getElementById("market");
     const minCardsEl = document.getElementById("minCards");
@@ -456,6 +530,8 @@
     const rowsEl = document.getElementById("rows");
     const spotlightEl = document.getElementById("spotlight");
     const sortTabsEl = document.getElementById("sortTabs");
+    const basketFilterSummaryEl = document.getElementById("basketFilterSummary");
+    const basketFilterPanelEl = document.getElementById("basketFilterPanel");
 
     function money(value) {
       if (value == null || Number.isNaN(Number(value))) return "—";
@@ -528,6 +604,56 @@
         });
         sortTabsEl.appendChild(button);
       });
+    }
+
+    function updateBasketFilterSummary() {
+      if (!state.basketFilters.length || state.basketFilters.includes("all")) {
+        basketFilterSummaryEl.textContent = "All";
+        return;
+      }
+      const labels = basketFilters
+        .filter((option) => state.basketFilters.includes(option.id) && option.id !== "all")
+        .map((option) => option.label);
+      basketFilterSummaryEl.textContent = labels.join(", ") || "All";
+    }
+
+    function renderBasketFilters() {
+      basketFilterPanelEl.innerHTML = "";
+      basketFilters.forEach((option) => {
+        const label = document.createElement("label");
+        label.className = "filter-option";
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = state.basketFilters.includes(option.id);
+        input.addEventListener("change", async () => {
+          if (option.id === "all") {
+            state.basketFilters = ["all"];
+          } else if (input.checked) {
+            state.basketFilters = state.basketFilters.filter((value) => value !== "all");
+            if (!state.basketFilters.includes(option.id)) {
+              state.basketFilters.push(option.id);
+            }
+          } else {
+            state.basketFilters = state.basketFilters.filter((value) => value !== option.id);
+          }
+
+          if (!state.basketFilters.length) {
+            state.basketFilters = ["all"];
+          }
+
+          state.selectedGroupId = null;
+          renderBasketFilters();
+          updateBasketFilterSummary();
+          await loadData();
+        });
+
+        const text = document.createElement("span");
+        text.textContent = option.label;
+        label.appendChild(input);
+        label.appendChild(text);
+        basketFilterPanelEl.appendChild(label);
+      });
+      updateBasketFilterSummary();
     }
 
     function renderSummary(sortedRows) {
@@ -660,6 +786,7 @@
 
     function render() {
       renderSortTabs();
+      renderBasketFilters();
       const sortedRows = getSortedRows();
       const selected = ensureSelection(sortedRows);
       renderSummary(sortedRows);
@@ -685,6 +812,9 @@
         min_cards: String(state.minCards),
         limit: "800",
       });
+      if (!state.basketFilters.includes("all")) {
+        params.set("filters", state.basketFilters.join(","));
+      }
       const res = await fetch(`/set_baskets?${params.toString()}`);
       const payload = await res.json();
       state.rows = hydrateRows(payload);
@@ -706,6 +836,7 @@
 
     async function init() {
       renderSortTabs();
+      renderBasketFilters();
       await loadCategories();
       await loadData();
     }

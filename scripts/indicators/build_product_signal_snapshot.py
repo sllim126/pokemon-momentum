@@ -83,6 +83,16 @@ with_ma AS (
         AVG(price) OVER (
             PARTITION BY groupId, productId, subTypeName
             ORDER BY date
+            ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
+        ) AS sma_3,
+        AVG(price) OVER (
+            PARTITION BY groupId, productId, subTypeName
+            ORDER BY date
+            ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+        ) AS sma_7,
+        AVG(price) OVER (
+            PARTITION BY groupId, productId, subTypeName
+            ORDER BY date
             ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
         ) AS sma_30,
         AVG(price) OVER (
@@ -96,6 +106,201 @@ with_ma AS (
             ROWS BETWEEN 89 PRECEDING AND CURRENT ROW
         ) AS high_90d
     FROM base
+),
+recent_changes AS (
+    -- Precompute recent day-to-day price changes once so the API does not need
+    -- to rescan history every time the Top Movers screen loads.
+    SELECT
+        groupId,
+        productId,
+        subTypeName,
+        date,
+        price,
+        LAG(price) OVER (
+            PARTITION BY groupId, productId, subTypeName
+            ORDER BY date
+        ) AS prev_price
+    FROM base
+    WHERE date >= (SELECT latest_date FROM latest_date) - INTERVAL 37 DAY
+),
+top_mover_activity AS (
+    -- Defaults mirror the dashboard Top Movers screen:
+    -- - 30d lookback
+    -- - 1% minimum daily move
+    -- - activity counts used as quality filters
+    SELECT
+        groupId,
+        productId,
+        subTypeName,
+        COUNT(*) FILTER (
+            WHERE prev_price IS NOT NULL
+              AND prev_price > 0
+              AND ((price / prev_price) - 1) * 100 >= 1.0
+              AND date >= (SELECT latest_date FROM latest_date) - INTERVAL 30 DAY
+        ) AS top_mover_signal_days,
+        COUNT(*) FILTER (
+            WHERE prev_price IS NOT NULL
+              AND date >= (SELECT latest_date FROM latest_date) - INTERVAL 30 DAY
+        ) AS top_mover_observed_changes
+    FROM recent_changes
+    GROUP BY groupId, productId, subTypeName
+),
+top_mover_recent_variation AS (
+    SELECT
+        groupId,
+        productId,
+        subTypeName,
+        COUNT(*) FILTER (
+            WHERE date >= (SELECT latest_date FROM latest_date) - INTERVAL 14 DAY
+        ) AS top_mover_recent_observations,
+        COUNT(DISTINCT price) FILTER (
+            WHERE date >= (SELECT latest_date FROM latest_date) - INTERVAL 14 DAY
+        ) AS top_mover_recent_distinct_prices
+    FROM recent_changes
+    GROUP BY groupId, productId, subTypeName
+),
+top_mover_latest_window AS (
+    SELECT
+        groupId,
+        productId,
+        subTypeName,
+        COUNT(*) FILTER (WHERE rn <= 3) AS top_mover_recent_points
+    FROM (
+        SELECT
+            groupId,
+            productId,
+            subTypeName,
+            price,
+            ROW_NUMBER() OVER (
+                PARTITION BY groupId, productId, subTypeName
+                ORDER BY date DESC
+            ) AS rn
+        FROM base
+    )
+    GROUP BY groupId, productId, subTypeName
+),
+top_mover_recent_activity AS (
+    SELECT
+        groupId,
+        productId,
+        subTypeName,
+        MAX(date) FILTER (
+            WHERE prev_price IS NOT NULL
+              AND price <> prev_price
+        ) AS top_mover_last_change_date
+    FROM recent_changes
+    GROUP BY groupId, productId, subTypeName
+),
+screen_recent_activity AS (
+    -- Shared activity windows for multiple screener endpoints.
+    SELECT
+        groupId,
+        productId,
+        subTypeName,
+        COUNT(*) FILTER (
+            WHERE date >= (SELECT latest_date FROM latest_date) - INTERVAL 7 DAY
+        ) AS recent_observations_7d,
+        COUNT(DISTINCT price) FILTER (
+            WHERE date >= (SELECT latest_date FROM latest_date) - INTERVAL 7 DAY
+        ) AS recent_distinct_prices_7d,
+        COUNT(DISTINCT price) FILTER (
+            WHERE date >= (SELECT latest_date FROM latest_date) - INTERVAL 30 DAY
+        ) AS recent_distinct_prices_30d,
+        MAX(date) FILTER (
+            WHERE prev_price IS NOT NULL
+              AND price <> prev_price
+        ) AS last_change_date
+    FROM recent_changes
+    GROUP BY groupId, productId, subTypeName
+),
+flagged AS (
+    -- Boolean state flags for the product-level screener families.
+    SELECT
+        date,
+        categoryId,
+        groupId,
+        productId,
+        subTypeName,
+        price,
+        sma_3,
+        sma_7,
+        sma_30,
+        sma_90,
+        high_90d,
+        CASE
+            WHEN sma_30 IS NOT NULL AND price > sma_30 THEN 1
+            ELSE 0
+        END AS above30,
+        CASE
+            WHEN sma_30 IS NOT NULL
+             AND sma_7 IS NOT NULL
+             AND price > sma_30
+             AND sma_7 > sma_30 THEN 1
+            ELSE 0
+        END AS bullish_day,
+        CASE
+            WHEN sma_30 IS NOT NULL
+             AND sma_7 IS NOT NULL
+             AND sma_3 IS NOT NULL
+             AND price > sma_30
+             AND sma_3 > sma_7
+             AND sma_7 > sma_30 THEN 1
+            ELSE 0
+        END AS early_bullish_day
+    FROM with_ma
+),
+flagged_runs AS (
+    -- Running false counters let us measure consecutive streaks from the latest row.
+    SELECT
+        *,
+        SUM(CASE WHEN above30 = 0 THEN 1 ELSE 0 END) OVER (
+            PARTITION BY groupId, productId, subTypeName
+            ORDER BY date DESC
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ) AS above30_false_run,
+        SUM(CASE WHEN bullish_day = 0 THEN 1 ELSE 0 END) OVER (
+            PARTITION BY groupId, productId, subTypeName
+            ORDER BY date DESC
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ) AS bullish_false_run,
+        SUM(CASE WHEN early_bullish_day = 0 THEN 1 ELSE 0 END) OVER (
+            PARTITION BY groupId, productId, subTypeName
+            ORDER BY date DESC
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ) AS early_false_run,
+        LAG(above30) OVER (
+            PARTITION BY groupId, productId, subTypeName
+            ORDER BY date
+        ) AS prev_above30
+    FROM flagged
+),
+streak_summary AS (
+    SELECT
+        groupId,
+        productId,
+        subTypeName,
+        MAX(CASE WHEN date = (SELECT latest_date FROM latest_date) THEN sma_3 END) AS latest_sma3,
+        MAX(CASE WHEN date = (SELECT latest_date FROM latest_date) THEN sma_7 END) AS latest_sma7,
+        MAX(CASE WHEN date = (SELECT latest_date FROM latest_date) THEN sma_30 END) AS latest_sma30,
+        COUNT(*) FILTER (
+            WHERE above30 = 1
+              AND above30_false_run = 0
+        ) AS hold_days,
+        COUNT(*) FILTER (
+            WHERE bullish_day = 1
+              AND bullish_false_run = 0
+        ) AS bullish_streak,
+        COUNT(*) FILTER (
+            WHERE early_bullish_day = 1
+              AND early_false_run = 0
+        ) AS early_streak,
+        MAX(CASE
+            WHEN above30 = 1
+             AND COALESCE(prev_above30, 0) = 0
+            THEN date
+        END) AS cross_date
+    FROM flagged_runs
+    GROUP BY groupId, productId, subTypeName
 ),
 latest_rows AS (
     -- Reduce to the latest available observation for each product/subtype pair.
@@ -197,9 +402,26 @@ enriched AS (
         p30.price_30d,
         p90.price_90d,
         p365.price_365d,
+        ss.latest_sma3,
+        ss.latest_sma7,
+        ss.latest_sma30,
+        ss.hold_days,
+        ss.bullish_streak,
+        ss.early_streak,
+        ss.cross_date,
+        sra.recent_observations_7d,
+        sra.recent_distinct_prices_7d,
+        sra.recent_distinct_prices_30d,
+        sra.last_change_date,
         l.sma_30,
         l.sma_90,
-        l.high_90d
+        l.high_90d,
+        tma.top_mover_signal_days,
+        tma.top_mover_observed_changes,
+        tmrv.top_mover_recent_observations,
+        tmrv.top_mover_recent_distinct_prices,
+        tmlw.top_mover_recent_points,
+        tmra.top_mover_last_change_date
     FROM latest_rows l
     LEFT JOIN prior_7 p7
       ON p7.groupId = l.groupId
@@ -217,6 +439,30 @@ enriched AS (
       ON p365.groupId = l.groupId
      AND p365.productId = l.productId
      AND p365.subTypeName = l.subTypeName
+    LEFT JOIN top_mover_activity tma
+      ON tma.groupId = l.groupId
+     AND tma.productId = l.productId
+     AND tma.subTypeName = l.subTypeName
+    LEFT JOIN top_mover_recent_variation tmrv
+      ON tmrv.groupId = l.groupId
+     AND tmrv.productId = l.productId
+     AND tmrv.subTypeName = l.subTypeName
+    LEFT JOIN top_mover_latest_window tmlw
+      ON tmlw.groupId = l.groupId
+     AND tmlw.productId = l.productId
+     AND tmlw.subTypeName = l.subTypeName
+    LEFT JOIN top_mover_recent_activity tmra
+      ON tmra.groupId = l.groupId
+     AND tmra.productId = l.productId
+     AND tmra.subTypeName = l.subTypeName
+    LEFT JOIN streak_summary ss
+      ON ss.groupId = l.groupId
+     AND ss.productId = l.productId
+     AND ss.subTypeName = l.subTypeName
+    LEFT JOIN screen_recent_activity sra
+      ON sra.groupId = l.groupId
+     AND sra.productId = l.productId
+     AND sra.subTypeName = l.subTypeName
     LEFT JOIN {category.products_table} p
       ON p.groupId = l.groupId
      AND p.productId = l.productId
@@ -252,6 +498,23 @@ SELECT
     price_365d,
     CASE WHEN price_365d IS NULL OR price_365d = 0 THEN NULL
          ELSE ((latest_price / price_365d) - 1) * 100 END AS roc_365d_pct,
+    top_mover_signal_days,
+    top_mover_observed_changes,
+    top_mover_recent_observations,
+    top_mover_recent_distinct_prices,
+    top_mover_recent_points,
+    top_mover_last_change_date,
+    recent_observations_7d,
+    recent_distinct_prices_7d,
+    recent_distinct_prices_30d,
+    last_change_date,
+    latest_sma3,
+    latest_sma7,
+    latest_sma30,
+    hold_days,
+    bullish_streak,
+    early_streak,
+    cross_date,
     sma_30,
     CASE WHEN sma_30 IS NULL OR sma_30 = 0 THEN NULL
          ELSE ((latest_price / sma_30) - 1) * 100 END AS price_vs_sma30_pct,

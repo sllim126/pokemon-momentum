@@ -113,6 +113,23 @@ def existing_group_ids(existing_rows: dict[tuple[int, int], tuple]) -> set[int]:
     return {group_id for group_id, _product_id in existing_rows}
 
 
+def groups_with_placeholder_rows(existing_rows: dict[tuple[int, int], tuple]) -> set[int]:
+    """Return groups whose cached metadata still includes placeholder fallback names.
+
+    Incremental refresh should not treat these groups as complete, because the
+    placeholder row means a previous run could not resolve one or more products.
+    Re-fetching the full group is the simplest way to replace stale
+    `Product <id>` placeholders once tcgcsv starts returning the missing cards.
+    """
+    groups: set[int] = set()
+    for (group_id, product_id), row in existing_rows.items():
+        name = str(row[2] or "")
+        clean_name = str(row[3] or "")
+        if name == f"Product {product_id}" or clean_name == f"Product {product_id}":
+            groups.add(group_id)
+    return groups
+
+
 def fetch_products_for_group(category_id: int, group_id: int) -> list[dict]:
     """Fetch one group's product catalog from tcgcsv with retries and timeouts."""
     url = f"https://tcgcsv.com/tcgplayer/{category_id}/{group_id}/products"
@@ -202,12 +219,15 @@ def main() -> int:
 
     # Expected result of the planning stage: we know which groups already have cached
     # metadata and which ones still need to be fetched from tcgcsv.
+    placeholder_groups = groups_with_placeholder_rows(existing_rows)
     groups_to_fetch = group_ids if args.full_refresh else [
-        gid for gid in group_ids if gid not in existing_group_ids(existing_rows)
+        gid for gid in group_ids
+        if gid not in existing_group_ids(existing_rows) or gid in placeholder_groups
     ]
 
     print("Unique groups in your price history:", len(group_ids))
     print("Existing metadata groups:", len(existing_group_ids(existing_rows)))
+    print("Groups with placeholder rows:", len(placeholder_groups))
     print("Groups queued for fetch:", len(groups_to_fetch))
     print("Mode:", "full-refresh" if args.full_refresh else "incremental")
 

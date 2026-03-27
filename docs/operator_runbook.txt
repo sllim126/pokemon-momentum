@@ -1,6 +1,49 @@
 Pokemon Momentum Operator Runbook
 =================================
 
+Recent Operational Notes (March 2026)
+-------------------------------------
+
+These checks were added after a dashboard performance and UX pass.
+
+1. Verify no unintended full-universe browser fetch
+- In browser DevTools Network, normal tab/set switching should not repeatedly trigger large
+  `universe?limit=...` calls.
+- If seen, hard refresh first (`Ctrl+Shift+R`) to clear stale frontend code.
+
+2. Verify Market Signals loading feedback
+- During slow screener calls, table area should show a spinner overlay with loading text.
+- If table appears frozen without spinner, check that latest `dashboard.html` is loaded.
+
+3. Placeholder name triage (`Product <id>`)
+- First check whether API now resolves names:
+  - `GET /group_products?groupId=<id>&limit=...`
+- If placeholder names still appear broadly, run metadata+snapshot refresh:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose exec -T pokemon-momentum python scripts/utilities/export_products_for_my_groups.py --category-id 3
+sudo docker-compose exec -T pokemon-momentum python scripts/indicators/build_product_signal_snapshot.py --category-id 3
+sudo docker-compose restart pokemon-momentum
+```
+
+- Expected result:
+  - metadata placeholders are re-evaluated
+  - product snapshot fallback has fresher names available
+
+4. Post-change smoke test checklist
+- `/dashboard` loads
+- switching Market Signals tabs auto-loads first row into chart
+- Set Products loads without generic `Product <id>` for known named sets
+- no unexpected large universe preloads on routine interactions
+- mobile bottom nav works:
+  - `Home`
+  - `Search`
+  - `Tracked`
+  - `Indicators`
+- mobile pull-to-refresh refreshes the current view without a full browser reload
+- clicking a product image opens the anchored in-page preview and clicking it again closes it
+
 What this is
 ------------
 This runbook is for operating the system day to day.
@@ -54,6 +97,11 @@ Weekly full metadata refresh:
 - `pokemon-momentum-weekly-refresh.timer`
 - `pokemon-momentum-weekly-refresh.service`
 
+Weekly placeholder cleanup refresh:
+
+- `pokemon-momentum-weekly-placeholder-refresh.timer`
+- `pokemon-momentum-weekly-placeholder-refresh.service`
+
 Normal expectation:
 
 - the daily run appends new price data
@@ -61,6 +109,10 @@ Normal expectation:
 - rebuilds snapshots
 - exports new parquet partitions
 - restarts the app container afterward
+- the weekly full metadata refresh runs Sunday at `11:00 UTC`
+- the weekly placeholder cleanup runs Monday at `11:00 UTC`, 24 hours later
+- the placeholder cleanup only reruns product metadata + product signal snapshot so stale
+  `Product <id>` rows get another chance to resolve
 
 
 Quick health checklist
@@ -96,6 +148,10 @@ Healthy result:
 - long signal/set lists scroll inside the lower panel
 - `set-explorer` loads and the set table populates
 - tracking sign-in works and tags persist after refresh
+- `Signals` tab is no longer present in the dashboard UI
+- on phone/tablet widths:
+  - mobile home shows `Singles / Sealed`
+  - selected-product drilldown hides the indicator tabs below the chart
 
 3. systemd timers are active
 
@@ -107,6 +163,7 @@ Healthy result:
 
 - daily timer listed
 - weekly timer listed
+- weekly placeholder timer listed
 
 
 Useful commands
@@ -127,6 +184,8 @@ sudo systemctl status pokemon-momentum-daily-update.timer
 sudo systemctl status pokemon-momentum-daily-update.service
 sudo systemctl status pokemon-momentum-weekly-refresh.timer
 sudo systemctl status pokemon-momentum-weekly-refresh.service
+sudo systemctl status pokemon-momentum-weekly-placeholder-refresh.timer
+sudo systemctl status pokemon-momentum-weekly-placeholder-refresh.service
 ```
 
 Check pipeline log:
@@ -164,6 +223,27 @@ Expected result:
 - Group Signals and Set Explorer can show local set logos when those files exist
 - shared-logo sets such as galleries or subset companions can intentionally reuse the same source logo
 
+Fix stale `Product <id>` metadata placeholders:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose exec -T pokemon-momentum python scripts/utilities/export_products_for_my_groups.py --category-id 3
+sudo docker-compose exec -T pokemon-momentum python scripts/indicators/build_product_signal_snapshot.py --category-id 3
+sudo docker-compose restart pokemon-momentum
+```
+
+Use this when:
+
+- a dashboard row shows `Product 586829` style fallback text
+- `pokemon_products.csv` has the real name but the dashboard still does not
+- MCAP or promo-heavy groups have stale placeholder rows
+
+Expected result:
+
+- groups with placeholder product names are re-fetched during metadata refresh
+- the rebuilt product signal snapshot picks up the real product name
+- the dashboard stops falling back to `Product <id>` for those rows
+
 
 Manual pipeline runs
 --------------------
@@ -183,6 +263,12 @@ Run the weekly full metadata refresh manually:
 
 ```bash
 sudo systemctl start pokemon-momentum-weekly-refresh.service
+```
+
+Run the weekly placeholder cleanup manually:
+
+```bash
+sudo systemctl start pokemon-momentum-weekly-placeholder-refresh.service
 ```
 
 

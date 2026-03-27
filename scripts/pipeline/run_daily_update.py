@@ -158,6 +158,11 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         steps.extend(
             [
                 (
+                    # Expected result: category-level health/freshness summary exists for fast /health reads.
+                    f"Build {category.label} health snapshot",
+                    ["python", "scripts/indicators/build_health_snapshot.py", "--category-id", str(args.category_id)],
+                ),
+                (
                     # Expected result: product-level momentum snapshot exists for API and screener reads.
                     f"Build {category.label} product signal snapshot",
                     ["python", "scripts/indicators/build_product_signal_snapshot.py", "--category-id", str(args.category_id)],
@@ -166,6 +171,16 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     # Expected result: group-level breadth/momentum snapshot exists for set ranking views.
                     f"Build {category.label} group signal snapshot",
                     ["python", "scripts/indicators/build_group_signal_snapshot.py", "--category-id", str(args.category_id)],
+                ),
+                (
+                    # Expected result: compact per-product sparkline payloads exist for ticker mini charts.
+                    f"Build {category.label} sparkline snapshot",
+                    ["python", "scripts/indicators/build_sparkline_snapshot.py", "--category-id", str(args.category_id)],
+                ),
+                (
+                    # Expected result: compact recent chart series exist for normal dashboard windows.
+                    f"Build {category.label} series snapshot",
+                    ["python", "scripts/indicators/build_series_snapshot.py", "--category-id", str(args.category_id)],
                 ),
             ]
         )

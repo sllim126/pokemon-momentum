@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Poke6s Sealed Deals</title>
+  <link rel="icon" type="image/png" href="/images/Favidon.png">
+  <style>
+    :root {
+      --bg: #0d1629;
+      --bg-2: #111b32;
+      --panel: rgba(29, 42, 68, 0.96);
+      --panel-2: rgba(21, 31, 53, 0.98);
+      --line: rgba(133, 162, 208, 0.16);
+      --ink: #e8f0ff;
+      --muted: #93a5c6;
+      --accent: #1fb1ff;
+      --accent-2: #28d39f;
+      --warn: #ffb266;
+      --radius: 24px;
+      --shadow: 0 18px 42px rgba(2, 7, 17, 0.38);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(31, 177, 255, 0.12), transparent 20%),
+        radial-gradient(circle at top right, rgba(40, 211, 159, 0.08), transparent 18%),
+        linear-gradient(180deg, var(--bg) 0%, #091121 100%);
+    }
+
+    .shell {
+      width: min(1480px, calc(100vw - 32px));
+      margin: 18px auto 30px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 10px;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: clamp(32px, 4.6vw, 56px);
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.45;
+      max-width: 980px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 220px 150px 150px minmax(200px, 1fr) 220px auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .field label,
+    .section-label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    input,
+    select {
+      width: 100%;
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 47, 0.96);
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+
+    .check-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 32px;
+      white-space: nowrap;
+    }
+
+    .sort-tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .sort-tabs button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(18, 28, 49, 0.92);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .sort-tabs button.active {
+      color: #a7e2ff;
+      background: rgba(31, 177, 255, 0.14);
+      border-color: rgba(31, 177, 255, 0.34);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .summary-card {
+      padding: 14px;
+    }
+
+    .summary-card .value {
+      margin-top: 8px;
+      font-size: clamp(22px, 2.6vw, 34px);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      font-weight: 800;
+    }
+
+    .summary-card .subtle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: calc(100vh - 360px);
+      border-radius: 16px;
+      border: 1px solid var(--line);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1320px;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: rgba(16, 25, 45, 0.98);
+      color: var(--muted);
+      text-align: left;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    th, td {
+      padding: 12px 13px;
+      border-bottom: 1px solid rgba(133, 162, 208, 0.1);
+      vertical-align: top;
+    }
+
+    tbody tr {
+      background: rgba(15, 24, 43, 0.56);
+    }
+
+    tbody tr:hover {
+      background: rgba(28, 42, 70, 0.94);
+    }
+
+    .num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .product-cell {
+      display: grid;
+      gap: 3px;
+      min-width: 260px;
+    }
+
+    .product-main {
+      font-weight: 700;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid rgba(31, 177, 255, 0.24);
+      background: rgba(31, 177, 255, 0.1);
+      color: #a9deff;
+      padding: 4px 9px;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .good { color: #7af3c4; }
+    .warn { color: #ffb266; }
+
+    .status {
+      color: var(--muted);
+      font-size: 13px;
+      min-height: 18px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 1200px) {
+      .toolbar {
+        grid-template-columns: 1fr 1fr;
+      }
+      .sort-tabs {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+      }
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        width: min(100vw - 18px, 1480px);
+        margin: 10px auto 20px;
+      }
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+      table {
+        min-width: 980px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="panel hero">
+      <h1>Best Sealed Deals</h1>
+      <p>Normalize sealed products down to price-per-pack so you can compare retail-value deals quickly. Pack count and MSRP are inferred from product naming and are best used as directional deal signals.</p>
+    </section>
+
+    <section class="panel">
+      <div class="toolbar">
+        <div class="field">
+          <label for="market">Market</label>
+          <select id="market"></select>
+        </div>
+        <div class="field">
+          <label for="minPrice">Min Price</label>
+          <input id="minPrice" type="number" min="0" step="1" value="5">
+        </div>
+        <div class="field">
+          <label for="maxPrice">Max Price</label>
+          <input id="maxPrice" type="number" min="1" step="1" value="500">
+        </div>
+        <div class="field">
+          <label for="setFilter">Set Filter</label>
+          <input id="setFilter" type="text" placeholder="Search set name">
+        </div>
+        <div class="field">
+          <label for="typeFilter">Product Type</label>
+          <select id="typeFilter">
+            <option value="all">All Types</option>
+          </select>
+        </div>
+        <label class="check-wrap">
+          <input id="lowConfidence" type="checkbox">
+          Include low confidence
+        </label>
+        <label class="check-wrap">
+          <input id="includeTrickOrTrade" type="checkbox">
+          Include Trick or Trade
+        </label>
+      </div>
+      <div class="sort-tabs" id="sortTabs"></div>
+      <div class="status" id="status"></div>
+    </section>
+
+    <section class="summary-grid" id="summaryGrid"></section>
+
+    <section class="panel">
+      <div class="section-label">Retail Value Table</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Set</th>
+              <th>Pack Mix</th>
+              <th>Type</th>
+              <th class="num">Market</th>
+              <th class="num" id="thBaselineEst">MSRP Est.</th>
+              <th class="num">Pack Count</th>
+              <th class="num">Price / Pack</th>
+              <th class="num" id="thBaselinePerPack">Retail / Pack</th>
+              <th class="num" id="thEdgeDollar">Savings $</th>
+              <th class="num" id="thEdgePct">Savings %</th>
+              <th class="num">Premium %</th>
+              <th class="num">JP Score</th>
+              <th>Confidence</th>
+              <th>Updated</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const state = {
+      categoryId: 3,
+      minPrice: 5,
+      maxPrice: 500,
+      includeLowConfidence: false,
+      includeTrickOrTrade: false,
+      setFilter: "",
+      typeFilter: "all",
+      sortMode: "ppp_low",
+      rows: [],
+      categories: [],
+    };
+
+    const sortModesDefault = [
+      { id: "ppp_low", label: "Lowest Price / Pack" },
+      { id: "discount_dollar", label: "Biggest $ Discount" },
+      { id: "discount_pct", label: "Biggest % Discount" },
+      { id: "deal_score", label: "Best Deal Score" },
+    ];
+    const sortModesJp = [
+      { id: "ppp_low", label: "Lowest Price / Pack" },
+      { id: "jp_score", label: "Best JP Value Score" },
+    ];
+
+    const marketEl = document.getElementById("market");
+    const minPriceEl = document.getElementById("minPrice");
+    const maxPriceEl = document.getElementById("maxPrice");
+    const setFilterEl = document.getElementById("setFilter");
+    const typeFilterEl = document.getElementById("typeFilter");
+    const lowConfidenceEl = document.getElementById("lowConfidence");
+    const includeTrickOrTradeEl = document.getElementById("includeTrickOrTrade");
+    const sortTabsEl = document.getElementById("sortTabs");
+    const rowsEl = document.getElementById("rows");
+    const summaryGridEl = document.getElementById("summaryGrid");
+    const statusEl = document.getElementById("status");
+    const thBaselineEst = document.getElementById("thBaselineEst");
+    const thBaselinePerPack = document.getElementById("thBaselinePerPack");
+    const thEdgeDollar = document.getElementById("thEdgeDollar");
+    const thEdgePct = document.getElementById("thEdgePct");
+
+    function money(value) {
+      if (value == null || Number.isNaN(Number(value))) return "—";
+      return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(Number(value));
+    }
+
+    function num(value, digits = 2) {
+      if (value == null || Number.isNaN(Number(value))) return "—";
+      return Number(value).toFixed(digits);
+    }
+
+    function int(value) {
+      if (value == null || Number.isNaN(Number(value))) return "—";
+      return new Intl.NumberFormat("en-US").format(Number(value));
+    }
+
+    function pct(value) {
+      if (value == null || Number.isNaN(Number(value))) return "—";
+      return `${Number(value).toFixed(1)}%`;
+    }
+
+    function sortedRows(rows) {
+      const copy = [...rows];
+      if (state.sortMode === "jp_score") {
+        return copy.sort((a, b) => (b.jp_value_score || 0) - (a.jp_value_score || 0) || (a.price_per_pack || 9999) - (b.price_per_pack || 9999));
+      }
+      if (state.sortMode === "discount_dollar") {
+        return copy.sort((a, b) => (b.savings_dollar || 0) - (a.savings_dollar || 0));
+      }
+      if (state.sortMode === "discount_pct") {
+        return copy.sort((a, b) => (b.savings_pct || -999) - (a.savings_pct || -999));
+      }
+      if (state.sortMode === "deal_score") {
+        return copy.sort((a, b) => (b.deal_score || 0) - (a.deal_score || 0));
+      }
+      return copy.sort((a, b) => (a.price_per_pack || 9999) - (b.price_per_pack || 9999));
+    }
+
+    function filteredRows() {
+      const setFilter = state.setFilter.trim().toLowerCase();
+      return sortedRows(state.rows).filter((row) => {
+        if (state.typeFilter !== "all" && row.productType !== state.typeFilter) return false;
+        if (setFilter) {
+          const groupName = String(row.groupName || "").toLowerCase();
+          const packMix = String(row.pack_mix || "").toLowerCase();
+          if (!groupName.includes(setFilter) && !packMix.includes(setFilter)) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderSortTabs() {
+      const modes = state.categoryId === 85 ? sortModesJp : sortModesDefault;
+      if (!modes.some((mode) => mode.id === state.sortMode)) {
+        state.sortMode = modes[0].id;
+      }
+      sortTabsEl.innerHTML = "";
+      modes.forEach((mode) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = mode.label;
+        if (state.sortMode === mode.id) button.classList.add("active");
+        button.addEventListener("click", () => {
+          state.sortMode = mode.id;
+          render();
+        });
+        sortTabsEl.appendChild(button);
+      });
+    }
+
+    function updateColumnLabels() {
+      const isJp = state.categoryId === 85;
+      thBaselineEst.textContent = isJp ? "Baseline Est." : "MSRP Est.";
+      thBaselinePerPack.textContent = isJp ? "Baseline / Pack" : "Retail / Pack";
+      thEdgeDollar.textContent = isJp ? "Edge $" : "Savings $";
+      thEdgePct.textContent = isJp ? "Edge %" : "Savings %";
+    }
+
+    function renderTypeOptions() {
+      const values = Array.from(new Set(state.rows.map((row) => row.productType).filter(Boolean))).sort();
+      const current = state.typeFilter;
+      typeFilterEl.innerHTML = '<option value="all">All Types</option>';
+      values.forEach((value) => {
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.textContent = value;
+        typeFilterEl.appendChild(opt);
+      });
+      typeFilterEl.value = values.includes(current) || current === "all" ? current : "all";
+      state.typeFilter = typeFilterEl.value;
+    }
+
+    function renderSummary(rows, payloadStats) {
+      const isJp = state.categoryId === 85;
+      const best = isJp ? (payloadStats?.best_jp_value || null) : (payloadStats?.best_deal || null);
+      const cheapestPack = payloadStats?.cheapest_pack || null;
+      const mostExpensivePack = payloadStats?.most_expensive_pack || null;
+      const worstDeal = payloadStats?.worst_deal || null;
+      const highestPremium = payloadStats?.highest_premium_pct || null;
+      const packValues = rows
+        .map((row) => Number(row.price_per_pack))
+        .filter((value) => Number.isFinite(value));
+      const avgPack = packValues.length
+        ? packValues.reduce((sum, value) => sum + value, 0) / packValues.length
+        : null;
+      const sortedPack = [...packValues].sort((a, b) => a - b);
+      const medianPack = sortedPack.length
+        ? (sortedPack.length % 2
+          ? sortedPack[Math.floor(sortedPack.length / 2)]
+          : (sortedPack[(sortedPack.length / 2) - 1] + sortedPack[sortedPack.length / 2]) / 2)
+        : null;
+      const spreadX = cheapestPack && mostExpensivePack
+        ? Number(mostExpensivePack.price_per_pack || 0) / Math.max(0.0001, Number(cheapestPack.price_per_pack || 0))
+        : null;
+      const over40PremiumCount = rows.filter((row) => Number(row.premium_pct) >= 40).length;
+      const latestTimestamp = rows
+        .map((row) => Date.parse(String(row.latest_date || "")))
+        .filter((value) => Number.isFinite(value))
+        .sort((a, b) => b - a)[0];
+      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+      const freshRowsCount = Number.isFinite(latestTimestamp)
+        ? rows.filter((row) => {
+          const ts = Date.parse(String(row.latest_date || ""));
+          return Number.isFinite(ts) && (latestTimestamp - ts) <= sevenDaysMs;
+        }).length
+        : 0;
+      const dealSetCounts = rows.reduce((acc, row) => {
+        if (Number(row.savings_dollar) > 0) {
+          const key = String(row.groupName || "Unknown Set");
+          acc[key] = (acc[key] || 0) + 1;
+        }
+        return acc;
+      }, {});
+      const topDealSetEntry = Object.entries(dealSetCounts).sort((a, b) => b[1] - a[1])[0] || null;
+      const biggestPct = isJp
+        ? [...rows].filter((row) => row.savings_pct != null).sort((a, b) => (b.savings_pct || -999) - (a.savings_pct || -999))[0] || null
+        : (payloadStats?.biggest_pct_discount || null);
+      const belowRetail = payloadStats?.below_retail_count ?? 0;
+      const cards = [
+        {
+          label: "Tracked Products",
+          value: int(rows.length),
+          subtle: "After client filters",
+        },
+        {
+          label: isJp ? "Best JP Score" : "Best Deal Score",
+          value: best ? num(isJp ? best.jp_value_score : best.deal_score, 2) : "—",
+          subtle: best ? best.productName : "No rows",
+        },
+        {
+          label: "Cheapest Pack",
+          value: cheapestPack ? money(cheapestPack.price_per_pack) : "—",
+          subtle: cheapestPack ? cheapestPack.productName : "No rows",
+        },
+        {
+          label: "Most Expensive Pack",
+          value: mostExpensivePack ? money(mostExpensivePack.price_per_pack) : "—",
+          subtle: mostExpensivePack ? mostExpensivePack.productName : "No rows",
+        },
+        {
+          label: "Average Pack Price",
+          value: avgPack == null ? "—" : money(avgPack),
+          subtle: "Mean of visible rows",
+        },
+        {
+          label: "Median Pack Price",
+          value: medianPack == null ? "—" : money(medianPack),
+          subtle: "Middle value (less outlier-sensitive)",
+        },
+        {
+          label: "Price Spread",
+          value: spreadX == null ? "—" : `${num(spreadX, 2)}x`,
+          subtle: "Most expensive vs cheapest pack",
+        },
+        {
+          label: isJp ? "Worst % Edge" : "Worst Deal Score",
+          value: worstDeal ? (isJp ? pct(worstDeal.savings_pct) : num(worstDeal.deal_score, 2)) : "—",
+          subtle: worstDeal ? worstDeal.productName : "No rows",
+        },
+        {
+          label: isJp ? "Biggest % Edge" : "Biggest % Discount",
+          value: biggestPct ? pct(biggestPct.savings_pct) : "N/A",
+          subtle: biggestPct ? biggestPct.productName : (isJp ? "No JP supplier MSRP match in current filter" : "No rows"),
+        },
+        {
+          label: "Highest Premium %",
+          value: highestPremium ? pct(highestPremium.premium_pct) : "N/A",
+          subtle: highestPremium ? highestPremium.productName : "No rows",
+        },
+        {
+          label: "Premium > 40%",
+          value: int(over40PremiumCount),
+          subtle: "Visible rows currently above +40% premium",
+        },
+        {
+          label: "Fresh Within 7D",
+          value: int(freshRowsCount),
+          subtle: "Rows updated in the latest 7-day window",
+        },
+        {
+          label: isJp ? "Top Set by Edge Count" : "Top Set by Deals",
+          value: topDealSetEntry ? int(topDealSetEntry[1]) : "0",
+          subtle: topDealSetEntry ? topDealSetEntry[0] : "No discounted rows",
+        },
+        {
+          label: isJp ? "Below Baseline" : "Below Retail",
+          value: isJp
+            ? int(rows.filter((row) => row.savings_dollar != null && Number(row.savings_dollar) > 0).length)
+            : int(belowRetail),
+          subtle: isJp ? "Count from JP rows with baseline matches" : "Products priced under inferred MSRP",
+        },
+      ];
+      summaryGridEl.innerHTML = cards.map((card) => `
+        <section class="panel summary-card">
+          <div class="section-label">${card.label}</div>
+          <div class="value">${card.value}</div>
+          <div class="subtle">${card.subtle}</div>
+        </section>
+      `).join("");
+    }
+
+    function renderRows(rows) {
+      const isJp = state.categoryId === 85;
+      if (!rows.length) {
+        rowsEl.innerHTML = `<tr><td colspan="15" class="muted">No rows matched the current filters.</td></tr>`;
+        return;
+      }
+      rowsEl.innerHTML = rows.map((row) => `
+        <tr>
+          <td>
+            <div class="product-cell">
+              <div class="product-main">${row.productName || "Unknown Product"}</div>
+              <div class="muted">ID ${row.productId ?? "—"}</div>
+            </div>
+          </td>
+          <td>${row.groupName || "Unknown Set"}</td>
+          <td>${row.pack_mix || "Single-set / inferred"}</td>
+          <td>${row.productType || "Sealed Product"}</td>
+          <td class="num">${money(row.latest_price)}</td>
+          <td class="num">${row.msrp_estimate == null ? "N/A" : money(row.msrp_estimate)}</td>
+          <td class="num">${int(row.pack_count)}</td>
+          <td class="num">${money(row.price_per_pack)}</td>
+          <td class="num">${row.retail_per_pack == null ? "N/A" : money(row.retail_per_pack)}</td>
+          <td class="num ${Number(row.savings_dollar) >= 0 ? "good" : "warn"}">${row.savings_dollar == null ? "N/A" : money(row.savings_dollar)}</td>
+          <td class="num ${Number(row.savings_pct) >= 0 ? "good" : "warn"}">${row.savings_pct == null ? "N/A" : pct(row.savings_pct)}</td>
+          <td class="num ${Number(row.premium_pct) > 0 ? "warn" : "good"}">${row.premium_pct == null ? "N/A" : pct(row.premium_pct)}</td>
+          <td class="num">${row.jp_value_score == null ? "—" : num(row.jp_value_score, 2)}</td>
+          <td><span class="chip">${row.confidence || "n/a"}</span></td>
+          <td>${row.latest_date || "—"}</td>
+        </tr>
+      `).join("");
+    }
+
+    function render(payloadStats = null) {
+      updateColumnLabels();
+      renderSortTabs();
+      renderTypeOptions();
+      const rows = filteredRows();
+      renderSummary(rows, payloadStats);
+      renderRows(rows);
+      statusEl.textContent = `${int(rows.length)} rows shown`;
+    }
+
+    async function loadCategories() {
+      const res = await fetch("/categories");
+      const data = await res.json();
+      state.categories = data.items || [];
+      marketEl.innerHTML = state.categories.map((item) => `
+        <option value="${item.category_id}">${item.label}</option>
+      `).join("");
+      marketEl.value = String(state.categoryId);
+    }
+
+    async function loadData() {
+      statusEl.textContent = "Loading sealed deals...";
+      const params = new URLSearchParams({
+        category_id: String(state.categoryId),
+        min_price: String(state.minPrice),
+        max_price: String(state.maxPrice),
+        include_low_confidence: state.includeLowConfidence ? "true" : "false",
+        include_trick_or_trade: state.includeTrickOrTrade ? "true" : "false",
+        limit: "800",
+      });
+      const res = await fetch(`/sealed_deals?${params.toString()}`);
+      if (!res.ok) {
+        throw new Error(`sealed_deals returned ${res.status}`);
+      }
+      const payload = await res.json();
+      state.rows = payload.items || [];
+      render(payload.stats || null);
+      statusEl.textContent = `${int(state.rows.length)} rows loaded · heuristics ${payload.meta?.heuristics || "v1"}`;
+    }
+
+    marketEl.addEventListener("change", async () => {
+      state.categoryId = Number(marketEl.value || 3);
+      await loadData();
+    });
+
+    minPriceEl.addEventListener("change", async () => {
+      state.minPrice = Math.max(0, Number(minPriceEl.value || 0));
+      minPriceEl.value = String(state.minPrice);
+      await loadData();
+    });
+
+    maxPriceEl.addEventListener("change", async () => {
+      state.maxPrice = Math.max(state.minPrice, Number(maxPriceEl.value || state.minPrice));
+      maxPriceEl.value = String(state.maxPrice);
+      await loadData();
+    });
+
+    setFilterEl.addEventListener("input", () => {
+      state.setFilter = setFilterEl.value || "";
+      render();
+    });
+
+    typeFilterEl.addEventListener("change", () => {
+      state.typeFilter = typeFilterEl.value || "all";
+      render();
+    });
+
+    lowConfidenceEl.addEventListener("change", async () => {
+      state.includeLowConfidence = Boolean(lowConfidenceEl.checked);
+      await loadData();
+    });
+
+    includeTrickOrTradeEl.addEventListener("change", async () => {
+      state.includeTrickOrTrade = Boolean(includeTrickOrTradeEl.checked);
+      await loadData();
+    });
+
+    async function init() {
+      renderSortTabs();
+      await loadCategories();
+      await loadData();
+    }
+
+    init().catch((err) => {
+      statusEl.textContent = `Error: ${err.message}`;
+    });
+  </script>
+</body>
+</html>

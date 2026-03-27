@@ -52,6 +52,30 @@ class CategoryConfig:
     def group_signal_csv(self) -> str:
         return f"{self.slug}_group_signal_snapshot.csv"
 
+    @property
+    def sparkline_snapshot_table(self) -> str:
+        return f"{self.slug}_sparkline_snapshot"
+
+    @property
+    def sparkline_snapshot_csv(self) -> str:
+        return f"{self.slug}_sparkline_snapshot.csv"
+
+    @property
+    def health_snapshot_table(self) -> str:
+        return f"{self.slug}_health_snapshot"
+
+    @property
+    def health_snapshot_csv(self) -> str:
+        return f"{self.slug}_health_snapshot.csv"
+
+    @property
+    def series_snapshot_table(self) -> str:
+        return f"{self.slug}_series_snapshot"
+
+    @property
+    def series_snapshot_csv(self) -> str:
+        return f"{self.slug}_series_snapshot.csv"
+
 
 def get_category_config(category_id: int) -> CategoryConfig:
     """Resolve known categories to friendly names and stable storage prefixes."""

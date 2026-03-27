@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Pokemon Momentum Terminal</title>
   <link rel="icon" type="image/png" href="/images/Favidon.png">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -28,25 +28,42 @@
 
     * { box-sizing: border-box; }
 
+    html,
     body {
-      margin: 0;
-      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
-      color: var(--ink);
+      min-height: 100%;
       background:
         radial-gradient(circle at top left, rgba(34, 176, 255, 0.08), transparent 20%),
         radial-gradient(circle at top right, rgba(37, 208, 165, 0.08), transparent 16%),
         linear-gradient(180deg, #11192f 0%, #0f1830 100%);
+      background-color: #0f1830;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--ink);
     }
 
     .shell {
-      min-height: 100vh;
-      padding: 22px;
+      min-height: 100dvh;
+      padding: calc(22px + env(safe-area-inset-top, 0px)) 22px 22px;
+    }
+
+    .market-strip {
+      margin-bottom: 18px;
+      padding: 10px 14px;
+      position: sticky;
+      top: 10px;
+      z-index: 12;
+      backdrop-filter: blur(12px);
+      background: linear-gradient(180deg, rgba(17, 26, 43, 0.94), rgba(15, 24, 42, 0.96));
+      overflow: hidden;
     }
 
     .brandbar {
       display: grid;
-      grid-template-columns: 328px minmax(0, 1fr) 320px;
-      align-items: center;
+      grid-template-columns: 280px minmax(0, 1fr) 520px;
+      align-items: start;
       gap: 18px;
       margin-bottom: 18px;
     }
@@ -54,6 +71,11 @@
     .brandlockup {
       display: block;
       min-width: 0;
+    }
+
+    .brand-home-link {
+      display: block;
+      text-decoration: none;
     }
 
     .brandmark {
@@ -98,26 +120,201 @@
 
     .brandcopy {
       min-width: 0;
-      align-self: center;
+      align-self: start;
+      display: grid;
+      gap: 12px;
     }
 
     .brandtag {
       color: var(--muted);
       margin-top: 2px;
       font-size: 14px;
-      line-height: 1.45;
-      max-width: 58ch;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brandsearch {
+      margin-top: 0;
+      max-width: 760px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .brandsearch-form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .brandsearch-form input {
+      min-width: 0;
+      background: rgba(17, 26, 43, 0.84);
+    }
+
+    .brandsearch-form button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 43, 0.84);
+      color: var(--ink);
+      font: inherit;
+      min-height: 44px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .brandsearch-status {
+      min-height: 18px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .brandsearch-results {
+      display: none;
+      margin-top: 10px;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(17, 26, 43, 0.96);
+      box-shadow: var(--shadow);
+    }
+
+    .brandsearch-results.open {
+      display: block;
+    }
+
+    .brandsearch-result {
+      width: 100%;
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+      text-align: left;
+      border-radius: 14px;
+      padding: 10px 12px;
+      cursor: pointer;
+      display: block;
+    }
+
+    .brandsearch-result:hover,
+    .brandsearch-result.active {
+      background: rgba(34, 176, 255, 0.12);
+    }
+
+    .brandsearch-result-title {
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .brandsearch-result-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .brandsearch-result-kind {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 42px;
+      margin-right: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 43, 0.78);
+      color: #8dddff;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .brandsearch-more {
+      padding: 8px 12px 2px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .search-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      width: 100%;
+    }
+
+    .search-actions button,
+    #trackingTrackedBtn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 43, 0.84);
+      color: var(--ink);
+      font: inherit;
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      white-space: nowrap;
+      width: 100%;
+    }
+
+    .search-actions button.active,
+    #trackingTrackedBtn.active {
+      background: rgba(34, 176, 255, 0.14);
+      color: #8dddff;
+      border-color: rgba(34, 176, 255, 0.32);
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.12);
     }
 
     .brandactions {
       display: grid;
-      gap: 10px;
-      justify-items: end;
+      grid-template-columns: 220px;
+      gap: 8px;
+      justify-content: end;
+      justify-items: stretch;
+      align-self: start;
+    }
+
+    .mobile-icon-btn {
+      display: none;
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 43, 0.84);
+      color: #8dddff;
+      font: inherit;
+      border-radius: 999px;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-icon-btn.active {
+      background: rgba(34, 176, 255, 0.14);
+      border-color: rgba(34, 176, 255, 0.32);
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.12);
     }
 
     .tracking-header {
-      width: min(100%, 320px);
+      width: 220px;
       position: relative;
+      display: grid;
+      gap: 8px;
+      justify-self: stretch;
     }
 
     .tracking-toggle,
@@ -130,13 +327,37 @@
       color: var(--ink);
       text-decoration: none;
       font: inherit;
-      min-height: 40px;
-      padding: 10px 14px;
+      min-height: 26px;
+      padding: 8px;
       border-radius: 999px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
+    }
+
+    .brandactions .tracking-toggle {
+      min-height: 40px;
+      padding: 6px 12px;
+      line-height: 1;
+    }
+
+    .track-actions-card {
+      display: grid;
+      gap: 10px;
+    }
+
+    .track-actions-card .detail-copy {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .track-actions-card #trackingTrackedBtn {
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+      margin-top: 2px;
     }
 
     .tracking-toggle {
@@ -237,13 +458,6 @@
       border-radius: 999px;
     }
 
-    .layout {
-      display: grid;
-      grid-template-columns: 328px minmax(0, 1fr) 320px;
-      gap: 18px;
-      align-items: start;
-    }
-
     .panel {
       background: linear-gradient(180deg, rgba(35, 47, 73, 0.94), rgba(24, 34, 56, 0.96));
       border: 1px solid var(--line);
@@ -251,7 +465,13 @@
       box-shadow: var(--shadow);
     }
 
-    .left-rail,
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 18px;
+      align-items: stretch;
+    }
+
     .right-rail {
       position: sticky;
       top: 22px;
@@ -261,12 +481,7 @@
     }
 
     .left-rail {
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-    }
-
-    .left-rail::-webkit-scrollbar {
-      display: none;
+      padding: 0;
     }
 
     .right-rail {
@@ -284,6 +499,93 @@
       min-width: 0;
     }
 
+    .top-stage {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 18px;
+      align-items: stretch;
+      min-width: 0;
+    }
+
+    .mobile-bottom-nav {
+      display: none;
+    }
+
+    .mobile-indicator-backdrop,
+    .mobile-indicator-menu {
+      display: none;
+    }
+
+    .mobile-detail-back {
+      display: none;
+    }
+
+    .mobile-hero-stats {
+      display: none;
+    }
+
+    .mobile-bottom-nav button {
+      appearance: none;
+      border: 1px solid rgba(91, 112, 146, 0.18);
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      border-radius: 14px;
+      padding: 10px 8px;
+      min-height: 48px;
+      cursor: pointer;
+      transition: 0.14s ease;
+    }
+
+    .mobile-bottom-nav button.active {
+      background: rgba(34, 176, 255, 0.14);
+      color: #8dddff;
+      border-color: rgba(34, 176, 255, 0.32);
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.12);
+    }
+
+    .mobile-home-segments {
+      display: none;
+    }
+
+    .pull-refresh-indicator {
+      position: fixed;
+      top: calc(8px + env(safe-area-inset-top, 0px));
+      left: 50%;
+      transform: translate(-50%, calc(-100% - 12px));
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 8px 14px;
+      border: 1px solid rgba(94, 116, 148, 0.22);
+      border-radius: 999px;
+      background: rgba(13, 20, 35, 0.96);
+      color: var(--muted);
+      font-size: 13px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 16px 38px rgba(5, 10, 22, 0.3);
+      z-index: 80;
+      transition: transform 0.16s ease, opacity 0.16s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .pull-refresh-indicator.visible {
+      display: inline-flex;
+      opacity: 1;
+    }
+
+    .pull-refresh-indicator.ready {
+      color: #8dddff;
+      border-color: rgba(34, 176, 255, 0.3);
+    }
+
+    .pull-refresh-indicator.refreshing {
+      color: var(--ink);
+    }
+
     .section-label {
       color: var(--muted);
       font-size: 11px;
@@ -292,14 +594,14 @@
     }
 
     .rail-title {
-      display: flex;
-      justify-content: space-between;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 14px;
+      gap: 16px;
+      margin-bottom: 0;
     }
 
-    .rail-title h2,
+    .rail-title-copy h2,
     .stage-title h1,
     .stack h3,
     .detail-card h3 {
@@ -307,11 +609,60 @@
       font-weight: 700;
     }
 
+    .rail-ticker-wrap {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .rail-title-main {
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      padding: 4px 14px 4px 18px;
+    }
+
+    .rail-title-copy {
+      min-width: 0;
+      max-width: 180px;
+      text-align: left;
+    }
+
+    .rail-title-copy h2 {
+      font-size: 18px;
+      letter-spacing: -0.03em;
+    }
+
+    .rail-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding-right: 8px;
+    }
+
     .stage-title {
       display: flex;
       justify-content: space-between;
       gap: 18px;
       align-items: start;
+    }
+
+    .stage-product-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .stage-product-copy {
+      min-width: 0;
+    }
+
+    .stage-product-media {
+      flex: 0 0 122px;
+      width: 122px;
     }
 
     .stage-title h1 {
@@ -343,6 +694,11 @@
       flex-shrink: 0;
     }
 
+    .hero-image-card.is-expandable,
+    .mobile-signal-image.is-expandable {
+      cursor: zoom-in;
+    }
+
     .hero-image-card img {
       width: 100%;
       height: 100%;
@@ -358,6 +714,23 @@
       text-transform: uppercase;
       letter-spacing: 0.12em;
       line-height: 1.5;
+    }
+
+    .stage-title .hero-image-card {
+      width: 122px;
+      min-height: 168px;
+      border-radius: 12px;
+      border-color: rgba(99, 123, 160, 0.24);
+      background:
+        radial-gradient(circle at top, rgba(34, 176, 255, 0.14), transparent 55%),
+        linear-gradient(180deg, rgba(18, 28, 47, 0.94), rgba(12, 20, 35, 0.98));
+    }
+
+    .stage-title .hero-image-empty {
+      padding: 10px;
+      font-size: 10px;
+      line-height: 1.35;
+      letter-spacing: 0.1em;
     }
 
     .price-block {
@@ -418,6 +791,15 @@
     .chart-panel,
     .signal-panel {
       padding: 22px;
+      height: 100%;
+    }
+
+    .hero {
+      min-width: 0;
+    }
+
+    .hero-tabs {
+      margin-top: 14px;
     }
 
     .toolbar,
@@ -552,9 +934,61 @@
     }
 
     .mover-list {
-      display: grid;
-      gap: 14px;
-      margin-top: 12px;
+      position: relative;
+      display: flex;
+      gap: 0;
+      margin-top: 0;
+      overflow: hidden;
+      padding: 0;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .mover-list::before,
+    .mover-list::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 36px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .mover-list::before {
+      left: 0;
+      background: linear-gradient(90deg, rgba(17, 26, 43, 0.98), rgba(17, 26, 43, 0));
+    }
+
+    .mover-list::after {
+      right: 0;
+      background: linear-gradient(270deg, rgba(17, 26, 43, 0.98), rgba(17, 26, 43, 0));
+    }
+
+    .mover-list-track {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      width: max-content;
+      flex: 0 0 auto;
+      animation: ticker-scroll 180s linear infinite;
+      will-change: transform;
+    }
+
+    .mover-list:hover .mover-list-track,
+    .mover-list:focus-within .mover-list-track {
+      animation-play-state: paused;
+    }
+
+    @keyframes ticker-scroll {
+      from { transform: translateX(0); }
+      to { transform: translateX(calc(-100% - 10px)); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .mover-list-track {
+        animation: none;
+      }
     }
 
     body.public-mode .status-strip {
@@ -562,86 +996,90 @@
     }
 
     .mover-card {
-      border: 1px solid var(--line-2);
-      border-radius: 22px;
-      background: linear-gradient(180deg, rgba(34, 45, 70, 0.94), rgba(24, 34, 56, 0.98));
-      padding: 16px;
+      appearance: none;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 4px 14px 4px 0;
       cursor: pointer;
-      transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+      transition: opacity 0.12s ease;
+      min-width: 0;
+      width: 376px;
+      text-align: left;
+      color: var(--ink);
+      font: inherit;
+      border-right: 1px solid rgba(94, 116, 148, 0.24);
     }
 
     .mover-card:hover,
     .mover-card.active {
-      transform: translateY(-1px);
-      border-color: rgba(34, 176, 255, 0.5);
-      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.28);
+      opacity: 1;
     }
 
     .mover-head,
-    .mover-meta,
     .detail-row {
       display: flex;
       justify-content: space-between;
       gap: 12px;
+      align-items: center;
     }
 
     .mover-head > div:first-child {
       min-width: 0;
-      flex: 1 1 auto;
+      flex: 0 1 150px;
+    }
+
+    .mover-chart {
+      min-width: 0;
+      flex: 1 1 150px;
     }
 
     .mover-name {
-      font-size: 24px;
-      line-height: 0.9;
-      margin-top: 4px;
+      font-size: 16px;
+      line-height: 1.12;
+      margin-top: 0;
       letter-spacing: -0.04em;
       overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      overflow: hidden;
     }
 
     .mover-set {
       color: var(--muted);
-      margin-top: 6px;
-      line-height: 1.35;
+      margin-top: 4px;
+      font-size: 11px;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .mover-price {
       text-align: right;
       flex-shrink: 0;
-      min-width: 92px;
+      min-width: 78px;
     }
 
     .mover-price strong {
       display: block;
-      font-size: 24px;
-      line-height: 0.95;
+      font-size: 17px;
+      line-height: 1;
       letter-spacing: -0.04em;
     }
 
     .sparkline-shell {
-      margin-top: 14px;
-      border-radius: 18px;
-      border: 1px solid var(--line);
-      background:
-        linear-gradient(180deg, rgba(20, 31, 51, 0.9), rgba(17, 26, 43, 0.95)),
-        linear-gradient(90deg, rgba(37, 208, 165, 0.18), transparent);
-      padding: 14px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .sparkline-label {
-      color: #627498;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      margin-bottom: 10px;
+      margin-top: 0;
+      padding: 0;
     }
 
     .sparkline-body {
-      height: 56px;
-      border-radius: 14px;
-      background: rgba(13, 20, 35, 0.72);
-      border: 1px solid rgba(99, 123, 160, 0.12);
+      height: 36px;
+      border-radius: 0;
+      background: transparent;
+      border: 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -659,18 +1097,23 @@
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-    }
-
-    .mover-meta {
-      margin-top: 14px;
-      color: var(--muted);
-      font-size: 12px;
+      display: inline-flex;
       align-items: center;
-      flex-wrap: wrap;
+      gap: 8px;
     }
 
-    .mover-meta .mini-badge {
-      margin-left: 6px;
+    .loading-spinner {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      border: 2px solid rgba(141, 157, 188, 0.3);
+      border-top-color: var(--accent);
+      animation: spin 0.75s linear infinite;
+      flex: 0 0 auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
 
     #chart {
@@ -720,6 +1163,7 @@
       overflow: auto;
       background: rgba(16, 23, 39, 0.72);
       max-height: min(48vh, 720px);
+      min-width: 0;
       scrollbar-width: none;
       -ms-overflow-style: none;
     }
@@ -728,8 +1172,246 @@
       display: none;
     }
 
+    .table-region {
+      position: relative;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .table-loading-overlay {
+      position: absolute;
+      inset: 0;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(16, 23, 39, 0.58);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .mobile-signal-results {
+      display: none;
+    }
+
+    .mobile-signal-card {
+      width: 100%;
+      appearance: none;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(31, 44, 70, 0.96), rgba(24, 35, 57, 0.98));
+      border-radius: 18px;
+      padding: 12px;
+      text-align: left;
+      color: var(--ink);
+      font: inherit;
+      display: grid;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .mobile-signal-card.active {
+      border-color: rgba(34, 176, 255, 0.42);
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.18);
+    }
+
+    .mobile-signal-head {
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .mobile-signal-image {
+      width: 56px;
+      height: 78px;
+      border: 1px solid rgba(94, 116, 148, 0.28);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #0f1830;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #627498;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .mobile-signal-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .image-preview-popover {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: min(88vw, 420px);
+      max-height: min(78vh, 620px);
+      display: none;
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid rgba(94, 116, 148, 0.28);
+      border-radius: 18px;
+      background: rgba(13, 20, 35, 0.98);
+      box-shadow: 0 26px 60px rgba(5, 10, 22, 0.45);
+      transform: translate(-50%, -50%);
+      z-index: 70;
+      backdrop-filter: blur(12px);
+    }
+
+    .image-preview-popover.open {
+      display: grid;
+    }
+
+    .image-preview-popover img {
+      display: block;
+      width: 100%;
+      max-height: min(64vh, 520px);
+      object-fit: contain;
+      border-radius: 14px;
+      background: #0a101d;
+      border: 1px solid rgba(94, 116, 148, 0.22);
+      cursor: zoom-out;
+    }
+
+    .image-preview-caption {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+
+    .mobile-signal-copy {
+      min-width: 0;
+    }
+
+    .mobile-signal-name {
+      font-size: 22px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .mobile-signal-set {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .mobile-signal-price {
+      text-align: right;
+      display: grid;
+      gap: 4px;
+      justify-items: end;
+    }
+
+    .mobile-signal-price strong {
+      font-size: 28px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .mobile-signal-metric {
+      font-size: 11px;
+      line-height: 1.2;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .mobile-signal-metric .good,
+    .mobile-signal-metric .warn,
+    .mobile-signal-metric .neutral {
+      font-weight: 700;
+      margin-left: 4px;
+    }
+
+    .mobile-track-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 10px 0 2px;
+    }
+
+    .mobile-track-btn {
+      appearance: none;
+      border: 1px solid rgba(91, 112, 146, 0.26);
+      background: rgba(16, 23, 39, 0.66);
+      color: var(--muted);
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font: inherit;
+      font-size: 11px;
+      line-height: 1;
+      min-height: 34px;
+      padding: 0 12px;
+      cursor: pointer;
+      transition: 0.14s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .mobile-track-btn.active {
+      background: rgba(34, 176, 255, 0.16);
+      color: #8dddff;
+      border-color: rgba(34, 176, 255, 0.32);
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.12);
+    }
+
+    .mobile-signal-trend {
+      border: 1px solid rgba(94, 116, 148, 0.28);
+      border-radius: 14px;
+      padding: 8px 10px;
+      background: rgba(15, 24, 48, 0.8);
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .mobile-signal-trend-label {
+      color: #7f91b1;
+      font-size: 11px;
+      line-height: 1.2;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      min-width: 72px;
+    }
+
+    .mobile-signal-spark {
+      height: 58px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(10, 16, 31, 0.88);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 6px;
+    }
+
+    .mobile-signal-spark svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
     table {
       width: 100%;
+      min-width: 980px;
       border-collapse: collapse;
       font-size: 13px;
     }
@@ -750,6 +1432,63 @@
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.12em;
+    }
+
+    .th-sort-button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      letter-spacing: inherit;
+      text-transform: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .th-sort-button:hover {
+      color: #a6dfff;
+    }
+
+    .th-sort-button.active {
+      color: #8dddff;
+    }
+
+    .th-sort-icon {
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 6px solid currentColor;
+      opacity: 0.5;
+      transform: translateY(1px);
+    }
+
+    .th-sort-button.active .th-sort-icon {
+      opacity: 1;
+    }
+
+    .table-link-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 62px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(34, 176, 255, 0.32);
+      background: rgba(34, 176, 255, 0.14);
+      color: #8dddff;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .table-link-btn:hover {
+      background: rgba(34, 176, 255, 0.22);
     }
 
     tbody tr {
@@ -860,11 +1599,11 @@
 
     @media (max-width: 1400px) {
       .brandbar {
-        grid-template-columns: 320px minmax(0, 1fr) 320px;
+        grid-template-columns: 260px minmax(0, 1fr) 500px;
       }
 
       .layout {
-        grid-template-columns: 320px minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr) 292px;
       }
 
       .right-rail {
@@ -879,18 +1618,33 @@
         grid-template-columns: 1fr;
       }
 
-      .brandactions,
       .tracking-header,
-      .tracking-header-actions {
+      .tracking-header-actions,
+      .search-actions {
         justify-items: start;
         justify-content: flex-start;
+        width: 100%;
+      }
+
+      .brandactions {
+        grid-template-columns: 1fr;
+      }
+
+      .brandactions .search-actions,
+      .tracking-header,
+      .brandactions > #trackingTrackedBtn {
+        grid-column: auto;
+        grid-row: auto;
       }
 
       .layout {
         grid-template-columns: 1fr;
       }
 
-      .left-rail,
+      .top-stage {
+        grid-template-columns: 1fr;
+      }
+
       .right-rail {
         position: static;
         max-height: none;
@@ -905,6 +1659,14 @@
         grid-template-columns: 1fr;
       }
 
+      .brandsearch-form {
+        grid-template-columns: 1fr;
+      }
+
+      .mover-list {
+        overflow: hidden;
+      }
+
       #chart {
         height: 360px;
       }
@@ -915,6 +1677,65 @@
     }
 
     @media (max-width: 760px) {
+      .shell {
+        padding: calc(14px + env(safe-area-inset-top, 0px)) 14px calc(88px + env(safe-area-inset-bottom, 0px));
+      }
+
+      .market-strip {
+        display: none;
+      }
+
+      .brandbar,
+      .layout,
+      .center-stage,
+      .top-stage {
+        gap: 14px;
+      }
+
+      .brandbar {
+        position: relative;
+      }
+
+      .brandlockup {
+        display: flex;
+        justify-content: center;
+      }
+
+      .brand-home-link {
+        width: min(280px, 100%);
+      }
+
+      .brandcopy {
+        display: none;
+        gap: 10px;
+      }
+
+      body.mobile-search-open .brandcopy {
+        display: grid;
+      }
+
+      .brandtag {
+        display: none;
+      }
+
+      .mobile-home-segments {
+        display: block;
+        margin-top: 4px;
+        margin-bottom: 2px;
+      }
+
+      .mobile-home-segments .segment-bar {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .mobile-home-segments .segment-bar button {
+        width: 100%;
+        justify-content: center;
+      }
+
       .brandlockup {
         align-items: start;
       }
@@ -923,35 +1744,446 @@
         height: 76px;
       }
 
+      .brandsearch-form {
+        grid-template-columns: 1fr;
+      }
+
+      .brandsearch-form button {
+        display: none;
+      }
+
+      .brandactions {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        pointer-events: none;
+      }
+
+      .brandactions > * {
+        pointer-events: auto;
+      }
+
+      .mobile-icon-btn {
+        display: inline-flex;
+        width: 42px;
+        min-height: 42px;
+        font-size: 20px;
+        line-height: 1;
+        order: 2;
+      }
+
+      .tracking-header {
+        width: auto;
+        order: 1;
+      }
+
+      #trackingToggleBtn {
+        width: 42px;
+        min-height: 42px;
+        padding: 0;
+        justify-content: center;
+      }
+
+      #trackingToggleBtn #trackingToggleLabel,
+      #trackingToggleBtn .caret {
+        display: none;
+      }
+
+      #trackingToggleBtn::before {
+        content: "\2630";
+        font-size: 20px;
+        line-height: 1;
+        color: #8dddff;
+      }
+
+      .tracking-menu {
+        left: 0;
+        right: auto;
+        width: min(360px, 100vw - 28px);
+      }
+
       .price-block {
         text-align: left;
         margin-left: 0;
+        width: 100%;
+      }
+
+      body.mobile-detail-open {
+        overflow: hidden;
+      }
+
+      #heroSection {
+        display: none;
+      }
+
+      body.mobile-detail-open #heroSection {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        overflow-y: auto;
+        border-radius: 0;
+        padding: 16px 16px calc(96px + env(safe-area-inset-bottom, 0px));
+        background:
+          radial-gradient(circle at top left, rgba(34, 176, 255, 0.08), transparent 20%),
+          radial-gradient(circle at top right, rgba(37, 208, 165, 0.08), transparent 16%),
+          linear-gradient(180deg, #11192f 0%, #0f1830 100%);
+      }
+
+      body.mobile-detail-open .mobile-bottom-nav {
+        display: none;
+      }
+
+      .stage-product-media {
+        flex-basis: 84px;
+        width: 84px;
+      }
+
+      .stage-title .hero-image-card {
+        width: 84px;
+        min-height: 116px;
       }
 
       .tracking-header-grid {
         grid-template-columns: 1fr;
+      }
+
+      .tracking-header-grid label {
+        display: block;
+      }
+
+      .tracking-header-actions {
+        margin-top: 8px;
+        justify-content: flex-start;
+      }
+
+      .market-strip {
+        top: 0;
+        padding: 12px;
+      }
+
+      .rail-title {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .rail-title-copy {
+        max-width: none;
+      }
+
+      .mover-card {
+        width: 92vw;
+        max-width: 460px;
+        padding-right: 10px;
+        border-right: 0;
+      }
+
+      .hero,
+      .signal-panel,
+      .right-rail {
+        padding: 16px;
+      }
+
+      .top-stage {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .top-stage > .signal-panel {
+        order: 1;
+      }
+
+      .top-stage > .hero {
+        order: 2;
+      }
+
+      .stage-product-head {
+        gap: 12px;
+      }
+
+      .stage-title h1 {
+        font-size: clamp(22px, 8vw, 30px);
+        line-height: 1;
+        margin-top: 2px;
+      }
+
+      .subtitle {
+        font-size: 14px;
+      }
+
+      .price-main {
+        font-size: 32px;
+      }
+
+      .freshness-badge {
+        display: none;
+      }
+
+      .hero .signal-topline {
+        margin-top: 12px;
+      }
+
+      #chart {
+        height: 240px;
+        margin-top: 12px;
+      }
+
+      .hero-tabs {
+        margin-top: 12px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+      }
+
+      body.mobile-detail-open .hero-tabs {
+        display: none;
+      }
+
+      .hero-tabs::-webkit-scrollbar {
+        display: none;
+      }
+
+      .hero-tabs button {
+        flex: 0 0 auto;
+      }
+
+      .mobile-detail-back {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+        appearance: none;
+        border: 1px solid var(--line);
+        background: rgba(16, 23, 39, 0.78);
+        color: var(--ink);
+        border-radius: 999px;
+        padding: 10px 14px;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .mobile-hero-stats {
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: rgba(16, 23, 39, 0.72);
+      }
+
+      .mobile-hero-stats h3 {
+        margin: 0;
+      }
+
+      .signal-panel {
+        grid-template-rows: auto auto minmax(0, 1fr);
+      }
+
+      .signal-topline {
+        align-items: flex-start;
+      }
+
+      .signal-panel.mobile-feed-mode .signal-topline,
+      .signal-panel.mobile-feed-mode .picker-grid,
+      .signal-panel.mobile-feed-mode .table-region {
+        display: none;
+      }
+
+      .signal-panel.mobile-feed-mode .mobile-signal-results {
+        display: grid;
+        gap: 12px;
+        max-height: 68vh;
+        overflow-y: auto;
+        padding-right: 2px;
+        scrollbar-width: none;
+      }
+
+      .signal-panel.mobile-feed-mode .mobile-signal-results::-webkit-scrollbar {
+        display: none;
+      }
+
+      .chart-window,
+      .segment-bar {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        scrollbar-width: none;
+      }
+
+      .chart-window::-webkit-scrollbar,
+      .segment-bar::-webkit-scrollbar {
+        display: none;
+      }
+
+      .chart-window button,
+      .segment-bar button {
+        flex: 0 0 auto;
+      }
+
+      .table-wrap {
+        max-height: 62vh;
+        border-radius: 16px;
+      }
+
+      table {
+        min-width: 760px;
+      }
+
+      .status-strip {
+        display: none;
+      }
+
+      .stack {
+        gap: 12px;
+      }
+
+      .right-rail {
+        display: none;
+      }
+
+      .mobile-bottom-nav {
+        position: fixed;
+        left: 14px;
+        right: 14px;
+        bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid rgba(91, 112, 146, 0.18);
+        border-radius: 18px;
+        background: rgba(13, 20, 35, 0.96);
+        backdrop-filter: blur(16px);
+        box-shadow: 0 20px 38px rgba(0, 0, 0, 0.28);
+        z-index: 40;
+      }
+
+      .mobile-indicator-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(4, 10, 22, 0.55);
+        z-index: 44;
+      }
+
+      .mobile-indicator-backdrop.open {
+        display: block;
+      }
+
+      .mobile-indicator-menu {
+        position: fixed;
+        left: 14px;
+        right: 14px;
+        bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+        border: 1px solid rgba(91, 112, 146, 0.2);
+        border-radius: 18px;
+        background: rgba(13, 20, 35, 0.98);
+        box-shadow: 0 22px 40px rgba(0, 0, 0, 0.34);
+        backdrop-filter: blur(14px);
+        padding: 12px;
+        z-index: 45;
+      }
+
+      .mobile-indicator-menu.open {
+        display: grid;
+        gap: 8px;
+      }
+
+      .mobile-indicator-title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+        margin: 0 2px 2px;
+      }
+
+      .mobile-indicator-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .mobile-indicator-grid button {
+        appearance: none;
+        border: 1px solid rgba(91, 112, 146, 0.22);
+        background: rgba(17, 26, 43, 0.84);
+        color: var(--ink);
+        font: inherit;
+        border-radius: 12px;
+        padding: 10px;
+        min-height: 44px;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .mobile-indicator-grid button.active {
+        background: rgba(34, 176, 255, 0.14);
+        color: #8dddff;
+        border-color: rgba(34, 176, 255, 0.32);
+        box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.12);
       }
     }
   </style>
 </head>
 <body>
   <div class="shell">
-    <section class="brandbar">
-      <div class="brandlockup">
-        <div class="brandmark" aria-hidden="true">
-          <img
-            src="/images/Logo.png"
-            alt="Poke6s logo"
-            onload="this.nextElementSibling.style.display='none'; this.style.display='block';"
-            onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-          >
-          <div class="brandmark-fallback">Poke<span class="accent">6</span>s</div>
+    <aside class="panel market-strip left-rail">
+      <div class="rail-title">
+        <div class="rail-title-main">
+          <div class="rail-title-copy">
+            <div class="section-label">Market Highlights</div>
+            <h2>Trending Now</h2>
+          </div>
         </div>
+        <div class="rail-ticker-wrap">
+          <div class="mover-list" id="moverList"></div>
+        </div>
+        <div class="rail-controls">
+          <div class="segment-bar" id="railSegments">
+            <button type="button" data-segment="cards" class="active">Cards</button>
+            <button type="button" data-segment="sealed">Sealed</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="brandbar" id="searchSection">
+      <div class="brandlockup">
+        <a class="brand-home-link" href="https://www.poke6s.com" aria-label="Visit Poke6s">
+          <div class="brandmark">
+            <img
+              src="/images/Logo.png"
+              alt="Poke6s logo"
+              onload="this.nextElementSibling.style.display='none'; this.style.display='block';"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+            >
+            <div class="brandmark-fallback">Poke<span class="accent">6</span>s</div>
+          </div>
+        </a>
       </div>
       <div class="brandcopy">
         <div class="brandtag">Data-driven Pokemon market screening for serious collectors, investors, and research-minded buyers.</div>
+        <div class="brandsearch">
+          <form class="brandsearch-form" id="headerSearchForm">
+            <input
+              id="headerSearchInput"
+              type="search"
+              placeholder="Search cards by name, number, or set"
+              autocomplete="off"
+            >
+            <button type="submit" id="headerSearchBtn">Search</button>
+          </form>
+          <div class="brandsearch-results" id="headerSearchResults" hidden></div>
+          <div class="brandsearch-status" id="headerSearchStatus"></div>
+        </div>
       </div>
       <div class="brandactions">
+        <button type="button" class="mobile-icon-btn" id="mobileSearchToggle" aria-label="Open search" aria-expanded="false">🔍</button>
         <div class="tracking-header">
           <button type="button" class="tracking-toggle" id="trackingToggleBtn">
             <span id="trackingToggleLabel">Account</span>
@@ -981,9 +2213,6 @@
                   <span id="trackingUserSubtext">Tracking tags sync to this account.</span>
                 </div>
               </div>
-              <div class="tracking-header-actions" style="justify-content: stretch;">
-                <button type="button" class="tracking-menu-link" id="trackingTrackedBtn">Tracked Items</button>
-              </div>
               <div class="tracking-header-actions split">
                 <a class="tracking-menu-link" href="/account-settings" id="trackingSettingsLink">Account Settings</a>
                 <button type="button" id="trackingLogoutBtn">Sign Out</button>
@@ -994,173 +2223,172 @@
         </div>
       </div>
     </section>
+    <div class="mobile-home-segments" id="mobileHomeSegments" aria-label="Mobile market segment">
+      <div class="segment-bar">
+        <button type="button" data-segment="cards" class="active">Singles</button>
+        <button type="button" data-segment="sealed">Sealed</button>
+      </div>
+    </div>
+    <div class="pull-refresh-indicator" id="pullRefreshIndicator" hidden>
+      <span class="loading-spinner" id="pullRefreshSpinner" aria-hidden="true"></span>
+      <span id="pullRefreshLabel">Pull to refresh</span>
+    </div>
     <div class="layout">
-      <aside class="panel left-rail">
-        <div class="rail-title">
-          <div>
-            <div class="section-label">Market Highlights</div>
-            <h2>Trending Now</h2>
-          </div>
-          <div class="mini-badge neutral" id="leftStatus">Loading</div>
-        </div>
-
-        <div class="segment-bar" id="railSegments">
-          <button type="button" data-segment="cards" class="active">Cards</button>
-          <button type="button" data-segment="sealed">Sealed</button>
-        </div>
-
-        <div class="status" style="margin-top:12px;">
-          Top movers over the last 30 days. Click any item to load the full chart and detail stack.
-        </div>
-
-        <div class="mover-list" id="moverList"></div>
-      </aside>
-
       <main class="center-stage">
-        <section class="panel hero">
-          <div class="stage-title">
-            <div>
-              <div class="section-label">Selected Product</div>
-              <h1 id="cardTitle">Loading...</h1>
-              <div class="subtitle" id="cardSubtitle">Fetching product history and metadata.</div>
-            </div>
-            <div class="price-block">
-              <div class="section-label">Selected Price</div>
-              <div class="price-main" id="headlinePrice">-</div>
-              <div style="margin-top:10px;" id="headlineChangeWrap"></div>
-              <div class="freshness-badge" id="freshnessBadgeWrap">
-                <span class="chip neutral" id="freshnessBadge">Latest data: -</span>
+        <div class="top-stage">
+          <section class="panel hero" id="heroSection">
+            <button type="button" class="mobile-detail-back" id="mobileDetailBackBtn">Back to signals</button>
+            <div class="stage-title">
+              <div class="stage-product-head">
+                <div class="stage-product-media">
+                  <div class="hero-image-card" id="heroImageCard">
+                    <div class="hero-image-empty" id="heroImageEmpty">No Image Available</div>
+                    <img id="heroImage" alt="" hidden>
+                  </div>
+                </div>
+                <div class="stage-product-copy">
+                  <div class="section-label">Selected Product</div>
+                  <h1 id="cardTitle">Loading...</h1>
+                  <div class="subtitle" id="cardSubtitle">Fetching product history and metadata.</div>
+                </div>
+              </div>
+              <div class="price-block">
+                <div class="section-label">Selected Price</div>
+                <div class="price-main" id="headlinePrice">-</div>
+                <div style="margin-top:10px;" id="headlineChangeWrap"></div>
+                <div class="freshness-badge" id="freshnessBadgeWrap">
+                  <span class="chip neutral" id="freshnessBadge">Latest data: -</span>
+                </div>
               </div>
             </div>
-          </div>
 
           <div class="signal-topline">
             <div>
               <div class="section-label">Price Action</div>
               <p id="chartLabel">Price, SMA7, and SMA30 for the selected product.</p>
             </div>
-            <div class="chart-window">
-              <button type="button" data-days="30">30D</button>
-              <button type="button" data-days="90">90D</button>
-              <button type="button" data-days="180">180D</button>
-              <button type="button" data-days="365" class="active">1Y</button>
-              <button type="button" data-days="730">2Y</button>
-              <button type="button" data-days="5000">Full</button>
-            </div>
+              <div class="chart-window">
+                <button type="button" data-days="30">30D</button>
+                <button type="button" data-days="90">90D</button>
+                <button type="button" data-days="180">180D</button>
+                <button type="button" data-days="365" class="active">1Y</button>
+                <button type="button" data-days="730">2Y</button>
+                <button type="button" data-days="5000">Full</button>
+              </div>
           </div>
 
           <div id="chart"></div>
-        </section>
 
-          <div class="status-strip" id="statusStrip">
-            <div class="status-card">
-              <div class="section-label">Rows</div>
-              <div class="value" id="statRows">-</div>
-            </div>
-            <div class="status-card">
-              <div class="section-label">Latest Date</div>
-              <div class="value" id="statLatest">-</div>
-            </div>
-            <div class="status-card">
-              <div class="section-label">Source</div>
-              <div class="value" id="statSource">-</div>
-            </div>
-            <div class="status-card">
-              <div class="section-label">Tracked Items</div>
-              <div class="value" id="statUniverse">-</div>
-            </div>
+          <div class="tab-bar hero-tabs" id="tabs">
+            <button type="button" data-tab="top_movers" class="active">Top Movers</button>
+            <button type="button" data-tab="breakouts">Breakouts</button>
+            <button type="button" data-tab="good_buys">Good Buys</button>
+            <button type="button" data-tab="sma30_holds">Consistent Movers</button>
+            <button type="button" data-tab="early_uptrends">Early Uptrends</button>
+            <button type="button" data-tab="confirmed_uptrends">Uptrends</button>
+            <button type="button" data-tab="group_signals">Group Signals</button>
+            <button type="button" data-tab="group_products">Set Products</button>
           </div>
-
-        <section class="panel signal-panel">
-          <div class="signal-topline">
-            <div>
-              <div class="section-label">Market Signals</div>
-              <p id="tableStatus">Loading screener...</p>
-            </div>
-            <div class="tab-bar" id="tabs">
-              <button type="button" data-tab="top_movers" class="active">Top Movers</button>
-              <button type="button" data-tab="breakouts">Breakouts</button>
-              <button type="button" data-tab="good_buys">Good Buys</button>
-              <button type="button" data-tab="sma30_holds">SMA30 Holds</button>
-              <button type="button" data-tab="early_uptrends">Early Uptrends</button>
-              <button type="button" data-tab="confirmed_uptrends">Uptrends</button>
-              <button type="button" data-tab="product_signals">Signals</button>
-              <button type="button" data-tab="group_signals">Group Signals</button>
-              <button type="button" data-tab="group_products">Set Products</button>
-            </div>
-            <div class="dev-tab-help" id="devTabHelp" hidden></div>
-          </div>
-
-          <div class="picker-grid" style="margin-bottom:18px;">
-            <label>
-              <span class="field-label">Product Picker</span>
-              <select id="picker"></select>
-            </label>
-            <label>
-              <span class="field-label">Set Picker</span>
-              <select id="groupPicker"></select>
-            </label>
-            <label>
-              <span class="field-label">Market</span>
-              <select id="marketPicker"></select>
-            </label>
-          </div>
-
-          <div class="picker-grid" id="groupSignalFilters" style="margin-bottom:18px; display:none;">
-            <label>
-              <span class="field-label">Generation</span>
-              <select id="generationPicker">
-                <option value="all">All Generations</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="picker-grid" id="trackedFilters" style="margin-bottom:18px; display:none;">
-            <label>
-              <span class="field-label">Tracked Tag</span>
-              <select id="trackedTagPicker">
-                <option value="all">All Tags</option>
-                <option value="favorite">Favorite</option>
-                <option value="watchlist">Watchlist</option>
-                <option value="research">Research</option>
-                <option value="owned">Buy List</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="table-wrap">
-            <table>
-              <thead id="tableHead"></thead>
-              <tbody id="tableBody"></tbody>
-            </table>
-            <div id="emptyState" class="empty" style="display:none;">No rows returned.</div>
-          </div>
-        </section>
-      </main>
-
-      <aside class="panel right-rail">
-        <div class="stack">
-          <section class="detail-card image-card">
-            <div class="hero-image-card" id="heroImageCard">
-              <div class="hero-image-empty" id="heroImageEmpty">No Image Available</div>
-              <img id="heroImage" alt="" hidden>
-            </div>
+          <section class="mobile-hero-stats" id="mobileHeroStats">
+            <h3>Key Stats</h3>
+            <div class="stats-list" id="mobileDetailStats"></div>
+          </section>
           </section>
 
-          <section class="detail-card">
-            <h3>Track This Item</h3>
-            <div class="detail-copy">
-              Click a tag to save it to this item. Click it again to remove it. Sign in from the account menu if you want your tracked items to follow you between sessions and devices.
+          <section class="panel signal-panel" id="signalsSection">
+            <div class="signal-topline">
+              <div>
+                <div class="section-label">Market Signals</div>
+                <p id="tableStatus">Loading screener...</p>
+              </div>
+              <div class="dev-tab-help" id="devTabHelp" hidden></div>
             </div>
-            <div class="tag-actions" id="tagActions">
+
+            <div class="picker-grid" style="margin-bottom:18px;">
+              <label>
+                <span class="field-label">Product Picker</span>
+                <select id="picker"></select>
+              </label>
+              <label>
+                <span class="field-label">Set Picker</span>
+                <select id="groupPicker"></select>
+              </label>
+              <label>
+                <span class="field-label">Market</span>
+                <select id="marketPicker"></select>
+              </label>
+            </div>
+
+            <div class="picker-grid" id="groupSignalFilters" style="margin-bottom:18px; display:none;">
+              <label>
+                <span class="field-label">Generation</span>
+                <select id="generationPicker">
+                  <option value="all">All Generations</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="picker-grid" id="trackedFilters" style="margin-bottom:18px; display:none;">
+              <label>
+                <span class="field-label">Tracked Tag</span>
+                <select id="trackedTagPicker">
+                  <option value="all">All Tags</option>
+                  <option value="favorite">Favorite</option>
+                  <option value="watchlist">Watchlist</option>
+                  <option value="research">Research</option>
+                  <option value="owned">Buy List</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="table-region">
+              <div class="table-loading-overlay" id="tableLoadingOverlay" hidden>
+                <div class="sparkline-empty"><span class="loading-spinner" aria-hidden="true"></span>Loading market signals</div>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead id="tableHead"></thead>
+                  <tbody id="tableBody"></tbody>
+                </table>
+                <div id="emptyState" class="empty" style="display:none;">No rows returned.</div>
+              </div>
+            </div>
+            <div class="mobile-signal-results" id="mobileSignalResults" hidden></div>
+          </section>
+        </div>
+
+        <div class="status-strip" id="statusStrip">
+          <div class="status-card">
+            <div class="section-label">Rows</div>
+            <div class="value" id="statRows">-</div>
+          </div>
+          <div class="status-card">
+            <div class="section-label">Latest Date</div>
+            <div class="value" id="statLatest">-</div>
+          </div>
+          <div class="status-card">
+            <div class="section-label">Source</div>
+            <div class="value" id="statSource">-</div>
+          </div>
+          <div class="status-card">
+            <div class="section-label">Tracked Items</div>
+            <div class="value" id="statUniverse">-</div>
+          </div>
+        </div>
+      </main>
+
+      <aside class="panel right-rail" id="detailsSection">
+        <div class="stack">
+          <section class="detail-card track-actions-card">
+            <h3>Track This Item</h3>
+            <p class="detail-copy">Save the selected product to a tag list for quick follow-up.</p>
+            <div class="search-actions" id="tagActions">
               <button type="button" data-tag="favorite">Favorite</button>
               <button type="button" data-tag="watchlist">Watchlist</button>
               <button type="button" data-tag="research">Research</button>
               <button type="button" data-tag="owned">Buy List</button>
             </div>
-            <div class="tag-actions full-width" style="margin-top:14px;">
-              <button type="button" id="viewTrackedItemsBtn">View Tracked Items</button>
-            </div>
+            <button type="button" class="tracking-menu-link" id="trackingTrackedBtn">Tracked Items</button>
           </section>
 
           <section class="detail-card">
@@ -1170,6 +2398,28 @@
 
         </div>
       </aside>
+    </div>
+    <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Mobile dashboard navigation">
+      <button type="button" data-mobile-target="home" class="active">Home</button>
+      <button type="button" data-mobile-target="search">Search</button>
+      <button type="button" data-mobile-target="tracked">Tracked</button>
+      <button type="button" data-mobile-target="indicators" id="mobileIndicatorsBtn" aria-expanded="false">Indicators</button>
+    </nav>
+    <div class="mobile-indicator-backdrop" id="mobileIndicatorBackdrop" hidden></div>
+    <div class="mobile-indicator-menu" id="mobileIndicatorMenu" hidden>
+      <p class="mobile-indicator-title">Choose Indicator</p>
+      <div class="mobile-indicator-grid" id="mobileIndicatorGrid">
+        <button type="button" data-indicator-tab="top_movers">Top Movers</button>
+        <button type="button" data-indicator-tab="breakouts">Breakouts</button>
+        <button type="button" data-indicator-tab="good_buys">Good Buys</button>
+        <button type="button" data-indicator-tab="sma30_holds">Consistent Movers</button>
+        <button type="button" data-indicator-tab="early_uptrends">Early Uptrends</button>
+        <button type="button" data-indicator-tab="confirmed_uptrends">Uptrends</button>
+      </div>
+    </div>
+    <div class="image-preview-popover" id="imagePreviewPopover" hidden>
+      <img id="imagePreviewImg" alt="">
+      <div class="image-preview-caption" id="imagePreviewCaption"></div>
     </div>
   </div>
 
@@ -1193,22 +2443,33 @@
     const tableHead = document.getElementById("tableHead");
     const tableBody = document.getElementById("tableBody");
     const tableWrap = document.querySelector(".table-wrap");
+    const tableLoadingOverlay = document.getElementById("tableLoadingOverlay");
     const emptyState = document.getElementById("emptyState");
     const tableStatus = document.getElementById("tableStatus");
     const devTabHelp = document.getElementById("devTabHelp");
     const tabsEl = document.getElementById("tabs");
+    const signalPanel = document.getElementById("signalsSection");
     const moverList = document.getElementById("moverList");
     const railSegments = document.getElementById("railSegments");
+    const mobileHomeSegments = document.getElementById("mobileHomeSegments");
+    const pullRefreshIndicator = document.getElementById("pullRefreshIndicator");
+    const pullRefreshLabel = document.getElementById("pullRefreshLabel");
+    const pullRefreshSpinner = document.getElementById("pullRefreshSpinner");
     const leftStatus = document.getElementById("leftStatus");
     const cardTitle = document.getElementById("cardTitle");
     const cardSubtitle = document.getElementById("cardSubtitle");
+    const heroSection = document.getElementById("heroSection");
+    const mobileDetailBackBtn = document.getElementById("mobileDetailBackBtn");
+    const heroImageCard = document.getElementById("heroImageCard");
     const heroImage = document.getElementById("heroImage");
     const heroImageEmpty = document.getElementById("heroImageEmpty");
+    const chartEl = document.getElementById("chart");
     const chartLabel = document.getElementById("chartLabel");
     const headlinePrice = document.getElementById("headlinePrice");
     const headlineChangeWrap = document.getElementById("headlineChangeWrap");
     const freshnessBadge = document.getElementById("freshnessBadge");
     const detailStats = document.getElementById("detailStats");
+    const mobileDetailStats = document.getElementById("mobileDetailStats");
     const tagActions = document.getElementById("tagActions");
     const trackingToggleBtn = document.getElementById("trackingToggleBtn");
     const trackingToggleLabel = document.getElementById("trackingToggleLabel");
@@ -1225,6 +2486,23 @@
     const trackingStatus = document.getElementById("trackingStatus");
     const trackingUserLabel = document.getElementById("trackingUserLabel");
     const trackingUserSubtext = document.getElementById("trackingUserSubtext");
+    const headerSearchForm = document.getElementById("headerSearchForm");
+    const headerSearchInput = document.getElementById("headerSearchInput");
+    const headerSearchBtn = document.getElementById("headerSearchBtn");
+    const headerSearchStatus = document.getElementById("headerSearchStatus");
+    const headerSearchResults = document.getElementById("headerSearchResults");
+    const mobileSearchToggle = document.getElementById("mobileSearchToggle");
+    const searchSection = document.getElementById("searchSection");
+    const signalsSection = document.getElementById("signalsSection");
+    const mobileBottomNav = document.getElementById("mobileBottomNav");
+    const mobileSignalResults = document.getElementById("mobileSignalResults");
+    const mobileIndicatorsBtn = document.getElementById("mobileIndicatorsBtn");
+    const mobileIndicatorMenu = document.getElementById("mobileIndicatorMenu");
+    const mobileIndicatorBackdrop = document.getElementById("mobileIndicatorBackdrop");
+    const mobileIndicatorGrid = document.getElementById("mobileIndicatorGrid");
+    const imagePreviewPopover = document.getElementById("imagePreviewPopover");
+    const imagePreviewImg = document.getElementById("imagePreviewImg");
+    const imagePreviewCaption = document.getElementById("imagePreviewCaption");
 
     const universeByKey = new Map();
     const groupsById = new Map();
@@ -1240,7 +2518,7 @@
     // one generation filter, and one market. It is URL-backed so refreshes restore the same view.
     let currentKey = initialParams.get("product") || null;
     let currentDays = Number(initialParams.get("days") || 365);
-    let currentTab = initialParams.get("tab") || "top_movers";
+    let currentTab = initialParams.get("tab") || "sma30_holds";
     let currentGroupId = initialParams.get("group_id") ? Number(initialParams.get("group_id")) : null;
     let currentSegment = initialParams.get("segment") || "cards";
     let currentCategoryId = Number(initialParams.get("category_id") || 3);
@@ -1253,15 +2531,37 @@
       cards: false,
       sealed: false
     };
+    const segmentFilteredTabs = new Set(["top_movers", "sma30_holds", "early_uptrends", "confirmed_uptrends"]);
     let currentGeneration = initialParams.get("generation") || "all";
     let currentTrackedTag = initialParams.get("tracked_tag") || "all";
+    let currentTrackedSort = initialParams.get("tracked_sort") || "tags";
     let activeTableRows = [];
     let activeTableIndex = -1;
     let currentSeriesPayload = null;
-    const hasExplicitProductSelection = initialParams.has("product");
     let trackingToken = localStorage.getItem(trackingTokenKey) || "";
     let trackingUser = null;
     let trackingMenuOpen = false;
+    let headerSearchDebounce = null;
+    let headerSearchResultsData = [];
+    let headerSearchActiveIndex = -1;
+    let tableLoadPending = 0;
+    let headerSearchRequestToken = 0;
+    let universeLoaded = false;
+    let groupsLoaded = false;
+    let universeLoadPromise = null;
+    let groupsLoadPromise = null;
+    let currentHeroImageExpandedSrc = "";
+    let currentHeroImageExpandedAlt = "";
+    let currentPreviewImageSrc = "";
+    let currentPreviewAnchor = null;
+    let pullRefreshStartY = 0;
+    let pullRefreshDistance = 0;
+    let pullRefreshActive = false;
+    let pullRefreshRefreshing = false;
+    let pullRefreshAllowed = false;
+
+    const pullRefreshThreshold = 84;
+    const pullRefreshMaxDistance = 132;
 
     const tabConfig = {
       // Each tab maps to one API screen plus the columns that should be surfaced in the lower table.
@@ -1281,24 +2581,19 @@
         title: "Premium-rarity cards that have been drifting lower and may be entering buyable pullback territory."
       },
       sma30_holds: {
-        path: "/sma30_holds?days_required=7&limit=120&min_price=5",
-        columns: ["productName", "groupName", "number", "subTypeName", "cross_date", "hold_days", "latest_price", "latest_sma30", "pct_vs_sma30"],
-        title: "Watchlist names reclaiming and holding their 30-day average."
+        path: "/sma30_holds?days_required=30&limit=120&min_price=5&min_recent_distinct_prices_30d=10",
+        columns: ["productName", "groupName", "number", "subTypeName", "cross_date", "hold_days", "recent_distinct_prices_30d", "latest_price", "latest_sma30", "pct_vs_sma30"],
+        title: "Names that have held above SMA30 for 30 straight days with real 30-day price movement."
       },
       early_uptrends: {
-        path: "/early_uptrends?days_required=3&limit=120&min_price=5&max_price_vs_sma30_pct=15",
-        columns: ["productName", "groupName", "number", "subTypeName", "early_streak", "latest_price", "latest_sma3", "latest_sma7", "latest_sma30", "pct_vs_sma30"],
-        title: "Early momentum: SMA3 > SMA7 > SMA30 for a few days without already being overextended."
+        path: "/early_uptrends?days_required=3&limit=120&min_price=5&max_price_vs_sma30_pct=15&min_recent_distinct_prices_30d=10",
+        columns: ["productName", "groupName", "number", "subTypeName", "early_streak", "recent_distinct_prices_30d", "latest_price", "latest_sma3", "latest_sma7", "latest_sma30", "pct_vs_sma30"],
+        title: "Early momentum: SMA3 > SMA7 > SMA30 with recent real price movement and 30-day price diversity."
       },
       confirmed_uptrends: {
         path: "/confirmed_uptrends?days_required=5&limit=120&min_price=5",
         columns: ["productName", "groupName", "number", "subTypeName", "bullish_streak", "latest_price", "latest_sma7", "latest_sma30", "pct_vs_sma30"],
         title: "Confirmed momentum where price and SMA7 are both above SMA30."
-      },
-      product_signals: {
-        path: "/product_signals?limit=250&min_price=1",
-        columns: ["productName", "groupName", "number", "subTypeName", "latest_price", "roc_7d_pct", "roc_30d_pct", "price_vs_sma30_pct", "breakout_90d_flag", "trend_score"],
-        title: "Latest product signal snapshot and ranking view."
       },
       group_signals: {
         path: "/group_signals?limit=250&min_items=5",
@@ -1306,7 +2601,7 @@
         title: "Set-level breadth and momentum snapshot."
       },
       tracked_items: {
-        columns: ["tags", "productName", "groupName", "number", "rarity", "subTypeName"],
+        columns: ["tags", "productName", "groupName", "number", "rarity", "subTypeName", "tcgplayerLink"],
         title: "Saved products from your tracking tags. Filter by one tag or browse everything you marked."
       },
       group_products: {
@@ -1314,6 +2609,22 @@
         title: "Browse every tracked product in the selected set."
       }
     };
+    const mobileIndicatorTabKeys = new Set([
+      "top_movers",
+      "breakouts",
+      "good_buys",
+      "sma30_holds",
+      "early_uptrends",
+      "confirmed_uptrends"
+    ]);
+
+    function formatTrackedTagLabel(tag) {
+      if (tag === "owned") return "Buy List";
+      if (tag === "favorite") return "Favorite";
+      if (tag === "watchlist") return "Watchlist";
+      if (tag === "research") return "Research";
+      return String(tag || "");
+    }
 
     function getStoredTags() {
       try {
@@ -1349,6 +2660,16 @@
       trackingStatus.classList.toggle("warn", Boolean(isWarn));
     }
 
+    function setHeaderSearchStatus(message, isWarn = false) {
+      headerSearchStatus.textContent = message;
+      headerSearchStatus.classList.toggle("warn", Boolean(isWarn));
+    }
+
+    function setHeaderSearchResultsOpen(open) {
+      headerSearchResults.hidden = !open;
+      headerSearchResults.classList.toggle("open", open);
+    }
+
     function setTrackingMenuOpen(open) {
       // The header account button behaves like a small site-style user menu rather than
       // leaving auth controls visible in the right rail at all times.
@@ -1374,6 +2695,9 @@
     }
 
     async function openTrackedItemsView() {
+      setMobileDetailOpen(false);
+      setMobileSearchOpen(false);
+      setMobileIndicatorMenuOpen(false);
       setTrackingMenuOpen(false);
       tabsEl.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
       currentTab = "tracked_items";
@@ -1382,12 +2706,18 @@
       updateGroupSignalFilterVisibility();
       updateTrackedFilterVisibility();
       updateDevTabHelp(currentTab);
-      const rows = await loadTable();
-      if (rows && rows.length) {
-        await selectItem(rows[0]);
-        activeTableIndex = 0;
-        syncActiveTableRow(true);
+      try {
+        const rows = await loadTable();
+        if (rows && rows.length) {
+          await selectItem(rows[0]);
+          activeTableIndex = 0;
+          syncActiveTableRow(true);
+        }
+      } catch (err) {
+        tableStatus.textContent = `Tracked view error: ${err.message}`;
       }
+      updateMobileNavState("tracked");
+      scrollSectionIntoView(signalsSection);
     }
 
     async function trackingJson(path, options = {}) {
@@ -1549,6 +2879,11 @@
       } else {
         url.searchParams.delete("tracked_tag");
       }
+      if (currentTrackedSort && currentTrackedSort !== "tags") {
+        url.searchParams.set("tracked_sort", currentTrackedSort);
+      } else {
+        url.searchParams.delete("tracked_sort");
+      }
       if (currentKey) {
         url.searchParams.set("product", currentKey);
       } else {
@@ -1560,6 +2895,15 @@
         url.searchParams.delete("group_id");
       }
       history.replaceState({}, "", `${url.pathname}${url.search}`);
+    }
+
+    function syncSegmentButtons() {
+      railSegments?.querySelectorAll("button").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.segment === currentSegment);
+      });
+      mobileHomeSegments?.querySelectorAll("[data-segment]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.segment === currentSegment);
+      });
     }
 
     function resetCategoryState() {
@@ -1582,10 +2926,26 @@
       tableBody.innerHTML = "";
       tableHead.innerHTML = "";
       emptyState.style.display = "none";
+      universeLoaded = false;
+      groupsLoaded = false;
+      universeLoadPromise = null;
+      groupsLoadPromise = null;
     }
 
     async function getJson(path) {
       const res = await fetch(apiBase + withCategory(path));
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      return res.json();
+    }
+
+    async function postJson(path, payload) {
+      const res = await fetch(apiBase + withCategory(path), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload || {})
+      });
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
       return res.json();
     }
@@ -1601,6 +2961,53 @@
 
     function keyOf(productId, subTypeName) {
       return Common.keyOf(productId, subTypeName);
+    }
+
+    function isPlaceholderProductName(name, productId = null) {
+      const raw = String(name || "").trim().toLowerCase();
+      if (!raw) return true;
+      const compact = raw.replace(/\s+/g, " ");
+      if (/^product(id)?\s+\d+$/.test(compact)) return true;
+      const parsed = Number(productId);
+      if (Number.isFinite(parsed) && parsed > 0) {
+        const pid = String(parsed);
+        if (compact === `product ${pid}` || compact === `productid ${pid}`) return true;
+      }
+      return false;
+    }
+
+    function mergeMeta(existing, incoming) {
+      const merged = { ...(existing || {}) };
+      const next = incoming || {};
+      const keepName = !isPlaceholderProductName(merged.productName, merged.productId);
+      const nextNameIsGood = !isPlaceholderProductName(next.productName, next.productId);
+      if (!keepName && nextNameIsGood) {
+        merged.productName = next.productName;
+      } else if (!merged.productName && next.productName) {
+        merged.productName = next.productName;
+      }
+      if ((!merged.imageUrl || String(merged.imageUrl).trim() === "") && next.imageUrl) {
+        merged.imageUrl = next.imageUrl;
+      }
+      const passThrough = ["groupName", "number", "rarity", "productClass", "productKind", "groupId", "productId", "subTypeName"];
+      passThrough.forEach((field) => {
+        if ((merged[field] === null || merged[field] === undefined || merged[field] === "") && next[field] !== undefined) {
+          merged[field] = next[field];
+        }
+      });
+      return merged;
+    }
+
+    function tcgplayerProductUrl(productId) {
+      const parsed = Number(productId);
+      if (!Number.isFinite(parsed) || parsed <= 0) return "";
+      // Swap this to your affiliate URL pattern later (keep productId as the key).
+      const params = new URLSearchParams({
+        Language: "English",
+        Condition: "Near Mint",
+        page: "1",
+      });
+      return `https://www.tcgplayer.com/product/${parsed}?${params.toString()}`;
     }
 
     function formatNumber(value, digits = 2) {
@@ -1619,11 +3026,190 @@
       return Common.formatProductBadgeLabel(item);
     }
 
+    function normalizeSearchQuery(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function loadingMarkup(label) {
+      return `<span class="loading-spinner" aria-hidden="true"></span>${label}`;
+    }
+
+    function setTableLoading(loading, label = "Loading market signals") {
+      if (!tableLoadingOverlay) return;
+      if (loading) {
+        tableLoadPending += 1;
+        // Keep loading copy in one place so every table-triggering action uses the same
+        // operator-facing message and spinner treatment.
+        tableLoadingOverlay.innerHTML = `<div class="sparkline-empty">${loadingMarkup(label)}</div>`;
+      } else {
+        tableLoadPending = Math.max(0, tableLoadPending - 1);
+      }
+      const visible = tableLoadPending > 0;
+      tableLoadingOverlay.hidden = !visible;
+      tableLoadingOverlay.style.display = visible ? "flex" : "none";
+    }
+
+    function resetTableLoading() {
+      tableLoadPending = 0;
+      if (!tableLoadingOverlay) return;
+      tableLoadingOverlay.hidden = true;
+      tableLoadingOverlay.style.display = "none";
+    }
+
+    async function fetchHeaderSearchResults(query, limit = 8) {
+      const payload = await getJson(`/search?query=${encodeURIComponent(query)}&limit=${limit}`);
+      const items = (payload.items || []).map((result) => {
+        if (result.kind === "set") {
+          return result;
+        }
+        const item = {
+          key: keyOf(result.productId, result.subTypeName),
+          productId: result.productId,
+          subTypeName: result.subTypeName || "",
+          groupId: result.groupId,
+          groupName: result.groupName || "",
+          productName: result.productName || result.title || `productId ${result.productId}`,
+          imageUrl: result.imageUrl || "",
+          rarity: result.rarity || "",
+          number: result.number || "",
+          productClass: result.productClass || null,
+          productKind: result.productKind || null
+        };
+        return { ...result, item };
+      });
+      return { ...payload, items };
+    }
+
+    function renderHeaderSearchResults(results, totalCount) {
+      headerSearchResults.innerHTML = "";
+      headerSearchResultsData = results;
+      headerSearchActiveIndex = results.length ? 0 : -1;
+      if (!results.length) {
+        setHeaderSearchResultsOpen(false);
+        return;
+      }
+      results.forEach((result, index) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `brandsearch-result${index === headerSearchActiveIndex ? " active" : ""}`;
+        btn.dataset.index = String(index);
+        btn.innerHTML = `
+          <div class="brandsearch-result-title">
+            <span class="brandsearch-result-kind">${result.kind === "set" ? "Set" : "Card"}</span>${result.title}
+          </div>
+          <div class="brandsearch-result-meta">${result.meta || ""}</div>
+        `;
+        btn.addEventListener("click", async () => {
+          await selectHeaderSearchResult(index);
+        });
+        headerSearchResults.appendChild(btn);
+      });
+      if (totalCount > results.length) {
+        const more = document.createElement("div");
+        more.className = "brandsearch-more";
+        more.textContent = `Showing ${results.length} of ${totalCount} matches.`;
+        headerSearchResults.appendChild(more);
+      }
+      setHeaderSearchResultsOpen(true);
+    }
+
+    function syncHeaderSearchActiveResult() {
+      Array.from(headerSearchResults.querySelectorAll(".brandsearch-result")).forEach((row, index) => {
+        row.classList.toggle("active", index === headerSearchActiveIndex);
+      });
+    }
+
+    async function selectHeaderSearchResult(index) {
+      const result = headerSearchResultsData[index];
+      if (!result) return;
+      headerSearchActiveIndex = index;
+      syncHeaderSearchActiveResult();
+      setHeaderSearchResultsOpen(false);
+      setMobileSearchOpen(false);
+      if (result.kind === "set") {
+        currentGroupId = Number(result.groupId);
+        if (!Number.isNaN(currentGroupId) && [...groupPicker.options].some((opt) => Number(opt.value) === currentGroupId)) {
+          groupPicker.value = String(currentGroupId);
+        }
+        activateTab("group_products");
+        syncUrlState();
+        const rows = await loadTable();
+        if (rows && rows.length) {
+          currentChartMode = "product";
+          await selectItem(rows[0]);
+        }
+        if (tableWrap) {
+          tableWrap.scrollTop = 0;
+        }
+        setHeaderSearchStatus(`Opened set: ${result.groupName}.`);
+        return;
+      }
+      await selectItem(result.item, { openDetail: isPhoneLayout() });
+      setHeaderSearchStatus(`Loaded ${result.item.productName}.`);
+    }
+
+    function activateTab(tabKey) {
+      tabsEl.querySelectorAll("button").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.tab === tabKey);
+      });
+      currentTab = tabKey;
+      updateGroupSignalFilterVisibility();
+      updateTrackedFilterVisibility();
+      updateDevTabHelp(currentTab);
+    }
+
+    async function runHeaderSearch() {
+      const query = normalizeSearchQuery(headerSearchInput.value);
+      if (!query) {
+        setHeaderSearchStatus("Enter a card name, number, or set name.", true);
+        return;
+      }
+      setHeaderSearchStatus("Searching...");
+      headerSearchBtn.disabled = true;
+      try {
+        const payload = await fetchHeaderSearchResults(query, 12);
+        const results = payload.items || [];
+        if (results.length) {
+          await selectHeaderSearchResult(0);
+          return;
+        }
+        setHeaderSearchStatus(`No results for "${headerSearchInput.value.trim()}".`, true);
+      } finally {
+        headerSearchBtn.disabled = false;
+      }
+    }
+
+    async function refreshHeaderSearchResults() {
+      const query = normalizeSearchQuery(headerSearchInput.value);
+      if (!query) {
+        headerSearchResults.innerHTML = "";
+        headerSearchResultsData = [];
+        headerSearchActiveIndex = -1;
+        setHeaderSearchResultsOpen(false);
+        setHeaderSearchStatus("Search a card name, card number, or set name.");
+        return;
+      }
+      const requestToken = ++headerSearchRequestToken;
+      setHeaderSearchStatus("Searching...");
+      const payload = await fetchHeaderSearchResults(query, 8);
+      if (requestToken !== headerSearchRequestToken) {
+        return;
+      }
+      const results = payload.items || [];
+      renderHeaderSearchResults(results, results.length);
+      if (!results.length) {
+        setHeaderSearchStatus(`No results for "${headerSearchInput.value.trim()}".`, true);
+        return;
+      }
+      if (results.length === 1) {
+        await selectHeaderSearchResult(0);
+        return;
+      }
+      setHeaderSearchStatus(`${results.length} match${results.length === 1 ? "" : "es"} found.`);
+    }
+
     function getSparklineDays() {
-      if (currentDays >= 5000) return 365;
-      if (currentDays >= 365) return 365;
-      if (currentDays >= 180) return 180;
-      return currentDays;
+      return 30;
     }
 
     function classifyItem(item) {
@@ -1637,25 +3223,32 @@
     }
 
     function ensurePickerOption(item) {
-      if (!universeByKey.has(item.key)) {
-        universeByKey.set(item.key, {
-          productId: item.productId,
-          subTypeName: item.subTypeName,
-          groupName: item.groupName || "Unknown Group",
-          productName: item.productName || `productId ${item.productId}`,
-          imageUrl: item.imageUrl || "",
-          rarity: item.rarity || "",
-          number: item.number || "",
-          productClass: item.productClass || null,
-          productKind: item.productKind || null
-        });
-      }
+      const existingMeta = universeByKey.get(item.key);
+      const nextMeta = mergeMeta(existingMeta, {
+        productId: item.productId,
+        subTypeName: item.subTypeName,
+        groupName: item.groupName || "Unknown Group",
+        productName: item.productName || `productId ${item.productId}`,
+        imageUrl: item.imageUrl || "",
+        rarity: item.rarity || "",
+        number: item.number || "",
+        productClass: item.productClass || null,
+        productKind: item.productKind || null,
+        groupId: item.groupId ?? null,
+      });
+      universeByKey.set(item.key, nextMeta);
 
       if (![...picker.options].some((opt) => opt.value === item.key)) {
         const opt = document.createElement("option");
         opt.value = item.key;
         opt.textContent = `${item.productName} | ${item.groupName || "Unknown Group"} | ${item.subTypeName}`;
         picker.appendChild(opt);
+      } else {
+        const existingOpt = [...picker.options].find((opt) => opt.value === item.key);
+        if (existingOpt) {
+          const meta = universeByKey.get(item.key) || item;
+          existingOpt.textContent = `${meta.productName || `productId ${meta.productId}`} | ${meta.groupName || "Unknown Group"} | ${meta.subTypeName || ""}`;
+        }
       }
     }
 
@@ -1720,8 +3313,35 @@
         p_prior: "P Prior (30D)",
         roc_pct: "ROC %",
         breakout_pct: "Breakout PCT (%)",
+        tags: "Tag",
+        productName: "Product Name",
+        groupName: "Set Name",
+        rarity: "Rarity",
+        number: "Number",
+        subTypeName: "Subtype",
+        tcgplayerLink: "TCGPlayer",
       };
-      tableHead.innerHTML = `<tr>${columns.map((c) => `<th>${labels[c] || c.replaceAll("_", " ")}</th>`).join("")}</tr>`;
+      const trackedSortableColumns = new Set(["tags", "productName", "groupName", "rarity", "number", "subTypeName"]);
+      tableHead.innerHTML = `<tr>${columns.map((c) => {
+        const label = labels[c] || c.replaceAll("_", " ");
+        if (currentTab === "tracked_items" && trackedSortableColumns.has(c)) {
+          const activeClass = currentTrackedSort === c ? " active" : "";
+          return `<th><button type="button" class="th-sort-button${activeClass}" data-tracked-sort="${c}" aria-label="Sort tracked items by ${label}"><span>${label}</span><span class="th-sort-icon" aria-hidden="true"></span></button></th>`;
+        }
+        return `<th>${label}</th>`;
+      }).join("")}</tr>`;
+      if (currentTab === "tracked_items") {
+        tableHead.querySelectorAll("[data-tracked-sort]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            currentTrackedSort = button.dataset.trackedSort || "tags";
+            syncUrlState();
+            if (tableWrap) {
+              tableWrap.scrollTop = 0;
+            }
+            await loadTable();
+          });
+        });
+      }
     }
 
     function updateDevTabHelp(tabKey = currentTab) {
@@ -1731,6 +3351,346 @@
       const cfg = tabConfig[tabKey];
       devTabHelp.hidden = false;
       devTabHelp.textContent = cfg?.title || "No description available for this screen.";
+    }
+
+    function updateMobileNavState(activeTarget = null) {
+      if (!mobileBottomNav) return;
+      const resolvedTarget = activeTarget || (
+        currentTab === "tracked_items"
+          ? "tracked"
+          : ((mobileIndicatorTabKeys.has(currentTab) && currentTab !== "sma30_holds") || ["group_products", "group_signals"].includes(currentTab))
+            ? "indicators"
+            : "home"
+      );
+      mobileBottomNav.querySelectorAll("button").forEach((button) => {
+        button.classList.toggle("active", button.dataset.mobileTarget === resolvedTarget);
+      });
+    }
+
+    function setMobileIndicatorMenuOpen(open) {
+      if (!mobileIndicatorMenu || !mobileIndicatorBackdrop || !mobileIndicatorsBtn) return;
+      const isOpen = Boolean(open) && isPhoneLayout();
+      mobileIndicatorMenu.hidden = !isOpen;
+      mobileIndicatorBackdrop.hidden = !isOpen;
+      mobileIndicatorMenu.classList.toggle("open", isOpen);
+      mobileIndicatorBackdrop.classList.toggle("open", isOpen);
+      mobileIndicatorsBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      if (mobileIndicatorGrid) {
+        mobileIndicatorGrid.querySelectorAll("[data-indicator-tab]").forEach((button) => {
+          button.classList.toggle("active", button.dataset.indicatorTab === currentTab);
+        });
+      }
+      if (isOpen) {
+        updateMobileNavState("indicators");
+      } else {
+        updateMobileNavState();
+      }
+    }
+
+    function isTouchDashboardLayout() {
+      return window.matchMedia("(max-width: 1080px)").matches;
+    }
+
+    function activeScrollContainer() {
+      // Pull-to-refresh should respect whichever panel is actually being scrolled right now.
+      // On mobile drilldown that is the fixed hero section; otherwise it is the normal page.
+      if (document.body.classList.contains("mobile-detail-open") && heroSection) {
+        return heroSection;
+      }
+      return document.scrollingElement || document.documentElement;
+    }
+
+    function scrollTopAtTop() {
+      const container = activeScrollContainer();
+      if (!container) return true;
+      return (container.scrollTop || 0) <= 0;
+    }
+
+    function resetPullRefreshIndicator() {
+      if (!pullRefreshIndicator || !pullRefreshLabel || !pullRefreshSpinner) return;
+      pullRefreshIndicator.hidden = true;
+      pullRefreshIndicator.classList.remove("visible", "ready", "refreshing");
+      pullRefreshIndicator.style.transform = "translate(-50%, calc(-100% - 12px))";
+      pullRefreshLabel.textContent = "Pull to refresh";
+      pullRefreshSpinner.hidden = true;
+    }
+
+    function renderPullRefreshIndicator(distance, refreshing = false) {
+      if (!pullRefreshIndicator || !pullRefreshLabel || !pullRefreshSpinner) return;
+      const clamped = Math.max(0, Math.min(distance, pullRefreshMaxDistance));
+      const ready = clamped >= pullRefreshThreshold;
+      const translateY = refreshing ? 10 : Math.min(clamped - 96, 10);
+      pullRefreshIndicator.hidden = false;
+      pullRefreshIndicator.classList.add("visible");
+      pullRefreshIndicator.classList.toggle("ready", ready && !refreshing);
+      pullRefreshIndicator.classList.toggle("refreshing", refreshing);
+      pullRefreshIndicator.style.transform = `translate(-50%, ${translateY}px)`;
+      pullRefreshLabel.textContent = refreshing
+        ? "Refreshing..."
+        : (ready ? "Release to refresh" : "Pull to refresh");
+      pullRefreshSpinner.hidden = !refreshing;
+    }
+
+    async function refreshDashboardView() {
+      // Mobile pull-to-refresh reuses the same data loaders as normal navigation so we
+      // refresh current market state without doing a full browser reload.
+      if (pullRefreshRefreshing) return;
+      pullRefreshRefreshing = true;
+      renderPullRefreshIndicator(pullRefreshThreshold, true);
+      try {
+        await Promise.all([
+          loadHealth(),
+          loadTopMovers(currentSegment, true, true),
+        ]);
+        if (currentChartMode === "group" && currentTab === "group_signals") {
+          await loadGroupSeries();
+        } else if (currentKey) {
+          await loadSeries();
+        }
+        await loadTable();
+      } finally {
+        pullRefreshRefreshing = false;
+        pullRefreshActive = false;
+        pullRefreshDistance = 0;
+        pullRefreshAllowed = false;
+        resetPullRefreshIndicator();
+      }
+    }
+
+    function scrollSectionIntoView(element) {
+      if (!element) return;
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function isPhoneLayout() {
+      return window.matchMedia("(max-width: 760px)").matches;
+    }
+
+    function setMobileDetailOpen(open) {
+      const shouldOpen = Boolean(open) && isPhoneLayout();
+      document.body.classList.toggle("mobile-detail-open", shouldOpen);
+      if (!shouldOpen) {
+        updateMobileNavState();
+      }
+    }
+
+    function isMobileSignalFeedMode() {
+      return isPhoneLayout() && currentTab !== "group_signals";
+    }
+
+    function getMobileSignalCardSummary(item) {
+      if (currentTab === "tracked_items") {
+        const latestPrice = item.latest_price ?? item.p_now;
+        const priceText = formatNumber(latestPrice, 2);
+        return {
+          priceText: priceText === "-" ? item.tags || item.rarity || "-" : `$${priceText}`,
+          metricHtml: item.tags || item.rarity || item.subTypeName || "",
+          trendLabel: "30D Trend"
+        };
+      }
+      if (currentTab === "top_movers") {
+        const pct = formatPercent(item.roc_pct);
+        return {
+          priceText: `$${formatNumber(item.p_now, 2)}`,
+          metricHtml: `30D move <span class="${pct.cls}">${pct.text}</span>`,
+          trendLabel: "30D Trend"
+        };
+      }
+      if (currentTab === "breakouts") {
+        const pct = formatPercent(item.breakout_pct);
+        return {
+          priceText: `$${formatNumber(item.latest_price, 2)}`,
+          metricHtml: `Breakout <span class="${pct.cls}">${pct.text}</span>`,
+          trendLabel: "30D Trend"
+        };
+      }
+      if (currentTab === "good_buys") {
+        const pct = formatPercent(item.price_vs_sma30_pct);
+        return {
+          priceText: `$${formatNumber(item.latest_price, 2)}`,
+          metricHtml: `vs SMA30 <span class="${pct.cls}">${pct.text}</span>`,
+          trendLabel: "30D Trend"
+        };
+      }
+      if (["sma30_holds", "early_uptrends", "confirmed_uptrends"].includes(currentTab)) {
+        const pct = formatPercent(item.pct_vs_sma30);
+        return {
+          priceText: `$${formatNumber(item.latest_price, 2)}`,
+          metricHtml: `vs SMA30 <span class="${pct.cls}">${pct.text}</span>`,
+          trendLabel: "30D Trend"
+        };
+      }
+      const latestPrice = item.latest_price ?? item.p_now;
+      const priceText = formatNumber(latestPrice, 2);
+      return {
+        priceText: priceText === "-" ? "-" : `$${priceText}`,
+        metricHtml: item.rarity || item.subTypeName || "",
+        trendLabel: "30D Trend"
+      };
+    }
+
+    async function renderMobileSignalResults(rows) {
+      if (!mobileSignalResults) return;
+      mobileSignalResults.innerHTML = "";
+      if (!rows.length) {
+        const empty = document.createElement("div");
+        empty.className = "empty";
+        empty.textContent = "No rows returned.";
+        mobileSignalResults.appendChild(empty);
+        mobileSignalResults.hidden = false;
+        return;
+      }
+
+      rows.forEach((item) => {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = `mobile-signal-card${item.key === currentKey ? " active" : ""}`;
+        const summary = getMobileSignalCardSummary(item);
+
+        const head = document.createElement("div");
+        head.className = "mobile-signal-head";
+
+        const imageShell = document.createElement("div");
+        imageShell.className = "mobile-signal-image";
+        if (item.imageUrl) {
+          const img = document.createElement("img");
+          img.src = item.imageUrl;
+          img.alt = item.productName || "Card image";
+          img.loading = "lazy";
+          imageShell.classList.add("is-expandable");
+          imageShell.title = "View full image";
+          imageShell.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleImagePreview(item.imageUrl, item.productName || "Card image", imageShell);
+          });
+          imageShell.appendChild(img);
+        } else {
+          imageShell.textContent = "No image";
+        }
+
+        const copy = document.createElement("div");
+        copy.className = "mobile-signal-copy";
+        const name = document.createElement("div");
+        name.className = "mobile-signal-name";
+        name.textContent = item.productName || `productId ${item.productId}`;
+        const set = document.createElement("div");
+        set.className = "mobile-signal-set";
+        set.textContent = item.groupName || "Unknown Set";
+        copy.append(name, set);
+
+        const price = document.createElement("div");
+        price.className = "mobile-signal-price";
+        const priceValue = document.createElement("strong");
+        priceValue.textContent = summary.priceText;
+        const pctLabel = document.createElement("div");
+        pctLabel.className = "mobile-signal-metric";
+        pctLabel.innerHTML = summary.metricHtml;
+        price.append(priceValue, pctLabel);
+
+        head.append(imageShell, copy, price);
+
+        const trend = document.createElement("div");
+        trend.className = "mobile-signal-trend";
+        const trendLabel = document.createElement("div");
+        trendLabel.className = "mobile-signal-trend-label";
+        trendLabel.textContent = summary.trendLabel;
+        const spark = document.createElement("div");
+        spark.className = "mobile-signal-spark";
+        spark.dataset.mobileSparkline = item.key;
+        spark.innerHTML = `<div class="sparkline-empty">${loadingMarkup("Loading trend")}</div>`;
+        trend.append(trendLabel, spark);
+
+        const trackRow = document.createElement("div");
+        trackRow.className = "mobile-track-row";
+        const trackButtons = [
+          { tag: "favorite", text: "Fav", label: "Favorite" },
+          { tag: "watchlist", text: "Watch", label: "Watchlist" },
+          { tag: "research", text: "Research", label: "Research" },
+          { tag: "owned", text: "Buy", label: "Buy List" },
+        ];
+        const activeTags = localTags.get(item.key) || new Set();
+        trackButtons.forEach(({ tag, text, label }) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `mobile-track-btn${activeTags.has(tag) ? " active" : ""}`;
+          button.dataset.tag = tag;
+          button.title = label;
+          button.setAttribute("aria-label", label);
+          button.textContent = text;
+          button.addEventListener("click", async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const enabled = await toggleTrackedTagForItem(item, tag);
+            button.classList.toggle("active", enabled);
+          });
+          trackRow.appendChild(button);
+        });
+
+        card.append(head, trend, trackRow);
+        card.addEventListener("click", async () => {
+          await selectItem(item, { openDetail: true });
+          activeTableIndex = rows.findIndex((row) => row.key === item.key);
+          syncActiveTableRow(true);
+          mobileSignalResults.querySelectorAll(".mobile-signal-card").forEach((node) => node.classList.remove("active"));
+          card.classList.add("active");
+        });
+        mobileSignalResults.appendChild(card);
+      });
+
+      const days = 30;
+      const uncachedRows = rows.filter((item) => !sparklineCache.has(`${item.key}|${days}`));
+      if (uncachedRows.length) {
+        try {
+          const payload = await postJson("/sparkline_batch", {
+            days,
+            items: uncachedRows.map((item) => ({
+              productId: item.productId,
+              subTypeName: item.subTypeName || ""
+            }))
+          });
+          const seriesMap = payload.items || {};
+          uncachedRows.forEach((item) => {
+            sparklineCache.set(`${item.key}|${days}`, seriesMap[item.key] || []);
+          });
+        } catch (_) {
+          uncachedRows.forEach((item) => {
+            sparklineCache.set(`${item.key}|${days}`, []);
+          });
+        }
+      }
+
+      rows.forEach((item) => {
+        const values = sparklineCache.get(`${item.key}|${days}`) || [];
+        mobileSignalResults.querySelectorAll(`[data-mobile-sparkline="${CSS.escape(item.key)}"]`).forEach((el) => {
+          el.innerHTML = renderSparklineSvg(values);
+        });
+      });
+      mobileSignalResults.hidden = false;
+    }
+
+    function setMobileSearchOpen(open) {
+      if (!mobileSearchToggle) return;
+      const isOpen = Boolean(open);
+      document.body.classList.toggle("mobile-search-open", isOpen);
+      mobileSearchToggle.classList.toggle("active", isOpen);
+      mobileSearchToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      if (isOpen) {
+        window.setTimeout(() => {
+          headerSearchInput.focus();
+          headerSearchInput.select();
+        }, 120);
+      }
+    }
+
+    function openMobileSearch() {
+      if (!mobileSearchToggle) return;
+      setMobileDetailOpen(false);
+      setMobileIndicatorMenuOpen(false);
+      updateMobileNavState("search");
+      setTrackingMenuOpen(false);
+      setMobileSearchOpen(true);
+      scrollSectionIntoView(searchSection);
     }
 
     function syncActiveTableRow(scrollIntoView = false) {
@@ -1770,6 +3730,11 @@
     function displayCell(col, item) {
       if (col === "generation") return item.generation || "Legacy";
       if (col === "tags") return item.tags || "";
+      if (col === "tcgplayerLink") {
+        const url = tcgplayerProductUrl(item.productId);
+        if (!url) return "—";
+        return `<a class="table-link-btn" data-stop-row="true" href="${url}" target="_blank" rel="noopener noreferrer">Open</a>`;
+      }
       if (col === "groupName") return item.groupName;
       if (col === "productName") return item.productName;
       if (col === "number") return item.number || "";
@@ -1795,6 +3760,13 @@
       // The lower table is intentionally task-based: it changes meaning based on the active tab,
       // but clicking any product-like row should still funnel back into the main chart selection.
       const cfg = tabConfig[currentTab];
+      const mobileFeedMode = isMobileSignalFeedMode();
+      if (signalPanel) {
+        signalPanel.classList.toggle("mobile-feed-mode", mobileFeedMode);
+      }
+      if (!mobileFeedMode && mobileSignalResults) {
+        mobileSignalResults.hidden = true;
+      }
       renderHeader(cfg.columns);
       tableBody.innerHTML = "";
       emptyState.style.display = rows.length ? "none" : "block";
@@ -1804,7 +3776,11 @@
         const tr = document.createElement("tr");
         tr.dataset.index = String(index);
         tr.innerHTML = cfg.columns.map((col) => `<td>${displayCell(col, item)}</td>`).join("");
-        tr.addEventListener("click", async () => {
+        tr.addEventListener("click", async (event) => {
+          const target = event.target;
+          if (target instanceof HTMLElement && target.closest("[data-stop-row]")) {
+            return;
+          }
           activeTableIndex = index;
           syncActiveTableRow(false);
           if (currentTab === "group_signals") {
@@ -1817,16 +3793,14 @@
             await loadGroupSeries(item);
             return;
           }
-          ensurePickerOption(item);
-          currentKey = item.key;
-          picker.value = currentKey;
-          currentChartMode = "product";
-          syncGroupSelection(item.groupId);
-          loadSeries();
+          await selectItem(item, { openDetail: isPhoneLayout() });
         });
         tableBody.appendChild(tr);
       });
       syncActiveTableRow(currentTab === "group_signals");
+      if (mobileFeedMode) {
+        renderMobileSignalResults(rows).catch((err) => console.error(err));
+      }
     }
 
     function updateGroupSignalFilterVisibility() {
@@ -1884,18 +3858,48 @@
           groupId: meta.groupId,
           productName: meta.productName || `productId ${meta.productId}`,
           groupName: meta.groupName || "",
+          imageUrl: meta.imageUrl || "",
           number: meta.number || "",
           rarity: meta.rarity || "",
           subTypeName: meta.subTypeName || "",
-          tags: tagList.join(", "),
+          latest_price: meta.latest_price ?? null,
+          latest_date: meta.latest_date || "",
+          tags: tagList.map((tag) => formatTrackedTagLabel(tag)).join(", "),
         });
       }
+      const compareText = (left, right) =>
+        String(left || "").localeCompare(String(right || ""), undefined, { numeric: true, sensitivity: "base" });
       rows.sort((a, b) => {
-        const tagCompare = a.tags.localeCompare(b.tags);
+        if (currentTrackedSort === "productName") {
+          const productCompare = compareText(a.productName, b.productName);
+          if (productCompare !== 0) return productCompare;
+          return compareText(a.subTypeName, b.subTypeName);
+        }
+        if (currentTrackedSort === "groupName") {
+          const groupCompare = compareText(a.groupName, b.groupName);
+          if (groupCompare !== 0) return groupCompare;
+          return compareText(a.productName, b.productName);
+        }
+        if (currentTrackedSort === "rarity") {
+          const rarityCompare = compareText(a.rarity, b.rarity);
+          if (rarityCompare !== 0) return rarityCompare;
+          return compareText(a.productName, b.productName);
+        }
+        if (currentTrackedSort === "number") {
+          const numberCompare = compareText(a.number, b.number);
+          if (numberCompare !== 0) return numberCompare;
+          return compareText(a.productName, b.productName);
+        }
+        if (currentTrackedSort === "subTypeName") {
+          const subtypeCompare = compareText(a.subTypeName, b.subTypeName);
+          if (subtypeCompare !== 0) return subtypeCompare;
+          return compareText(a.productName, b.productName);
+        }
+        const tagCompare = compareText(a.tags, b.tags);
         if (tagCompare !== 0) return tagCompare;
-        const groupCompare = a.groupName.localeCompare(b.groupName);
+        const groupCompare = compareText(a.groupName, b.groupName);
         if (groupCompare !== 0) return groupCompare;
-        return a.productName.localeCompare(b.productName);
+        return compareText(a.productName, b.productName);
       });
       return rows;
     }
@@ -1918,7 +3922,7 @@
       }
     }
 
-    async function selectItem(item) {
+    async function selectItem(item, options = {}) {
       // Central helper used by the table and set browser to move the full dashboard to one product.
       if (!item) return;
       ensurePickerOption(item);
@@ -1927,67 +3931,75 @@
       currentChartMode = "product";
       syncGroupSelection(item.groupId);
       await loadSeries();
+      if (options.openDetail) {
+        setMobileDetailOpen(true);
+      }
     }
 
     function renderMoverRail(hydrateSparklines = true) {
-      // The left rail is the discovery surface: compact ranked cards that should quickly load
-      // a full chart when clicked without touching the lower table first.
+      // The top ticker is a quick-scan market band: compact movers with just enough
+      // context and sparkline history to jump the main chart to a name immediately.
       const rows = (moverFeeds[currentSegment] || []).slice(0, 18);
       moverList.innerHTML = "";
-      leftStatus.textContent = moverFeedLoading[currentSegment] ? "Loading" : `${rows.length} live`;
+      if (leftStatus) {
+        leftStatus.textContent = moverFeedLoading[currentSegment] ? "Loading" : `${rows.length} live`;
+      }
+      if (!rows.length) {
+        moverList.innerHTML = `<div class="sparkline-empty">${moverFeedLoading[currentSegment] ? loadingMarkup("Loading ticker") : "No movers"}</div>`;
+        return;
+      }
       const sparklineDays = getSparklineDays();
-      rows.forEach((item, idx) => {
+      const buildTickerTrack = (isDuplicate = false) => {
+        const track = document.createElement("div");
+        track.className = "mover-list-track";
+        if (isDuplicate) {
+          track.setAttribute("aria-hidden", "true");
+        }
+        rows.forEach((item) => {
         const pct = formatPercent(item.roc_pct);
-        const div = document.createElement("article");
+        const div = document.createElement("button");
+        div.type = "button";
         div.className = `mover-card${item.key === currentKey ? " active" : ""}`;
+        div.dataset.key = item.key;
         div.innerHTML = `
           <div class="mover-head">
             <div>
-              <div class="section-label">${currentSegment === "sealed" ? "Sealed mover" : "Card mover"} #${idx + 1}</div>
               <div class="mover-name">${item.productName}</div>
-              <div class="mover-set">${item.groupName || "Unknown Set"}<br>${item.subTypeName || ""}</div>
+              <div class="mover-set">${item.groupName || "Unknown Set"}</div>
+            </div>
+            <div class="mover-chart">
+              <div class="sparkline-shell">
+                <div class="sparkline-body" data-sparkline="${item.key}">
+                  <div class="sparkline-empty">${loadingMarkup("Loading trend")}</div>
+                </div>
+              </div>
             </div>
             <div class="mover-price">
               <strong>${formatNumber(item.p_now, 2)}</strong>
               <span class="price-pill ${pct.cls}">${pct.text}</span>
             </div>
           </div>
-          <div class="sparkline-shell">
-            <div class="sparkline-label">Price trend ${sparklineDays >= 365 ? "1Y" : `${Math.round(sparklineDays / 30)}M`}</div>
-            <div class="sparkline-body" data-sparkline="${item.key}">
-              <div class="sparkline-empty">Loading trend</div>
-            </div>
-          </div>
-          <div class="mover-meta">
-            <div>
-              ${formatProductClassLabel(item)}
-              <span class="mini-badge neutral">${formatProductBadgeLabel(item)}</span>
-            </div>
-            <div>P Prior (30D) ${formatNumber(item.p_prior, 2)}</div>
-          </div>
         `;
-        div.addEventListener("click", () => {
-          ensurePickerOption(item);
-          currentKey = item.key;
-          picker.value = currentKey;
-          currentChartMode = "product";
-          syncGroupSelection(item.groupId);
+        div.addEventListener("click", async () => {
+          await selectItem(item, { openDetail: isPhoneLayout() });
           updateMoverRailActiveState();
-          loadSeries();
         });
-        moverList.appendChild(div);
-      });
+          track.appendChild(div);
+        });
+        return track;
+      };
+      moverList.appendChild(buildTickerTrack(false));
+      moverList.appendChild(buildTickerTrack(true));
       if (hydrateSparklines) {
         hydrateMoverSparklines(rows, sparklineDays);
       }
     }
 
     function updateMoverRailActiveState() {
-      // Keep the left-rail selection highlight in sync without rebuilding the sparkline cards.
+      // Keep the ticker highlight in sync without rebuilding the duplicated marquee items.
       const cards = Array.from(moverList.querySelectorAll(".mover-card"));
-      cards.forEach((card, index) => {
-        const item = (moverFeeds[currentSegment] || [])[index];
-        card.classList.toggle("active", item?.key === currentKey);
+      cards.forEach((card) => {
+        card.classList.toggle("active", card.dataset.key === currentKey);
       });
     }
 
@@ -2021,31 +4033,45 @@
       `;
     }
 
-    async function fetchSparklineSeries(item, days) {
-      const cacheKey = `${item.key}|${days}`;
-      if (sparklineCache.has(cacheKey)) {
-        return sparklineCache.get(cacheKey);
-      }
-      const qs = new URLSearchParams({
-        productId: String(item.productId),
-        subTypeName: item.subTypeName,
-        days: String(days)
+    function renderDetailsList(target, details) {
+      if (!target) return;
+      target.innerHTML = "";
+      details.forEach(([label, value]) => {
+        const row = document.createElement("div");
+        row.className = "detail-row";
+        row.innerHTML = `<div class="label">${label}</div><div class="value">${value}</div>`;
+        target.appendChild(row);
       });
-      const promise = getJson(`/series?${qs.toString()}`)
-        .then((payload) => (payload.rows || []).map((row) => row[1]).filter((value) => value !== null && value !== undefined))
-        .catch(() => []);
-      sparklineCache.set(cacheKey, promise);
-      return promise;
     }
 
     async function hydrateMoverSparklines(rows, days) {
-      const tasks = rows.map(async (item) => {
-        const el = moverList.querySelector(`[data-sparkline="${CSS.escape(item.key)}"]`);
-        if (!el) return;
-        const values = await fetchSparklineSeries(item, days);
-        el.innerHTML = renderSparklineSvg(values);
+      const uncachedRows = rows.filter((item) => !sparklineCache.has(`${item.key}|${days}`));
+      if (uncachedRows.length) {
+        try {
+          const payload = await postJson("/sparkline_batch", {
+            days,
+            items: uncachedRows.map((item) => ({
+              productId: item.productId,
+              subTypeName: item.subTypeName || ""
+            }))
+          });
+          const seriesMap = payload.items || {};
+          uncachedRows.forEach((item) => {
+            sparklineCache.set(`${item.key}|${days}`, seriesMap[item.key] || []);
+          });
+        } catch (_) {
+          uncachedRows.forEach((item) => {
+            sparklineCache.set(`${item.key}|${days}`, []);
+          });
+        }
+      }
+
+      rows.forEach((item) => {
+        const values = sparklineCache.get(`${item.key}|${days}`) || [];
+        moverList.querySelectorAll(`[data-sparkline="${CSS.escape(item.key)}"]`).forEach((el) => {
+          el.innerHTML = renderSparklineSvg(values);
+        });
       });
-      await Promise.all(tasks);
     }
 
     function renderSummary(meta, series) {
@@ -2060,7 +4086,7 @@
       const pct = formatPercent(pctVsSma30);
 
       cardTitle.textContent = meta.productName || `productId ${meta.productId}`;
-      cardSubtitle.textContent = `${meta.groupName || "Unknown Set"} | ${meta.subTypeName} | ${meta.number ? `#${meta.number}` : "No card number"}`;
+      cardSubtitle.textContent = `${meta.groupName || "Unknown Set"} | ${meta.subTypeName || "n/a"} | ${meta.number ? `#${meta.number}` : "No card number"}`;
       chartLabel.textContent = `Showing ${rows.length.toLocaleString()} daily observations across the selected chart window.`;
       headlinePrice.textContent = formatNumber(latestPrice, 2);
       headlineChangeWrap.innerHTML = `<span class="price-pill ${pct.cls}">${pct.text === "n/a" ? "vs SMA30 n/a" : `${pct.text} vs SMA30`}</span>`;
@@ -2070,7 +4096,6 @@
         clearHeroImage("No Image Available");
       }
 
-      detailStats.innerHTML = "";
       const details = [
         ["Set", meta.groupName || "Unknown Set"],
         ["Subtype", meta.subTypeName || "n/a"],
@@ -2082,13 +4107,18 @@
         ["Vs SMA30", pct.text],
         ["Window", `${currentDays} days`]
       ];
-      details.forEach(([label, value]) => {
-        const row = document.createElement("div");
-        row.className = "detail-row";
-        row.innerHTML = `<div class="label">${label}</div><div class="value">${value}</div>`;
-        detailStats.appendChild(row);
-      });
+      renderDetailsList(detailStats, details);
+      renderDetailsList(mobileDetailStats, details);
 
+    }
+
+    function setHeroImageExpandable(src = "", altText = "") {
+      currentHeroImageExpandedSrc = src || "";
+      currentHeroImageExpandedAlt = altText || "";
+      if (!heroImageCard) return;
+      const isExpandable = Boolean(currentHeroImageExpandedSrc);
+      heroImageCard.classList.toggle("is-expandable", isExpandable);
+      heroImageCard.title = isExpandable ? "View full image" : "";
     }
 
     function clearHeroImage(emptyText = "No Image Available") {
@@ -2099,6 +4129,7 @@
       heroImageEmpty.textContent = emptyText;
       heroImage.onload = null;
       heroImage.onerror = null;
+      setHeroImageExpandable();
     }
 
     function setHeroImageCandidates(candidates, altText, emptyText = "No Image Available") {
@@ -2116,6 +4147,7 @@
         heroImage.onload = () => {
           heroImage.hidden = false;
           heroImageEmpty.hidden = true;
+          setHeroImageExpandable(src, altText || "");
         };
         heroImage.onerror = () => {
           tryNext();
@@ -2126,6 +4158,77 @@
         heroImage.src = src;
       };
       tryNext();
+    }
+
+    function closeImagePreview() {
+      if (!imagePreviewPopover || !imagePreviewImg || !imagePreviewCaption) return;
+      imagePreviewPopover.classList.remove("open");
+      imagePreviewPopover.hidden = true;
+      imagePreviewPopover.style.top = "";
+      imagePreviewPopover.style.left = "";
+      imagePreviewPopover.style.width = "";
+      imagePreviewImg.removeAttribute("src");
+      imagePreviewImg.alt = "";
+      imagePreviewCaption.textContent = "";
+      currentPreviewImageSrc = "";
+      currentPreviewAnchor = null;
+    }
+
+    function positionImagePreview(anchorEl = null) {
+      // The preview is anchored near the clicked image so it feels like the card art is
+      // popping out from the current dashboard context instead of opening in a detached viewer.
+      if (!imagePreviewPopover) return;
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+      const fallbackWidth = Math.min(viewportWidth * 0.88, 420);
+      if (!(anchorEl instanceof Element)) {
+        imagePreviewPopover.style.left = `${viewportWidth / 2}px`;
+        imagePreviewPopover.style.top = `${viewportHeight / 2}px`;
+        imagePreviewPopover.style.width = `${fallbackWidth}px`;
+        return;
+      }
+      const rect = anchorEl.getBoundingClientRect();
+      const desiredWidth = Math.min(
+        Math.max(rect.width * 2.5, 220),
+        viewportWidth - 24,
+        420
+      );
+      const centerX = Math.min(
+        Math.max(rect.left + (rect.width / 2), desiredWidth / 2 + 12),
+        viewportWidth - (desiredWidth / 2) - 12
+      );
+      const centerY = Math.min(
+        Math.max(rect.top + (rect.height / 2), 90),
+        viewportHeight - 90
+      );
+      imagePreviewPopover.style.width = `${desiredWidth}px`;
+      imagePreviewPopover.style.left = `${centerX}px`;
+      imagePreviewPopover.style.top = `${centerY}px`;
+    }
+
+    function openImagePreview(src, caption = "", anchorEl = null) {
+      if (!imagePreviewPopover || !imagePreviewImg || !imagePreviewCaption || !src) return;
+      imagePreviewImg.src = src;
+      imagePreviewImg.alt = caption || "Card image";
+      imagePreviewCaption.textContent = caption || "";
+      currentPreviewAnchor = anchorEl instanceof Element ? anchorEl : null;
+      positionImagePreview(currentPreviewAnchor);
+      imagePreviewPopover.hidden = false;
+      imagePreviewPopover.classList.add("open");
+      currentPreviewImageSrc = src;
+    }
+
+    function toggleImagePreview(src, caption = "", anchorEl = null) {
+      if (!src) return;
+      if (
+        currentPreviewImageSrc === src
+        && imagePreviewPopover
+        && !imagePreviewPopover.hidden
+      ) {
+        closeImagePreview();
+        return;
+      }
+      openImagePreview(src, caption, anchorEl);
     }
 
     function groupLogoCandidates(groupId) {
@@ -2160,7 +4263,6 @@
         "Set-Level View"
       );
 
-      detailStats.innerHTML = "";
       const details = [
         ["Set", groupMeta?.groupName || `Group ${currentGroupId}`],
         ["Generation", groupMeta?.generation || "n/a"],
@@ -2171,15 +4273,15 @@
         ["Median Price", last.median_price ? formatNumber(last.median_price, 2) : "n/a"],
         ["Window", `${currentDays} days`]
       ];
-      details.forEach(([label, value]) => {
-        const row = document.createElement("div");
-        row.className = "detail-row";
-        row.innerHTML = `<div class="label">${label}</div><div class="value">${value}</div>`;
-        detailStats.appendChild(row);
-      });
+      renderDetailsList(detailStats, details);
+      renderDetailsList(mobileDetailStats, details);
     }
 
     function renderChart(series) {
+      if (window.Plotly?.purge) {
+        Plotly.purge(chartEl);
+      }
+      chartEl.replaceChildren();
       const dates = [];
       const prices = [];
       const sma7 = [];
@@ -2191,7 +4293,7 @@
         sma30.push(row[3]);
       }
 
-      Plotly.react("chart", [
+      Plotly.react(chartEl, [
         {
           x: dates,
           y: prices,
@@ -2244,6 +4346,10 @@
     }
 
     function renderGroupChart(series) {
+      if (window.Plotly?.purge) {
+        Plotly.purge(chartEl);
+      }
+      chartEl.replaceChildren();
       const dates = [];
       const indexValues = [];
       const breadthValues = [];
@@ -2253,7 +4359,7 @@
         breadthValues.push(row[2]);
       }
 
-      Plotly.react("chart", [
+      Plotly.react(chartEl, [
         {
           x: dates,
           y: indexValues,
@@ -2315,6 +4421,52 @@
       });
     }
 
+    async function toggleTrackedTagForItem(item, tag, enabled = null) {
+      if (!item?.key || !tag) return false;
+      if (!localTags.has(item.key)) {
+        localTags.set(item.key, new Set());
+      }
+      const tags = localTags.get(item.key);
+      const shouldEnable = enabled === null ? !tags.has(tag) : Boolean(enabled);
+      if (shouldEnable) {
+        tags.add(tag);
+      } else {
+        tags.delete(tag);
+      }
+      if (!tags.size) {
+        localTags.delete(item.key);
+      }
+      saveStoredTags();
+      if (currentKey === item.key) {
+        updateTagButtons();
+      }
+      if (currentTab === "tracked_items") {
+        await loadTable();
+      }
+      if (trackingToken) {
+        const meta = universeByKey.get(item.key) || item;
+        if (meta?.productId) {
+          try {
+            await trackingJson("/tracking/tags", {
+              method: "PUT",
+              body: JSON.stringify({
+                category_id: currentCategoryId,
+                product_id: meta.productId,
+                sub_type_name: meta.subTypeName || "",
+                tag,
+                enabled: shouldEnable,
+              }),
+              headers: {},
+            });
+            setTrackingStatus(`Saved ${tag} for ${trackingUser?.username || "account"}.`);
+          } catch (err) {
+            setTrackingStatus(`Tag sync failed: ${err.message}`, true);
+          }
+        }
+      }
+      return shouldEnable;
+    }
+
     async function loadHealth() {
       // Health drives the lightweight freshness/source badges and operator stats.
       const health = await getJson("/health");
@@ -2322,32 +4474,60 @@
       document.getElementById("statLatest").textContent = health.latest || "-";
       document.getElementById("statSource").textContent = health.source || "-";
       freshnessBadge.textContent = `Latest data: ${health.latest || "-"}`;
-      leftStatus.textContent = categoryOptions.find((item) => Number(item.category_id) === currentCategoryId)?.label || `Category ${currentCategoryId}`;
+        if (leftStatus) {
+          leftStatus.textContent = categoryOptions.find((item) => Number(item.category_id) === currentCategoryId)?.label || `Category ${currentCategoryId}`;
+        }
     }
 
     async function loadGroups() {
-      // Group metadata populates the set browser and supports group-signals drilldown.
-      const payload = await getJson("/groups?limit=2000");
-      const columns = payload.columns || [];
-      for (const row of payload.rows || []) {
-        const item = {};
-        columns.forEach((col, idx) => { item[col] = row[idx]; });
-        groupsById.set(Number(item.groupId), item);
+      if (groupsLoaded) return;
+      if (groupsLoadPromise) {
+        await groupsLoadPromise;
+        return;
       }
-      fillGroupPicker();
+      // Group metadata populates the set browser and supports group-signals drilldown.
+      groupsLoadPromise = (async () => {
+        const payload = await getJson("/groups?limit=2000");
+        const columns = payload.columns || [];
+        for (const row of payload.rows || []) {
+          const item = {};
+          columns.forEach((col, idx) => { item[col] = row[idx]; });
+          groupsById.set(Number(item.groupId), item);
+        }
+        groupsLoaded = true;
+        fillGroupPicker();
+      })();
+      try {
+        await groupsLoadPromise;
+      } finally {
+        groupsLoadPromise = null;
+      }
     }
 
     async function loadUniverse() {
-      // Universe load seeds the main product picker and provides enrichment data for every screen.
-      const payload = await getJson(`/universe?limit=${universeLimit}`);
-      const columns = payload.columns || [];
-      for (const row of payload.rows || []) {
-        const item = {};
-        columns.forEach((col, idx) => { item[col] = row[idx]; });
-        const key = keyOf(item.productId, item.subTypeName);
-        universeByKey.set(key, item);
+      if (universeLoaded) return;
+      if (universeLoadPromise) {
+        await universeLoadPromise;
+        return;
       }
-      fillPicker();
+      // Universe load seeds the main product picker and provides enrichment data for every screen.
+      universeLoadPromise = (async () => {
+        const payload = await getJson(`/universe?limit=${universeLimit}`);
+        const columns = payload.columns || [];
+        for (const row of payload.rows || []) {
+          const item = {};
+          columns.forEach((col, idx) => { item[col] = row[idx]; });
+          const key = keyOf(item.productId, item.subTypeName);
+          universeByKey.set(key, item);
+        }
+        universeLoaded = true;
+        fillPicker();
+      })();
+      try {
+        await universeLoadPromise;
+      } finally {
+        universeLoadPromise = null;
+      }
     }
 
     async function loadTopMovers(segment = currentSegment, force = false, hydrateSparklines = true) {
@@ -2390,7 +4570,6 @@
       // Fresh page load should become usable as soon as the selected chart is ready. Heavier
       // list-building work is intentionally deferred so it does not block first paint.
       scheduleDeferredLoad(async () => {
-        await Promise.all([loadGroups(), loadUniverse()]);
         await loadTable();
       });
       scheduleDeferredLoad(async () => {
@@ -2406,16 +4585,31 @@
       // right rail are refreshed from the same payload so the whole page stays coherent.
       if (!currentKey) return;
       let meta = universeByKey.get(currentKey);
-      if (!meta && hasExplicitProductSelection) {
-        await loadUniverse();
-        meta = universeByKey.get(currentKey);
+      if (!meta) {
+        // Avoid forcing a full universe preload on cache misses. Expected result:
+        // chart loads server-side from the selected key without large browser metadata fetches.
+        const [productIdRaw, subTypeNameRaw = ""] = String(currentKey).split("||");
+        const productId = Number(productIdRaw);
+        if (!Number.isNaN(productId)) {
+          meta = {
+            productId,
+            subTypeName: subTypeNameRaw,
+          };
+        }
+      }
+      const activeRowMeta = activeTableRows.find((row) => row.key === currentKey);
+      if (activeRowMeta) {
+        meta = mergeMeta(meta, activeRowMeta);
+        universeByKey.set(currentKey, meta);
       }
       if (!meta) return;
       const qs = new URLSearchParams({
         productId: String(meta.productId),
-        subTypeName: meta.subTypeName,
+        subTypeName: meta.subTypeName || "",
         days: String(currentDays)
       });
+      chartLabel.innerHTML = loadingMarkup("Loading selected history");
+      chartEl.innerHTML = `<div class="sparkline-empty">${loadingMarkup("Loading chart")}</div>`;
       const series = await getJson(`/series?${qs.toString()}`);
       currentSeriesPayload = series;
       renderSummary(meta, series);
@@ -2448,41 +4642,87 @@
       // group's product list; otherwise it renders the configured screener endpoint.
       // Group Signals can also be narrowed by generation/era without leaving the screen.
       const cfg = tabConfig[currentTab];
-      tableStatus.textContent = cfg.title;
+      tableStatus.innerHTML = loadingMarkup("Loading screener");
       updateDevTabHelp(currentTab);
-      if (currentTab === "tracked_items") {
-        if (!universeByKey.size) {
-          await loadUniverse();
+      // Overlay makes loading state obvious during slower queries and filter changes.
+      setTableLoading(true, "Loading market signals");
+      let loadSucceeded = false;
+      try {
+        if (currentTab === "tracked_items") {
+          if (!universeByKey.size) {
+            await loadUniverse();
+          }
+          updateTrackedFilterVisibility();
+          updateMobileNavState("tracked");
+          const rows = buildTrackedRows();
+          renderTable(rows);
+          loadSucceeded = true;
+          return rows;
         }
-        updateTrackedFilterVisibility();
-        const rows = buildTrackedRows();
-        renderTable(rows);
-        return rows;
-      }
-      let path = currentTab === "group_products"
-        ? `/group_products?groupId=${encodeURIComponent(currentGroupId)}&limit=5000`
-        : cfg.path;
-      if (currentTab === "group_signals" && currentGeneration !== "all") {
-        path += `&generation=${encodeURIComponent(currentGeneration)}`;
-      }
-      const payload = await getJson(path);
-      const rows = enrichRows(payload);
-      if (currentTab === "group_signals") {
-        populateGenerationPicker(rows);
-        if (rows.length && !rows.some((row) => Number(row.groupId) === Number(currentGroupId))) {
-          currentGroupId = Number(rows[0].groupId);
-          if (!Number.isNaN(currentGroupId)) {
-            groupPicker.value = String(currentGroupId);
+        if (currentTab === "top_movers") {
+          if (!moverFeeds[currentSegment] || !moverFeeds[currentSegment].length) {
+            await loadTopMovers(currentSegment, false, false);
+          }
+          const rows = moverFeeds[currentSegment] || [];
+          updateGroupSignalFilterVisibility();
+          updateTrackedFilterVisibility();
+          updateMobileNavState("home");
+          renderTable(rows);
+          loadSucceeded = true;
+          return rows;
+        }
+        let path = currentTab === "group_products"
+          ? `/group_products?groupId=${encodeURIComponent(currentGroupId)}&limit=5000`
+          : cfg.path;
+        if (segmentFilteredTabs.has(currentTab)) {
+          path += `${path.includes("?") ? "&" : "?"}product_kind=${encodeURIComponent(currentSegment === "sealed" ? "sealed" : "card")}`;
+        }
+        if (currentTab === "group_signals" && currentGeneration !== "all") {
+          path += `&generation=${encodeURIComponent(currentGeneration)}`;
+        }
+        const payload = await getJson(path);
+        let rows = enrichRows(payload);
+        if (currentTab === "group_signals") {
+          populateGenerationPicker(rows);
+          if (!rows.length) {
+            currentGroupId = null;
+            syncUrlState();
+            updateGroupSignalFilterVisibility();
+            updateTrackedFilterVisibility();
+            renderTable(rows);
+            loadSucceeded = true;
+            return rows;
+          }
+          if (rows.length && !rows.some((row) => Number(row.groupId) === Number(currentGroupId))) {
+            currentGroupId = Number(rows[0].groupId);
+            if (!Number.isNaN(currentGroupId)) {
+              groupPicker.value = String(currentGroupId);
+            }
+          }
+          if (currentGroupId !== null && currentGroupId !== undefined && !Number.isNaN(currentGroupId)) {
+            await loadGroupSeries(rows.find((row) => Number(row.groupId) === Number(currentGroupId)) || null);
           }
         }
-        if (currentGroupId !== null && currentGroupId !== undefined && !Number.isNaN(currentGroupId)) {
-          await loadGroupSeries(rows.find((row) => Number(row.groupId) === Number(currentGroupId)) || null);
+        updateGroupSignalFilterVisibility();
+        updateTrackedFilterVisibility();
+        updateMobileNavState();
+        renderTable(rows);
+        loadSucceeded = true;
+        return rows;
+      } catch (err) {
+        resetTableLoading();
+        tableHead.innerHTML = "";
+        tableBody.innerHTML = "";
+        emptyState.style.display = "block";
+        emptyState.textContent = "Unable to load market signals.";
+        tableStatus.textContent = `Dashboard error: ${err.message}`;
+        throw err;
+      } finally {
+        if (loadSucceeded) {
+          setTableLoading(false);
+          tableStatus.textContent = cfg.title;
         }
       }
-      updateGroupSignalFilterVisibility();
-      updateTrackedFilterVisibility();
-      renderTable(rows);
-      return rows;
     }
 
     function bindEvents() {
@@ -2497,6 +4737,15 @@
         }
         currentChartMode = "product";
         await loadSeries();
+        if (isPhoneLayout() && currentKey) {
+          setMobileDetailOpen(true);
+        }
+      });
+
+      picker.addEventListener("focus", () => {
+        if (!universeLoaded && !universeLoadPromise) {
+          loadUniverse().catch((err) => console.error(err));
+        }
       });
 
       groupPicker.addEventListener("change", async () => {
@@ -2512,6 +4761,12 @@
         if (rows && rows.length) {
           currentChartMode = "product";
           await selectItem(rows[0]);
+        }
+      });
+
+      groupPicker.addEventListener("focus", () => {
+        if (!groupsLoaded && !groupsLoadPromise) {
+          loadGroups().catch((err) => console.error(err));
         }
       });
 
@@ -2531,6 +4786,42 @@
           tableWrap.scrollTop = 0;
         }
         await loadTable();
+      });
+
+      headerSearchInput.addEventListener("input", () => {
+        if (headerSearchDebounce) {
+          clearTimeout(headerSearchDebounce);
+        }
+        headerSearchDebounce = setTimeout(() => {
+          refreshHeaderSearchResults().catch((err) => {
+            console.error(err);
+            setHeaderSearchStatus(`Search error: ${err.message}`, true);
+          });
+        }, 140);
+      });
+
+      headerSearchInput.addEventListener("keydown", async (event) => {
+        if (!headerSearchResultsData.length) return;
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          headerSearchActiveIndex = Math.min(headerSearchResultsData.length - 1, headerSearchActiveIndex + 1);
+          syncHeaderSearchActiveResult();
+        } else if (event.key === "ArrowUp") {
+          event.preventDefault();
+          headerSearchActiveIndex = Math.max(0, headerSearchActiveIndex - 1);
+          syncHeaderSearchActiveResult();
+        } else if (event.key === "Enter") {
+          event.preventDefault();
+          const index = headerSearchActiveIndex >= 0 ? headerSearchActiveIndex : 0;
+          await selectHeaderSearchResult(index);
+        } else if (event.key === "Escape") {
+          setHeaderSearchResultsOpen(false);
+        }
+      });
+
+      headerSearchForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        await runHeaderSearch();
       });
 
       trackingToggleBtn.addEventListener("click", () => {
@@ -2556,37 +4847,37 @@
         if (cfg?.title) {
           btn.title = cfg.title;
         }
-        btn.addEventListener("click", async () => {
-          const wasActive = currentTab === btn.dataset.tab;
-          const previousTab = currentTab;
-          tabsEl.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
+          btn.addEventListener("click", async () => {
+            const previousTab = currentTab;
+            setMobileDetailOpen(false);
+            setMobileIndicatorMenuOpen(false);
+            tabsEl.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
           btn.classList.add("active");
           currentTab = btn.dataset.tab;
+          if (currentTab === "group_products" && !groupsLoaded) {
+            await loadGroups();
+          }
           if (currentTab === "group_signals") {
-            const selectedGroupId = Number(groupPicker.value);
-            if (!Number.isNaN(selectedGroupId)) {
+            const selectedGroupId = groupPicker.value ? Number(groupPicker.value) : currentGroupId;
+            if (selectedGroupId !== null && selectedGroupId !== undefined && !Number.isNaN(selectedGroupId)) {
               currentGroupId = selectedGroupId;
             }
           }
           syncUrlState();
           updateGroupSignalFilterVisibility();
           updateDevTabHelp(currentTab);
+          updateMobileNavState();
           const rows = await loadTable();
-          if (currentTab !== "group_signals") {
-            currentChartMode = "product";
-            if (previousTab === "group_signals" && currentKey) {
-              await loadSeries();
-            }
-          }
-          if (currentTab === "group_products" && wasActive && rows && rows.length) {
-            activeTableIndex = 0;
-            syncActiveTableRow(true);
-          }
-          if (currentTab === "tracked_items" && rows && rows.length) {
+          if (rows && rows.length && currentTab !== "group_signals") {
             currentChartMode = "product";
             await selectItem(rows[0]);
             activeTableIndex = 0;
             syncActiveTableRow(true);
+          } else if (currentTab !== "group_signals") {
+            currentChartMode = "product";
+            if (previousTab === "group_signals" && currentKey) {
+              await loadSeries();
+            }
           }
           if (currentTab === "group_products" && tableWrap) {
             tableWrap.scrollTop = 0;
@@ -2597,21 +4888,108 @@
         });
       });
 
-      railSegments.querySelectorAll("button").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-          railSegments.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
-          btn.classList.add("active");
-          currentSegment = btn.dataset.segment;
-          syncUrlState();
-          await loadTopMovers(currentSegment);
+      const bindSegmentButtons = (container) => {
+        if (!container) return;
+        container.querySelectorAll("[data-segment]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const nextSegment = btn.dataset.segment;
+            if (!["cards", "sealed"].includes(nextSegment || "")) return;
+            currentSegment = nextSegment;
+            syncSegmentButtons();
+            syncUrlState();
+            await loadTopMovers(currentSegment);
+            if (segmentFilteredTabs.has(currentTab)) {
+              if (tableWrap) {
+                tableWrap.scrollTop = 0;
+              }
+              await loadTable();
+            }
+          });
         });
-      });
+      };
+      bindSegmentButtons(railSegments);
+      bindSegmentButtons(mobileHomeSegments);
+
+      if (mobileBottomNav) {
+        mobileBottomNav.querySelectorAll("button").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const target = btn.dataset.mobileTarget;
+            if (target === "search") {
+              openMobileSearch();
+              return;
+            }
+            if (target === "tracked") {
+              setMobileDetailOpen(false);
+              setMobileSearchOpen(false);
+              setMobileIndicatorMenuOpen(false);
+              updateMobileNavState("tracked");
+              await openTrackedItemsView();
+              return;
+            }
+            if (target === "indicators") {
+              setMobileDetailOpen(false);
+              setMobileSearchOpen(false);
+              const currentlyOpen = mobileIndicatorMenu && !mobileIndicatorMenu.hidden;
+              setMobileIndicatorMenuOpen(!currentlyOpen);
+              return;
+            }
+            setMobileIndicatorMenuOpen(false);
+            setMobileDetailOpen(false);
+            if (target === "home") {
+              setMobileSearchOpen(false);
+              if (currentTab !== "sma30_holds") {
+                const homeBtn = tabsEl.querySelector('[data-tab="sma30_holds"]');
+                if (homeBtn) {
+                  homeBtn.click();
+                  return;
+                }
+              }
+              updateMobileNavState("home");
+              scrollSectionIntoView(searchSection);
+              return;
+            }
+          });
+        });
+      }
+
+      if (mobileIndicatorGrid) {
+        mobileIndicatorGrid.querySelectorAll("[data-indicator-tab]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const tabKey = btn.dataset.indicatorTab;
+            const tabBtn = tabsEl.querySelector(`[data-tab="${tabKey}"]`);
+            setMobileIndicatorMenuOpen(false);
+            if (tabBtn) {
+              tabBtn.click();
+              scrollSectionIntoView(signalsSection);
+            }
+          });
+        });
+      }
+
+      if (mobileIndicatorBackdrop) {
+        mobileIndicatorBackdrop.addEventListener("click", () => {
+          setMobileIndicatorMenuOpen(false);
+        });
+      }
+
+      if (mobileSearchToggle) {
+        mobileSearchToggle.addEventListener("click", () => {
+          const currentlyOpen = document.body.classList.contains("mobile-search-open");
+          if (currentlyOpen) {
+            setMobileSearchOpen(false);
+            return;
+          }
+          openMobileSearch();
+        });
+      }
 
       marketPicker.addEventListener("change", async () => {
         currentCategoryId = Number(marketPicker.value || 3);
         syncUrlState();
         resetCategoryState();
-        leftStatus.textContent = "Loading";
+        if (leftStatus) {
+          leftStatus.textContent = "Loading";
+        }
         tableStatus.textContent = "Switching market...";
         await Promise.all([loadHealth(), loadTopMovers(currentSegment, true, false)]);
         adoptTopMoverSelection(currentSegment);
@@ -2631,14 +5009,40 @@
         await openTrackedItemsView();
       });
 
-      viewTrackedItemsBtn.addEventListener("click", async () => {
-        await openTrackedItemsView();
-      });
+      if (viewTrackedItemsBtn) {
+        viewTrackedItemsBtn.addEventListener("click", async () => {
+          await openTrackedItemsView();
+        });
+      }
 
       trackingLogoutBtn.addEventListener("click", async () => {
         await signOutTracking();
         setTrackingMenuOpen(false);
       });
+
+      if (mobileDetailBackBtn) {
+        mobileDetailBackBtn.addEventListener("click", () => {
+          setMobileDetailOpen(false);
+          scrollSectionIntoView(signalsSection);
+        });
+      }
+
+      if (heroImageCard) {
+        heroImageCard.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (!currentHeroImageExpandedSrc) return;
+          toggleImagePreview(currentHeroImageExpandedSrc, currentHeroImageExpandedAlt, heroImageCard);
+        });
+      }
+
+      if (imagePreviewPopover) {
+        imagePreviewPopover.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          closeImagePreview();
+        });
+      }
 
       [trackingUsername, trackingPin].forEach((input) => {
         input.addEventListener("keydown", async (event) => {
@@ -2652,47 +5056,23 @@
       tagActions.querySelectorAll("button").forEach((btn) => {
         btn.addEventListener("click", async () => {
           if (!currentKey) return;
-          if (!localTags.has(currentKey)) {
-            localTags.set(currentKey, new Set());
-          }
-          const tags = localTags.get(currentKey);
-          const enabled = !tags.has(btn.dataset.tag);
-          if (tags.has(btn.dataset.tag)) {
-            tags.delete(btn.dataset.tag);
-          } else {
-            tags.add(btn.dataset.tag);
-          }
-          saveStoredTags();
-          updateTagButtons();
-          if (currentTab === "tracked_items") {
-            await loadTable();
-          }
-          if (trackingToken) {
-            const meta = universeByKey.get(currentKey);
-            if (!meta) return;
-            try {
-              await trackingJson("/tracking/tags", {
-                method: "PUT",
-                body: JSON.stringify({
-                  category_id: currentCategoryId,
-                  product_id: meta.productId,
-                  sub_type_name: meta.subTypeName || "",
-                  tag: btn.dataset.tag,
-                  enabled,
-                }),
-                headers: {},
-              });
-              setTrackingStatus(`Saved ${btn.dataset.tag} for ${trackingUser?.username || "account"}.`);
-            } catch (err) {
-              setTrackingStatus(`Tag sync failed: ${err.message}`, true);
-            }
-          }
+          const meta = universeByKey.get(currentKey);
+          if (!meta) return;
+          await toggleTrackedTagForItem({ ...meta, key: currentKey }, btn.dataset.tag);
         });
       });
 
       document.addEventListener("keydown", async (event) => {
         const target = event.target;
         if (target instanceof HTMLElement && target.closest("select, input, textarea, button")) {
+          return;
+        }
+        if (event.key === "Escape" && mobileIndicatorMenu && !mobileIndicatorMenu.hidden) {
+          setMobileIndicatorMenuOpen(false);
+          return;
+        }
+        if (event.key === "Escape" && imagePreviewPopover && !imagePreviewPopover.hidden) {
+          closeImagePreview();
           return;
         }
         if (event.key === "Escape" && trackingMenuOpen) {
@@ -2712,12 +5092,101 @@
       });
 
       document.addEventListener("click", (event) => {
-        if (!trackingMenuOpen) return;
         const target = event.target;
         if (!(target instanceof Node)) return;
-        if (!trackingMenu.contains(target) && !trackingToggleBtn.contains(target)) {
+        if (trackingMenuOpen && !trackingMenu.contains(target) && !trackingToggleBtn.contains(target)) {
           setTrackingMenuOpen(false);
         }
+        if (
+          imagePreviewPopover
+          && !imagePreviewPopover.hidden
+          && !imagePreviewPopover.contains(target)
+          && !(heroImageCard && heroImageCard.contains(target))
+          && !(target instanceof HTMLElement && target.closest(".mobile-signal-image"))
+        ) {
+          closeImagePreview();
+        }
+        if (!headerSearchForm.contains(target) && !headerSearchResults.contains(target)) {
+          setHeaderSearchResultsOpen(false);
+        }
+        if (
+          mobileSearchToggle
+          && document.body.classList.contains("mobile-search-open")
+          && !searchSection.contains(target)
+          && !mobileSearchToggle.contains(target)
+          && !(mobileBottomNav && mobileBottomNav.contains(target))
+        ) {
+          setMobileSearchOpen(false);
+        }
+        if (
+          mobileIndicatorMenu
+          && !mobileIndicatorMenu.hidden
+          && !mobileIndicatorMenu.contains(target)
+          && !(mobileBottomNav && mobileBottomNav.contains(target))
+        ) {
+          setMobileIndicatorMenuOpen(false);
+        }
+      });
+
+      window.addEventListener("touchstart", (event) => {
+        if (!isTouchDashboardLayout() || pullRefreshRefreshing) return;
+        if (event.touches.length !== 1) return;
+        const target = event.target;
+        if (target instanceof HTMLElement && target.closest("input, textarea, select, button, .tracking-menu, .brandsearch-results")) {
+          pullRefreshAllowed = false;
+          return;
+        }
+        pullRefreshAllowed = scrollTopAtTop();
+        if (!pullRefreshAllowed) return;
+        pullRefreshStartY = event.touches[0].clientY;
+        pullRefreshDistance = 0;
+        pullRefreshActive = true;
+      }, { passive: true });
+
+      window.addEventListener("touchmove", (event) => {
+        if (!pullRefreshActive || !pullRefreshAllowed || pullRefreshRefreshing) return;
+        const currentY = event.touches[0]?.clientY || 0;
+        const deltaY = Math.max(0, currentY - pullRefreshStartY);
+        if (deltaY <= 0) {
+          resetPullRefreshIndicator();
+          return;
+        }
+        if (!scrollTopAtTop()) {
+          pullRefreshAllowed = false;
+          pullRefreshActive = false;
+          resetPullRefreshIndicator();
+          return;
+        }
+        pullRefreshDistance = Math.min(deltaY * 0.7, pullRefreshMaxDistance);
+        renderPullRefreshIndicator(pullRefreshDistance, false);
+        if (deltaY > 6) {
+          event.preventDefault();
+        }
+      }, { passive: false });
+
+      window.addEventListener("touchend", async () => {
+        if (!pullRefreshActive) return;
+        const shouldRefresh = pullRefreshAllowed && pullRefreshDistance >= pullRefreshThreshold;
+        pullRefreshActive = false;
+        pullRefreshAllowed = false;
+        if (shouldRefresh) {
+          await refreshDashboardView();
+          return;
+        }
+        pullRefreshDistance = 0;
+        resetPullRefreshIndicator();
+      });
+
+      window.addEventListener("resize", () => {
+        if (imagePreviewPopover && !imagePreviewPopover.hidden) {
+          positionImagePreview(currentPreviewAnchor);
+        }
+        if (!isPhoneLayout()) {
+          setMobileDetailOpen(false);
+          setMobileIndicatorMenuOpen(false);
+        }
+        if (!activeTableRows.length) return;
+        renderTable(activeTableRows);
       });
     }
 
@@ -2734,11 +5203,13 @@
         updateTrackingUi();
         bindEvents();
         await restoreTrackingSession();
-        if (!tabConfig[currentTab]) currentTab = "top_movers";
+        if (!tabConfig[currentTab]) currentTab = "sma30_holds";
         if (!["cards", "sealed"].includes(currentSegment)) currentSegment = "cards";
         if (![30, 90, 180, 365, 730, 5000].includes(currentDays)) currentDays = 365;
+        setMobileDetailOpen(false);
         updateGroupSignalFilterVisibility();
         updateTrackedFilterVisibility();
+        updateMobileNavState();
         if (devTabHelp) {
           devTabHelp.hidden = !isDevMode;
         }
@@ -2748,10 +5219,10 @@
         tabsEl.querySelectorAll("button").forEach((btn) => {
           btn.classList.toggle("active", btn.dataset.tab === currentTab);
         });
-        railSegments.querySelectorAll("button").forEach((btn) => {
-          btn.classList.toggle("active", btn.dataset.segment === currentSegment);
-        });
+        syncSegmentButtons();
         updateDevTabHelp(currentTab);
+        picker.innerHTML = '<option value="">Load products on demand</option>';
+        groupPicker.innerHTML = '<option value="">Load sets on demand</option>';
         await loadCategories();
         await loadHealth();
         syncUrlState();
@@ -2760,7 +5231,10 @@
         await loadSeries();
         startDeferredDashboardLoad();
       } catch (err) {
-        leftStatus.textContent = "Error";
+        resetTableLoading();
+        if (leftStatus) {
+          leftStatus.textContent = "Error";
+        }
         tableStatus.textContent = `Dashboard error: ${err.message}`;
         cardTitle.textContent = "Dashboard failed to load";
         cardSubtitle.textContent = err.message;

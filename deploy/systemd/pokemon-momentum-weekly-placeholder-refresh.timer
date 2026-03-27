@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Pokemon Momentum Weekly Metadata Placeholder Refresh
+
+[Timer]
+OnCalendar=Mon *-*-* 11:00:00 UTC
+Persistent=true
+Unit=pokemon-momentum-weekly-placeholder-refresh.service
+
+[Install]
+WantedBy=timers.target

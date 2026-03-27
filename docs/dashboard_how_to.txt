@@ -1,5 +1,70 @@
 Pokemon Momentum Dashboard: How To Use
 
+Recent Implementation Notes (March 2026)
+----------------------------------------
+This section documents behavior that changed during the latest dashboard refinement pass so
+new reviewers can verify expected UX quickly.
+
+1. Top ticker behavior
+- The old left-rail mover list has been transformed into a top ticker-style market band.
+- Ticker cards are intentionally compact and continuously scroll.
+- Clicking a ticker item immediately selects that product and loads the main chart.
+- Expected result:
+  - users can scan momentum quickly without losing main chart focus
+  - first interaction path is faster and more obvious
+
+2. Market Signals tab click behavior
+- When a signal tab is selected, the table loads and the first row is auto-selected.
+- The main chart then loads from that first row automatically.
+- Expected result:
+  - no extra click is required after switching tabs
+  - each signal tab is immediately actionable
+
+3. Loading feedback
+- Market Signals table now shows an explicit loading spinner overlay while requests are in flight.
+- Selected chart already shows loading spinner/state during series fetch.
+- Expected result:
+  - users see active feedback instead of a static screen during slower queries
+
+4. Selected product image placement
+- The selected item image now appears inside the Selected Product header, left of the product title.
+- The prior standalone image card in the right rail was removed.
+- Expected result:
+  - product context (image + name + price) is grouped together near the chart
+
+5. Tracking actions placement
+- `Favorite`, `Watchlist`, `Research`, and `Buy List` moved into a dedicated right-rail
+  `Track This Item` card.
+- `Tracked Items` action is colocated there.
+- Expected result:
+  - top header remains navigation/search focused
+  - item-level actions remain visible but unobtrusive
+
+6. Set Products name resolution
+- `Set Products` now depends on server-provided names for display.
+- Additional fallback logic handles stale placeholder names (`Product <id>`).
+- Expected result:
+  - significantly fewer generic placeholder names in set tables
+
+7. Mobile-first dashboard behavior
+- phone/tablet layouts now use a bottom nav:
+  - `Home`
+  - `Search`
+  - `Tracked`
+  - `Indicators`
+- selected product opens as a mobile drilldown page instead of permanently occupying the home screen
+- the mobile home screen now includes a `Singles / Sealed` toggle
+- pull-to-refresh now refreshes the current dashboard state without requiring a full browser reload
+
+8. In-page image preview
+- clicking or tapping a product image now opens a small in-page preview anchored over that image
+- tapping the enlarged preview again closes it
+- this works on both desktop and mobile
+
+9. Signals screen removed
+- the old `Signals` tab has been removed from the dashboard UI for now
+- the remaining indicator set is now more focused on actionable momentum and set-research screens
+
 What This Is
 This dashboard is a research and discovery tool built around Pokemon market data.
 It takes a large amount of price history and turns it into something easier to scan, compare, and act on.
@@ -136,19 +201,24 @@ Uptrends
 Shows more confirmed momentum names.
 These are generally stronger trend candidates than the earliest setups.
 
-Signals
-Shows the broader product-level snapshot ranking.
-This includes multiple momentum and moving-average measures in one view.
-
 Group Signals
 Shows set-level breadth and momentum.
 This is helpful when you want to know which sets are strong overall, not just which single card is moving.
 This view also supports generation filtering so you can narrow the set list to eras like SV, SWSH, SM, XY, and older groups.
 When a local set logo exists in the uploaded logo folder, the right-side image panel can show that logo instead of the generic set-view placeholder.
 
-Set Browser
-Shows all products in the currently selected set from the Set Browser dropdown.
+Set Products
+Shows all products in the currently selected set from the Set Picker dropdown.
 Use this when you want to browse one set directly rather than only relying on the screener tabs.
+
+Simple one-line summaries
+- `Early Uptrends`: the earliest momentum names starting to turn positive
+- `Uptrends`: stronger and more confirmed trend names
+- `Top Movers`: the biggest recent movers over the last 30 days
+- `Consistent Movers`: cards steadily holding above SMA30 with real movement
+- `Good Buys`: premium cards that have pulled back into more interesting buy zones
+- `Group Signals`: whole-set strength and participation
+- `Set Products`: drill directly into one set and browse all tracked cards/products inside it
 
 Browsing behavior:
 - the lower table is now its own scroll region, so the main chart stays visible while you review long lists
@@ -205,6 +275,12 @@ This is a normalized equal-weight set index.
 Each tracked item in the set is rebased to 100 at the start of the selected window, then averaged together.
 This helps show how the set is moving as a whole without letting one expensive chase card dominate the chart.
 
+Why it starts at 100:
+- `100` is the baseline at the start of the selected window
+- above `100` means the set is up from that starting point
+- below `100` means the set is down from that starting point
+- this makes it easier to compare how sets perform over time without using raw dollar prices
+
 % Above SMA30
 This is daily breadth.
 It shows what percent of tracked items in the set are trading above their own 30-day moving average on each day.
@@ -216,6 +292,30 @@ How to read the set chart:
   usually means a narrower move driven by fewer cards
 - flat Set Index + rising % Above SMA30
   can mean internal participation is improving before the set price picture looks obviously strong
+
+Plain-English shortcut:
+- blue line = what the set is doing overall
+- green line = how many cards inside the set are helping
+
+Quick cheat sheet:
+- blue up + green up
+  strongest setup
+  the set is rising and more cards are participating
+- blue up + green down
+  caution
+  the set is rising, but fewer cards are helping
+- blue flat + green up
+  early improvement
+  the set is sideways, but more cards are starting to act better
+- blue flat + green down
+  weak setup
+  the set is sideways, but fewer cards are holding up
+- blue down + green up
+  mixed / possible stabilization
+  the set is still weak overall, but more cards are starting to recover
+- blue down + green down
+  weakest setup
+  the set is falling and participation is getting worse
 
 
 Set Explorer Page
@@ -254,15 +354,15 @@ Selecting a product here updates:
 - main title
 - image
 - chart
-- right-rail details
+- detail summary and tracking controls
 
 
-Set Browser Dropdown
-The Set Browser dropdown selects which set is used for the Set Browser tab.
-When the Set Browser tab is active, the table will show all products from the selected set.
+Set Picker Dropdown
+The Set Picker dropdown selects which set is used for the `Set Products` view.
+When `Set Products` is active, the table will show all products from the selected set.
 
 Typical use:
-1. choose a set in the Set Browser dropdown
+1. choose a set in the Set Picker dropdown
 2. the dashboard automatically switches to the set product list
 3. the first product in the set is loaded into the main chart
 4. review the rest of the set in the lower list and click or arrow through rows
@@ -278,15 +378,15 @@ Changing market updates the dashboard queries so you are working inside that spe
 If something appears empty after switching, it usually means that feed has little or no qualifying data in that market yet.
 
 
-Right Rail
-The right rail is the detail stack for the currently selected product.
+Selected Product Detail
+The selected product detail area is the context stack for the currently selected product.
 It is meant to give context without leaving the chart.
 
 Sections include:
 - selected product image
 - tracking / favorites
 - key stats
-- momentum read
+- chart context
 
 Tracking / Favorites
 This is the lightweight tracking area.
@@ -329,7 +429,7 @@ When signed in:
   - `Sign Out`
 
 Tracked Items
-The `Tracked` tab in Market Signals is the saved-items list.
+`Tracked Items` is the saved-items list available from the account menu on desktop and the bottom navigation on mobile.
 It shows the products you marked with tracking tags and lets you filter by:
 - All Tags
 - Favorite
@@ -337,7 +437,7 @@ It shows the products you marked with tracking tags and lets you filter by:
 - Research
 - Buy List
 
-Opening `Tracked` will automatically load the first tracked card into the main chart so the screen is immediately usable.
+Opening `Tracked Items` will automatically load the first tracked card into the main chart so the screen is immediately usable.
 
 Key Stats
 This shows the current summary numbers for the selected item, such as:
@@ -350,21 +450,19 @@ This shows the current summary numbers for the selected item, such as:
 - SMA30
 - price versus SMA30
 
-Momentum Read
-This is a compact chip summary of the current state of the selected product.
-It gives a quick read without needing to parse the entire chart.
-
 Selected Product Image
-The selected card or sealed product image now lives in its own persistent panel on the right rail.
-This keeps the image visible while you scroll through long set lists or signal screens.
+The selected card or sealed product image lives in the selected-product detail header.
+This keeps the art close to the title, chart, and tracking actions.
+If you click that image, it opens a small in-page preview anchored over the current image.
+Clicking or tapping the enlarged preview again closes it.
 
 
 Suggested Workflow
 1. Start on the left rail and click anything interesting.
 2. Review the main chart and compare price vs SMA7 and SMA30.
 3. Use the signal tabs to look for confirmation or earlier-stage setups.
-4. Use Set Browser to inspect neighboring items in the same set.
-5. Use the right rail to tag and keep track of names you want to revisit.
+4. Use Set Products to inspect neighboring items in the same set.
+5. Use the tracking controls to tag and keep track of names you want to revisit.
 6. If you want those tags on another device, sign in to the tracking account and let them sync.
 
 

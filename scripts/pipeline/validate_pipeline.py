@@ -135,6 +135,13 @@ def build_steps(category_id: int, workers: int, full_metadata_refresh: bool) -> 
             table_outputs=(category.prices_named_table,),
         ),
         StepSpec(
+            # Expected result: lightweight health summary exists for fast dashboard status reads.
+            name="Build health snapshot",
+            command=["python", "scripts/indicators/build_health_snapshot.py", "--category-id", str(category_id)],
+            file_outputs=(EXTRACTED_DIR / category.health_snapshot_csv,),
+            table_outputs=(category.health_snapshot_table,),
+        ),
+        StepSpec(
             # Expected result: product-level signal snapshot exists for screeners and API calls.
             name="Build product signal snapshot",
             command=["python", "scripts/indicators/build_product_signal_snapshot.py", "--category-id", str(category_id)],
@@ -147,6 +154,20 @@ def build_steps(category_id: int, workers: int, full_metadata_refresh: bool) -> 
             command=["python", "scripts/indicators/build_group_signal_snapshot.py", "--category-id", str(category_id)],
             file_outputs=(EXTRACTED_DIR / category.group_signal_csv,),
             table_outputs=(category.group_signal_table,),
+        ),
+        StepSpec(
+            # Expected result: compact sparkline payloads exist for ticker / mini-chart requests.
+            name="Build sparkline snapshot",
+            command=["python", "scripts/indicators/build_sparkline_snapshot.py", "--category-id", str(category_id)],
+            file_outputs=(EXTRACTED_DIR / category.sparkline_snapshot_csv,),
+            table_outputs=(category.sparkline_snapshot_table,),
+        ),
+        StepSpec(
+            # Expected result: compact chart-series payloads exist for normal dashboard chart windows.
+            name="Build series snapshot",
+            command=["python", "scripts/indicators/build_series_snapshot.py", "--category-id", str(category_id)],
+            file_outputs=(EXTRACTED_DIR / category.series_snapshot_csv,),
+            table_outputs=(category.series_snapshot_table,),
         ),
         StepSpec(
             # Expected result: parquet partitions exist and include the most recent processed date.

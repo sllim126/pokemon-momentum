@@ -1,6 +1,45 @@
 Pokemon Momentum Data Flow
 ==========================
 
+Recent Data/Serving Changes (March 2026)
+----------------------------------------
+
+1. Removed client dependency on full-universe preload for chart fetch
+- Previous behavior:
+  - chart selection could trigger a large `/universe` fetch when metadata cache missed
+- Current behavior:
+  - chart series requests derive `productId` and `subTypeName` directly from `currentKey`
+  - no full-universe preload is required for normal chart loads
+- Expected result:
+  - lower browser-side network cost
+  - faster tab/set/product transitions
+
+2. Set Products server-side name fallback hardening
+- `group_products` now detects placeholder metadata names (`Product <id>` / `ProductId <id>`).
+- When placeholder is detected, server falls back to `product_signal_snapshot.productName` when available.
+- Expected result:
+  - fewer placeholder names in Set Products output even if metadata table contains stale placeholder rows
+
+3. Client-side row normalization fallback hardening
+- `dashboard_common.enrichRows()` now prioritizes non-placeholder payload names over cached metadata names.
+- Expected result:
+  - stale placeholder values in browser cache are less likely to overwrite valid API names
+
+4. Loading UX for data-driven table flow
+- Market Signals table now exposes an overlay spinner during active fetches.
+- This is UI-only, but important for perceived data-flow status during larger queries.
+
+5. More dashboard reads moved to snapshots
+- `/health` now reads from a compact health snapshot instead of scanning history on request.
+- `/series` now reads a prebuilt recent-series snapshot for normal chart windows.
+- `/sparkline_batch` now reads prebuilt sparkline payloads instead of rebuilding tiny chart history live.
+- `/universe` now reads from the product signal snapshot instead of scanning raw price history.
+- snapshot-backed screeners now cover more of the first-load path, including the default mobile/home feeds.
+- Expected result:
+  - less request-time SQL work
+  - faster first paint
+  - less repeated work on phone/tablet refreshes
+
 What this document is for
 -------------------------
 This file explains how data moves through the project from raw TCGCSV archives to the
@@ -36,9 +75,9 @@ workflow features:
     active group generation filter are stored in the URL
   - refreshes reopen the same research context
 
-- persistent right-rail image preview
-  - the selected product image now stays visible in its own right-rail panel while the
-    user scrolls through long signal or set lists
+- persistent selected-item image preview
+  - the selected product image now stays visible in the selected-product header / side context
+  - clicking that image opens a small anchored preview without leaving the dashboard
 
 - keyboard list stepping
   - the lower table can be navigated with Arrow Up / Arrow Down
@@ -52,6 +91,12 @@ workflow features:
   - this page is intentionally lighter than the main dashboard
   - it is meant for browsing set cost and value concentration questions without needing
     to interpret chart signals first
+
+- mobile-first dashboard workflow
+  - selected product opens as a drilldown page on phone layouts
+  - a mobile bottom nav coordinates `Home`, `Search`, `Tracked`, and `Indicators`
+  - mobile home includes a `Singles / Sealed` segment toggle
+  - pull-to-refresh refreshes dashboard state by calling the same snapshot-backed feeds
 
 - uploaded set-logo support
   - local files from `/images/set logos` can now be synced into `/images/logos/<groupId>.<ext>`
@@ -67,6 +112,10 @@ workflow features:
   - signed-in users can now sync `favorite`, `watchlist`, `research`, and `buy list` tags
     through a separate tracking store
   - the header account menu is now the main entry point for sign-in, tracked items, and settings
+
+- removed `Signals` screen from dashboard UI
+  - the broader product snapshot endpoint still exists, but the public dashboard no longer surfaces
+    that tab because it was not proving useful enough in the current workflow
 
 
 Core idea
@@ -234,6 +283,15 @@ Placeholder behavior:
 
 - if price history contains a productId that metadata does not return, a placeholder row is created
 - this keeps downstream joins from dropping priced products
+
+Incremental refresh safeguard:
+
+- incremental product refreshes now re-fetch any group whose cached metadata still contains
+  placeholder names like `Product 586829`
+- this prevents stale fallback rows from becoming permanent when tcgcsv later starts returning
+  the missing product metadata
+- dashboard/API metadata reads also prefer the category CSV when it is newer than the DuckDB
+  file, which helps if a metadata refresh updated the CSV but the DuckDB table was not rebuilt yet
 
 Result of this stage:
 
@@ -435,6 +493,14 @@ Weekly behavior:
 
 - same overall pipeline
 - but product metadata refresh is forced to full-refresh mode
+- a second weekly metadata placeholder cleanup runs 24 hours later
+- that follow-up reruns product metadata plus the product signal snapshot only
+- its job is to replace stale `Product <id>` placeholders after tcgcsv starts returning
+  the missing product metadata
+- a second weekly metadata placeholder cleanup runs 24 hours later
+- that follow-up reruns product metadata plus the product signal snapshot only
+- its job is to replace stale `Product <id>` placeholders after tcgcsv starts returning
+  the missing product metadata
 
 
 Validation / troubleshooting
@@ -573,7 +639,7 @@ Main dashboard responsibilities:
 - left rail = discovery / trending feed
 - center chart = selected product analysis
 - lower table = active screener / set browser
-- right rail = persistent image preview, tracking, and summary context
+- selected-product detail area = image, tracking, and summary context
 
 Additional dashboard behavior:
 

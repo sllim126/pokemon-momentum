@@ -96,14 +96,25 @@ def first_existing_path(*paths: Path) -> Path | None:
     return None
 
 
+def prefer_csv_source(csv_path: Path | None) -> bool:
+    """Prefer CSV metadata exports whenever they exist.
+
+    The dashboard has repeatedly hit stale placeholder names in DuckDB metadata
+    tables even after the CSV export was corrected. The CSV export is the safer
+    source of truth for product/group naming because it is rebuilt directly from
+    the upstream metadata pull and is small enough to read on demand.
+    """
+    return csv_path is not None and csv_path.exists()
+
+
 def products_from(category_id: int) -> str:
     category = category_config(category_id)
-    if db_has_table(category.products_table):
-        return category.products_table
     csv_path = first_existing_path(
         EXTRACTED_DIR / category.products_csv,
         OUTPUT_DIR / category.products_csv,
     )
+    if db_has_table(category.products_table) and not prefer_csv_source(csv_path):
+        return category.products_table
     if csv_path is None:
         raise HTTPException(status_code=500, detail=f"{category.products_table} metadata not found")
     return f"read_csv_auto('{csv_path}')"
@@ -111,12 +122,12 @@ def products_from(category_id: int) -> str:
 
 def groups_from(category_id: int) -> str:
     category = category_config(category_id)
-    if db_has_table(category.groups_table):
-        return category.groups_table
     csv_path = first_existing_path(
         EXTRACTED_DIR / category.groups_csv,
         OUTPUT_DIR / category.groups_csv,
     )
+    if db_has_table(category.groups_table) and not prefer_csv_source(csv_path):
+        return category.groups_table
     if csv_path is None:
         raise HTTPException(status_code=500, detail=f"{category.groups_table} metadata not found")
     return f"read_csv_auto('{csv_path}')"
@@ -140,6 +151,36 @@ def group_signal_from(category_id: int) -> str:
     if csv_path.exists():
         return f"read_csv_auto('{csv_path}')"
     raise HTTPException(status_code=500, detail=f"{category.group_signal_table} snapshot not found")
+
+
+def sparkline_snapshot_from(category_id: int) -> str:
+    category = category_config(category_id)
+    if db_has_table(category.sparkline_snapshot_table):
+        return category.sparkline_snapshot_table
+    csv_path = EXTRACTED_DIR / category.sparkline_snapshot_csv
+    if csv_path.exists():
+        return f"read_csv_auto('{csv_path}')"
+    raise HTTPException(status_code=500, detail=f"{category.sparkline_snapshot_table} snapshot not found")
+
+
+def health_snapshot_from(category_id: int) -> str:
+    category = category_config(category_id)
+    if db_has_table(category.health_snapshot_table):
+        return category.health_snapshot_table
+    csv_path = EXTRACTED_DIR / category.health_snapshot_csv
+    if csv_path.exists():
+        return f"read_csv_auto('{csv_path}')"
+    raise HTTPException(status_code=500, detail=f"{category.health_snapshot_table} snapshot not found")
+
+
+def series_snapshot_from(category_id: int) -> str:
+    category = category_config(category_id)
+    if db_has_table(category.series_snapshot_table):
+        return category.series_snapshot_table
+    csv_path = EXTRACTED_DIR / category.series_snapshot_csv
+    if csv_path.exists():
+        return f"read_csv_auto('{csv_path}')"
+    raise HTTPException(status_code=500, detail=f"{category.series_snapshot_table} snapshot not found")
 
 
 def get_con():
@@ -223,6 +264,57 @@ def build_premium_rarity_filter(column: str = "rarity") -> str:
         OR {lower_col} LIKE '%secret rare%'
         OR {lower_col} LIKE '%amazing rare%'
     )"""
+
+
+def build_set_basket_filter(
+    filters: list[str],
+    rarity_column: str = "rarity",
+    subtype_column: str = "subTypeName",
+    product_name_column: str = "productName",
+) -> str:
+    """Return a SQL predicate for Set Explorer rarity/variant filtering.
+
+    The explorer now answers multiple set questions through one basket view:
+    full tracked set, only hits, only reverse holos, only IR/SIR, etc. The UI
+    sends normalized filter keys which are translated here into the matching
+    rarity/subtype rules.
+    """
+    normalized = {str(value).strip().lower() for value in (filters or []) if str(value).strip()}
+    if not normalized or "all" in normalized:
+        return "1=1"
+
+    rarity = f"lower(COALESCE({rarity_column}, ''))"
+    subtype = f"lower(COALESCE({subtype_column}, ''))"
+    product_name = f"lower(COALESCE({product_name_column}, ''))"
+    clauses = []
+    if "common" in normalized:
+        clauses.append(f"{rarity} = 'common'")
+    if "uncommon" in normalized:
+        clauses.append(f"{rarity} = 'uncommon'")
+    if "rare" in normalized:
+        clauses.append(f"{rarity} = 'rare'")
+    if "reverse_holo" in normalized:
+        clauses.append(f"{subtype} LIKE '%reverse holo%'")
+    if "holo_rare" in normalized:
+        clauses.append(f"{rarity} = 'holo rare'")
+    if "double_rare" in normalized:
+        clauses.append(f"{rarity} LIKE '%double rare%'")
+    if "illustration_rare" in normalized:
+        clauses.append(f"{rarity} LIKE '%illustration rare%' AND {rarity} NOT LIKE '%special illustration rare%'")
+    if "special_illustration_rare" in normalized:
+        clauses.append(f"{rarity} LIKE '%special illustration rare%'")
+    if "ultra_rare" in normalized:
+        clauses.append(f"{rarity} LIKE '%ultra rare%'")
+    if "hyper_rare" in normalized:
+        clauses.append(f"{rarity} LIKE '%hyper rare%'")
+    if "secret_rare" in normalized:
+        clauses.append(f"{rarity} LIKE '%secret rare%'")
+    if "promo" in normalized:
+        clauses.append(f"{rarity} LIKE '%promo%'")
+    if "stamped" in normalized:
+        clauses.append(f"({product_name} LIKE '%stamp%' OR {subtype} LIKE '%stamp%')")
+
+    return "(\n        " + "\n        OR ".join(clauses or ["1=1"]) + "\n    )"
 
 
 def build_generation_case(

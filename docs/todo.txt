@@ -1,13 +1,106 @@
 Pokemon Momentum TODO
 =====================
 
-Near-Term UI / UX
------------------
+Recently Completed (March 2026)
+-------------------------------
+
+- Top ticker / marquee polish completed for now.
+  - moved to top broadcast-style band
+  - compact item payload and fast sparkline behavior
+  - click-through selection to main product context
+- Added visible loading states in Market Signals.
+  - table now shows an explicit spinner overlay while screener data is loading
+  - chart already shows loading state while selected series is fetched
+- Market Signals interaction improvement:
+  - clicking indicator tabs now auto-selects the first returned row
+  - main chart loads immediately without requiring a second click
+- Moved product image into the selected-product header area (left of title) for faster context.
+- Tracking actions moved into a dedicated right-rail `Track This Item` card.
+- Removed forced full-universe browser load in set-products flow.
+  - chart selection can resolve from `currentKey` directly
+  - set-products naming now resolved server-side
+- Added server/client fallback logic for placeholder names (`Product <id>`).
+  - server `group_products` now falls back to product-signal names when metadata name is placeholder
+  - client row normalization now prefers non-placeholder payload names
+- Moved the left-rail mover list into a top ticker / marquee band.
+- Added explicit loading states for chart and Market Signals table fetches.
+- Added a first server-side search pass and header search UI.
+- Reduced some forced full-universe loads so card/set detail can load more on demand.
+- Mobile dashboard pass:
+  - bottom nav now drives `Home`, `Search`, `Tracked`, and `Indicators`
+  - selected-product view is a mobile drilldown instead of always occupying the home screen
+  - `Singles / Sealed` mobile home toggle added
+  - pull-to-refresh added for phone / tablet layouts
+  - tapping images now opens a small in-page preview anchored over the clicked image
+- Removed the old `Signals` indicator from the dashboard UI for now.
+  - it can be added back later if it earns a clearer purpose
+
+Immediate Bugs
+--------------
+
+- Keep cleaning up placeholder `Product <id>` names if any still leak through after metadata refreshes.
+- Review current header search behavior and resolve any result-selection quirks before iterating further.
+
+Performance
+-----------
+
+- Profile `/dashboard` in browser developer tools and identify the slowest first-load requests.
+- Measure:
+  - first paint
+  - time to interactive
+  - slowest API endpoints
+  - slowest client-side render steps
+- Reduce first-render time so the page feels usable quickly instead of taking 10-20 seconds on refresh.
+- Audit which API calls are still blocking first paint and defer anything non-essential.
+- Load independent dashboard sections in parallel where possible instead of serial boot chains.
+- Keep moving expensive live SQL into precomputed snapshots instead of scanning larger history tables on demand.
+- Continue shifting computation to server-side precomputation so the page mostly renders already-prepared data.
+- Keep detailed card/set data loading on selection instead of preloading large broad datasets.
+- Review whether:
+  - `universe`
+  - `groups`
+  - lower-table data
+  - sparklines
+  are still loading too early or too often.
+- Add lightweight caching where safe for:
+  - health
+  - group signals
+  - top movers
+  - universe metadata
+- Keep left-rail / ticker mini-graph payloads minimal:
+  - rolling 30 or 90 points only
+  - close price only
+  - no unnecessary extra fields
+- Precompute sparkline-ready history server-side so mini charts render from compact payloads.
+- Save only the minimal data needed for small charts and mini history views.
+- Review whether the current frontend/backend split should stay in place or later consolidate toward a Django-served app while the codebase is still flexible.
+
+Search Redesign
+---------------
+
+- Rework search UX after the first server-side pass; it still needs a clearer browsing and result-selection flow.
+- Keep search server-side with explicit ranking:
+  - exact card-name matches first
+  - then strong string matches
+  - then set matches / broader partials
+- Stop loading the whole universe for search and browsing before the user selects a specific card or set.
+- Load detailed data only when a card or set is actually selected.
+- Evaluate typo tolerance / fuzzy matching for search without harming result quality.
+- Decide how aggressive autocomplete should be for broad names like `Charizard` vs unique searches like `Stellar Crown`.
+- Keep search result lists capped so broad searches do not overwhelm the user.
+
+Mobile / Layout
+---------------
 
 - Review the dashboard on iPad / tablet layouts.
 - Review the dashboard on iPhone / phone layouts.
 - Decide whether mobile should keep the same three-panel structure or switch to a more task-based stacked layout.
+- Design mobile-first so the main research flow works well on:
+  - phone
+  - iPad / tablet
+  - desktop
 - Review `/embed` on tablet and phone sizes after the main dashboard mobile pass.
+- Consider replacing the mobile bottom-bar `Sets` button with a popup / overflow menu for the other indicator feeds, with those feeds loading into the same mobile card layout used by `Consistent Movers`.
 - Add a first-time guided tour / onboarding flow for new users.
 - Highlight the major parts of the dashboard with simple prompts such as:
   - click here
@@ -23,17 +116,38 @@ Near-Term UI / UX
   - public-facing only
   - optional for returning users
   - dismissible and remembered between sessions
+- Revisit the three-panel layout because the right rail holds the important detail and should not fall off-screen before the left rail.
+- Review whether the left rail should stay as a side column or become a stock-style ticker / trending bar at the top of the page.
+- Keep the market signals block as visually prominent as the main chart.
+
+Product Clarity / UX
+--------------------
+
+- Clarify what the user is actually buying / researching and make the main value proposition more obvious on first view.
+- Figure out whether the site can use shorter / cleaner URLs for public-facing pages and shared links.
+- Reduce confusion around labels and metrics such as `Main Profit` and the current screener / signal naming.
+- Review whether there are too many indicators on the main dashboard and simplify if needed.
+- Clarify the main user goal on the page:
+  - what am I searching for?
+  - what am I buying?
+  - what action should I take next?
+- Make what the product is actually selling stand out more clearly on the public-facing experience.
 
 
 Set / Group Analysis
 --------------------
 
-- Decide whether reverse holos, holos, and other variants should be included in the basket estimate by default or exposed as separate set-cost views.
-- Decide whether the new set explorer should expose alternate basket modes such as:
-  - all tracked card variants
-  - non-bulk hits only
-  - master-set style completion baskets
-  - reverse holo / holo split views
+- Keep refining Set Explorer rarity / variant filters beyond the first pass:
+  - all tracked cards
+  - common
+  - uncommon
+  - rare
+  - reverse holo
+  - double rare
+  - illustration rare
+  - special illustration rare
+  - and other relevant rarity slices
+- Decide later whether Set Explorer needs saved presets on top of the filterable rarity / variant selector.
 - Refine generation grouping beyond the first-pass era buckets if specific sets land in the wrong generation.
 
 
@@ -46,37 +160,14 @@ Signals / Screening
 - Consider a dedicated "pre-breakout accumulation" signal.
 
 
-Performance / Load Time
------------------------
-
-- Speed up hard refreshes and initial page loads across:
-  - `/dashboard`
-  - `/embed`
-  - `/set-explorer`
-- Reduce first-render time so the page feels usable quickly instead of taking 10-20 seconds on refresh.
-- Audit which API calls are still blocking first paint and defer anything non-essential.
-- Review whether:
-  - `universe`
-  - `groups`
-  - lower-table data
-  - sparklines
-  are still loading too early or too often.
-- Add lightweight caching where safe for:
-  - health
-  - group signals
-  - top movers
-  - universe metadata
-- Review expensive dashboard queries and decide what should move to snapshots instead of scanning larger history tables on demand.
-- Keep the dashboard focused on fast interaction after load:
-  - clicking rows
-  - switching tabs
-  - changing markets
-  - opening tracked items
-
-
 Tracking / Workflow
 -------------------
 
+- Add camera/photo card lookup:
+  - take a picture of a card on phone/tablet
+  - run OCR + card matching (name/number/set symbol) against product metadata
+  - open the matched product directly in dashboard context (chart + signals + tracking actions)
+  - support low-confidence flow with top 3 suggested matches when image quality is poor
 - Decide whether tracking should be private to the operator or exposed in a lightweight public way.
 - Consider keyboard shortcuts beyond up/down row stepping.
 - Extend tracking beyond the main dashboard:
@@ -137,3 +228,10 @@ Future Data Availability / Research
   - condition-aware buy logic
   - resale-margin math after fees and shipping
   - whether the data should live as extra product fields or as a separate valuation layer
+
+
+Future Architecture
+-------------------
+
+- Revisit whether Next.js / Django-style consolidation would make sense later if the current split starts slowing development.
+- Keep this as a future architecture decision, not a near-term rewrite, unless the current stack becomes a clear blocker.

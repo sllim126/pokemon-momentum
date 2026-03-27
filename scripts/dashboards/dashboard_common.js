@@ -90,11 +90,28 @@
     );
   }
 
+  function isPlaceholderProductName(name, productId) {
+    const value = String(name || "").trim().toLowerCase();
+    if (!value) return true;
+    const id = String(productId ?? "").trim().toLowerCase();
+    return value === `product ${id}` || value === `productid ${id}`;
+  }
+
   function enrichRows(payload, universeByKey, cardLabel, sealedLabel) {
     return rowObjects(payload).map((item) => {
       item.key = keyOf(item.productId, item.subTypeName);
       const meta = universeByKey.get(item.key) || {};
-      item.productName = meta.productName || item.productName || `productId ${item.productId}`;
+      const payloadName = item.productName;
+      const metaName = meta.productName;
+      // Prefer non-placeholder names from API payload over cached metadata. Expected result:
+      // stale client cache values like "Product 12345" do not override real server names.
+      if (!isPlaceholderProductName(payloadName, item.productId)) {
+        item.productName = payloadName;
+      } else if (!isPlaceholderProductName(metaName, item.productId)) {
+        item.productName = metaName;
+      } else {
+        item.productName = payloadName || metaName || `productId ${item.productId}`;
+      }
       item.groupName = meta.groupName || item.groupName || "";
       item.imageUrl = meta.imageUrl || item.imageUrl || "";
       item.rarity = meta.rarity || item.rarity || "";
