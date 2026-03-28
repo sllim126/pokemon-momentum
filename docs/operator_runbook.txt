@@ -35,6 +35,8 @@ sudo docker-compose restart pokemon-momentum
 - `/dashboard` loads
 - switching Market Signals tabs auto-loads first row into chart
 - Set Products loads without generic `Product <id>` for known named sets
+- header search set results open directly into `Browse Set`
+- header search product results can open `Browse Set` with the matching item selected
 - no unexpected large universe preloads on routine interactions
 - mobile bottom nav works:
   - `Home`
@@ -149,6 +151,7 @@ Healthy result:
 - `set-explorer` loads and the set table populates
 - tracking sign-in works and tags persist after refresh
 - `Signals` tab is no longer present in the dashboard UI
+- `Good Buys` supports `Hide Prize Pack Series` and excludes Prize Pack rows when enabled
 - on phone/tablet widths:
   - mobile home shows `Singles / Sealed`
   - selected-product drilldown hides the indicator tabs below the chart

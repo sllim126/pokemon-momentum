@@ -40,8 +40,8 @@ new reviewers can verify expected UX quickly.
   - top header remains navigation/search focused
   - item-level actions remain visible but unobtrusive
 
-6. Set Products name resolution
-- `Set Products` now depends on server-provided names for display.
+6. Browse Set name resolution
+- `Browse Set` now depends on server-provided names for display.
 - Additional fallback logic handles stale placeholder names (`Product <id>`).
 - Expected result:
   - significantly fewer generic placeholder names in set tables
@@ -64,6 +64,21 @@ new reviewers can verify expected UX quickly.
 9. Signals screen removed
 - the old `Signals` tab has been removed from the dashboard UI for now
 - the remaining indicator set is now more focused on actionable momentum and set-research screens
+
+10. Search-to-Browse-Set handoff
+- header search now treats set/product results more like navigation than a raw jump
+- searching for a set opens `Browse Set` for that set
+- searching for a product can also open `Browse Set` for that product's set and select the exact item
+- expected result:
+  - search feels more like "take me to the right set context"
+  - users do not have to manually switch tabs after finding a result
+
+11. Good Buys refinement
+- `Good Buys` now requires at least `10` distinct prices in the last `30` days
+- a `Hide Prize Pack Series` toggle was added to the screen so Prize Pack cards can be excluded when desired
+- expected result:
+  - fewer illiquid or overly special-case names in the list
+  - easier review of normal premium-rarity pullback candidates
 
 What This Is
 This dashboard is a research and discovery tool built around Pokemon market data.
@@ -188,6 +203,7 @@ Good Buys
 Shows premium-rarity cards that have been trending downward or pulling back.
 This is meant to surface high-end cards that may be moving into more interesting buy zones rather than already spiking.
 The first version focuses on rarities like Double Rare, Illustration Rare, Special Illustration Rare, Ultra Rare, Hyper Rare, and Secret Rare.
+This screen now also requires at least `10` distinct prices over the last `30` days, and it includes a `Hide Prize Pack Series` toggle so those products can be excluded when they are not useful for the current review.
 
 SMA30 Holds
 Shows products that reclaimed and held above the 30-day moving average.
@@ -201,15 +217,16 @@ Uptrends
 Shows more confirmed momentum names.
 These are generally stronger trend candidates than the earliest setups.
 
-Group Signals
+Set Strength
 Shows set-level breadth and momentum.
 This is helpful when you want to know which sets are strong overall, not just which single card is moving.
 This view also supports generation filtering so you can narrow the set list to eras like SV, SWSH, SM, XY, and older groups.
 When a local set logo exists in the uploaded logo folder, the right-side image panel can show that logo instead of the generic set-view placeholder.
 
-Set Products
+Browse Set
 Shows all products in the currently selected set from the Set Picker dropdown.
 Use this when you want to browse one set directly rather than only relying on the screener tabs.
+Header search also uses this screen as the destination for set-oriented searches, so a set search now opens directly into `Browse Set`.
 
 Simple one-line summaries
 - `Early Uptrends`: the earliest momentum names starting to turn positive
@@ -217,8 +234,8 @@ Simple one-line summaries
 - `Top Movers`: the biggest recent movers over the last 30 days
 - `Consistent Movers`: cards steadily holding above SMA30 with real movement
 - `Good Buys`: premium cards that have pulled back into more interesting buy zones
-- `Group Signals`: whole-set strength and participation
-- `Set Products`: drill directly into one set and browse all tracked cards/products inside it
+- `Set Strength`: whole-set strength and participation
+- `Browse Set`: drill directly into one set and browse all tracked cards/products inside it
 
 Browsing behavior:
 - the lower table is now its own scroll region, so the main chart stays visible while you review long lists
@@ -226,6 +243,8 @@ Browsing behavior:
   - Arrow Down selects the next row
   - Arrow Up selects the previous row
 - selecting a set automatically switches to the set view and loads the first product in that set
+- searching for a set opens `Browse Set` automatically
+- searching for a specific card or sealed item can also open `Browse Set` for that set with that exact item selected
 
 
 What the Indicators Mean
@@ -259,12 +278,12 @@ Top Movers
 This is mostly a ranking view.
 It tells you what already moved the most over the selected lookback logic.
 
-Group Signals
+Set Strength
 These are set-level breadth metrics.
 They help answer whether strength is isolated to a few cards or spread across a set.
 
-Set Chart From Group Signals
-When you click a row in Group Signals, the main chart can switch into a set-level view instead of only showing one card.
+Set Chart From Set Strength
+When you click a row in Set Strength, the main chart can switch into a set-level view instead of only showing one card.
 
 That set chart currently shows:
 - Set Index
@@ -358,8 +377,8 @@ Selecting a product here updates:
 
 
 Set Picker Dropdown
-The Set Picker dropdown selects which set is used for the `Set Products` view.
-When `Set Products` is active, the table will show all products from the selected set.
+The Set Picker dropdown selects which set is used for the `Browse Set` view.
+When `Browse Set` is active, the table will show all products from the selected set.
 
 Typical use:
 1. choose a set in the Set Picker dropdown
@@ -461,7 +480,7 @@ Suggested Workflow
 1. Start on the left rail and click anything interesting.
 2. Review the main chart and compare price vs SMA7 and SMA30.
 3. Use the signal tabs to look for confirmation or earlier-stage setups.
-4. Use Set Products to inspect neighboring items in the same set.
+4. Use Browse Set to inspect neighboring items in the same set.
 5. Use the tracking controls to tag and keep track of names you want to revisit.
 6. If you want those tags on another device, sign in to the tracking account and let them sync.
 
@@ -502,7 +521,7 @@ Uptrends
 This is a stronger confirmation list.
 These names may be more developed than the earliest setups, but they are often higher-confidence trends.
 
-Group Signals
+Set Strength
 This helps you see whether a whole set is strengthening.
 If a set is broadening, more products inside it may start to follow.
 
@@ -512,7 +531,7 @@ Simple early-trend checklist
 - SMA7 is above SMA30
 - there were real price changes in the last 3 to 5 days
 - the product is not already massively extended
-- ideally the set is also improving in Group Signals
+- ideally the set is also improving in Set Strength
 
 What to be careful of
 - one-day spikes with no follow-through

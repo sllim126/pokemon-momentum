@@ -144,6 +144,11 @@
       align-items: start;
     }
 
+    .brandsearch-anchor {
+      position: relative;
+      z-index: 40;
+    }
+
     .brandsearch-form {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
@@ -181,12 +186,20 @@
 
     .brandsearch-results {
       display: none;
-      margin-top: 10px;
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      right: 0;
+      margin-top: 0;
       padding: 8px;
       border: 1px solid var(--line);
       border-radius: 18px;
       background: rgba(17, 26, 43, 0.96);
       box-shadow: var(--shadow);
+      max-height: min(62vh, 520px);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      z-index: 60;
     }
 
     .brandsearch-results.open {
@@ -787,6 +800,10 @@
       margin-top: 12px;
     }
 
+    .freshness-badge .chip {
+      white-space: nowrap;
+    }
+
     .hero,
     .chart-panel,
     .signal-panel {
@@ -800,6 +817,27 @@
 
     .hero-tabs {
       margin-top: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .hero-tab-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .hero-tab-group-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding-left: 2px;
+    }
+
+    .hero-tab-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
     .toolbar,
@@ -1323,6 +1361,32 @@
       letter-spacing: -0.03em;
     }
 
+    .mobile-purchase-btn {
+      appearance: none;
+      border: 1px solid rgba(91, 112, 146, 0.24);
+      background: rgba(16, 23, 39, 0.72);
+      color: var(--muted);
+      width: 38px;
+      height: 38px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      transition: 0.14s ease;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+    .mobile-purchase-btn.active {
+      background: rgba(47, 211, 134, 0.18);
+      color: #8cf0bb;
+      border-color: rgba(47, 211, 134, 0.38);
+      box-shadow: inset 0 0 0 1px rgba(47, 211, 134, 0.14);
+    }
+
     .mobile-signal-metric {
       font-size: 11px;
       line-height: 1.2;
@@ -1426,8 +1490,9 @@
     th {
       position: sticky;
       top: 0;
-      z-index: 1;
+      z-index: 5;
       background: #18233b;
+      box-shadow: 0 1px 0 rgba(91, 112, 146, 0.22);
       color: var(--muted);
       font-size: 11px;
       text-transform: uppercase;
@@ -1491,6 +1556,58 @@
       background: rgba(34, 176, 255, 0.22);
     }
 
+    .inline-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      justify-self: start;
+      gap: 12px;
+      min-height: 48px;
+      padding: 0 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(34, 176, 255, 0.18);
+      background: linear-gradient(180deg, rgba(17, 26, 43, 0.92), rgba(24, 35, 59, 0.92));
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.05);
+      color: var(--ink);
+      font: inherit;
+      transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+    }
+
+    .inline-toggle:hover {
+      border-color: rgba(34, 176, 255, 0.28);
+      background: linear-gradient(180deg, rgba(20, 31, 51, 0.96), rgba(28, 42, 68, 0.96));
+    }
+
+    .inline-toggle input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: #22b0ff;
+      cursor: pointer;
+    }
+
+    .inline-toggle label {
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.2;
+      letter-spacing: 0.01em;
+      cursor: default;
+    }
+
+    #goodBuysFilters {
+      grid-template-columns: minmax(0, 1fr);
+      align-items: start;
+      justify-content: start;
+      max-width: calc((100% - 24px) / 3);
+    }
+
+    #goodBuysFilters .inline-toggle {
+      width: 100%;
+      min-height: 48px;
+      height: 48px;
+    }
+
     tbody tr {
       cursor: pointer;
       transition: background 0.12s ease;
@@ -1501,8 +1618,12 @@
     }
 
     tbody tr.active {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    tbody tr.active td {
       background: rgba(34, 176, 255, 0.12);
-      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.2);
     }
 
     .empty {
@@ -1935,22 +2056,21 @@
 
       .hero-tabs {
         margin-top: 12px;
-        overflow-x: auto;
-        flex-wrap: nowrap;
-        padding-bottom: 2px;
-        scrollbar-width: none;
+        gap: 10px;
       }
 
       body.mobile-detail-open .hero-tabs {
         display: none;
       }
 
-      .hero-tabs::-webkit-scrollbar {
-        display: none;
+      .hero-tab-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
       }
 
       .hero-tabs button {
-        flex: 0 0 auto;
+        width: 100%;
       }
 
       .mobile-detail-back {
@@ -2169,16 +2289,18 @@
       <div class="brandcopy">
         <div class="brandtag">Data-driven Pokemon market screening for serious collectors, investors, and research-minded buyers.</div>
         <div class="brandsearch">
-          <form class="brandsearch-form" id="headerSearchForm">
-            <input
-              id="headerSearchInput"
-              type="search"
-              placeholder="Search cards by name, number, or set"
-              autocomplete="off"
-            >
-            <button type="submit" id="headerSearchBtn">Search</button>
-          </form>
-          <div class="brandsearch-results" id="headerSearchResults" hidden></div>
+          <div class="brandsearch-anchor">
+            <form class="brandsearch-form" id="headerSearchForm">
+              <input
+                id="headerSearchInput"
+                type="search"
+                placeholder="Search cards by name, number, or set"
+                autocomplete="off"
+              >
+              <button type="submit" id="headerSearchBtn">Search</button>
+            </form>
+            <div class="brandsearch-results" id="headerSearchResults" hidden></div>
+          </div>
           <div class="brandsearch-status" id="headerSearchStatus"></div>
         </div>
       </div>
@@ -2279,15 +2401,25 @@
 
           <div id="chart"></div>
 
-          <div class="tab-bar hero-tabs" id="tabs">
-            <button type="button" data-tab="top_movers" class="active">Top Movers</button>
-            <button type="button" data-tab="breakouts">Breakouts</button>
-            <button type="button" data-tab="good_buys">Good Buys</button>
-            <button type="button" data-tab="sma30_holds">Consistent Movers</button>
-            <button type="button" data-tab="early_uptrends">Early Uptrends</button>
-            <button type="button" data-tab="confirmed_uptrends">Uptrends</button>
-            <button type="button" data-tab="group_signals">Group Signals</button>
-            <button type="button" data-tab="group_products">Set Products</button>
+          <div class="hero-tabs" id="tabs">
+            <div class="hero-tab-group">
+              <div class="hero-tab-group-label">Market Momentum</div>
+              <div class="tab-bar hero-tab-row">
+                <button type="button" data-tab="early_uptrends">Early Uptrends</button>
+                <button type="button" data-tab="confirmed_uptrends">Uptrends</button>
+                <button type="button" data-tab="top_movers" class="active">Top Movers</button>
+                <button type="button" data-tab="sma30_holds">Consistent Movers</button>
+              </div>
+            </div>
+            <div class="hero-tab-group">
+              <div class="hero-tab-group-label">Research Tools</div>
+              <div class="tab-bar hero-tab-row">
+                <button type="button" data-tab="breakouts">Breakouts</button>
+                <button type="button" data-tab="good_buys">Good Buys</button>
+                <button type="button" data-tab="group_signals">Set Strength</button>
+                <button type="button" data-tab="group_products">Browse Set</button>
+              </div>
+            </div>
           </div>
           <section class="mobile-hero-stats" id="mobileHeroStats">
             <h3>Key Stats</h3>
@@ -2339,6 +2471,13 @@
                   <option value="owned">Buy List</option>
                 </select>
               </label>
+            </div>
+
+            <div class="picker-grid" id="goodBuysFilters" style="margin-bottom:18px; display:none;">
+              <div class="inline-toggle">
+                <input type="checkbox" id="goodBuysPrizePackToggle">
+                <label for="goodBuysPrizePackToggle">Hide Prize Pack Series</label>
+              </div>
             </div>
 
             <div class="table-region">
@@ -2409,12 +2548,14 @@
     <div class="mobile-indicator-menu" id="mobileIndicatorMenu" hidden>
       <p class="mobile-indicator-title">Choose Indicator</p>
       <div class="mobile-indicator-grid" id="mobileIndicatorGrid">
-        <button type="button" data-indicator-tab="top_movers">Top Movers</button>
-        <button type="button" data-indicator-tab="breakouts">Breakouts</button>
-        <button type="button" data-indicator-tab="good_buys">Good Buys</button>
-        <button type="button" data-indicator-tab="sma30_holds">Consistent Movers</button>
         <button type="button" data-indicator-tab="early_uptrends">Early Uptrends</button>
         <button type="button" data-indicator-tab="confirmed_uptrends">Uptrends</button>
+        <button type="button" data-indicator-tab="top_movers">Top Movers</button>
+        <button type="button" data-indicator-tab="sma30_holds">Consistent Movers</button>
+        <button type="button" data-indicator-tab="breakouts">Breakouts</button>
+        <button type="button" data-indicator-tab="good_buys">Good Buys</button>
+        <button type="button" data-indicator-tab="group_signals">Set Strength</button>
+        <button type="button" data-indicator-tab="group_products">Browse Set</button>
       </div>
     </div>
     <div class="image-preview-popover" id="imagePreviewPopover" hidden>
@@ -2440,6 +2581,8 @@
     const generationPicker = document.getElementById("generationPicker");
     const trackedFilters = document.getElementById("trackedFilters");
     const trackedTagPicker = document.getElementById("trackedTagPicker");
+    const goodBuysFilters = document.getElementById("goodBuysFilters");
+    const goodBuysPrizePackToggle = document.getElementById("goodBuysPrizePackToggle");
     const tableHead = document.getElementById("tableHead");
     const tableBody = document.getElementById("tableBody");
     const tableWrap = document.querySelector(".table-wrap");
@@ -2507,11 +2650,13 @@
     const universeByKey = new Map();
     const groupsById = new Map();
     const localTags = new Map();
+    const purchasedKeys = new Set();
     const sparklineCache = new Map();
     const categoryOptions = [];
 
     const initialParams = new URLSearchParams(window.location.search);
     const trackingTokenKey = "pokemon-momentum-tracking-token";
+    const purchasedKeysStorageKey = "pokemon-momentum-purchased-keys";
 
     // This shared UI state lets the left rail, chart, table, and right rail stay in sync
     // around one selected product, one active feed tab, one chart window, one set context,
@@ -2535,6 +2680,7 @@
     let currentGeneration = initialParams.get("generation") || "all";
     let currentTrackedTag = initialParams.get("tracked_tag") || "all";
     let currentTrackedSort = initialParams.get("tracked_sort") || "tags";
+    let currentHidePrizePack = initialParams.get("hide_prize_pack") === "1";
     let activeTableRows = [];
     let activeTableIndex = -1;
     let currentSeriesPayload = null;
@@ -2546,8 +2692,10 @@
     let headerSearchActiveIndex = -1;
     let tableLoadPending = 0;
     let headerSearchRequestToken = 0;
+    let productPickerLoaded = false;
     let universeLoaded = false;
     let groupsLoaded = false;
+    let productPickerLoadPromise = null;
     let universeLoadPromise = null;
     let groupsLoadPromise = null;
     let currentHeroImageExpandedSrc = "";
@@ -2598,7 +2746,7 @@
       group_signals: {
         path: "/group_signals?limit=250&min_items=5",
         columns: ["generation", "groupName", "item_count", "card_count", "sealed_count", "avg_30d_pct", "avg_90d_pct", "pct_above_sma30", "pct_at_90d_high", "sealed_vs_cards_30d_divergence", "breadth_score"],
-        title: "Set-level breadth and momentum snapshot."
+        title: "Set Strength shows set-level breadth and momentum."
       },
       tracked_items: {
         columns: ["tags", "productName", "groupName", "number", "rarity", "subTypeName", "tcgplayerLink"],
@@ -2606,7 +2754,7 @@
       },
       group_products: {
         columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "latest_date"],
-        title: "Browse every tracked product in the selected set."
+        title: "Browse Set shows every tracked product in the selected set."
       }
     };
     const mobileIndicatorTabKeys = new Set([
@@ -2649,6 +2797,44 @@
       Object.entries(obj).forEach(([key, tags]) => {
         localTags.set(key, new Set(tags));
       });
+    }
+
+    function getStoredPurchasedKeys() {
+      try {
+        const raw = localStorage.getItem(purchasedKeysStorageKey);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (err) {
+        return [];
+      }
+    }
+
+    function savePurchasedKeys() {
+      localStorage.setItem(purchasedKeysStorageKey, JSON.stringify(Array.from(purchasedKeys)));
+    }
+
+    function hydratePurchasedKeys() {
+      purchasedKeys.clear();
+      getStoredPurchasedKeys().forEach((key) => {
+        if (key) purchasedKeys.add(String(key));
+      });
+    }
+
+    function isPurchasedKey(key) {
+      return purchasedKeys.has(String(key || ""));
+    }
+
+    function togglePurchasedKey(key) {
+      const normalized = String(key || "");
+      if (!normalized) return false;
+      if (purchasedKeys.has(normalized)) {
+        purchasedKeys.delete(normalized);
+      } else {
+        purchasedKeys.add(normalized);
+      }
+      savePurchasedKeys();
+      return purchasedKeys.has(normalized);
     }
 
     function trackingHeaders() {
@@ -2884,6 +3070,11 @@
       } else {
         url.searchParams.delete("tracked_sort");
       }
+      if (currentHidePrizePack) {
+        url.searchParams.set("hide_prize_pack", "1");
+      } else {
+        url.searchParams.delete("hide_prize_pack");
+      }
       if (currentKey) {
         url.searchParams.set("product", currentKey);
       } else {
@@ -2926,8 +3117,10 @@
       tableBody.innerHTML = "";
       tableHead.innerHTML = "";
       emptyState.style.display = "none";
+      productPickerLoaded = false;
       universeLoaded = false;
       groupsLoaded = false;
+      productPickerLoadPromise = null;
       universeLoadPromise = null;
       groupsLoadPromise = null;
     }
@@ -3099,6 +3292,10 @@
           </div>
           <div class="brandsearch-result-meta">${result.meta || ""}</div>
         `;
+        btn.addEventListener("mouseenter", () => {
+          headerSearchActiveIndex = index;
+          syncHeaderSearchActiveResult();
+        });
         btn.addEventListener("click", async () => {
           await selectHeaderSearchResult(index);
         });
@@ -3119,6 +3316,31 @@
       });
     }
 
+    async function openBrowseSetForSearch(groupId, preferredKey = null, fallbackItem = null) {
+      if (!groupsLoaded) {
+        await loadGroups();
+      }
+      currentGroupId = Number(groupId);
+      if (!Number.isNaN(currentGroupId) && [...groupPicker.options].some((opt) => Number(opt.value) === currentGroupId)) {
+        groupPicker.value = String(currentGroupId);
+      }
+      activateTab("group_products");
+      syncUrlState();
+      const rows = await loadTable();
+      if (!rows || !rows.length) {
+        return null;
+      }
+      const targetRow = (preferredKey ? rows.find((row) => row.key === preferredKey) : null)
+        || (fallbackItem?.key ? rows.find((row) => row.key === fallbackItem.key) : null)
+        || rows[0];
+      currentChartMode = "product";
+      await selectItem(targetRow, { openDetail: isPhoneLayout() });
+      if (tableWrap) {
+        tableWrap.scrollTop = 0;
+      }
+      return targetRow;
+    }
+
     async function selectHeaderSearchResult(index) {
       const result = headerSearchResultsData[index];
       if (!result) return;
@@ -3127,21 +3349,16 @@
       setHeaderSearchResultsOpen(false);
       setMobileSearchOpen(false);
       if (result.kind === "set") {
-        currentGroupId = Number(result.groupId);
-        if (!Number.isNaN(currentGroupId) && [...groupPicker.options].some((opt) => Number(opt.value) === currentGroupId)) {
-          groupPicker.value = String(currentGroupId);
-        }
-        activateTab("group_products");
-        syncUrlState();
-        const rows = await loadTable();
-        if (rows && rows.length) {
-          currentChartMode = "product";
-          await selectItem(rows[0]);
-        }
-        if (tableWrap) {
-          tableWrap.scrollTop = 0;
-        }
+        const currentSelectionKey = currentGroupId !== null && Number(result.groupId) === Number(currentGroupId)
+          ? currentKey
+          : null;
+        await openBrowseSetForSearch(result.groupId, currentSelectionKey, null);
         setHeaderSearchStatus(`Opened set: ${result.groupName}.`);
+        return;
+      }
+      if (result.item?.groupId !== undefined && result.item?.groupId !== null && !Number.isNaN(Number(result.item.groupId))) {
+        await openBrowseSetForSearch(result.item.groupId, result.item.key, result.item);
+        setHeaderSearchStatus(`Opened ${result.item.productName} in Browse Set.`);
         return;
       }
       await selectItem(result.item, { openDetail: isPhoneLayout() });
@@ -3155,6 +3372,7 @@
       currentTab = tabKey;
       updateGroupSignalFilterVisibility();
       updateTrackedFilterVisibility();
+      updateGoodBuysFilterVisibility();
       updateDevTabHelp(currentTab);
     }
 
@@ -3162,6 +3380,11 @@
       const query = normalizeSearchQuery(headerSearchInput.value);
       if (!query) {
         setHeaderSearchStatus("Enter a card name, number, or set name.", true);
+        return;
+      }
+      if (headerSearchResultsData.length) {
+        const index = headerSearchActiveIndex >= 0 ? headerSearchActiveIndex : 0;
+        await selectHeaderSearchResult(index);
         return;
       }
       setHeaderSearchStatus("Searching...");
@@ -3191,21 +3414,22 @@
       }
       const requestToken = ++headerSearchRequestToken;
       setHeaderSearchStatus("Searching...");
-      const payload = await fetchHeaderSearchResults(query, 8);
+      const payload = await fetchHeaderSearchResults(query, 20);
       if (requestToken !== headerSearchRequestToken) {
         return;
       }
       const results = payload.items || [];
-      renderHeaderSearchResults(results, results.length);
+      renderHeaderSearchResults(results, payload.total_count || results.length);
       if (!results.length) {
         setHeaderSearchStatus(`No results for "${headerSearchInput.value.trim()}".`, true);
         return;
       }
+      const totalCount = payload.total_count || results.length;
       if (results.length === 1) {
-        await selectHeaderSearchResult(0);
+        setHeaderSearchStatus(`1 match found. Press Enter to open it.`);
         return;
       }
-      setHeaderSearchStatus(`${results.length} match${results.length === 1 ? "" : "es"} found.`);
+      setHeaderSearchStatus(`${totalCount} matches found. Scroll, click, or press Enter to open.`);
     }
 
     function getSparklineDays() {
@@ -3535,7 +3759,7 @@
       if (!rows.length) {
         const empty = document.createElement("div");
         empty.className = "empty";
-        empty.textContent = "No rows returned.";
+        empty.textContent = currentTab === "tracked_items" ? trackedEmptyStateMessage() : "No rows returned.";
         mobileSignalResults.appendChild(empty);
         mobileSignalResults.hidden = false;
         return;
@@ -3626,6 +3850,21 @@
           });
           trackRow.appendChild(button);
         });
+        if (currentTab === "tracked_items") {
+          const purchaseBtn = document.createElement("button");
+          purchaseBtn.type = "button";
+          purchaseBtn.className = `mobile-purchase-btn${isPurchasedKey(item.key) ? " active" : ""}`;
+          purchaseBtn.title = "Mark purchased";
+          purchaseBtn.setAttribute("aria-label", "Mark purchased");
+          purchaseBtn.innerHTML = "&hearts;";
+          purchaseBtn.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const active = togglePurchasedKey(item.key);
+            purchaseBtn.classList.toggle("active", active);
+          });
+          trackRow.appendChild(purchaseBtn);
+        }
 
         card.append(head, trend, trackRow);
         card.addEventListener("click", async () => {
@@ -3703,12 +3942,14 @@
       }
       const row = rows[activeTableIndex];
       if (!row || !tableWrap) return;
+      const stickyHeaderHeight = tableHead ? Math.ceil(tableHead.getBoundingClientRect().height || 0) : 0;
+      const topPadding = stickyHeaderHeight + 8;
       const rowTop = row.offsetTop;
       const rowBottom = rowTop + row.offsetHeight;
       const viewTop = tableWrap.scrollTop;
       const viewBottom = viewTop + tableWrap.clientHeight;
-      if (rowTop < viewTop) {
-        tableWrap.scrollTop = Math.max(rowTop - 8, 0);
+      if (rowTop < viewTop + topPadding) {
+        tableWrap.scrollTop = Math.max(rowTop - topPadding, 0);
       } else if (rowBottom > viewBottom) {
         tableWrap.scrollTop = rowBottom - tableWrap.clientHeight + 8;
       }
@@ -3770,6 +4011,9 @@
       renderHeader(cfg.columns);
       tableBody.innerHTML = "";
       emptyState.style.display = rows.length ? "none" : "block";
+      if (!rows.length) {
+        emptyState.textContent = currentTab === "tracked_items" ? trackedEmptyStateMessage() : "No rows returned.";
+      }
       activeTableRows = rows;
       activeTableIndex = inferActiveTableIndex(rows);
       rows.forEach((item, index) => {
@@ -3842,6 +4086,12 @@
       trackedTagPicker.value = currentTrackedTag;
     }
 
+    function updateGoodBuysFilterVisibility() {
+      if (!goodBuysFilters || !goodBuysPrizePackToggle) return;
+      goodBuysFilters.style.display = currentTab === "good_buys" ? "grid" : "none";
+      goodBuysPrizePackToggle.checked = currentHidePrizePack;
+    }
+
     function buildTrackedRows() {
       // The Tracked tab is assembled client-side from the saved tag map plus loaded
       // product metadata. That keeps it fast and works for both local-only and synced tags.
@@ -3850,6 +4100,7 @@
         if (!tags || !tags.size) continue;
         const meta = universeByKey.get(key);
         if (!meta) continue;
+        if (classifyItem(meta) !== currentSegment) continue;
         const tagList = Array.from(tags).sort();
         if (currentTrackedTag !== "all" && !tagList.includes(currentTrackedTag)) continue;
         rows.push({
@@ -3902,6 +4153,12 @@
         return compareText(a.productName, b.productName);
       });
       return rows;
+    }
+
+    function trackedEmptyStateMessage() {
+      return currentSegment === "sealed"
+        ? "No sealed items have been tracked yet."
+        : "No singles have been tracked yet.";
     }
 
     async function moveTableSelection(delta) {
@@ -4518,7 +4775,7 @@
           const item = {};
           columns.forEach((col, idx) => { item[col] = row[idx]; });
           const key = keyOf(item.productId, item.subTypeName);
-          universeByKey.set(key, item);
+          universeByKey.set(key, mergeMeta(universeByKey.get(key), item));
         }
         universeLoaded = true;
         fillPicker();
@@ -4528,6 +4785,60 @@
       } finally {
         universeLoadPromise = null;
       }
+    }
+
+    async function loadProductPicker() {
+      if (productPickerLoaded) return;
+      if (productPickerLoadPromise) {
+        await productPickerLoadPromise;
+        return;
+      }
+      // Preload a lightweight text-only catalog for the picker so the dropdown is ready
+      // without forcing the heavier full-universe payload on the initial page load.
+      productPickerLoadPromise = (async () => {
+        const payload = await getJson("/product_picker?limit=50000");
+        const columns = payload.columns || [];
+        for (const row of payload.rows || []) {
+          const item = {};
+          columns.forEach((col, idx) => { item[col] = row[idx]; });
+          const key = keyOf(item.productId, item.subTypeName);
+          universeByKey.set(key, mergeMeta(universeByKey.get(key), item));
+        }
+        productPickerLoaded = true;
+        fillPicker();
+      })();
+      try {
+        await productPickerLoadPromise;
+      } finally {
+        productPickerLoadPromise = null;
+      }
+    }
+
+    async function hydrateCurrentSelectionMeta() {
+      if (!currentKey || universeByKey.has(currentKey)) return universeByKey.get(currentKey) || null;
+      const [productIdRaw, subTypeNameRaw = ""] = String(currentKey).split("||");
+      const productId = Number(productIdRaw);
+      if (Number.isNaN(productId)) return null;
+      // Refreshes often restore only the URL key. Fetch the single product snapshot row so
+      // the selected title/image render immediately without forcing a full universe preload.
+      const qs = new URLSearchParams({
+        limit: "1",
+        product_id: String(productId),
+        sub_type_name: subTypeNameRaw || ""
+      });
+      const payload = await getJson(`/universe?${qs.toString()}`);
+      const columns = payload.columns || [];
+      const row = (payload.rows || [])[0];
+      if (!row) return null;
+      const item = {};
+      columns.forEach((col, idx) => { item[col] = row[idx]; });
+      const resolvedKey = keyOf(item.productId, item.subTypeName);
+      const nextMeta = mergeMeta(universeByKey.get(resolvedKey), item);
+      universeByKey.set(resolvedKey, nextMeta);
+      if (resolvedKey === currentKey) {
+        ensurePickerOption({ ...nextMeta, key: resolvedKey });
+      }
+      return nextMeta;
     }
 
     async function loadTopMovers(segment = currentSegment, force = false, hydrateSparklines = true) {
@@ -4573,6 +4884,12 @@
         await loadTable();
       });
       scheduleDeferredLoad(async () => {
+        await loadProductPicker();
+      });
+      scheduleDeferredLoad(async () => {
+        await loadGroups();
+      });
+      scheduleDeferredLoad(async () => {
         const rows = (moverFeeds[currentSegment] || []).slice(0, 18);
         if (rows.length) {
           await hydrateMoverSparklines(rows, getSparklineDays());
@@ -4601,6 +4918,16 @@
       if (activeRowMeta) {
         meta = mergeMeta(meta, activeRowMeta);
         universeByKey.set(currentKey, meta);
+      }
+      if (!meta || isPlaceholderProductName(meta.productName, meta.productId) || !meta.imageUrl) {
+        try {
+          meta = mergeMeta(meta, await hydrateCurrentSelectionMeta());
+          if (meta) {
+            universeByKey.set(currentKey, meta);
+          }
+        } catch (err) {
+          console.error("selected meta hydration failed", err);
+        }
       }
       if (!meta) return;
       const qs = new URLSearchParams({
@@ -4649,7 +4976,7 @@
       let loadSucceeded = false;
       try {
         if (currentTab === "tracked_items") {
-          if (!universeByKey.size) {
+          if (!universeLoaded) {
             await loadUniverse();
           }
           updateTrackedFilterVisibility();
@@ -4666,6 +4993,7 @@
           const rows = moverFeeds[currentSegment] || [];
           updateGroupSignalFilterVisibility();
           updateTrackedFilterVisibility();
+          updateGoodBuysFilterVisibility();
           updateMobileNavState("home");
           renderTable(rows);
           loadSucceeded = true;
@@ -4676,6 +5004,9 @@
           : cfg.path;
         if (segmentFilteredTabs.has(currentTab)) {
           path += `${path.includes("?") ? "&" : "?"}product_kind=${encodeURIComponent(currentSegment === "sealed" ? "sealed" : "card")}`;
+        }
+        if (currentTab === "good_buys" && currentHidePrizePack) {
+          path += `${path.includes("?") ? "&" : "?"}exclude_prize_packs=true`;
         }
         if (currentTab === "group_signals" && currentGeneration !== "all") {
           path += `&generation=${encodeURIComponent(currentGeneration)}`;
@@ -4689,6 +5020,7 @@
             syncUrlState();
             updateGroupSignalFilterVisibility();
             updateTrackedFilterVisibility();
+            updateGoodBuysFilterVisibility();
             renderTable(rows);
             loadSucceeded = true;
             return rows;
@@ -4705,6 +5037,7 @@
         }
         updateGroupSignalFilterVisibility();
         updateTrackedFilterVisibility();
+        updateGoodBuysFilterVisibility();
         updateMobileNavState();
         renderTable(rows);
         loadSucceeded = true;
@@ -4743,8 +5076,8 @@
       });
 
       picker.addEventListener("focus", () => {
-        if (!universeLoaded && !universeLoadPromise) {
-          loadUniverse().catch((err) => console.error(err));
+        if (!productPickerLoaded && !productPickerLoadPromise) {
+          loadProductPicker().catch((err) => console.error(err));
         }
       });
 
@@ -4781,6 +5114,15 @@
 
       trackedTagPicker.addEventListener("change", async () => {
         currentTrackedTag = trackedTagPicker.value || "all";
+        syncUrlState();
+        if (tableWrap) {
+          tableWrap.scrollTop = 0;
+        }
+        await loadTable();
+      });
+
+      goodBuysPrizePackToggle?.addEventListener("change", async () => {
+        currentHidePrizePack = Boolean(goodBuysPrizePackToggle.checked);
         syncUrlState();
         if (tableWrap) {
           tableWrap.scrollTop = 0;
@@ -5200,6 +5542,7 @@
       // - heavier universe/groups/table work continues in the background
       try {
         hydrateStoredTags();
+        hydratePurchasedKeys();
         updateTrackingUi();
         bindEvents();
         await restoreTrackingSession();
@@ -5209,6 +5552,7 @@
         setMobileDetailOpen(false);
         updateGroupSignalFilterVisibility();
         updateTrackedFilterVisibility();
+        updateGoodBuysFilterVisibility();
         updateMobileNavState();
         if (devTabHelp) {
           devTabHelp.hidden = !isDevMode;
@@ -5221,8 +5565,8 @@
         });
         syncSegmentButtons();
         updateDevTabHelp(currentTab);
-        picker.innerHTML = '<option value="">Load products on demand</option>';
-        groupPicker.innerHTML = '<option value="">Load sets on demand</option>';
+        picker.innerHTML = '<option value="">Loading products...</option>';
+        groupPicker.innerHTML = '<option value="">Loading sets...</option>';
         await loadCategories();
         await loadHealth();
         syncUrlState();

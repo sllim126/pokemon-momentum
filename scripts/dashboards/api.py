@@ -842,11 +842,18 @@ def eod_series(code: str, days: int = 365):
 
 
 @app.get("/universe")
-def universe(limit: int = 5000, category_id: int = 3):
+def universe(limit: int = 5000, category_id: int = 3, product_id: int | None = None, sub_type_name: str | None = None):
     limit = max(1, min(limit, 50000))
     category = category_config(category_id)
     product_signal_source = product_signal_from(category.category_id)
     metadata_cte = build_metadata_cte(category.category_id, include_classification=True, cte_name="metadata")
+    filters: list[str] = []
+    if product_id is not None:
+        filters.append(f"s.productId = {int(product_id)}")
+    if sub_type_name is not None:
+        safe_sub_type_name = str(sub_type_name).replace("'", "''")
+        filters.append(f"COALESCE(s.subTypeName, '') = '{safe_sub_type_name}'")
+    where_clause = f"WHERE {' AND '.join(filters)}" if filters else ""
 
     sql = f"""
     WITH
@@ -884,6 +891,70 @@ def universe(limit: int = 5000, category_id: int = 3):
     LEFT JOIN metadata m
       ON m.productId = s.productId
      AND m.groupId = s.groupId
+    {where_clause}
+    LIMIT {limit}
+    """
+    cols, rows = q(sql)
+    return {"columns": cols, "rows": rows}
+
+
+@app.get("/product_picker")
+def product_picker(limit: int = 50000, category_id: int = 3):
+    limit = max(1, min(limit, 50000))
+    category = category_config(category_id)
+    product_signal_source = product_signal_from(category.category_id)
+    metadata_cte = build_metadata_cte(category.category_id, include_classification=False, cte_name="metadata")
+
+    sql = f"""
+    WITH
+    {metadata_cte}
+    SELECT
+      s.productId,
+      s.subTypeName,
+      COALESCE(m.groupId, s.groupId) AS groupId,
+      COALESCE(NULLIF(trim(m.groupName), ''), s.groupName) AS groupName,
+      COALESCE(
+        CASE
+          WHEN lower(trim(COALESCE(m.productName, ''))) IN (
+            lower('product ' || CAST(s.productId AS VARCHAR)),
+            lower('productid ' || CAST(s.productId AS VARCHAR))
+          ) THEN NULL
+          ELSE NULLIF(trim(m.productName), '')
+        END,
+        CASE
+          WHEN lower(trim(COALESCE(s.productName, ''))) IN (
+            lower('product ' || CAST(s.productId AS VARCHAR)),
+            lower('productid ' || CAST(s.productId AS VARCHAR))
+          ) THEN NULL
+          ELSE NULLIF(trim(s.productName), '')
+        END,
+        'productId ' || CAST(s.productId AS VARCHAR)
+      ) AS productName
+    FROM {product_signal_source} s
+    LEFT JOIN metadata m
+      ON m.productId = s.productId
+     AND m.groupId = s.groupId
+    ORDER BY lower(COALESCE(NULLIF(trim(m.groupName), ''), s.groupName)),
+             lower(
+               COALESCE(
+                 CASE
+                   WHEN lower(trim(COALESCE(m.productName, ''))) IN (
+                     lower('product ' || CAST(s.productId AS VARCHAR)),
+                     lower('productid ' || CAST(s.productId AS VARCHAR))
+                   ) THEN NULL
+                   ELSE NULLIF(trim(m.productName), '')
+                 END,
+                 CASE
+                   WHEN lower(trim(COALESCE(s.productName, ''))) IN (
+                     lower('product ' || CAST(s.productId AS VARCHAR)),
+                     lower('productid ' || CAST(s.productId AS VARCHAR))
+                   ) THEN NULL
+                   ELSE NULLIF(trim(s.productName), '')
+                 END,
+                 'productId ' || CAST(s.productId AS VARCHAR)
+               )
+             ),
+             lower(COALESCE(s.subTypeName, ''))
     LIMIT {limit}
     """
     cols, rows = q(sql)
@@ -927,30 +998,29 @@ def search(query: str, limit: int = 12, category_id: int = 3):
     """Search active sets/cards without forcing the client to preload the full universe."""
     term = " ".join(str(query or "").strip().split())
     if len(term) < 2:
-        return {"items": [], "query": term, "limit": limit}
+        return {"items": [], "query": term, "limit": limit, "total_count": 0}
 
     safe_term = term.replace("'", "''")
     limit = max(1, min(limit, 50))
     category = category_config(category_id)
-    price_source = prices_from(category.category_id)
+    product_signal_source = product_signal_from(category.category_id)
     metadata_cte = build_metadata_cte(category.category_id, include_classification=True, cte_name="metadata")
+    normalized_term = "".join(ch.lower() for ch in term if ch.isalnum())
+    safe_normalized_term = normalized_term.replace("'", "''")
 
     sql = f"""
     WITH active_products AS (
       SELECT
         productId,
         subTypeName,
-        any_value(groupId) AS groupId
-      FROM {price_source}
-      WHERE categoryId = {category.category_id}
-      GROUP BY productId, subTypeName
+        groupId
+      FROM {product_signal_source}
     ),
     active_groups AS (
       SELECT
         groupId,
         COUNT(DISTINCT productId) AS productCount
-      FROM {price_source}
-      WHERE categoryId = {category.category_id}
+      FROM {product_signal_source}
       GROUP BY groupId
     ),
     {metadata_cte},
@@ -958,7 +1028,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
       SELECT
         'product' AS kind,
         m.productName AS title,
-        CONCAT_WS(' | ', m.groupName, NULLIF(m.number, ''), NULLIF(m.subTypeName, '')) AS meta,
+        CONCAT_WS(' | ', m.groupName, NULLIF(m.number, ''), NULLIF(ap.subTypeName, '')) AS meta,
         ap.productId,
         ap.subTypeName,
         ap.groupId,
@@ -970,14 +1040,17 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         m.productClass,
         m.productKind,
         CASE
+          WHEN lower(regexp_replace(COALESCE(m.productName, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 520
+          WHEN lower(regexp_replace(COALESCE(m.number, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 500
           WHEN lower(m.productName) = lower('{safe_term}') THEN 400
           WHEN lower(m.number) = lower('{safe_term}') THEN 340
+          WHEN lower(regexp_replace(COALESCE(m.productName, ''), '[^a-z0-9]+', '', 'g')) LIKE lower('{safe_normalized_term}') || '%' THEN 330
           WHEN lower(m.productName) LIKE lower('{safe_term}') || '%' THEN 300
           WHEN lower(m.number) LIKE lower('{safe_term}') || '%' THEN 260
           WHEN lower(m.productName) LIKE '%' || lower('{safe_term}') || '%' THEN 220
           WHEN lower(m.groupName) LIKE lower('{safe_term}') || '%' THEN 180
           WHEN lower(m.groupName) LIKE '%' || lower('{safe_term}') || '%' THEN 150
-          WHEN lower(COALESCE(m.subTypeName, '')) LIKE '%' || lower('{safe_term}') || '%' THEN 140
+          WHEN lower(COALESCE(ap.subTypeName, '')) LIKE '%' || lower('{safe_term}') || '%' THEN 140
           ELSE 0
         END AS score
       FROM active_products ap
@@ -986,9 +1059,11 @@ def search(query: str, limit: int = 12, category_id: int = 3):
        AND m.groupId = ap.groupId
       WHERE (
         lower(COALESCE(m.productName, '')) LIKE '%' || lower('{safe_term}') || '%'
+        OR lower(regexp_replace(COALESCE(m.productName, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR lower(COALESCE(m.number, '')) LIKE '%' || lower('{safe_term}') || '%'
+        OR lower(regexp_replace(COALESCE(m.number, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR lower(COALESCE(m.groupName, '')) LIKE '%' || lower('{safe_term}') || '%'
-        OR lower(COALESCE(m.subTypeName, '')) LIKE '%' || lower('{safe_term}') || '%'
+        OR lower(COALESCE(ap.subTypeName, '')) LIKE '%' || lower('{safe_term}') || '%'
       )
     ),
     group_matches AS (
@@ -1007,8 +1082,11 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         NULL AS productClass,
         'set' AS productKind,
         CASE
+          WHEN lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 560
+          WHEN lower(regexp_replace(COALESCE(g.abbreviation, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 540
           WHEN lower(COALESCE(g.name, '')) = lower('{safe_term}') THEN 360
           WHEN lower(COALESCE(g.abbreviation, '')) = lower('{safe_term}') THEN 340
+          WHEN lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g')) LIKE lower('{safe_normalized_term}') || '%' THEN 320
           WHEN lower(COALESCE(g.name, '')) LIKE lower('{safe_term}') || '%' THEN 280
           WHEN lower(COALESCE(g.name, '')) LIKE '%' || lower('{safe_term}') || '%' THEN 200
           WHEN lower(COALESCE(g.abbreviation, '')) LIKE '%' || lower('{safe_term}') || '%' THEN 180
@@ -1019,21 +1097,76 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         ON g.groupId = ag.groupId
       WHERE (
         lower(COALESCE(g.name, '')) LIKE '%' || lower('{safe_term}') || '%'
+        OR lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR lower(COALESCE(g.abbreviation, '')) LIKE '%' || lower('{safe_term}') || '%'
+        OR lower(regexp_replace(COALESCE(g.abbreviation, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
       )
-    )
-    SELECT *
-    FROM (
+    ),
+    scored AS (
       SELECT * FROM group_matches
       UNION ALL
       SELECT * FROM product_matches
     )
+    SELECT *
+    FROM scored
     WHERE score > 0
     ORDER BY score DESC, kind ASC, lower(title) ASC
     LIMIT {limit}
     """
     cols, rows = q(sql)
-    return {"items": [dict(zip(cols, row)) for row in rows], "query": term, "limit": limit}
+    count_sql = f"""
+    WITH active_products AS (
+      SELECT
+        productId,
+        subTypeName,
+        groupId
+      FROM {product_signal_source}
+    ),
+    active_groups AS (
+      SELECT
+        groupId,
+        COUNT(DISTINCT productId) AS productCount
+      FROM {product_signal_source}
+      GROUP BY groupId
+    ),
+    {metadata_cte},
+    product_matches AS (
+      SELECT 1 AS marker
+      FROM active_products ap
+      LEFT JOIN metadata m
+        ON m.productId = ap.productId
+       AND m.groupId = ap.groupId
+      WHERE (
+        lower(COALESCE(m.productName, '')) LIKE '%' || lower('{safe_term}') || '%'
+        OR lower(regexp_replace(COALESCE(m.productName, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
+        OR lower(COALESCE(m.number, '')) LIKE '%' || lower('{safe_term}') || '%'
+        OR lower(regexp_replace(COALESCE(m.number, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
+        OR lower(COALESCE(m.groupName, '')) LIKE '%' || lower('{safe_term}') || '%'
+        OR lower(COALESCE(ap.subTypeName, '')) LIKE '%' || lower('{safe_term}') || '%'
+      )
+    ),
+    group_matches AS (
+      SELECT 1 AS marker
+      FROM active_groups ag
+      LEFT JOIN {groups_from(category.category_id)} g
+        ON g.groupId = ag.groupId
+      WHERE (
+        lower(COALESCE(g.name, '')) LIKE '%' || lower('{safe_term}') || '%'
+        OR lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
+        OR lower(COALESCE(g.abbreviation, '')) LIKE '%' || lower('{safe_term}') || '%'
+        OR lower(regexp_replace(COALESCE(g.abbreviation, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
+      )
+    )
+    SELECT COUNT(*)
+    FROM (
+      SELECT * FROM group_matches
+      UNION ALL
+      SELECT * FROM product_matches
+    )
+    """
+    _, count_rows = q(count_sql)
+    total_count = int(count_rows[0][0]) if count_rows else 0
+    return {"items": [dict(zip(cols, row)) for row in rows], "query": term, "limit": limit, "total_count": total_count}
 
 
 @app.get("/group_products")
@@ -1166,11 +1299,17 @@ def good_buys(
     min_price: float = 5.0,
     max_30d_pct: float = 0.0,
     max_7d_pct: float = 5.0,
+    min_recent_distinct_prices_30d: int = 10,
+    exclude_prize_packs: bool = False,
     category_id: int = 3,
 ):
     limit = max(1, min(limit, 5000))
+    min_recent_distinct_prices_30d = max(2, min(min_recent_distinct_prices_30d, 30))
     category = category_config(category_id)
     premium_rarity_filter = build_premium_rarity_filter("rarity")
+    prize_pack_filter = ""
+    if exclude_prize_packs:
+        prize_pack_filter = "AND lower(COALESCE(groupName, '')) NOT LIKE '%prize pack%'"
 
     sql = f"""
     SELECT
@@ -1189,6 +1328,7 @@ def good_buys(
       roc_7d_pct,
       roc_30d_pct,
       roc_90d_pct,
+      recent_distinct_prices_30d,
       price_vs_sma30_pct,
       trend_score
     FROM {product_signal_from(category.category_id)}
@@ -1197,6 +1337,8 @@ def good_buys(
       AND {premium_rarity_filter}
       AND COALESCE(roc_30d_pct, 0) <= {max_30d_pct}
       AND COALESCE(roc_7d_pct, 0) <= {max_7d_pct}
+      AND COALESCE(recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
+      {prize_pack_filter}
     ORDER BY roc_30d_pct ASC, price_vs_sma30_pct ASC, latest_price DESC
     LIMIT {limit}
     """
