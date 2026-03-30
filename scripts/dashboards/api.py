@@ -1176,12 +1176,15 @@ def search(query: str, limit: int = 12, category_id: int = 3):
 
 
 @app.get("/group_products")
-def group_products(groupId: int, limit: int = 2000, category_id: int = 3):
+def group_products(groupId: int, limit: int = 2000, product_kind: str | None = None, category_id: int = 3):
     limit = max(1, min(limit, 10000))
     category = category_config(category_id)
     price_source = prices_from(category.category_id)
     signal_source = product_signal_from(category.category_id)
     metadata_cte = build_metadata_cte(category.category_id, include_classification=True, cte_name="metadata")
+    product_kind_filter = ""
+    if product_kind in {"card", "sealed"}:
+        product_kind_filter = f"AND m.productKind = '{product_kind}'"
 
     sql = f"""
     WITH latest_date AS (
@@ -1251,6 +1254,8 @@ def group_products(groupId: int, limit: int = 2000, category_id: int = 3):
       ON sn.productId = lp.productId
      AND sn.groupId = lp.groupId
      AND COALESCE(sn.subTypeName, '') = COALESCE(lp.subTypeName, '')
+    WHERE 1 = 1
+      {product_kind_filter}
     ORDER BY
       CASE WHEN m.number IS NULL OR m.number = '' THEN 1 ELSE 0 END,
       m.number,
@@ -1307,6 +1312,7 @@ def good_buys(
     max_7d_pct: float = 5.0,
     min_recent_distinct_prices_30d: int = 10,
     exclude_prize_packs: bool = False,
+    product_kind: str | None = None,
     category_id: int = 3,
 ):
     limit = max(1, min(limit, 5000))
@@ -1314,6 +1320,14 @@ def good_buys(
     category = category_config(category_id)
     premium_rarity_filter = build_premium_rarity_filter("rarity")
     prize_pack_filter = ""
+    product_kind_filter = "AND productKind = 'card'"
+    rarity_filter = f"AND {premium_rarity_filter}"
+    if product_kind == "sealed":
+        product_kind_filter = "AND productKind = 'sealed'"
+        rarity_filter = ""
+    elif product_kind == "card":
+        product_kind_filter = "AND productKind = 'card'"
+        rarity_filter = f"AND {premium_rarity_filter}"
     if exclude_prize_packs:
         prize_pack_filter = "AND lower(COALESCE(groupName, '')) NOT LIKE '%prize pack%'"
 
@@ -1339,8 +1353,8 @@ def good_buys(
       trend_score
     FROM {product_signal_from(category.category_id)}
     WHERE latest_price >= {min_price}
-      AND productKind = 'card'
-      AND {premium_rarity_filter}
+      {product_kind_filter}
+      {rarity_filter}
       AND COALESCE(roc_30d_pct, 0) <= {max_30d_pct}
       AND COALESCE(roc_7d_pct, 0) <= {max_7d_pct}
       AND COALESCE(recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}

@@ -110,6 +110,35 @@ The current daily flow is:
 8. export parquet history
 
 
+## Testing
+
+The repo now includes a lightweight test harness for:
+
+- backend API route coverage
+- frontend dashboard contract checks
+- shared dashboard/query helper logic
+
+Run the suite inside the app container:
+
+```bash
+docker-compose exec -T pokemon-momentum python tests/run_with_coverage.py
+```
+
+Current expectations:
+
+- all tests pass
+- target-module coverage stays at or above `90%`
+
+The coverage gate currently measures the shared dashboard logic modules:
+
+- `scripts/common/category_config.py`
+- `scripts/common/product_classification.py`
+- `scripts/dashboards/query_support.py`
+
+This keeps the threshold honest without pretending the entire large dashboard API file
+is already unit-test-shaped.
+
+
 ## Set Logos
 
 Uploaded source logos can live in:

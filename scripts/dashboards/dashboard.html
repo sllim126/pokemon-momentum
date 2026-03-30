@@ -2890,7 +2890,7 @@
     };
     // These tabs all honor the shared Cards / Sealed segment toggle. Breakouts needs to be in
     // this set too so sealed JP booster boxes do not leak into the singles view.
-    const segmentFilteredTabs = new Set(["top_movers", "sma30_holds", "early_uptrends", "confirmed_uptrends", "breakouts"]);
+    const segmentFilteredTabs = new Set(["top_movers", "sma30_holds", "early_uptrends", "confirmed_uptrends", "breakouts", "good_buys", "group_products"]);
     let currentGeneration = initialParams.get("generation") || "all";
     let currentTrackedTag = initialParams.get("tracked_tag") || "all";
     let currentTrackedSort = initialParams.get("tracked_sort") || "tags";
@@ -3757,6 +3757,7 @@
       updateGroupSignalFilterVisibility();
       updateTrackedFilterVisibility();
       updateGoodBuysFilterVisibility();
+      updateSignalSegmentVisibility();
       updateDevTabHelp(currentTab);
     }
 
@@ -4485,6 +4486,12 @@
       if (currentTab !== "good_buys") {
         setGoodBuysSetPopoverOpen(false);
       }
+    }
+
+    function updateSignalSegmentVisibility() {
+      if (!signalSegments) return;
+      const showSegments = segmentFilteredTabs.has(currentTab) && currentTab !== "browse_species";
+      signalSegments.style.display = showSegments ? "inline-flex" : "none";
     }
 
     function setGoodBuysSetPopoverOpen(open) {
@@ -5562,6 +5569,7 @@
         updateGroupSignalFilterVisibility();
         updateTrackedFilterVisibility();
         updateGoodBuysFilterVisibility();
+        updateSignalSegmentVisibility();
         updateMobileNavState();
         renderTable(rows);
         loadSucceeded = true;

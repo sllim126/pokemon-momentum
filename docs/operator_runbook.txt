@@ -173,6 +173,19 @@ Healthy result:
 Useful commands
 ---------------
 
+Run dashboard/backend tests with coverage gate:
+
+```bash
+cd /opt/pokemon-momentum
+docker-compose exec -T pokemon-momentum python tests/run_with_coverage.py
+```
+
+Expected result:
+
+- all tests pass
+- coverage summary prints for the targeted dashboard logic modules
+- overall target coverage stays at or above `90%`
+
 Check Docker app health:
 
 ```bash
