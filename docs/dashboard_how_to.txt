@@ -180,6 +180,13 @@ The large chart shows:
 - SMA7
 - SMA30
 
+Chart scaling notes:
+- cards under `5` keep Plotly auto-range
+- longer windows can switch to visible price-window bounds when the chart clearly moved into a new price regime
+- 30D charts can also widen just enough when:
+  - the visible month trades below the opening level
+  - or SMA30 would otherwise get squeezed off the chart on a fast mover
+
 Chart window buttons
 These buttons change how much history is shown:
 - 30D: last 30 days
@@ -211,6 +218,7 @@ This is useful for seeing what is already moving the most.
 Breakouts
 Shows products making a real fresh break above their prior 90-day high.
 This now also prefers names with repeated distinct prices in the last 30 days, which helps filter out flat cards merely sitting at the top of a range.
+This screen also respects the shared `Cards / Sealed` toggle, so booster boxes should only appear when `Sealed` is selected.
 
 Good Buys
 Shows premium-rarity cards that have been trending downward or pulling back.
@@ -234,6 +242,7 @@ Set Strength
 Shows set-level breadth and momentum.
 This is helpful when you want to know which sets are strong overall, not just which single card is moving.
 This view also supports generation filtering so you can narrow the set list to eras like SV, SWSH, SM, XY, and older groups.
+Japanese Mega-era sets are intentionally grouped into `MEG` even when the prefixes vary (`ME`, `M2`, `M2a`, `M3`, `MBD`, `MBG`, `MP1`, etc.).
 When a local set logo exists in the uploaded logo folder, the right-side image panel can show that logo instead of the generic set-view placeholder.
 
 Browse Set

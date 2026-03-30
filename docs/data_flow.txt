@@ -34,6 +34,8 @@ Recent Data/Serving Changes (March 2026)
 - `/series` now reads a prebuilt recent-series snapshot for normal chart windows.
 - `/sparkline_batch` now reads prebuilt sparkline payloads instead of rebuilding tiny chart history live.
 - `/universe` now reads from the product signal snapshot instead of scanning raw price history.
+- the dashboard still applies client-side y-axis rules on top of `/series` so repriced windows
+  can focus on the current visible price regime without losing SMA context
 - snapshot-backed screeners now cover more of the first-load path, including the default mobile/home feeds.
 - Expected result:
   - less request-time SQL work
@@ -44,6 +46,7 @@ Recent Data/Serving Changes (March 2026)
 - header search now routes set-oriented selections into `Browse Set` instead of acting like a raw product jump
 - `Good Buys` now filters for `recent_distinct_prices_30d >= 10`
 - `Good Buys` now supports a client-side `Filter Sets` popout over the current result set
+- `Breakouts` now honors the shared `Cards / Sealed` segment filter the same way as the other segmented tabs
 - Expected result:
   - search drops the user into the correct set context more often
   - `Good Buys` is less likely to show thinly traded names by default and is easier to narrow to relevant sets
@@ -432,6 +435,8 @@ Recent API-side addition:
   `Group Signals`
 - this label is built from group metadata such as set name, abbreviation, and
   publication date so the UI can filter set breadth screens by era
+- Japanese Mega-era overrides now cover multiple modern Mega prefixes so sets like `M2`,
+  `M2a`, `M3`, `MBD`, `MBG`, and `MP1` stay in the `MEG` bucket instead of falling into generic SV
 
 
 Stage 8: Parquet export

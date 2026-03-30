@@ -971,6 +971,44 @@
       letter-spacing: -0.03em;
     }
 
+    .site-footer {
+      margin-top: 24px;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(19, 28, 47, 0.58);
+    }
+
+    .site-footer-grid {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .site-footer-brand {
+      display: grid;
+      gap: 8px;
+    }
+
+    .site-footer-brand a {
+      color: #8dddff;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .site-footer-brand a:hover {
+      text-decoration: underline;
+    }
+
+    .site-footer-copy {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
     .mover-list {
       position: relative;
       display: flex;
@@ -1182,6 +1220,17 @@
     .signal-topline p {
       margin: 0;
       color: var(--muted);
+    }
+
+    .signal-topline-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: auto;
+    }
+
+    .signal-segment-bar {
+      gap: 8px;
     }
 
     .dev-tab-help {
@@ -1922,6 +1971,10 @@
         position: relative;
       }
 
+      .site-footer-grid {
+        grid-template-columns: 1fr;
+      }
+
       .brandlockup {
         display: flex;
         justify-content: center;
@@ -2548,7 +2601,13 @@
                 <div class="section-label">Market Signals</div>
                 <p id="tableStatus">Loading screener...</p>
               </div>
-              <div class="dev-tab-help" id="devTabHelp" hidden></div>
+              <div class="signal-topline-actions">
+                <div class="segment-bar signal-segment-bar" id="signalSegments">
+                  <button type="button" data-segment="cards" class="active">Cards</button>
+                  <button type="button" data-segment="sealed">Sealed</button>
+                </div>
+                <div class="dev-tab-help" id="devTabHelp" hidden></div>
+              </div>
             </div>
 
             <div class="picker-grid" style="margin-bottom:18px;">
@@ -2667,6 +2726,19 @@
         </div>
       </aside>
     </div>
+    <footer class="site-footer">
+      <div class="site-footer-grid">
+        <div class="site-footer-brand">
+          <div class="section-label">Pokemon Momentum</div>
+          <a href="https://market.poke6s.com">market.poke6s.com</a>
+        </div>
+        <div class="site-footer-copy">
+          <div>Pokemon Momentum is a research tool for market screening and collection analysis. It is not financial advice, pricing advice, or a guarantee of future results.</div>
+          <div>Pokemon-related names, characters, logos, and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc., and The Pokemon Company / The Pokemon Company International. This project is independent and is not affiliated with or endorsed by those companies.</div>
+          <div>Marketplace names and product references are used only to identify products and support research workflows.</div>
+        </div>
+      </div>
+    </footer>
     <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Mobile dashboard navigation">
       <button type="button" data-mobile-target="home" class="active">Home</button>
       <button type="button" data-mobile-target="search">Search</button>
@@ -2729,6 +2801,7 @@
     const signalPanel = document.getElementById("signalsSection");
     const moverList = document.getElementById("moverList");
     const railSegments = document.getElementById("railSegments");
+    const signalSegments = document.getElementById("signalSegments");
     const mobileHomeSegments = document.getElementById("mobileHomeSegments");
     const pullRefreshIndicator = document.getElementById("pullRefreshIndicator");
     const pullRefreshLabel = document.getElementById("pullRefreshLabel");
@@ -2815,7 +2888,9 @@
       cards: false,
       sealed: false
     };
-    const segmentFilteredTabs = new Set(["top_movers", "sma30_holds", "early_uptrends", "confirmed_uptrends"]);
+    // These tabs all honor the shared Cards / Sealed segment toggle. Breakouts needs to be in
+    // this set too so sealed JP booster boxes do not leak into the singles view.
+    const segmentFilteredTabs = new Set(["top_movers", "sma30_holds", "early_uptrends", "confirmed_uptrends", "breakouts"]);
     let currentGeneration = initialParams.get("generation") || "all";
     let currentTrackedTag = initialParams.get("tracked_tag") || "all";
     let currentTrackedSort = initialParams.get("tracked_sort") || "tags";
@@ -3245,6 +3320,9 @@
 
     function syncSegmentButtons() {
       railSegments?.querySelectorAll("button").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.segment === currentSegment);
+      });
+      signalSegments?.querySelectorAll("button").forEach((btn) => {
         btn.classList.toggle("active", btn.dataset.segment === currentSegment);
       });
       mobileHomeSegments?.querySelectorAll("[data-segment]").forEach((btn) => {
@@ -4920,6 +4998,63 @@
         sma7.push(row[2]);
         sma30.push(row[3]);
       }
+      const priceValues = prices
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value));
+      const sma7Values = sma7
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value));
+      const sma30Values = sma30
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value));
+      const startingPrice = priceValues.find((value) => Number.isFinite(Number(value)));
+      const plottedValues = [...priceValues, ...sma7Values, ...sma30Values]
+        .map((value) => Number(value))
+        .filter((value) => Number.isFinite(value));
+      const useAutoRange = !Number.isFinite(Number(startingPrice))
+        || Number(startingPrice) < 5;
+      const startValue = Number(startingPrice);
+      const lowestValue = plottedValues.length ? Math.min(...plottedValues) : startValue;
+      const lowestPriceValue = priceValues.length ? Math.min(...priceValues) : lowestValue;
+      const highestPriceValue = priceValues.length ? Math.max(...priceValues) : (plottedValues.length ? Math.max(...plottedValues) : 0);
+      const latestSma7Value = [...sma7Values].reverse().find((value) => Number.isFinite(value)) ?? highestPriceValue;
+      const latestSma30Value = [...sma30Values].reverse().find((value) => Number.isFinite(value)) ?? highestPriceValue;
+      const lowestSma30Value = sma30Values.length ? Math.min(...sma30Values) : lowestPriceValue;
+      const visibleRegimeShift = Number.isFinite(startValue)
+        && Number.isFinite(lowestPriceValue)
+        && startValue >= 5
+        && (
+          (startValue - lowestPriceValue) >= 5
+          || (lowestPriceValue > 0 && (startValue / lowestPriceValue) >= 1.2)
+        );
+      const compact30DayReprice = currentDays === 30
+        && Number.isFinite(startValue)
+        && Number.isFinite(lowestPriceValue)
+        && startValue >= 5
+        && (
+          lowestPriceValue < startValue - 0.009
+          ||
+          (startValue - lowestPriceValue) >= 2
+          || (lowestPriceValue > 0 && (startValue / lowestPriceValue) >= 1.03)
+        );
+      const needsSma30Floor = currentDays === 30
+        && Number.isFinite(lowestSma30Value)
+        && Number.isFinite(lowestPriceValue)
+        && lowestSma30Value < (lowestPriceValue - 2);
+      const usePriceWindowBounds = currentTab === "good_buys" || currentDays >= 90 || visibleRegimeShift || compact30DayReprice;
+      const yAnchor = needsSma30Floor
+        ? Math.min(lowestPriceValue, lowestSma30Value)
+        : (usePriceWindowBounds ? lowestPriceValue : startValue);
+      const yMin = useAutoRange
+        ? null
+        : Math.max(0, (yAnchor % 5 === 0 ? yAnchor - 5 : Math.floor(yAnchor / 5) * 5));
+      // Longer windows read better when the y-axis follows the actual visible price regime and
+      // only keeps the current trend lines in frame, instead of letting an old elevated SMA30
+      // dominate the vertical scale after a sharp drop.
+      const yMax = usePriceWindowBounds
+        ? Math.max(highestPriceValue, latestSma7Value, latestSma30Value)
+        : (plottedValues.length ? Math.max(...plottedValues) : (yMin ?? 0));
+      const yPad = useAutoRange ? null : Math.max(0.5, (yMax - yMin) * 0.08);
 
       Plotly.react(chartEl, [
         {
@@ -4965,7 +5100,8 @@
           title: "",
           gridcolor: "rgba(99, 123, 160, 0.12)",
           zerolinecolor: "rgba(99, 123, 160, 0.12)",
-          tickfont: { color: "#8d9dbc" }
+          tickfont: { color: "#8d9dbc" },
+          ...(useAutoRange ? {} : { range: [yMin, yMax + yPad] })
         }
       }, {
         displaylogo: false,
@@ -5254,7 +5390,13 @@
       // Fresh page load should become usable as soon as the selected chart is ready. Heavier
       // list-building work is intentionally deferred so it does not block first paint.
       scheduleDeferredLoad(async () => {
-        await loadTable();
+        const rows = await loadTable();
+        if (!rows?.length) return;
+        const restoredIndex = inferActiveTableIndex(rows);
+        if (restoredIndex >= 0) {
+          activeTableIndex = restoredIndex;
+          syncActiveTableRow(true);
+        }
       });
       scheduleDeferredLoad(async () => {
         await loadGroups();
@@ -5691,6 +5833,7 @@
         });
       };
       bindSegmentButtons(railSegments);
+      bindSegmentButtons(signalSegments);
       bindSegmentButtons(mobileHomeSegments);
 
       if (mobileBottomNav) {

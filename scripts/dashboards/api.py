@@ -2224,11 +2224,15 @@ def breakouts(
     min_breakout_pct: float = 1.0,
     recent_change_within_days: int = 5,
     min_recent_distinct_prices_30d: int = 10,
+    product_kind: str | None = None,
     category_id: int = 3,
 ):
     category = category_config(category_id)
     price_source = prices_from(category.category_id)
-    metadata_cte = build_metadata_cte(category.category_id, cte_name="metadata")
+    metadata_cte = build_metadata_cte(category.category_id, include_classification=True, cte_name="metadata")
+    product_kind_filter = ""
+    if product_kind in {"card", "sealed"}:
+        product_kind_filter = f"AND m.productKind = '{product_kind}'"
     sql = f"""
     WITH base AS (
         SELECT
@@ -2322,6 +2326,8 @@ def breakouts(
         m.imageUrl,
         m.rarity,
         m.number,
+        m.productClass,
+        m.productKind,
         w.marketPrice AS latest_price,
         ph.prior_high_n AS prior_high_window,
         ((w.marketPrice / NULLIF(ph.prior_high_n, 0)) - 1) * 100.0 AS breakout_pct,
@@ -2351,6 +2357,7 @@ def breakouts(
       AND ((w.marketPrice / NULLIF(ph.prior_high_n, 0)) - 1) * 100.0 >= {min_breakout_pct}
       AND ph.last_change_date >= w.latest_date - INTERVAL {recent_change_within_days} DAY
       AND ra.recent_distinct_prices_30d >= {min_recent_distinct_prices_30d}
+      {product_kind_filter}
     ORDER BY breakout_pct DESC, w.marketPrice DESC
     LIMIT {limit}
     """

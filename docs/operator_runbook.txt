@@ -369,6 +369,12 @@ curl 'http://localhost:8001/group_series?category_id=85&groupId=24006&days=365'
 curl 'http://localhost:8001/set_baskets?category_id=85&min_cards=10&limit=5'
 ```
 
+Japanese sanity notes:
+
+- `Breakouts` under `Cards` should not show JP booster boxes; those belong under `Sealed`
+- JP Mega-era sets should group under `MEG`, not `SV`
+  - examples include `M2`, `M2a`, `M3`, `MBD`, `MBG`, and `MP1`
+
 
 Tracking checks
 ---------------

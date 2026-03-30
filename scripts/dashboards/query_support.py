@@ -21,7 +21,8 @@ PRODUCT_KIND_SQL = get_product_kind_sql("p")
 
 # Exact set-level overrides are safer than trying to keep stretching the era
 # heuristics to fit every promo, subset, or custom supplemental release.
-# This table is expected to grow as real-world metadata edge cases are found.
+# This table is expected to grow as real-world metadata edge cases are found,
+# especially for JP Mega-era releases that use multiple parallel prefixes.
 GENERATION_OVERRIDES = {
     17688: "SWSH",   # Crown Zenith
     17689: "SWSH",   # Crown Zenith: Galarian Gallery
@@ -38,9 +39,15 @@ GENERATION_OVERRIDES = {
     24380: "MEG",    # ME01: Mega Evolution
     24451: "MEG",    # ME: Mega Evolution Promo
     24448: "MEG",    # ME02: Phantasmal Flames
+    24444: "MEG",    # MBG: MEGA Starter Set Mega Gengar ex
+    24445: "MEG",    # MBD: MEGA Starter Set Mega Diancie ex
     24541: "MEG",    # ME: Ascended Heroes
     24461: "MEG",    # MEE: Mega Evolution Energies
+    24459: "MEG",    # M2: Inferno X
+    24499: "MEG",    # M2a: High Class Pack: MEGA Dream ex
+    24607: "MEG",    # MP1: Start Deck 100 Battle Collection CoroCiao Version
     24587: "MEG",    # ME03: Perfect Order
+    24600: "MEG",    # M3: Nihil Zero
     24655: "MEG",    # ME04: Chaos Rising
 }
 
@@ -357,6 +364,29 @@ CASE
     OR {name} LIKE '%BLACK STAR%'
     OR {abbr} IN ('SVP', 'SWSD', 'SMP', 'BWP', 'HSP', 'DPP', 'NP', 'WP', 'MEP')
     THEN 'PROMO'
+  WHEN {name} LIKE '%MEGA EVOLUTION%'
+    OR {name} LIKE 'ME:%'
+    OR {name} LIKE 'ME0%'
+    OR {name} LIKE 'M1:%'
+    OR {name} LIKE 'M1A:%'
+    OR {name} LIKE 'M1L:%'
+    OR {name} LIKE 'M1S:%'
+    OR {name} LIKE 'M2:%'
+    OR {name} LIKE 'M2A:%'
+    OR {name} LIKE 'M3:%'
+    OR {name} LIKE 'M3A:%'
+    OR {name} LIKE 'M4:%'
+    OR {name} LIKE 'M4A:%'
+    OR {name} LIKE 'MBD:%'
+    OR {name} LIKE 'MBG:%'
+    OR {name} LIKE 'MP1:%'
+    OR {name} LIKE '%START DECK 100 BATTLE COLLECTION%'
+    OR {name} LIKE 'MEE:%'
+    OR {abbr} = 'ME'
+    OR {abbr} LIKE 'ME0%'
+    OR {abbr} LIKE 'MEE%'
+    OR {abbr} IN ('M1', 'M1A', 'M1L', 'M1S', 'M2', 'M2A', 'M3', 'M3A', 'M4', 'M4A', 'MBD', 'MBG', 'MP1')
+    THEN 'MEG'
   WHEN {name} LIKE 'SV:%'
     OR {name} LIKE 'SV %'
     OR {name} LIKE 'SCARLET & VIOLET%'
@@ -388,14 +418,6 @@ CASE
   WHEN {name} LIKE 'POP SERIES%'
     OR {abbr} = 'POP'
     THEN 'POP'
-  WHEN {name} LIKE '%MEGA EVOLUTION%'
-    OR {name} LIKE 'ME:%'
-    OR {name} LIKE 'ME0%'
-    OR {name} LIKE 'MEE:%'
-    OR {abbr} = 'ME'
-    OR {abbr} LIKE 'ME0%'
-    OR {abbr} LIKE 'MEE%'
-    THEN 'MEG'
   WHEN {name} LIKE 'EX %'
     OR {name} IN (
       'RUBY & SAPPHIRE',
