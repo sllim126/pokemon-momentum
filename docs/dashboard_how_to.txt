@@ -73,12 +73,25 @@ new reviewers can verify expected UX quickly.
   - search feels more like "take me to the right set context"
   - users do not have to manually switch tabs after finding a result
 
-11. Good Buys refinement
+11. Browse Species and search refinement
+- broad card-name searches can now open `Browse Species` instead of dropping immediately into one set
+- `Browse Species` can also be opened from the currently selected card without typing a new search
+- expected result:
+  - searching for a species like `Seedot` or `Greninja` can show the cross-set card list directly
+  - `Browse Set` stays focused on set drilldown
+
+12. Good Buys refinement
 - `Good Buys` now requires at least `10` distinct prices in the last `30` days
-- a `Hide Prize Pack Series` toggle was added to the screen so Prize Pack cards can be excluded when desired
+- the screen now supports a `Filter Sets` popout so only specific sets can be reviewed
 - expected result:
   - fewer illiquid or overly special-case names in the list
-  - easier review of normal premium-rarity pullback candidates
+  - easier review of normal premium-rarity pullback candidates from just the sets you care about
+
+13. Quick Buy Targets
+- selected-card details now show a quick bargaining breakdown
+- target price references are shown at `95%`, `90%`, `85%`, `80%`, `75%`, `70%`, `65%`, and `60%` of the latest market price
+- expected result:
+  - faster buying decisions at shows or in quick sourcing situations
 
 What This Is
 This dashboard is a research and discovery tool built around Pokemon market data.
@@ -203,17 +216,17 @@ Good Buys
 Shows premium-rarity cards that have been trending downward or pulling back.
 This is meant to surface high-end cards that may be moving into more interesting buy zones rather than already spiking.
 The first version focuses on rarities like Double Rare, Illustration Rare, Special Illustration Rare, Ultra Rare, Hyper Rare, and Secret Rare.
-This screen now also requires at least `10` distinct prices over the last `30` days, and it includes a `Hide Prize Pack Series` toggle so those products can be excluded when they are not useful for the current review.
+This screen now also requires at least `10` distinct prices over the last `30` days, and it includes a `Filter Sets` popout so you can narrow the review to just the sets you care about.
 
 SMA30 Holds
 Shows products that reclaimed and held above the 30-day moving average.
 This is useful for finding names that may be stabilizing into a trend.
 
-Early Uptrends
+Early Movers
 Shows names where short-term momentum is starting to line up.
 This is meant to catch products that may be moving upward before they become obvious spikes.
 
-Uptrends
+Confirmed Movers
 Shows more confirmed momentum names.
 These are generally stronger trend candidates than the earliest setups.
 
@@ -228,14 +241,19 @@ Shows all products in the currently selected set from the Set Picker dropdown.
 Use this when you want to browse one set directly rather than only relying on the screener tabs.
 Header search also uses this screen as the destination for set-oriented searches, so a set search now opens directly into `Browse Set`.
 
+Browse Species
+Shows matching listings for the same searched card name across sets.
+Use this when you want to compare one species or card name across many sets instead of drilling into only one set.
+
 Simple one-line summaries
-- `Early Uptrends`: the earliest momentum names starting to turn positive
-- `Uptrends`: stronger and more confirmed trend names
+- `Early Movers`: the earliest momentum names starting to turn positive
+- `Confirmed Movers`: stronger and more confirmed trend names
 - `Top Movers`: the biggest recent movers over the last 30 days
 - `Consistent Movers`: cards steadily holding above SMA30 with real movement
 - `Good Buys`: premium cards that have pulled back into more interesting buy zones
 - `Set Strength`: whole-set strength and participation
 - `Browse Set`: drill directly into one set and browse all tracked cards/products inside it
+- `Browse Species`: compare one card name across many sets
 
 Browsing behavior:
 - the lower table is now its own scroll region, so the main chart stays visible while you review long lists
@@ -509,7 +527,7 @@ In practical terms, you usually want something that is:
 
 Best places to look in this dashboard:
 
-Early Uptrends
+Early Movers
 This is usually the best first place to look for early setups.
 It is designed to surface names where short-term momentum is starting to line up before they become obvious top movers.
 
@@ -517,7 +535,7 @@ SMA30 Holds
 This is useful for finding names that reclaimed and are holding above their 30-day trend.
 It can help identify products that may be stabilizing into an uptrend.
 
-Uptrends
+Confirmed Movers
 This is a stronger confirmation list.
 These names may be more developed than the earliest setups, but they are often higher-confidence trends.
 
@@ -526,7 +544,7 @@ This helps you see whether a whole set is strengthening.
 If a set is broadening, more products inside it may start to follow.
 
 Simple early-trend checklist
-- appears in Early Uptrends
+- appears in Early Movers
 - price is above SMA30
 - SMA7 is above SMA30
 - there were real price changes in the last 3 to 5 days

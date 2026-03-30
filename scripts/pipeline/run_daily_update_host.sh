@@ -10,6 +10,7 @@ SERVICE_NAME="pokemon-momentum"
 # Keep scheduled runs modest so the nightly job stays stable under normal load.
 DAILY_WORKERS="${DAILY_WORKERS:-4}"
 PIPELINE_ARGS="${PIPELINE_ARGS:-}"
+DAILY_CATEGORY_IDS="${DAILY_CATEGORY_IDS:-3 85}"
 
 mkdir -p "$LOG_DIR" "$LOCK_DIR"
 
@@ -44,11 +45,14 @@ echo "[$STAMP] Stopping $SERVICE_NAME to release DuckDB lock"
 docker-compose stop "$SERVICE_NAME" >> "$LOG_DIR/daily_update.log" 2>&1
 
 # Expected result: one-off container runs the pipeline and appends a full audit trail to the log.
-docker-compose run --rm -T "$SERVICE_NAME" bash -lc "
-  set -euo pipefail
-  cd /app
-  python scripts/pipeline/run_daily_update.py --workers ${DAILY_WORKERS} ${PIPELINE_ARGS}
-" 2>&1 | tee -a "$LOG_DIR/daily_update.log"
+for CATEGORY_ID in $DAILY_CATEGORY_IDS; do
+  echo "[$STAMP] Running pipeline for category ${CATEGORY_ID}"
+  docker-compose run --rm -T "$SERVICE_NAME" bash -lc "
+    set -euo pipefail
+    cd /app
+    python scripts/pipeline/run_daily_update.py --category-id ${CATEGORY_ID} --workers ${DAILY_WORKERS} ${PIPELINE_ARGS}
+  " 2>&1 | tee -a "$LOG_DIR/daily_update.log"
+done
 
 END_STAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "[$END_STAMP] Daily update finished"

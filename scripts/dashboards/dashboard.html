@@ -1166,9 +1166,9 @@
 
     .signal-panel {
       min-width: 0;
-      display: grid;
-      grid-template-rows: auto auto minmax(0, 1fr);
       min-height: 0;
+      display: flex;
+      flex-direction: column;
     }
 
     .signal-topline {
@@ -1214,6 +1214,8 @@
       position: relative;
       min-width: 0;
       overflow: hidden;
+      flex: 1 1 auto;
+      min-height: 0;
     }
 
     .table-loading-overlay {
@@ -1556,56 +1558,118 @@
       background: rgba(34, 176, 255, 0.22);
     }
 
-    .inline-toggle {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      justify-self: start;
+    #goodBuysFilters {
+      position: relative;
+      grid-template-columns: max-content;
+      align-items: start;
+      justify-content: start;
       gap: 12px;
-      min-height: 48px;
-      padding: 0 16px;
+      max-width: 100%;
+    }
+
+    .good-buys-filter-trigger {
+      appearance: none;
+      border: 1px solid rgba(44, 121, 197, 0.24);
       border-radius: 14px;
-      border: 1px solid rgba(34, 176, 255, 0.18);
       background: linear-gradient(180deg, rgba(17, 26, 43, 0.92), rgba(24, 35, 59, 0.92));
       box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.05);
       color: var(--ink);
+      padding: 11px 14px;
       font: inherit;
-      transition: border-color 0.16s ease, background 0.16s ease, transform 0.16s ease;
+      font-weight: 600;
+      cursor: pointer;
+      min-width: 148px;
+      text-align: left;
     }
 
-    .inline-toggle:hover {
+    .good-buys-filter-trigger:hover,
+    .good-buys-filter-trigger[aria-expanded="true"] {
       border-color: rgba(34, 176, 255, 0.28);
       background: linear-gradient(180deg, rgba(20, 31, 51, 0.96), rgba(28, 42, 68, 0.96));
     }
 
-    .inline-toggle input {
-      width: 18px;
-      height: 18px;
-      margin: 0;
-      accent-color: #22b0ff;
+    .good-buys-set-filter {
+      width: min(520px, calc(100vw - 64px));
+      padding: 14px 16px;
+      border: 1px solid rgba(44, 121, 197, 0.24);
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(17, 26, 43, 0.92), rgba(24, 35, 59, 0.92));
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.05);
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      z-index: 6;
+    }
+
+    .good-buys-set-filter .field-label {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .good-buys-set-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .good-buys-set-actions button {
+      border: 1px solid rgba(91, 112, 146, 0.24);
+      border-radius: 999px;
+      background: rgba(19, 30, 56, 0.8);
+      color: var(--muted);
+      padding: 6px 10px;
+      font-size: 12px;
       cursor: pointer;
     }
 
-    .inline-toggle label {
+    .good-buys-set-actions button:hover {
       color: var(--ink);
-      font-size: 15px;
-      font-weight: 600;
-      line-height: 1.2;
-      letter-spacing: 0.01em;
-      cursor: default;
+      border-color: rgba(44, 121, 197, 0.34);
     }
 
-    #goodBuysFilters {
-      grid-template-columns: minmax(0, 1fr);
-      align-items: start;
-      justify-content: start;
-      max-width: calc((100% - 24px) / 3);
+    .good-buys-set-actions .done {
+      margin-left: auto;
+      background: rgba(34, 176, 255, 0.14);
+      color: #8dddff;
+      border-color: rgba(34, 176, 255, 0.28);
     }
 
-    #goodBuysFilters .inline-toggle {
-      width: 100%;
-      min-height: 48px;
-      height: 48px;
+    .good-buys-set-list {
+      display: grid;
+      gap: 8px;
+      max-height: 220px;
+      overflow: auto;
+      padding-right: 4px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .good-buys-set-list::-webkit-scrollbar {
+      display: none;
+    }
+
+    .good-buys-set-item {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      align-items: center;
+      column-gap: 16px;
+      row-gap: 8px;
+      color: var(--ink);
+      font-size: 13px;
+    }
+
+    .good-buys-set-item input {
+      cursor: pointer;
+      margin: 0;
+      width: 18px;
+      height: 18px;
+    }
+
+    .good-buys-set-item span {
+      min-width: 0;
+      padding-left: 4px;
     }
 
     tbody tr {
@@ -1685,6 +1749,47 @@
     .stats-list {
       margin-top: 8px;
       border-top: 1px solid var(--line);
+    }
+
+    .bargain-block {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(91, 112, 146, 0.22);
+    }
+
+    .bargain-title {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .bargain-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 12px;
+    }
+
+    .bargain-pill {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid rgba(91, 112, 146, 0.18);
+      border-radius: 14px;
+      background: rgba(14, 22, 42, 0.52);
+      font-size: 13px;
+    }
+
+    .bargain-pill .label {
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .bargain-pill .value {
+      font-weight: 800;
     }
 
     .detail-row {
@@ -2102,10 +2207,6 @@
         margin: 0;
       }
 
-      .signal-panel {
-        grid-template-rows: auto auto minmax(0, 1fr);
-      }
-
       .signal-topline {
         align-items: flex-start;
       }
@@ -2114,6 +2215,15 @@
       .signal-panel.mobile-feed-mode .picker-grid,
       .signal-panel.mobile-feed-mode .table-region {
         display: none;
+      }
+
+      #goodBuysFilters {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+      }
+
+      .good-buys-set-filter {
+        width: min(100%, calc(100vw - 44px));
       }
 
       .signal-panel.mobile-feed-mode .mobile-signal-results {
@@ -2405,8 +2515,8 @@
             <div class="hero-tab-group">
               <div class="hero-tab-group-label">Market Momentum</div>
               <div class="tab-bar hero-tab-row">
-                <button type="button" data-tab="early_uptrends">Early Uptrends</button>
-                <button type="button" data-tab="confirmed_uptrends">Uptrends</button>
+                <button type="button" data-tab="early_uptrends">Early Movers</button>
+                <button type="button" data-tab="confirmed_uptrends">Confirmed Movers</button>
                 <button type="button" data-tab="top_movers" class="active">Top Movers</button>
                 <button type="button" data-tab="sma30_holds">Consistent Movers</button>
               </div>
@@ -2418,12 +2528,17 @@
                 <button type="button" data-tab="good_buys">Good Buys</button>
                 <button type="button" data-tab="group_signals">Set Strength</button>
                 <button type="button" data-tab="group_products">Browse Set</button>
+                <button type="button" data-tab="browse_species">Browse Species</button>
               </div>
             </div>
           </div>
           <section class="mobile-hero-stats" id="mobileHeroStats">
             <h3>Key Stats</h3>
             <div class="stats-list" id="mobileDetailStats"></div>
+            <div class="bargain-block" id="mobileBargainBlock">
+              <h4 class="bargain-title">Quick Buy Targets</h4>
+              <div class="bargain-grid" id="mobileBargainGrid"></div>
+            </div>
           </section>
           </section>
 
@@ -2474,9 +2589,19 @@
             </div>
 
             <div class="picker-grid" id="goodBuysFilters" style="margin-bottom:18px; display:none;">
-              <div class="inline-toggle">
-                <input type="checkbox" id="goodBuysPrizePackToggle">
-                <label for="goodBuysPrizePackToggle">Hide Prize Pack Series</label>
+              <button type="button" class="good-buys-filter-trigger" id="goodBuysFilterTrigger" aria-expanded="false">
+                Filter Sets
+              </button>
+              <div class="good-buys-set-filter" id="goodBuysSetPopover" hidden>
+                <span class="field-label">Filter Sets</span>
+                <div class="good-buys-set-actions">
+                  <button type="button" id="goodBuysSelectAll">All</button>
+                  <button type="button" id="goodBuysClearAll">Clear</button>
+                  <button type="button" class="done" id="goodBuysFilterDone">Done</button>
+                </div>
+                <div class="good-buys-set-list" id="goodBuysSetList">
+                  <div class="status">Set filters load from the current Good Buys results.</div>
+                </div>
               </div>
             </div>
 
@@ -2533,6 +2658,10 @@
           <section class="detail-card">
             <h3>Key Stats</h3>
             <div class="stats-list" id="detailStats"></div>
+            <div class="bargain-block" id="detailBargainBlock">
+              <h4 class="bargain-title">Quick Buy Targets</h4>
+              <div class="bargain-grid" id="detailBargainGrid"></div>
+            </div>
           </section>
 
         </div>
@@ -2548,14 +2677,15 @@
     <div class="mobile-indicator-menu" id="mobileIndicatorMenu" hidden>
       <p class="mobile-indicator-title">Choose Indicator</p>
       <div class="mobile-indicator-grid" id="mobileIndicatorGrid">
-        <button type="button" data-indicator-tab="early_uptrends">Early Uptrends</button>
-        <button type="button" data-indicator-tab="confirmed_uptrends">Uptrends</button>
+        <button type="button" data-indicator-tab="early_uptrends">Early Movers</button>
+        <button type="button" data-indicator-tab="confirmed_uptrends">Confirmed Movers</button>
         <button type="button" data-indicator-tab="top_movers">Top Movers</button>
         <button type="button" data-indicator-tab="sma30_holds">Consistent Movers</button>
         <button type="button" data-indicator-tab="breakouts">Breakouts</button>
         <button type="button" data-indicator-tab="good_buys">Good Buys</button>
         <button type="button" data-indicator-tab="group_signals">Set Strength</button>
         <button type="button" data-indicator-tab="group_products">Browse Set</button>
+        <button type="button" data-indicator-tab="browse_species">Browse Species</button>
       </div>
     </div>
     <div class="image-preview-popover" id="imagePreviewPopover" hidden>
@@ -2582,7 +2712,12 @@
     const trackedFilters = document.getElementById("trackedFilters");
     const trackedTagPicker = document.getElementById("trackedTagPicker");
     const goodBuysFilters = document.getElementById("goodBuysFilters");
-    const goodBuysPrizePackToggle = document.getElementById("goodBuysPrizePackToggle");
+    const goodBuysFilterTrigger = document.getElementById("goodBuysFilterTrigger");
+    const goodBuysSetPopover = document.getElementById("goodBuysSetPopover");
+    const goodBuysSetList = document.getElementById("goodBuysSetList");
+    const goodBuysSelectAll = document.getElementById("goodBuysSelectAll");
+    const goodBuysClearAll = document.getElementById("goodBuysClearAll");
+    const goodBuysFilterDone = document.getElementById("goodBuysFilterDone");
     const tableHead = document.getElementById("tableHead");
     const tableBody = document.getElementById("tableBody");
     const tableWrap = document.querySelector(".table-wrap");
@@ -2613,6 +2748,10 @@
     const freshnessBadge = document.getElementById("freshnessBadge");
     const detailStats = document.getElementById("detailStats");
     const mobileDetailStats = document.getElementById("mobileDetailStats");
+    const detailBargainBlock = document.getElementById("detailBargainBlock");
+    const detailBargainGrid = document.getElementById("detailBargainGrid");
+    const mobileBargainBlock = document.getElementById("mobileBargainBlock");
+    const mobileBargainGrid = document.getElementById("mobileBargainGrid");
     const tagActions = document.getElementById("tagActions");
     const trackingToggleBtn = document.getElementById("trackingToggleBtn");
     const trackingToggleLabel = document.getElementById("trackingToggleLabel");
@@ -2680,7 +2819,15 @@
     let currentGeneration = initialParams.get("generation") || "all";
     let currentTrackedTag = initialParams.get("tracked_tag") || "all";
     let currentTrackedSort = initialParams.get("tracked_sort") || "tags";
-    let currentHidePrizePack = initialParams.get("hide_prize_pack") === "1";
+    let currentGoodBuysSets = new Set(
+      String(initialParams.get("good_buys_sets") || "")
+        .split("|")
+        .map((value) => value.trim())
+        .filter((value) => value && value !== "__none__")
+    );
+    let currentGoodBuysSetFilterAll = !initialParams.has("good_buys_sets");
+    let lastGoodBuysRows = [];
+    let goodBuysSetPopoverOpen = false;
     let activeTableRows = [];
     let activeTableIndex = -1;
     let currentSeriesPayload = null;
@@ -2690,6 +2837,8 @@
     let headerSearchDebounce = null;
     let headerSearchResultsData = [];
     let headerSearchActiveIndex = -1;
+    let currentSpeciesRows = [];
+    let currentSpeciesLabel = "Search for a card name to browse matching listings across sets.";
     let tableLoadPending = 0;
     let headerSearchRequestToken = 0;
     let productPickerLoaded = false;
@@ -2734,14 +2883,14 @@
         title: "Names that have held above SMA30 for 30 straight days with real 30-day price movement."
       },
       early_uptrends: {
-        path: "/early_uptrends?days_required=3&limit=120&min_price=5&max_price_vs_sma30_pct=15&min_recent_distinct_prices_30d=10",
+        path: "/early_uptrends?days_required=3&limit=120&min_price=5&max_price_vs_sma30_pct=8&min_recent_distinct_prices_30d=10",
         columns: ["productName", "groupName", "number", "subTypeName", "early_streak", "recent_distinct_prices_30d", "latest_price", "latest_sma3", "latest_sma7", "latest_sma30", "pct_vs_sma30"],
-        title: "Early momentum: SMA3 > SMA7 > SMA30 with recent real price movement and 30-day price diversity."
+        title: "Early Movers shows names just starting to trend upward while still staying relatively close to SMA30."
       },
       confirmed_uptrends: {
         path: "/confirmed_uptrends?days_required=5&limit=120&min_price=5",
         columns: ["productName", "groupName", "number", "subTypeName", "bullish_streak", "latest_price", "latest_sma7", "latest_sma30", "pct_vs_sma30"],
-        title: "Confirmed momentum where price and SMA7 are both above SMA30."
+        title: "Confirmed Movers shows stronger uptrends with a more established bullish streak."
       },
       group_signals: {
         path: "/group_signals?limit=250&min_items=5",
@@ -2755,6 +2904,10 @@
       group_products: {
         columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "latest_date"],
         title: "Browse Set shows every tracked product in the selected set."
+      },
+      browse_species: {
+        columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "latest_date"],
+        title: "Browse Species shows matching listings for a searched card name across sets."
       }
     };
     const mobileIndicatorTabKeys = new Set([
@@ -3070,10 +3223,12 @@
       } else {
         url.searchParams.delete("tracked_sort");
       }
-      if (currentHidePrizePack) {
-        url.searchParams.set("hide_prize_pack", "1");
+      if (currentGoodBuysSetFilterAll) {
+        url.searchParams.delete("good_buys_sets");
+      } else if (currentGoodBuysSets.size) {
+        url.searchParams.set("good_buys_sets", Array.from(currentGoodBuysSets).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })).join("|"));
       } else {
-        url.searchParams.delete("hide_prize_pack");
+        url.searchParams.set("good_buys_sets", "__none__");
       }
       if (currentKey) {
         url.searchParams.set("product", currentKey);
@@ -3219,6 +3374,31 @@
       return Common.formatProductBadgeLabel(item);
     }
 
+    function renderBargainTargets(container, latestPrice) {
+      if (!container) return;
+      const numericPrice = Number(latestPrice);
+      if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+        container.innerHTML = "";
+        if (container.parentElement) {
+          container.parentElement.hidden = true;
+        }
+        return;
+      }
+      if (container.parentElement) {
+        container.parentElement.hidden = false;
+      }
+      const levels = [95, 90, 85, 80, 75, 70, 65, 60];
+      container.innerHTML = levels.map((pct) => {
+        const target = numericPrice * (pct / 100);
+        return `
+          <div class="bargain-pill">
+            <span class="label">${pct}%</span>
+            <span class="value">${formatNumber(target, 2)}</span>
+          </div>
+        `;
+      }).join("");
+    }
+
     function normalizeSearchQuery(value) {
       return String(value || "").trim().toLowerCase();
     }
@@ -3266,11 +3446,79 @@
           rarity: result.rarity || "",
           number: result.number || "",
           productClass: result.productClass || null,
-          productKind: result.productKind || null
+          productKind: result.productKind || null,
+          latest_price: result.latest_price ?? null,
+          latest_date: result.latest_date || ""
         };
         return { ...result, item };
       });
       return { ...payload, items };
+    }
+
+    function getProductHeaderSearchResults(results = []) {
+      return (results || []).filter((result) => result.kind !== "set" && result.item);
+    }
+
+    function parseCardNumberParts(value) {
+      const raw = String(value || "").trim();
+      if (!raw) return { hasNumber: false, primary: Number.POSITIVE_INFINITY, secondary: "", raw: "" };
+      const match = raw.match(/^(\d+)(.*)$/);
+      if (!match) {
+        return { hasNumber: false, primary: Number.POSITIVE_INFINITY, secondary: raw.toLowerCase(), raw };
+      }
+      return {
+        hasNumber: true,
+        primary: Number(match[1]),
+        secondary: String(match[2] || "").toLowerCase(),
+        raw
+      };
+    }
+
+    function compareCardNumberValues(left, right) {
+      const a = parseCardNumberParts(left);
+      const b = parseCardNumberParts(right);
+      if (a.hasNumber && b.hasNumber) {
+        if (a.primary !== b.primary) return a.primary - b.primary;
+        const suffixCompare = a.secondary.localeCompare(b.secondary, undefined, { numeric: true, sensitivity: "base" });
+        if (suffixCompare !== 0) return suffixCompare;
+      } else if (a.hasNumber !== b.hasNumber) {
+        return a.hasNumber ? -1 : 1;
+      }
+      return a.raw.localeCompare(b.raw, undefined, { numeric: true, sensitivity: "base" });
+    }
+
+    function deriveSpeciesQueryFromName(name) {
+      const raw = String(name || "").trim();
+      if (!raw) return "";
+      return raw
+        .replace(/\s*-\s*[^-]+$/u, "")
+        .replace(/\s*\([^)]*\)\s*$/u, "")
+        .trim();
+    }
+
+    function deriveSpeciesQueryFromCurrentSelection() {
+      if (!currentKey) return "";
+      const meta = universeByKey.get(currentKey)
+        || activeTableRows.find((row) => row.key === currentKey)
+        || null;
+      return deriveSpeciesQueryFromName(meta?.productName || cardTitle?.textContent || "");
+    }
+
+    function shouldOpenProductSearchResults(query, results = []) {
+      const normalized = normalizeSearchQuery(query);
+      if (!normalized || /[0-9/]/.test(normalized)) {
+        return false;
+      }
+      const productResults = getProductHeaderSearchResults(results);
+      if (productResults.length < 2) {
+        return false;
+      }
+      const tokens = normalized.toLowerCase().split(/\s+/).filter(Boolean);
+      const strongMatches = productResults.filter((result) => {
+        const name = String(result.item?.productName || "").toLowerCase();
+        return tokens.every((token) => name.includes(token));
+      });
+      return strongMatches.length >= 2;
     }
 
     function renderHeaderSearchResults(results, totalCount) {
@@ -3341,6 +3589,64 @@
       return targetRow;
     }
 
+    async function openProductSearchResults(query, results = []) {
+      // Browse Species acts like a research landing page for one card name across sets.
+      // Keep all matches together, sort them like card numbers, and let the chart follow
+      // the first listing so the user lands in a useful state immediately.
+      const productRows = getProductHeaderSearchResults(results).map((result) => ({
+        ...result.item,
+        latest_price: result.item.latest_price ?? result.latest_price ?? null,
+        latest_date: result.item.latest_date || result.latest_date || ""
+      })).sort((left, right) => {
+        const numberCompare = compareCardNumberValues(left.number, right.number);
+        if (numberCompare !== 0) return numberCompare;
+        const setCompare = String(left.groupName || "").localeCompare(String(right.groupName || ""), undefined, { numeric: true, sensitivity: "base" });
+        if (setCompare !== 0) return setCompare;
+        const subtypeCompare = String(left.subTypeName || "").localeCompare(String(right.subTypeName || ""), undefined, { numeric: true, sensitivity: "base" });
+        if (subtypeCompare !== 0) return subtypeCompare;
+        return String(left.productName || "").localeCompare(String(right.productName || ""), undefined, { numeric: true, sensitivity: "base" });
+      });
+      if (!productRows.length) {
+        return null;
+      }
+      productRows.forEach((item) => ensurePickerOption(item));
+      currentSpeciesRows = productRows;
+      currentSpeciesLabel = `Showing ${productRows.length} matching listings for "${query}".`;
+      activateTab("browse_species");
+      currentChartMode = "product";
+      syncUrlState();
+      const rows = await loadTable();
+      if (rows && rows.length) {
+        await selectItem(rows[0], { openDetail: isPhoneLayout() });
+        activeTableIndex = 0;
+        syncActiveTableRow(true);
+      }
+      if (tableWrap) {
+        tableWrap.scrollTop = 0;
+      }
+      return rows;
+    }
+
+    async function maybeOpenBrowseSpeciesFromSearch(query, seededResults = null) {
+      const normalized = normalizeSearchQuery(query);
+      if (!normalized) {
+        return false;
+      }
+      let results = seededResults;
+      if (!results || !results.length) {
+        const payload = await fetchHeaderSearchResults(normalized, 500);
+        results = payload.items || [];
+      }
+      if (!shouldOpenProductSearchResults(normalized, results)) {
+        return false;
+      }
+      await openProductSearchResults(normalized, results);
+      setHeaderSearchStatus(`Loaded ${getProductHeaderSearchResults(results).length} matching listings for ${normalized}.`);
+      setHeaderSearchResultsOpen(false);
+      setMobileSearchOpen(false);
+      return true;
+    }
+
     async function selectHeaderSearchResult(index) {
       const result = headerSearchResultsData[index];
       if (!result) return;
@@ -3382,6 +3688,9 @@
         setHeaderSearchStatus("Enter a card name, number, or set name.", true);
         return;
       }
+      if (await maybeOpenBrowseSpeciesFromSearch(query, headerSearchResultsData)) {
+        return;
+      }
       if (headerSearchResultsData.length) {
         const index = headerSearchActiveIndex >= 0 ? headerSearchActiveIndex : 0;
         await selectHeaderSearchResult(index);
@@ -3393,6 +3702,9 @@
         const payload = await fetchHeaderSearchResults(query, 12);
         const results = payload.items || [];
         if (results.length) {
+          if (await maybeOpenBrowseSpeciesFromSearch(query, results)) {
+            return;
+          }
           await selectHeaderSearchResult(0);
           return;
         }
@@ -3414,7 +3726,7 @@
       }
       const requestToken = ++headerSearchRequestToken;
       setHeaderSearchStatus("Searching...");
-      const payload = await fetchHeaderSearchResults(query, 20);
+      const payload = await fetchHeaderSearchResults(query, 500);
       if (requestToken !== headerSearchRequestToken) {
         return;
       }
@@ -3582,7 +3894,7 @@
       const resolvedTarget = activeTarget || (
         currentTab === "tracked_items"
           ? "tracked"
-          : ((mobileIndicatorTabKeys.has(currentTab) && currentTab !== "sma30_holds") || ["group_products", "group_signals"].includes(currentTab))
+          : ((mobileIndicatorTabKeys.has(currentTab) && currentTab !== "sma30_holds") || ["group_products", "group_signals", "browse_species"].includes(currentTab))
             ? "indicators"
             : "home"
       );
@@ -3991,7 +4303,10 @@
       }
       if (col === "trend_score") return formatNumber(item[col], 1);
       if (col === "breadth_score") return formatNumber(item[col], 1);
-      if (["p_now", "p_prior", "latest_price", "latest_sma7", "latest_sma30", "high_window"].includes(col)) {
+      if (["p_now", "p_prior", "latest_price", "latest_sma7", "latest_sma30", "high_window", "prior_high_window", "avg_price", "median_price", "top_hit_price", "top3_price", "total_set_cost"].includes(col)) {
+        return formatNumber(item[col], 2);
+      }
+      if (typeof item[col] === "number" && Number.isFinite(item[col]) && !Number.isInteger(item[col])) {
         return formatNumber(item[col], 2);
       }
       return item[col] ?? "";
@@ -4087,9 +4402,61 @@
     }
 
     function updateGoodBuysFilterVisibility() {
-      if (!goodBuysFilters || !goodBuysPrizePackToggle) return;
+      if (!goodBuysFilters) return;
       goodBuysFilters.style.display = currentTab === "good_buys" ? "grid" : "none";
-      goodBuysPrizePackToggle.checked = currentHidePrizePack;
+      if (currentTab !== "good_buys") {
+        setGoodBuysSetPopoverOpen(false);
+      }
+    }
+
+    function setGoodBuysSetPopoverOpen(open) {
+      // Good Buys set filters now behave like an inspector popout so the screen can stay
+      // focused on the results table until the operator explicitly wants to narrow the set list.
+      const isOpen = Boolean(open) && currentTab === "good_buys";
+      goodBuysSetPopoverOpen = isOpen;
+      if (goodBuysSetPopover) {
+        goodBuysSetPopover.hidden = !isOpen;
+      }
+      if (goodBuysFilterTrigger) {
+        goodBuysFilterTrigger.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      }
+    }
+
+    function populateGoodBuysSetFilters(rows = []) {
+      if (!goodBuysSetList) return;
+      const setNames = Array.from(new Set(
+        (rows || [])
+          .map((row) => String(row.groupName || "").trim())
+          .filter(Boolean)
+      )).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
+      if (!setNames.length) {
+        goodBuysSetList.innerHTML = `<div class="status">No set filters available for the current Good Buys results.</div>`;
+        currentGoodBuysSets.clear();
+        return;
+      }
+      const available = new Set(setNames);
+      currentGoodBuysSets = new Set(Array.from(currentGoodBuysSets).filter((name) => available.has(name)));
+      goodBuysSetList.innerHTML = "";
+      setNames.forEach((name) => {
+        const row = document.createElement("label");
+        row.className = "good-buys-set-item";
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.value = name;
+        input.checked = currentGoodBuysSetFilterAll ? true : currentGoodBuysSets.has(name);
+        const text = document.createElement("span");
+        text.textContent = name;
+        row.appendChild(input);
+        row.appendChild(text);
+        goodBuysSetList.appendChild(row);
+      });
+    }
+
+    function applyGoodBuysSetFilters(rows = []) {
+      if (currentTab !== "good_buys" || currentGoodBuysSetFilterAll) {
+        return rows;
+      }
+      return (rows || []).filter((row) => currentGoodBuysSets.has(String(row.groupName || "").trim()));
     }
 
     function buildTrackedRows() {
@@ -4366,6 +4733,8 @@
       ];
       renderDetailsList(detailStats, details);
       renderDetailsList(mobileDetailStats, details);
+      renderBargainTargets(detailBargainGrid, latestPrice);
+      renderBargainTargets(mobileBargainGrid, latestPrice);
 
     }
 
@@ -4532,6 +4901,8 @@
       ];
       renderDetailsList(detailStats, details);
       renderDetailsList(mobileDetailStats, details);
+      renderBargainTargets(detailBargainGrid, null);
+      renderBargainTargets(mobileBargainGrid, null);
     }
 
     function renderChart(series) {
@@ -4794,8 +5165,10 @@
         return;
       }
       // Preload a lightweight text-only catalog for the picker so the dropdown is ready
-      // without forcing the heavier full-universe payload on the initial page load.
+      // once someone actually opens it, without forcing the heavier text catalog
+      // onto every page boot.
       productPickerLoadPromise = (async () => {
+        picker.innerHTML = '<option value="">Loading products...</option>';
         const payload = await getJson("/product_picker?limit=50000");
         const columns = payload.columns || [];
         for (const row of payload.rows || []) {
@@ -4882,9 +5255,6 @@
       // list-building work is intentionally deferred so it does not block first paint.
       scheduleDeferredLoad(async () => {
         await loadTable();
-      });
-      scheduleDeferredLoad(async () => {
-        await loadProductPicker();
       });
       scheduleDeferredLoad(async () => {
         await loadGroups();
@@ -4975,6 +5345,16 @@
       setTableLoading(true, "Loading market signals");
       let loadSucceeded = false;
       try {
+        if (currentTab === "browse_species") {
+          updateGroupSignalFilterVisibility();
+          updateTrackedFilterVisibility();
+          updateGoodBuysFilterVisibility();
+          updateMobileNavState("indicators");
+          const rows = currentSpeciesRows || [];
+          renderTable(rows);
+          loadSucceeded = true;
+          return rows;
+        }
         if (currentTab === "tracked_items") {
           if (!universeLoaded) {
             await loadUniverse();
@@ -5005,14 +5385,16 @@
         if (segmentFilteredTabs.has(currentTab)) {
           path += `${path.includes("?") ? "&" : "?"}product_kind=${encodeURIComponent(currentSegment === "sealed" ? "sealed" : "card")}`;
         }
-        if (currentTab === "good_buys" && currentHidePrizePack) {
-          path += `${path.includes("?") ? "&" : "?"}exclude_prize_packs=true`;
-        }
         if (currentTab === "group_signals" && currentGeneration !== "all") {
           path += `&generation=${encodeURIComponent(currentGeneration)}`;
         }
         const payload = await getJson(path);
         let rows = enrichRows(payload);
+        if (currentTab === "good_buys") {
+          lastGoodBuysRows = rows.slice();
+          populateGoodBuysSetFilters(lastGoodBuysRows);
+          rows = applyGoodBuysSetFilters(lastGoodBuysRows);
+        }
         if (currentTab === "group_signals") {
           populateGenerationPicker(rows);
           if (!rows.length) {
@@ -5053,7 +5435,7 @@
       } finally {
         if (loadSucceeded) {
           setTableLoading(false);
-          tableStatus.textContent = cfg.title;
+          tableStatus.textContent = currentTab === "browse_species" ? currentSpeciesLabel : cfg.title;
         }
       }
     }
@@ -5121,13 +5503,57 @@
         await loadTable();
       });
 
-      goodBuysPrizePackToggle?.addEventListener("change", async () => {
-        currentHidePrizePack = Boolean(goodBuysPrizePackToggle.checked);
+      goodBuysSetList?.addEventListener("change", async (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement) || target.type !== "checkbox") return;
+        const visibleSetNames = Array.from(goodBuysSetList.querySelectorAll('input[type="checkbox"]')).map((input) => String(input.value || ""));
+        const checkedNames = visibleSetNames.filter((name) => {
+          const input = goodBuysSetList.querySelector(`input[value="${CSS.escape(name)}"]`);
+          return input instanceof HTMLInputElement && input.checked;
+        });
+        currentGoodBuysSetFilterAll = checkedNames.length === visibleSetNames.length;
+        currentGoodBuysSets = new Set(checkedNames);
         syncUrlState();
         if (tableWrap) {
           tableWrap.scrollTop = 0;
         }
-        await loadTable();
+        renderTable(applyGoodBuysSetFilters(lastGoodBuysRows));
+      });
+
+      goodBuysFilterTrigger?.addEventListener("click", () => {
+        setGoodBuysSetPopoverOpen(!goodBuysSetPopoverOpen);
+      });
+
+      goodBuysSelectAll?.addEventListener("click", () => {
+        currentGoodBuysSetFilterAll = true;
+        currentGoodBuysSets.clear();
+        populateGoodBuysSetFilters(lastGoodBuysRows);
+        syncUrlState();
+        if (tableWrap) {
+          tableWrap.scrollTop = 0;
+        }
+        renderTable(applyGoodBuysSetFilters(lastGoodBuysRows));
+      });
+
+      goodBuysFilterDone?.addEventListener("click", () => {
+        setGoodBuysSetPopoverOpen(false);
+      });
+
+      goodBuysClearAll?.addEventListener("click", () => {
+        const visibleSetNames = Array.from(goodBuysSetList?.querySelectorAll('input[type="checkbox"]') || []).map((input) => String(input.value || ""));
+        currentGoodBuysSetFilterAll = false;
+        visibleSetNames.forEach((name) => {
+          const input = goodBuysSetList.querySelector(`input[value="${CSS.escape(name)}"]`);
+          if (input instanceof HTMLInputElement) {
+            input.checked = false;
+          }
+        });
+        currentGoodBuysSets = new Set();
+        syncUrlState();
+        if (tableWrap) {
+          tableWrap.scrollTop = 0;
+        }
+        renderTable(applyGoodBuysSetFilters(lastGoodBuysRows));
       });
 
       headerSearchInput.addEventListener("input", () => {
@@ -5154,10 +5580,14 @@
           syncHeaderSearchActiveResult();
         } else if (event.key === "Enter") {
           event.preventDefault();
+          if (await maybeOpenBrowseSpeciesFromSearch(headerSearchInput.value, headerSearchResultsData)) {
+            return;
+          }
           const index = headerSearchActiveIndex >= 0 ? headerSearchActiveIndex : 0;
           await selectHeaderSearchResult(index);
         } else if (event.key === "Escape") {
           setHeaderSearchResultsOpen(false);
+          setGoodBuysSetPopoverOpen(false);
         }
       });
 
@@ -5198,6 +5628,17 @@
           currentTab = btn.dataset.tab;
           if (currentTab === "group_products" && !groupsLoaded) {
             await loadGroups();
+          }
+          if (currentTab === "browse_species") {
+            const speciesQuery = normalizeSearchQuery(headerSearchInput.value) || deriveSpeciesQueryFromCurrentSelection();
+            if (speciesQuery && !normalizeSearchQuery(headerSearchInput.value)) {
+              headerSearchInput.value = speciesQuery;
+            }
+            const openedSpecies = await maybeOpenBrowseSpeciesFromSearch(speciesQuery, headerSearchResultsData);
+            if (!openedSpecies) {
+              currentSpeciesRows = [];
+              currentSpeciesLabel = "Search for a card name to browse matching listings across sets.";
+            }
           }
           if (currentTab === "group_signals") {
             const selectedGroupId = groupPicker.value ? Number(groupPicker.value) : currentGroupId;
@@ -5409,6 +5850,10 @@
         if (target instanceof HTMLElement && target.closest("select, input, textarea, button")) {
           return;
         }
+        if (event.key === "Escape" && goodBuysSetPopoverOpen) {
+          setGoodBuysSetPopoverOpen(false);
+          return;
+        }
         if (event.key === "Escape" && mobileIndicatorMenu && !mobileIndicatorMenu.hidden) {
           setMobileIndicatorMenuOpen(false);
           return;
@@ -5467,6 +5912,13 @@
           && !(mobileBottomNav && mobileBottomNav.contains(target))
         ) {
           setMobileIndicatorMenuOpen(false);
+        }
+        if (
+          goodBuysSetPopoverOpen
+          && goodBuysFilters
+          && !goodBuysFilters.contains(target)
+        ) {
+          setGoodBuysSetPopoverOpen(false);
         }
       });
 
@@ -5565,7 +6017,7 @@
         });
         syncSegmentButtons();
         updateDevTabHelp(currentTab);
-        picker.innerHTML = '<option value="">Loading products...</option>';
+        picker.innerHTML = '<option value="">Open product picker to load products</option>';
         groupPicker.innerHTML = '<option value="">Loading sets...</option>';
         await loadCategories();
         await loadHealth();

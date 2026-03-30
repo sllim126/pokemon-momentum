@@ -43,10 +43,10 @@ Recent Data/Serving Changes (March 2026)
 6. Search and screener workflow refinements
 - header search now routes set-oriented selections into `Browse Set` instead of acting like a raw product jump
 - `Good Buys` now filters for `recent_distinct_prices_30d >= 10`
-- `Good Buys` can also exclude Prize Pack rows through a request-time toggle
+- `Good Buys` now supports a client-side `Filter Sets` popout over the current result set
 - Expected result:
   - search drops the user into the correct set context more often
-  - `Good Buys` is less likely to show thinly traded or special-case rows by default
+  - `Good Buys` is less likely to show thinly traded names by default and is easier to narrow to relevant sets
 
 What this document is for
 -------------------------
@@ -72,6 +72,10 @@ High-level flow
 7. Export partitioned parquet history
 8. Serve dashboards and API from DuckDB + parquet
 
+Host-driven daily automation now runs that pipeline for both category `3` and category `85`
+sequentially, so Japanese snapshots are rebuilt during the same nightly maintenance window
+instead of depending on a separate manual pass.
+
 
 Recent dashboard workflow additions
 ----------------------------------
@@ -95,7 +99,7 @@ workflow features:
   - this uses the product snapshot plus rarity metadata to surface premium-rarity cards
     that have been trending down or pulling back
   - it now also requires recent distinct-price activity so thinly traded pullbacks are filtered out
-  - request-time filtering can exclude Prize Pack Series rows without rebuilding the snapshot
+  - the dashboard can now narrow those rows client-side to just the selected sets without rebuilding the snapshot
 
 - new snapshot-driven companion page: `Set Explorer`
   - this page is intentionally lighter than the main dashboard

@@ -26,6 +26,12 @@ Recently Completed (March 2026)
 - Added explicit loading states for chart and Market Signals table fetches.
 - Added a first server-side search pass and header search UI.
 - Reduced some forced full-universe loads so card/set detail can load more on demand.
+- Added `Browse Species` as a research tool for cross-set card-name browsing.
+- Added `Quick Buy Targets` to the selected-card details for fast bargaining references.
+- Reworked `Good Buys` set filtering into a popout checklist over the results area.
+- Renamed momentum labels for clarity:
+  - `Early Movers`
+  - `Confirmed Movers`
 - Mobile dashboard pass:
   - bottom nav now drives `Home`, `Search`, `Tracked`, and `Indicators`
   - selected-product view is a mobile drilldown instead of always occupying the home screen
@@ -78,16 +84,8 @@ Performance
 Search Redesign
 ---------------
 
-- Rework search UX after the first server-side pass; it still needs a clearer browsing and result-selection flow.
-- Keep search server-side with explicit ranking:
-  - exact card-name matches first
-  - then strong string matches
-  - then set matches / broader partials
-- Stop loading the whole universe for search and browsing before the user selects a specific card or set.
-- Load detailed data only when a card or set is actually selected.
+- Improve ranking for broad names and edge cases.
 - Evaluate typo tolerance / fuzzy matching for search without harming result quality.
-- Decide how aggressive autocomplete should be for broad names like `Charizard` vs unique searches like `Stellar Crown`.
-- Keep search result lists capped so broad searches do not overwhelm the user.
 
 Mobile / Layout
 ---------------
@@ -100,7 +98,6 @@ Mobile / Layout
   - iPad / tablet
   - desktop
 - Review `/embed` on tablet and phone sizes after the main dashboard mobile pass.
-- Consider replacing the mobile bottom-bar `Sets` button with a popup / overflow menu for the other indicator feeds, with those feeds loading into the same mobile card layout used by `Consistent Movers`.
 - Add a first-time guided tour / onboarding flow for new users.
 - Highlight the major parts of the dashboard with simple prompts such as:
   - click here
@@ -161,7 +158,7 @@ Signals / Screening
 
 - Continue tuning `Good Buys` so it finds premium-rarity cards that are weakening but not broken.
 - Review whether `Good Buys` should prefer cards flattening over the last 7 days instead of still actively falling.
-- Continue refining `Top Movers` and `Early Uptrends` to reject stale one-sale jumps.
+- Continue refining `Top Movers` and `Early Movers` to reject stale one-sale jumps.
 - Consider a dedicated "pre-breakout accumulation" signal.
 
 
@@ -201,6 +198,7 @@ LLM / Assistant Layer
 ---------------------
 
 - Explore an LLM assistant on top of the screener data instead of replacing the deterministic filters.
+- Add a Discord webhook / bot path so users can ask about a specific card and receive its key card stats/state as a response.
 - Support budget-based sourcing prompts, for example:
   - "I have $250, show me the best Illustrated Rare or higher cards between $3 and $5."
   - "I want sealed products under $80 that are starting to trend upward."

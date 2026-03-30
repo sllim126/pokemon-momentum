@@ -110,6 +110,7 @@ Normal expectation:
 - refreshes metadata incrementally
 - rebuilds snapshots
 - exports new parquet partitions
+- processes both category `3` (Pokemon) and category `85` (Pokemon Japanese) in sequence
 - restarts the app container afterward
 - the weekly full metadata refresh runs Sunday at `11:00 UTC`
 - the weekly placeholder cleanup runs Monday at `11:00 UTC`, 24 hours later
@@ -151,7 +152,7 @@ Healthy result:
 - `set-explorer` loads and the set table populates
 - tracking sign-in works and tags persist after refresh
 - `Signals` tab is no longer present in the dashboard UI
-- `Good Buys` supports `Hide Prize Pack Series` and excludes Prize Pack rows when enabled
+- `Good Buys` supports a `Filter Sets` popout so review can be narrowed to the specific sets you want to inspect
 - on phone/tablet widths:
   - mobile home shows `Singles / Sealed`
   - selected-product drilldown hides the indicator tabs below the chart

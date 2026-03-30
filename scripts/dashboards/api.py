@@ -1001,7 +1001,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         return {"items": [], "query": term, "limit": limit, "total_count": 0}
 
     safe_term = term.replace("'", "''")
-    limit = max(1, min(limit, 50))
+    limit = max(1, min(limit, 500))
     category = category_config(category_id)
     product_signal_source = product_signal_from(category.category_id)
     metadata_cte = build_metadata_cte(category.category_id, include_classification=True, cte_name="metadata")
@@ -1013,7 +1013,9 @@ def search(query: str, limit: int = 12, category_id: int = 3):
       SELECT
         productId,
         subTypeName,
-        groupId
+        groupId,
+        latest_price,
+        latest_date
       FROM {product_signal_source}
     ),
     active_groups AS (
@@ -1039,6 +1041,8 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         m.number,
         m.productClass,
         m.productKind,
+        ap.latest_price,
+        ap.latest_date,
         CASE
           WHEN lower(regexp_replace(COALESCE(m.productName, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 520
           WHEN lower(regexp_replace(COALESCE(m.number, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 500
@@ -1081,6 +1085,8 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         NULL AS number,
         NULL AS productClass,
         'set' AS productKind,
+        NULL AS latest_price,
+        NULL AS latest_date,
         CASE
           WHEN lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 560
           WHEN lower(regexp_replace(COALESCE(g.abbreviation, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 540
@@ -2454,7 +2460,7 @@ def early_uptrends(
     days_required: int = 3,
     limit: int = 200,
     min_price: float = 5.0,
-    max_price_vs_sma30_pct: float = 15.0,
+    max_price_vs_sma30_pct: float = 8.0,
     min_recent_distinct_prices_30d: int = 10,
     min_recent_observations: int = 3,
     recent_change_within_days: int = 5,
@@ -2505,7 +2511,7 @@ def early_uptrends(
       AND last_change_date >= latest_date - INTERVAL {recent_change_within_days} DAY
       AND ((latest_price / NULLIF(latest_sma30, 0)) - 1) * 100 <= {max_price_vs_sma30_pct}
       {product_kind_filter}
-    ORDER BY early_streak DESC, pct_vs_sma30 ASC, latest_price DESC
+    ORDER BY early_streak ASC, pct_vs_sma30 ASC, latest_price DESC
     LIMIT {limit}
     """
 
