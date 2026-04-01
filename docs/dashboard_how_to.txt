@@ -93,6 +93,22 @@ new reviewers can verify expected UX quickly.
 - expected result:
   - faster buying decisions at shows or in quick sourcing situations
 
+14. Header account menu and bug reporting
+- the upper-right `Account` menu now contains sign-in / account creation, tracked-item access,
+  public page links, and a `Report a Bug` action
+- bug reports capture the current page state, active tab, market, segment, selected product,
+  chart mode, and current search query when available
+- expected result:
+  - issues can be reproduced more reliably from the saved context
+  - the account menu becomes the main utility launcher for tracking and support actions
+
+15. Paged product and set pickers
+- the custom `Product Picker` and `Set Picker` now load in pages instead of preloading the full catalog
+- this keeps the dropdowns scrollable while avoiding the old `50,000`-row upfront load
+- expected result:
+  - first open is much faster
+  - desktop and mobile tracking/research flows avoid unnecessary startup cost
+
 What This Is
 This dashboard is a research and discovery tool built around Pokemon market data.
 It takes a large amount of price history and turns it into something easier to scan, compare, and act on.
@@ -133,6 +149,18 @@ It is meant to answer questions like:
 
 It does not replace the main dashboard.
 Instead, it gives a simpler place to poke around in the set data without learning the chart and screener workflow first.
+
+Sealed Deals
+There is also a dedicated sealed-products page:
+- `/sealed-deals`
+
+This page is meant for product-level pack-value checks and quick sealed comparisons.
+It is especially useful for:
+- booster boxes
+- elite trainer boxes
+- collection products with known pack mixes
+
+The page is public and can be reached from the account menu.
 
 Overview
 This dashboard is designed to help you scan for momentum across Pokemon cards and sealed products, then drill into a single item quickly.

@@ -26,7 +26,7 @@ def get_con() -> sqlite3.Connection:
 
 
 def ensure_tracking_schema() -> None:
-    """Create the lightweight tracking account/session/tag tables when missing."""
+    """Create the lightweight tracking account/session/tag/bug-report tables when missing."""
     con = get_con()
     try:
         con.executescript(
@@ -58,6 +58,26 @@ def ensure_tracking_schema() -> None:
                 updated_at TEXT NOT NULL,
                 PRIMARY KEY (user_id, category_id, product_id, sub_type_name, tag),
                 FOREIGN KEY(user_id) REFERENCES tracking_users(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS bug_reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL,
+                reporter_username TEXT,
+                page_path TEXT NOT NULL,
+                page_url TEXT NOT NULL,
+                category_id INTEGER,
+                tab TEXT,
+                segment TEXT,
+                chart_mode TEXT,
+                product_key TEXT,
+                group_id INTEGER,
+                search_query TEXT,
+                title TEXT NOT NULL,
+                expected TEXT,
+                details TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'new',
+                context_json TEXT NOT NULL
             );
             """
         )
@@ -295,5 +315,91 @@ def merge_tags(user_id: int, items: list[dict]) -> None:
                 ],
             )
         con.commit()
+    finally:
+        con.close()
+
+
+def create_bug_report(payload: dict) -> int:
+    ensure_tracking_schema()
+    now = utc_now_iso()
+    con = get_con()
+    try:
+        cur = con.execute(
+            """
+            INSERT INTO bug_reports (
+                created_at,
+                reporter_username,
+                page_path,
+                page_url,
+                category_id,
+                tab,
+                segment,
+                chart_mode,
+                product_key,
+                group_id,
+                search_query,
+                title,
+                expected,
+                details,
+                status,
+                context_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                now,
+                (payload.get("reporter_username") or "").strip() or None,
+                (payload.get("page_path") or "").strip() or "/dashboard",
+                (payload.get("page_url") or "").strip() or "/dashboard",
+                payload.get("category_id"),
+                (payload.get("tab") or "").strip() or None,
+                (payload.get("segment") or "").strip() or None,
+                (payload.get("chart_mode") or "").strip() or None,
+                (payload.get("product_key") or "").strip() or None,
+                payload.get("group_id"),
+                (payload.get("search_query") or "").strip() or None,
+                (payload.get("title") or "").strip() or "Bug report",
+                (payload.get("expected") or "").strip() or None,
+                (payload.get("details") or "").strip() or "",
+                (payload.get("status") or "").strip() or "new",
+                payload.get("context_json") or "{}",
+            ],
+        )
+        con.commit()
+        return int(cur.lastrowid)
+    finally:
+        con.close()
+
+
+def list_bug_reports(limit: int = 200) -> list[dict]:
+    ensure_tracking_schema()
+    con = get_con()
+    try:
+        rows = con.execute(
+            """
+            SELECT
+                id,
+                created_at,
+                reporter_username,
+                page_path,
+                page_url,
+                category_id,
+                tab,
+                segment,
+                chart_mode,
+                product_key,
+                group_id,
+                search_query,
+                title,
+                expected,
+                details,
+                status,
+                context_json
+            FROM bug_reports
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            [max(1, min(int(limit or 200), 1000))],
+        ).fetchall()
+        return [dict(row) for row in rows]
     finally:
         con.close()

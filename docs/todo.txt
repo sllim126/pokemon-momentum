@@ -41,198 +41,107 @@ Recently Completed (March 2026)
 - Removed the old `Signals` indicator from the dashboard UI for now.
   - it can be added back later if it earns a clearer purpose
 
-Immediate Bugs
---------------
+Next Up
+-------
 
-- Keep cleaning up placeholder `Product <id>` names if any still leak through after metadata refreshes.
-- Review current header search behavior and resolve any result-selection quirks before iterating further.
+- Profile `/dashboard` in browser developer tools and write down the current slowest first-load requests.
+- Reduce first-render time by deferring any non-essential API calls still blocking the first usable paint.
+- Review current header search behavior and fix any remaining result-selection quirks.
+- Improve search ranking for broad card names and edge cases.
+- Test the dashboard on:
+  - iPhone / phone
+  - iPad / tablet
+  and write down the concrete layout problems instead of keeping this as a generic mobile task.
+- Review `/embed` on phone and tablet after the main mobile layout settles.
+- Add a first-time guided tour / onboarding flow for new users.
+- Make the onboarding explain the main Market Signals buttons in plain language.
+- Tighten `Good Buys` so it keeps premium cards that are weakening but not obviously broken.
+- Decide whether `Good Buys` should prefer cards flattening over the last 7 days instead of still actively falling.
+- Tighten `Top Movers` and `Early Movers` so stale one-sale jumps are less likely to pass.
+- Expand Set Explorer rarity / variant filters beyond the current first pass.
+- Fix any remaining generation grouping mistakes when a set clearly lands in the wrong era bucket.
+- Add camera / photo card lookup for show-floor use.
+- Extend tracking into:
+  - `/embed`
+  - `/set-explorer`
+- Add keyboard shortcuts beyond the current up/down row stepping if they clearly improve desktop workflow.
+- Add a Discord webhook / bot path so a card can be requested and its key stats returned as a response.
 
-Performance
------------
+Needs Decisions
+---------------
 
-- Profile `/dashboard` in browser developer tools and identify the slowest first-load requests.
-- Measure:
-  - first paint
-  - time to interactive
-  - slowest API endpoints
-  - slowest client-side render steps
-- Reduce first-render time so the page feels usable quickly instead of taking 10-20 seconds on refresh.
-- Audit which API calls are still blocking first paint and defer anything non-essential.
-- Load independent dashboard sections in parallel where possible instead of serial boot chains.
-- Keep moving expensive live SQL into precomputed snapshots instead of scanning larger history tables on demand.
-- Continue shifting computation to server-side precomputation so the page mostly renders already-prepared data.
-- Keep detailed card/set data loading on selection instead of preloading large broad datasets.
-- Review whether:
-  - `universe`
-  - `groups`
-  - lower-table data
-  - sparklines
-  are still loading too early or too often.
+- Decide whether mobile should keep the current three-panel structure or move to a more task-based stacked layout.
+- Decide whether the right rail should stay a side column on smaller screens or collapse into a more mobile-first detail flow.
+- Decide whether the left rail should remain a side column or fully become a stock-style ticker / trending bar at the top.
+- Decide how prominent the Market Signals block should stay relative to the main chart on mobile/tablet.
+- Decide whether the guided tour should be:
+  - public-facing only
+  - optional for returning users
+  - dismissible and remembered
+- Decide whether the site should use shorter / cleaner public-facing URLs and shared links.
+- Decide whether the dashboard still has too many indicators or whether the current set is now stable enough.
+- Decide whether tracking should stay private-only or support lightweight sharing.
+- Decide whether the username + PIN flow should stay as-is or move to:
+  - email magic link
+  - Google sign-in
+  - another lightweight auth option
+- Decide whether the saved tag set is final or still needs another pass.
+- Decide whether the current lightweight tracking-account model should remain the long-term approach or later join a broader site membership system.
+- Decide whether the current frontend/backend split should stay in place or only later consolidate if it starts slowing development.
+- Decide how the future assistant should behave:
+  - explainer only
+  - ranked recommender
+  - portfolio / collection copilot
+- Decide what guardrails and disclaimers are required if an assistant is added.
+
+Future Ideas
+------------
+
+- Keep moving expensive live SQL into precomputed snapshots until the page is mostly rendering prepared data.
+- Keep shifting independent dashboard sections toward parallel loading where it actually improves perceived speed.
 - Add lightweight caching where safe for:
   - health
   - group signals
   - top movers
   - universe metadata
-- Keep left-rail / ticker mini-graph payloads minimal:
-  - rolling 30 or 90 points only
-  - close price only
-  - no unnecessary extra fields
-- Precompute sparkline-ready history server-side so mini charts render from compact payloads.
-- Save only the minimal data needed for small charts and mini history views.
-- Review whether the current frontend/backend split should stay in place or later consolidate toward a Django-served app while the codebase is still flexible.
-
-Search Redesign
----------------
-
-- Improve ranking for broad names and edge cases.
-- Evaluate typo tolerance / fuzzy matching for search without harming result quality.
-
-Mobile / Layout
----------------
-
-- Review the dashboard on iPad / tablet layouts.
-- Review the dashboard on iPhone / phone layouts.
-- Decide whether mobile should keep the same three-panel structure or switch to a more task-based stacked layout.
-- Design mobile-first so the main research flow works well on:
-  - phone
-  - iPad / tablet
-  - desktop
-- Review `/embed` on tablet and phone sizes after the main dashboard mobile pass.
-- Add a first-time guided tour / onboarding flow for new users.
-- Highlight the major parts of the dashboard with simple prompts such as:
-  - click here
-  - this is where to find the chart
-  - this is where to browse sets
-  - this is where to look for early movers
-- Make the onboarding walkthrough explain the Market Signals buttons in plain language:
-  - what each button shows
-  - what is usually a good sign
-  - what is usually a bad sign
-  - how to interpret the data without needing to already understand charts
-- Decide whether the guided tour should be:
-  - public-facing only
-  - optional for returning users
-  - dismissible and remembered between sessions
-- Revisit the three-panel layout because the right rail holds the important detail and should not fall off-screen before the left rail.
-- Review whether the left rail should stay as a side column or become a stock-style ticker / trending bar at the top of the page.
-- Keep the market signals block as visually prominent as the main chart.
-
-Product Clarity / UX
---------------------
-
-- Clarify what the user is actually buying / researching and make the main value proposition more obvious on first view.
-- Figure out whether the site can use shorter / cleaner URLs for public-facing pages and shared links.
-- Reduce confusion around labels and metrics such as `Main Profit` and the current screener / signal naming.
-- Review whether there are too many indicators on the main dashboard and simplify if needed.
-- Clarify the main user goal on the page:
+- Keep detailed card/set data loading on selection instead of preloading broad datasets.
+- Keep left-rail / ticker mini-graph payloads minimal and snapshot-backed.
+- Clarify the public-facing product story:
   - what am I searching for?
   - what am I buying?
   - what action should I take next?
-- Make what the product is actually selling stand out more clearly on the public-facing experience.
-
-
-Set / Group Analysis
---------------------
-
-- Keep refining Set Explorer rarity / variant filters beyond the first pass:
-  - all tracked cards
-  - common
-  - uncommon
-  - rare
-  - reverse holo
-  - double rare
-  - illustration rare
-  - special illustration rare
-  - and other relevant rarity slices
-- Decide later whether Set Explorer needs saved presets on top of the filterable rarity / variant selector.
-- Refine generation grouping beyond the first-pass era buckets if specific sets land in the wrong generation.
-
-
-Signals / Screening
--------------------
-
-- Continue tuning `Good Buys` so it finds premium-rarity cards that are weakening but not broken.
-- Review whether `Good Buys` should prefer cards flattening over the last 7 days instead of still actively falling.
-- Continue refining `Top Movers` and `Early Movers` to reject stale one-sale jumps.
-- Consider a dedicated "pre-breakout accumulation" signal.
-
-
-Tracking / Workflow
--------------------
-
-- Add camera/photo card lookup:
-  - take a picture of a card on phone/tablet
-  - run OCR + card matching (name/number/set symbol) against product metadata
-  - open the matched product directly in dashboard context (chart + signals + tracking actions)
-  - support low-confidence flow with top 3 suggested matches when image quality is poor
-- Decide whether tracking should be private to the operator or exposed in a lightweight public way.
-- Consider keyboard shortcuts beyond up/down row stepping.
-- Extend tracking beyond the main dashboard:
-  - `/embed`
-  - `/set-explorer`
-- Decide whether the username + PIN flow should stay as-is or move to:
-  - email magic link
-  - Google sign-in
-  - another lightweight auth option
-- Decide whether the saved tag set is final or should change further:
-  - favorites
-  - watchlist items
-  - research tags
-  - buy list
-- Decide whether tags should be private-only or optionally shareable.
-- Decide whether to keep the current lightweight tracking-account model as the long-term approach, or later connect it to a broader site membership system.
-- Expand `Buy List` into a stronger sourcing / card-show workflow:
-  - save items you want to buy at shows or online
-  - generate a shopping list from tracked candidates
-  - open product links on TCGplayer or the storefront
-  - optionally add target buy prices and brief reasons
-  - avoid relying on unsupported direct cart automation
-
-
-LLM / Assistant Layer
----------------------
-
-- Explore an LLM assistant on top of the screener data instead of replacing the deterministic filters.
-- Add a Discord webhook / bot path so users can ask about a specific card and receive its key card stats/state as a response.
-- Support budget-based sourcing prompts, for example:
-  - "I have $250, show me the best Illustrated Rare or higher cards between $3 and $5."
-  - "I want sealed products under $80 that are starting to trend upward."
-- Support collection-completion prompts using a user-supplied inventory list and a fixed budget.
-- Support entry / exit prompts:
+- Make the main value proposition clearer on first view.
+- Build `Buy List` into a stronger sourcing / card-show workflow with target prices and shopping-list behavior.
+- Explore budget-based assistant prompts.
+- Explore collection-completion prompts.
+- Explore entry / exit prompts such as:
   - what looks buyable now
   - what is flattening out
-  - what has likely reached a 15-20% resale target
-- Decide whether the LLM should operate:
-  - as a research-only explainer
-  - as a ranked recommender over screener results
-  - or as a portfolio / collection copilot
-- Decide what guardrails and disclaimers are needed so the assistant stays framed as research support rather than guaranteed investing advice.
+  - what may have reached a resale target
+- Consider a dedicated pre-breakout accumulation screen.
 
-
-Future Data Availability / Research
------------------------------------
+Future Data / Research
+----------------------
 
 - Find a condition-aware price source before building any real resale/condition layer.
-- Confirm whether a future source can provide usable tiers such as:
+- Confirm whether a future source can provide usable condition tiers such as:
   - Near Mint
   - Lightly Played
   - Moderately Played
 - Confirm whether that source supports:
   - historical condition pricing
   - current condition pricing only
-  - card-level coverage broad enough to be useful
+  - broad enough card coverage to matter
 - If condition data becomes available later, revisit:
-  - condition spreads such as NM vs LP
+  - NM vs LP spreads
   - condition-aware buy logic
   - resale-margin math after fees and shipping
-  - whether the data should live as extra product fields or as a separate valuation layer
-
+  - whether condition data belongs inside product fields or a separate valuation layer
 
 Future Architecture
 -------------------
 
-- Revisit whether Next.js / Django-style consolidation would make sense later if the current split starts slowing development.
+- Revisit larger stack consolidation only if the current split becomes a real blocker.
 - Evaluate whether Pokémon Momentum should eventually become:
   - an installable PWA first
   - or a native mobile app later if phone/tablet usage becomes the primary workflow
-- Keep this as a future architecture decision, not a near-term rewrite, unless the current stack becomes a clear blocker.

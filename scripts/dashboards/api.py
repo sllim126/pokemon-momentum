@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from datetime import timedelta
 from pathlib import Path
@@ -8,7 +9,7 @@ import urllib.error
 
 import duckdb
 import pandas as pd
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import Cookie, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
@@ -34,6 +35,7 @@ from scripts.dashboards.query_support import (
 )
 from scripts.dashboards.tracking_store import (
     create_session,
+    create_bug_report,
     create_user,
     delete_user,
     delete_session,
@@ -41,6 +43,7 @@ from scripts.dashboards.tracking_store import (
     get_session_user,
     get_tags_for_user,
     get_user_by_username,
+    list_bug_reports,
     merge_tags,
     set_tag,
     update_user_pin,
@@ -55,6 +58,7 @@ SEALED_DEALS_HTML = SCRIPT_DIR / "sealed_deals.html"
 ACCOUNT_SETTINGS_HTML = SCRIPT_DIR / "account_settings.html"
 EOD_DASHBOARD_HTML = SCRIPT_DIR / "eod_dashboard.html"
 EMBED_DASHBOARD_HTML = SCRIPT_DIR / "embed_dashboard.html"
+BUG_REPORTS_HTML = SCRIPT_DIR / "bug_reports.html"
 DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
 IMAGE_DIR_CANDIDATES = [
     SCRIPT_DIR.parents[2] / "images",
@@ -69,6 +73,11 @@ if str(MS_SCRIPTS_ROOT) not in sys.path:
 from processor.utilities.pokemon_eodhistoricaldata_api import EodApi as PokemonEodApi
 
 EOD_API = PokemonEodApi("POKEMON")
+ADMIN_USERNAMES = {
+    username.strip().lower()
+    for username in os.getenv("POKEMON_MOMENTUM_ADMIN_USERS", "sllim126").split(",")
+    if username.strip()
+}
 
 
 app = FastAPI()
@@ -121,13 +130,21 @@ def dashboard_dev():
 
 
 @app.get("/eod-dashboard")
-def eod_dashboard():
+def eod_dashboard(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
     return FileResponse(EOD_DASHBOARD_HTML)
 
 
 @app.get("/embed")
-def embed_dashboard():
+def embed_dashboard(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
     return FileResponse(EMBED_DASHBOARD_HTML)
+
+
+@app.get("/bug-reports")
+def bug_reports_page(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    return FileResponse(BUG_REPORTS_HTML)
 
 
 @app.get("/dashboard-common.js")
@@ -191,13 +208,15 @@ def health(category_id: int = 3):
 
 
 @app.get("/eod/market_details")
-def eod_market_details():
+def eod_market_details(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
     details = EOD_API.get_market_details()
     return details.to_dict()
 
 
 @app.get("/eod/index_list")
-def eod_index_list():
+def eod_index_list(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
     cols, rows = q(
         f"""
         WITH active_groups AS (
@@ -294,6 +313,19 @@ _SEALED_PACK_COMPOSITION_OVERRIDES = [
         ],
         "product_type": "Ultra Premium Collection",
     },
+    {
+        "match": ["team rocket's moltres ex ultra-premium collection"],
+        "packs": [
+            {"set": "Destined Rivals", "count": 2},
+            {"set": "Journey Together", "count": 4},
+            {"set": "Temporal Forces", "count": 2},
+            {"set": "Paradox Rift", "count": 2},
+            {"set": "Obsidian Flames", "count": 3},
+            {"set": "Paldea Evolved", "count": 3},
+            {"set": "Scarlet and Violet", "count": 2},
+        ],
+        "product_type": "Ultra Premium Collection",
+    },
 ]
 
 _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID = {
@@ -372,6 +404,149 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID = {
     },
 }
 
+_SEALED_PACK_COUNT_OVERRIDES_BY_NAME = [
+    {
+        "match": ["pokemon center", "elite trainer box", "scarlet", "violet"],
+        "pack_count": 11,
+        "product_type": "Pokemon Center ETB",
+    },
+    {
+        "match": ["elite trainer box", "scarlet", "violet"],
+        "pack_count": 9,
+        "product_type": "Elite Trainer Box",
+    },
+    {
+        "match": ["pokemon center", "elite trainer box", "mega"],
+        "pack_count": 11,
+        "product_type": "Pokemon Center ETB",
+    },
+    {
+        "match": ["elite trainer box", "mega"],
+        "pack_count": 9,
+        "product_type": "Elite Trainer Box",
+    },
+    {
+        "match": ["pokemon center", "elite trainer box", "crown zenith"],
+        "pack_count": 12,
+        "product_type": "Pokemon Center ETB",
+    },
+    {
+        "match": ["elite trainer box", "crown zenith"],
+        "pack_count": 10,
+        "product_type": "Elite Trainer Box",
+    },
+    {
+        "match": ["pokemon center", "elite trainer box", "celestial storm"],
+        "pack_count": 8,
+        "product_type": "Pokemon Center ETB",
+    },
+    {
+        "match": ["elite trainer box", "celestial storm"],
+        "pack_count": 6,
+        "product_type": "Elite Trainer Box",
+    },
+    {
+        "match": ["pokemon center", "elite trainer box", "brilliant stars"],
+        "pack_count": 10,
+        "product_type": "Pokemon Center ETB",
+    },
+    {
+        "match": ["elite trainer box", "brilliant stars"],
+        "pack_count": 8,
+        "product_type": "Elite Trainer Box",
+    },
+    {
+        "match": ["pokemon center", "elite trainer box", "fusion strike"],
+        "pack_count": 8,
+        "product_type": "Pokemon Center ETB",
+    },
+    {
+        "match": ["elite trainer box", "fusion strike"],
+        "pack_count": 6,
+        "product_type": "Elite Trainer Box",
+    },
+    {
+        "match": ["pokemon center", "elite trainer box", "pokemon go"],
+        "pack_count": 12,
+        "product_type": "Pokemon Center ETB",
+    },
+    {
+        "match": ["elite trainer box", "pokemon go"],
+        "pack_count": 10,
+        "product_type": "Elite Trainer Box",
+    },
+    {
+        "match": ["pokemon center", "elite trainer box", "hidden fates"],
+        "pack_count": 10,
+        "product_type": "Pokemon Center ETB",
+    },
+    {
+        "match": ["elite trainer box", "hidden fates"],
+        "pack_count": 8,
+        "product_type": "Elite Trainer Box",
+    },
+    {
+        "match": ["pokemon center", "elite trainer box", "cosmic eclipse"],
+        "pack_count": 8,
+        "product_type": "Pokemon Center ETB",
+    },
+    {
+        "match": ["elite trainer box", "cosmic eclipse"],
+        "pack_count": 6,
+        "product_type": "Elite Trainer Box",
+    },
+    {
+        "match": ["pokemon center", "elite trainer box", "lost origin"],
+        "pack_count": 10,
+        "product_type": "Pokemon Center ETB",
+    },
+    {
+        "match": ["elite trainer box", "lost origin"],
+        "pack_count": 8,
+        "product_type": "Elite Trainer Box",
+    },
+    {
+        "match": ["pokemon center", "elite trainer box", "astral radiance"],
+        "pack_count": 10,
+        "product_type": "Pokemon Center ETB",
+    },
+    {
+        "match": ["elite trainer box", "astral radiance"],
+        "pack_count": 8,
+        "product_type": "Elite Trainer Box",
+    },
+    {
+        "match": ["pokemon center", "elite trainer box", "silver tempest"],
+        "pack_count": 10,
+        "product_type": "Pokemon Center ETB",
+    },
+    {
+        "match": ["elite trainer box", "silver tempest"],
+        "pack_count": 8,
+        "product_type": "Elite Trainer Box",
+    },
+    {
+        "match": ["pokemon center", "sun", "moon", "elite trainer box", "lunala"],
+        "pack_count": 8,
+        "product_type": "Pokemon Center ETB",
+    },
+    {
+        "match": ["sun", "moon", "elite trainer box", "lunala"],
+        "pack_count": 6,
+        "product_type": "Elite Trainer Box",
+    },
+    {
+        "match": ["pokemon center", "sun", "moon", "elite trainer box", "solgaleo"],
+        "pack_count": 8,
+        "product_type": "Pokemon Center ETB",
+    },
+    {
+        "match": ["sun", "moon", "elite trainer box", "solgaleo"],
+        "pack_count": 6,
+        "product_type": "Elite Trainer Box",
+    },
+]
+
 # JP supplier list (box-level JPY) provided by user; MSRP baseline uses +25% uplift.
 # JP MSRP tiers (box configuration + yen/pack):
 # - Regular sets: 30 packs/box at ¥180 per pack
@@ -438,6 +613,15 @@ def _find_pack_count_override(product_id: int | None) -> dict | None:
     if product_id is None:
         return None
     return _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID.get(int(product_id))
+
+
+def _find_pack_count_override_by_name(name_raw: str) -> dict | None:
+    lower = (name_raw or "").lower()
+    for override in _SEALED_PACK_COUNT_OVERRIDES_BY_NAME:
+        tokens = [token.lower() for token in override.get("match", [])]
+        if tokens and all(token in lower for token in tokens):
+            return override
+    return None
 
 
 def _normalize_match_text(value: str) -> str:
@@ -647,6 +831,38 @@ def require_tracking_user(authorization: str | None):
     return session_user
 
 
+def is_admin_username(username: str | None) -> bool:
+    return str(username or "").strip().lower() in ADMIN_USERNAMES
+
+
+def admin_user_payload(session_user) -> dict:
+    return {
+        "username": session_user.username,
+        "is_admin": is_admin_username(session_user.username),
+    }
+
+
+def require_tracking_user_from_request(
+    authorization: str | None = None,
+    tracking_token: str | None = None,
+):
+    """Resolve a signed-in user from either the bearer header or the dashboard cookie."""
+    header = authorization
+    if (not header or not header.lower().startswith("bearer ")) and tracking_token:
+        header = f"Bearer {tracking_token}"
+    return require_tracking_user(header)
+
+
+def require_admin_user(
+    authorization: str | None = None,
+    tracking_token: str | None = None,
+):
+    session_user = require_tracking_user_from_request(authorization=authorization, tracking_token=tracking_token)
+    if not is_admin_username(session_user.username):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return session_user
+
+
 @app.post("/tracking/session")
 def tracking_session(payload: dict):
     """Create or resume a lightweight tracking account using username + PIN."""
@@ -660,17 +876,21 @@ def tracking_session(payload: dict):
         raise HTTPException(status_code=400, detail="PIN must be at least 4 characters")
 
     existing = get_user_by_username(username)
+    generic_auth_error = "That username or PIN is incorrect."
     if action == "create" and existing is not None:
-        raise HTTPException(status_code=409, detail="That username already exists. Sign in or choose a different username.")
+        raise HTTPException(
+            status_code=409,
+            detail=f"{generic_auth_error} Sign in with the existing account or choose a different username.",
+        )
     if action == "sign_in" and existing is None:
-        raise HTTPException(status_code=404, detail="Tracking account not found. Create it first or choose a different username.")
+        raise HTTPException(status_code=401, detail=generic_auth_error)
 
     user = verify_user(username, pin)
     if user is None:
         if existing is not None:
-            raise HTTPException(status_code=401, detail="That username exists, but the PIN does not match.")
+            raise HTTPException(status_code=401, detail=generic_auth_error)
         if not create_if_missing:
-            raise HTTPException(status_code=404, detail="Tracking account not found")
+            raise HTTPException(status_code=401, detail=generic_auth_error)
         user_id = create_user(username, pin)
         username_out = username.strip().lower()
     else:
@@ -682,6 +902,7 @@ def tracking_session(payload: dict):
         "token": token,
         "user": {
             "username": username_out,
+            "is_admin": is_admin_username(username_out),
         },
     }
 
@@ -689,7 +910,7 @@ def tracking_session(payload: dict):
 @app.get("/tracking/session")
 def tracking_session_status(authorization: str | None = Header(default=None)):
     session_user = require_tracking_user(authorization)
-    return {"user": {"username": session_user.username}}
+    return {"user": admin_user_payload(session_user)}
 
 
 @app.delete("/tracking/session")
@@ -756,8 +977,55 @@ def tracking_delete_account(payload: dict | None = None, authorization: str | No
     return {"ok": True}
 
 
+@app.post("/bug_reports")
+def submit_bug_report(payload: dict):
+    title = str(payload.get("title", "")).strip()
+    details = str(payload.get("details", "")).strip()
+    if len(title) < 3:
+        raise HTTPException(status_code=400, detail="Title must be at least 3 characters")
+    if len(details) < 10:
+        raise HTTPException(status_code=400, detail="Details must be at least 10 characters")
+
+    context_payload = {
+        "page_path": str(payload.get("page_path", "")).strip(),
+        "page_url": str(payload.get("page_url", "")).strip(),
+        "category_id": payload.get("category_id"),
+        "tab": str(payload.get("tab", "")).strip(),
+        "segment": str(payload.get("segment", "")).strip(),
+        "chart_mode": str(payload.get("chart_mode", "")).strip(),
+        "product_key": str(payload.get("product_key", "")).strip(),
+        "group_id": payload.get("group_id"),
+        "search_query": str(payload.get("search_query", "")).strip(),
+        "reporter_username": str(payload.get("reporter_username", "")).strip(),
+        "user_agent": str(payload.get("user_agent", "")).strip(),
+        "expected": str(payload.get("expected", "")).strip(),
+        "discord_status": "not_configured",
+    }
+    bug_report_id = create_bug_report(
+        {
+            **context_payload,
+            "title": title,
+            "details": details,
+            "expected": context_payload["expected"],
+            "context_json": json.dumps(context_payload, ensure_ascii=True),
+        }
+    )
+    return {"ok": True, "id": bug_report_id}
+
+
+@app.get("/bug_reports")
+def bug_reports(
+    limit: int = 200,
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    return {"items": list_bug_reports(limit=limit)}
+
+
 @app.get("/eod/index_components")
-def eod_index_components(index: str):
+def eod_index_components(index: str, authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
     try:
         general, components = EOD_API.get_index_components(index)
     except FileNotFoundError as exc:
@@ -781,7 +1049,8 @@ def eod_index_components(index: str):
 
 
 @app.get("/eod/series")
-def eod_series(code: str, days: int = 365):
+def eod_series(code: str, days: int = 365, authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
     days = max(7, min(days, 5000))
     try:
         product = EOD_API.resolve_product(code)
@@ -842,7 +1111,7 @@ def eod_series(code: str, days: int = 365):
 
 
 @app.get("/universe")
-def universe(limit: int = 5000, category_id: int = 3, product_id: int | None = None, sub_type_name: str | None = None):
+def universe(limit: int = 5000, category_id: int = 3, product_id: int | None = None, sub_type_name: str | None = None, keys: str | None = None):
     limit = max(1, min(limit, 50000))
     category = category_config(category_id)
     product_signal_source = product_signal_from(category.category_id)
@@ -853,6 +1122,20 @@ def universe(limit: int = 5000, category_id: int = 3, product_id: int | None = N
     if sub_type_name is not None:
         safe_sub_type_name = str(sub_type_name).replace("'", "''")
         filters.append(f"COALESCE(s.subTypeName, '') = '{safe_sub_type_name}'")
+    if keys:
+        key_filters: list[str] = []
+        for raw_key in str(keys).split(","):
+            product_part, _, subtype_part = raw_key.partition("||")
+            try:
+                parsed_product_id = int(product_part)
+            except (TypeError, ValueError):
+                continue
+            safe_subtype = subtype_part.replace("'", "''")
+            key_filters.append(
+                f"(s.productId = {parsed_product_id} AND COALESCE(s.subTypeName, '') = '{safe_subtype}')"
+            )
+        if key_filters:
+            filters.append(f"({' OR '.join(key_filters)})")
     where_clause = f"WHERE {' AND '.join(filters)}" if filters else ""
 
     sql = f"""
@@ -899,8 +1182,9 @@ def universe(limit: int = 5000, category_id: int = 3, product_id: int | None = N
 
 
 @app.get("/product_picker")
-def product_picker(limit: int = 50000, category_id: int = 3):
+def product_picker(limit: int = 50000, offset: int = 0, category_id: int = 3):
     limit = max(1, min(limit, 50000))
+    offset = max(0, offset)
     category = category_config(category_id)
     product_signal_source = product_signal_from(category.category_id)
     metadata_cte = build_metadata_cte(category.category_id, include_classification=False, cte_name="metadata")
@@ -955,6 +1239,7 @@ def product_picker(limit: int = 50000, category_id: int = 3):
                )
              ),
              lower(COALESCE(s.subTypeName, ''))
+    OFFSET {offset}
     LIMIT {limit}
     """
     cols, rows = q(sql)
@@ -962,8 +1247,9 @@ def product_picker(limit: int = 50000, category_id: int = 3):
 
 
 @app.get("/groups")
-def groups(limit: int = 1000, category_id: int = 3):
+def groups(limit: int = 1000, offset: int = 0, category_id: int = 3):
     limit = max(1, min(limit, 5000))
+    offset = max(0, offset)
     category = category_config(category_id)
     price_source = prices_from(category.category_id)
 
@@ -987,6 +1273,7 @@ def groups(limit: int = 1000, category_id: int = 3):
     LEFT JOIN {groups_from(category.category_id)} g
       ON g.groupId = ag.groupId
     ORDER BY groupName
+    OFFSET {offset}
     LIMIT {limit}
     """
     cols, rows = q(sql)
@@ -1542,7 +1829,12 @@ def group_series(groupId: int, days: int = 365, category_id: int = 3):
 
 
 @app.get("/set_baskets")
-def set_baskets(limit: int = 500, min_cards: int = 10, filters: str | None = None, category_id: int = 3):
+def set_baskets(
+    limit: int = 500,
+    min_cards: int = 10,
+    filters: str | None = None,
+    category_id: int = 3,
+):
     """Return a lightweight set-completion and concentration view for the fun set explorer page."""
     limit = max(1, min(limit, 2000))
     min_cards = max(1, min(min_cards, 400))
@@ -1698,7 +1990,7 @@ def sealed_deals(
             continue
         product_class = str(row.get("productClass") or "")
         product_id = int(row.get("productId")) if row.get("productId") is not None else None
-        pack_count_override = _find_pack_count_override(product_id)
+        pack_count_override = _find_pack_count_override(product_id) or _find_pack_count_override_by_name(name)
         composition_override = _find_pack_composition_override(name)
         packs = []
         if pack_count_override and isinstance(pack_count_override.get("packs"), list):

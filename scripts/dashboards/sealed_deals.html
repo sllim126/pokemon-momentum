@@ -35,7 +35,7 @@
     }
 
     .shell {
-      width: min(1480px, calc(100vw - 32px));
+      width: min(1560px, calc(100vw - 28px));
       margin: 18px auto 30px;
       display: grid;
       gap: 16px;
@@ -47,6 +47,69 @@
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 18px;
+    }
+
+    .site-header {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+    }
+
+    .brand-home-link {
+      display: block;
+      text-decoration: none;
+    }
+
+    .brandmark {
+      width: 100%;
+      height: 110px;
+      border-radius: 22px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(180deg, #11192f 0%, #0f1830 100%);
+      border: 1px solid rgba(31, 177, 255, 0.24);
+    }
+
+    .brandmark img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transform: scale(2.35);
+      transform-origin: center center;
+    }
+
+    .site-header-copy {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .site-header-copy h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+    }
+
+    .site-header-copy p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.45;
+      max-width: 760px;
+    }
+
+    .site-header-copy a {
+      color: #8dddff;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .site-header-copy a:hover {
+      text-decoration: underline;
     }
 
     .hero {
@@ -162,12 +225,18 @@
       max-height: calc(100vh - 360px);
       border-radius: 16px;
       border: 1px solid var(--line);
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .table-wrap::-webkit-scrollbar {
+      display: none;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 1320px;
+      min-width: 1240px;
     }
 
     thead th {
@@ -205,7 +274,7 @@
     .product-cell {
       display: grid;
       gap: 3px;
-      min-width: 260px;
+      min-width: 220px;
     }
 
     .product-main {
@@ -240,7 +309,59 @@
       margin-top: 10px;
     }
 
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .section-head .status {
+      margin-top: 0;
+      min-height: 0;
+    }
+
+    .site-footer {
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(19, 28, 47, 0.58);
+    }
+
+    .site-footer-grid {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .site-footer-brand {
+      display: grid;
+      gap: 8px;
+    }
+
+    .site-footer-brand a {
+      color: #8dddff;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .site-footer-brand a:hover {
+      text-decoration: underline;
+    }
+
+    .site-footer-copy {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
     @media (max-width: 1200px) {
+      .site-header,
       .toolbar {
         grid-template-columns: 1fr 1fr;
       }
@@ -258,6 +379,18 @@
         width: min(100vw - 18px, 1480px);
         margin: 10px auto 20px;
       }
+
+      .site-header {
+        grid-template-columns: 1fr;
+      }
+
+      .brandmark {
+        height: 92px;
+      }
+
+      .site-footer-grid {
+        grid-template-columns: 1fr;
+      }
       .summary-grid {
         grid-template-columns: 1fr;
       }
@@ -269,6 +402,20 @@
 </head>
 <body>
   <div class="shell">
+    <section class="panel site-header">
+      <a class="brand-home-link" href="/dashboard">
+        <div class="brandmark">
+          <img src="/images/Logo.png" alt="Poke6s logo">
+        </div>
+      </a>
+      <div class="site-header-copy">
+        <div class="section-label">Pokemon Momentum</div>
+        <h1>Poke6s Best Sealed Deals</h1>
+        <p>Quick retail-value comparisons work better when the sealed page still looks and feels connected to the rest of the product, not like a separate utility page.</p>
+        <div><a href="https://market.poke6s.com">market.poke6s.com</a></div>
+      </div>
+    </section>
+
     <section class="panel hero">
       <h1>Best Sealed Deals</h1>
       <p>Normalize sealed products down to price-per-pack so you can compare retail-value deals quickly. Pack count and MSRP are inferred from product naming and are best used as directional deal signals.</p>
@@ -314,7 +461,10 @@
     <section class="summary-grid" id="summaryGrid"></section>
 
     <section class="panel">
-      <div class="section-label">Retail Value Table</div>
+      <div class="section-head">
+        <div class="section-label">Retail Value Table</div>
+        <div class="status" id="tableUpdatedStatus">Latest visible update: —</div>
+      </div>
       <div class="table-wrap">
         <table>
           <thead>
@@ -331,15 +481,28 @@
               <th class="num" id="thEdgeDollar">Savings $</th>
               <th class="num" id="thEdgePct">Savings %</th>
               <th class="num">Premium %</th>
-              <th class="num">JP Score</th>
+              <th class="num" id="thJpScore">JP Score</th>
               <th>Confidence</th>
-              <th>Updated</th>
             </tr>
           </thead>
           <tbody id="rows"></tbody>
         </table>
       </div>
     </section>
+
+    <footer class="site-footer">
+      <div class="site-footer-grid">
+        <div class="site-footer-brand">
+          <div class="section-label">Pokemon Momentum</div>
+          <a href="https://market.poke6s.com">market.poke6s.com</a>
+        </div>
+        <div class="site-footer-copy">
+          <div>Pokemon Momentum is a research tool for market screening and collection analysis. It is not financial advice, pricing advice, or a guarantee of future results.</div>
+          <div>Pokemon-related names, characters, logos, and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc., and The Pokemon Company / The Pokemon Company International. This project is independent and is not affiliated with or endorsed by those companies.</div>
+          <div>Marketplace names and product references are used only to identify products and support research workflows.</div>
+        </div>
+      </div>
+    </footer>
   </div>
 
   <script>
@@ -378,10 +541,12 @@
     const rowsEl = document.getElementById("rows");
     const summaryGridEl = document.getElementById("summaryGrid");
     const statusEl = document.getElementById("status");
+    const tableUpdatedStatusEl = document.getElementById("tableUpdatedStatus");
     const thBaselineEst = document.getElementById("thBaselineEst");
     const thBaselinePerPack = document.getElementById("thBaselinePerPack");
     const thEdgeDollar = document.getElementById("thEdgeDollar");
     const thEdgePct = document.getElementById("thEdgePct");
+    const thJpScore = document.getElementById("thJpScore");
 
     function money(value) {
       if (value == null || Number.isNaN(Number(value))) return "—";
@@ -458,6 +623,9 @@
       thBaselinePerPack.textContent = isJp ? "Baseline / Pack" : "Retail / Pack";
       thEdgeDollar.textContent = isJp ? "Edge $" : "Savings $";
       thEdgePct.textContent = isJp ? "Edge %" : "Savings %";
+      if (thJpScore) {
+        thJpScore.hidden = !isJp;
+      }
     }
 
     function renderTypeOptions() {
@@ -606,7 +774,7 @@
     function renderRows(rows) {
       const isJp = state.categoryId === 85;
       if (!rows.length) {
-        rowsEl.innerHTML = `<tr><td colspan="15" class="muted">No rows matched the current filters.</td></tr>`;
+        rowsEl.innerHTML = `<tr><td colspan="${isJp ? 14 : 13}" class="muted">No rows matched the current filters.</td></tr>`;
         return;
       }
       rowsEl.innerHTML = rows.map((row) => `
@@ -628,11 +796,19 @@
           <td class="num ${Number(row.savings_dollar) >= 0 ? "good" : "warn"}">${row.savings_dollar == null ? "N/A" : money(row.savings_dollar)}</td>
           <td class="num ${Number(row.savings_pct) >= 0 ? "good" : "warn"}">${row.savings_pct == null ? "N/A" : pct(row.savings_pct)}</td>
           <td class="num ${Number(row.premium_pct) > 0 ? "warn" : "good"}">${row.premium_pct == null ? "N/A" : pct(row.premium_pct)}</td>
-          <td class="num">${row.jp_value_score == null ? "—" : num(row.jp_value_score, 2)}</td>
+          ${isJp ? `<td class="num">${row.jp_value_score == null ? "—" : num(row.jp_value_score, 2)}</td>` : ""}
           <td><span class="chip">${row.confidence || "n/a"}</span></td>
-          <td>${row.latest_date || "—"}</td>
         </tr>
       `).join("");
+    }
+
+    function latestVisibleUpdate(rows) {
+      const latest = rows
+        .map((row) => String(row.latest_date || "").trim())
+        .filter(Boolean)
+        .sort()
+        .at(-1);
+      return latest || "—";
     }
 
     function render(payloadStats = null) {
@@ -642,6 +818,9 @@
       const rows = filteredRows();
       renderSummary(rows, payloadStats);
       renderRows(rows);
+      if (tableUpdatedStatusEl) {
+        tableUpdatedStatusEl.textContent = `Latest visible update: ${latestVisibleUpdate(rows)}`;
+      }
       statusEl.textContent = `${int(rows.length)} rows shown`;
     }
 

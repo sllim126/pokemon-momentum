@@ -52,9 +52,6 @@
     .market-strip {
       margin-bottom: 18px;
       padding: 10px 14px;
-      position: sticky;
-      top: 10px;
-      z-index: 12;
       backdrop-filter: blur(12px);
       background: linear-gradient(180deg, rgba(17, 26, 43, 0.94), rgba(15, 24, 42, 0.96));
       overflow: hidden;
@@ -204,6 +201,105 @@
 
     .brandsearch-results.open {
       display: block;
+    }
+
+    .custom-picker {
+      position: relative;
+    }
+
+    .custom-picker-trigger {
+      width: 100%;
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 43, 0.84);
+      color: var(--ink);
+      border-radius: 16px;
+      padding: 12px 14px;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      min-height: 48px;
+    }
+
+    .custom-picker-trigger.placeholder {
+      color: var(--muted);
+    }
+
+    .custom-picker-panel {
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 0;
+      right: 0;
+      z-index: 45;
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(17, 26, 43, 0.98);
+      box-shadow: var(--shadow);
+    }
+
+    .custom-picker-panel[hidden] {
+      display: none;
+    }
+
+    .custom-picker-search {
+      width: 100%;
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(13, 20, 35, 0.96);
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+
+    .custom-picker-status {
+      min-height: 16px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .custom-picker-results {
+      max-height: min(46vh, 420px);
+      overflow-y: auto;
+      display: grid;
+      gap: 8px;
+      padding-right: 2px;
+    }
+
+    .custom-picker-option {
+      width: 100%;
+      appearance: none;
+      border: 1px solid rgba(91, 112, 146, 0.18);
+      background: rgba(16, 23, 39, 0.72);
+      color: var(--ink);
+      border-radius: 14px;
+      padding: 10px 12px;
+      text-align: left;
+      font: inherit;
+      cursor: pointer;
+      display: grid;
+      gap: 4px;
+    }
+
+    .custom-picker-option:hover,
+    .custom-picker-option.active {
+      border-color: rgba(34, 176, 255, 0.3);
+      background: rgba(34, 176, 255, 0.12);
+    }
+
+    .custom-picker-option-title {
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .custom-picker-option-meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
     }
 
     .brandsearch-result {
@@ -416,6 +512,7 @@
       display: flex;
       justify-content: flex-end;
       gap: 8px;
+      margin-top: 8px;
       flex-wrap: wrap;
     }
 
@@ -453,10 +550,150 @@
       line-height: 1.4;
     }
 
+    .tracking-menu-pages {
+      display: grid;
+      gap: 8px;
+      margin-top: 4px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(91, 112, 146, 0.22);
+    }
+
+    .tracking-menu-pages[hidden] {
+      display: none !important;
+    }
+
+    .tracking-menu-pages .field-label {
+      margin-bottom: 0;
+    }
+
+    .tracking-menu-page-list {
+      display: grid;
+      gap: 8px;
+    }
+
     .tracking-menu-link {
       width: 100%;
       justify-content: flex-start;
       border-radius: 14px;
+    }
+
+    .bug-report-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      z-index: 60;
+    }
+
+    .bug-report-modal.open {
+      display: grid;
+    }
+
+    .bug-report-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(7, 11, 21, 0.7);
+      backdrop-filter: blur(8px);
+    }
+
+    .bug-report-card {
+      position: relative;
+      width: min(680px, calc(100vw - 32px));
+      max-height: min(760px, calc(100vh - 32px));
+      overflow: auto;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(31, 43, 69, 0.98), rgba(20, 29, 48, 0.99));
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 14px;
+    }
+
+    .bug-report-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .bug-report-head h3 {
+      margin: 0 0 6px;
+      font-size: 24px;
+    }
+
+    .bug-report-close {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 43, 0.84);
+      color: var(--ink);
+      border-radius: 999px;
+      min-width: 38px;
+      min-height: 38px;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .bug-report-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .bug-report-grid .full {
+      grid-column: 1 / -1;
+    }
+
+    .bug-report-grid textarea,
+    .bug-report-grid input {
+      width: 100%;
+    }
+
+    .bug-report-context {
+      border: 1px solid rgba(86, 129, 197, 0.22);
+      border-radius: 16px;
+      background: rgba(13, 21, 40, 0.58);
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .bug-report-context-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .bug-report-context-grid strong {
+      color: var(--ink);
+      font-weight: 600;
+    }
+
+    .bug-report-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .bug-report-actions button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 43, 0.84);
+      color: var(--ink);
+      font: inherit;
+      min-height: 42px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    .bug-report-actions button.primary {
+      background: linear-gradient(180deg, rgba(30, 113, 181, 0.94), rgba(21, 91, 150, 0.96));
+      border-color: rgba(74, 164, 234, 0.38);
     }
 
     .tag-actions.full-width button {
@@ -516,7 +753,7 @@
       display: grid;
       grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
       gap: 18px;
-      align-items: stretch;
+      align-items: start;
       min-width: 0;
     }
 
@@ -661,6 +898,13 @@
       align-items: start;
     }
 
+    .stage-metrics {
+      display: grid;
+      justify-items: end;
+      margin-top: 10px;
+      gap: 8px;
+    }
+
     .stage-product-head {
       display: flex;
       align-items: flex-start;
@@ -753,6 +997,8 @@
     }
 
     .price-main {
+      margin-top: 6px;
+      margin-bottom: 24px;
       font-size: 42px;
       line-height: 0.9;
       letter-spacing: -0.04em;
@@ -794,6 +1040,10 @@
     .mini-badge.neutral {
       background: var(--pill);
       color: var(--ink);
+    }
+
+    .window-change-pill {
+      margin: 8px 0;
     }
 
     .freshness-badge {
@@ -874,6 +1124,23 @@
       color: #8dddff;
       border-color: rgba(34, 176, 255, 0.32);
       box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.12);
+    }
+
+    .chart-controls {
+      display: grid;
+      gap: 4px;
+      justify-items: end;
+    }
+
+    .chart-metrics {
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+      width: 100%;
+    }
+
+    #railSegments {
+      margin-bottom: 14px;
     }
 
     .picker-grid {
@@ -1199,7 +1466,7 @@
       overflow: hidden;
       border: 1px solid var(--line);
       background: #121a2c;
-      margin-top: 18px;
+      margin-top: 10px;
     }
 
     .signal-panel {
@@ -1213,11 +1480,18 @@
       display: flex;
       justify-content: space-between;
       gap: 12px;
-      align-items: center;
-      margin-bottom: 14px;
+      align-items: flex-end;
+      margin-bottom: 2px;
     }
 
-    .signal-topline p {
+    .signal-topline-main {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .signal-topline p,
+    .chart-summary {
       margin: 0;
       color: var(--muted);
     }
@@ -1245,10 +1519,12 @@
     }
 
     .table-wrap {
+      flex: 1 1 auto;
       border: 1px solid var(--line);
       border-radius: 20px;
       overflow: auto;
       background: rgba(16, 23, 39, 0.72);
+      min-height: 0;
       max-height: min(48vh, 720px);
       min-width: 0;
       scrollbar-width: none;
@@ -1261,6 +1537,8 @@
 
     .table-region {
       position: relative;
+      display: flex;
+      flex-direction: column;
       min-width: 0;
       overflow: hidden;
       flex: 1 1 auto;
@@ -1796,7 +2074,7 @@
     }
 
     .stats-list {
-      margin-top: 8px;
+      margin-top: 18px;
       border-top: 1px solid var(--line);
     }
 
@@ -1866,7 +2144,7 @@
     }
 
     .hero .signal-topline {
-      margin-top: 18px;
+      margin-top: 0;
     }
 
     .good { color: #77f0af; }
@@ -2000,7 +2278,7 @@
       .mobile-home-segments {
         display: block;
         margin-top: 4px;
-        margin-bottom: 2px;
+        margin-bottom: 14px;
       }
 
       .mobile-home-segments .segment-bar {
@@ -2091,6 +2369,11 @@
         margin-left: 0;
         width: 100%;
       }
+
+      .stage-metrics {
+        justify-items: start;
+      }
+
 
       body.mobile-detail-open {
         overflow: hidden;
@@ -2294,15 +2577,15 @@
 
       .chart-window,
       .segment-bar {
-        overflow-x: auto;
-        flex-wrap: nowrap;
-        scrollbar-width: none;
-      }
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      scrollbar-width: none;
+    }
 
-      .chart-window::-webkit-scrollbar,
-      .segment-bar::-webkit-scrollbar {
-        display: none;
-      }
+    .chart-window::-webkit-scrollbar,
+    .segment-bar::-webkit-scrollbar {
+      display: none;
+    }
 
       .chart-window button,
       .segment-bar button {
@@ -2479,7 +2762,7 @@
               <div class="tracking-header-grid">
                 <label>
                   <span class="field-label">Username</span>
-                  <input id="trackingUsername" type="text" placeholder="your-name">
+                  <input id="trackingUsername" type="text" placeholder="Username">
                 </label>
                 <label>
                   <span class="field-label">PIN</span>
@@ -2501,6 +2784,23 @@
               <div class="tracking-header-actions split">
                 <a class="tracking-menu-link" href="/account-settings" id="trackingSettingsLink">Account Settings</a>
                 <button type="button" id="trackingLogoutBtn">Sign Out</button>
+              </div>
+            </div>
+            <button type="button" class="tracking-menu-link" id="openBugReportBtn">Report a Bug</button>
+            <!-- Public utility pages stay in the normal account menu; admin-only tools live below. -->
+            <div class="tracking-menu-pages">
+              <div class="field-label">More Pages</div>
+              <div class="tracking-menu-page-list">
+                <a class="tracking-menu-link" href="/set-explorer">Set Explorer</a>
+                <a class="tracking-menu-link" href="/sealed-deals">Sealed Deals</a>
+              </div>
+            </div>
+            <div class="tracking-menu-pages" id="trackingAdminPages" hidden>
+              <div class="field-label">Admin Pages</div>
+              <div class="tracking-menu-page-list">
+                <a class="tracking-menu-link" href="/bug-reports">Bug Reports</a>
+                <a class="tracking-menu-link" href="/eod-dashboard">End of Day</a>
+                <a class="tracking-menu-link" href="/embed">Embed View</a>
               </div>
             </div>
             <div class="tracking-header-status" id="trackingStatus">Local-only mode.</div>
@@ -2540,18 +2840,18 @@
               <div class="price-block">
                 <div class="section-label">Selected Price</div>
                 <div class="price-main" id="headlinePrice">-</div>
-                <div style="margin-top:10px;" id="headlineChangeWrap"></div>
-                <div class="freshness-badge" id="freshnessBadgeWrap">
-                  <span class="chip neutral" id="freshnessBadge">Latest data: -</span>
-                </div>
+                <div id="headlineChangeWrap" hidden></div>
+                <div id="headlineWindowChangeWrap" hidden></div>
               </div>
             </div>
+            <div class="stage-metrics" id="chartMetricPills"></div>
 
           <div class="signal-topline">
-            <div>
+            <div class="signal-topline-main">
               <div class="section-label">Price Action</div>
-              <p id="chartLabel">Price, SMA7, and SMA30 for the selected product.</p>
+              <p class="chart-summary" id="chartLabel">Price, SMA7, and SMA30 for the selected product.</p>
             </div>
+            <div class="chart-controls">
               <div class="chart-window">
                 <button type="button" data-days="30">30D</button>
                 <button type="button" data-days="90">90D</button>
@@ -2560,6 +2860,7 @@
                 <button type="button" data-days="730">2Y</button>
                 <button type="button" data-days="5000">Full</button>
               </div>
+            </div>
           </div>
 
           <div id="chart"></div>
@@ -2613,11 +2914,25 @@
             <div class="picker-grid" style="margin-bottom:18px;">
               <label>
                 <span class="field-label">Product Picker</span>
-                <select id="picker"></select>
+                <div class="custom-picker" id="productPickerShell">
+                  <button type="button" class="custom-picker-trigger placeholder" id="productPickerTrigger">Open product picker to load products</button>
+                  <div class="custom-picker-panel" id="productPickerPanel" hidden>
+                    <div class="custom-picker-status" id="productPickerStatus">Loading products...</div>
+                    <div class="custom-picker-results" id="productPickerResults"></div>
+                  </div>
+                </div>
+                <select id="picker" hidden aria-hidden="true" tabindex="-1"></select>
               </label>
               <label>
                 <span class="field-label">Set Picker</span>
-                <select id="groupPicker"></select>
+                <div class="custom-picker" id="groupPickerShell">
+                  <button type="button" class="custom-picker-trigger placeholder" id="groupPickerTrigger">Open set picker to load sets</button>
+                  <div class="custom-picker-panel" id="groupPickerPanel" hidden>
+                    <div class="custom-picker-status" id="groupPickerStatus">Loading sets...</div>
+                    <div class="custom-picker-results" id="groupPickerResults"></div>
+                  </div>
+                </div>
+                <select id="groupPicker" hidden aria-hidden="true" tabindex="-1"></select>
               </label>
               <label>
                 <span class="field-label">Market</span>
@@ -2726,6 +3041,42 @@
         </div>
       </aside>
     </div>
+    <div class="bug-report-modal" id="bugReportModal" hidden>
+      <div class="bug-report-backdrop" id="bugReportBackdrop"></div>
+      <section class="bug-report-card" aria-labelledby="bugReportTitle" aria-modal="true" role="dialog">
+        <div class="bug-report-head">
+          <div>
+            <div class="section-label">Feedback</div>
+            <h3 id="bugReportTitle">Report a Bug</h3>
+            <div class="subtitle">We’ll save the current dashboard context with your notes so it’s easier to reproduce later and wire into Discord when that integration lands.</div>
+          </div>
+          <button type="button" class="bug-report-close" id="bugReportCloseBtn" aria-label="Close bug report">×</button>
+        </div>
+        <div class="bug-report-grid">
+          <label class="full">
+            <span class="field-label">Title</span>
+            <input type="text" id="bugReportTitleInput" placeholder="Short summary of what broke">
+          </label>
+          <label class="full">
+            <span class="field-label">What Happened</span>
+            <textarea id="bugReportDetailsInput" rows="5" placeholder="What did you do, and what happened instead?"></textarea>
+          </label>
+          <label class="full">
+            <span class="field-label">Expected Behavior</span>
+            <textarea id="bugReportExpectedInput" rows="3" placeholder="Optional: what should have happened?"></textarea>
+          </label>
+        </div>
+        <div class="bug-report-context">
+          <div class="field-label">Captured Context</div>
+          <div class="bug-report-context-grid" id="bugReportContextGrid"></div>
+        </div>
+        <div class="tracking-header-status" id="bugReportStatus">Bug reports stay internal for now. The stored payload is structured so it can be forwarded to Discord later.</div>
+        <div class="bug-report-actions">
+          <button type="button" id="bugReportCancelBtn">Cancel</button>
+          <button type="button" class="primary" id="bugReportSubmitBtn">Submit Report</button>
+        </div>
+      </section>
+    </div>
     <footer class="site-footer">
       <div class="site-footer-grid">
         <div class="site-footer-brand">
@@ -2816,8 +3167,10 @@
     const heroImageEmpty = document.getElementById("heroImageEmpty");
     const chartEl = document.getElementById("chart");
     const chartLabel = document.getElementById("chartLabel");
+    const chartMetricPills = document.getElementById("chartMetricPills");
     const headlinePrice = document.getElementById("headlinePrice");
     const headlineChangeWrap = document.getElementById("headlineChangeWrap");
+    const headlineWindowChangeWrap = document.getElementById("headlineWindowChangeWrap");
     const freshnessBadge = document.getElementById("freshnessBadge");
     const detailStats = document.getElementById("detailStats");
     const mobileDetailStats = document.getElementById("mobileDetailStats");
@@ -2836,16 +3189,30 @@
     const trackingSignInBtn = document.getElementById("trackingSignInBtn");
     const trackingCreateBtn = document.getElementById("trackingCreateBtn");
     const trackingTrackedBtn = document.getElementById("trackingTrackedBtn");
+    const openBugReportBtn = document.getElementById("openBugReportBtn");
     const viewTrackedItemsBtn = document.getElementById("viewTrackedItemsBtn");
     const trackingLogoutBtn = document.getElementById("trackingLogoutBtn");
     const trackingStatus = document.getElementById("trackingStatus");
     const trackingUserLabel = document.getElementById("trackingUserLabel");
     const trackingUserSubtext = document.getElementById("trackingUserSubtext");
+    const trackingAdminPages = document.getElementById("trackingAdminPages");
     const headerSearchForm = document.getElementById("headerSearchForm");
     const headerSearchInput = document.getElementById("headerSearchInput");
     const headerSearchBtn = document.getElementById("headerSearchBtn");
     const headerSearchStatus = document.getElementById("headerSearchStatus");
     const headerSearchResults = document.getElementById("headerSearchResults");
+    const productPickerShell = document.getElementById("productPickerShell");
+    const productPickerTrigger = document.getElementById("productPickerTrigger");
+    const productPickerPanel = document.getElementById("productPickerPanel");
+    const productPickerSearch = document.getElementById("productPickerSearch");
+    const productPickerStatus = document.getElementById("productPickerStatus");
+    const productPickerResults = document.getElementById("productPickerResults");
+    const groupPickerShell = document.getElementById("groupPickerShell");
+    const groupPickerTrigger = document.getElementById("groupPickerTrigger");
+    const groupPickerPanel = document.getElementById("groupPickerPanel");
+    const groupPickerSearch = document.getElementById("groupPickerSearch");
+    const groupPickerStatus = document.getElementById("groupPickerStatus");
+    const groupPickerResults = document.getElementById("groupPickerResults");
     const mobileSearchToggle = document.getElementById("mobileSearchToggle");
     const searchSection = document.getElementById("searchSection");
     const signalsSection = document.getElementById("signalsSection");
@@ -2858,6 +3225,16 @@
     const imagePreviewPopover = document.getElementById("imagePreviewPopover");
     const imagePreviewImg = document.getElementById("imagePreviewImg");
     const imagePreviewCaption = document.getElementById("imagePreviewCaption");
+    const bugReportModal = document.getElementById("bugReportModal");
+    const bugReportBackdrop = document.getElementById("bugReportBackdrop");
+    const bugReportCloseBtn = document.getElementById("bugReportCloseBtn");
+    const bugReportCancelBtn = document.getElementById("bugReportCancelBtn");
+    const bugReportSubmitBtn = document.getElementById("bugReportSubmitBtn");
+    const bugReportTitleInput = document.getElementById("bugReportTitleInput");
+    const bugReportDetailsInput = document.getElementById("bugReportDetailsInput");
+    const bugReportExpectedInput = document.getElementById("bugReportExpectedInput");
+    const bugReportStatus = document.getElementById("bugReportStatus");
+    const bugReportContextGrid = document.getElementById("bugReportContextGrid");
 
     const universeByKey = new Map();
     const groupsById = new Map();
@@ -2888,9 +3265,10 @@
       cards: false,
       sealed: false
     };
-    // These tabs all honor the shared Cards / Sealed segment toggle. Breakouts needs to be in
-    // this set too so sealed JP booster boxes do not leak into the singles view.
-    const segmentFilteredTabs = new Set(["top_movers", "sma30_holds", "early_uptrends", "confirmed_uptrends", "breakouts", "good_buys", "group_products"]);
+    // These tabs all honor the shared Cards / Sealed segment toggle. Breakouts and Tracked
+    // Items both need to be in this set so the toggle actually rebuilds their rows instead of
+    // just changing button state.
+    const segmentFilteredTabs = new Set(["top_movers", "sma30_holds", "early_uptrends", "confirmed_uptrends", "breakouts", "good_buys", "group_products", "tracked_items"]);
     let currentGeneration = initialParams.get("generation") || "all";
     let currentTrackedTag = initialParams.get("tracked_tag") || "all";
     let currentTrackedSort = initialParams.get("tracked_sort") || "tags";
@@ -2922,10 +3300,21 @@
     let productPickerLoadPromise = null;
     let universeLoadPromise = null;
     let groupsLoadPromise = null;
+    let productPickerOffset = 0;
+    const productPickerPageSize = 1000;
+    let productPickerHasMore = true;
+    let productPickerItems = [];
+    let productPickerOpen = false;
+    let groupsOffset = 0;
+    const groupsPageSize = 500;
+    let groupsHasMore = true;
+    let groupPickerItems = [];
+    let groupPickerOpen = false;
     let currentHeroImageExpandedSrc = "";
     let currentHeroImageExpandedAlt = "";
     let currentPreviewImageSrc = "";
     let currentPreviewAnchor = null;
+    let bugReportModalOpen = false;
     let pullRefreshStartY = 0;
     let pullRefreshDistance = 0;
     let pullRefreshActive = false;
@@ -2973,7 +3362,7 @@
         title: "Set Strength shows set-level breadth and momentum."
       },
       tracked_items: {
-        columns: ["tags", "productName", "groupName", "number", "rarity", "subTypeName", "tcgplayerLink"],
+        columns: ["tags", "productName", "groupName", "number", "rarity", "subTypeName", "purchased", "tcgplayerLink"],
         title: "Saved products from your tracking tags. Filter by one tag or browse everything you marked."
       },
       group_products: {
@@ -3069,6 +3458,16 @@
       return trackingToken ? { Authorization: `Bearer ${trackingToken}` } : {};
     }
 
+    function setTrackingCookie(token) {
+      const value = String(token || "").trim();
+      if (!value) return;
+      document.cookie = `pm_tracking_token=${encodeURIComponent(value)}; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+    }
+
+    function clearTrackingCookie() {
+      document.cookie = "pm_tracking_token=; Path=/; Max-Age=0; SameSite=Lax";
+    }
+
     function setTrackingStatus(message, isWarn = false) {
       trackingStatus.textContent = message;
       trackingStatus.classList.toggle("warn", Boolean(isWarn));
@@ -3092,14 +3491,117 @@
       trackingToggleBtn.setAttribute("aria-expanded", trackingMenuOpen ? "true" : "false");
     }
 
+    function buildBugReportContext() {
+      const meta = currentKey ? getMetaForKey(currentKey) : null;
+      return {
+        reporter_username: trackingUser?.username || "",
+        page_path: window.location.pathname,
+        page_url: window.location.href,
+        category_id: currentCategoryId,
+        tab: currentTab,
+        segment: currentSegment,
+        chart_mode: currentChartMode,
+        product_key: currentKey || "",
+        group_id: Number.isFinite(Number(currentGroupId)) ? Number(currentGroupId) : null,
+        search_query: String(headerSearchInput?.value || "").trim(),
+        product_name: meta?.productName || "",
+        group_name: meta?.groupName || "",
+        selected_days: currentDays,
+        user_agent: navigator.userAgent || "",
+      };
+    }
+
+    function renderBugReportContext() {
+      if (!bugReportContextGrid) return;
+      const context = buildBugReportContext();
+      const rows = [
+        ["Page", context.page_path || "/dashboard"],
+        ["Market", String(context.category_id || "")],
+        ["Tab", context.tab || "none"],
+        ["Segment", context.segment || "none"],
+        ["Chart", context.chart_mode || "product"],
+        ["Window", `${context.selected_days}D`],
+        ["Selected Product", context.product_name || context.product_key || "none"],
+        ["Set", context.group_name || (context.group_id ? String(context.group_id) : "none")],
+        ["Search", context.search_query || "none"],
+        ["Reporter", context.reporter_username || "anonymous"],
+      ];
+      bugReportContextGrid.innerHTML = rows
+        .map(([label, value]) => `<div><strong>${label}:</strong> ${value}</div>`)
+        .join("");
+    }
+
+    function setBugReportStatus(message, isWarn = false) {
+      if (!bugReportStatus) return;
+      bugReportStatus.textContent = message;
+      bugReportStatus.classList.toggle("warn", Boolean(isWarn));
+    }
+
+    function setBugReportModalOpen(open) {
+      if (!bugReportModal) return;
+      bugReportModalOpen = Boolean(open);
+      bugReportModal.hidden = !bugReportModalOpen;
+      bugReportModal.classList.toggle("open", bugReportModalOpen);
+      if (bugReportModalOpen) {
+        renderBugReportContext();
+        setBugReportStatus("Bug reports stay internal for now. The stored payload is structured so it can be forwarded to Discord later.");
+        window.setTimeout(() => bugReportTitleInput?.focus(), 0);
+      }
+    }
+
+    async function submitBugReport() {
+      const title = String(bugReportTitleInput?.value || "").trim();
+      const details = String(bugReportDetailsInput?.value || "").trim();
+      const expected = String(bugReportExpectedInput?.value || "").trim();
+      if (title.length < 3) {
+        setBugReportStatus("Give the report a short title so it is easier to scan later.", true);
+        bugReportTitleInput?.focus();
+        return;
+      }
+      if (details.length < 10) {
+        setBugReportStatus("Add a little more detail so we can reproduce the issue later.", true);
+        bugReportDetailsInput?.focus();
+        return;
+      }
+      const context = buildBugReportContext();
+      setBugReportStatus("Submitting report...");
+      bugReportSubmitBtn.disabled = true;
+      try {
+        const payload = await trackingJson("/bug_reports", {
+          method: "POST",
+          body: JSON.stringify({
+            ...context,
+            title,
+            details,
+            expected,
+          }),
+        });
+        setBugReportStatus(`Report #${payload.id} saved.`);
+        if (bugReportTitleInput) bugReportTitleInput.value = "";
+        if (bugReportDetailsInput) bugReportDetailsInput.value = "";
+        if (bugReportExpectedInput) bugReportExpectedInput.value = "";
+        window.setTimeout(() => {
+          setBugReportModalOpen(false);
+        }, 600);
+      } catch (err) {
+        setBugReportStatus(`Could not save report: ${err.message}`, true);
+      } finally {
+        bugReportSubmitBtn.disabled = false;
+      }
+    }
+
     function updateTrackingUi() {
       const signedIn = Boolean(trackingUser && trackingToken);
+      const isAdmin = Boolean(signedIn && trackingUser?.is_admin);
       trackingSignedOut.hidden = signedIn;
       trackingSignedIn.hidden = !signedIn;
       trackingToggleLabel.textContent = signedIn ? (trackingUser?.username || "Account") : "Account";
       trackingUserLabel.textContent = signedIn ? trackingUser.username : "Signed in";
       if (trackingUserSubtext) {
         trackingUserSubtext.hidden = !isDevMode;
+      }
+      if (trackingAdminPages) {
+        trackingAdminPages.hidden = !isAdmin;
       }
       if (signedIn) {
         setTrackingStatus(isDevMode ? `Syncing tags for ${trackingUser.username}.` : "");
@@ -3191,25 +3693,29 @@
 
     async function restoreTrackingSession() {
       if (!trackingToken) {
+        clearTrackingCookie();
         updateTrackingUi();
         return;
       }
       try {
         const payload = await trackingJson("/tracking/session", { method: "GET" });
         trackingUser = payload.user || null;
+        setTrackingCookie(trackingToken);
         updateTrackingUi();
         await loadRemoteTags();
       } catch (err) {
         trackingToken = "";
         trackingUser = null;
         localStorage.removeItem(trackingTokenKey);
+        clearTrackingCookie();
         updateTrackingUi();
       }
     }
 
     async function beginTrackingAuth(action) {
       // Sign in and account creation share the same lightweight username+PIN backend,
-      // but the explicit action keeps the UI messaging clear for "taken username" cases.
+      // while keeping auth failures intentionally generic so the UI does not confirm
+      // whether a specific username already exists.
       const username = trackingUsername.value.trim();
       const pin = trackingPin.value.trim();
       if (username.length < 3 || pin.length < 4) {
@@ -3231,6 +3737,7 @@
         trackingToken = payload.token;
         trackingUser = payload.user || null;
         localStorage.setItem(trackingTokenKey, trackingToken);
+        setTrackingCookie(trackingToken);
         const localItems = buildLocalTrackingItems();
         if (localItems.length) {
           await trackingJson("/tracking/tags/merge", {
@@ -3268,6 +3775,7 @@
         trackingToken = "";
         trackingUser = null;
         localStorage.removeItem(trackingTokenKey);
+        clearTrackingCookie();
         updateTrackingUi();
       }
     }
@@ -3356,6 +3864,28 @@
       productPickerLoadPromise = null;
       universeLoadPromise = null;
       groupsLoadPromise = null;
+      productPickerOffset = 0;
+      productPickerHasMore = true;
+      productPickerItems = [];
+      productPickerOpen = false;
+      if (productPickerPanel) {
+        productPickerPanel.hidden = true;
+      }
+      if (productPickerSearch) {
+        productPickerSearch.value = "";
+      }
+      syncProductPickerTriggerLabel();
+      groupsOffset = 0;
+      groupsHasMore = true;
+      groupPickerItems = [];
+      groupPickerOpen = false;
+      if (groupPickerPanel) {
+        groupPickerPanel.hidden = true;
+      }
+      if (groupPickerSearch) {
+        groupPickerSearch.value = "";
+      }
+      syncGroupPickerTriggerLabel();
     }
 
     async function getJson(path) {
@@ -3415,7 +3945,7 @@
       if ((!merged.imageUrl || String(merged.imageUrl).trim() === "") && next.imageUrl) {
         merged.imageUrl = next.imageUrl;
       }
-      const passThrough = ["groupName", "number", "rarity", "productClass", "productKind", "groupId", "productId", "subTypeName"];
+      const passThrough = ["groupName", "number", "rarity", "productClass", "productKind", "groupId", "productId", "subTypeName", "latest_price", "latest_date"];
       passThrough.forEach((field) => {
         if ((merged[field] === null || merged[field] === undefined || merged[field] === "") && next[field] !== undefined) {
           merged[field] = next[field];
@@ -3424,15 +3954,42 @@
       return merged;
     }
 
-    function tcgplayerProductUrl(productId) {
+    function tcgplayerPrintingParam(subTypeName) {
+      const normalizedSubtype = String(subTypeName || "").trim().toLowerCase();
+      if (!normalizedSubtype) return "";
+      if (normalizedSubtype === "reverse holofoil") return "Reverse Holofoil";
+      if (normalizedSubtype === "1st edition") return "1st Edition";
+      if (normalizedSubtype === "unlimited holofoil") return "Unlimited Holofoil";
+      if (normalizedSubtype === "1st edition holofoil") return "1st Edition Holofoil";
+      return "";
+    }
+
+    function tcgplayerProductUrl(productId, productKind = null, subTypeName = "") {
       const parsed = Number(productId);
       if (!Number.isFinite(parsed) || parsed <= 0) return "";
-      // Swap this to your affiliate URL pattern later (keep productId as the key).
-      const params = new URLSearchParams({
-        Language: "English",
-        Condition: "Near Mint",
-        page: "1",
-      });
+      // Sealed links work better with the broader marketplace listing view, while singles can
+      // still deep-link to the more specific English / Near Mint path.
+      const normalizedKind = String(productKind || "").toLowerCase();
+      let params;
+      if (normalizedKind === "sealed") {
+        params = new URLSearchParams({
+          page: "1",
+          Language: "all",
+        });
+      } else {
+        params = new URLSearchParams({
+          Language: "English",
+          Condition: "Near Mint",
+          page: "1",
+        });
+        const printing = tcgplayerPrintingParam(subTypeName);
+        if (printing) {
+          params.set("Printing", printing);
+          if (printing === "Reverse Holofoil") {
+            params.delete("Condition");
+          }
+        }
+      }
       return `https://www.tcgplayer.com/product/${parsed}?${params.toString()}`;
     }
 
@@ -3537,6 +4094,20 @@
       return (results || []).filter((result) => result.kind !== "set" && result.item);
     }
 
+    function getCardHeaderSearchResults(results = []) {
+      return getProductHeaderSearchResults(results).filter((result) => {
+        const kind = String(result.item?.productKind || "").toLowerCase();
+        return kind === "card" || !kind;
+      });
+    }
+
+    function matchesSpeciesQuery(item, query) {
+      const speciesQuery = normalizeSearchQuery(deriveSpeciesQueryFromName(query));
+      if (!speciesQuery) return false;
+      const productName = normalizeSearchQuery(deriveSpeciesQueryFromName(item?.productName || ""));
+      return Boolean(productName) && productName.includes(speciesQuery);
+    }
+
     function parseCardNumberParts(value) {
       const raw = String(value || "").trim();
       if (!raw) return { hasNumber: false, primary: Number.POSITIVE_INFINITY, secondary: "", raw: "" };
@@ -3571,6 +4142,8 @@
       return raw
         .replace(/\s*-\s*[^-]+$/u, "")
         .replace(/\s*\([^)]*\)\s*$/u, "")
+        .replace(/^mega\s+/iu, "")
+        .replace(/\s+(ex|gx|vmax|vstar|v-union|v)\b.*$/iu, "")
         .trim();
     }
 
@@ -3587,7 +4160,7 @@
       if (!normalized || /[0-9/]/.test(normalized)) {
         return false;
       }
-      const productResults = getProductHeaderSearchResults(results);
+      const productResults = getCardHeaderSearchResults(results).filter((result) => matchesSpeciesQuery(result.item, query));
       if (productResults.length < 2) {
         return false;
       }
@@ -3671,7 +4244,7 @@
       // Browse Species acts like a research landing page for one card name across sets.
       // Keep all matches together, sort them like card numbers, and let the chart follow
       // the first listing so the user lands in a useful state immediately.
-      const productRows = getProductHeaderSearchResults(results).map((result) => ({
+      const productRows = getCardHeaderSearchResults(results).filter((result) => matchesSpeciesQuery(result.item, query)).map((result) => ({
         ...result.item,
         latest_price: result.item.latest_price ?? result.latest_price ?? null,
         latest_date: result.item.latest_date || result.latest_date || ""
@@ -3710,16 +4283,18 @@
       if (!normalized) {
         return false;
       }
+      const speciesQuery = normalizeSearchQuery(deriveSpeciesQueryFromName(query)) || normalized;
       let results = seededResults;
-      if (!results || !results.length) {
-        const payload = await fetchHeaderSearchResults(normalized, 500);
+      if (speciesQuery !== normalized || !results || !results.length) {
+        const payload = await fetchHeaderSearchResults(speciesQuery, 500);
         results = payload.items || [];
       }
-      if (!shouldOpenProductSearchResults(normalized, results)) {
+      if (!shouldOpenProductSearchResults(speciesQuery, results)) {
         return false;
       }
-      await openProductSearchResults(normalized, results);
-      setHeaderSearchStatus(`Loaded ${getProductHeaderSearchResults(results).length} matching listings for ${normalized}.`);
+      await openProductSearchResults(speciesQuery, results);
+      const matchCount = getCardHeaderSearchResults(results).filter((result) => matchesSpeciesQuery(result.item, speciesQuery)).length;
+      setHeaderSearchStatus(`Loaded ${matchCount} matching listings for ${speciesQuery}.`);
       setHeaderSearchResultsOpen(false);
       setMobileSearchOpen(false);
       return true;
@@ -3865,6 +4440,7 @@
           existingOpt.textContent = `${meta.productName || `productId ${meta.productId}`} | ${meta.groupName || "Unknown Group"} | ${meta.subTypeName || ""}`;
         }
       }
+      syncProductPickerTriggerLabel();
     }
 
     function fillPicker() {
@@ -3890,6 +4466,60 @@
         }
       }
       document.getElementById("statUniverse").textContent = options.length.toLocaleString();
+      syncProductPickerTriggerLabel();
+    }
+
+    function formatProductPickerLabel(meta) {
+      if (!meta) return "";
+      return `${meta.productName || `productId ${meta.productId}`} | ${meta.groupName || "Unknown Group"} | ${meta.subTypeName || ""}`;
+    }
+
+    function syncProductPickerTriggerLabel() {
+      if (!productPickerTrigger) return;
+      const meta = currentKey ? (universeByKey.get(currentKey) || null) : null;
+      if (meta) {
+        productPickerTrigger.textContent = formatProductPickerLabel(meta);
+        productPickerTrigger.classList.remove("placeholder");
+        return;
+      }
+      productPickerTrigger.textContent = productPickerLoaded
+        ? "Choose a product"
+        : "Open product picker to load products";
+      productPickerTrigger.classList.add("placeholder");
+    }
+
+    function setProductPickerOpen(open) {
+      if (!productPickerPanel || !productPickerTrigger) return;
+      productPickerOpen = Boolean(open);
+      productPickerPanel.hidden = !productPickerOpen;
+      productPickerTrigger.setAttribute("aria-expanded", productPickerOpen ? "true" : "false");
+    }
+
+    function renderProductPickerResults() {
+      if (!productPickerResults || !productPickerStatus) return;
+      productPickerResults.innerHTML = "";
+      if (!productPickerItems.length) {
+        const empty = document.createElement("div");
+        empty.className = "custom-picker-status";
+        empty.textContent = productPickerLoaded ? "No products loaded." : "Loading products...";
+        productPickerResults.appendChild(empty);
+      } else {
+        productPickerItems.forEach((item) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = `custom-picker-option${item.key === currentKey ? " active" : ""}`;
+          btn.innerHTML = `<div class="custom-picker-option-title">${item.productName || `productId ${item.productId}`}</div><div class="custom-picker-option-meta">${item.groupName || "Unknown Group"} | ${item.subTypeName || ""}</div>`;
+          btn.addEventListener("click", async () => {
+            ensurePickerOption(item);
+            picker.value = item.key;
+            setProductPickerOpen(false);
+            picker.dispatchEvent(new Event("change"));
+          });
+          productPickerResults.appendChild(btn);
+        });
+      }
+      const loadedCount = productPickerItems.length;
+      productPickerStatus.textContent = `Loaded ${loadedCount.toLocaleString()} products${productPickerHasMore ? ". Scroll for more." : "."}`;
     }
 
     function fillGroupPicker() {
@@ -3909,6 +4539,7 @@
         groupPicker.value = String(currentGroupId);
         syncUrlState();
       }
+      syncGroupPickerTriggerLabel();
     }
 
     function syncGroupSelection(groupId) {
@@ -3920,6 +4551,60 @@
         groupPicker.value = String(nextGroupId);
       }
       syncUrlState();
+      syncGroupPickerTriggerLabel();
+    }
+
+    function formatGroupPickerLabel(group) {
+      if (!group) return "";
+      return `${group.groupName || "Unknown Group"} (${group.productCount || 0})`;
+    }
+
+    function syncGroupPickerTriggerLabel() {
+      if (!groupPickerTrigger) return;
+      const group = Number.isFinite(Number(currentGroupId)) ? groupsById.get(Number(currentGroupId)) : null;
+      if (group) {
+        groupPickerTrigger.textContent = formatGroupPickerLabel(group);
+        groupPickerTrigger.classList.remove("placeholder");
+        return;
+      }
+      groupPickerTrigger.textContent = groupsLoaded
+        ? "Choose a set"
+        : "Open set picker to load sets";
+      groupPickerTrigger.classList.add("placeholder");
+    }
+
+    function setGroupPickerOpen(open) {
+      if (!groupPickerPanel || !groupPickerTrigger) return;
+      groupPickerOpen = Boolean(open);
+      groupPickerPanel.hidden = !groupPickerOpen;
+      groupPickerTrigger.setAttribute("aria-expanded", groupPickerOpen ? "true" : "false");
+    }
+
+    function renderGroupPickerResults() {
+      if (!groupPickerResults || !groupPickerStatus) return;
+      groupPickerResults.innerHTML = "";
+      if (!groupPickerItems.length) {
+        const empty = document.createElement("div");
+        empty.className = "custom-picker-status";
+        empty.textContent = groupsLoaded ? "No sets loaded." : "Loading sets...";
+        groupPickerResults.appendChild(empty);
+      } else {
+        groupPickerItems.forEach((group) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = `custom-picker-option${Number(group.groupId) === Number(currentGroupId) ? " active" : ""}`;
+          btn.innerHTML = `<div class="custom-picker-option-title">${group.groupName || "Unknown Group"}</div><div class="custom-picker-option-meta">${group.abbreviation || "Set"} | ${group.productCount || 0} products</div>`;
+          btn.addEventListener("click", async () => {
+            currentGroupId = Number(group.groupId);
+            groupPicker.value = String(currentGroupId);
+            setGroupPickerOpen(false);
+            groupPicker.dispatchEvent(new Event("change"));
+          });
+          groupPickerResults.appendChild(btn);
+        });
+      }
+      const loadedCount = groupPickerItems.length;
+      groupPickerStatus.textContent = `Loaded ${loadedCount.toLocaleString()} sets${groupsHasMore ? ". Scroll for more." : "."}`;
     }
 
     function renderHeader(columns) {
@@ -4095,7 +4780,8 @@
 
     function getMobileSignalCardSummary(item) {
       if (currentTab === "tracked_items") {
-        const latestPrice = item.latest_price ?? item.p_now;
+        const universeMeta = universeByKey.get(item.key) || null;
+        const latestPrice = item.latest_price ?? universeMeta?.latest_price ?? item.p_now;
         const priceText = formatNumber(latestPrice, 2);
         return {
           priceText: priceText === "-" ? item.tags || item.rarity || "-" : `$${priceText}`,
@@ -4247,12 +4933,13 @@
           purchaseBtn.className = `mobile-purchase-btn${isPurchasedKey(item.key) ? " active" : ""}`;
           purchaseBtn.title = "Mark purchased";
           purchaseBtn.setAttribute("aria-label", "Mark purchased");
-          purchaseBtn.innerHTML = "&hearts;";
+          purchaseBtn.textContent = isPurchasedKey(item.key) ? "♥" : "♡";
           purchaseBtn.addEventListener("click", (event) => {
             event.preventDefault();
             event.stopPropagation();
             const active = togglePurchasedKey(item.key);
             purchaseBtn.classList.toggle("active", active);
+            purchaseBtn.textContent = active ? "♥" : "♡";
           });
           trackRow.appendChild(purchaseBtn);
         }
@@ -4362,8 +5049,12 @@
     function displayCell(col, item) {
       if (col === "generation") return item.generation || "Legacy";
       if (col === "tags") return item.tags || "";
+      if (col === "purchased") {
+        const purchased = isPurchasedKey(item.key);
+        return `<button type="button" class="table-link-btn${purchased ? " active" : ""}" data-stop-row="true" data-purchased-toggle="true" aria-label="Mark purchased" title="Mark purchased">${purchased ? "♥" : "♡"}</button>`;
+      }
       if (col === "tcgplayerLink") {
-        const url = tcgplayerProductUrl(item.productId);
+        const url = tcgplayerProductUrl(item.productId, item.productKind, item.subTypeName);
         if (!url) return "—";
         return `<a class="table-link-btn" data-stop-row="true" href="${url}" target="_blank" rel="noopener noreferrer">Open</a>`;
       }
@@ -4433,6 +5124,16 @@
           }
           await selectItem(item, { openDetail: isPhoneLayout() });
         });
+        const purchaseBtn = tr.querySelector("[data-purchased-toggle]");
+        if (purchaseBtn instanceof HTMLButtonElement) {
+          purchaseBtn.addEventListener("click", async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const purchased = togglePurchasedKey(item.key);
+            purchaseBtn.classList.toggle("active", purchased);
+            purchaseBtn.textContent = purchased ? "♥" : "♡";
+          });
+        }
         tableBody.appendChild(tr);
       });
       syncActiveTableRow(currentTab === "group_signals");
@@ -4787,18 +5488,32 @@
       // The summary panel and persistent right-rail image are refreshed together from the
       // same selected product payload so browsing long lists does not drop visual context.
       const rows = series.rows || [];
+      const priceValues = rows
+        .map((row) => Number(row[1]))
+        .filter((value) => Number.isFinite(value));
       const last = rows[rows.length - 1] || [];
       const latestPrice = last[1];
       const latestSma7 = last[2];
       const latestSma30 = last[3];
+      const firstPrice = priceValues[0] ?? null;
+      const lowPrice = priceValues.length ? Math.min(...priceValues) : null;
+      const highPrice = priceValues.length ? Math.max(...priceValues) : null;
+      const pctWindowChange = firstPrice && latestPrice ? ((latestPrice / firstPrice) - 1) * 100 : null;
       const pctVsSma30 = latestPrice && latestSma30 ? ((latestPrice / latestSma30) - 1) * 100 : null;
       const pct = formatPercent(pctVsSma30);
+      const pctWindow = formatPercent(pctWindowChange);
 
       cardTitle.textContent = meta.productName || `productId ${meta.productId}`;
       cardSubtitle.textContent = `${meta.groupName || "Unknown Set"} | ${meta.subTypeName || "n/a"} | ${meta.number ? `#${meta.number}` : "No card number"}`;
       chartLabel.textContent = `Showing ${rows.length.toLocaleString()} daily observations across the selected chart window.`;
       headlinePrice.textContent = formatNumber(latestPrice, 2);
+      headlineChangeWrap.hidden = false;
+      headlineWindowChangeWrap.hidden = false;
       headlineChangeWrap.innerHTML = `<span class="price-pill ${pct.cls}">${pct.text === "n/a" ? "vs SMA30 n/a" : `${pct.text} vs SMA30`}</span>`;
+      headlineWindowChangeWrap.innerHTML = `<span class="price-pill window-change-pill ${pctWindow.cls}">${pctWindow.text === "n/a" ? "Window change n/a" : `${pctWindow.text} window change`}</span>`;
+      if (chartMetricPills) {
+        chartMetricPills.innerHTML = "";
+      }
       if (meta.imageUrl) {
         setHeroImageCandidates([meta.imageUrl], meta.productName ? `${meta.productName} image` : "Product image", "No Image Available");
       } else {
@@ -4811,10 +5526,11 @@
         ["Rarity", meta.rarity || "n/a"],
         ["Number", meta.number || "n/a"],
         ["Latest Price", formatNumber(latestPrice, 2)],
+        ["Window Low", formatNumber(lowPrice, 2)],
+        ["Window High", formatNumber(highPrice, 2)],
         ["SMA7", formatNumber(latestSma7, 2)],
         ["SMA30", formatNumber(latestSma30, 2)],
-        ["Vs SMA30", pct.text],
-        ["Window", `${currentDays} days`]
+        ["Vs SMA30", pct.text]
       ];
       renderDetailsList(detailStats, details);
       renderDetailsList(mobileDetailStats, details);
@@ -4966,7 +5682,13 @@
       cardSubtitle.textContent = `${groupMeta?.generation ? `${groupMeta.generation} | ` : ""}Set-level equal-weight index and daily breadth participation.`;
       chartLabel.textContent = `Showing ${rows.length.toLocaleString()} daily set observations across the selected chart window.`;
       headlinePrice.textContent = indexValue ? formatNumber(indexValue, 1) : "-";
-      headlineChangeWrap.innerHTML = `<span class="price-pill ${breadth.cls}">${breadth.text === "n/a" ? "Breadth n/a" : `${breadth.text} above SMA30`}</span>`;
+      headlineChangeWrap.hidden = true;
+      headlineWindowChangeWrap.hidden = true;
+      headlineChangeWrap.innerHTML = "";
+      headlineWindowChangeWrap.innerHTML = "";
+      if (chartMetricPills) {
+        chartMetricPills.innerHTML = "";
+      }
 
       setHeroImageCandidates(
         groupLogoCandidates(groupMeta?.groupId ?? currentGroupId),
@@ -5244,29 +5966,40 @@
       document.getElementById("statRows").textContent = Number(health.rows || 0).toLocaleString();
       document.getElementById("statLatest").textContent = health.latest || "-";
       document.getElementById("statSource").textContent = health.source || "-";
-      freshnessBadge.textContent = `Latest data: ${health.latest || "-"}`;
+      if (freshnessBadge) {
+        freshnessBadge.textContent = `Latest data: ${health.latest || "-"}`;
+      }
         if (leftStatus) {
           leftStatus.textContent = categoryOptions.find((item) => Number(item.category_id) === currentCategoryId)?.label || `Category ${currentCategoryId}`;
         }
     }
 
     async function loadGroups() {
-      if (groupsLoaded) return;
+      if (!groupsHasMore && groupsLoaded) return;
       if (groupsLoadPromise) {
         await groupsLoadPromise;
         return;
       }
       // Group metadata populates the set browser and supports group-signals drilldown.
       groupsLoadPromise = (async () => {
-        const payload = await getJson("/groups?limit=2000");
+        const payload = await getJson(`/groups?limit=${groupsPageSize}&offset=${groupsOffset}`);
         const columns = payload.columns || [];
+        let added = 0;
         for (const row of payload.rows || []) {
           const item = {};
           columns.forEach((col, idx) => { item[col] = row[idx]; });
-          groupsById.set(Number(item.groupId), item);
+          const groupId = Number(item.groupId);
+          if (!groupsById.has(groupId)) {
+            added += 1;
+            groupPickerItems.push(item);
+          }
+          groupsById.set(groupId, item);
         }
+        groupsOffset += added;
+        groupsHasMore = added === groupsPageSize;
         groupsLoaded = true;
         fillGroupPicker();
+        renderGroupPickerResults();
       })();
       try {
         await groupsLoadPromise;
@@ -5301,27 +6034,60 @@
       }
     }
 
+    async function hydrateTrackedUniverseMeta() {
+      const trackedKeys = Array.from(localTags.keys());
+      if (!trackedKeys.length) return;
+      const keysToLoad = trackedKeys.filter((key) => {
+        const meta = universeByKey.get(key);
+        return !meta || meta.latest_price === null || meta.latest_price === undefined || !meta.productKind || !meta.groupName || !meta.productName;
+      });
+      if (!keysToLoad.length) return;
+      const qs = new URLSearchParams({
+        limit: String(Math.max(keysToLoad.length, 1)),
+        keys: keysToLoad.join(","),
+      });
+      const payload = await getJson(`/universe?${qs.toString()}`);
+      const columns = payload.columns || [];
+      for (const row of payload.rows || []) {
+        const item = {};
+        columns.forEach((col, idx) => { item[col] = row[idx]; });
+        const key = keyOf(item.productId, item.subTypeName);
+        universeByKey.set(key, mergeMeta(universeByKey.get(key), item));
+      }
+    }
+
     async function loadProductPicker() {
-      if (productPickerLoaded) return;
+      if (!productPickerHasMore && productPickerLoaded) return;
       if (productPickerLoadPromise) {
         await productPickerLoadPromise;
         return;
       }
-      // Preload a lightweight text-only catalog for the picker so the dropdown is ready
-      // once someone actually opens it, without forcing the heavier text catalog
-      // onto every page boot.
+      // Load the product picker in pages so opening the dropdown stays fast even when
+      // the catalog is large. The hidden native select remains the state source, while
+      // the visible custom picker renders the paged results.
       productPickerLoadPromise = (async () => {
-        picker.innerHTML = '<option value="">Loading products...</option>';
-        const payload = await getJson("/product_picker?limit=50000");
+        const payload = await getJson(`/product_picker?limit=${productPickerPageSize}&offset=${productPickerOffset}`);
         const columns = payload.columns || [];
+        const nextItems = [];
         for (const row of payload.rows || []) {
           const item = {};
           columns.forEach((col, idx) => { item[col] = row[idx]; });
           const key = keyOf(item.productId, item.subTypeName);
-          universeByKey.set(key, mergeMeta(universeByKey.get(key), item));
+          const merged = mergeMeta(universeByKey.get(key), item);
+          universeByKey.set(key, merged);
+          nextItems.push({ ...merged, key });
         }
+        productPickerOffset += nextItems.length;
+        productPickerHasMore = nextItems.length === productPickerPageSize;
+        const existingKeys = new Set(productPickerItems.map((item) => item.key));
+        nextItems.forEach((item) => {
+          if (!existingKeys.has(item.key)) {
+            productPickerItems.push(item);
+          }
+        });
         productPickerLoaded = true;
-        fillPicker();
+        renderProductPickerResults();
+        syncProductPickerTriggerLabel();
       })();
       try {
         await productPickerLoadPromise;
@@ -5404,9 +6170,6 @@
           activeTableIndex = restoredIndex;
           syncActiveTableRow(true);
         }
-      });
-      scheduleDeferredLoad(async () => {
-        await loadGroups();
       });
       scheduleDeferredLoad(async () => {
         const rows = (moverFeeds[currentSegment] || []).slice(0, 18);
@@ -5505,9 +6268,7 @@
           return rows;
         }
         if (currentTab === "tracked_items") {
-          if (!universeLoaded) {
-            await loadUniverse();
-          }
+          await hydrateTrackedUniverseMeta();
           updateTrackedFilterVisibility();
           updateMobileNavState("tracked");
           const rows = buildTrackedRows();
@@ -5605,13 +6366,29 @@
         if (isPhoneLayout() && currentKey) {
           setMobileDetailOpen(true);
         }
+        syncProductPickerTriggerLabel();
       });
 
-      picker.addEventListener("focus", () => {
-        if (!productPickerLoaded && !productPickerLoadPromise) {
-          loadProductPicker().catch((err) => console.error(err));
-        }
-      });
+      if (productPickerTrigger) {
+        productPickerTrigger.addEventListener("click", async () => {
+          const nextOpen = !productPickerOpen;
+          setProductPickerOpen(nextOpen);
+          if (nextOpen && !productPickerLoaded && !productPickerLoadPromise) {
+            await loadProductPicker().catch((err) => console.error(err));
+          } else if (nextOpen) {
+            renderProductPickerResults();
+          }
+        });
+      }
+
+      if (productPickerResults) {
+        productPickerResults.addEventListener("scroll", async () => {
+          if (!productPickerOpen || !productPickerHasMore || productPickerLoadPromise) return;
+          const remaining = productPickerResults.scrollHeight - productPickerResults.scrollTop - productPickerResults.clientHeight;
+          if (remaining > 120) return;
+          await loadProductPicker().catch((err) => console.error(err));
+        });
+      }
 
       groupPicker.addEventListener("change", async () => {
         currentGroupId = Number(groupPicker.value);
@@ -5627,13 +6404,29 @@
           currentChartMode = "product";
           await selectItem(rows[0]);
         }
+        syncGroupPickerTriggerLabel();
       });
 
-      groupPicker.addEventListener("focus", () => {
-        if (!groupsLoaded && !groupsLoadPromise) {
-          loadGroups().catch((err) => console.error(err));
-        }
-      });
+      if (groupPickerTrigger) {
+        groupPickerTrigger.addEventListener("click", async () => {
+          const nextOpen = !groupPickerOpen;
+          setGroupPickerOpen(nextOpen);
+          if (nextOpen && !groupsLoaded && !groupsLoadPromise) {
+            await loadGroups().catch((err) => console.error(err));
+          } else if (nextOpen) {
+            renderGroupPickerResults();
+          }
+        });
+      }
+
+      if (groupPickerResults) {
+        groupPickerResults.addEventListener("scroll", async () => {
+          if (!groupPickerOpen || !groupsHasMore || groupsLoadPromise) return;
+          const remaining = groupPickerResults.scrollHeight - groupPickerResults.scrollTop - groupPickerResults.clientHeight;
+          if (remaining > 120) return;
+          await loadGroups().catch((err) => console.error(err));
+        });
+      }
 
       generationPicker.addEventListener("change", async () => {
         currentGeneration = generationPicker.value || "all";
@@ -5750,6 +6543,19 @@
         setTrackingMenuOpen(!trackingMenuOpen);
       });
 
+      if (openBugReportBtn) {
+        openBugReportBtn.addEventListener("click", () => {
+          setTrackingMenuOpen(false);
+          setBugReportModalOpen(true);
+        });
+      }
+      bugReportCloseBtn?.addEventListener("click", () => setBugReportModalOpen(false));
+      bugReportCancelBtn?.addEventListener("click", () => setBugReportModalOpen(false));
+      bugReportBackdrop?.addEventListener("click", () => setBugReportModalOpen(false));
+      bugReportSubmitBtn?.addEventListener("click", async () => {
+        await submitBugReport();
+      });
+
       document.querySelectorAll(".chart-window button").forEach((btn) => {
         btn.addEventListener("click", async () => {
           document.querySelectorAll(".chart-window button").forEach((x) => x.classList.remove("active"));
@@ -5780,10 +6586,11 @@
             await loadGroups();
           }
           if (currentTab === "browse_species") {
-            const speciesQuery = normalizeSearchQuery(headerSearchInput.value) || deriveSpeciesQueryFromCurrentSelection();
-            if (speciesQuery && !normalizeSearchQuery(headerSearchInput.value)) {
-              headerSearchInput.value = speciesQuery;
-            }
+            const speciesQuery = deriveSpeciesQueryFromCurrentSelection() || normalizeSearchQuery(headerSearchInput.value);
+            headerSearchInput.value = "";
+            headerSearchResultsData = [];
+            headerSearchActiveIndex = -1;
+            setHeaderSearchResultsOpen(false);
             const openedSpecies = await maybeOpenBrowseSpeciesFromSearch(speciesQuery, headerSearchResultsData);
             if (!openedSpecies) {
               currentSpeciesRows = [];
@@ -5997,6 +6804,10 @@
       });
 
       document.addEventListener("keydown", async (event) => {
+        if (event.key === "Escape" && bugReportModalOpen) {
+          setBugReportModalOpen(false);
+          return;
+        }
         const target = event.target;
         if (target instanceof HTMLElement && target.closest("select, input, textarea, button")) {
           return;
@@ -6017,6 +6828,14 @@
           setTrackingMenuOpen(false);
           return;
         }
+        if (event.key === "Escape" && productPickerOpen) {
+          setProductPickerOpen(false);
+          return;
+        }
+        if (event.key === "Escape" && groupPickerOpen) {
+          setGroupPickerOpen(false);
+          return;
+        }
         if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
           return;
         }
@@ -6032,6 +6851,10 @@
       document.addEventListener("click", (event) => {
         const target = event.target;
         if (!(target instanceof Node)) return;
+        if (bugReportModalOpen && target === bugReportBackdrop) {
+          setBugReportModalOpen(false);
+          return;
+        }
         if (trackingMenuOpen && !trackingMenu.contains(target) && !trackingToggleBtn.contains(target)) {
           setTrackingMenuOpen(false);
         }
@@ -6046,6 +6869,20 @@
         }
         if (!headerSearchForm.contains(target) && !headerSearchResults.contains(target)) {
           setHeaderSearchResultsOpen(false);
+        }
+        if (
+          productPickerOpen
+          && productPickerShell
+          && !productPickerShell.contains(target)
+        ) {
+          setProductPickerOpen(false);
+        }
+        if (
+          groupPickerOpen
+          && groupPickerShell
+          && !groupPickerShell.contains(target)
+        ) {
+          setGroupPickerOpen(false);
         }
         if (
           mobileSearchToggle
@@ -6170,6 +7007,8 @@
         updateDevTabHelp(currentTab);
         picker.innerHTML = '<option value="">Open product picker to load products</option>';
         groupPicker.innerHTML = '<option value="">Loading sets...</option>';
+        syncProductPickerTriggerLabel();
+        syncGroupPickerTriggerLabel();
         await loadCategories();
         await loadHealth();
         syncUrlState();

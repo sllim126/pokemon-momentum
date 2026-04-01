@@ -7,6 +7,7 @@ It combines:
 - DuckDB and Parquet storage
 - a main research dashboard
 - a lighter set explorer
+- a sealed-products deal page
 - lightweight tracking tags for sourcing and review
 
 The goal is simple: make it easier to spot what is moving, what may be starting to move, and which sets or products deserve attention.
@@ -22,6 +23,8 @@ The goal is simple: make it easier to spot what is moving, what may be starting 
   - a lighter embedded/public-style view
 - `/set-explorer`
   - a simpler set-browsing page for cost and concentration questions
+- `/sealed-deals`
+  - a sealed-product screening page focused on pack-value and product-level deal math
 - `/account-settings`
   - lightweight tracking account management
 
@@ -33,13 +36,13 @@ The goal is simple: make it easier to spot what is moving, what may be starting 
   - `Top Movers`
   - `Breakouts`
   - `Good Buys`
-  - `SMA30 Holds`
-  - `Early Uptrends`
-  - `Uptrends`
-  - `Signals`
-  - `Group Signals`
+  - `Consistent Movers`
+  - `Early Movers`
+  - `Confirmed Movers`
+  - `Set Strength`
 - supports set-level history through `/group_series`
 - supports set-cost and concentration browsing through `/set_baskets`
+- supports sealed deal screening through `/sealed_deals`
 - supports lightweight synced tags such as:
   - `Favorite`
   - `Watchlist`

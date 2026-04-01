@@ -133,6 +133,13 @@ workflow features:
   - signed-in users can now sync `favorite`, `watchlist`, `research`, and `buy list` tags
     through a separate tracking store
   - the header account menu is now the main entry point for sign-in, tracked items, and settings
+  - the same menu now exposes public links to `Set Explorer` and `Sealed Deals`
+  - `Report a Bug` submissions are stored separately with structured page-state context for later review
+
+- paged picker loading
+  - the dashboard `Product Picker` and `Set Picker` no longer rely on a full upfront catalog preload
+  - both pickers now request paged results from `/product_picker` and `/groups`
+  - this reduces first-load cost while preserving scrollable dropdown behavior
 
 - removed `Signals` screen from dashboard UI
   - the broader product snapshot endpoint still exists, but the public dashboard no longer surfaces

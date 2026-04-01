@@ -46,6 +46,20 @@
       box-shadow: var(--shadow);
     }
 
+    .site-header {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 18px;
+      align-items: center;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .brand-home-link {
+      display: block;
+      text-decoration: none;
+    }
+
     .hero {
       display: grid;
       grid-template-columns: 360px minmax(0, 1fr);
@@ -73,6 +87,37 @@
       object-fit: contain;
       transform: scale(2.35);
       transform-origin: center center;
+    }
+
+    .site-header-copy {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .site-header-copy h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+    }
+
+    .site-header-copy p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.45;
+      max-width: 760px;
+    }
+
+    .site-header-copy a {
+      color: #8dddff;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .site-header-copy a:hover {
+      text-decoration: underline;
     }
 
     .hero-copy h1 {
@@ -376,7 +421,46 @@
       padding: 12px 0;
     }
 
+    .site-footer {
+      margin-top: 8px;
+      padding: 18px 20px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(19, 28, 47, 0.58);
+    }
+
+    .site-footer-grid {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .site-footer-brand {
+      display: grid;
+      gap: 8px;
+    }
+
+    .site-footer-brand a {
+      color: #8dddff;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .site-footer-brand a:hover {
+      text-decoration: underline;
+    }
+
+    .site-footer-copy {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
     @media (max-width: 1100px) {
+      .site-header,
       .hero,
       .content {
         grid-template-columns: 1fr;
@@ -406,6 +490,7 @@
         margin: 10px auto 22px;
       }
 
+      .site-header,
       .hero,
       .toolbar,
       .summary-grid {
@@ -416,6 +501,10 @@
         height: 92px;
       }
 
+      .site-footer-grid {
+        grid-template-columns: 1fr;
+      }
+
       table {
         min-width: 820px;
       }
@@ -424,6 +513,20 @@
 </head>
 <body>
   <div class="shell">
+    <section class="panel site-header">
+      <a class="brand-home-link" href="/dashboard">
+        <div class="brandmark">
+          <img src="/images/Logo.png" alt="Poke6s logo">
+        </div>
+      </a>
+      <div class="site-header-copy">
+        <div class="section-label">Pokemon Momentum</div>
+        <h1>Poke6s Set Explorer</h1>
+        <p>Secondary research pages now carry the same brand layer as the main dashboard, so they still feel like part of one tool instead of one-off utilities.</p>
+        <div><a href="https://market.poke6s.com">market.poke6s.com</a></div>
+      </div>
+    </section>
+
     <section class="panel hero">
       <div class="brandmark">
         <img src="/images/Logo.png" alt="Poke6s logo">
@@ -485,6 +588,20 @@
         <div class="spotlight-card" id="spotlight"></div>
       </aside>
     </section>
+
+    <footer class="site-footer">
+      <div class="site-footer-grid">
+        <div class="site-footer-brand">
+          <div class="section-label">Pokemon Momentum</div>
+          <a href="https://market.poke6s.com">market.poke6s.com</a>
+        </div>
+        <div class="site-footer-copy">
+          <div>Pokemon Momentum is a research tool for market screening and collection analysis. It is not financial advice, pricing advice, or a guarantee of future results.</div>
+          <div>Pokemon-related names, characters, logos, and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc., and The Pokemon Company / The Pokemon Company International. This project is independent and is not affiliated with or endorsed by those companies.</div>
+          <div>Marketplace names and product references are used only to identify products and support research workflows.</div>
+        </div>
+      </div>
+    </footer>
   </div>
 
   <script>
@@ -736,7 +853,7 @@
       const shell = document.createElement("div");
       shell.className = "spotlight-image";
       const img = document.createElement("img");
-      const candidates = [...groupLogoCandidates(row.groupId), row.top_hit_image].filter(Boolean);
+      const candidates = [row.top_hit_image, ...groupLogoCandidates(row.groupId)].filter(Boolean);
 
       const tryNext = () => {
         const src = candidates.shift();
@@ -755,8 +872,9 @@
         img.alt = `${row.groupName} artwork`;
       };
 
-      // Prefer local set-logo assets so the explorer feels like a set page first,
-      // but fall back to the top-hit image if no logo has been uploaded yet.
+      // Set Explorer now leads with the actual top-hit card art so the spotlight feels more
+      // collectible-focused, while still falling back to uploaded set logos when the hit image
+      // is missing or broken.
       tryNext();
       return shell;
     }

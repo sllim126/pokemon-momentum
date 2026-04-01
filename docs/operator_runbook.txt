@@ -417,6 +417,9 @@ Healthy UI result:
 - open `Tracked Items` from the account menu and see the saved list
 - refresh the page
 - the tags remain
+- public companion pages are reachable from the same menu:
+  - `Set Explorer`
+  - `Sealed Deals`
 
 Account settings:
 
@@ -429,6 +432,22 @@ Current scope:
 
 - only `/dashboard` uses the tracking account so far
 - `/embed` and `/set-explorer` are not wired to tracking yet
+
+Bug report checks
+-----------------
+Use these when verifying the in-dashboard report flow.
+
+UI checks:
+
+- sign in from the header account menu
+- open `Report a Bug`
+- submit a short test report from a live dashboard state
+- verify the modal captures current tab / market / segment / selected product context
+
+Admin-only review:
+
+- `/bug-reports`
+- intended for operator/admin use only
 
 
 Set explorer checks

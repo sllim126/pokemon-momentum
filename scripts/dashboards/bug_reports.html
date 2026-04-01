@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bug Reports</title>
+  <style>
+    :root {
+      --bg: #0f1730;
+      --panel: #1d2946;
+      --panel-2: #16203a;
+      --line: rgba(88, 130, 198, 0.28);
+      --text: #e6eefc;
+      --muted: #9fb2d8;
+      --accent: #2ab6ff;
+      --warn: #f9b562;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(180deg, #111a34 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+    .shell {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .hero, .report {
+      background: linear-gradient(180deg, rgba(40, 56, 94, 0.92), rgba(22, 32, 58, 0.96));
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+    }
+    .hero {
+      margin-bottom: 18px;
+    }
+    .eyebrow {
+      color: #8ea6d7;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 38px;
+    }
+    .sub {
+      color: var(--muted);
+      max-width: 760px;
+      line-height: 1.5;
+    }
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+    .toolbar a, .toolbar button {
+      border: 1px solid var(--line);
+      background: rgba(19, 29, 53, 0.82);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 16px;
+      text-decoration: none;
+      cursor: pointer;
+      font: inherit;
+    }
+    .status {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .report-list {
+      display: grid;
+      gap: 14px;
+    }
+    .report-card {
+      background: rgba(15, 24, 45, 0.72);
+      border: 1px solid rgba(86, 129, 197, 0.22);
+      border-radius: 20px;
+      padding: 18px;
+    }
+    .report-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .report-title {
+      margin: 0;
+      font-size: 22px;
+    }
+    .report-meta {
+      color: var(--muted);
+      font-size: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(28, 83, 124, 0.28);
+      color: #b7dcff;
+      font-size: 13px;
+    }
+    .badge.warn {
+      background: rgba(140, 87, 24, 0.22);
+      color: #ffd28f;
+    }
+    .report-body {
+      display: grid;
+      gap: 12px;
+    }
+    .report-block {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .label {
+      color: #8ea6d7;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #dbe7ff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+    @media (max-width: 760px) {
+      .shell { padding: 14px; }
+      h1 { font-size: 30px; }
+      .report-top { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="eyebrow">Internal Ops</div>
+      <h1>Bug Reports</h1>
+      <div class="sub">Structured reports from the dashboard live here so we can review what broke, which page state it happened in, and eventually forward the same payload into Discord.</div>
+      <div class="toolbar">
+        <div class="status" id="pageStatus">Loading reports...</div>
+        <a href="/dashboard">Back to Dashboard</a>
+      </div>
+    </section>
+    <section class="report">
+      <div class="report-list" id="reportList"></div>
+    </section>
+  </div>
+  <script>
+    const pageStatus = document.getElementById("pageStatus");
+    const reportList = document.getElementById("reportList");
+
+    function formatMeta(report) {
+      const bits = [];
+      if (report.reporter_username) bits.push(`Reporter: ${report.reporter_username}`);
+      if (report.page_path) bits.push(`Page: ${report.page_path}`);
+      if (report.tab) bits.push(`Tab: ${report.tab}`);
+      if (report.segment) bits.push(`Segment: ${report.segment}`);
+      if (report.category_id) bits.push(`Category: ${report.category_id}`);
+      return bits;
+    }
+
+    function renderReports(items) {
+      reportList.innerHTML = "";
+      if (!items.length) {
+        reportList.innerHTML = '<div class="report-card"><div class="report-body"><div class="report-block"><div class="label">Status</div><div>No bug reports yet.</div></div></div></div>';
+        return;
+      }
+      items.forEach((report) => {
+        const card = document.createElement("article");
+        card.className = "report-card";
+        let contextJson = report.context_json || "{}";
+        try {
+          contextJson = JSON.stringify(JSON.parse(contextJson), null, 2);
+        } catch (_) {}
+        const expectedBlock = report.expected
+          ? `<div class="report-block"><div class="label">Expected</div><div>${report.expected}</div></div>`
+          : "";
+        card.innerHTML = `
+          <div class="report-top">
+            <div>
+              <h2 class="report-title">${report.title}</h2>
+              <div class="report-meta">${formatMeta(report).map((item) => `<span>${item}</span>`).join("")}</div>
+            </div>
+            <div class="badge warn">${report.status || "new"}</div>
+          </div>
+          <div class="report-body">
+            <div class="report-block">
+              <div class="label">Submitted</div>
+              <div>${report.created_at}</div>
+            </div>
+            <div class="report-block">
+              <div class="label">What Happened</div>
+              <div>${report.details}</div>
+            </div>
+            ${expectedBlock}
+            <div class="report-block">
+              <div class="label">Context</div>
+              <pre>${contextJson}</pre>
+            </div>
+          </div>
+        `;
+        reportList.appendChild(card);
+      });
+    }
+
+    async function init() {
+      try {
+        const res = await fetch("/bug_reports?limit=200");
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        const payload = await res.json();
+        const items = payload.items || [];
+        pageStatus.textContent = `${items.length} report${items.length === 1 ? "" : "s"} loaded.`;
+        renderReports(items);
+      } catch (err) {
+        pageStatus.textContent = `Failed to load reports: ${err.message}`;
+        renderReports([]);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
