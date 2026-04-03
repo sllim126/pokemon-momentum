@@ -47,6 +47,8 @@ Recent Data/Serving Changes (March 2026)
 - `Good Buys` now filters for `recent_distinct_prices_30d >= 10`
 - `Good Buys` now supports a client-side `Filter Sets` popout over the current result set
 - `Breakouts` now honors the shared `Cards / Sealed` segment filter the same way as the other segmented tabs
+- `Browse Set` now owns the set-scoped `Time to Buy` workflow through the `Set View` toggle
+- `Browse Set` also has a client-side `Included Cards` filter that can narrow the loaded set rows by rarity and set-specific variants
 - Expected result:
   - search drops the user into the correct set context more often
   - `Good Buys` is less likely to show thinly traded names by default and is easier to narrow to relevant sets

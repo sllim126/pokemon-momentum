@@ -247,6 +247,7 @@ def build_metadata_cte(category_id: int, include_classification: bool = False, c
             ]
         )
     product_fields.append("COALESCE(g.name, 'Unknown Group') AS groupName")
+    product_fields.append("COALESCE(g.abbreviation, '') AS groupAbbreviation")
     fields_sql = ",\n            ".join(product_fields)
     return f"""
     {cte_name} AS (
@@ -302,6 +303,10 @@ def build_set_basket_filter(
         clauses.append(f"{rarity} = 'rare'")
     if "reverse_holo" in normalized:
         clauses.append(f"{subtype} LIKE '%reverse holo%'")
+    if "pokeball_holo" in normalized:
+        clauses.append(f"({product_name} LIKE '%poke ball%' OR {subtype} LIKE '%poke ball%')")
+    if "masterball_holo" in normalized:
+        clauses.append(f"({product_name} LIKE '%master ball%' OR {subtype} LIKE '%master ball%')")
     if "holo_rare" in normalized:
         clauses.append(f"{rarity} = 'holo rare'")
     if "double_rare" in normalized:

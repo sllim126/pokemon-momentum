@@ -109,6 +109,14 @@ new reviewers can verify expected UX quickly.
   - first open is much faster
   - desktop and mobile tracking/research flows avoid unnecessary startup cost
 
+16. First-run guide overlay
+- the dashboard now includes a short onboarding guide that opens automatically the first time the
+  page is visited on a device
+- the guide can also be reopened later from the `Account` menu through `View Guide`
+- expected result:
+  - new users get a quick explanation of search, Market Signals, chart reading, and tracking
+  - returning users are not forced through the guide repeatedly
+
 What This Is
 This dashboard is a research and discovery tool built around Pokemon market data.
 It takes a large amount of price history and turns it into something easier to scan, compare, and act on.
@@ -277,6 +285,15 @@ Browse Set
 Shows all products in the currently selected set from the Set Picker dropdown.
 Use this when you want to browse one set directly rather than only relying on the screener tabs.
 Header search also uses this screen as the destination for set-oriented searches, so a set search now opens directly into `Browse Set`.
+This screen now also has two set-specific controls:
+- `Set View` switches between the normal set list and the set-scoped `Time to Buy` screen
+- `Included Cards` lets you narrow the loaded set rows by rarity or variant, including things like `IR+`, `Hits Only`, `Reverse Holo`, `Poke Ball Holo`, `Master Ball Holo`, `Ball Pattern`, and `Energy Symbol Pattern`
+
+Time to Buy
+Lives inside the `Browse Set` workspace instead of the main indicator row.
+It only runs for the currently selected set.
+This view looks for cards that are still under broader trend pressure but have started to flatten into a recent price floor.
+It also requires at least `10` distinct prices in the last `30` days so the list is less likely to be driven by stale one-print pricing.
 
 Browse Species
 Shows matching listings for the same searched card name across sets.
@@ -434,12 +451,14 @@ Selecting a product here updates:
 Set Picker Dropdown
 The Set Picker dropdown selects which set is used for the `Browse Set` view.
 When `Browse Set` is active, the table will show all products from the selected set.
+If `Set View` is switched to `Time to Buy`, the same set picker controls that set-specific screen instead.
 
 Typical use:
 1. choose a set in the Set Picker dropdown
 2. the dashboard automatically switches to the set product list
 3. the first product in the set is loaded into the main chart
-4. review the rest of the set in the lower list and click or arrow through rows
+4. optionally use `Included Cards` to narrow the set to the variants or rarity bucket you care about
+5. review the rest of the set in the lower list and click or arrow through rows
 
 
 Market Dropdown

@@ -37,6 +37,8 @@ sudo docker-compose restart pokemon-momentum
 - Set Products loads without generic `Product <id>` for known named sets
 - header search set results open directly into `Browse Set`
 - header search product results can open `Browse Set` with the matching item selected
+- `Browse Set` can switch between `Browse Set` and set-scoped `Time to Buy` via `Set View`
+- `Included Cards` can be opened and closed cleanly, and set-specific variant filters behave as expected
 - no unexpected large universe preloads on routine interactions
 - mobile bottom nav works:
   - `Home`

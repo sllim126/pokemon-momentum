@@ -86,6 +86,45 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.json()["items"], [])
         self.assertEqual(response.json()["total_count"], 0)
 
+    def test_search_sql_supports_card_and_set_token_queries(self):
+        with patch.object(api, "q", side_effect=[(["kind"], []), (["count"], [(0,)])]) as q_mock, patch.object(
+            api, "product_signal_from", return_value="product_signal_snapshot"
+        ), patch.object(api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"), patch.object(
+            api, "groups_from", return_value="groups_source"
+        ), patch.object(api, "category_config", return_value=api.category_config(3)):
+            api.search(query="zekrom brilliant stars", limit=12, category_id=3)
+
+        sql = q_mock.call_args_list[0][0][0]
+        self.assertIn("zekrom", sql.lower())
+        self.assertIn("brilliant", sql.lower())
+        self.assertIn("COALESCE(m.productName", sql)
+        self.assertIn("COALESCE(m.groupName", sql)
+        self.assertIn("AND", sql)
+
+    def test_search_sql_supports_set_code_tokens_on_product_matches(self):
+        with patch.object(api, "q", side_effect=[(["kind"], []), (["count"], [(0,)])]) as q_mock, patch.object(
+            api, "product_signal_from", return_value="product_signal_snapshot"
+        ), patch.object(api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"), patch.object(
+            api, "groups_from", return_value="groups_source"
+        ), patch.object(api, "category_config", return_value=api.category_config(3)):
+            api.search(query="zekrom jtg", limit=12, category_id=3)
+
+        sql = q_mock.call_args_list[0][0][0]
+        self.assertIn("COALESCE(m.groupAbbreviation", sql)
+        self.assertIn("jtg", sql.lower())
+
+    def test_search_sql_supports_set_code_tokens_on_product_matches(self):
+        with patch.object(api, "q", side_effect=[(["kind"], []), (["count"], [(0,)])]) as q_mock, patch.object(
+            api, "product_signal_from", return_value="product_signal_snapshot"
+        ), patch.object(api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"), patch.object(
+            api, "groups_from", return_value="groups_source"
+        ), patch.object(api, "category_config", return_value=api.category_config(3)):
+            api.search(query="zekrom jtg", limit=12, category_id=3)
+
+        sql = q_mock.call_args_list[0][0][0]
+        self.assertIn("COALESCE(m.groupAbbreviation", sql)
+        self.assertIn("jtg", sql.lower())
+
     def test_universe_sql_can_filter_specific_product_and_subtype(self):
         with patch.object(api, "q", return_value=(["productId"], [(1,)])) as q_mock, patch.object(
             api, "product_signal_from", return_value="product_signal_snapshot"
@@ -218,6 +257,40 @@ class ApiRouteTests(unittest.TestCase):
         sql = q_mock.call_args[0][0]
         self.assertIn("AND productKind = 'sealed'", sql)
         self.assertNotIn("ultra rare", sql.lower())
+
+    def test_time_to_buy_uses_recent_variance_floor_logic(self):
+        with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
+            api, "product_signal_from", return_value="product_signal_snapshot"
+        ), patch.object(api, "prices_from", return_value="prices_source"), patch.object(
+            api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"
+        ), patch.object(api, "category_config", return_value=api.category_config(3)):
+            api.time_to_buy(category_id=3, group_id=123, product_kind="card")
+
+        sql = q_mock.call_args[0][0]
+        self.assertIn("latest_price <= latest_sma30", sql)
+        self.assertIn("recent_low", sql)
+        self.assertIn("recent_high", sql)
+        self.assertIn("variance_to_current_pct", sql)
+        self.assertIn("recent_distinct_prices_30d", sql)
+        self.assertIn(">= 10", sql)
+        self.assertIn("AND COALESCE(m.productKind, s.productKind, '') = 'card'", sql)
+        self.assertIn("AND s.groupId = 123", sql)
+
+    def test_time_to_buy_requires_a_selected_set(self):
+        result = api.time_to_buy(category_id=3)
+        self.assertEqual(result.get("rows"), [])
+        self.assertEqual(result.get("columns"), [])
+
+    def test_time_to_buy_can_filter_to_one_set(self):
+        with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
+            api, "product_signal_from", return_value="product_signal_snapshot"
+        ), patch.object(api, "prices_from", return_value="prices_source"), patch.object(
+            api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"
+        ), patch.object(api, "category_config", return_value=api.category_config(85)):
+            api.time_to_buy(category_id=85, group_id=606)
+
+        sql = q_mock.call_args[0][0]
+        self.assertIn("AND s.groupId = 606", sql)
 
     def test_group_products_honors_product_kind_filter(self):
         with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(

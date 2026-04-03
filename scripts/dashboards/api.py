@@ -1294,6 +1294,118 @@ def search(query: str, limit: int = 12, category_id: int = 3):
     metadata_cte = build_metadata_cte(category.category_id, include_classification=True, cte_name="metadata")
     normalized_term = "".join(ch.lower() for ch in term if ch.isalnum())
     safe_normalized_term = normalized_term.replace("'", "''")
+    raw_tokens = [token for token in re.split(r"\s+", term.lower()) if token]
+    normalized_tokens = ["".join(ch for ch in token if ch.isalnum()) for token in raw_tokens]
+
+    def _safe_token(token: str) -> str:
+        return token.replace("'", "''")
+
+    def _raw_or_normalized_like(raw_expr: str, normalized_expr: str, raw_token: str, normalized_token: str) -> str:
+        clauses = [f"{raw_expr} LIKE '%' || lower('{_safe_token(raw_token)}') || '%'"]
+        if normalized_token:
+            clauses.append(f"{normalized_expr} LIKE '%' || lower('{_safe_token(normalized_token)}') || '%'")
+        return "(" + " OR ".join(clauses) + ")"
+
+    def _all_token_matches(raw_expr: str, normalized_expr: str) -> str:
+        if not raw_tokens:
+            return "TRUE"
+        clauses = [
+            _raw_or_normalized_like(raw_expr, normalized_expr, raw_token, normalized_token)
+            for raw_token, normalized_token in zip(raw_tokens, normalized_tokens)
+        ]
+        return "(" + " AND ".join(clauses) + ")"
+
+    def _any_token_matches(raw_expr: str, normalized_expr: str) -> str:
+        if not raw_tokens:
+            return "FALSE"
+        clauses = [
+            _raw_or_normalized_like(raw_expr, normalized_expr, raw_token, normalized_token)
+            for raw_token, normalized_token in zip(raw_tokens, normalized_tokens)
+        ]
+        return "(" + " OR ".join(clauses) + ")"
+
+    product_token_match_expr = _all_token_matches(
+        "lower(CONCAT_WS(' ', COALESCE(m.productName, ''), COALESCE(m.groupName, ''), COALESCE(m.groupAbbreviation, ''), COALESCE(m.number, ''), COALESCE(ap.subTypeName, '')))",
+        "lower(regexp_replace(CONCAT_WS(' ', COALESCE(m.productName, ''), COALESCE(m.groupName, ''), COALESCE(m.groupAbbreviation, ''), COALESCE(m.number, ''), COALESCE(ap.subTypeName, '')), '[^a-z0-9]+', '', 'g'))",
+    )
+    group_token_match_expr = _all_token_matches(
+        "lower(CONCAT_WS(' ', COALESCE(g.name, ''), COALESCE(g.abbreviation, '')))",
+        "lower(regexp_replace(CONCAT_WS(' ', COALESCE(g.name, ''), COALESCE(g.abbreviation, '')), '[^a-z0-9]+', '', 'g'))",
+    )
+    product_name_token_expr = _any_token_matches(
+        "lower(COALESCE(m.productName, ''))",
+        "lower(regexp_replace(COALESCE(m.productName, ''), '[^a-z0-9]+', '', 'g'))",
+    )
+    product_group_token_expr = _any_token_matches(
+        "lower(COALESCE(m.groupName, ''))",
+        "lower(regexp_replace(COALESCE(m.groupName, ''), '[^a-z0-9]+', '', 'g'))",
+    )
+    product_group_abbrev_token_expr = _any_token_matches(
+        "lower(COALESCE(m.groupAbbreviation, ''))",
+        "lower(regexp_replace(COALESCE(m.groupAbbreviation, ''), '[^a-z0-9]+', '', 'g'))",
+    )
+    product_number_token_expr = _any_token_matches(
+        "lower(COALESCE(m.number, ''))",
+        "lower(regexp_replace(COALESCE(m.number, ''), '[^a-z0-9]+', '', 'g'))",
+    )
+    product_subtype_token_expr = _any_token_matches(
+        "lower(COALESCE(ap.subTypeName, ''))",
+        "lower(regexp_replace(COALESCE(ap.subTypeName, ''), '[^a-z0-9]+', '', 'g'))",
+    )
+    group_name_token_expr = _any_token_matches(
+        "lower(COALESCE(g.name, ''))",
+        "lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g'))",
+    )
+    group_abbrev_token_expr = _any_token_matches(
+        "lower(COALESCE(g.abbreviation, ''))",
+        "lower(regexp_replace(COALESCE(g.abbreviation, ''), '[^a-z0-9]+', '', 'g'))",
+    )
+    product_name_raw_expr = "lower(COALESCE(m.productName, ''))"
+    product_name_normalized_expr = "lower(regexp_replace(COALESCE(m.productName, ''), '[^a-z0-9]+', '', 'g'))"
+    product_group_raw_expr = "lower(COALESCE(m.groupName, ''))"
+    product_group_normalized_expr = "lower(regexp_replace(COALESCE(m.groupName, ''), '[^a-z0-9]+', '', 'g'))"
+    product_group_abbrev_raw_expr = "lower(COALESCE(m.groupAbbreviation, ''))"
+    product_group_abbrev_normalized_expr = "lower(regexp_replace(COALESCE(m.groupAbbreviation, ''), '[^a-z0-9]+', '', 'g'))"
+    product_number_raw_expr = "lower(COALESCE(m.number, ''))"
+    product_number_normalized_expr = "lower(regexp_replace(COALESCE(m.number, ''), '[^a-z0-9]+', '', 'g'))"
+    product_subtype_raw_expr = "lower(COALESCE(ap.subTypeName, ''))"
+    product_subtype_normalized_expr = "lower(regexp_replace(COALESCE(ap.subTypeName, ''), '[^a-z0-9]+', '', 'g'))"
+    group_name_raw_expr = "lower(COALESCE(g.name, ''))"
+    group_name_normalized_expr = "lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g'))"
+    group_abbrev_raw_expr = "lower(COALESCE(g.abbreviation, ''))"
+    group_abbrev_normalized_expr = "lower(regexp_replace(COALESCE(g.abbreviation, ''), '[^a-z0-9]+', '', 'g'))"
+    product_token_score_expr = " + ".join(
+        [
+            f"CASE WHEN {_raw_or_normalized_like(product_name_raw_expr, product_name_normalized_expr, raw_token, normalized_token)} THEN 70 ELSE 0 END"
+            for raw_token, normalized_token in zip(raw_tokens, normalized_tokens)
+        ]
+        + [
+            f"CASE WHEN {_raw_or_normalized_like(product_group_raw_expr, product_group_normalized_expr, raw_token, normalized_token)} THEN 55 ELSE 0 END"
+            for raw_token, normalized_token in zip(raw_tokens, normalized_tokens)
+        ]
+        + [
+            f"CASE WHEN {_raw_or_normalized_like(product_group_abbrev_raw_expr, product_group_abbrev_normalized_expr, raw_token, normalized_token)} THEN 62 ELSE 0 END"
+            for raw_token, normalized_token in zip(raw_tokens, normalized_tokens)
+        ]
+        + [
+            f"CASE WHEN {_raw_or_normalized_like(product_number_raw_expr, product_number_normalized_expr, raw_token, normalized_token)} THEN 45 ELSE 0 END"
+            for raw_token, normalized_token in zip(raw_tokens, normalized_tokens)
+        ]
+        + [
+            f"CASE WHEN {_raw_or_normalized_like(product_subtype_raw_expr, product_subtype_normalized_expr, raw_token, normalized_token)} THEN 30 ELSE 0 END"
+            for raw_token, normalized_token in zip(raw_tokens, normalized_tokens)
+        ]
+    ) or "0"
+    group_token_score_expr = " + ".join(
+        [
+            f"CASE WHEN {_raw_or_normalized_like(group_name_raw_expr, group_name_normalized_expr, raw_token, normalized_token)} THEN 60 ELSE 0 END"
+            for raw_token, normalized_token in zip(raw_tokens, normalized_tokens)
+        ]
+        + [
+            f"CASE WHEN {_raw_or_normalized_like(group_abbrev_raw_expr, group_abbrev_normalized_expr, raw_token, normalized_token)} THEN 42 ELSE 0 END"
+            for raw_token, normalized_token in zip(raw_tokens, normalized_tokens)
+        ]
+    ) or "0"
 
     sql = f"""
     WITH active_products AS (
@@ -1322,6 +1434,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         ap.subTypeName,
         ap.groupId,
         m.groupName,
+        m.groupAbbreviation,
         m.productName,
         m.imageUrl,
         m.rarity,
@@ -1331,6 +1444,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         ap.latest_price,
         ap.latest_date,
         CASE
+          WHEN {product_token_match_expr} AND {product_name_token_expr} AND ({product_group_token_expr} OR {product_group_abbrev_token_expr}) THEN 470
           WHEN lower(regexp_replace(COALESCE(m.productName, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 520
           WHEN lower(regexp_replace(COALESCE(m.number, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 500
           WHEN lower(m.productName) = lower('{safe_term}') THEN 400
@@ -1343,7 +1457,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
           WHEN lower(m.groupName) LIKE '%' || lower('{safe_term}') || '%' THEN 150
           WHEN lower(COALESCE(ap.subTypeName, '')) LIKE '%' || lower('{safe_term}') || '%' THEN 140
           ELSE 0
-        END AS score
+        END + ({product_token_score_expr}) AS score
       FROM active_products ap
       LEFT JOIN metadata m
         ON m.productId = ap.productId
@@ -1355,6 +1469,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         OR lower(regexp_replace(COALESCE(m.number, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR lower(COALESCE(m.groupName, '')) LIKE '%' || lower('{safe_term}') || '%'
         OR lower(COALESCE(ap.subTypeName, '')) LIKE '%' || lower('{safe_term}') || '%'
+        OR {product_token_match_expr}
       )
     ),
     group_matches AS (
@@ -1366,6 +1481,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         '' AS subTypeName,
         ag.groupId,
         COALESCE(g.name, 'Unknown Group') AS groupName,
+        COALESCE(g.abbreviation, '') AS groupAbbreviation,
         NULL AS productName,
         NULL AS imageUrl,
         NULL AS rarity,
@@ -1375,6 +1491,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         NULL AS latest_price,
         NULL AS latest_date,
         CASE
+          WHEN {group_token_match_expr} AND {group_name_token_expr} THEN 300
           WHEN lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 560
           WHEN lower(regexp_replace(COALESCE(g.abbreviation, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 540
           WHEN lower(COALESCE(g.name, '')) = lower('{safe_term}') THEN 360
@@ -1384,7 +1501,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
           WHEN lower(COALESCE(g.name, '')) LIKE '%' || lower('{safe_term}') || '%' THEN 200
           WHEN lower(COALESCE(g.abbreviation, '')) LIKE '%' || lower('{safe_term}') || '%' THEN 180
           ELSE 0
-        END AS score
+        END + ({group_token_score_expr}) AS score
       FROM active_groups ag
       LEFT JOIN {groups_from(category.category_id)} g
         ON g.groupId = ag.groupId
@@ -1393,6 +1510,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         OR lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR lower(COALESCE(g.abbreviation, '')) LIKE '%' || lower('{safe_term}') || '%'
         OR lower(regexp_replace(COALESCE(g.abbreviation, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
+        OR {group_token_match_expr}
       )
     ),
     scored AS (
@@ -1436,6 +1554,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         OR lower(regexp_replace(COALESCE(m.number, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR lower(COALESCE(m.groupName, '')) LIKE '%' || lower('{safe_term}') || '%'
         OR lower(COALESCE(ap.subTypeName, '')) LIKE '%' || lower('{safe_term}') || '%'
+        OR {product_token_match_expr}
       )
     ),
     group_matches AS (
@@ -1448,6 +1567,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         OR lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR lower(COALESCE(g.abbreviation, '')) LIKE '%' || lower('{safe_term}') || '%'
         OR lower(regexp_replace(COALESCE(g.abbreviation, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
+        OR {group_token_match_expr}
       )
     )
     SELECT COUNT(*)
@@ -1647,6 +1767,134 @@ def good_buys(
       AND COALESCE(recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
       {prize_pack_filter}
     ORDER BY roc_30d_pct ASC, price_vs_sma30_pct ASC, latest_price DESC
+    LIMIT {limit}
+    """
+    cols, rows = q(sql)
+    return {"columns": cols, "rows": rows}
+
+
+@app.get("/time_to_buy")
+def time_to_buy(
+    limit: int = 250,
+    min_price: float = 5.0,
+    lookback_days: int = 10,
+    min_recent_observations: int = 10,
+    min_recent_distinct_prices_30d: int = 10,
+    max_variance_to_current_pct: float = 10.0,
+    max_30d_pct: float = 0.0,
+    max_90d_pct: float = 0.0,
+    group_id: int | None = None,
+    product_kind: str | None = None,
+    category_id: int = 3,
+):
+    limit = max(1, min(limit, 5000))
+    lookback_days = max(5, min(lookback_days, 30))
+    min_recent_observations = max(3, min(min_recent_observations, lookback_days))
+    min_recent_distinct_prices_30d = max(2, min(min_recent_distinct_prices_30d, 30))
+    if group_id is None:
+        return {"columns": [], "rows": []}
+    category = category_config(category_id)
+    signal_source = product_signal_from(category.category_id)
+    price_source = prices_from(category.category_id)
+    metadata_cte = build_metadata_cte(category.category_id, include_classification=True, cte_name="metadata")
+    product_kind_filter = ""
+    group_filter = ""
+    if product_kind in {"card", "sealed"}:
+        product_kind_filter = f"AND COALESCE(m.productKind, s.productKind, '') = '{product_kind}'"
+    if group_id is not None:
+        group_filter = f"AND s.groupId = {int(group_id)}"
+
+    sql = f"""
+    WITH latest_signal AS (
+      SELECT
+        latest_date,
+        productId,
+        groupId,
+        subTypeName,
+        productKind,
+        latest_price,
+        latest_sma30,
+        roc_7d_pct,
+        roc_30d_pct,
+        roc_90d_pct,
+        price_vs_sma30_pct,
+        recent_distinct_prices_30d
+      FROM {signal_source}
+      WHERE categoryId = {category.category_id}
+        AND latest_date = (SELECT MAX(latest_date) FROM {signal_source})
+        AND latest_price >= {min_price}
+        AND latest_sma30 IS NOT NULL
+        AND latest_price <= latest_sma30
+        AND COALESCE(roc_30d_pct, 0) <= {max_30d_pct}
+        AND COALESCE(roc_90d_pct, 0) <= {max_90d_pct}
+        AND COALESCE(recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
+    ),
+    recent_window AS (
+      SELECT
+        p.productId,
+        p.groupId,
+        p.subTypeName,
+        COUNT(*) AS recent_observations,
+        COUNT(DISTINCT p.date) AS recent_days,
+        MIN(p.marketPrice) AS recent_low,
+        MAX(p.marketPrice) AS recent_high,
+        AVG(p.marketPrice) AS recent_avg
+      FROM {price_source} p
+      JOIN latest_signal s
+        ON p.productId = s.productId
+       AND p.groupId = s.groupId
+       AND p.subTypeName = s.subTypeName
+      WHERE p.categoryId = {category.category_id}
+        AND p.marketPrice IS NOT NULL
+        AND p.date >= s.latest_date - INTERVAL {lookback_days - 1} DAY
+      GROUP BY p.productId, p.groupId, p.subTypeName
+    ),
+    {metadata_cte}
+    SELECT
+      s.latest_date,
+      s.groupId,
+      COALESCE(m.groupName, 'Unknown Group') AS groupName,
+      s.productId,
+      COALESCE(m.productName, 'productId ' || CAST(s.productId AS VARCHAR)) AS productName,
+      m.imageUrl,
+      m.rarity,
+      m.number,
+      COALESCE(m.productClass, '') AS productClass,
+      COALESCE(m.productKind, '') AS productKind,
+      s.subTypeName,
+      s.latest_price,
+      s.latest_sma30,
+      s.roc_7d_pct,
+      s.roc_30d_pct,
+      s.roc_90d_pct,
+      s.price_vs_sma30_pct,
+      s.recent_distinct_prices_30d,
+      rw.recent_observations,
+      rw.recent_days,
+      rw.recent_low,
+      rw.recent_high,
+      rw.recent_avg,
+      ((rw.recent_high - rw.recent_low) / NULLIF(s.latest_price, 0)) * 100.0 AS recent_range_pct,
+      GREATEST(
+        ABS(((rw.recent_high / NULLIF(s.latest_price, 0)) - 1) * 100.0),
+        ABS(((rw.recent_low / NULLIF(s.latest_price, 0)) - 1) * 100.0)
+      ) AS variance_to_current_pct
+    FROM latest_signal s
+    JOIN recent_window rw
+      ON rw.productId = s.productId
+     AND rw.groupId = s.groupId
+     AND rw.subTypeName = s.subTypeName
+    LEFT JOIN metadata m
+      ON m.productId = s.productId
+     AND m.groupId = s.groupId
+    WHERE rw.recent_observations >= {min_recent_observations}
+      AND GREATEST(
+        ABS(((rw.recent_high / NULLIF(s.latest_price, 0)) - 1) * 100.0),
+        ABS(((rw.recent_low / NULLIF(s.latest_price, 0)) - 1) * 100.0)
+      ) <= {max_variance_to_current_pct}
+      {product_kind_filter}
+      {group_filter}
+    ORDER BY variance_to_current_pct ASC, s.roc_90d_pct ASC, s.latest_price DESC
     LIMIT {limit}
     """
     cols, rows = q(sql)

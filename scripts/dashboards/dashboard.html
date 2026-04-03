@@ -313,12 +313,29 @@
       border-radius: 14px;
       padding: 10px 12px;
       cursor: pointer;
-      display: block;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 12px;
     }
 
     .brandsearch-result:hover,
     .brandsearch-result.active {
       background: rgba(34, 176, 255, 0.12);
+    }
+
+    .brandsearch-result-thumb {
+      width: 44px;
+      height: 44px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid rgba(91, 112, 146, 0.28);
+      background: rgba(9, 14, 24, 0.7);
+      flex: 0 0 auto;
+    }
+
+    .brandsearch-result-body {
+      min-width: 0;
     }
 
     .brandsearch-result-title {
@@ -696,6 +713,204 @@
       border-color: rgba(74, 164, 234, 0.38);
     }
 
+    .guide-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      z-index: 58;
+    }
+
+    .guide-modal.open {
+      display: block;
+    }
+
+    .guide-backdrop {
+      position: fixed;
+      inset: 0;
+      background: transparent;
+    }
+
+    .guide-shade {
+      position: fixed;
+      background: rgba(7, 11, 21, 0.52);
+      backdrop-filter: blur(4px);
+      pointer-events: none;
+      z-index: 0;
+      transition:
+        top 0.18s ease,
+        left 0.18s ease,
+        width 0.18s ease,
+        height 0.18s ease;
+    }
+
+    .guide-spotlight {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      width: 120px;
+      height: 120px;
+      border-radius: 22px;
+      border: 1px solid rgba(118, 203, 255, 0.46);
+      box-shadow:
+        0 0 0 8px rgba(34, 176, 255, 0.10),
+        0 18px 36px rgba(5, 11, 22, 0.30);
+      pointer-events: none;
+      z-index: 1;
+      transition:
+        top 0.18s ease,
+        left 0.18s ease,
+        width 0.18s ease,
+        height 0.18s ease,
+        border-radius 0.18s ease;
+    }
+
+    .guide-card {
+      position: fixed;
+      width: min(420px, calc(100vw - 32px));
+      max-height: min(72vh, calc(100vh - 32px));
+      overflow: auto;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(31, 43, 69, 0.98), rgba(20, 29, 48, 0.99));
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 16px;
+      z-index: 2;
+    }
+
+    .guide-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .guide-head h3 {
+      margin: 0 0 6px;
+      font-size: 24px;
+    }
+
+    .guide-close {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 43, 0.84);
+      color: var(--ink);
+      border-radius: 999px;
+      min-width: 38px;
+      min-height: 38px;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .guide-progress {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .guide-progress-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      border: 1px solid rgba(120, 150, 198, 0.26);
+      background: rgba(18, 26, 43, 0.72);
+    }
+
+    .guide-progress-dot.active {
+      background: rgba(34, 176, 255, 0.9);
+      border-color: rgba(34, 176, 255, 0.48);
+      box-shadow: 0 0 0 4px rgba(34, 176, 255, 0.14);
+    }
+
+    .guide-body {
+      display: grid;
+      gap: 14px;
+    }
+
+    .guide-step-meta {
+      display: grid;
+      gap: 6px;
+    }
+
+    .guide-step-count {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .guide-step-target {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      max-width: 100%;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(34, 176, 255, 0.26);
+      background: rgba(24, 56, 92, 0.34);
+      color: #9be3ff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .guide-step-title {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.05;
+    }
+
+    .guide-step-copy {
+      margin: 0;
+      color: var(--ink);
+      font-size: 17px;
+      line-height: 1.55;
+      max-width: 62ch;
+    }
+
+    .guide-step-points {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .guide-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding-top: 4px;
+    }
+
+    .guide-actions-left,
+    .guide-actions-right {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .guide-actions button {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 43, 0.84);
+      color: var(--ink);
+      font: inherit;
+      min-height: 42px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    .guide-actions button.primary {
+      background: linear-gradient(180deg, rgba(30, 113, 181, 0.94), rgba(21, 91, 150, 0.96));
+      border-color: rgba(74, 164, 234, 0.38);
+    }
+
     .tag-actions.full-width button {
       width: 100%;
       justify-content: center;
@@ -753,7 +968,7 @@
       display: grid;
       grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
       gap: 18px;
-      align-items: start;
+      align-items: stretch;
       min-width: 0;
     }
 
@@ -1067,13 +1282,22 @@
 
     .hero-tabs {
       margin-top: 14px;
-      display: grid;
-      gap: 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: start;
     }
 
     .hero-tab-group {
       display: grid;
       gap: 8px;
+      min-width: 0;
+      flex: 0 1 auto;
+    }
+
+    .hero-tab-group:last-child {
+      align-content: start;
+      margin-left: auto;
     }
 
     .hero-tab-group-label {
@@ -1086,7 +1310,7 @@
 
     .hero-tab-row {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       gap: 10px;
     }
 
@@ -1951,6 +2175,84 @@
       cursor: pointer;
     }
 
+    details.browse-set-filter-menu {
+      position: relative;
+    }
+
+    details.browse-set-filter-menu summary {
+      list-style: none;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 43, 0.96);
+      color: var(--ink);
+      border-radius: 16px;
+      padding: 12px 14px;
+      font: inherit;
+      cursor: pointer;
+      user-select: none;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+    }
+
+    details.browse-set-filter-menu summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .browse-set-filter-panel {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      z-index: 6;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(16, 25, 45, 0.98);
+      box-shadow: var(--shadow);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      max-height: 320px;
+      overflow: auto;
+      min-width: min(360px, calc(100vw - 64px));
+    }
+
+    .browse-set-filter-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .browse-set-filter-option input {
+      width: auto;
+      margin: 0;
+    }
+
+    .browse-set-view-toggle {
+      display: inline-flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .browse-set-view-toggle button {
+      appearance: none;
+      border: 1px solid rgba(91, 112, 146, 0.24);
+      border-radius: 999px;
+      background: rgba(19, 30, 56, 0.8);
+      color: var(--muted);
+      padding: 10px 14px;
+      font: inherit;
+      cursor: pointer;
+      min-height: 44px;
+    }
+
+    .browse-set-view-toggle button.active {
+      color: #a7e2ff;
+      background: rgba(31, 177, 255, 0.14);
+      border-color: rgba(31, 177, 255, 0.34);
+    }
+
     .good-buys-set-actions button:hover {
       color: var(--ink);
       border-color: rgba(44, 121, 197, 0.34);
@@ -2164,11 +2466,25 @@
         max-height: none;
         grid-column: 1 / -1;
       }
+
+      .right-rail .stack {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: start;
+      }
     }
 
-    @media (max-width: 1080px) {
+    @media (max-width: 1280px) {
       .brandbar {
-        grid-template-columns: 1fr;
+        grid-template-columns: 220px minmax(0, 1fr) 220px;
+        align-items: start;
+      }
+
+      .brandlockup {
+        grid-column: auto;
+      }
+
+      .brandmark {
+        height: 76px;
       }
 
       .tracking-header,
@@ -2180,7 +2496,9 @@
       }
 
       .brandactions {
-        grid-template-columns: 1fr;
+        grid-template-columns: 220px;
+        justify-content: end;
+        align-self: start;
       }
 
       .brandactions .search-actions,
@@ -2195,7 +2513,7 @@
       }
 
       .top-stage {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       }
 
       .right-rail {
@@ -2203,9 +2521,15 @@
         max-height: none;
       }
 
-      .stage-title,
+      .stage-title {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
+      }
+
       .signal-topline {
-        flex-direction: column;
+        flex-direction: row;
+        align-items: flex-end;
       }
 
       .picker-grid {
@@ -2224,8 +2548,11 @@
         height: 360px;
       }
 
-      .table-wrap {
-        max-height: none;
+    }
+
+    @media (max-width: 1080px) {
+      .top-stage {
+        grid-template-columns: 1fr;
       }
     }
 
@@ -2422,6 +2749,19 @@
       .tracking-header-actions {
         margin-top: 8px;
         justify-content: flex-start;
+      }
+
+      .guide-card {
+        left: 16px !important;
+        right: 16px !important;
+        bottom: 16px !important;
+        top: auto !important;
+        width: auto;
+        max-height: min(54vh, calc(100vh - 32px));
+      }
+
+      .guide-spotlight {
+        border-radius: 18px;
       }
 
       .market-strip {
@@ -2787,6 +3127,7 @@
               </div>
             </div>
             <button type="button" class="tracking-menu-link" id="openBugReportBtn">Report a Bug</button>
+            <button type="button" class="tracking-menu-link" id="openGuideBtn">View Guide</button>
             <!-- Public utility pages stay in the normal account menu; admin-only tools live below. -->
             <div class="tracking-menu-pages">
               <div class="field-label">More Pages</div>
@@ -2962,6 +3303,23 @@
               </label>
             </div>
 
+            <div class="picker-grid" id="browseSetFilters" style="margin-bottom:18px; display:none;">
+              <div>
+                <span class="field-label">Set View</span>
+                <div class="browse-set-view-toggle" id="browseSetViewToggle">
+                  <button type="button" data-browse-set-view="group_products">Browse Set</button>
+                  <button type="button" data-browse-set-view="time_to_buy">Time to Buy</button>
+                </div>
+              </div>
+              <label>
+                <span class="field-label">Included Cards</span>
+                <details class="browse-set-filter-menu" id="browseSetFilterMenu">
+                  <summary id="browseSetFilterSummary">All</summary>
+                  <div class="browse-set-filter-panel" id="browseSetFilterPanel"></div>
+                </details>
+              </label>
+            </div>
+
             <div class="picker-grid" id="goodBuysFilters" style="margin-bottom:18px; display:none;">
               <button type="button" class="good-buys-filter-trigger" id="goodBuysFilterTrigger" aria-expanded="false">
                 Filter Sets
@@ -3017,6 +3375,15 @@
 
       <aside class="panel right-rail" id="detailsSection">
         <div class="stack">
+          <section class="detail-card">
+            <h3>Key Stats</h3>
+            <div class="stats-list" id="detailStats"></div>
+            <div class="bargain-block" id="detailBargainBlock">
+              <h4 class="bargain-title">Quick Buy Targets</h4>
+              <div class="bargain-grid" id="detailBargainGrid"></div>
+            </div>
+          </section>
+
           <section class="detail-card track-actions-card">
             <h3>Track This Item</h3>
             <p class="detail-copy">Save the selected product to a tag list for quick follow-up.</p>
@@ -3027,15 +3394,6 @@
               <button type="button" data-tag="owned">Buy List</button>
             </div>
             <button type="button" class="tracking-menu-link" id="trackingTrackedBtn">Tracked Items</button>
-          </section>
-
-          <section class="detail-card">
-            <h3>Key Stats</h3>
-            <div class="stats-list" id="detailStats"></div>
-            <div class="bargain-block" id="detailBargainBlock">
-              <h4 class="bargain-title">Quick Buy Targets</h4>
-              <div class="bargain-grid" id="detailBargainGrid"></div>
-            </div>
           </section>
 
         </div>
@@ -3074,6 +3432,42 @@
         <div class="bug-report-actions">
           <button type="button" id="bugReportCancelBtn">Cancel</button>
           <button type="button" class="primary" id="bugReportSubmitBtn">Submit Report</button>
+        </div>
+      </section>
+    </div>
+    <div class="guide-modal" id="guideModal" hidden>
+      <div class="guide-backdrop" id="guideBackdrop"></div>
+      <div class="guide-shade" id="guideShadeTop" aria-hidden="true"></div>
+      <div class="guide-shade" id="guideShadeLeft" aria-hidden="true"></div>
+      <div class="guide-shade" id="guideShadeRight" aria-hidden="true"></div>
+      <div class="guide-shade" id="guideShadeBottom" aria-hidden="true"></div>
+      <div class="guide-spotlight" id="guideSpotlight" aria-hidden="true"></div>
+      <section class="guide-card" aria-labelledby="guideTitle" aria-modal="true" role="dialog">
+        <div class="guide-head">
+          <div>
+            <div class="section-label">Welcome</div>
+            <h3 id="guideTitle">How to Use the Dashboard</h3>
+          </div>
+          <button type="button" class="guide-close" id="guideCloseBtn" aria-label="Close guide">×</button>
+        </div>
+        <div class="guide-progress" id="guideProgress"></div>
+        <div class="guide-body">
+          <div class="guide-step-meta">
+            <div class="guide-step-count" id="guideStepCount">Step 1</div>
+            <div class="guide-step-target" id="guideStepTarget">Search</div>
+          </div>
+          <h4 class="guide-step-title" id="guideStepTitle">Start with search or the active screener.</h4>
+          <p class="guide-step-copy" id="guideStepCopy">Use search when you already know the card or set. Use the screener tabs when you want the dashboard to show candidates for you.</p>
+          <ul class="guide-step-points" id="guideStepPoints"></ul>
+        </div>
+        <div class="guide-actions">
+          <div class="guide-actions-left">
+            <button type="button" id="guideSkipBtn">Close Guide</button>
+          </div>
+          <div class="guide-actions-right">
+            <button type="button" id="guidePrevBtn">Back</button>
+            <button type="button" class="primary" id="guideNextBtn">Next</button>
+          </div>
         </div>
       </section>
     </div>
@@ -3134,6 +3528,11 @@
     const generationPicker = document.getElementById("generationPicker");
     const trackedFilters = document.getElementById("trackedFilters");
     const trackedTagPicker = document.getElementById("trackedTagPicker");
+    const browseSetFilters = document.getElementById("browseSetFilters");
+    const browseSetViewToggle = document.getElementById("browseSetViewToggle");
+    const browseSetFilterMenu = document.getElementById("browseSetFilterMenu");
+    const browseSetFilterSummary = document.getElementById("browseSetFilterSummary");
+    const browseSetFilterPanel = document.getElementById("browseSetFilterPanel");
     const goodBuysFilters = document.getElementById("goodBuysFilters");
     const goodBuysFilterTrigger = document.getElementById("goodBuysFilterTrigger");
     const goodBuysSetPopover = document.getElementById("goodBuysSetPopover");
@@ -3190,6 +3589,7 @@
     const trackingCreateBtn = document.getElementById("trackingCreateBtn");
     const trackingTrackedBtn = document.getElementById("trackingTrackedBtn");
     const openBugReportBtn = document.getElementById("openBugReportBtn");
+    const openGuideBtn = document.getElementById("openGuideBtn");
     const viewTrackedItemsBtn = document.getElementById("viewTrackedItemsBtn");
     const trackingLogoutBtn = document.getElementById("trackingLogoutBtn");
     const trackingStatus = document.getElementById("trackingStatus");
@@ -3235,6 +3635,24 @@
     const bugReportExpectedInput = document.getElementById("bugReportExpectedInput");
     const bugReportStatus = document.getElementById("bugReportStatus");
     const bugReportContextGrid = document.getElementById("bugReportContextGrid");
+    const guideModal = document.getElementById("guideModal");
+    const guideBackdrop = document.getElementById("guideBackdrop");
+    const guideShadeTop = document.getElementById("guideShadeTop");
+    const guideShadeLeft = document.getElementById("guideShadeLeft");
+    const guideShadeRight = document.getElementById("guideShadeRight");
+    const guideShadeBottom = document.getElementById("guideShadeBottom");
+    const guideSpotlight = document.getElementById("guideSpotlight");
+    const guideCard = guideModal?.querySelector(".guide-card");
+    const guideCloseBtn = document.getElementById("guideCloseBtn");
+    const guideProgress = document.getElementById("guideProgress");
+    const guideStepCount = document.getElementById("guideStepCount");
+    const guideStepTarget = document.getElementById("guideStepTarget");
+    const guideStepTitle = document.getElementById("guideStepTitle");
+    const guideStepCopy = document.getElementById("guideStepCopy");
+    const guideStepPoints = document.getElementById("guideStepPoints");
+    const guideSkipBtn = document.getElementById("guideSkipBtn");
+    const guidePrevBtn = document.getElementById("guidePrevBtn");
+    const guideNextBtn = document.getElementById("guideNextBtn");
 
     const universeByKey = new Map();
     const groupsById = new Map();
@@ -3246,6 +3664,7 @@
     const initialParams = new URLSearchParams(window.location.search);
     const trackingTokenKey = "pokemon-momentum-tracking-token";
     const purchasedKeysStorageKey = "pokemon-momentum-purchased-keys";
+    const guideSeenStorageKey = "pokemon-momentum-guide-seen";
 
     // This shared UI state lets the left rail, chart, table, and right rail stay in sync
     // around one selected product, one active feed tab, one chart window, one set context,
@@ -3268,10 +3687,16 @@
     // These tabs all honor the shared Cards / Sealed segment toggle. Breakouts and Tracked
     // Items both need to be in this set so the toggle actually rebuilds their rows instead of
     // just changing button state.
-    const segmentFilteredTabs = new Set(["top_movers", "sma30_holds", "early_uptrends", "confirmed_uptrends", "breakouts", "good_buys", "group_products", "tracked_items"]);
+    const segmentFilteredTabs = new Set(["top_movers", "sma30_holds", "early_uptrends", "confirmed_uptrends", "breakouts", "good_buys", "time_to_buy", "group_products", "tracked_items"]);
+    const browseSetScopedTabs = new Set(["group_products", "time_to_buy"]);
     let currentGeneration = initialParams.get("generation") || "all";
     let currentTrackedTag = initialParams.get("tracked_tag") || "all";
     let currentTrackedSort = initialParams.get("tracked_sort") || "tags";
+    const initialBrowseSetFilterTokens = String(initialParams.get("browse_set_filters") || initialParams.get("browse_set_variant") || "")
+      .split("|")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    let currentBrowseSetFilters = new Set(initialBrowseSetFilterTokens.length ? initialBrowseSetFilterTokens : ["all"]);
     let currentGoodBuysSets = new Set(
       String(initialParams.get("good_buys_sets") || "")
         .split("|")
@@ -3279,6 +3704,7 @@
         .filter((value) => value && value !== "__none__")
     );
     let currentGoodBuysSetFilterAll = !initialParams.has("good_buys_sets");
+    let lastBrowseSetRows = [];
     let lastGoodBuysRows = [];
     let goodBuysSetPopoverOpen = false;
     let activeTableRows = [];
@@ -3315,6 +3741,8 @@
     let currentPreviewImageSrc = "";
     let currentPreviewAnchor = null;
     let bugReportModalOpen = false;
+    let guideModalOpen = false;
+    let guideStepIndex = 0;
     let pullRefreshStartY = 0;
     let pullRefreshDistance = 0;
     let pullRefreshActive = false;
@@ -3323,6 +3751,60 @@
 
     const pullRefreshThreshold = 84;
     const pullRefreshMaxDistance = 132;
+    const guideSteps = [
+      {
+        selector: "#headerSearchForm",
+        placement: "bottom",
+        padding: 10,
+        target: "Header Search",
+        title: "Start with search when you already know the card or set.",
+        copy: "The fastest path is usually the top search bar. It is best for direct lookups, while the screener tabs are better when you want the site to surface ideas for you.",
+        points: [
+          "Search a set name to jump into Browse Set.",
+          "Search a card name to open Browse Species and compare the same card across sets.",
+          "If you just want ideas, skip search and start with the Market Signals tabs."
+        ]
+      },
+      {
+        selector: "#tabs",
+        placement: "bottom",
+        padding: 10,
+        target: "Market Signals",
+        title: "Use the tabs to decide what kind of opportunity you want to scan.",
+        copy: "Each tab is answering a slightly different question, so the quickest way to learn the dashboard is to think in terms of workflow rather than formulas.",
+        points: [
+          "Top Movers shows what has already moved the most recently.",
+          "Early Movers and Confirmed Movers help separate earlier setups from stronger established trends.",
+          "Good Buys, Breakouts, Set Strength, Browse Set, and Browse Species are the main research tools."
+        ]
+      },
+      {
+        selector: "#heroSection .signal-topline",
+        placement: "bottom",
+        padding: 10,
+        target: "Chart + Window",
+        title: "Use the chart to confirm whether the move still looks healthy.",
+        copy: "Once a row is selected, the main chart becomes the quick quality check. The price, SMA lines, and window buttons are there to help you decide whether the move is fresh, extended, or stabilizing.",
+        points: [
+          "Flip between 30D, 90D, 180D, 1Y, 2Y, and Full to see whether momentum is recent or part of a larger trend.",
+          "The selected price block shows the current price, percent vs SMA30, and change over the visible window.",
+          "If the chart looks wrong for the thesis, move on quickly rather than forcing the setup."
+        ]
+      },
+      {
+        selector: "#trackingToggleBtn",
+        placement: "left",
+        padding: 8,
+        target: "Tracking + Pages",
+        title: "Save the ones you care about and use the companion pages when needed.",
+        copy: "The account menu and tracking actions turn the dashboard from a scanner into a working research tool. Save what matters, then branch into the lighter companion pages when you want a different lens.",
+        points: [
+          "Use Favorite, Watchlist, Research, and Buy List to keep a short working set.",
+          "Open Tracked Items from the account menu or right rail to revisit saved cards quickly.",
+          "Set Explorer and Sealed Deals are public companion pages for set-level and sealed-product work."
+        ]
+      }
+    ];
 
     const tabConfig = {
       // Each tab maps to one API screen plus the columns that should be surfaced in the lower table.
@@ -3340,6 +3822,11 @@
         path: "/good_buys?limit=120&min_price=5&max_30d_pct=0&max_7d_pct=5",
         columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "roc_7d_pct", "roc_30d_pct", "roc_90d_pct", "price_vs_sma30_pct"],
         title: "Premium-rarity cards that have been drifting lower and may be entering buyable pullback territory."
+      },
+      time_to_buy: {
+        path: "/time_to_buy?limit=120&min_price=5&lookback_days=10&min_recent_observations=10&min_recent_distinct_prices_30d=10&max_variance_to_current_pct=10",
+        columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "recent_distinct_prices_30d", "recent_low", "recent_high", "variance_to_current_pct", "roc_30d_pct", "roc_90d_pct", "price_vs_sma30_pct"],
+        title: "Names that are still below SMA30 but have flattened into a tight recent range, suggesting a safer buy zone may be forming."
       },
       sma30_holds: {
         path: "/sma30_holds?days_required=30&limit=120&min_price=5&min_recent_distinct_prices_30d=10",
@@ -3367,7 +3854,7 @@
       },
       group_products: {
         columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "latest_date"],
-        title: "Browse Set shows every tracked product in the selected set."
+        title: "Browse Set shows tracked products in the selected set."
       },
       browse_species: {
         columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "latest_date"],
@@ -3547,6 +4034,164 @@
         setBugReportStatus("Bug reports stay internal for now. The stored payload is structured so it can be forwarded to Discord later.");
         window.setTimeout(() => bugReportTitleInput?.focus(), 0);
       }
+    }
+
+    function renderGuideStep() {
+      if (!guideProgress || !guideStepCount || !guideStepTarget || !guideStepTitle || !guideStepCopy || !guideStepPoints) return;
+      const safeIndex = Math.max(0, Math.min(guideSteps.length - 1, guideStepIndex));
+      const step = guideSteps[safeIndex];
+      guideStepCount.textContent = `Step ${safeIndex + 1} of ${guideSteps.length}`;
+      guideStepTarget.textContent = step.target;
+      guideStepTitle.textContent = step.title;
+      guideStepCopy.textContent = step.copy;
+      guideStepPoints.innerHTML = step.points.map((point) => `<li>${point}</li>`).join("");
+      guideProgress.innerHTML = guideSteps
+        .map((_, index) => `<span class="guide-progress-dot${index === safeIndex ? " active" : ""}" aria-hidden="true"></span>`)
+        .join("");
+      if (guidePrevBtn) {
+        guidePrevBtn.disabled = safeIndex === 0;
+      }
+      if (guideNextBtn) {
+        guideNextBtn.textContent = safeIndex === guideSteps.length - 1 ? "Done" : "Next";
+      }
+    }
+
+    function getGuideTargetElement() {
+      const step = guideSteps[Math.max(0, Math.min(guideSteps.length - 1, guideStepIndex))];
+      if (!step?.selector) return null;
+      return document.querySelector(step.selector);
+    }
+
+    function positionGuideOverlay() {
+      if (!guideModalOpen || !guideCard || !guideSpotlight) return;
+      const step = guideSteps[Math.max(0, Math.min(guideSteps.length - 1, guideStepIndex))];
+      const targetEl = getGuideTargetElement();
+      if (!targetEl) {
+        guideSpotlight.style.display = "none";
+        [guideShadeTop, guideShadeLeft, guideShadeRight, guideShadeBottom].forEach((shade) => {
+          if (shade) shade.style.display = "none";
+        });
+        guideCard.style.left = "16px";
+        guideCard.style.right = "16px";
+        guideCard.style.bottom = "16px";
+        guideCard.style.top = "auto";
+        return;
+      }
+      const padding = Number(step?.padding || 10);
+      const rect = targetEl.getBoundingClientRect();
+      const top = Math.max(12, rect.top - padding);
+      const left = Math.max(12, rect.left - padding);
+      const width = Math.min(window.innerWidth - left - 12, rect.width + (padding * 2));
+      const height = Math.min(window.innerHeight - top - 12, rect.height + (padding * 2));
+      guideSpotlight.style.display = "block";
+      guideSpotlight.style.top = `${top}px`;
+      guideSpotlight.style.left = `${left}px`;
+      guideSpotlight.style.width = `${Math.max(44, width)}px`;
+      guideSpotlight.style.height = `${Math.max(44, height)}px`;
+      const spotlightWidth = Math.max(44, width);
+      const spotlightHeight = Math.max(44, height);
+      const spotlightRight = left + spotlightWidth;
+      const spotlightBottom = top + spotlightHeight;
+      if (guideShadeTop && guideShadeLeft && guideShadeRight && guideShadeBottom) {
+        [guideShadeTop, guideShadeLeft, guideShadeRight, guideShadeBottom].forEach((shade) => {
+          shade.style.display = "block";
+        });
+        guideShadeTop.style.top = "0px";
+        guideShadeTop.style.left = "0px";
+        guideShadeTop.style.width = "100vw";
+        guideShadeTop.style.height = `${top}px`;
+
+        guideShadeLeft.style.top = `${top}px`;
+        guideShadeLeft.style.left = "0px";
+        guideShadeLeft.style.width = `${left}px`;
+        guideShadeLeft.style.height = `${spotlightHeight}px`;
+
+        guideShadeRight.style.top = `${top}px`;
+        guideShadeRight.style.left = `${spotlightRight}px`;
+        guideShadeRight.style.width = `${Math.max(0, window.innerWidth - spotlightRight)}px`;
+        guideShadeRight.style.height = `${spotlightHeight}px`;
+
+        guideShadeBottom.style.top = `${spotlightBottom}px`;
+        guideShadeBottom.style.left = "0px";
+        guideShadeBottom.style.width = "100vw";
+        guideShadeBottom.style.height = `${Math.max(0, window.innerHeight - spotlightBottom)}px`;
+      }
+
+      if (window.innerWidth <= 760) {
+        guideCard.style.left = "16px";
+        guideCard.style.right = "16px";
+        guideCard.style.top = "auto";
+        guideCard.style.bottom = "16px";
+        return;
+      }
+
+      const cardWidth = Math.min(420, window.innerWidth - 32);
+      const gap = 18;
+      const cardHeight = guideCard.offsetHeight || 320;
+      let cardTop = top;
+      let cardLeft = left;
+
+      if (step?.placement === "left") {
+        if (left - gap - cardWidth >= 16) {
+          cardLeft = left - gap - cardWidth;
+        } else if (left + width + gap + cardWidth <= window.innerWidth - 16) {
+          cardLeft = left + width + gap;
+        } else {
+          cardLeft = Math.min(Math.max(16, left), window.innerWidth - cardWidth - 16);
+          cardTop = Math.min(window.innerHeight - cardHeight - 16, top + height + gap);
+        }
+      } else {
+        if (top + height + gap + cardHeight <= window.innerHeight - 16) {
+          cardTop = top + height + gap;
+        } else if (top - gap - cardHeight >= 16) {
+          cardTop = top - gap - cardHeight;
+        } else {
+          cardTop = Math.max(16, window.innerHeight - cardHeight - 16);
+        }
+        cardLeft = Math.min(Math.max(16, left), window.innerWidth - cardWidth - 16);
+      }
+
+      guideCard.style.width = `${cardWidth}px`;
+      guideCard.style.left = `${cardLeft}px`;
+      guideCard.style.top = `${cardTop}px`;
+      guideCard.style.right = "auto";
+      guideCard.style.bottom = "auto";
+    }
+
+    function setGuideModalOpen(open, markSeen = true) {
+      if (!guideModal) return;
+      guideModalOpen = Boolean(open);
+      guideModal.hidden = !guideModalOpen;
+      guideModal.classList.toggle("open", guideModalOpen);
+      if (guideModalOpen) {
+        renderGuideStep();
+        window.setTimeout(() => {
+          positionGuideOverlay();
+          guideNextBtn?.focus();
+        }, 0);
+      } else if (markSeen) {
+        localStorage.setItem(guideSeenStorageKey, "1");
+      }
+    }
+
+    function setGuideStep(index) {
+      guideStepIndex = Math.max(0, Math.min(guideSteps.length - 1, index));
+      if (guideModalOpen) {
+        const targetEl = getGuideTargetElement();
+        if (targetEl) {
+          targetEl.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+        }
+        renderGuideStep();
+        window.setTimeout(() => positionGuideOverlay(), 140);
+      }
+    }
+
+    function maybeOpenGuideOnFirstVisit() {
+      if (localStorage.getItem(guideSeenStorageKey) === "1") return;
+      window.setTimeout(() => {
+        setGuideStep(0);
+        setGuideModalOpen(true);
+      }, 300);
     }
 
     async function submitBugReport() {
@@ -3805,6 +4450,16 @@
         url.searchParams.set("tracked_sort", currentTrackedSort);
       } else {
         url.searchParams.delete("tracked_sort");
+      }
+      if (!currentBrowseSetFilters.size || currentBrowseSetFilters.has("all")) {
+        url.searchParams.delete("browse_set_filters");
+        url.searchParams.delete("browse_set_variant");
+      } else {
+        url.searchParams.set(
+          "browse_set_filters",
+          Array.from(currentBrowseSetFilters).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })).join("|")
+        );
+        url.searchParams.delete("browse_set_variant");
       }
       if (currentGoodBuysSetFilterAll) {
         url.searchParams.delete("good_buys_sets");
@@ -4155,6 +4810,19 @@
       return deriveSpeciesQueryFromName(meta?.productName || cardTitle?.textContent || "");
     }
 
+    function deriveGroupIdFromCurrentSelection() {
+      if (currentGroupId !== null && currentGroupId !== undefined && !Number.isNaN(Number(currentGroupId))) {
+        return Number(currentGroupId);
+      }
+      if (groupPicker?.value) {
+        const pickerGroupId = Number(groupPicker.value);
+        if (!Number.isNaN(pickerGroupId)) {
+          return pickerGroupId;
+        }
+      }
+      return null;
+    }
+
     function shouldOpenProductSearchResults(query, results = []) {
       const normalized = normalizeSearchQuery(query);
       if (!normalized || /[0-9/]/.test(normalized)) {
@@ -4185,12 +4853,31 @@
         btn.type = "button";
         btn.className = `brandsearch-result${index === headerSearchActiveIndex ? " active" : ""}`;
         btn.dataset.index = String(index);
-        btn.innerHTML = `
-          <div class="brandsearch-result-title">
-            <span class="brandsearch-result-kind">${result.kind === "set" ? "Set" : "Card"}</span>${result.title}
-          </div>
-          <div class="brandsearch-result-meta">${result.meta || ""}</div>
-        `;
+        const imageUrl = String(result.item?.imageUrl || result.imageUrl || "").trim();
+        if (imageUrl) {
+          const thumb = document.createElement("img");
+          thumb.className = "brandsearch-result-thumb";
+          thumb.src = imageUrl;
+          thumb.alt = "";
+          thumb.loading = "lazy";
+          thumb.decoding = "async";
+          btn.appendChild(thumb);
+        }
+        const body = document.createElement("div");
+        body.className = "brandsearch-result-body";
+        const title = document.createElement("div");
+        title.className = "brandsearch-result-title";
+        const kind = document.createElement("span");
+        kind.className = "brandsearch-result-kind";
+        kind.textContent = result.kind === "set" ? "Set" : "Card";
+        title.appendChild(kind);
+        title.append(result.title || "");
+        const meta = document.createElement("div");
+        meta.className = "brandsearch-result-meta";
+        meta.textContent = result.meta || "";
+        body.appendChild(title);
+        body.appendChild(meta);
+        btn.appendChild(body);
         btn.addEventListener("mouseenter", () => {
           headerSearchActiveIndex = index;
           syncHeaderSearchActiveResult();
@@ -4325,12 +5012,11 @@
     }
 
     function activateTab(tabKey) {
-      tabsEl.querySelectorAll("button").forEach((btn) => {
-        btn.classList.toggle("active", btn.dataset.tab === tabKey);
-      });
       currentTab = tabKey;
+      syncPrimaryTabButtons();
       updateGroupSignalFilterVisibility();
       updateTrackedFilterVisibility();
+      updateBrowseSetFilterVisibility();
       updateGoodBuysFilterVisibility();
       updateSignalSegmentVisibility();
       updateDevTabHelp(currentTab);
@@ -4619,6 +5305,10 @@
         rarity: "Rarity",
         number: "Number",
         subTypeName: "Subtype",
+        recent_distinct_prices_30d: "30D Distinct Prices",
+        recent_low: "10D Low",
+        recent_high: "10D High",
+        variance_to_current_pct: "10D Variance %",
         tcgplayerLink: "TCGPlayer",
       };
       const trackedSortableColumns = new Set(["tags", "productName", "groupName", "rarity", "number", "subTypeName"]);
@@ -4810,6 +5500,14 @@
         return {
           priceText: `$${formatNumber(item.latest_price, 2)}`,
           metricHtml: `vs SMA30 <span class="${pct.cls}">${pct.text}</span>`,
+          trendLabel: "30D Trend"
+        };
+      }
+      if (currentTab === "time_to_buy") {
+        const pct = formatPercent(item.variance_to_current_pct);
+        return {
+          priceText: `$${formatNumber(item.latest_price, 2)}`,
+          metricHtml: `10D variance <span class="${pct.cls}">${pct.text}</span>`,
           trendLabel: "30D Trend"
         };
       }
@@ -5181,6 +5879,187 @@
       trackedTagPicker.value = currentTrackedTag;
     }
 
+    const browseSetFilterOptions = [
+      { id: "all", label: "All" },
+      { id: "bulk", label: "Bulk" },
+      { id: "hits", label: "Hits Only" },
+      { id: "ir_plus", label: "IR+" },
+      { id: "common", label: "Common" },
+      { id: "uncommon", label: "Uncommon" },
+      { id: "rare", label: "Rare" },
+      { id: "holo_rare", label: "Holo Rare" },
+      { id: "double_rare", label: "Double Rare" },
+      { id: "illustration_rare", label: "Illustration Rare" },
+      { id: "special_illustration_rare", label: "Special Illustration Rare" },
+      { id: "ultra_rare", label: "Ultra Rare" },
+      { id: "hyper_rare", label: "Hyper Rare" },
+      { id: "secret_rare", label: "Secret Rare" },
+      { id: "promo", label: "Promo" },
+      { id: "stamped", label: "Stamped" },
+      { id: "reverse_holo", label: "Reverse Holo" },
+      { id: "pokeball_holo", label: "Poke Ball Holo" },
+      { id: "masterball_holo", label: "Master Ball Holo" },
+      { id: "ball_pattern", label: "Ball Pattern" },
+      { id: "energy_symbol_pattern", label: "Energy Symbol Pattern" },
+    ];
+
+    function shouldShowBrowseSetVariantFilter() {
+      if (!browseSetScopedTabs.has(currentTab) || currentSegment !== "cards") {
+        return false;
+      }
+      return lastBrowseSetRows.length > 0;
+    }
+
+    function browseSetFilterText(row) {
+      return [
+        String(row?.productName || ""),
+        String(row?.subTypeName || ""),
+        String(row?.rarity || ""),
+      ].join(" ").toLowerCase();
+    }
+
+    function rarityIncludes(row, needle) {
+      return String(row?.rarity || "").toLowerCase().includes(String(needle || "").toLowerCase());
+    }
+
+    function currentBrowseSetName(row = null) {
+      const activeGroupId = Number(currentGroupId);
+      const groupName =
+        row?.groupName
+        || (Number.isFinite(activeGroupId) ? groupsById.get(activeGroupId)?.groupName : "")
+        || lastBrowseSetRows[0]?.groupName
+        || "";
+      return String(groupName || "").toLowerCase();
+    }
+
+    function matchesBrowseSetFilter(row, filterId) {
+      const id = String(filterId || "all").trim().toLowerCase();
+      if (!id || id === "all") return true;
+      const text = browseSetFilterText(row);
+      const groupName = currentBrowseSetName(row);
+      if (id === "common") return rarityIncludes(row, "common") && !rarityIncludes(row, "uncommon");
+      if (id === "uncommon") return rarityIncludes(row, "uncommon");
+      if (id === "rare") {
+        const rarity = String(row?.rarity || "").toLowerCase().trim();
+        return rarity === "rare";
+      }
+      if (id === "holo_rare") return rarityIncludes(row, "holo rare");
+      if (id === "double_rare") return rarityIncludes(row, "double rare");
+      if (id === "illustration_rare") return rarityIncludes(row, "illustration rare") && !rarityIncludes(row, "special illustration rare");
+      if (id === "special_illustration_rare") return rarityIncludes(row, "special illustration rare");
+      if (id === "ultra_rare") return rarityIncludes(row, "ultra rare");
+      if (id === "hyper_rare") return rarityIncludes(row, "hyper rare");
+      if (id === "secret_rare") return rarityIncludes(row, "secret rare");
+      if (id === "promo") return text.includes("promo");
+      if (id === "stamped") return text.includes("stamp");
+      if (id === "reverse_holo") return text.includes("reverse holo");
+      if (id === "pokeball_holo") {
+        // Black Bolt / White Flare / Prismatic Evolutions use literal "Poke Ball"
+        // naming, while Ascended Heroes has broader ball-pattern variants that
+        // collectors still want under the same quick filter.
+        if (
+          groupName.includes("black bolt")
+          || groupName.includes("white flare")
+          || groupName.includes("prismatic evolutions")
+        ) {
+          return text.includes("poke ball");
+        }
+        if (groupName.includes("ascended heroes")) {
+          return text.includes("ball");
+        }
+        return text.includes("poke ball");
+      }
+      if (id === "masterball_holo") return text.includes("master ball");
+      if (id === "ball_pattern") return text.includes("ball pattern");
+      if (id === "energy_symbol_pattern") return text.includes("energy symbol pattern");
+      if (id === "ir_plus") {
+        return ["illustration_rare", "special_illustration_rare", "ultra_rare", "hyper_rare", "secret_rare"]
+          .some((optionId) => matchesBrowseSetFilter(row, optionId));
+      }
+      if (id === "hits") {
+        return ["double_rare", "ir_plus"]
+          .some((optionId) => matchesBrowseSetFilter(row, optionId))
+          || rarityIncludes(row, "shiny holo rare");
+      }
+      if (id === "bulk") {
+        return ["common", "uncommon", "rare", "holo_rare", "reverse_holo", "pokeball_holo", "masterball_holo", "ball_pattern", "energy_symbol_pattern"]
+          .some((optionId) => matchesBrowseSetFilter(row, optionId));
+      }
+      return false;
+    }
+
+    function getAvailableBrowseSetFilterOptions(rows = []) {
+      return browseSetFilterOptions.filter((option) => {
+        if (option.id === "all") return true;
+        return (rows || []).some((row) => matchesBrowseSetFilter(row, option.id));
+      });
+    }
+
+    function updateBrowseSetFilterSummary() {
+      if (!browseSetFilterSummary) return;
+      if (!currentBrowseSetFilters.size || currentBrowseSetFilters.has("all")) {
+        browseSetFilterSummary.textContent = "All";
+        return;
+      }
+      const labels = browseSetFilterOptions
+        .filter((option) => currentBrowseSetFilters.has(option.id) && option.id !== "all")
+        .map((option) => option.label);
+      browseSetFilterSummary.textContent = labels.join(", ") || "All";
+    }
+
+    function updateBrowseSetModeButtons() {
+      if (!browseSetViewToggle) return;
+      browseSetViewToggle.querySelectorAll("[data-browse-set-view]").forEach((button) => {
+        if (!(button instanceof HTMLButtonElement)) return;
+        button.classList.toggle("active", button.dataset.browseSetView === currentTab);
+      });
+    }
+
+    function syncPrimaryTabButtons() {
+      tabsEl.querySelectorAll("button").forEach((button) => {
+        const tabKey = button.dataset.tab;
+        const isActive = currentTab === "time_to_buy"
+          ? tabKey === "group_products"
+          : tabKey === currentTab;
+        button.classList.toggle("active", isActive);
+      });
+    }
+
+    function populateBrowseSetFilters(rows = []) {
+      if (!browseSetFilterPanel) return;
+      const availableOptions = getAvailableBrowseSetFilterOptions(rows);
+      const availableIds = new Set(availableOptions.map((option) => option.id));
+      currentBrowseSetFilters = new Set(Array.from(currentBrowseSetFilters).filter((value) => availableIds.has(value)));
+      if (!currentBrowseSetFilters.size) {
+        currentBrowseSetFilters = new Set(["all"]);
+      }
+      if (currentBrowseSetFilters.has("all") && currentBrowseSetFilters.size > 1) {
+        currentBrowseSetFilters = new Set(["all"]);
+      }
+      browseSetFilterPanel.innerHTML = "";
+      availableOptions.forEach((option) => {
+        const label = document.createElement("label");
+        label.className = "browse-set-filter-option";
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.value = option.id;
+        input.checked = currentBrowseSetFilters.has(option.id);
+        const text = document.createElement("span");
+        text.textContent = option.label;
+        label.appendChild(input);
+        label.appendChild(text);
+        browseSetFilterPanel.appendChild(label);
+      });
+      updateBrowseSetFilterSummary();
+    }
+
+    function updateBrowseSetFilterVisibility() {
+      if (!browseSetFilters) return;
+      browseSetFilters.style.display = (browseSetScopedTabs.has(currentTab) && currentSegment === "cards") ? "grid" : "none";
+      updateBrowseSetModeButtons();
+      updateBrowseSetFilterSummary();
+    }
+
     function updateGoodBuysFilterVisibility() {
       if (!goodBuysFilters) return;
       goodBuysFilters.style.display = currentTab === "good_buys" ? "grid" : "none";
@@ -5243,6 +6122,16 @@
         return rows;
       }
       return (rows || []).filter((row) => currentGoodBuysSets.has(String(row.groupName || "").trim()));
+    }
+
+    function applyBrowseSetVariantFilter(rows = []) {
+      if (!browseSetScopedTabs.has(currentTab) || !shouldShowBrowseSetVariantFilter()) {
+        return rows;
+      }
+      if (!currentBrowseSetFilters.size || currentBrowseSetFilters.has("all")) {
+        return rows;
+      }
+      return (rows || []).filter((row) => Array.from(currentBrowseSetFilters).some((filterId) => matchesBrowseSetFilter(row, filterId)));
     }
 
     function buildTrackedRows() {
@@ -6260,6 +7149,7 @@
         if (currentTab === "browse_species") {
           updateGroupSignalFilterVisibility();
           updateTrackedFilterVisibility();
+          updateBrowseSetFilterVisibility();
           updateGoodBuysFilterVisibility();
           updateMobileNavState("indicators");
           const rows = currentSpeciesRows || [];
@@ -6270,6 +7160,7 @@
         if (currentTab === "tracked_items") {
           await hydrateTrackedUniverseMeta();
           updateTrackedFilterVisibility();
+          updateBrowseSetFilterVisibility();
           updateMobileNavState("tracked");
           const rows = buildTrackedRows();
           renderTable(rows);
@@ -6283,23 +7174,47 @@
           const rows = moverFeeds[currentSegment] || [];
           updateGroupSignalFilterVisibility();
           updateTrackedFilterVisibility();
+          updateBrowseSetFilterVisibility();
           updateGoodBuysFilterVisibility();
           updateMobileNavState("home");
           renderTable(rows);
           loadSucceeded = true;
           return rows;
         }
+        if (currentTab === "time_to_buy" && (currentGroupId === null || currentGroupId === undefined || Number.isNaN(currentGroupId))) {
+          tableHead.innerHTML = "";
+          tableBody.innerHTML = "";
+          emptyState.style.display = "block";
+          emptyState.textContent = "Pick a set to run Time to Buy for that set.";
+          tableStatus.textContent = "Time to Buy needs a selected set.";
+          updateGroupSignalFilterVisibility();
+          updateTrackedFilterVisibility();
+          updateBrowseSetFilterVisibility();
+          updateGoodBuysFilterVisibility();
+          updateSignalSegmentVisibility();
+          updateMobileNavState();
+          loadSucceeded = true;
+          return [];
+        }
         let path = currentTab === "group_products"
-          ? `/group_products?groupId=${encodeURIComponent(currentGroupId)}&limit=5000`
+          ? `/group_products?groupId=${encodeURIComponent(currentGroupId)}&limit=5000&category_id=${encodeURIComponent(currentCategoryId)}`
           : cfg.path;
         if (segmentFilteredTabs.has(currentTab)) {
           path += `${path.includes("?") ? "&" : "?"}product_kind=${encodeURIComponent(currentSegment === "sealed" ? "sealed" : "card")}`;
+        }
+        if (currentTab === "time_to_buy" && currentGroupId !== null && currentGroupId !== undefined && !Number.isNaN(currentGroupId)) {
+          path += `${path.includes("?") ? "&" : "?"}group_id=${encodeURIComponent(currentGroupId)}`;
         }
         if (currentTab === "group_signals" && currentGeneration !== "all") {
           path += `&generation=${encodeURIComponent(currentGeneration)}`;
         }
         const payload = await getJson(path);
         let rows = enrichRows(payload);
+        if (browseSetScopedTabs.has(currentTab)) {
+          lastBrowseSetRows = rows.slice();
+          populateBrowseSetFilters(lastBrowseSetRows);
+          rows = applyBrowseSetVariantFilter(lastBrowseSetRows);
+        }
         if (currentTab === "good_buys") {
           lastGoodBuysRows = rows.slice();
           populateGoodBuysSetFilters(lastGoodBuysRows);
@@ -6312,6 +7227,7 @@
             syncUrlState();
             updateGroupSignalFilterVisibility();
             updateTrackedFilterVisibility();
+            updateBrowseSetFilterVisibility();
             updateGoodBuysFilterVisibility();
             renderTable(rows);
             loadSucceeded = true;
@@ -6329,6 +7245,7 @@
         }
         updateGroupSignalFilterVisibility();
         updateTrackedFilterVisibility();
+        updateBrowseSetFilterVisibility();
         updateGoodBuysFilterVisibility();
         updateSignalSegmentVisibility();
         updateMobileNavState();
@@ -6392,12 +7309,10 @@
 
       groupPicker.addEventListener("change", async () => {
         currentGroupId = Number(groupPicker.value);
-        currentTab = "group_products";
-        tabsEl.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
-        const setBrowserBtn = tabsEl.querySelector('[data-tab="group_products"]');
-        if (setBrowserBtn) {
-          setBrowserBtn.classList.add("active");
+        if (currentTab !== "time_to_buy") {
+          currentTab = "group_products";
         }
+        syncPrimaryTabButtons();
         syncUrlState();
         const rows = await loadTable();
         if (rows && rows.length) {
@@ -6444,6 +7359,74 @@
           tableWrap.scrollTop = 0;
         }
         await loadTable();
+      });
+
+      browseSetViewToggle?.querySelectorAll("[data-browse-set-view]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const nextTab = button.dataset.browseSetView;
+          if (!browseSetScopedTabs.has(nextTab || "")) return;
+          if (currentTab === nextTab) return;
+          currentTab = nextTab;
+          syncPrimaryTabButtons();
+          syncUrlState();
+          updateBrowseSetFilterVisibility();
+          updateSignalSegmentVisibility();
+          updateDevTabHelp(currentTab);
+          updateMobileNavState();
+          if (tableWrap) {
+            tableWrap.scrollTop = 0;
+          }
+          const rows = await loadTable();
+          if (rows && rows.length) {
+            currentChartMode = "product";
+            await selectItem(rows[0]);
+            activeTableIndex = 0;
+            syncActiveTableRow(true);
+          }
+        });
+      });
+
+      browseSetFilterPanel?.addEventListener("change", (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLInputElement) || target.type !== "checkbox") return;
+
+        const allInput = browseSetFilterPanel.querySelector('input[value="all"]');
+        const otherInputs = Array.from(browseSetFilterPanel.querySelectorAll('input[type="checkbox"]'))
+          .filter((input) => input instanceof HTMLInputElement && input.value !== "all");
+
+        if (target.value === "all") {
+          if (target.checked) {
+            currentBrowseSetFilters = new Set(["all"]);
+            otherInputs.forEach((input) => {
+              input.checked = false;
+            });
+          } else {
+            target.checked = true;
+            currentBrowseSetFilters = new Set(["all"]);
+          }
+        } else {
+          if (target.checked) {
+            currentBrowseSetFilters.delete("all");
+            if (allInput instanceof HTMLInputElement) {
+              allInput.checked = false;
+            }
+          }
+          const checkedOthers = otherInputs
+            .filter((input) => input.checked)
+            .map((input) => String(input.value || ""));
+          currentBrowseSetFilters = new Set(checkedOthers.length ? checkedOthers : ["all"]);
+          if (allInput instanceof HTMLInputElement) {
+            allInput.checked = currentBrowseSetFilters.has("all");
+          }
+        }
+        updateBrowseSetFilterSummary();
+        syncUrlState();
+        if (tableWrap) {
+          tableWrap.scrollTop = 0;
+        }
+        if (currentTab === "group_products") {
+          renderTable(applyBrowseSetVariantFilter(lastBrowseSetRows));
+        }
       });
 
       goodBuysSetList?.addEventListener("change", async (event) => {
@@ -6549,11 +7532,31 @@
           setBugReportModalOpen(true);
         });
       }
+      if (openGuideBtn) {
+        openGuideBtn.addEventListener("click", () => {
+          setTrackingMenuOpen(false);
+          setGuideStep(0);
+          setGuideModalOpen(true, false);
+        });
+      }
       bugReportCloseBtn?.addEventListener("click", () => setBugReportModalOpen(false));
       bugReportCancelBtn?.addEventListener("click", () => setBugReportModalOpen(false));
       bugReportBackdrop?.addEventListener("click", () => setBugReportModalOpen(false));
       bugReportSubmitBtn?.addEventListener("click", async () => {
         await submitBugReport();
+      });
+      guideCloseBtn?.addEventListener("click", () => setGuideModalOpen(false));
+      guideSkipBtn?.addEventListener("click", () => setGuideModalOpen(false));
+      guideBackdrop?.addEventListener("click", () => setGuideModalOpen(false));
+      guidePrevBtn?.addEventListener("click", () => {
+        setGuideStep(guideStepIndex - 1);
+      });
+      guideNextBtn?.addEventListener("click", () => {
+        if (guideStepIndex >= guideSteps.length - 1) {
+          setGuideModalOpen(false);
+          return;
+        }
+        setGuideStep(guideStepIndex + 1);
       });
 
       document.querySelectorAll(".chart-window button").forEach((btn) => {
@@ -6579,9 +7582,8 @@
             const previousTab = currentTab;
             setMobileDetailOpen(false);
             setMobileIndicatorMenuOpen(false);
-            tabsEl.querySelectorAll("button").forEach((x) => x.classList.remove("active"));
-          btn.classList.add("active");
           currentTab = btn.dataset.tab;
+          syncPrimaryTabButtons();
           if (currentTab === "group_products" && !groupsLoaded) {
             await loadGroups();
           }
@@ -6601,6 +7603,15 @@
             const selectedGroupId = groupPicker.value ? Number(groupPicker.value) : currentGroupId;
             if (selectedGroupId !== null && selectedGroupId !== undefined && !Number.isNaN(selectedGroupId)) {
               currentGroupId = selectedGroupId;
+            }
+          }
+          if (currentTab === "time_to_buy") {
+            const selectedGroupId = deriveGroupIdFromCurrentSelection();
+            if (selectedGroupId !== null && selectedGroupId !== undefined && !Number.isNaN(selectedGroupId)) {
+              currentGroupId = selectedGroupId;
+              if ([...groupPicker.options].some((opt) => Number(opt.value) === selectedGroupId)) {
+                groupPicker.value = String(selectedGroupId);
+              }
             }
           }
           syncUrlState();
@@ -6804,6 +7815,10 @@
       });
 
       document.addEventListener("keydown", async (event) => {
+        if (event.key === "Escape" && guideModalOpen) {
+          setGuideModalOpen(false);
+          return;
+        }
         if (event.key === "Escape" && bugReportModalOpen) {
           setBugReportModalOpen(false);
           return;
@@ -6836,6 +7851,10 @@
           setGroupPickerOpen(false);
           return;
         }
+        if (event.key === "Escape" && browseSetFilterMenu?.open) {
+          browseSetFilterMenu.open = false;
+          return;
+        }
         if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
           return;
         }
@@ -6851,6 +7870,10 @@
       document.addEventListener("click", (event) => {
         const target = event.target;
         if (!(target instanceof Node)) return;
+        if (guideModalOpen && target === guideBackdrop) {
+          setGuideModalOpen(false);
+          return;
+        }
         if (bugReportModalOpen && target === bugReportBackdrop) {
           setBugReportModalOpen(false);
           return;
@@ -6908,6 +7931,12 @@
         ) {
           setGoodBuysSetPopoverOpen(false);
         }
+        if (
+          browseSetFilterMenu?.open
+          && !browseSetFilterMenu.contains(target)
+        ) {
+          browseSetFilterMenu.open = false;
+        }
       });
 
       window.addEventListener("touchstart", (event) => {
@@ -6960,6 +7989,9 @@
       });
 
       window.addEventListener("resize", () => {
+        if (guideModalOpen) {
+          positionGuideOverlay();
+        }
         if (imagePreviewPopover && !imagePreviewPopover.hidden) {
           positionImagePreview(currentPreviewAnchor);
         }
@@ -6970,6 +8002,12 @@
         if (!activeTableRows.length) return;
         renderTable(activeTableRows);
       });
+
+      window.addEventListener("scroll", () => {
+        if (guideModalOpen) {
+          positionGuideOverlay();
+        }
+      }, { passive: true });
     }
 
     async function init() {
@@ -7000,10 +8038,9 @@
         document.querySelectorAll(".chart-window button").forEach((btn) => {
           btn.classList.toggle("active", Number(btn.dataset.days) === currentDays);
         });
-        tabsEl.querySelectorAll("button").forEach((btn) => {
-          btn.classList.toggle("active", btn.dataset.tab === currentTab);
-        });
+        syncPrimaryTabButtons();
         syncSegmentButtons();
+        updateBrowseSetFilterVisibility();
         updateDevTabHelp(currentTab);
         picker.innerHTML = '<option value="">Open product picker to load products</option>';
         groupPicker.innerHTML = '<option value="">Loading sets...</option>';
@@ -7016,6 +8053,7 @@
         adoptTopMoverSelection(currentSegment);
         await loadSeries();
         startDeferredDashboardLoad();
+        maybeOpenGuideOnFirstVisit();
       } catch (err) {
         resetTableLoading();
         if (leftStatus) {

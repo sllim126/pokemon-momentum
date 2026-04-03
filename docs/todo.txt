@@ -32,6 +32,10 @@ Recently Completed (March 2026)
 - Renamed momentum labels for clarity:
   - `Early Movers`
   - `Confirmed Movers`
+- Added a first-pass onboarding guide:
+  - auto-opens once for new users
+  - can be reopened from the account menu
+  - now uses a spotlight/cutout overlay instead of a plain modal
 - Mobile dashboard pass:
   - bottom nav now drives `Home`, `Search`, `Tracked`, and `Indicators`
   - selected-product view is a mobile drilldown instead of always occupying the home screen
@@ -40,6 +44,10 @@ Recently Completed (March 2026)
   - tapping images now opens a small in-page preview anchored over the clicked image
 - Removed the old `Signals` indicator from the dashboard UI for now.
   - it can be added back later if it earns a clearer purpose
+- Account/support workflow updates:
+  - account dropdown now links to public companion pages
+  - `Report a Bug` flow now saves structured dashboard context
+  - admin-only pages stay hidden from normal users
 
 Next Up
 -------
@@ -53,13 +61,12 @@ Next Up
   - iPad / tablet
   and write down the concrete layout problems instead of keeping this as a generic mobile task.
 - Review `/embed` on phone and tablet after the main mobile layout settles.
-- Add a first-time guided tour / onboarding flow for new users.
-- Make the onboarding explain the main Market Signals buttons in plain language.
 - Tighten `Good Buys` so it keeps premium cards that are weakening but not obviously broken.
 - Decide whether `Good Buys` should prefer cards flattening over the last 7 days instead of still actively falling.
 - Tighten `Top Movers` and `Early Movers` so stale one-sale jumps are less likely to pass.
 - Expand Set Explorer rarity / variant filters beyond the current first pass.
 - Fix any remaining generation grouping mistakes when a set clearly lands in the wrong era bucket.
+- Add high-resolution image support for the image popout / enlarged preview so expanded card art can use a better source than the current in-table image when available.
 - Add camera / photo card lookup for show-floor use.
 - Extend tracking into:
   - `/embed`
@@ -72,12 +79,7 @@ Needs Decisions
 
 - Decide whether mobile should keep the current three-panel structure or move to a more task-based stacked layout.
 - Decide whether the right rail should stay a side column on smaller screens or collapse into a more mobile-first detail flow.
-- Decide whether the left rail should remain a side column or fully become a stock-style ticker / trending bar at the top.
 - Decide how prominent the Market Signals block should stay relative to the main chart on mobile/tablet.
-- Decide whether the guided tour should be:
-  - public-facing only
-  - optional for returning users
-  - dismissible and remembered
 - Decide whether the site should use shorter / cleaner public-facing URLs and shared links.
 - Decide whether the dashboard still has too many indicators or whether the current set is now stable enough.
 - Decide whether tracking should stay private-only or support lightweight sharing.
@@ -85,9 +87,7 @@ Needs Decisions
   - email magic link
   - Google sign-in
   - another lightweight auth option
-- Decide whether the saved tag set is final or still needs another pass.
 - Decide whether the current lightweight tracking-account model should remain the long-term approach or later join a broader site membership system.
-- Decide whether the current frontend/backend split should stay in place or only later consolidate if it starts slowing development.
 - Decide how the future assistant should behave:
   - explainer only
   - ranked recommender

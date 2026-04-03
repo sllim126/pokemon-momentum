@@ -251,12 +251,16 @@ class QuerySupportTests(unittest.TestCase):
         self.assertEqual(query_support.build_set_basket_filter(["all"]), "1=1")
 
         sql = query_support.build_set_basket_filter(
-            ["reverse_holo", "stamped", "illustration_rare"],
+            ["reverse_holo", "pokeball_holo", "masterball_holo", "stamped", "illustration_rare"],
             rarity_column="rarity_col",
             subtype_column="subtype_col",
             product_name_column="name_col",
         )
         self.assertIn("lower(COALESCE(subtype_col, '')) LIKE '%reverse holo%'", sql)
+        self.assertIn("lower(COALESCE(name_col, '')) LIKE '%poke ball%'", sql)
+        self.assertIn("lower(COALESCE(subtype_col, '')) LIKE '%poke ball%'", sql)
+        self.assertIn("lower(COALESCE(name_col, '')) LIKE '%master ball%'", sql)
+        self.assertIn("lower(COALESCE(subtype_col, '')) LIKE '%master ball%'", sql)
         self.assertIn("lower(COALESCE(name_col, '')) LIKE '%stamp%'", sql)
         self.assertIn("lower(COALESCE(rarity_col, '')) LIKE '%illustration rare%'", sql)
 
