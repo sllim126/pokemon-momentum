@@ -48,6 +48,12 @@ Recently Completed (March 2026)
   - account dropdown now links to public companion pages
   - `Report a Bug` flow now saves structured dashboard context
   - admin-only pages stay hidden from normal users
+- Google auth and outbound link updates:
+  - dashboard tracking now uses Google sign-in
+  - TCGplayer links now route through the affiliate wrapper
+- Tablet/mobile interaction pass:
+  - smaller tablets now use a simpler stacked layout
+  - selected-product swipe navigation now works on smaller touch tablets too
 
 Next Up
 -------
@@ -60,19 +66,22 @@ Next Up
   - iPhone / phone
   - iPad / tablet
   and write down the concrete layout problems instead of keeping this as a generic mobile task.
+- Update the mobile intro / guide overlay so highlighted areas stay legible and the step content fits without requiring awkward scrolling.
 - Review `/embed` on phone and tablet after the main mobile layout settles.
 - Tighten `Good Buys` so it keeps premium cards that are weakening but not obviously broken.
-- Decide whether `Good Buys` should prefer cards flattening over the last 7 days instead of still actively falling.
 - Tighten `Top Movers` and `Early Movers` so stale one-sale jumps are less likely to pass.
 - Expand Set Explorer rarity / variant filters beyond the current first pass.
 - Fix any remaining generation grouping mistakes when a set clearly lands in the wrong era bucket.
-- Add high-resolution image support for the image popout / enlarged preview so expanded card art can use a better source than the current in-table image when available.
-- Add camera / photo card lookup for show-floor use.
+- Keep high-resolution image support deferred until there is a stronger need than the current fast-loading image flow.
+- Keep camera / photo card lookup as a later project after the main phone workflow settles.
 - Extend tracking into:
   - `/embed`
   - `/set-explorer`
 - Add keyboard shortcuts beyond the current up/down row stepping if they clearly improve desktop workflow.
-- Add a Discord webhook / bot path so a card can be requested and its key stats returned as a response.
+- Add a basic Discord path for:
+  - key stat lookups
+  - webhook notifications
+  - bug report forwarding
 
 Needs Decisions
 ---------------
@@ -83,10 +92,6 @@ Needs Decisions
 - Decide whether the site should use shorter / cleaner public-facing URLs and shared links.
 - Decide whether the dashboard still has too many indicators or whether the current set is now stable enough.
 - Decide whether tracking should stay private-only or support lightweight sharing.
-- Decide whether the username + PIN flow should stay as-is or move to:
-  - email magic link
-  - Google sign-in
-  - another lightweight auth option
 - Decide whether the current lightweight tracking-account model should remain the long-term approach or later join a broader site membership system.
 - Decide how the future assistant should behave:
   - explainer only

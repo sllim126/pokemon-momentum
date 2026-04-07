@@ -40,6 +40,8 @@ sudo docker-compose restart pokemon-momentum
 - `Browse Set` can switch between `Browse Set` and set-scoped `Time to Buy` via `Set View`
 - `Included Cards` can be opened and closed cleanly, and set-specific variant filters behave as expected
 - no unexpected large universe preloads on routine interactions
+- Google sign-in button renders in `Account` when configured and creates a synced tracking session
+- dashboard `Buy` / TCGplayer links redirect through the affiliate wrapper and still land on the expected product
 - mobile bottom nav works:
   - `Home`
   - `Search`
@@ -47,6 +49,7 @@ sudo docker-compose restart pokemon-momentum
   - `Indicators`
 - mobile pull-to-refresh refreshes the current view without a full browser reload
 - clicking a product image opens the anchored in-page preview and clicking it again closes it
+- smaller tablets can swipe left/right on the selected-product area to move through the current result list
 
 What this is
 ------------
@@ -402,19 +405,26 @@ Storage:
 
 Main endpoints:
 
+- `GET /tracking/auth_config`
+- `POST /tracking/google_session`
 - `POST /tracking/session`
 - `GET /tracking/session`
 - `DELETE /tracking/session`
 - `GET /tracking/tags`
 - `PUT /tracking/tags`
 - `POST /tracking/tags/merge`
-- `POST /tracking/change_pin`
 - `DELETE /tracking/account`
+
+Google sign-in config:
+
+- env var:
+  - `POKEMON_MOMENTUM_GOOGLE_CLIENT_ID`
+- when this is set, the dashboard account menu renders the Google sign-in button and `/tracking/google_session` becomes usable
 
 Healthy UI result:
 
 - you can open the `Account` dropdown in the upper-right header
-- sign in or create the account
+- sign in with Google
 - tag a product as `Favorite`, `Watchlist`, `Research`, or `Buy List`
 - open `Tracked Items` from the account menu and see the saved list
 - refresh the page
@@ -423,11 +433,20 @@ Healthy UI result:
   - `Set Explorer`
   - `Sealed Deals`
 
+Affiliate outbound links:
+
+- current TCGplayer affiliate base:
+  - `https://partner.tcgplayer.com/jR1OJb`
+- dashboard TCGplayer links wrap the product destination with the Impact `u=` target parameter
+- smoke test:
+  - click one singles `Buy` link
+  - click one sealed TCGplayer link
+  - confirm the final landing page is still the intended product
+
 Account settings:
 
 - `/account-settings`
 - supports:
-  - change PIN
   - delete tracking account
 
 Current scope:

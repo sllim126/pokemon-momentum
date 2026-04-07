@@ -8,6 +8,7 @@ It combines:
 - a main research dashboard
 - a lighter set explorer
 - a sealed-products deal page
+- Google-based synced tracking auth
 - lightweight tracking tags for sourcing and review
 
 The goal is simple: make it easier to spot what is moving, what may be starting to move, and which sets or products deserve attention.
@@ -26,7 +27,7 @@ The goal is simple: make it easier to spot what is moving, what may be starting 
 - `/sealed-deals`
   - a sealed-product screening page focused on pack-value and product-level deal math
 - `/account-settings`
-  - lightweight tracking account management
+  - lightweight synced tracking account management
 
 
 ## What The Project Does
@@ -48,6 +49,8 @@ The goal is simple: make it easier to spot what is moving, what may be starting 
   - `Watchlist`
   - `Research`
   - `Buy List`
+- supports Google sign-in for synced tracking accounts
+- routes dashboard TCGplayer outbound links through the configured affiliate link
 
 
 ## Storage
@@ -86,6 +89,11 @@ App URL:
 ```text
 http://localhost:8001
 ```
+
+Google sign-in:
+
+- set `POKEMON_MOMENTUM_GOOGLE_CLIENT_ID` in `.env`
+- the dashboard account menu will render the Google sign-in button when configured
 
 
 ## Daily Pipeline

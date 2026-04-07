@@ -53,6 +53,17 @@ Recent Data/Serving Changes (March 2026)
   - search drops the user into the correct set context more often
   - `Good Buys` is less likely to show thinly traded names by default and is easier to narrow to relevant sets
 
+7. Tracking auth and outbound link routing
+- the dashboard now exposes Google-auth config to the frontend and verifies Google identity tokens
+  before creating or resuming synced tracking sessions
+- synced tracking users are stored in the lightweight SQLite tracking store using the Google email
+  as the account identity key
+- dashboard TCGplayer links now wrap product-specific destination URLs with the configured Impact
+  affiliate base link
+- Expected result:
+  - account sync stays separate from the main market-history pipeline
+  - outbound marketplace clicks preserve exact product landing pages while using affiliate tracking
+
 What this document is for
 -------------------------
 This file explains how data moves through the project from raw TCGCSV archives to the
@@ -116,6 +127,8 @@ workflow features:
   - a mobile bottom nav coordinates `Home`, `Search`, `Tracked`, and `Indicators`
   - mobile home includes a `Singles / Sealed` segment toggle
   - pull-to-refresh refreshes dashboard state by calling the same snapshot-backed feeds
+  - smaller touch tablets now reuse some of that touch-first workflow, including stacked hero
+    layout and swipe-based card stepping in the selected-product area
 
 - search-to-set handoff
   - set and product search results can route directly into the `Browse Set` screen
@@ -133,7 +146,7 @@ workflow features:
 - lightweight tracking accounts
   - anonymous tags can still stay browser-local
   - signed-in users can now sync `favorite`, `watchlist`, `research`, and `buy list` tags
-    through a separate tracking store
+    through a separate tracking store using Google sign-in
   - the header account menu is now the main entry point for sign-in, tracked items, and settings
   - the same menu now exposes public links to `Set Explorer` and `Sealed Deals`
   - `Report a Bug` submissions are stored separately with structured page-state context for later review
@@ -603,8 +616,15 @@ Set explorer endpoint:
 
 Tracking endpoints:
 
+- `/tracking/auth_config`
+  - reports whether Google sign-in is configured for the dashboard and exposes the Google client ID used by the frontend button
+
+- `/tracking/google_session`
+  - verifies a Google identity token, creates the tracking user if needed, and returns the normal synced tracking session
+
 - `/tracking/session`
-  - creates or resumes a lightweight tracking account with username + PIN
+  - legacy sign-in endpoint retained for older locally created tracking accounts, though the
+    current dashboard UI uses Google sign-in
 
 - `/tracking/tags`
   - reads and writes saved workflow tags for one signed-in user
@@ -612,11 +632,8 @@ Tracking endpoints:
 - `/tracking/tags/merge`
   - pushes locally-created tags into the saved account after sign-in
 
-- `/tracking/change_pin`
-  - updates the lightweight tracking account PIN
-
 - `/tracking/account`
-  - deletes the tracking account, tags, and active sessions
+  - deletes the signed-in tracking account, tags, and active sessions
 
 Important helpers:
 

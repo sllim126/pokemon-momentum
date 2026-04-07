@@ -9,6 +9,7 @@ import urllib.error
 
 import duckdb
 import pandas as pd
+import requests
 from fastapi import Cookie, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -36,6 +37,7 @@ from scripts.dashboards.query_support import (
 from scripts.dashboards.tracking_store import (
     create_session,
     create_bug_report,
+    create_google_user,
     create_user,
     delete_user,
     delete_session,
@@ -46,7 +48,6 @@ from scripts.dashboards.tracking_store import (
     list_bug_reports,
     merge_tags,
     set_tag,
-    update_user_pin,
     verify_user,
 )
 
@@ -78,6 +79,7 @@ ADMIN_USERNAMES = {
     for username in os.getenv("POKEMON_MOMENTUM_ADMIN_USERS", "sllim126").split(",")
     if username.strip()
 }
+GOOGLE_CLIENT_ID = os.getenv("POKEMON_MOMENTUM_GOOGLE_CLIENT_ID", "").strip()
 
 
 app = FastAPI()
@@ -863,9 +865,42 @@ def require_admin_user(
     return session_user
 
 
+def verify_google_identity_token(credential: str) -> dict:
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=503, detail="Google sign-in is not configured")
+    token = str(credential or "").strip()
+    if not token:
+        raise HTTPException(status_code=400, detail="Missing Google credential")
+    try:
+        response = requests.get(
+            "https://oauth2.googleapis.com/tokeninfo",
+            params={"id_token": token},
+            timeout=8,
+        )
+    except requests.RequestException as exc:
+        raise HTTPException(status_code=502, detail=f"Google token verification failed: {exc}") from exc
+    if response.status_code != 200:
+        raise HTTPException(status_code=401, detail="Google sign-in could not be verified")
+    payload = response.json()
+    audience = str(payload.get("aud", "")).strip()
+    email = str(payload.get("email", "")).strip().lower()
+    email_verified = str(payload.get("email_verified", "")).lower() == "true"
+    subject = str(payload.get("sub", "")).strip()
+    if audience != GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=401, detail="Google sign-in was issued for a different app")
+    if not email or not email_verified or not subject:
+        raise HTTPException(status_code=401, detail="Google account details were incomplete")
+    return {
+        "email": email,
+        "sub": subject,
+        "name": str(payload.get("name", "")).strip(),
+        "picture": str(payload.get("picture", "")).strip(),
+    }
+
+
 @app.post("/tracking/session")
 def tracking_session(payload: dict):
-    """Create or resume a lightweight tracking account using username + PIN."""
+    """Legacy username + PIN sign-in kept for existing local tracking accounts."""
     username = str(payload.get("username", "")).strip()
     pin = str(payload.get("pin", "")).strip()
     action = str(payload.get("action", "auto")).strip().lower()
@@ -897,6 +932,35 @@ def tracking_session(payload: dict):
         user_id = int(user["id"])
         username_out = user["username"]
 
+    token = create_session(user_id)
+    return {
+        "token": token,
+        "user": {
+            "username": username_out,
+            "is_admin": is_admin_username(username_out),
+        },
+    }
+
+
+@app.get("/tracking/auth_config")
+def tracking_auth_config():
+    return {
+        "google_enabled": bool(GOOGLE_CLIENT_ID),
+        "google_client_id": GOOGLE_CLIENT_ID,
+    }
+
+
+@app.post("/tracking/google_session")
+def tracking_google_session(payload: dict):
+    identity = verify_google_identity_token(payload.get("credential", ""))
+    email = identity["email"]
+    existing = get_user_by_username(email)
+    if existing is None:
+        user_id = create_google_user(email)
+        username_out = email
+    else:
+        user_id = int(existing["id"])
+        username_out = existing["username"]
     token = create_session(user_id)
     return {
         "token": token,
@@ -951,28 +1015,9 @@ def tracking_tags_merge(payload: dict, authorization: str | None = Header(defaul
     return {"ok": True, "count": len(items)}
 
 
-@app.post("/tracking/change_pin")
-def tracking_change_pin(payload: dict, authorization: str | None = Header(default=None)):
-    session_user = require_tracking_user(authorization)
-    current_pin = str(payload.get("current_pin", "")).strip()
-    new_pin = str(payload.get("new_pin", "")).strip()
-    if len(new_pin) < 4:
-        raise HTTPException(status_code=400, detail="New PIN must be at least 4 characters")
-    verified = verify_user(session_user.username, current_pin)
-    if verified is None:
-        raise HTTPException(status_code=401, detail="Current PIN is incorrect")
-    update_user_pin(session_user.user_id, new_pin)
-    return {"ok": True}
-
-
 @app.delete("/tracking/account")
 def tracking_delete_account(payload: dict | None = None, authorization: str | None = Header(default=None)):
     session_user = require_tracking_user(authorization)
-    payload = payload or {}
-    pin = str(payload.get("pin", "")).strip()
-    verified = verify_user(session_user.username, pin)
-    if verified is None:
-        raise HTTPException(status_code=401, detail="PIN is incorrect")
     delete_user(session_user.user_id)
     return {"ok": True}
 
@@ -1428,6 +1473,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
     product_matches AS (
       SELECT
         'product' AS kind,
+        0 AS set_focus_rank,
         m.productName AS title,
         CONCAT_WS(' | ', m.groupName, NULLIF(m.number, ''), NULLIF(ap.subTypeName, '')) AS meta,
         ap.productId,
@@ -1475,6 +1521,12 @@ def search(query: str, limit: int = 12, category_id: int = 3):
     group_matches AS (
       SELECT
         'set' AS kind,
+        CASE
+          -- When every query token matches the set name/abbreviation, treat the
+          -- set row as the primary result and let the individual cards follow it.
+          WHEN {group_token_match_expr} THEN 1
+          ELSE 0
+        END AS set_focus_rank,
         COALESCE(g.name, 'Unknown Group') AS title,
         CONCAT(CAST(ag.productCount AS VARCHAR), ' tracked products') AS meta,
         NULL AS productId,
@@ -1521,7 +1573,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
     SELECT *
     FROM scored
     WHERE score > 0
-    ORDER BY score DESC, kind ASC, lower(title) ASC
+    ORDER BY set_focus_rank DESC, score DESC, kind ASC, lower(title) ASC
     LIMIT {limit}
     """
     cols, rows = q(sql)
@@ -1716,6 +1768,7 @@ def good_buys(
     limit: int = 250,
     min_price: float = 5.0,
     max_30d_pct: float = 0.0,
+    min_7d_pct: float = -2.0,
     max_7d_pct: float = 5.0,
     min_recent_distinct_prices_30d: int = 10,
     exclude_prize_packs: bool = False,
@@ -1763,10 +1816,11 @@ def good_buys(
       {product_kind_filter}
       {rarity_filter}
       AND COALESCE(roc_30d_pct, 0) <= {max_30d_pct}
+      AND COALESCE(roc_7d_pct, 0) >= {min_7d_pct}
       AND COALESCE(roc_7d_pct, 0) <= {max_7d_pct}
       AND COALESCE(recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
       {prize_pack_filter}
-    ORDER BY roc_30d_pct ASC, price_vs_sma30_pct ASC, latest_price DESC
+    ORDER BY ABS(COALESCE(roc_7d_pct, 0)) ASC, roc_30d_pct ASC, price_vs_sma30_pct ASC, latest_price DESC
     LIMIT {limit}
     """
     cols, rows = q(sql)

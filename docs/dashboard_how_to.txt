@@ -117,6 +117,24 @@ new reviewers can verify expected UX quickly.
   - new users get a quick explanation of search, Market Signals, chart reading, and tracking
   - returning users are not forced through the guide repeatedly
 
+17. Google sign-in and outbound buy links
+- synced tracking accounts now use Google sign-in from the `Account` menu instead of the older
+  username + PIN entry flow
+- dashboard `Buy` / TCGplayer links now route through the configured affiliate link while keeping
+  the same product-specific landing behavior
+- expected result:
+  - sign-in feels more professional and consistent across devices
+  - outbound marketplace clicks can be attributed without changing dashboard workflow
+
+18. Tablet / touch workflow refinement
+- smaller touch tablets now use a simpler stacked hero/signals layout instead of trying to show
+  every desktop panel at once
+- the selected-product area on smaller tablets now supports left/right swipe navigation through the
+  active result list, similar to phone drilldown behavior
+- expected result:
+  - iPad Mini / compact tablet widths feel less crowded
+  - quick card-to-card comparison is possible without repeatedly tapping back into the table
+
 What This Is
 This dashboard is a research and discovery tool built around Pokemon market data.
 It takes a large amount of price history and turns it into something easier to scan, compare, and act on.
@@ -493,7 +511,7 @@ Buy List is meant for cards and products you want to source soon, especially for
 
 How it works now:
 - if you stay signed out, tags are saved locally in that browser only
-- if you sign in with a tracking username and PIN, tags sync to the tracking account and follow you between sessions and devices
+- if you sign in with Google, tags sync to the tracking account and follow you between sessions and devices
 
 This is intentionally not a full collection tracker.
 It does not currently track:
@@ -509,13 +527,10 @@ The account controls now live in the upper-right header area, which is where mos
 
 When signed out:
 - click `Account`
-- enter username and PIN
-- choose:
-  - `Sign In`
-  - `Create Account`
+- use the Google sign-in button
 
 When signed in:
-- click your username in the header
+- click your signed-in email in the header
 - open:
   - `Tracked Items`
   - `Account Settings`
@@ -556,7 +571,7 @@ Suggested Workflow
 3. Use the signal tabs to look for confirmation or earlier-stage setups.
 4. Use Browse Set to inspect neighboring items in the same set.
 5. Use the tracking controls to tag and keep track of names you want to revisit.
-6. If you want those tags on another device, sign in to the tracking account and let them sync.
+6. If you want those tags on another device, sign in with the same Google account and let them sync.
 
 
 Important Reminder

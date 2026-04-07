@@ -4,6 +4,8 @@ services:
     container_name: pokemon-momentum
     working_dir: /app
     command: python -m uvicorn scripts.dashboards.api:app --host 0.0.0.0 --port 8001
+    environment:
+      POKEMON_MOMENTUM_GOOGLE_CLIENT_ID: ${POKEMON_MOMENTUM_GOOGLE_CLIENT_ID:-}
     ports:
       - "8001:8001"
     volumes:

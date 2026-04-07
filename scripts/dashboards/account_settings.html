@@ -135,32 +135,14 @@
     </section>
 
     <section class="panel">
-      <div class="section-label">Change PIN</div>
-      <div class="grid" style="margin-top: 14px;">
-        <label>
-          <span class="field-label">Current PIN</span>
-          <input id="currentPin" type="password" inputmode="numeric" placeholder="Current PIN">
-        </label>
-        <label>
-          <span class="field-label">New PIN</span>
-          <input id="newPin" type="password" inputmode="numeric" placeholder="New PIN">
-        </label>
-      </div>
-      <div class="actions">
-        <button type="button" id="changePinBtn">Change PIN</button>
-      </div>
-      <div class="status" id="pinStatus"></div>
+      <div class="section-label">Sign-In Method</div>
+      <p>Google sign-in now handles tracking access on the dashboard. There is no separate username or PIN to manage here.</p>
+      <div class="status" id="accountStatus"></div>
     </section>
 
     <section class="panel">
       <div class="section-label">Delete Account</div>
-      <p>This deletes the tracking account, its saved tags, and all active tracking sessions.</p>
-      <div class="grid" style="margin-top: 14px;">
-        <label>
-          <span class="field-label">Confirm PIN</span>
-          <input id="deletePin" type="password" inputmode="numeric" placeholder="Enter PIN to confirm">
-        </label>
-      </div>
+      <p>This deletes the tracking account, its saved tags, and all active tracking sessions. Google sign-in itself is not removed; only this dashboard’s synced tracking data is deleted.</p>
       <div class="actions">
         <button type="button" class="danger" id="deleteAccountBtn">Delete Tracking Account</button>
       </div>
@@ -172,12 +154,8 @@
     const tokenKey = "pokemon-momentum-tracking-token";
     const token = localStorage.getItem(tokenKey) || "";
     const accountTitle = document.getElementById("accountTitle");
-    const pinStatus = document.getElementById("pinStatus");
+    const accountStatus = document.getElementById("accountStatus");
     const deleteStatus = document.getElementById("deleteStatus");
-    const currentPin = document.getElementById("currentPin");
-    const newPin = document.getElementById("newPin");
-    const deletePin = document.getElementById("deletePin");
-    const changePinBtn = document.getElementById("changePinBtn");
     const deleteAccountBtn = document.getElementById("deleteAccountBtn");
 
     function setStatus(el, message, isWarn = false) {
@@ -210,40 +188,21 @@
       // account, not broader site membership or profile settings.
       if (!token) {
         accountTitle.textContent = "Tracking Sign-In Required";
-        setStatus(pinStatus, "Sign in on the dashboard first, then come back to this page.", true);
-        changePinBtn.disabled = true;
+        setStatus(accountStatus, "Sign in on the dashboard first, then come back to this page.", true);
         deleteAccountBtn.disabled = true;
         return;
       }
       try {
         const payload = await api("/tracking/session", { method: "GET" });
         accountTitle.textContent = `Tracking Settings: ${payload.user.username}`;
+        setStatus(accountStatus, "This tracking account is connected through Google sign-in on the dashboard.");
       } catch (err) {
         localStorage.removeItem(tokenKey);
         accountTitle.textContent = "Tracking Session Expired";
-        setStatus(pinStatus, "Sign in again on the dashboard, then reopen account settings.", true);
-        changePinBtn.disabled = true;
+        setStatus(accountStatus, "Sign in again on the dashboard, then reopen account settings.", true);
         deleteAccountBtn.disabled = true;
       }
     }
-
-    changePinBtn.addEventListener("click", async () => {
-      setStatus(pinStatus, "Updating PIN...");
-      try {
-        await api("/tracking/change_pin", {
-          method: "POST",
-          body: JSON.stringify({
-            current_pin: currentPin.value.trim(),
-            new_pin: newPin.value.trim(),
-          }),
-        });
-        currentPin.value = "";
-        newPin.value = "";
-        setStatus(pinStatus, "PIN updated.");
-      } catch (err) {
-        setStatus(pinStatus, err.message, true);
-      }
-    });
 
     deleteAccountBtn.addEventListener("click", async () => {
       if (!confirm("Delete this tracking account and all saved tags?")) return;
@@ -251,12 +210,8 @@
       try {
         await api("/tracking/account", {
           method: "DELETE",
-          body: JSON.stringify({
-            pin: deletePin.value.trim(),
-          }),
         });
         localStorage.removeItem(tokenKey);
-        deletePin.value = "";
         setStatus(deleteStatus, "Tracking account deleted.");
         window.location.href = "/dashboard";
       } catch (err) {

@@ -6,6 +6,7 @@
   <title>Pokemon Momentum Terminal</title>
   <link rel="icon" type="image/png" href="/images/Favidon.png">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root {
       --bg: #11192f;
@@ -492,6 +493,11 @@
       gap: 10px;
     }
 
+    .tracking-header {
+      position: relative;
+      z-index: 80;
+    }
+
     .tracking-toggle .caret {
       color: var(--muted);
       font-size: 12px;
@@ -508,7 +514,7 @@
       background: linear-gradient(180deg, rgba(28, 38, 61, 0.98), rgba(20, 29, 48, 0.99));
       box-shadow: var(--shadow);
       display: none;
-      z-index: 20;
+      z-index: 120;
     }
 
     .tracking-menu.open {
@@ -1101,9 +1107,22 @@
     .rail-controls {
       display: flex;
       align-items: center;
+      align-self: center;
       gap: 10px;
       flex-wrap: wrap;
       padding-right: 8px;
+      min-height: 100%;
+    }
+
+    .rail-controls .segment-bar {
+      align-items: center;
+    }
+
+    .rail-controls .segment-bar button {
+      line-height: 1;
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
     }
 
     .stage-title {
@@ -1321,6 +1340,7 @@
     .tag-actions,
     .chart-window {
       display: flex;
+      align-items: center;
       flex-wrap: wrap;
       gap: 10px;
     }
@@ -2476,7 +2496,7 @@
     @media (max-width: 1280px) {
       .brandbar {
         grid-template-columns: 220px minmax(0, 1fr) 220px;
-        align-items: start;
+        align-items: center;
       }
 
       .brandlockup {
@@ -2498,7 +2518,7 @@
       .brandactions {
         grid-template-columns: 220px;
         justify-content: end;
-        align-self: start;
+        align-self: center;
       }
 
       .brandactions .search-actions,
@@ -2506,6 +2526,21 @@
       .brandactions > #trackingTrackedBtn {
         grid-column: auto;
         grid-row: auto;
+      }
+
+      .brandcopy {
+        gap: 10px;
+      }
+
+      .brandtag {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+      }
+
+      .brandsearch {
+        max-width: none;
+        gap: 6px;
       }
 
       .layout {
@@ -2537,7 +2572,13 @@
       }
 
       .brandsearch-form {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+      }
+
+      .brandsearch-form button {
+        min-width: 116px;
+        padding-inline: 16px;
       }
 
       .mover-list {
@@ -2553,6 +2594,103 @@
     @media (max-width: 1080px) {
       .top-stage {
         grid-template-columns: 1fr;
+      }
+    }
+
+    @media (pointer: coarse) and (min-width: 1025px) and (max-width: 1366px) {
+      .top-stage {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      }
+
+      .table-wrap {
+        max-height: none;
+        height: 100%;
+      }
+    }
+
+    @media (pointer: coarse) and (min-width: 761px) and (max-width: 1024px) {
+      .brandbar {
+        gap: 14px;
+      }
+
+      .center-stage,
+      .top-stage {
+        gap: 8px;
+      }
+
+      .brandbar {
+        grid-template-columns: minmax(0, 1fr) 220px;
+        grid-template-areas:
+          "logo actions"
+          "copy copy";
+        align-items: start;
+      }
+
+      .brandlockup {
+        display: flex;
+        justify-content: flex-start;
+        grid-area: logo;
+      }
+
+      .brand-home-link {
+        width: min(240px, 100%);
+      }
+
+      .brandactions {
+        grid-template-columns: 220px;
+        justify-content: end;
+        grid-area: actions;
+      }
+
+      .brandcopy {
+        grid-area: copy;
+        gap: 6px;
+      }
+
+      .brandtag {
+        margin-top: 0;
+        line-height: 1.15;
+      }
+
+      .brandsearch {
+        gap: 4px;
+      }
+
+      .brandsearch-status {
+        min-height: 0;
+        margin-top: 2px;
+      }
+
+      .top-stage {
+        grid-template-columns: 1fr;
+      }
+
+      .stage-title h1 {
+        margin-top: 0;
+      }
+
+      .hero .signal-topline {
+        gap: 10px;
+      }
+
+      .hero .signal-topline-main {
+        max-width: 250px;
+      }
+
+      .hero .stage-product-copy .section-label,
+      .hero .price-block .section-label,
+      .hero .signal-topline .section-label,
+      .hero .chart-summary {
+        display: none;
+      }
+
+      .hero .chart-summary {
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .subtitle {
+        margin-top: 6px;
       }
     }
 
@@ -2574,6 +2712,8 @@
 
       .brandbar {
         position: relative;
+        grid-template-columns: 1fr;
+        gap: 12px;
       }
 
       .site-footer-grid {
@@ -2583,6 +2723,8 @@
       .brandlockup {
         display: flex;
         justify-content: center;
+        align-items: center;
+        min-height: 76px;
       }
 
       .brand-home-link {
@@ -2590,12 +2732,9 @@
       }
 
       .brandcopy {
-        display: none;
-        gap: 10px;
-      }
-
-      body.mobile-search-open .brandcopy {
         display: grid;
+        gap: 10px;
+        margin-top: 0;
       }
 
       .brandtag {
@@ -2604,8 +2743,13 @@
 
       .mobile-home-segments {
         display: block;
-        margin-top: 4px;
+        margin-top: 0;
         margin-bottom: 14px;
+      }
+
+      .brandsearch-status {
+        min-height: 0;
+        margin-top: 0;
       }
 
       .mobile-home-segments .segment-bar {
@@ -2621,7 +2765,7 @@
       }
 
       .brandlockup {
-        align-items: start;
+        align-items: center;
       }
 
       .brandmark {
@@ -2643,7 +2787,8 @@
         right: 0;
         width: 100%;
         display: flex;
-        align-items: flex-start;
+        height: 76px;
+        align-items: center;
         justify-content: space-between;
         pointer-events: none;
       }
@@ -2714,7 +2859,7 @@
         display: block;
         position: fixed;
         inset: 0;
-        z-index: 60;
+        z-index: 140;
         overflow-y: auto;
         border-radius: 0;
         padding: 16px 16px calc(96px + env(safe-area-inset-bottom, 0px));
@@ -2820,6 +2965,11 @@
 
       .price-main {
         font-size: 32px;
+        margin-bottom: 12px;
+      }
+
+      .window-change-pill {
+        margin: 4px 0 0;
       }
 
       .freshness-badge {
@@ -2869,6 +3019,7 @@
         cursor: pointer;
       }
 
+      .mobile-hero-bargains,
       .mobile-hero-stats {
         display: grid;
         gap: 10px;
@@ -2879,12 +3030,36 @@
         background: rgba(16, 23, 39, 0.72);
       }
 
+      .mobile-hero-bargains h3,
       .mobile-hero-stats h3 {
         margin: 0;
       }
 
+      .mobile-hero-bargains .bargain-grid {
+        margin-top: 4px;
+      }
+
       .signal-topline {
         align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .signal-topline-main,
+      .chart-controls {
+        width: 100%;
+      }
+
+      .hero .signal-topline .section-label {
+        display: none;
+      }
+
+      .hero .chart-summary {
+        display: none;
+      }
+
+      .chart-controls {
+        justify-items: start;
+        gap: 0;
       }
 
       .signal-panel.mobile-feed-mode .signal-topline,
@@ -3099,20 +3274,9 @@
           </button>
           <div class="tracking-menu" id="trackingMenu">
             <div id="trackingSignedOut" class="tracking-header-signout">
-              <div class="tracking-header-grid">
-                <label>
-                  <span class="field-label">Username</span>
-                  <input id="trackingUsername" type="text" placeholder="Username">
-                </label>
-                <label>
-                  <span class="field-label">PIN</span>
-                  <input id="trackingPin" type="password" inputmode="numeric" placeholder="4+ digits">
-                </label>
-              </div>
-              <div class="tracking-header-actions">
-                <button type="button" id="trackingSignInBtn">Sign In</button>
-                <button type="button" id="trackingCreateBtn">Create Account</button>
-              </div>
+              <div class="section-label">Google Sign-In</div>
+              <p class="detail-copy" id="trackingSignedOutCopy">Use your Google account to sync favorites, tracked cards, bug reports, and saved research across devices.</p>
+              <div id="googleSignInMount"></div>
             </div>
             <div id="trackingSignedIn" hidden>
               <div class="tracking-header-user">
@@ -3206,6 +3370,11 @@
 
           <div id="chart"></div>
 
+          <section class="mobile-hero-bargains" id="mobileBargainBlock" hidden>
+            <h3>Quick Buy Targets</h3>
+            <div class="bargain-grid" id="mobileBargainGrid"></div>
+          </section>
+
           <div class="hero-tabs" id="tabs">
             <div class="hero-tab-group">
               <div class="hero-tab-group-label">Market Momentum</div>
@@ -3230,10 +3399,6 @@
           <section class="mobile-hero-stats" id="mobileHeroStats">
             <h3>Key Stats</h3>
             <div class="stats-list" id="mobileDetailStats"></div>
-            <div class="bargain-block" id="mobileBargainBlock">
-              <h4 class="bargain-title">Quick Buy Targets</h4>
-              <div class="bargain-grid" id="mobileBargainGrid"></div>
-            </div>
           </section>
           </section>
 
@@ -3583,10 +3748,8 @@
     const trackingMenu = document.getElementById("trackingMenu");
     const trackingSignedOut = document.getElementById("trackingSignedOut");
     const trackingSignedIn = document.getElementById("trackingSignedIn");
-    const trackingUsername = document.getElementById("trackingUsername");
-    const trackingPin = document.getElementById("trackingPin");
-    const trackingSignInBtn = document.getElementById("trackingSignInBtn");
-    const trackingCreateBtn = document.getElementById("trackingCreateBtn");
+    const trackingSignedOutCopy = document.getElementById("trackingSignedOutCopy");
+    const googleSignInMount = document.getElementById("googleSignInMount");
     const trackingTrackedBtn = document.getElementById("trackingTrackedBtn");
     const openBugReportBtn = document.getElementById("openBugReportBtn");
     const openGuideBtn = document.getElementById("openGuideBtn");
@@ -3712,6 +3875,8 @@
     let currentSeriesPayload = null;
     let trackingToken = localStorage.getItem(trackingTokenKey) || "";
     let trackingUser = null;
+    let trackingAuthConfig = { google_enabled: false, google_client_id: "" };
+    let googleSignInInitialized = false;
     let trackingMenuOpen = false;
     let headerSearchDebounce = null;
     let headerSearchResultsData = [];
@@ -3748,9 +3913,16 @@
     let pullRefreshActive = false;
     let pullRefreshRefreshing = false;
     let pullRefreshAllowed = false;
+    let mobileDetailSwipeActive = false;
+    let mobileDetailSwipeStartX = 0;
+    let mobileDetailSwipeStartY = 0;
+    let mobileDetailSwipeDeltaX = 0;
+    let mobileDetailSwipeDeltaY = 0;
 
     const pullRefreshThreshold = 84;
     const pullRefreshMaxDistance = 132;
+    const mobileDetailSwipeThreshold = 60;
+    const mobileDetailDismissThreshold = 72;
     const guideSteps = [
       {
         selector: "#headerSearchForm",
@@ -4251,8 +4423,99 @@
       if (signedIn) {
         setTrackingStatus(isDevMode ? `Syncing tags for ${trackingUser.username}.` : "");
       } else {
-        setTrackingStatus("Local-only mode.");
+        initializeGoogleTrackingButton();
+        if (trackingAuthConfig.google_enabled) {
+          setTrackingStatus("Sign in with Google to sync tracked cards and tags.");
+        } else {
+          setTrackingStatus("Google sign-in is not configured yet.");
+        }
       }
+    }
+
+    async function loadTrackingAuthConfig() {
+      try {
+        const res = await fetch(apiBase + "/tracking/auth_config");
+        if (!res.ok) {
+          throw new Error(`Auth config ${res.status}`);
+        }
+        trackingAuthConfig = await res.json();
+      } catch (_) {
+        trackingAuthConfig = { google_enabled: false, google_client_id: "" };
+      }
+    }
+
+    async function beginGoogleTrackingAuth(credential) {
+      if (!credential) {
+        setTrackingStatus("Google sign-in did not return a credential.", true);
+        return;
+      }
+      setTrackingStatus("Signing in with Google...");
+      try {
+        const payload = await trackingJson("/tracking/google_session", {
+          method: "POST",
+          body: JSON.stringify({ credential }),
+          headers: {},
+        });
+        trackingToken = payload.token;
+        trackingUser = payload.user || null;
+        localStorage.setItem(trackingTokenKey, trackingToken);
+        setTrackingCookie(trackingToken);
+        const localItems = buildLocalTrackingItems();
+        if (localItems.length) {
+          await trackingJson("/tracking/tags/merge", {
+            method: "POST",
+            body: JSON.stringify({ items: localItems }),
+            headers: {},
+          });
+        }
+        await loadRemoteTags();
+        if (currentTab === "tracked_items") {
+          await loadTable();
+        }
+        updateTrackingUi();
+        setTrackingMenuOpen(false);
+        setTrackingStatus(isDevMode ? `Signed in as ${trackingUser?.username || "account"}.` : "");
+      } catch (err) {
+        setTrackingStatus(`Could not sign in with Google: ${err.message}`, true);
+      }
+    }
+
+    function initializeGoogleTrackingButton() {
+      if (!googleSignInMount) return;
+      googleSignInMount.innerHTML = "";
+      googleSignInInitialized = false;
+      if (!trackingAuthConfig.google_enabled) {
+        if (trackingSignedOutCopy) {
+          trackingSignedOutCopy.textContent = "Google sign-in is not configured yet for this dashboard.";
+        }
+        return;
+      }
+      if (!window.google?.accounts?.id) {
+        if (trackingSignedOutCopy) {
+          trackingSignedOutCopy.textContent = "Loading Google sign-in...";
+        }
+        window.setTimeout(initializeGoogleTrackingButton, 250);
+        return;
+      }
+      if (trackingSignedOutCopy) {
+        trackingSignedOutCopy.textContent = "Use your Google account to sync favorites, tracked cards, bug reports, and saved research across devices.";
+      }
+      window.google.accounts.id.initialize({
+        client_id: trackingAuthConfig.google_client_id,
+        callback: async (response) => {
+          await beginGoogleTrackingAuth(response?.credential || "");
+        },
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+      window.google.accounts.id.renderButton(googleSignInMount, {
+        theme: "outline",
+        size: "large",
+        text: "signin_with",
+        shape: "pill",
+        width: googleSignInMount.clientWidth || 260,
+      });
+      googleSignInInitialized = true;
     }
 
     async function openTrackedItemsView() {
@@ -4354,59 +4617,6 @@
         localStorage.removeItem(trackingTokenKey);
         clearTrackingCookie();
         updateTrackingUi();
-      }
-    }
-
-    async function beginTrackingAuth(action) {
-      // Sign in and account creation share the same lightweight username+PIN backend,
-      // while keeping auth failures intentionally generic so the UI does not confirm
-      // whether a specific username already exists.
-      const username = trackingUsername.value.trim();
-      const pin = trackingPin.value.trim();
-      if (username.length < 3 || pin.length < 4) {
-        setTrackingStatus("Use a username of at least 3 characters and a PIN of at least 4 digits.", true);
-        return;
-      }
-      setTrackingStatus(action === "create" ? "Creating tracking account..." : "Signing in...");
-      try {
-        const payload = await trackingJson("/tracking/session", {
-          method: "POST",
-          body: JSON.stringify({
-            username,
-            pin,
-            action,
-            create_if_missing: action === "create",
-          }),
-          headers: {},
-        });
-        trackingToken = payload.token;
-        trackingUser = payload.user || null;
-        localStorage.setItem(trackingTokenKey, trackingToken);
-        setTrackingCookie(trackingToken);
-        const localItems = buildLocalTrackingItems();
-        if (localItems.length) {
-          await trackingJson("/tracking/tags/merge", {
-            method: "POST",
-            body: JSON.stringify({ items: localItems }),
-            headers: {},
-          });
-        }
-        await loadRemoteTags();
-        if (currentTab === "tracked_items") {
-          await loadTable();
-        }
-        trackingPin.value = "";
-        updateTrackingUi();
-        setTrackingMenuOpen(false);
-        setTrackingStatus(
-          isDevMode
-            ? (action === "create"
-                ? `Tracking account created for ${trackingUser?.username || username}.`
-                : `Signed in as ${trackingUser?.username || username}.`)
-            : ""
-        );
-      } catch (err) {
-        setTrackingStatus(err.message, true);
       }
     }
 
@@ -4609,6 +4819,8 @@
       return merged;
     }
 
+    const TCGPLAYER_AFFILIATE_BASE = "https://partner.tcgplayer.com/jR1OJb";
+
     function tcgplayerPrintingParam(subTypeName) {
       const normalizedSubtype = String(subTypeName || "").trim().toLowerCase();
       if (!normalizedSubtype) return "";
@@ -4617,6 +4829,20 @@
       if (normalizedSubtype === "unlimited holofoil") return "Unlimited Holofoil";
       if (normalizedSubtype === "1st edition holofoil") return "1st Edition Holofoil";
       return "";
+    }
+
+    function tcgplayerAffiliateUrl(targetUrl) {
+      const destination = String(targetUrl || "").trim();
+      if (!destination) return "";
+      try {
+        // Keep one central affiliate wrapper so every TCGplayer entry point can keep using
+        // normal product-specific deep links while routing through the Impact vanity link.
+        const affiliateUrl = new URL(TCGPLAYER_AFFILIATE_BASE);
+        affiliateUrl.searchParams.set("u", destination);
+        return affiliateUrl.toString();
+      } catch (_) {
+        return destination;
+      }
     }
 
     function tcgplayerProductUrl(productId, productKind = null, subTypeName = "") {
@@ -4645,7 +4871,8 @@
           }
         }
       }
-      return `https://www.tcgplayer.com/product/${parsed}?${params.toString()}`;
+      const directUrl = `https://www.tcgplayer.com/product/${parsed}?${params.toString()}`;
+      return tcgplayerAffiliateUrl(directUrl);
     }
 
     function formatNumber(value, digits = 2) {
@@ -4664,8 +4891,20 @@
       return Common.formatProductBadgeLabel(item);
     }
 
+    function shouldShowInlineBargainTargets() {
+      return window.matchMedia("(pointer: coarse) and (max-width: 1024px)").matches;
+    }
+
     function renderBargainTargets(container, latestPrice) {
       if (!container) return;
+      const isInlineHeroTargets = container === mobileBargainGrid;
+      if (isInlineHeroTargets && !shouldShowInlineBargainTargets()) {
+        container.innerHTML = "";
+        if (container.parentElement) {
+          container.parentElement.hidden = true;
+        }
+        return;
+      }
       const numericPrice = Number(latestPrice);
       if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
         container.innerHTML = "";
@@ -4902,7 +5141,7 @@
       });
     }
 
-    async function openBrowseSetForSearch(groupId, preferredKey = null, fallbackItem = null) {
+    async function openBrowseSetForSearch(groupId, preferredKey = null, fallbackItem = null, options = {}) {
       if (!groupsLoaded) {
         await loadGroups();
       }
@@ -4920,14 +5159,14 @@
         || (fallbackItem?.key ? rows.find((row) => row.key === fallbackItem.key) : null)
         || rows[0];
       currentChartMode = "product";
-      await selectItem(targetRow, { openDetail: isPhoneLayout() });
+      await selectItem(targetRow, { openDetail: options.openDetail ?? isPhoneLayout() });
       if (tableWrap) {
         tableWrap.scrollTop = 0;
       }
       return targetRow;
     }
 
-    async function openProductSearchResults(query, results = []) {
+    async function openProductSearchResults(query, results = [], options = {}) {
       // Browse Species acts like a research landing page for one card name across sets.
       // Keep all matches together, sort them like card numbers, and let the chart follow
       // the first listing so the user lands in a useful state immediately.
@@ -4955,7 +5194,7 @@
       syncUrlState();
       const rows = await loadTable();
       if (rows && rows.length) {
-        await selectItem(rows[0], { openDetail: isPhoneLayout() });
+        await selectItem(rows[0], { openDetail: options.openDetail ?? isPhoneLayout() });
         activeTableIndex = 0;
         syncActiveTableRow(true);
       }
@@ -4965,7 +5204,7 @@
       return rows;
     }
 
-    async function maybeOpenBrowseSpeciesFromSearch(query, seededResults = null) {
+    async function maybeOpenBrowseSpeciesFromSearch(query, seededResults = null, options = {}) {
       const normalized = normalizeSearchQuery(query);
       if (!normalized) {
         return false;
@@ -4979,7 +5218,7 @@
       if (!shouldOpenProductSearchResults(speciesQuery, results)) {
         return false;
       }
-      await openProductSearchResults(speciesQuery, results);
+      await openProductSearchResults(speciesQuery, results, options);
       const matchCount = getCardHeaderSearchResults(results).filter((result) => matchesSpeciesQuery(result.item, speciesQuery)).length;
       setHeaderSearchStatus(`Loaded ${matchCount} matching listings for ${speciesQuery}.`);
       setHeaderSearchResultsOpen(false);
@@ -5603,25 +5842,52 @@
         const trackRow = document.createElement("div");
         trackRow.className = "mobile-track-row";
         const trackButtons = [
-          { tag: "favorite", text: "Fav", label: "Favorite" },
-          { tag: "watchlist", text: "Watch", label: "Watchlist" },
-          { tag: "research", text: "Research", label: "Research" },
-          { tag: "owned", text: "Buy", label: "Buy List" },
+          { mode: "tag", tag: "favorite", text: "Fav", label: "Favorite" },
+          { mode: "action", action: "set", text: "Set", label: "Browse Set" },
+          { mode: "action", action: "species", text: "Species", label: "Browse Species" },
+          { mode: "action", action: "buy", text: "Buy", label: "Open on TCGPlayer" },
         ];
         const activeTags = localTags.get(item.key) || new Set();
-        trackButtons.forEach(({ tag, text, label }) => {
+        trackButtons.forEach(({ mode, tag, action, text, label }) => {
           const button = document.createElement("button");
           button.type = "button";
-          button.className = `mobile-track-btn${activeTags.has(tag) ? " active" : ""}`;
-          button.dataset.tag = tag;
+          button.className = `mobile-track-btn${mode === "tag" && activeTags.has(tag) ? " active" : ""}`;
+          if (tag) button.dataset.tag = tag;
+          if (action) button.dataset.action = action;
           button.title = label;
           button.setAttribute("aria-label", label);
           button.textContent = text;
           button.addEventListener("click", async (event) => {
             event.preventDefault();
             event.stopPropagation();
-            const enabled = await toggleTrackedTagForItem(item, tag);
-            button.classList.toggle("active", enabled);
+            if (mode === "tag") {
+              const enabled = await toggleTrackedTagForItem(item, tag);
+              button.classList.toggle("active", enabled);
+              return;
+            }
+            if (action === "set" && item.groupId) {
+              await openBrowseSetForSearch(item.groupId, item.key, item, { openDetail: false });
+              setMobileDetailOpen(false);
+              updateMobileNavState("indicators");
+              setMobileSearchOpen(false);
+              return;
+            }
+            if (action === "species") {
+              const speciesQuery = deriveSpeciesQueryFromName(item.productName || "");
+              if (speciesQuery) {
+                await maybeOpenBrowseSpeciesFromSearch(speciesQuery, null, { openDetail: false });
+                setMobileDetailOpen(false);
+                updateMobileNavState("indicators");
+                setMobileSearchOpen(false);
+                return;
+              }
+            }
+            if (action === "buy") {
+              const url = tcgplayerProductUrl(item.productId, item.productKind, item.subTypeName);
+              if (url) {
+                window.open(url, "_blank", "noopener,noreferrer");
+              }
+            }
           });
           trackRow.appendChild(button);
         });
@@ -6219,6 +6485,22 @@
       if (row) {
         row.click();
       }
+    }
+
+    function shouldEnableTouchCardSwipe() {
+      return isPhoneLayout()
+        ? document.body.classList.contains("mobile-detail-open")
+        : window.matchMedia("(pointer: coarse) and (min-width: 761px) and (max-width: 1024px)").matches;
+    }
+
+    function shouldHandleMobileDetailSwipe(target) {
+      if (!shouldEnableTouchCardSwipe() || !activeTableRows.length) {
+        return false;
+      }
+      if (!(target instanceof HTMLElement)) {
+        return true;
+      }
+      return !target.closest("button, a, input, textarea, select, .tracking-menu, .brandsearch-results");
     }
 
     async function selectItem(item, options = {}) {
@@ -7749,14 +8031,6 @@
         startDeferredDashboardLoad();
       });
 
-      trackingSignInBtn.addEventListener("click", async () => {
-        await beginTrackingAuth("sign_in");
-      });
-
-      trackingCreateBtn.addEventListener("click", async () => {
-        await beginTrackingAuth("create");
-      });
-
       trackingTrackedBtn.addEventListener("click", async () => {
         await openTrackedItemsView();
       });
@@ -7795,15 +8069,6 @@
           closeImagePreview();
         });
       }
-
-      [trackingUsername, trackingPin].forEach((input) => {
-        input.addEventListener("keydown", async (event) => {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            await beginTrackingAuth("sign_in");
-          }
-        });
-      });
 
       tagActions.querySelectorAll("button").forEach((btn) => {
         btn.addEventListener("click", async () => {
@@ -7988,6 +8253,64 @@
         resetPullRefreshIndicator();
       });
 
+      if (heroSection) {
+        heroSection.addEventListener("touchstart", (event) => {
+          if (!shouldHandleMobileDetailSwipe(event.target) || event.touches.length !== 1) {
+            mobileDetailSwipeActive = false;
+            return;
+          }
+          mobileDetailSwipeActive = true;
+          mobileDetailSwipeStartX = event.touches[0].clientX;
+          mobileDetailSwipeStartY = event.touches[0].clientY;
+          mobileDetailSwipeDeltaX = 0;
+          mobileDetailSwipeDeltaY = 0;
+        }, { passive: true });
+
+        heroSection.addEventListener("touchmove", (event) => {
+          if (!mobileDetailSwipeActive) return;
+          const touch = event.touches[0];
+          if (!touch) return;
+          mobileDetailSwipeDeltaX = touch.clientX - mobileDetailSwipeStartX;
+          mobileDetailSwipeDeltaY = touch.clientY - mobileDetailSwipeStartY;
+          if (
+            Math.abs(mobileDetailSwipeDeltaX) > 18
+            && Math.abs(mobileDetailSwipeDeltaX) > Math.abs(mobileDetailSwipeDeltaY) * 1.2
+          ) {
+            event.preventDefault();
+          }
+        }, { passive: false });
+
+        heroSection.addEventListener("touchend", async () => {
+          if (!mobileDetailSwipeActive) return;
+          const absX = Math.abs(mobileDetailSwipeDeltaX);
+          const absY = Math.abs(mobileDetailSwipeDeltaY);
+          const shouldSwipe = absX >= mobileDetailSwipeThreshold && absX > absY * 1.2;
+          const shouldDismiss = (
+            isPhoneLayout()
+            && document.body.classList.contains("mobile-detail-open")
+            && heroSection.scrollTop <= 0
+            && mobileDetailSwipeDeltaY >= mobileDetailDismissThreshold
+            && absY > absX * 1.2
+          );
+          const deltaX = mobileDetailSwipeDeltaX;
+          mobileDetailSwipeActive = false;
+          mobileDetailSwipeDeltaX = 0;
+          mobileDetailSwipeDeltaY = 0;
+          if (shouldDismiss) {
+            setMobileDetailOpen(false);
+            return;
+          }
+          if (!shouldSwipe) return;
+          await moveTableSelection(deltaX < 0 ? 1 : -1);
+        });
+
+        heroSection.addEventListener("touchcancel", () => {
+          mobileDetailSwipeActive = false;
+          mobileDetailSwipeDeltaX = 0;
+          mobileDetailSwipeDeltaY = 0;
+        });
+      }
+
       window.addEventListener("resize", () => {
         if (guideModalOpen) {
           positionGuideOverlay();
@@ -8021,6 +8344,7 @@
       try {
         hydrateStoredTags();
         hydratePurchasedKeys();
+        await loadTrackingAuthConfig();
         updateTrackingUi();
         bindEvents();
         await restoreTrackingSession();

@@ -238,6 +238,64 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.json()["user"]["username"], "sllim126")
         self.assertTrue(response.json()["user"]["is_admin"])
 
+    @patch.object(api, "GOOGLE_CLIENT_ID", "google-client-id")
+    def test_tracking_auth_config_exposes_google_client_state(self):
+        response = self.client.get("/tracking/auth_config")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {"google_enabled": True, "google_client_id": "google-client-id"},
+        )
+
+    @patch.object(api, "create_session", return_value="session-token")
+    @patch.object(api, "get_user_by_username", return_value={"id": 7, "username": "collector@example.com"})
+    @patch.object(api, "verify_google_identity_token", return_value={"email": "collector@example.com", "sub": "abc123"})
+    def test_tracking_google_session_reuses_existing_user(
+        self,
+        verify_google_identity_token_mock,
+        get_user_by_username_mock,
+        create_session_mock,
+    ):
+        response = self.client.post("/tracking/google_session", json={"credential": "google-token"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["token"], "session-token")
+        self.assertEqual(response.json()["user"]["username"], "collector@example.com")
+        self.assertFalse(response.json()["user"]["is_admin"])
+        verify_google_identity_token_mock.assert_called_once_with("google-token")
+        get_user_by_username_mock.assert_called_once_with("collector@example.com")
+        create_session_mock.assert_called_once_with(7)
+
+    @patch.object(api, "create_session", return_value="session-token")
+    @patch.object(api, "create_google_user", return_value=11)
+    @patch.object(api, "get_user_by_username", return_value=None)
+    @patch.object(api, "verify_google_identity_token", return_value={"email": "newuser@example.com", "sub": "abc123"})
+    def test_tracking_google_session_creates_missing_user(
+        self,
+        verify_google_identity_token_mock,
+        get_user_by_username_mock,
+        create_google_user_mock,
+        create_session_mock,
+    ):
+        response = self.client.post("/tracking/google_session", json={"credential": "google-token"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["user"]["username"], "newuser@example.com")
+        verify_google_identity_token_mock.assert_called_once_with("google-token")
+        get_user_by_username_mock.assert_called_once_with("newuser@example.com")
+        create_google_user_mock.assert_called_once_with("newuser@example.com")
+        create_session_mock.assert_called_once_with(11)
+
+    @patch.object(api, "delete_user")
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "collector@example.com", "user_id": 9})())
+    def test_tracking_account_delete_requires_session_but_not_pin(self, _get_session_user_mock, delete_user_mock):
+        response = self.client.request("DELETE", "/tracking/account", headers={"Authorization": "Bearer token"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"ok": True})
+        delete_user_mock.assert_called_once_with(9)
+
     def test_good_buys_defaults_to_premium_cards(self):
         with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
             api, "product_signal_from", return_value="product_signal_snapshot"
@@ -247,6 +305,8 @@ class ApiRouteTests(unittest.TestCase):
         sql = q_mock.call_args[0][0]
         self.assertIn("AND productKind = 'card'", sql)
         self.assertIn("ultra rare", sql.lower())
+        self.assertIn("AND COALESCE(roc_7d_pct, 0) >= -2.0", sql)
+        self.assertIn("ORDER BY ABS(COALESCE(roc_7d_pct, 0)) ASC", sql)
 
     def test_good_buys_can_switch_to_sealed(self):
         with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(

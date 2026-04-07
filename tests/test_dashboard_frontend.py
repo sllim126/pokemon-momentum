@@ -19,6 +19,8 @@ class DashboardFrontendContractTests(unittest.TestCase):
 
     def test_dashboard_contains_quick_buy_targets_and_footer_link(self):
         self.assertIn("Quick Buy Targets", self.html)
+        self.assertIn("shouldShowInlineBargainTargets", self.html)
+        self.assertIn("(pointer: coarse) and (max-width: 1024px)", self.html)
         self.assertIn("https://market.poke6s.com", self.html)
         self.assertIn("not financial advice", self.html.lower())
 
@@ -57,7 +59,13 @@ class DashboardFrontendContractTests(unittest.TestCase):
         self.assertIn('id="guideModal"', self.html)
         self.assertIn("How to Use the Dashboard", self.html)
         self.assertIn("maybeOpenGuideOnFirstVisit", self.html)
+        self.assertIn("Google Sign-In", self.html)
+        self.assertIn('id="googleSignInMount"', self.html)
 
     def test_header_search_results_render_with_thumbnail_support(self):
         self.assertIn("brandsearch-result-thumb", self.html)
         self.assertIn("brandsearch-result-body", self.html)
+
+    def test_tcgplayer_links_use_affiliate_wrapper(self):
+        self.assertIn('const TCGPLAYER_AFFILIATE_BASE = "https://partner.tcgplayer.com/jR1OJb"', self.html)
+        self.assertIn('affiliateUrl.searchParams.set("u", destination)', self.html)

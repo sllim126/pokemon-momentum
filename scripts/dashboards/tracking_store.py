@@ -120,6 +120,25 @@ def create_user(username: str, pin: str) -> int:
         con.close()
 
 
+def create_google_user(email: str) -> int:
+    ensure_tracking_schema()
+    normalized = normalize_username(email)
+    now = utc_now_iso()
+    con = get_con()
+    try:
+        cur = con.execute(
+            """
+            INSERT INTO tracking_users (username, pin_salt, pin_hash, created_at, updated_at)
+            VALUES (?, '', '', ?, ?)
+            """,
+            [normalized, now, now],
+        )
+        con.commit()
+        return int(cur.lastrowid)
+    finally:
+        con.close()
+
+
 def get_user_by_username(username: str) -> sqlite3.Row | None:
     ensure_tracking_schema()
     con = get_con()
