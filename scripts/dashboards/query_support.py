@@ -88,7 +88,13 @@ def prices_from(category_id: int | None = None) -> str:
 def db_has_table(name: str) -> bool:
     if not DB_PATH.exists():
         return False
-    con = duckdb.connect(str(DB_PATH), read_only=True)
+    try:
+        con = duckdb.connect(str(DB_PATH), read_only=True)
+    except duckdb.IOException:
+        # When another process holds the DuckDB write/read lock, metadata checks
+        # should gracefully fall back to CSV/parquet sources instead of taking
+        # the whole dashboard down.
+        return False
     try:
         tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
         return name in tables
@@ -192,7 +198,13 @@ def series_snapshot_from(category_id: int) -> str:
 
 def get_con():
     if DB_PATH.exists():
-        return duckdb.connect(str(DB_PATH), read_only=True)
+        try:
+            return duckdb.connect(str(DB_PATH), read_only=True)
+        except duckdb.IOException:
+            # Fall back to an in-memory connection so queries against
+            # read_csv_auto/read_parquet sources can still run while the main
+            # database file is locked by another process.
+            return duckdb.connect()
     return duckdb.connect()
 
 

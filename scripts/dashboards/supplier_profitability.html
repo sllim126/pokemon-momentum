@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Supplier Profitability</title>
+  <style>
+    :root {
+      --bg: #0f1730;
+      --panel: #1a2745;
+      --panel-2: #12203a;
+      --line: rgba(94, 135, 198, 0.28);
+      --text: #e7eefc;
+      --muted: #9db0d8;
+      --accent: #45c0ff;
+      --good: #7fe3a1;
+      --warn: #f4c37b;
+      --bad: #ff9a9a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(69, 192, 255, 0.16), transparent 28%),
+        linear-gradient(180deg, #111936 0%, var(--bg) 100%);
+    }
+    .shell { max-width: 1500px; margin: 0 auto; padding: 24px; }
+    .hero, .panel {
+      background: linear-gradient(180deg, rgba(34, 49, 83, 0.96), rgba(18, 32, 58, 0.96));
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
+    }
+    .hero { padding: 24px; margin-bottom: 18px; }
+    .panel { padding: 22px; margin-bottom: 18px; }
+    .eyebrow {
+      color: #8ea6d7;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    h1 { margin: 0 0 10px; font-size: 38px; }
+    .sub { color: var(--muted); max-width: 980px; line-height: 1.55; }
+    .actions, .filters {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 14px;
+    }
+    .filters { margin-top: 0; }
+    input, button, a.button, select {
+      font: inherit;
+      color: var(--text);
+    }
+    input, select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(104, 149, 219, 0.32);
+      background: rgba(13, 22, 41, 0.66);
+    }
+    button, a.button {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 11px 18px;
+      cursor: pointer;
+      background: rgba(22, 39, 71, 0.96);
+      text-decoration: none;
+    }
+    button.primary {
+      background: linear-gradient(135deg, rgba(52, 168, 255, 0.95), rgba(36, 118, 246, 0.92));
+      border-color: rgba(120, 190, 255, 0.45);
+    }
+    .status { color: var(--muted); font-size: 14px; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 16px;
+    }
+    .subpanel {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(102, 145, 214, 0.16);
+      border-radius: 18px;
+      padding: 16px;
+    }
+    .subpanel-title {
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #95addb;
+      margin-bottom: 6px;
+    }
+    .subpanel-copy {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 4px;
+    }
+    .subpanel .form-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 12px;
+    }
+    .helper {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      margin-top: 10px;
+    }
+    .field label {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      color: #95addb;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .field-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .field-actions button {
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+    .stat {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(102, 145, 214, 0.16);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .stat-label { color: var(--muted); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 600; }
+    .table-wrap {
+      margin-top: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px solid rgba(102, 145, 214, 0.16);
+      overflow: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1480px; }
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(102, 145, 214, 0.12);
+      vertical-align: top;
+    }
+    th { color: #95addb; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
+    .muted { color: var(--muted); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid transparent;
+    }
+    .badge.good { background: rgba(127, 227, 161, 0.14); color: #bff5d1; border-color: rgba(127, 227, 161, 0.22); }
+    .badge.warn { background: rgba(244, 195, 123, 0.14); color: #ffd69d; border-color: rgba(244, 195, 123, 0.22); }
+    .badge.bad { background: rgba(255, 154, 154, 0.14); color: #ffc7c7; border-color: rgba(255, 154, 154, 0.22); }
+    @media (max-width: 1120px) {
+      .split-grid, .form-grid, .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .shell { padding: 14px; }
+      h1 { font-size: 31px; }
+      .split-grid, .form-grid, .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="eyebrow">Internal Ops</div>
+      <h1>Supplier Profitability</h1>
+      <div class="sub">Take the latest supplier quote saved for each SKU, compare it to your market and store pricing, and answer the two questions that matter: is it worth buying now, and what do you need to charge to stay profitable after shipping, fees, duties, and tax?</div>
+      <div class="actions">
+        <a class="button" href="/dashboard">Back to Dashboard</a>
+        <a class="button" href="/supplier-pricing">Supplier Pricing</a>
+        <a class="button" href="/pricing-upload">Squarespace Upload</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="eyebrow">Assumptions</div>
+      <div class="sub">We now split the math into supplier-side costs and buyer-side costs so it mirrors how you actually buy and sell. For Japan shipping, you can either enter a manual per-item amount or estimate it from a whole order.</div>
+      <div class="split-grid">
+        <div class="subpanel">
+          <div class="subpanel-title">Supplier Side</div>
+          <div class="subpanel-copy">What it costs you to get the product into your hands.</div>
+          <div class="form-grid">
+            <div class="field"><label for="jpyPerUsd">JPY per USD</label><input id="jpyPerUsd" type="number" step="0.01" value="145"></div>
+            <div class="field"><label for="importDutyPct">Import Duty %</label><input id="importDutyPct" type="number" step="0.01" value="10"></div>
+            <div class="field"><label for="inboundShippingMode">Inbound Shipping Mode</label><select id="inboundShippingMode"><option value="order-estimate" selected>Estimate from Order</option><option value="manual">Manual per Item</option></select></div>
+            <div class="field"><label for="orderShippingJpy">Order Shipping JPY</label><input id="orderShippingJpy" type="number" step="1" value="13800"></div>
+            <div class="field"><label for="orderBoxCount">Boxes in Order</label><input id="orderBoxCount" type="number" step="1" value="11"></div>
+            <div class="field">
+              <label for="inboundShippingUsd">Manual Inbound Shipping USD</label>
+              <input id="inboundShippingUsd" type="number" step="0.01" value="5.50">
+              <div class="field-actions">
+                <button id="clearInboundShippingBtn" type="button">Clear to 0</button>
+              </div>
+            </div>
+            <div class="field"><label for="handlingCostUsd">Packaging / Handling USD</label><input id="handlingCostUsd" type="number" step="0.01" value="0.75"></div>
+            <div class="field"><label for="disbursementFeeUsd">Disbursement Fee USD</label><input id="disbursementFeeUsd" type="number" step="0.01" value="15.00"></div>
+          </div>
+          <div class="helper" id="shippingModeHelp">Order estimate mode allocates shipping per item as `total JPY shipping / boxes in order`, then converts that to USD. Disbursement sits here too, since you’re treating it as part of import / FedEx landing cost.</div>
+        </div>
+        <div class="subpanel">
+          <div class="subpanel-title">Buyer Side</div>
+          <div class="subpanel-copy">What it costs to sell, ship out, and still leave yourself profit.</div>
+          <div class="form-grid">
+            <div class="field"><label for="outboundShippingUsd">Outbound Shipping USD</label><input id="outboundShippingUsd" type="number" step="0.01" value="6.25"></div>
+            <div class="field"><label for="shippingCreditUsd">Buyer Shipping Credit USD</label><input id="shippingCreditUsd" type="number" step="0.01" value="0.00"></div>
+            <div class="field"><label for="platformFeePct">Platform Fee %</label><input id="platformFeePct" type="number" step="0.01" value="10.00"></div>
+            <div class="field"><label for="paymentFeePct">Payment Fee %</label><input id="paymentFeePct" type="number" step="0.01" value="0.00"></div>
+            <div class="field"><label for="paymentFeeFixed">Payment Fixed Fee USD</label><input id="paymentFeeFixed" type="number" step="0.01" value="0.30"></div>
+            <div class="field"><label for="incomeTaxPct">Income Tax %</label><input id="incomeTaxPct" type="number" step="0.01" value="25"></div>
+            <div class="field"><label for="targetMarginPct">Target Margin %</label><input id="targetMarginPct" type="number" step="0.01" value="15"></div>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="primary" id="refreshBtn" type="button">Refresh Profitability</button>
+        <div class="status" id="status">Loading latest supplier quotes…</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="eyebrow">Summary</div>
+      <div class="grid">
+        <div class="stat"><div class="stat-label">Quoted SKUs</div><div class="stat-value" id="statRows">0</div></div>
+        <div class="stat"><div class="stat-label">Buy Now</div><div class="stat-value" id="statBuy">0</div></div>
+        <div class="stat"><div class="stat-label">Thin Margin</div><div class="stat-value" id="statThin">0</div></div>
+        <div class="stat"><div class="stat-label">Pass</div><div class="stat-value" id="statPass">0</div></div>
+        <div class="stat"><div class="stat-label">Avg Target Profit</div><div class="stat-value" id="statAvgProfit">-</div></div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="filters">
+          <select id="decisionFilter">
+            <option value="all">All decisions</option>
+            <option value="Buy">Buy</option>
+            <option value="Thin margin">Thin margin</option>
+            <option value="Pass">Pass</option>
+          </select>
+          <input id="searchInput" type="text" placeholder="Filter by SKU or title">
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Decision</th>
+              <th>SKU</th>
+              <th>Title</th>
+              <th>Quote</th>
+              <th>Supplier Cost</th>
+              <th>Landed Cost</th>
+              <th>Store</th>
+              <th>Market</th>
+              <th>Target</th>
+              <th>Break Even</th>
+              <th>Target Margin Price</th>
+              <th>Recommended Floor</th>
+              <th>Target Profit</th>
+              <th>Store Profit</th>
+              <th>Headroom</th>
+            </tr>
+          </thead>
+          <tbody id="profitRows">
+            <tr><td colspan="15" class="muted">Loading profitability rows…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const token = localStorage.getItem("pokemon-momentum-tracking-token") || "";
+    const statusEl = document.getElementById("status");
+    const decisionFilter = document.getElementById("decisionFilter");
+    const searchInput = document.getElementById("searchInput");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const inboundShippingMode = document.getElementById("inboundShippingMode");
+    const shippingModeHelp = document.getElementById("shippingModeHelp");
+    const clearInboundShippingBtn = document.getElementById("clearInboundShippingBtn");
+    const profitRows = document.getElementById("profitRows");
+    const statRows = document.getElementById("statRows");
+    const statBuy = document.getElementById("statBuy");
+    const statThin = document.getElementById("statThin");
+    const statPass = document.getElementById("statPass");
+    const statAvgProfit = document.getElementById("statAvgProfit");
+    let allRows = [];
+
+    function money(value) {
+      return value == null ? "-" : `$${Number(value).toFixed(2)}`;
+    }
+
+    function pct(value) {
+      return value == null ? "-" : `${Number(value).toFixed(1)}%`;
+    }
+
+    function badge(decision) {
+      const cls = decision === "Buy" ? "good" : (decision === "Thin margin" ? "warn" : "bad");
+      return `<span class="badge ${cls}">${decision}</span>`;
+    }
+
+    function assumptionsPayload() {
+      return {
+        jpy_per_usd: Number(document.getElementById("jpyPerUsd").value || 0),
+        import_duty_pct: Number(document.getElementById("importDutyPct").value || 0),
+        inbound_shipping_mode: document.getElementById("inboundShippingMode").value || "manual",
+        order_shipping_jpy: Number(document.getElementById("orderShippingJpy").value || 0),
+        order_box_count: Number(document.getElementById("orderBoxCount").value || 0),
+        inbound_shipping_usd: Number(document.getElementById("inboundShippingUsd").value || 0),
+        handling_cost_usd: Number(document.getElementById("handlingCostUsd").value || 0),
+        outbound_shipping_usd: Number(document.getElementById("outboundShippingUsd").value || 0),
+        shipping_credit_usd: Number(document.getElementById("shippingCreditUsd").value || 0),
+        disbursement_fee_usd: Number(document.getElementById("disbursementFeeUsd").value || 0),
+        platform_fee_pct: Number(document.getElementById("platformFeePct").value || 0),
+        payment_fee_pct: Number(document.getElementById("paymentFeePct").value || 0),
+        payment_fee_fixed: Number(document.getElementById("paymentFeeFixed").value || 0),
+        income_tax_pct: Number(document.getElementById("incomeTaxPct").value || 0),
+        target_margin_pct: Number(document.getElementById("targetMarginPct").value || 0),
+      };
+    }
+
+    function updateShippingModeHelp() {
+      const mode = inboundShippingMode.value;
+      document.getElementById("orderShippingJpy").disabled = mode !== "order-estimate";
+      document.getElementById("orderBoxCount").disabled = mode !== "order-estimate";
+      document.getElementById("inboundShippingUsd").disabled = mode !== "manual";
+      shippingModeHelp.textContent = mode === "order-estimate"
+        ? "Order estimate mode uses `total JPY shipping / boxes in order`, then converts that to USD per item. Great for pre-buy planning."
+        : "Manual mode uses the per-item inbound shipping USD you enter, which is handy once you know the real landed number.";
+    }
+
+    function render(rows) {
+      const filter = decisionFilter.value;
+      const needle = searchInput.value.trim().toLowerCase();
+      const visible = rows.filter((row) => {
+        if (filter !== "all" && row.decision !== filter) return false;
+        if (!needle) return true;
+        return `${row.sku} ${row.title} ${row.supplier_item}`.toLowerCase().includes(needle);
+      });
+      if (!visible.length) {
+        profitRows.innerHTML = '<tr><td colspan="15" class="muted">No rows match the current filters.</td></tr>';
+        return;
+      }
+      profitRows.innerHTML = visible.map((row) => `
+        <tr>
+          <td>${badge(row.decision)}</td>
+          <td>${row.sku}</td>
+          <td><strong>${row.title || row.supplier_item}</strong><br><span class="muted">${row.supplier_name || ""}</span></td>
+          <td>${row.quote_date || "-"}<br><span class="muted">${row.cost_jpy} JPY</span></td>
+          <td>${money(row.supplier_cost_usd)}<br><span class="muted">import ${money(row.import_cost_usd)}</span></td>
+          <td>${money(row.landed_cost_usd)}<br><span class="muted">inbound ${money(row.inbound_shipping_usd)} / fixed ${money(row.fixed_costs_usd)}</span></td>
+          <td>${money(row.store_price)}<br><span class="muted">${money(row.profit_at_store_after_tax)} after tax</span></td>
+          <td>${money(row.market_price)}<br><span class="muted">${money(row.profit_at_market_after_tax)} after tax</span></td>
+          <td>${money(row.target_price)}<br><span class="muted">${money(row.profit_at_target_after_tax)} after tax</span></td>
+          <td>${money(row.break_even_price)}</td>
+          <td>${money(row.required_price_for_target_margin)}</td>
+          <td>${money(row.recommended_floor_price)}</td>
+          <td>${money(row.profit_at_target_before_tax)}<br><span class="muted">${pct(row.margin_at_target_before_tax_pct)}</span></td>
+          <td>${money(row.profit_at_store_before_tax)}<br><span class="muted">${pct(row.margin_at_store_before_tax_pct)}</span></td>
+          <td>${money(row.headroom_vs_target)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function updateStats(stats) {
+      statRows.textContent = stats.rows ?? 0;
+      statBuy.textContent = stats.buy_count ?? 0;
+      statThin.textContent = stats.thin_margin_count ?? 0;
+      statPass.textContent = stats.pass_count ?? 0;
+      statAvgProfit.textContent = stats.avg_target_profit_after_tax == null ? "-" : money(stats.avg_target_profit_after_tax);
+    }
+
+    async function loadProfitability() {
+      statusEl.textContent = "Crunching the numbers…";
+      refreshBtn.disabled = true;
+      try {
+        const response = await fetch("/supplier-profitability/data", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(assumptionsPayload()),
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.detail || `${response.status} ${response.statusText}`);
+        }
+        allRows = payload.rows || [];
+        updateStats(payload.stats || {});
+        render(allRows);
+        const unmatched = payload.stats?.unmatched_quote_rows || 0;
+        statusEl.textContent = unmatched
+          ? `Loaded ${allRows.length} matched SKUs. ${unmatched} supplier rows still need SKU matches.`
+          : `Loaded ${allRows.length} matched SKUs from your latest supplier quotes.`;
+      } catch (err) {
+        statusEl.textContent = err.message || "Failed to load profitability.";
+        profitRows.innerHTML = '<tr><td colspan="15" class="muted">Unable to load profitability data.</td></tr>';
+      } finally {
+        refreshBtn.disabled = false;
+      }
+    }
+
+    refreshBtn.addEventListener("click", loadProfitability);
+    inboundShippingMode.addEventListener("change", updateShippingModeHelp);
+    clearInboundShippingBtn.addEventListener("click", () => {
+      document.getElementById("inboundShippingUsd").value = "0";
+    });
+    decisionFilter.addEventListener("change", () => render(allRows));
+    searchInput.addEventListener("input", () => render(allRows));
+    updateShippingModeHelp();
+    loadProfitability();
+  </script>
+</body>
+</html>

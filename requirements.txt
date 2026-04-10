@@ -10,3 +10,4 @@ jupyterlab
 matplotlib
 plotly
 python-dotenv
+python-multipart

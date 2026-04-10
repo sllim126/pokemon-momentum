@@ -64,6 +64,119 @@ It answers:
 - what the common recovery steps are
 
 
+Store Pricing Ops
+-----------------
+The store pricing workflow now has three admin pages that work together:
+
+- `/pricing-upload`
+  - upload the latest Squarespace product export after you add or edit products
+- `/supplier-pricing`
+  - upload or OCR supplier screenshots and save reviewed JPY quote rows by SKU
+- `/supplier-profitability`
+  - compare latest supplier costs against market/store pricing with editable supplier-side and buyer-side assumptions
+
+Daily price sync inputs:
+
+- Squarespace export:
+  - `/opt/pokemon-momentum/products_Apr-09_04-31-18PM.csv`
+- Supplier quotes:
+  - `/opt/pokemon-momentum/data/supplier_quotes.csv`
+- Price rules:
+  - `/opt/pokemon-momentum/data/store_price_rules.csv`
+- Generated daily targets:
+  - `/opt/pokemon-momentum/data/market_prices_latest.csv`
+
+Important pricing behavior:
+
+- the target builder now uses `max(market_target, profit_floor)` for SKUs with supplier quotes
+- `profit_floor` is derived from supplier cost plus landed-cost assumptions
+- rows without supplier quotes remain market-based
+- `target_source` in `market_prices_latest.csv` shows whether a row came from `market` or `profit_floor`
+
+Recommended operator flow when adding a new SKU:
+
+1. Add the product in Squarespace with a unique SKU.
+2. Add or update its pricing rule in `data/store_price_rules.csv`.
+3. Upload the refreshed Squarespace export on `/pricing-upload`.
+4. Save the latest supplier quote on `/supplier-pricing` if you want profit-floor protection.
+5. Review `/supplier-profitability` before allowing auto-pricing to move the SKU.
+
+What each page is expected to do
+--------------------------------
+
+`/pricing-upload`
+
+- Purpose:
+  - replace the local Squarespace export with a fresh one after store edits
+- Inputs:
+  - a valid Squarespace product CSV export
+- Outputs:
+  - archive copy in `data/archive/squarespace_exports/`
+  - canonical working export in `products_Apr-09_04-31-18PM.csv`
+  - coverage preview showing which SKUs have usable pricing rules
+- Debug questions:
+  - if a SKU is missing from automation, did it appear in the uploaded export?
+  - if the export was accepted but no preview row appears, check `unmatched_rules`
+
+`/supplier-pricing`
+
+- Purpose:
+  - convert supplier screenshots into structured SKU-linked quote rows
+- Inputs:
+  - OCR-reviewed rows containing supplier item name and JPY cost
+- Outputs:
+  - appended historical quote rows in `data/supplier_quotes.csv`
+- Debug questions:
+  - if OCR rows have blank SKU, check `data/supplier_name_mapping.csv`
+  - if a quote was saved but not reflected later, confirm the SKU was populated on save
+
+`/supplier-profitability`
+
+- Purpose:
+  - answer whether one unit is profitable under current supplier-side and buyer-side assumptions
+- Inputs:
+  - latest supplier quote per SKU
+  - generated market/store target data
+  - operator assumptions from the page
+- Outputs:
+  - per-unit rows with landed cost, break-even, target-margin price, and decision status
+- Important interpretation:
+  - results are per unit, not whole-order totals
+  - `Estimate from Order` allocates whole-order shipping down to one box
+  - `Manual per Item` ignores order shipping and uses only the manual inbound value
+
+Generated target file fields
+----------------------------
+
+`data/market_prices_latest.csv` now includes:
+
+- `market_price`
+  - latest market price pulled from the signal snapshot
+- `target_price`
+  - final price the sync script will try to push to Squarespace
+- `profit_floor_price`
+  - minimum viable target derived from supplier economics, blank when no supplier quote exists
+- `supplier_cost_jpy`
+  - raw supplier quote used for floor calculation
+- `target_source`
+  - `market` when market logic won
+  - `profit_floor` when supplier economics overrode the market target
+
+If pricing looks wrong:
+
+1. Check whether the SKU appears in `products_Apr-09_04-31-18PM.csv`.
+2. Check its rule row in `data/store_price_rules.csv`.
+3. Check its latest supplier quote in `data/supplier_quotes.csv`.
+4. Rebuild targets:
+
+```bash
+cd /opt/pokemon-momentum
+python3 scripts/build_store_price_targets.py
+```
+
+5. Inspect the resulting row in `data/market_prices_latest.csv`.
+
+
 Environment
 -----------
 Primary app path:
@@ -244,6 +357,22 @@ Expected result:
 - copied into `/opt/pokemon-momentum/images/logos/<groupId>.<ext>`
 - Group Signals and Set Explorer can show local set logos when those files exist
 - shared-logo sets such as galleries or subset companions can intentionally reuse the same source logo
+
+Recover from DuckDB lock fallback:
+
+If `/dashboard` loads but API calls like `/groups`, `/health`, or `/product_picker` fail with DuckDB lock errors, the dashboard now tries to fall back to CSV/parquet sources automatically. If the app still looks stale or partially loaded:
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose restart pokemon-momentum
+sudo docker-compose logs --tail=120 pokemon-momentum
+```
+
+What to look for:
+
+- lock errors mentioning `/app/data/processed/prices_db.duckdb`
+- dashboard pages still rendering even when some endpoints are falling back
+- after restart, key smoke checks like `/health` and `/groups?category_id=85&limit=5` should return again
 
 Fix stale `Product <id>` metadata placeholders:
 

@@ -1,7 +1,8 @@
+import csv
 import json
 import os
 import re
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import unquote
 import sys
@@ -10,9 +11,10 @@ import urllib.error
 import duckdb
 import pandas as pd
 import requests
-from fastapi import Cookie, FastAPI, Header, HTTPException
+from fastapi import Cookie, FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from scripts.build_store_price_targets import build_target_rows
 
 from scripts.dashboards.query_support import (
     DB_PATH,
@@ -60,6 +62,9 @@ ACCOUNT_SETTINGS_HTML = SCRIPT_DIR / "account_settings.html"
 EOD_DASHBOARD_HTML = SCRIPT_DIR / "eod_dashboard.html"
 EMBED_DASHBOARD_HTML = SCRIPT_DIR / "embed_dashboard.html"
 BUG_REPORTS_HTML = SCRIPT_DIR / "bug_reports.html"
+PRICING_UPLOAD_HTML = SCRIPT_DIR / "pricing_upload.html"
+SUPPLIER_PRICING_HTML = SCRIPT_DIR / "supplier_pricing.html"
+SUPPLIER_PROFITABILITY_HTML = SCRIPT_DIR / "supplier_profitability.html"
 DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
 IMAGE_DIR_CANDIDATES = [
     SCRIPT_DIR.parents[2] / "images",
@@ -147,6 +152,24 @@ def embed_dashboard(authorization: str | None = Header(default=None), tracking_t
 def bug_reports_page(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
     require_admin_user(authorization=authorization, tracking_token=tracking_token)
     return FileResponse(BUG_REPORTS_HTML)
+
+
+@app.get("/pricing-upload")
+def pricing_upload_page(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    return FileResponse(PRICING_UPLOAD_HTML)
+
+
+@app.get("/supplier-pricing")
+def supplier_pricing_page(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    return FileResponse(SUPPLIER_PRICING_HTML)
+
+
+@app.get("/supplier-profitability")
+def supplier_profitability_page(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    return FileResponse(SUPPLIER_PROFITABILITY_HTML)
 
 
 @app.get("/dashboard-common.js")
@@ -372,9 +395,9 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID = {
     649421: {"pack_count": 18, "product_type": "Half Booster Box"},
     541171: {"pack_count": 3, "product_type": "Tin"},
     587368: {"pack_count": 3, "product_type": "Tin"},
-    558713: {"pack_count": 3, "product_type": "Mini Pack Bundle"},
+    558713: {"pack_count": 35, "product_type": "Mini Pack Bundle", "msrp_total": 14.99},
     591147: {"pack_count": 3, "product_type": "Tin"},
-    280302: {"pack_count": 40, "product_type": "Booster Bundle"},
+    280302: {"pack_count": 40, "product_type": "Mini Pack Bundle"},
     591145: {"pack_count": 3, "product_type": "Tin"},
     591146: {"pack_count": 3, "product_type": "Tin"},
     562354: {"pack_count": 5, "product_type": "Tin"},
@@ -387,6 +410,8 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID = {
     616737: {"pack_count": 7},
     475647: {"pack_count": 11},
     644731: {"pack_count": 216},
+    591211: {"pack_count": 120, "product_type": "Mini Pack Bundle"},
+    566954: {"pack_count": 80, "product_type": "Mini Pack Bundle"},
     # Mixed sealed layouts supplied by user notes.
     518638: {
         "pack_count": 25,
@@ -680,6 +705,9 @@ def _infer_pack_count(
     is_japanese_market = int(category_id or 0) == 85
     jp_packs_per_box, _ = _jp_pricing_profile(name_raw, group_name_raw) if is_japanese_market else (36, 0.0)
 
+    if _is_trick_or_trade_product(name_raw):
+        return 35 * multiplier
+
     if "ultra premium collection case" in name:
         return 16 * 6 * multiplier
     if "booster box case" in name or ("booster box" in name and "case" in name):
@@ -746,9 +774,15 @@ def _infer_pack_count(
     return None
 
 
-def _infer_retail_per_pack(name_raw: str, product_class: str) -> float:
+def _infer_retail_per_pack(name_raw: str, product_class: str, product_type: str | None = None) -> float:
     name = (name_raw or "").lower()
+    normalized_type = str(product_type or "").lower()
 
+    if _is_trick_or_trade_product(name_raw):
+        return 0.0
+
+    if normalized_type == "mini pack bundle":
+        return 0.0
     if "booster box" in name:
         return 4.49
     if "booster bundle" in name:
@@ -863,6 +897,558 @@ def require_admin_user(
     if not is_admin_username(session_user.username):
         raise HTTPException(status_code=403, detail="Admin access required")
     return session_user
+
+
+STORE_PRICE_RULES_CSV = SCRIPT_DIR.parents[1] / "data" / "store_price_rules.csv"
+SQUARESPACE_EXPORT_CSV = SCRIPT_DIR.parents[1] / "products_Apr-09_04-31-18PM.csv"
+SQUARESPACE_EXPORT_ARCHIVE_DIR = SCRIPT_DIR.parents[1] / "data" / "archive" / "squarespace_exports"
+SUPPLIER_NAME_MAPPING_CSV = SCRIPT_DIR.parents[1] / "data" / "supplier_name_mapping.csv"
+SUPPLIER_QUOTES_CSV = SCRIPT_DIR.parents[1] / "data" / "supplier_quotes.csv"
+SQUARESPACE_MAPPING_CSV = SCRIPT_DIR.parents[1] / "output" / "squarespace_product_mapping.csv"
+
+
+def _normalize_supplier_name(value: str) -> str:
+    """Normalize supplier screenshot item names for mapping-file lookup.
+
+    Expected input:
+    - OCR text or manually edited supplier item names such as "Mega Dream"
+
+    Expected output:
+    - lowercase whitespace-normalized key that matches `supplier_name_mapping.csv`
+    """
+    text = re.sub(r"[^a-z0-9]+", " ", str(value or "").lower()).strip()
+    return re.sub(r"\s+", " ", text)
+
+
+def load_supplier_name_mapping() -> dict[str, str]:
+    """Load supplier raw-name to SKU mappings used during OCR review.
+
+    Source:
+    - `data/supplier_name_mapping.csv`
+
+    Expected output:
+    - dict where key is normalized supplier item name and value is store SKU
+
+    Failure behavior:
+    - returns an empty dict when the mapping file does not exist yet
+    """
+    mapping: dict[str, str] = {}
+    if not SUPPLIER_NAME_MAPPING_CSV.exists():
+        return mapping
+    with SUPPLIER_NAME_MAPPING_CSV.open(newline="") as handle:
+        for row in csv.DictReader(handle):
+            key = _normalize_supplier_name(row.get("supplier_name_raw") or "")
+            sku = str(row.get("sku") or "").strip()
+            if key and sku:
+                mapping[key] = sku
+    return mapping
+
+
+def load_current_store_mapping() -> dict[str, dict]:
+    """Load the current SKU -> Squarespace product mapping generated by the sync script.
+
+    Expected output:
+    - dict keyed by SKU
+    - each value includes product id, variant id, title, and current prices
+    """
+    mapping: dict[str, dict] = {}
+    if not SQUARESPACE_MAPPING_CSV.exists():
+        return mapping
+    with SQUARESPACE_MAPPING_CSV.open(newline="") as handle:
+        for row in csv.DictReader(handle):
+            sku = str(row.get("sku") or "").strip()
+            if sku:
+                mapping[sku] = row
+    return mapping
+
+
+def load_latest_market_targets() -> dict[str, dict]:
+    """Load the most recent generated pricing targets for SKU-level comparison.
+
+    Expected output:
+    - dict keyed by SKU
+    - each value includes `market_price`, `target_price`, and pricing metadata
+    """
+    market_path = SCRIPT_DIR.parents[1] / "data" / "market_prices_latest.csv"
+    mapping: dict[str, dict] = {}
+    if not market_path.exists():
+        return mapping
+    with market_path.open(newline="") as handle:
+        for row in csv.DictReader(handle):
+            sku = str(row.get("sku") or "").strip()
+            if sku:
+                mapping[sku] = row
+    return mapping
+
+
+def summarize_store_price_rules() -> dict:
+    """Count how many store pricing rules are automatic vs manual."""
+    total_rules = 0
+    manual_rules = 0
+    with STORE_PRICE_RULES_CSV.open(newline="") as handle:
+        for row in csv.DictReader(handle):
+            sku = str(row.get("sku") or "").strip()
+            if not sku:
+                continue
+            total_rules += 1
+            if str(row.get("pricing_mode") or "").strip() == "manual":
+                manual_rules += 1
+    return {
+        "total_rules": total_rules,
+        "manual_rules": manual_rules,
+        "auto_rules": total_rules - manual_rules,
+    }
+
+
+def summarize_uploaded_export(upload_path: Path) -> dict:
+    """Build a pricing coverage summary for a newly uploaded Squarespace export.
+
+    Expected output:
+    - counts for export rows, covered target rows, unmatched rules, and a preview table
+    """
+    rows = []
+    with upload_path.open(newline="") as handle:
+        for row in csv.DictReader(handle):
+            sku = str(row.get("SKU") or "").strip()
+            if not sku:
+                continue
+            rows.append(
+                {
+                    "sku": sku,
+                    "title": str(row.get("Title") or "").strip(),
+                    "price": str(row.get("Price") or "").strip(),
+                    "sale_price": str(row.get("Sale Price") or "").strip(),
+                }
+            )
+    rows_by_sku = {row["sku"]: row for row in rows}
+    target_rows, unmatched = build_target_rows(upload_path)
+    auto_preview = []
+    covered = 0
+    missing_from_export = []
+    for row in target_rows:
+        export_row = rows_by_sku.get(row["sku"])
+        if export_row is None:
+            missing_from_export.append(row["sku"])
+            continue
+        covered += 1
+        auto_preview.append(
+            {
+                "sku": row["sku"],
+                "title": export_row["title"],
+                "current_price": export_row["price"],
+                "target_price": row["target_price"],
+                "market_price": row["market_price"],
+                "pricing_mode": row["pricing_mode"],
+                "market_source": row["market_source"],
+            }
+        )
+    auto_preview.sort(key=lambda item: item["sku"])
+    return {
+        "export_rows": len(rows),
+        "covered_rows": covered,
+        "target_rows": len(target_rows),
+        "missing_from_export": missing_from_export,
+        "unmatched_rules": unmatched,
+        "preview": auto_preview[:80],
+        **summarize_store_price_rules(),
+    }
+
+
+def enrich_supplier_rows(rows: list[dict]) -> list[dict]:
+    """Attach store and market context to OCR-reviewed supplier quote rows.
+
+    Expected output:
+    - each row is returned with `sku`, `store_title`, `store_price`, `market_price`,
+      and `target_price` added when available
+    """
+    supplier_mapping = load_supplier_name_mapping()
+    store_mapping = load_current_store_mapping()
+    market_targets = load_latest_market_targets()
+    enriched = []
+    for row in rows:
+        raw_name = str(row.get("item_name_raw") or "").strip()
+        cost_jpy = str(row.get("cost_jpy") or "").strip()
+        sku = str(row.get("sku") or "").strip()
+        if not sku:
+            sku = supplier_mapping.get(_normalize_supplier_name(raw_name), "")
+        store_row = store_mapping.get(sku, {})
+        market_row = market_targets.get(sku, {})
+        enriched.append(
+            {
+                "item_name_raw": raw_name,
+                "cost_jpy": cost_jpy,
+                "sku": sku,
+                "store_title": str(store_row.get("title") or ""),
+                "store_price": str(store_row.get("current_price") or "") or None,
+                "market_price": str(market_row.get("market_price") or "") or None,
+                "target_price": str(market_row.get("target_price") or "") or None,
+            }
+        )
+    return enriched
+
+
+def load_latest_supplier_quotes() -> tuple[list[dict], list[dict]]:
+    """Return the newest supplier quote row per SKU plus unmatched historical rows.
+
+    Expected output:
+    - first item: latest matched quote row per SKU
+    - second item: quote rows that still have no SKU mapping
+    """
+    latest_by_sku: dict[str, dict] = {}
+    unmatched_rows: list[dict] = []
+    if not SUPPLIER_QUOTES_CSV.exists():
+        return [], []
+    with SUPPLIER_QUOTES_CSV.open(newline="") as handle:
+        for row in csv.DictReader(handle):
+            sku = str(row.get("sku") or "").strip()
+            if not sku:
+                unmatched_rows.append(row)
+                continue
+            sort_key = (
+                str(row.get("quote_date") or "").strip(),
+                str(row.get("quote_id") or "").strip(),
+                str(row.get("item_name_raw") or "").strip().lower(),
+            )
+            existing = latest_by_sku.get(sku)
+            existing_key = (
+                str(existing.get("quote_date") or "").strip(),
+                str(existing.get("quote_id") or "").strip(),
+                str(existing.get("item_name_raw") or "").strip().lower(),
+            ) if existing else None
+            if existing is None or sort_key >= existing_key:
+                latest_by_sku[sku] = row
+    latest_rows = sorted(latest_by_sku.values(), key=lambda row: str(row.get("sku") or ""))
+    return latest_rows, unmatched_rows
+
+
+def _round_money(value: float | None) -> float | None:
+    """Round floats for JSON responses while preserving `None` for missing values."""
+    if value is None:
+        return None
+    return round(value + 1e-9, 2)
+
+
+def _profitability_status(required_price: float | None, target_price: float | None, market_price: float | None) -> str:
+    """Classify whether a SKU looks buyable under the current assumptions."""
+    if required_price is None:
+        return "Check assumptions"
+    if target_price is not None and target_price >= required_price:
+        return "Buy"
+    if market_price is not None and market_price >= required_price:
+        return "Thin margin"
+    return "Pass"
+
+
+@app.post("/supplier-profitability/data")
+def supplier_profitability_data(
+    payload: dict,
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    """Return per-SKU profitability rows for the Supplier Profitability admin page.
+
+    Expected input:
+    - JSON payload of operator assumptions from the browser UI
+
+    Expected output:
+    - `rows`: one per SKU with supplier/store/market economics
+    - `stats`: summary counts for the page
+    - `assumptions`: normalized values actually used in the calculation
+
+    Important:
+    - every row is a per-unit result, not a whole-order result
+    - when `inbound_shipping_mode=order-estimate`, whole-order shipping is allocated
+      down to a per-box estimate before profitability is calculated
+    """
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    assumptions = payload if isinstance(payload, dict) else {}
+    latest_quotes, unmatched_quotes = load_latest_supplier_quotes()
+    store_mapping = load_current_store_mapping()
+    market_targets = load_latest_market_targets()
+
+    jpy_per_usd = _safe_float(assumptions.get("jpy_per_usd")) or 145.0
+    import_duty_pct = _safe_float(assumptions.get("import_duty_pct")) or 0.0
+    inbound_shipping_mode = str(assumptions.get("inbound_shipping_mode") or "manual").strip().lower()
+    inbound_shipping_usd = _safe_float(assumptions.get("inbound_shipping_usd")) or 0.0
+    order_shipping_jpy = _safe_float(assumptions.get("order_shipping_jpy")) or 0.0
+    order_box_count = _safe_float(assumptions.get("order_box_count")) or 0.0
+    handling_cost_usd = _safe_float(assumptions.get("handling_cost_usd")) or 0.0
+    outbound_shipping_usd = _safe_float(assumptions.get("outbound_shipping_usd")) or 0.0
+    shipping_credit_usd = _safe_float(assumptions.get("shipping_credit_usd")) or 0.0
+    disbursement_fee_usd = _safe_float(assumptions.get("disbursement_fee_usd")) or 15.0
+    platform_fee_pct = _safe_float(assumptions.get("platform_fee_pct")) or 0.0
+    payment_fee_pct = _safe_float(assumptions.get("payment_fee_pct")) or 0.0
+    payment_fee_fixed = _safe_float(assumptions.get("payment_fee_fixed")) or 0.0
+    income_tax_pct = _safe_float(assumptions.get("income_tax_pct")) or 0.0
+    target_margin_pct = _safe_float(assumptions.get("target_margin_pct")) or 0.0
+
+    fee_rate = max(0.0, (platform_fee_pct + payment_fee_pct) / 100.0)
+    tax_rate = max(0.0, income_tax_pct / 100.0)
+    target_margin_rate = max(0.0, target_margin_pct / 100.0)
+    margin_denominator = 1.0 - fee_rate - target_margin_rate
+    break_even_denominator = 1.0 - fee_rate
+
+    def profit_at_price(price: float | None, fixed_costs: float) -> tuple[float | None, float | None, float | None, float | None]:
+        """Return before/after-tax profit and margin for one hypothetical sale price."""
+        if price is None:
+            return None, None, None, None
+        profit_before_tax = price * (1.0 - fee_rate) - fixed_costs
+        profit_after_tax = profit_before_tax if profit_before_tax <= 0 else profit_before_tax * (1.0 - tax_rate)
+        margin_before_tax = (profit_before_tax / price) * 100.0 if price > 0 else None
+        margin_after_tax = (profit_after_tax / price) * 100.0 if price > 0 else None
+        return (
+            _round_money(profit_before_tax),
+            _round_money(profit_after_tax),
+            _round_money(margin_before_tax),
+            _round_money(margin_after_tax),
+        )
+
+    rows: list[dict] = []
+    for quote in latest_quotes:
+        sku = str(quote.get("sku") or "").strip()
+        if not sku:
+            continue
+        cost_jpy = _safe_float(quote.get("cost_jpy"))
+        if cost_jpy is None or cost_jpy <= 0 or jpy_per_usd <= 0:
+            continue
+        store_row = store_mapping.get(sku, {})
+        market_row = market_targets.get(sku, {})
+        supplier_cost_usd = cost_jpy / jpy_per_usd
+        import_cost_usd = supplier_cost_usd * (import_duty_pct / 100.0)
+        estimated_inbound_shipping_jpy = None
+        estimated_inbound_shipping_usd = None
+        effective_inbound_shipping_usd = inbound_shipping_usd
+        # Supplier quotes often arrive as whole-order shipping. When that mode is
+        # selected, allocate the quote down to a per-box estimate so every row on
+        # the page still answers "what does one unit need to sell for?"
+        if inbound_shipping_mode == "order-estimate" and order_shipping_jpy > 0 and order_box_count > 0 and jpy_per_usd > 0:
+            estimated_inbound_shipping_jpy = order_shipping_jpy / order_box_count
+            estimated_inbound_shipping_usd = estimated_inbound_shipping_jpy / jpy_per_usd
+            effective_inbound_shipping_usd = estimated_inbound_shipping_usd
+        landed_cost_usd = supplier_cost_usd + import_cost_usd + effective_inbound_shipping_usd + handling_cost_usd + disbursement_fee_usd
+        fixed_costs = landed_cost_usd + outbound_shipping_usd + payment_fee_fixed - shipping_credit_usd
+        break_even_price = (fixed_costs / break_even_denominator) if break_even_denominator > 0 else None
+        required_price_for_target_margin = (fixed_costs / margin_denominator) if margin_denominator > 0 else None
+        store_price = _safe_float(store_row.get("current_price"))
+        market_price = _safe_float(market_row.get("market_price"))
+        target_price = _safe_float(market_row.get("target_price"))
+        store_profit = profit_at_price(store_price, fixed_costs)
+        market_profit = profit_at_price(market_price, fixed_costs)
+        target_profit = profit_at_price(target_price, fixed_costs)
+        recommended_floor = required_price_for_target_margin or break_even_price
+        rows.append(
+            {
+                "sku": sku,
+                "title": str(store_row.get("title") or market_row.get("title") or quote.get("item_name_raw") or sku),
+                "supplier_item": str(quote.get("item_name_raw") or ""),
+                "quote_date": str(quote.get("quote_date") or ""),
+                "supplier_name": str(quote.get("supplier_name") or ""),
+                "cost_jpy": int(round(cost_jpy)),
+                "supplier_cost_usd": _round_money(supplier_cost_usd),
+                "import_cost_usd": _round_money(import_cost_usd),
+                "inbound_shipping_mode": inbound_shipping_mode,
+                "inbound_shipping_usd": _round_money(effective_inbound_shipping_usd),
+                "estimated_inbound_shipping_jpy": _round_money(estimated_inbound_shipping_jpy),
+                "estimated_inbound_shipping_usd": _round_money(estimated_inbound_shipping_usd),
+                "landed_cost_usd": _round_money(landed_cost_usd),
+                "fixed_costs_usd": _round_money(fixed_costs),
+                "store_price": _round_money(store_price),
+                "market_price": _round_money(market_price),
+                "target_price": _round_money(target_price),
+                "break_even_price": _round_money(break_even_price),
+                "required_price_for_target_margin": _round_money(required_price_for_target_margin),
+                "recommended_floor_price": _round_money(recommended_floor),
+                "profit_at_store_before_tax": store_profit[0],
+                "profit_at_store_after_tax": store_profit[1],
+                "margin_at_store_before_tax_pct": store_profit[2],
+                "margin_at_store_after_tax_pct": store_profit[3],
+                "profit_at_market_before_tax": market_profit[0],
+                "profit_at_market_after_tax": market_profit[1],
+                "margin_at_market_before_tax_pct": market_profit[2],
+                "margin_at_market_after_tax_pct": market_profit[3],
+                "profit_at_target_before_tax": target_profit[0],
+                "profit_at_target_after_tax": target_profit[1],
+                "margin_at_target_before_tax_pct": target_profit[2],
+                "margin_at_target_after_tax_pct": target_profit[3],
+                "headroom_vs_target": _round_money((target_price - required_price_for_target_margin) if target_price is not None and required_price_for_target_margin is not None else None),
+                "decision": _profitability_status(required_price_for_target_margin, target_price, market_price),
+            }
+        )
+
+    rows.sort(
+        key=lambda row: (
+            {"Buy": 0, "Thin margin": 1, "Pass": 2, "Check assumptions": 3}.get(str(row.get("decision")), 9),
+            -(float(row.get("headroom_vs_target")) if row.get("headroom_vs_target") is not None else -10_000.0),
+            str(row.get("sku") or ""),
+        )
+    )
+
+    stats = {
+        "rows": len(rows),
+        "buy_count": sum(1 for row in rows if row.get("decision") == "Buy"),
+        "thin_margin_count": sum(1 for row in rows if row.get("decision") == "Thin margin"),
+        "pass_count": sum(1 for row in rows if row.get("decision") == "Pass"),
+        "unmatched_quote_rows": len(unmatched_quotes),
+        "avg_target_profit_after_tax": _round_money(
+            sum(float(row["profit_at_target_after_tax"]) for row in rows if row.get("profit_at_target_after_tax") is not None)
+            / max(1, sum(1 for row in rows if row.get("profit_at_target_after_tax") is not None))
+        ) if rows else None,
+    }
+
+    return {
+        "ok": True,
+        "rows": rows,
+        "stats": stats,
+        "assumptions": {
+            "jpy_per_usd": jpy_per_usd,
+            "import_duty_pct": import_duty_pct,
+            "inbound_shipping_mode": inbound_shipping_mode,
+            "inbound_shipping_usd": inbound_shipping_usd,
+            "order_shipping_jpy": order_shipping_jpy,
+            "order_box_count": order_box_count,
+            "handling_cost_usd": handling_cost_usd,
+            "outbound_shipping_usd": outbound_shipping_usd,
+            "shipping_credit_usd": shipping_credit_usd,
+            "disbursement_fee_usd": disbursement_fee_usd,
+            "platform_fee_pct": platform_fee_pct,
+            "payment_fee_pct": payment_fee_pct,
+            "payment_fee_fixed": payment_fee_fixed,
+            "income_tax_pct": income_tax_pct,
+            "target_margin_pct": target_margin_pct,
+        },
+    }
+
+
+@app.post("/pricing-upload/compare")
+async def pricing_upload_compare(
+    file: UploadFile = File(...),
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    """Accept a fresh Squarespace export, archive it, and preview pricing coverage.
+
+    Side effects:
+    - overwrites the canonical local export used by the pricing pipeline
+    - writes a timestamped archive copy for later debugging
+    """
+    admin_user = require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    filename = str(file.filename or "").strip()
+    if not filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Please upload a Squarespace CSV export.")
+
+    payload = await file.read()
+    if not payload:
+        raise HTTPException(status_code=400, detail="Uploaded file was empty.")
+
+    header_line = payload.splitlines()[0].decode("utf-8", errors="ignore") if payload.splitlines() else ""
+    if "Product ID [Non Editable]" not in header_line or "SKU" not in header_line:
+        raise HTTPException(status_code=400, detail="CSV does not look like a Squarespace product export.")
+
+    SQUARESPACE_EXPORT_ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    archive_path = SQUARESPACE_EXPORT_ARCHIVE_DIR / f"squarespace_export_{timestamp}.csv"
+    archive_path.write_bytes(payload)
+    SQUARESPACE_EXPORT_CSV.write_bytes(payload)
+
+    summary = summarize_uploaded_export(SQUARESPACE_EXPORT_CSV)
+    return {
+        "ok": True,
+        "saved_to": str(SQUARESPACE_EXPORT_CSV),
+        "archive_path": str(archive_path),
+        "uploaded_by": admin_user.username,
+        "uploaded_at": timestamp,
+        **summary,
+    }
+
+
+@app.post("/supplier-pricing/enrich")
+def supplier_pricing_enrich(
+    payload: dict,
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    """Enrich OCR-reviewed supplier rows with SKU, store, and market context."""
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    rows = payload.get("rows") or []
+    if not isinstance(rows, list):
+        raise HTTPException(status_code=400, detail="rows must be a list")
+    return {"ok": True, "rows": enrich_supplier_rows(rows)}
+
+
+@app.post("/supplier-pricing/save")
+def supplier_pricing_save(
+    payload: dict,
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    """Persist reviewed supplier quote rows to the historical supplier quote ledger.
+
+    Expected output:
+    - JSON with `quote_id`, `saved_rows`, `matched_skus`, and the CSV path
+    """
+    admin_user = require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    supplier_name = str(payload.get("supplier_name") or "").strip() or "Unknown Supplier"
+    quote_date = str(payload.get("quote_date") or "").strip()
+    source_name = str(payload.get("source_name") or "").strip()
+    source_type = str(payload.get("source_type") or "").strip() or "screenshot"
+    rows = payload.get("rows") or []
+    if not quote_date:
+        raise HTTPException(status_code=400, detail="quote_date is required")
+    if not isinstance(rows, list) or not rows:
+        raise HTTPException(status_code=400, detail="rows must be a non-empty list")
+
+    quote_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    SUPPLIER_QUOTES_CSV.parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = [
+        "quote_id",
+        "quote_date",
+        "supplier_name",
+        "source_name",
+        "source_type",
+        "item_name_raw",
+        "sku",
+        "cost_jpy",
+        "image_name",
+        "notes",
+    ]
+    needs_header = not SUPPLIER_QUOTES_CSV.exists() or SUPPLIER_QUOTES_CSV.stat().st_size == 0
+    saved_rows = 0
+    matched_skus = 0
+    with SUPPLIER_QUOTES_CSV.open("a", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        if needs_header:
+            writer.writeheader()
+        for row in rows:
+            item_name_raw = str(row.get("item_name_raw") or "").strip()
+            cost_jpy = str(row.get("cost_jpy") or "").strip()
+            sku = str(row.get("sku") or "").strip()
+            if not item_name_raw or not cost_jpy:
+                continue
+            writer.writerow(
+                {
+                    "quote_id": quote_id,
+                    "quote_date": quote_date,
+                    "supplier_name": supplier_name,
+                    "source_name": source_name,
+                    "source_type": source_type,
+                    "item_name_raw": item_name_raw,
+                    "sku": sku,
+                    "cost_jpy": cost_jpy,
+                    "image_name": source_name,
+                    "notes": f"saved_by={admin_user.username}",
+                }
+            )
+            saved_rows += 1
+            if sku:
+                matched_skus += 1
+
+    return {
+        "ok": True,
+        "quote_id": quote_id,
+        "saved_rows": saved_rows,
+        "matched_skus": matched_skus,
+        "quotes_path": str(SUPPLIER_QUOTES_CSV),
+    }
 
 
 def verify_google_identity_token(credential: str) -> dict:
@@ -1767,17 +2353,24 @@ def product_signals(limit: int = 500, min_price: float = 0.0, category_id: int =
 def good_buys(
     limit: int = 250,
     min_price: float = 5.0,
-    max_30d_pct: float = 0.0,
-    min_7d_pct: float = -2.0,
-    max_7d_pct: float = 5.0,
+    max_30d_pct: float = -5.0,
+    max_90d_pct: float = 10.0,
+    max_7d_pct: float = 3.0,
     min_recent_distinct_prices_30d: int = 10,
+    floor_days: int = 7,
+    min_floor_observations: int = 5,
+    max_floor_variance_pct: float = 8.0,
     exclude_prize_packs: bool = False,
     product_kind: str | None = None,
     category_id: int = 3,
 ):
     limit = max(1, min(limit, 5000))
     min_recent_distinct_prices_30d = max(2, min(min_recent_distinct_prices_30d, 30))
+    floor_days = max(5, min(floor_days, 10))
+    min_floor_observations = max(3, min(min_floor_observations, floor_days))
     category = category_config(category_id)
+    signal_source = product_signal_from(category.category_id)
+    price_source = prices_from(category.category_id)
     premium_rarity_filter = build_premium_rarity_filter("rarity")
     prize_pack_filter = ""
     product_kind_filter = "AND productKind = 'card'"
@@ -1792,6 +2385,75 @@ def good_buys(
         prize_pack_filter = "AND lower(COALESCE(groupName, '')) NOT LIKE '%prize pack%'"
 
     sql = f"""
+    WITH latest_signal AS (
+      SELECT
+        latest_date,
+        groupId,
+        groupName,
+        productId,
+        productName,
+        imageUrl,
+        rarity,
+        number,
+        productClass,
+        productKind,
+        subTypeName,
+        latest_price,
+        roc_7d_pct,
+        roc_30d_pct,
+        roc_90d_pct,
+        recent_distinct_prices_30d,
+        price_vs_sma30_pct,
+        trend_score
+      FROM {signal_source}
+    ),
+    recent_prices AS (
+      SELECT
+        productId,
+        groupId,
+        subTypeName,
+        date,
+        marketPrice,
+        ROW_NUMBER() OVER (
+          PARTITION BY productId, groupId, subTypeName
+          ORDER BY date DESC
+        ) AS rn
+      FROM {price_source}
+      WHERE categoryId = {category.category_id}
+        AND marketPrice IS NOT NULL
+    ),
+    floor_window AS (
+      SELECT
+        rp.productId,
+        rp.groupId,
+        rp.subTypeName,
+        COUNT(*) AS floor_observations,
+        MIN(rp.marketPrice) AS floor_low,
+        MAX(rp.marketPrice) AS floor_high,
+        AVG(rp.marketPrice) AS floor_avg
+      FROM recent_prices rp
+      JOIN latest_signal s
+        ON s.productId = rp.productId
+       AND s.groupId = rp.groupId
+       AND s.subTypeName = rp.subTypeName
+      WHERE s.categoryId = {category.category_id}
+        AND s.latest_date = (SELECT MAX(latest_date) FROM {signal_source})
+        AND rp.date >= s.latest_date - INTERVAL {floor_days} DAY
+      GROUP BY rp.productId, rp.groupId, rp.subTypeName
+    ),
+    recent_lift AS (
+      SELECT
+        productId,
+        groupId,
+        subTypeName,
+        MAX(CASE WHEN rn = 1 THEN marketPrice END) AS latest_price_1d,
+        MAX(CASE WHEN rn = 2 THEN marketPrice END) AS latest_price_2d,
+        MAX(CASE WHEN rn = 3 THEN marketPrice END) AS latest_price_3d,
+        COUNT(*) FILTER (WHERE rn <= 3) AS recent_price_points
+      FROM recent_prices
+      WHERE rn <= 3
+      GROUP BY productId, groupId, subTypeName
+    )
     SELECT
       latest_date,
       groupId,
@@ -1811,16 +2473,53 @@ def good_buys(
       recent_distinct_prices_30d,
       price_vs_sma30_pct,
       trend_score
-    FROM {product_signal_from(category.category_id)}
+    FROM latest_signal s
+    JOIN floor_window fw
+      ON fw.productId = s.productId
+     AND fw.groupId = s.groupId
+     AND fw.subTypeName = s.subTypeName
+    JOIN recent_lift rl
+      ON rl.productId = s.productId
+     AND rl.groupId = s.groupId
+     AND rl.subTypeName = s.subTypeName
     WHERE latest_price >= {min_price}
       {product_kind_filter}
       {rarity_filter}
       AND COALESCE(roc_30d_pct, 0) <= {max_30d_pct}
-      AND COALESCE(roc_7d_pct, 0) >= {min_7d_pct}
+      AND COALESCE(roc_90d_pct, 0) <= {max_90d_pct}
       AND COALESCE(roc_7d_pct, 0) <= {max_7d_pct}
       AND COALESCE(recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
+      AND (
+        (
+          rl.recent_price_points >= 3
+          AND rl.latest_price_1d < rl.latest_price_2d
+          AND rl.latest_price_2d < rl.latest_price_3d
+        )
+        OR (
+          fw.floor_observations >= {min_floor_observations}
+          AND GREATEST(
+            ABS(((fw.floor_high / NULLIF(latest_price, 0)) - 1) * 100.0),
+            ABS(((fw.floor_low / NULLIF(latest_price, 0)) - 1) * 100.0)
+          ) <= {max_floor_variance_pct}
+        )
+      )
       {prize_pack_filter}
-    ORDER BY ABS(COALESCE(roc_7d_pct, 0)) ASC, roc_30d_pct ASC, price_vs_sma30_pct ASC, latest_price DESC
+    ORDER BY
+      CASE
+        WHEN fw.floor_observations >= {min_floor_observations}
+         AND GREATEST(
+           ABS(((fw.floor_high / NULLIF(latest_price, 0)) - 1) * 100.0),
+           ABS(((fw.floor_low / NULLIF(latest_price, 0)) - 1) * 100.0)
+         ) <= {max_floor_variance_pct}
+        THEN 0 ELSE 1
+      END ASC,
+      GREATEST(
+        ABS(((fw.floor_high / NULLIF(latest_price, 0)) - 1) * 100.0),
+        ABS(((fw.floor_low / NULLIF(latest_price, 0)) - 1) * 100.0)
+      ) ASC,
+      roc_30d_pct ASC,
+      price_vs_sma30_pct ASC,
+      latest_price DESC
     LIMIT {limit}
     """
     cols, rows = q(sql)
@@ -2326,17 +3025,35 @@ def sealed_deals(
                 savings_pct = None
                 deal_score = None
         else:
-            retail_per_pack = _infer_retail_per_pack(name, product_class)
+            msrp_total_override = (
+                _safe_float(pack_count_override.get("msrp_total"))
+                if pack_count_override and pack_count_override.get("msrp_total") is not None
+                else None
+            )
+            inferred_product_type = (
+                str(pack_count_override.get("product_type"))
+                if pack_count_override and pack_count_override.get("product_type")
+                else str(composition_override.get("product_type"))
+                if composition_override and composition_override.get("product_type")
+                else _infer_product_type(name, product_class)
+            )
+            retail_per_pack = _infer_retail_per_pack(name, product_class, inferred_product_type)
+            if msrp_total_override is not None and pack_count > 0:
+                msrp_estimate = msrp_total_override
+                retail_per_pack = msrp_estimate / pack_count
+            else:
+                msrp_estimate = None
             if retail_per_pack <= 0:
                 continue
-            msrp_estimate = retail_per_pack * pack_count
+            if msrp_estimate is None:
+                msrp_estimate = retail_per_pack * pack_count
             if msrp_estimate <= 0:
                 continue
             savings_dollar = msrp_estimate - latest_price
             savings_pct = (savings_dollar / msrp_estimate) * 100 if msrp_estimate else None
             deal_score = retail_per_pack - price_per_pack
 
-        inferred_type = (
+        inferred_type = inferred_product_type if not is_japanese_market else (
             str(pack_count_override.get("product_type"))
             if pack_count_override and pack_count_override.get("product_type")
             else str(composition_override.get("product_type"))
@@ -2481,12 +3198,15 @@ def series(productId: int, subTypeName: str, days: int = 365, category_id: int =
                 sma30[-slice_len:],
             ))
             start = dates[-slice_len] if slice_len else None
-            return {
-                "columns": ["date", "price", "sma7", "sma30"],
-                "rows": rows_out,
-                "latest": str(latest),
-                "start": str(start) if start is not None else None,
-            }
+            # If the cached snapshot is too sparse, fall back to the raw prices table
+            # so thin snapshots (like 3-4 points) don't flatten the chart view.
+            if len(rows_out) >= min(7, days):
+                return {
+                    "columns": ["date", "price", "sma7", "sma30"],
+                    "rows": rows_out,
+                    "latest": str(latest),
+                    "start": str(start) if start is not None else None,
+                }
 
     price_source = prices_from(category.category_id)
 
@@ -3076,6 +3796,11 @@ def early_uptrends(
     limit: int = 200,
     min_price: float = 5.0,
     max_price_vs_sma30_pct: float = 8.0,
+    min_7d_pct: float = 1.0,
+    max_7d_pct: float = 10.0,
+    max_30d_pct: float = 12.0,
+    max_90d_pct: float = 25.0,
+    min_acceleration_7d_vs_30d: float = 0.5,
     min_recent_distinct_prices_30d: int = 10,
     min_recent_observations: int = 3,
     recent_change_within_days: int = 5,
@@ -3089,44 +3814,91 @@ def early_uptrends(
     recent_change_within_days = max(1, min(recent_change_within_days, 15))
     category = category_config(category_id)
     source = product_signal_from(category.category_id)
+    price_source = prices_from(category.category_id)
     product_kind_filter = ""
     if product_kind in {"card", "sealed"}:
         product_kind_filter = f"AND productKind = '{product_kind}'"
     sql = f"""
-    SELECT
+    WITH recent_prices AS (
+      SELECT
         productId,
         groupId,
         subTypeName,
-        groupName,
-        productName,
-        imageUrl,
-        rarity,
-        number,
-        early_streak,
-        recent_observations_7d AS recent_observations,
-        recent_distinct_prices_7d,
-        recent_distinct_prices_30d,
-        last_change_date,
-        latest_price,
-        latest_sma3,
-        latest_sma7,
-        latest_sma30,
+        marketPrice,
+        ROW_NUMBER() OVER (
+          PARTITION BY productId, groupId, subTypeName
+          ORDER BY date DESC
+        ) AS rn
+      FROM {price_source}
+      WHERE categoryId = {category.category_id}
+        AND marketPrice IS NOT NULL
+    ),
+    recent_lift AS (
+      SELECT
+        productId,
+        groupId,
+        subTypeName,
+        MAX(CASE WHEN rn = 1 THEN marketPrice END) AS latest_price_1d,
+        MAX(CASE WHEN rn = 2 THEN marketPrice END) AS latest_price_2d,
+        MAX(CASE WHEN rn = 3 THEN marketPrice END) AS latest_price_3d,
+        COUNT(*) FILTER (WHERE rn <= 3) AS recent_price_points
+      FROM recent_prices
+      WHERE rn <= 3
+      GROUP BY productId, groupId, subTypeName
+    )
+    SELECT
+        s.productId,
+        s.groupId,
+        s.subTypeName,
+        s.groupName,
+        s.productName,
+        s.imageUrl,
+        s.rarity,
+        s.number,
+        s.early_streak,
+        s.recent_observations_7d AS recent_observations,
+        s.recent_distinct_prices_7d,
+        s.recent_distinct_prices_30d,
+        s.last_change_date,
+        s.latest_price,
+        s.roc_7d_pct,
+        s.roc_30d_pct,
+        s.roc_90d_pct,
+        s.acceleration_7d_vs_30d,
+        s.latest_sma3,
+        s.latest_sma7,
+        s.latest_sma30,
+        rl.latest_price_1d,
+        rl.latest_price_2d,
+        rl.latest_price_3d,
         CASE WHEN latest_sma30 IS NULL OR latest_sma30 = 0 THEN NULL
              ELSE ((latest_price / latest_sma30) - 1) * 100 END AS pct_vs_sma30
-    FROM {source}
-    WHERE categoryId = {category.category_id}
-      AND latest_date = (SELECT MAX(latest_date) FROM {source})
-      AND latest_price >= {min_price}
-      AND early_streak >= {days_required}
-      AND latest_sma30 IS NOT NULL
-      AND COALESCE(recent_observations_7d, 0) >= {min_recent_observations}
-      AND COALESCE(recent_distinct_prices_7d, 0) >= 2
-      AND COALESCE(recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
-      AND last_change_date IS NOT NULL
-      AND last_change_date >= latest_date - INTERVAL {recent_change_within_days} DAY
-      AND ((latest_price / NULLIF(latest_sma30, 0)) - 1) * 100 <= {max_price_vs_sma30_pct}
+    FROM {source} s
+    JOIN recent_lift rl
+      ON rl.productId = s.productId
+     AND rl.groupId = s.groupId
+     AND rl.subTypeName = s.subTypeName
+    WHERE s.categoryId = {category.category_id}
+      AND s.latest_date = (SELECT MAX(latest_date) FROM {source})
+      AND s.latest_price >= {min_price}
+      AND s.early_streak >= {days_required}
+      AND s.latest_sma30 IS NOT NULL
+      AND COALESCE(s.recent_observations_7d, 0) >= {min_recent_observations}
+      AND COALESCE(s.recent_distinct_prices_7d, 0) >= 2
+      AND COALESCE(s.recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
+      AND s.last_change_date IS NOT NULL
+      AND s.last_change_date >= s.latest_date - INTERVAL {recent_change_within_days} DAY
+      AND COALESCE(s.roc_7d_pct, 0) >= {min_7d_pct}
+      AND COALESCE(s.roc_7d_pct, 0) <= {max_7d_pct}
+      AND COALESCE(s.roc_30d_pct, 0) <= {max_30d_pct}
+      AND COALESCE(s.roc_90d_pct, 0) <= {max_90d_pct}
+      AND COALESCE(s.acceleration_7d_vs_30d, 0) >= {min_acceleration_7d_vs_30d}
+      AND rl.recent_price_points >= 3
+      AND rl.latest_price_1d > rl.latest_price_2d
+      AND rl.latest_price_2d > rl.latest_price_3d
+      AND ((s.latest_price / NULLIF(s.latest_sma30, 0)) - 1) * 100 <= {max_price_vs_sma30_pct}
       {product_kind_filter}
-    ORDER BY early_streak ASC, pct_vs_sma30 ASC, latest_price DESC
+    ORDER BY s.acceleration_7d_vs_30d DESC, pct_vs_sma30 ASC, s.roc_30d_pct ASC, s.latest_price DESC
     LIMIT {limit}
     """
 

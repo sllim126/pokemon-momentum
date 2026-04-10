@@ -723,7 +723,7 @@
       position: fixed;
       inset: 0;
       display: none;
-      z-index: 58;
+      z-index: 180;
     }
 
     .guide-modal.open {
@@ -1228,6 +1228,33 @@
       text-align: right;
       min-width: 132px;
       margin-left: auto;
+    }
+
+    .hero-buy-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      padding: 10px 14px;
+      border: 1px solid rgba(34, 176, 255, 0.28);
+      border-radius: 14px;
+      background: rgba(24, 56, 92, 0.34);
+      color: #9be3ff;
+      font: inherit;
+      font-weight: 700;
+      line-height: 1;
+      text-decoration: none;
+      transition: 0.14s ease;
+    }
+
+    .stage-product-copy .hero-buy-link {
+      justify-content: flex-start;
+    }
+
+    .hero-buy-link:hover {
+      background: rgba(34, 176, 255, 0.16);
+      border-color: rgba(34, 176, 255, 0.4);
+      color: #b8edff;
     }
 
     .price-main {
@@ -2902,7 +2929,12 @@
         bottom: 16px !important;
         top: auto !important;
         width: auto;
-        max-height: min(54vh, calc(100vh - 32px));
+        max-height: min(68vh, calc(100vh - 32px));
+      }
+
+      .guide-modal.mobile-top-card .guide-card {
+        top: 16px !important;
+        bottom: auto !important;
       }
 
       .guide-spotlight {
@@ -3303,6 +3335,9 @@
             <div class="tracking-menu-pages" id="trackingAdminPages" hidden>
               <div class="field-label">Admin Pages</div>
               <div class="tracking-menu-page-list">
+                <a class="tracking-menu-link" href="/pricing-upload">Pricing Upload</a>
+                <a class="tracking-menu-link" href="/supplier-pricing">Supplier Pricing</a>
+                <a class="tracking-menu-link" href="/supplier-profitability">Supplier Profitability</a>
                 <a class="tracking-menu-link" href="/bug-reports">Bug Reports</a>
                 <a class="tracking-menu-link" href="/eod-dashboard">End of Day</a>
                 <a class="tracking-menu-link" href="/embed">Embed View</a>
@@ -3340,6 +3375,7 @@
                   <div class="section-label">Selected Product</div>
                   <h1 id="cardTitle">Loading...</h1>
                   <div class="subtitle" id="cardSubtitle">Fetching product history and metadata.</div>
+                  <a id="heroBuyLink" class="hero-buy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>TCGplayer</a>
                 </div>
               </div>
               <div class="price-block">
@@ -3735,6 +3771,7 @@
     const headlinePrice = document.getElementById("headlinePrice");
     const headlineChangeWrap = document.getElementById("headlineChangeWrap");
     const headlineWindowChangeWrap = document.getElementById("headlineWindowChangeWrap");
+    const heroBuyLink = document.getElementById("heroBuyLink");
     const freshnessBadge = document.getElementById("freshnessBadge");
     const detailStats = document.getElementById("detailStats");
     const mobileDetailStats = document.getElementById("mobileDetailStats");
@@ -3939,42 +3976,52 @@
       },
       {
         selector: "#tabs",
+        mobileSelector: "#mobileIndicatorMenu",
         placement: "bottom",
         padding: 10,
-        target: "Market Signals",
-        title: "Use the tabs to decide what kind of opportunity you want to scan.",
-        copy: "Each tab is answering a slightly different question, so the quickest way to learn the dashboard is to think in terms of workflow rather than formulas.",
+        target: "Indicators",
+        title: "Use the indicator drawer to choose what kind of setup you want to scan.",
+        copy: "On mobile, the indicator button opens the main research views.",
         points: [
-          "Top Movers shows what has already moved the most recently.",
-          "Early Movers and Confirmed Movers help separate earlier setups from stronger established trends.",
-          "Good Buys, Breakouts, Set Strength, Browse Set, and Browse Species are the main research tools."
-        ]
+          "Top Movers shows what already moved.",
+          "Early Movers and Confirmed Movers separate early setups from stronger trends.",
+          "Browse Set, Browse Species, Good Buys, and Breakouts are the main research tools."
+        ],
+        mobileMenuOpen: true,
+        mobileCardPosition: "top"
       },
       {
         selector: "#heroSection .signal-topline",
+        mobileSelector: "#heroSection .chart-window",
         placement: "bottom",
         padding: 10,
         target: "Chart + Window",
         title: "Use the chart to confirm whether the move still looks healthy.",
-        copy: "Once a row is selected, the main chart becomes the quick quality check. The price, SMA lines, and window buttons are there to help you decide whether the move is fresh, extended, or stabilizing.",
+        copy: "Once a row is selected, the chart is the quick quality check.",
         points: [
-          "Flip between 30D, 90D, 180D, 1Y, 2Y, and Full to see whether momentum is recent or part of a larger trend.",
-          "The selected price block shows the current price, percent vs SMA30, and change over the visible window.",
-          "If the chart looks wrong for the thesis, move on quickly rather than forcing the setup."
-        ]
+          "Flip windows to see whether the move is recent or part of a larger trend.",
+          "Use the price and percent readouts to judge extension.",
+          "If the chart looks wrong, move on quickly."
+        ],
+        mobileDemoTab: "sma30_holds",
+        mobileSelectTopResult: true,
+        mobileOpenDetail: true
       },
       {
         selector: "#trackingToggleBtn",
+        mobileSelector: "#mobileSignalResults .mobile-track-row",
         placement: "left",
         padding: 8,
-        target: "Tracking + Pages",
-        title: "Save the ones you care about and use the companion pages when needed.",
-        copy: "The account menu and tracking actions turn the dashboard from a scanner into a working research tool. Save what matters, then branch into the lighter companion pages when you want a different lens.",
+        target: "Quick Actions",
+        title: "Use the quick actions to save or branch out fast.",
+        copy: "These buttons are the fastest way to act on a card.",
         points: [
-          "Use Favorite, Watchlist, Research, and Buy List to keep a short working set.",
-          "Open Tracked Items from the account menu or right rail to revisit saved cards quickly.",
-          "Set Explorer and Sealed Deals are public companion pages for set-level and sealed-product work."
-        ]
+          "Fav saves the card to your favorites.",
+          "Set and Species open the matching research views.",
+          "Buy opens the TCGplayer listing."
+        ],
+        mobileDemoTab: "sma30_holds",
+        mobileEnsureFeed: true
       }
     ];
 
@@ -3991,7 +4038,7 @@
         title: "Fresh 90-day highs across all tracked cards and products."
       },
       good_buys: {
-        path: "/good_buys?limit=120&min_price=5&max_30d_pct=0&max_7d_pct=5",
+        path: "/good_buys?limit=120&min_price=5&max_30d_pct=-5&max_90d_pct=10&max_7d_pct=3&floor_days=7&min_floor_observations=5&max_floor_variance_pct=8",
         columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "roc_7d_pct", "roc_30d_pct", "roc_90d_pct", "price_vs_sma30_pct"],
         title: "Premium-rarity cards that have been drifting lower and may be entering buyable pullback territory."
       },
@@ -4033,6 +4080,8 @@
         title: "Browse Species shows matching listings for a searched card name across sets."
       }
     };
+
+    const sealedColumnStrip = new Set(["number", "subTypeName"]);
     const mobileIndicatorTabKeys = new Set([
       "top_movers",
       "breakouts",
@@ -4228,10 +4277,76 @@
       }
     }
 
+    function syncGuideMobileStepState() {
+      if (!guideModal) return;
+      guideModal.classList.remove("mobile-top-card");
+      if (window.innerWidth > 760) return;
+      const step = guideSteps[Math.max(0, Math.min(guideSteps.length - 1, guideStepIndex))];
+      if (step?.mobileCardPosition === "top") {
+        guideModal.classList.add("mobile-top-card");
+      }
+      if (step?.mobileMenuOpen) {
+        setMobileSearchOpen(false);
+        setTrackingMenuOpen(false);
+        setMobileIndicatorMenuOpen(true);
+      } else {
+        setMobileIndicatorMenuOpen(false);
+        setTrackingMenuOpen(false);
+      }
+    }
+
+    function shouldKeepGuideMobileIndicatorMenuOpen() {
+      if (!guideModalOpen || window.innerWidth > 760) return false;
+      const step = guideSteps[Math.max(0, Math.min(guideSteps.length - 1, guideStepIndex))];
+      return Boolean(step?.mobileMenuOpen);
+    }
+
+    async function prepareGuideStepState() {
+      if (!guideModalOpen || window.innerWidth > 760) return;
+      const step = guideSteps[Math.max(0, Math.min(guideSteps.length - 1, guideStepIndex))];
+      guideModal.classList.toggle("mobile-top-card", step?.mobileCardPosition === "top");
+      if (step?.mobileDemoTab) {
+        setMobileSearchOpen(false);
+        setMobileIndicatorMenuOpen(false);
+        setTrackingMenuOpen(false);
+        if (currentTab !== step.mobileDemoTab) {
+          currentTab = step.mobileDemoTab;
+          syncPrimaryTabButtons();
+          syncUrlState();
+          updateGroupSignalFilterVisibility();
+          updateTrackedFilterVisibility();
+          updateBrowseSetFilterVisibility();
+          updateGoodBuysFilterVisibility();
+          updateSignalSegmentVisibility();
+          updateDevTabHelp(currentTab);
+          updateMobileNavState();
+        }
+        const rows = activeTableRows.length && currentTab === step.mobileDemoTab
+          ? activeTableRows
+          : await loadTable();
+        if (step.mobileEnsureFeed) {
+          setMobileDetailOpen(false);
+          scrollSectionIntoView(signalsSection);
+          return;
+        }
+        if (step.mobileSelectTopResult && rows && rows.length) {
+          currentChartMode = "product";
+          activeTableIndex = 0;
+          await selectItem(rows[0], { openDetail: Boolean(step.mobileOpenDetail) });
+          syncActiveTableRow(true);
+        }
+        return;
+      }
+      syncGuideMobileStepState();
+    }
+
     function getGuideTargetElement() {
       const step = guideSteps[Math.max(0, Math.min(guideSteps.length - 1, guideStepIndex))];
-      if (!step?.selector) return null;
-      return document.querySelector(step.selector);
+      const selector = window.innerWidth <= 760 && step?.mobileSelector
+        ? step.mobileSelector
+        : step?.selector;
+      if (!selector) return null;
+      return document.querySelector(selector);
     }
 
     function positionGuideOverlay() {
@@ -4292,8 +4407,8 @@
       if (window.innerWidth <= 760) {
         guideCard.style.left = "16px";
         guideCard.style.right = "16px";
-        guideCard.style.top = "auto";
-        guideCard.style.bottom = "16px";
+        guideCard.style.top = step?.mobileCardPosition === "top" ? "16px" : "auto";
+        guideCard.style.bottom = step?.mobileCardPosition === "top" ? "auto" : "16px";
         return;
       }
 
@@ -4337,7 +4452,8 @@
       guideModal.classList.toggle("open", guideModalOpen);
       if (guideModalOpen) {
         renderGuideStep();
-        window.setTimeout(() => {
+        window.setTimeout(async () => {
+          await prepareGuideStepState();
           positionGuideOverlay();
           guideNextBtn?.focus();
         }, 0);
@@ -4346,9 +4462,10 @@
       }
     }
 
-    function setGuideStep(index) {
+    async function setGuideStep(index) {
       guideStepIndex = Math.max(0, Math.min(guideSteps.length - 1, index));
       if (guideModalOpen) {
+        await prepareGuideStepState();
         const targetEl = getGuideTargetElement();
         if (targetEl) {
           targetEl.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
@@ -6050,6 +6167,9 @@
       // The lower table is intentionally task-based: it changes meaning based on the active tab,
       // but clicking any product-like row should still funnel back into the main chart selection.
       const cfg = tabConfig[currentTab];
+      const displayColumns = currentSegment === "sealed"
+        ? cfg.columns.filter((col) => !sealedColumnStrip.has(col))
+        : cfg.columns;
       const mobileFeedMode = isMobileSignalFeedMode();
       if (signalPanel) {
         signalPanel.classList.toggle("mobile-feed-mode", mobileFeedMode);
@@ -6057,7 +6177,7 @@
       if (!mobileFeedMode && mobileSignalResults) {
         mobileSignalResults.hidden = true;
       }
-      renderHeader(cfg.columns);
+      renderHeader(displayColumns);
       tableBody.innerHTML = "";
       emptyState.style.display = rows.length ? "none" : "block";
       if (!rows.length) {
@@ -6068,7 +6188,7 @@
       rows.forEach((item, index) => {
         const tr = document.createElement("tr");
         tr.dataset.index = String(index);
-        tr.innerHTML = cfg.columns.map((col) => `<td>${displayCell(col, item)}</td>`).join("");
+        tr.innerHTML = displayColumns.map((col) => `<td>${displayCell(col, item)}</td>`).join("");
         tr.addEventListener("click", async (event) => {
           const target = event.target;
           if (target instanceof HTMLElement && target.closest("[data-stop-row]")) {
@@ -6682,6 +6802,11 @@
       headlineWindowChangeWrap.hidden = false;
       headlineChangeWrap.innerHTML = `<span class="price-pill ${pct.cls}">${pct.text === "n/a" ? "vs SMA30 n/a" : `${pct.text} vs SMA30`}</span>`;
       headlineWindowChangeWrap.innerHTML = `<span class="price-pill window-change-pill ${pctWindow.cls}">${pctWindow.text === "n/a" ? "Window change n/a" : `${pctWindow.text} window change`}</span>`;
+      if (heroBuyLink) {
+        const tcgUrl = tcgplayerProductUrl(meta.productId, meta.productKind, meta.subTypeName);
+        heroBuyLink.hidden = !tcgUrl;
+        heroBuyLink.href = tcgUrl || "#";
+      }
       if (chartMetricPills) {
         chartMetricPills.innerHTML = "";
       }
@@ -6857,6 +6982,10 @@
       headlineWindowChangeWrap.hidden = true;
       headlineChangeWrap.innerHTML = "";
       headlineWindowChangeWrap.innerHTML = "";
+      if (heroBuyLink) {
+        heroBuyLink.hidden = true;
+        heroBuyLink.href = "#";
+      }
       if (chartMetricPills) {
         chartMetricPills.innerHTML = "";
       }
@@ -7831,14 +7960,14 @@
       guideSkipBtn?.addEventListener("click", () => setGuideModalOpen(false));
       guideBackdrop?.addEventListener("click", () => setGuideModalOpen(false));
       guidePrevBtn?.addEventListener("click", () => {
-        setGuideStep(guideStepIndex - 1);
+        setGuideStep(guideStepIndex - 1).catch((err) => console.error(err));
       });
       guideNextBtn?.addEventListener("click", () => {
         if (guideStepIndex >= guideSteps.length - 1) {
           setGuideModalOpen(false);
           return;
         }
-        setGuideStep(guideStepIndex + 1);
+        setGuideStep(guideStepIndex + 1).catch((err) => console.error(err));
       });
 
       document.querySelectorAll(".chart-window button").forEach((btn) => {
@@ -8184,6 +8313,7 @@
         if (
           mobileIndicatorMenu
           && !mobileIndicatorMenu.hidden
+          && !shouldKeepGuideMobileIndicatorMenuOpen()
           && !mobileIndicatorMenu.contains(target)
           && !(mobileBottomNav && mobileBottomNav.contains(target))
         ) {
