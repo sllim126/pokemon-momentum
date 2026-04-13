@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pricing Upload</title>
+  <style>
+    :root {
+      --bg: #0f1730;
+      --panel: #1a2745;
+      --panel-2: #12203a;
+      --line: rgba(94, 135, 198, 0.28);
+      --text: #e7eefc;
+      --muted: #9db0d8;
+      --accent: #45c0ff;
+      --good: #7fe3a1;
+      --warn: #f4c37b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(69, 192, 255, 0.16), transparent 28%),
+        linear-gradient(180deg, #111936 0%, var(--bg) 100%);
+    }
+    .shell {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .hero, .panel {
+      background: linear-gradient(180deg, rgba(34, 49, 83, 0.96), rgba(18, 32, 58, 0.96));
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
+    }
+    .hero {
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+    .eyebrow {
+      color: #8ea6d7;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 38px;
+    }
+    .sub {
+      color: var(--muted);
+      max-width: 780px;
+      line-height: 1.55;
+    }
+    .steps {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+      color: #d6e2fb;
+    }
+    .panel {
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 14px;
+    }
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px dashed rgba(104, 149, 219, 0.42);
+      background: rgba(13, 22, 41, 0.66);
+      color: var(--text);
+    }
+    button, a.button {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 11px 18px;
+      cursor: pointer;
+      color: var(--text);
+      background: rgba(22, 39, 71, 0.96);
+      text-decoration: none;
+      font: inherit;
+    }
+    button.primary {
+      background: linear-gradient(135deg, rgba(52, 168, 255, 0.95), rgba(36, 118, 246, 0.92));
+      border-color: rgba(120, 190, 255, 0.45);
+    }
+    .status {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .stat {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(102, 145, 214, 0.16);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .stat-label {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 30px;
+      font-weight: 600;
+    }
+    .list, .table-wrap {
+      margin-top: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px solid rgba(102, 145, 214, 0.16);
+    }
+    ul {
+      margin: 0;
+      padding-left: 18px;
+      color: #d7e4fd;
+    }
+    li + li {
+      margin-top: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(102, 145, 214, 0.12);
+      vertical-align: top;
+    }
+    th {
+      color: #95addb;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .muted { color: var(--muted); }
+    .good { color: var(--good); }
+    .warn { color: var(--warn); }
+    .empty {
+      color: var(--muted);
+      padding: 8px 0;
+    }
+    @media (max-width: 920px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .shell { padding: 14px; }
+      h1 { font-size: 31px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="eyebrow">Internal Ops</div>
+      <h1>Pricing Upload</h1>
+      <div class="sub">Upload your latest Squarespace product export here after you add or edit products. We’ll save it as the new comparison baseline, rebuild the auto-pricing coverage, and show you what the daily sync can now manage.</div>
+      <div class="steps">
+        <div>1. Add or edit products in Squarespace.</div>
+        <div>2. Export the Squarespace CSV.</div>
+        <div>3. Upload it here to refresh the local pricing baseline.</div>
+      </div>
+      <div class="actions">
+        <a class="button" href="/dashboard">Back to Dashboard</a>
+        <a class="button" href="/bug-reports">Bug Reports</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="eyebrow">Upload</div>
+      <form id="uploadForm">
+        <input id="csvFile" name="file" type="file" accept=".csv,text/csv" required>
+        <div class="actions">
+          <button class="primary" type="submit">Upload And Compare</button>
+          <div class="status" id="statusLine">Waiting for a Squarespace export.</div>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="eyebrow">Summary</div>
+      <div class="grid" id="summaryGrid">
+        <div class="stat"><div class="stat-label">Export Rows</div><div class="stat-value">0</div></div>
+        <div class="stat"><div class="stat-label">Auto Rules</div><div class="stat-value">0</div></div>
+        <div class="stat"><div class="stat-label">Covered Rows</div><div class="stat-value">0</div></div>
+        <div class="stat"><div class="stat-label">Manual Rules</div><div class="stat-value">0</div></div>
+      </div>
+      <div class="list">
+        <div class="eyebrow">Saved Files</div>
+        <div class="empty" id="savedFiles">Upload a file to see where it was saved.</div>
+      </div>
+      <div class="list">
+        <div class="eyebrow">Unmatched Rules</div>
+        <div class="empty" id="unmatchedRules">No upload yet.</div>
+      </div>
+      <div class="list">
+        <div class="eyebrow">Missing From Export</div>
+        <div class="empty" id="missingFromExport">No upload yet.</div>
+      </div>
+      <div class="table-wrap">
+        <div class="eyebrow">Auto Pricing Preview</div>
+        <div class="empty" id="previewEmpty">Upload a file to preview the first set of auto-priced products.</div>
+        <table id="previewTable" hidden>
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Title</th>
+              <th>Current</th>
+              <th>Target</th>
+              <th>Market</th>
+              <th>Rule</th>
+            </tr>
+          </thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const uploadForm = document.getElementById("uploadForm");
+    const csvFile = document.getElementById("csvFile");
+    const statusLine = document.getElementById("statusLine");
+    const summaryGrid = document.getElementById("summaryGrid");
+    const savedFiles = document.getElementById("savedFiles");
+    const unmatchedRules = document.getElementById("unmatchedRules");
+    const missingFromExport = document.getElementById("missingFromExport");
+    const previewEmpty = document.getElementById("previewEmpty");
+    const previewTable = document.getElementById("previewTable");
+    const previewBody = document.getElementById("previewBody");
+
+    function setStats(payload) {
+      const values = [
+        payload.export_rows || 0,
+        payload.auto_rules || 0,
+        payload.covered_rows || 0,
+        payload.manual_rules || 0,
+      ];
+      summaryGrid.querySelectorAll(".stat-value").forEach((node, index) => {
+        node.textContent = values[index];
+      });
+    }
+
+    function renderList(node, items, emptyMessage) {
+      if (!items || !items.length) {
+        node.innerHTML = `<div class="empty">${emptyMessage}</div>`;
+        return;
+      }
+      node.innerHTML = `<ul>${items.map((item) => `<li>${item}</li>`).join("")}</ul>`;
+    }
+
+    function renderPreview(items) {
+      if (!items || !items.length) {
+        previewTable.hidden = true;
+        previewEmpty.hidden = false;
+        previewEmpty.textContent = "No auto-priced rows were found in the uploaded export.";
+        previewBody.innerHTML = "";
+        return;
+      }
+      previewEmpty.hidden = true;
+      previewTable.hidden = false;
+      previewBody.innerHTML = items.map((item) => `
+        <tr>
+          <td>${item.sku}</td>
+          <td>${item.title}</td>
+          <td>${item.current_price}</td>
+          <td>${item.target_price}</td>
+          <td>${item.market_price}</td>
+          <td><span class="muted">${item.pricing_mode}</span><br><span class="muted">${item.market_source}</span></td>
+        </tr>
+      `).join("");
+    }
+
+    uploadForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!csvFile.files.length) {
+        statusLine.textContent = "Pick a CSV export first.";
+        return;
+      }
+      statusLine.textContent = "Uploading and rebuilding pricing coverage...";
+      const formData = new FormData();
+      formData.append("file", csvFile.files[0]);
+      try {
+        const response = await fetch("/pricing-upload/compare", {
+          method: "POST",
+          body: formData,
+          credentials: "same-origin",
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          statusLine.textContent = payload.detail || "Upload failed.";
+          return;
+        }
+        statusLine.innerHTML = `<span class="good">Upload saved and compared successfully.</span>`;
+        setStats(payload);
+        savedFiles.innerHTML = `
+          <div><strong>Saved to:</strong> ${payload.saved_to}</div>
+          <div><strong>Archive:</strong> ${payload.archive_path}</div>
+          <div><strong>Uploaded by:</strong> ${payload.uploaded_by}</div>
+          <div><strong>Uploaded at:</strong> ${payload.uploaded_at}</div>
+        `;
+        renderList(unmatchedRules, payload.unmatched_rules, "Every configured rule matched market data.");
+        renderList(missingFromExport, payload.missing_from_export, "All configured SKUs were present in the uploaded export.");
+        renderPreview(payload.preview);
+      } catch (error) {
+        statusLine.textContent = `Upload failed: ${error}`;
+      }
+    });
+  </script>
+</body>
+</html>

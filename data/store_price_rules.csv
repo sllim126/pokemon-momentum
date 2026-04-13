@@ -1,0 +1,69 @@
+sku,market_source,lookup_type,lookup_value,pricing_mode,min_price,note
+JP-151-BOX,jp,name,Pokemon Card 151 Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-SHINY-BOX,jp,name,Shiny Treasure ex High Class Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-BBD-BOX,jp,name,Black Bolt Deluxe Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-WF-BOX,jp,name,White Flare Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-BB-BOX,jp,name,Black Bolt Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-WFD-BOX,jp,name,White Flare Deluxe Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-MB-BOX,jp,name,Mega Brave Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-MS-BOX,jp,name,Mega Symphonia Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-INFX-BOX,jp,name,Inferno X Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-MD-BOX,jp,name,Mega Dream ex Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-TR-BB,jp,name,Glory of Team Rocket Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-V-BOX,jp,name,Violet ex Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-S-BOX,jp,name,Scarlet ex Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-TB-BOX,jp,name,Triple Beat Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-SH-BOX,jp,name,Snow Hazard Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-VSTAR-BOX,jp,name,VSTAR Universe Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-RBF-BOX,jp,name,Ruler of the Black Flame Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-FF-BOX,jp,name,Future Flash Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-AR-BOX,jp,name,Ancient Roar Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-CJ-BOX,jp,name,Cyber Judge Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-WIFO-BOX,jp,name,Wild Force Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-CH-BOX,jp,name,Crimson Haze Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-TM-BOX,jp,name,Transformation Mask Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-NW-BOX,jp,name,Night Wanderer Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-SM-BOX,jp,name,Stellar Miracle Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-PD-BOX,jp,name,Paradise Dragona Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-SEB-BOX,jp,name,Super Electric Breaker Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-BP-BOX,jp,name,Battle Partners Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-HWA-BOX,jp,name,Heat Wave Arena Booster Box,market_minus_5_pct_99,,Japanese booster box
+MYZ-JP-BB,jp,name,Nihil Zero Booster Box,market_minus_5_pct_99,,Japanese booster box
+NS-JPN-BB,jp,name,Ninja Spinner Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-RS-BOX,jp,name,Raging Surf Booster Box,market_minus_5_pct_99,,Japanese booster box kept explicit while export is stale
+ENG-DR-PACK,en,name,Destined Rivals Sleeved Booster Pack,market_minus_5_pct_99,,English matched by title
+ENG-JT-PACK,en,name,Journey Together Sleeved Booster Pack,market_minus_5_pct_99,,English matched by title
+ENG-DR-BUNDLE,en,name,Destined Rivals Booster Bundle,market_minus_5_pct_99,,English matched by title
+ENG-MEGA-PACK,en,name,Mega Evolution Sleeved Booster Pack,market_minus_5_pct_99,,English matched by title
+ENG-SILTEM-BP,en,name,Silver Tempest Sleeved Booster Pack,market_minus_5_pct_99,,English matched by title
+EN-PF-SB,en,name,Phantasmal Flames Sleeved Booster Pack,market_minus_5_pct_99,,English matched by title
+ENG-DR-ART,en,name,Destined Rivals Booster Pack Art Bundle [Set of 4],market_minus_5_pct_99,,English matched by title
+ENG-BB-BB,en,name,Black Bolt Booster Bundle,market_minus_5_pct_99,,English matched by title
+ENG-WF-BB,en,name,White Flare Booster Bundle,market_minus_5_pct_99,,English matched by title
+ENG-SS-ETB,en,name,Surging Sparks Elite Trainer Box,market_minus_5_pct_99,,English matched by title
+ENG-TM-ETB,en,name,Twilight Masquerade Elite Trainer Box,market_minus_5_pct_99,,English matched by title
+ENG-PF-BB,en,name,Phantasmal Flames Booster Bundle,market_minus_5_pct_99,,English matched by title
+EN-AH-ETB,en,name,Ascended Heroes Elite Trainer Box,market_minus_5_pct_99,,English matched by title
+ENG-BORING-PACK,en,name,,manual,,Self-made product; no market equivalent
+ENG-PF-ART,en,product_id,664903,market_minus_5_pct_99,,English TCGplayer-mapped product
+ENG-SS-BB,en,product_id,565629,market_minus_5_pct_99,,English TCGplayer-mapped product
+ENG-SS-Costco,en,product_id,650397,market_minus_5_pct_99,,English TCGplayer-mapped product
+ENG-HOUNDex-MCAP,en,product_id,561521,market_minus_5_pct_99_with_floor,29.99,Keep at or above supplier-based floor
+ENG-RESHex-MCAP,en,product_id,666512,market_minus_5_pct_99_with_floor,29.99,Keep at or above supplier-based floor
+ENG-BLKYUec-MCAP,en,product_id,662745,market_minus_5_pct_99_with_floor,29.99,Keep at or above supplier-based floor
+ENG-MELex-MCAP,en,product_id,662750,market_minus_5_pct_99_with_floor,29.99,Keep at or above supplier-based floor
+ENG-ARCHex-MCAP,en,product_id,656955,market_minus_5_pct_99_with_floor,29.99,Keep at or above supplier-based floor
+ENG-MEGLATex-MCAP,en,product_id,654188,market_minus_5_pct_99_with_floor,29.99,Keep at or above supplier-based floor
+ENG-PO-ART4,en,product_id,672413,market_minus_5_pct_99,,English TCGplayer-mapped product
+602682,jp,product_id,602682,market,,Japanese single at full market price
+567555,jp,product_id,567555,market,,Japanese single at full market price
+665881,jp,product_id,665881,market,,Japanese single at full market price
+636501,jp,product_id,636501,market,,Japanese single at full market price
+637278,jp,product_id,637278,market,,Japanese single at full market price
+567477,jp,product_id,567477,market,,Japanese single at full market price
+567364,jp,product_id,567364,market,,Japanese single at full market price
+637314,jp,product_id,637314,market,,Japanese single at full market price
+637220,jp,product_id,637220,market,,Japanese single at full market price
+637340,jp,product_id,637340,market,,Japanese single at full market price
+637332,jp,product_id,637332,market,,Japanese single at full market price
+637647,jp,product_id,637647,market,,Japanese single at full market price

@@ -34,6 +34,10 @@ DEFAULT_PLATFORM_FEE_PCT = Decimal(os.getenv("SUPPLIER_FLOOR_PLATFORM_FEE_PCT", 
 DEFAULT_PAYMENT_FEE_PCT = Decimal(os.getenv("SUPPLIER_FLOOR_PAYMENT_FEE_PCT", "0"))
 DEFAULT_PAYMENT_FEE_FIXED = Decimal(os.getenv("SUPPLIER_FLOOR_PAYMENT_FEE_FIXED_USD", "0.30"))
 DEFAULT_TARGET_MARGIN_PCT = Decimal(os.getenv("SUPPLIER_FLOOR_TARGET_MARGIN_PCT", "15"))
+DEFAULT_JP_BOOSTER_BOX_JPY_PER_USD = Decimal(os.getenv("JP_BOOSTER_BOX_JPY_PER_USD", "159"))
+DEFAULT_JP_BOOSTER_BOX_ORDER_SHIPPING_JPY = Decimal(os.getenv("JP_BOOSTER_BOX_ORDER_SHIPPING_JPY", "13800"))
+DEFAULT_JP_BOOSTER_BOX_ORDER_COUNT = Decimal(os.getenv("JP_BOOSTER_BOX_ORDER_COUNT", "10"))
+DEFAULT_JP_BOOSTER_BOX_MARKUP_PCT = Decimal(os.getenv("JP_BOOSTER_BOX_MARKUP_PCT", "20"))
 
 
 def parse_decimal(value: str) -> Decimal | None:
@@ -192,6 +196,58 @@ def compute_profit_floor(cost_jpy: Decimal) -> Decimal | None:
     return round_down_to_ending(required_price, Decimal("0.99"))
 
 
+def is_jp_booster_box_rule(rule: dict[str, str]) -> bool:
+    """Return whether a pricing rule should use the JP landed-cost markup logic.
+
+    Expected input:
+    - one row from `store_price_rules.csv`
+
+    Expected output:
+    - True for Japanese booster-box rows that should reflect current supplier costs
+    - False for everything else so the legacy pricing logic stays unchanged
+    """
+    market_source = (rule.get("market_source") or "").strip().lower()
+    note = (rule.get("note") or "").strip().lower()
+    lookup_value = (rule.get("lookup_value") or "").strip().lower()
+    return (
+        market_source == "jp"
+        and ("booster box" in note or "booster box" in lookup_value)
+    )
+
+
+def compute_jp_booster_box_floor(cost_jpy: Decimal) -> Decimal | None:
+    """Price JP booster boxes at 20% above landed cost from the latest supplier quote.
+
+    Expected input:
+    - `cost_jpy`: latest quoted supplier cost for one Japanese booster box
+
+    Expected output:
+    - Decimal target ending in `.99`
+    - None when the quote or FX/shipping assumptions are invalid
+
+    Landed-cost model:
+    - convert supplier JPY to USD
+    - add 10% import duty
+    - allocate `13,800 JPY` shipping across `10` mixed boxes
+    - add handling and disbursement
+    - multiply by `1.20`
+    """
+    if cost_jpy <= 0 or DEFAULT_JP_BOOSTER_BOX_JPY_PER_USD <= 0 or DEFAULT_JP_BOOSTER_BOX_ORDER_COUNT <= 0:
+        return None
+    supplier_cost_usd = cost_jpy / DEFAULT_JP_BOOSTER_BOX_JPY_PER_USD
+    import_cost_usd = supplier_cost_usd * (DEFAULT_IMPORT_DUTY_PCT / Decimal("100"))
+    inbound_shipping_usd = (DEFAULT_JP_BOOSTER_BOX_ORDER_SHIPPING_JPY / DEFAULT_JP_BOOSTER_BOX_ORDER_COUNT) / DEFAULT_JP_BOOSTER_BOX_JPY_PER_USD
+    landed_cost_usd = (
+        supplier_cost_usd
+        + import_cost_usd
+        + inbound_shipping_usd
+        + DEFAULT_HANDLING_COST_USD
+        + DEFAULT_DISBURSEMENT_FEE_USD
+    )
+    target = landed_cost_usd * (Decimal("1") + (DEFAULT_JP_BOOSTER_BOX_MARKUP_PCT / Decimal("100")))
+    return round_down_to_ending(target, Decimal("0.99"))
+
+
 def compute_target_price(market_price: Decimal, pricing_mode: str, min_price: Decimal | None) -> Decimal:
     """Compute the market-aware target before any supplier-profit protection is applied.
 
@@ -325,7 +381,12 @@ def build_target_rows(export_csv: Path = DEFAULT_EXPORT_CSV) -> tuple[list[dict[
             target_price = compute_target_price(market_price, pricing_mode, min_price)
             supplier_quote = latest_supplier_quotes.get(sku)
             supplier_cost_jpy = parse_decimal((supplier_quote or {}).get("cost_jpy") or "")
-            profit_floor_price = compute_profit_floor(supplier_cost_jpy) if supplier_cost_jpy is not None else None
+            if supplier_cost_jpy is not None and is_jp_booster_box_rule(rule):
+                profit_floor_price = compute_jp_booster_box_floor(supplier_cost_jpy)
+                target_source = "jp_landed_markup"
+            else:
+                profit_floor_price = compute_profit_floor(supplier_cost_jpy) if supplier_cost_jpy is not None else None
+                target_source = "profit_floor"
             final_target_price = target_price
             # Prefer the higher of the market-aware target and the supplier-cost
             # floor so automation protects margin by default.
@@ -342,7 +403,7 @@ def build_target_rows(export_csv: Path = DEFAULT_EXPORT_CSV) -> tuple[list[dict[
                     "market_source": source,
                     "profit_floor_price": str(profit_floor_price) if profit_floor_price is not None else "",
                     "supplier_cost_jpy": str(supplier_cost_jpy) if supplier_cost_jpy is not None else "",
-                    "target_source": "profit_floor" if profit_floor_price is not None and profit_floor_price > target_price else "market",
+                    "target_source": target_source if profit_floor_price is not None and profit_floor_price > target_price else "market",
                 }
             )
 

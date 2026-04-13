@@ -1,6 +1,23 @@
 Pokemon Momentum TODO
 =====================
 
+Recently Completed (April 2026)
+-------------------------------
+
+- Added supplier-aware pricing operations for Squarespace:
+  - CSV upload and archive flow
+  - supplier quote save/enrich flows
+  - supplier profitability analysis
+  - daily Squarespace price sync support
+- Added Japanese booster-box landed-cost pricing support for store targets.
+- Added singles pricing support using Squarespace SKU = TCGplayer product ID.
+- Expanded Set Explorer controls:
+  - era filtering
+  - extra sort modes
+  - clearer filter selection states
+  - close-on-outside-click filter menus
+- Retired `/embed` from active roadmap planning while keeping the page available.
+
 Recently Completed (March 2026)
 -------------------------------
 
@@ -60,14 +77,13 @@ Next Up
 
 - Profile `/dashboard` in browser developer tools and write down the current slowest first-load requests.
 - Reduce first-render time by deferring any non-essential API calls still blocking the first usable paint.
-- Review current header search behavior and fix any remaining result-selection quirks.
-- Improve search ranking for broad card names and edge cases.
+- Review current header search behavior and fix any remaining result-selection quirks. (Done 2026-04-10)
+- Improve search ranking for broad card names and edge cases. (Done 2026-04-10)
 - Test the dashboard on:
   - iPhone / phone
   - iPad / tablet
   and write down the concrete layout problems instead of keeping this as a generic mobile task.
 - Update the mobile intro / guide overlay so highlighted areas stay legible and the step content fits without requiring awkward scrolling.
-- Review `/embed` on phone and tablet after the main mobile layout settles.
 - Tighten `Good Buys` so it keeps premium cards that are weakening but not obviously broken.
 - Tighten `Top Movers` and `Early Movers` so stale one-sale jumps are less likely to pass.
 - Expand Set Explorer rarity / variant filters beyond the current first pass.
@@ -75,7 +91,6 @@ Next Up
 - Keep high-resolution image support deferred until there is a stronger need than the current fast-loading image flow.
 - Keep camera / photo card lookup as a later project after the main phone workflow settles.
 - Extend tracking into:
-  - `/embed`
   - `/set-explorer`
 - Add keyboard shortcuts beyond the current up/down row stepping if they clearly improve desktop workflow.
 - Add a basic Discord path for:

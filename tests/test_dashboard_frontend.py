@@ -69,3 +69,5 @@ class DashboardFrontendContractTests(unittest.TestCase):
     def test_tcgplayer_links_use_affiliate_wrapper(self):
         self.assertIn('const TCGPLAYER_AFFILIATE_BASE = "https://partner.tcgplayer.com/jR1OJb"', self.html)
         self.assertIn('affiliateUrl.searchParams.set("u", destination)', self.html)
+        self.assertIn('id="heroBuyLink"', self.html)
+        self.assertIn('heroBuyLink.hidden = !tcgUrl', self.html)

@@ -1,4 +1,5 @@
 import csv
+import difflib
 import json
 import os
 import re
@@ -579,12 +580,32 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_NAME = [
 # - Regular sets: 30 packs/box at ¥180 per pack
 # - High class sets: 10 packs/box at ¥550 per pack
 # - 151: 20 packs/box at ¥290 per pack
+# - Black Bolt / White Flare regular boxes: 20 packs/box at ¥290 per pack
+# - Black Bolt / White Flare deluxe boxes: 4 deluxe packs/box. We price each deluxe
+#   pack as 5 regular packs because each deluxe pack contains 35 cards vs 7 cards
+#   in the regular format, so the MSRP baseline becomes ¥1450 per deluxe pack.
 _JP_HIGH_CLASS_SET_KEYS = (
     "terastal festival",
     "vstar universe",
     "shiny treasures",
 )
+_JP_TWENTY_PACK_SET_KEYS = (
+    "151",
+    "black bolt",
+    "white flare",
+)
+_JP_DELUXE_SET_KEYS = (
+    "black bolt deluxe",
+    "white flare deluxe",
+)
 _JPY_TO_USD_RATE = 1.0 / 159.48
+_JPY_PER_USD_FX_CACHE_TTL = timedelta(hours=6)
+_JPY_PER_USD_FX_CACHE: dict[str, object] = {
+    "value": None,
+    "fetched_at": None,
+    "provider": "",
+    "effective_date": "",
+}
 
 
 def _safe_float(value) -> float | None:
@@ -656,9 +677,26 @@ def _normalize_match_text(value: str) -> str:
     return re.sub(r"\s+", " ", text)
 
 
+def _normalize_search_text(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", (value or "").lower())
+
+
 def _jp_pricing_profile(name_raw: str, group_name_raw: str) -> tuple[int, float]:
+    """Return JP box pack-count and per-pack MSRP for sealed heuristics.
+
+    Expected output:
+    - element 0: how many sealed packs are in the box
+    - element 1: MSRP in JPY for each sealed pack in that format
+
+    Notes:
+    - `Black Bolt Deluxe` / `White Flare Deluxe` are treated as 4 deluxe packs
+      per box. Because each deluxe pack is 35 cards versus the regular 7-card
+      pack, we model one deluxe pack as five regular packs for MSRP purposes.
+    """
     haystack = _normalize_match_text(f"{name_raw} {group_name_raw}")
-    if re.search(r"\b151\b", haystack):
+    if any(_normalize_match_text(key) in haystack for key in _JP_DELUXE_SET_KEYS):
+        return 4, 1450.0
+    if any(_normalize_match_text(key) in haystack for key in _JP_TWENTY_PACK_SET_KEYS):
         return 20, 290.0
     if "high class" in haystack:
         return 10, 550.0
@@ -868,7 +906,13 @@ def require_tracking_user(authorization: str | None):
 
 
 def is_admin_username(username: str | None) -> bool:
-    return str(username or "").strip().lower() in ADMIN_USERNAMES
+    normalized = str(username or "").strip().lower()
+    if normalized in ADMIN_USERNAMES:
+        return True
+    if "@" in normalized:
+        local_part = normalized.split("@", 1)[0]
+        return local_part in ADMIN_USERNAMES
+    return False
 
 
 def admin_user_payload(session_user) -> dict:
@@ -1128,6 +1172,84 @@ def _round_money(value: float | None) -> float | None:
     return round(value + 1e-9, 2)
 
 
+def _latest_jpy_per_usd_rate() -> dict:
+    """Fetch and cache the latest available JPY-per-USD rate for the profitability page.
+
+    Expected output:
+    - `jpy_per_usd`: numeric FX rate used to prefill the calculator
+    - `provider`: upstream rate source
+    - `effective_date`: rate date reported by the provider
+    - `fetched_at`: UTC timestamp when this app refreshed the value
+    - `stale`: whether the response fell back to cached data
+
+    The chosen provider is public and credential-free so admins get a current-ish FX
+    default without maintaining a separate API key. The rate is not tick-by-tick forex,
+    but it is materially better than a stale hardcoded assumption.
+    """
+    now = datetime.now(timezone.utc)
+    cached_value = _safe_float(_JPY_PER_USD_FX_CACHE.get("value"))
+    fetched_at = _JPY_PER_USD_FX_CACHE.get("fetched_at")
+    if (
+        cached_value is not None
+        and isinstance(fetched_at, datetime)
+        and now - fetched_at <= _JPY_PER_USD_FX_CACHE_TTL
+    ):
+        return {
+            "jpy_per_usd": round(cached_value, 4),
+            "provider": str(_JPY_PER_USD_FX_CACHE.get("provider") or "Frankfurter"),
+            "effective_date": str(_JPY_PER_USD_FX_CACHE.get("effective_date") or ""),
+            "fetched_at": fetched_at.isoformat(),
+            "stale": False,
+        }
+
+    try:
+        response = requests.get(
+            "https://api.frankfurter.dev/v2/rates",
+            params={"base": "USD", "quotes": "JPY"},
+            timeout=8,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        rate_rows = payload if isinstance(payload, list) else []
+        jpy_row = next(
+            (
+                row for row in rate_rows
+                if str(row.get("base") or "").upper() == "USD"
+                and str(row.get("quote") or "").upper() == "JPY"
+            ),
+            None,
+        )
+        jpy_per_usd = _safe_float(jpy_row.get("rate") if jpy_row else None)
+        if jpy_per_usd is None or jpy_per_usd <= 0:
+            raise ValueError("FX response did not include a valid USD/JPY rate")
+
+        _JPY_PER_USD_FX_CACHE.update(
+            {
+                "value": jpy_per_usd,
+                "fetched_at": now,
+                "provider": "Frankfurter",
+                "effective_date": str(jpy_row.get("date") or ""),
+            }
+        )
+        return {
+            "jpy_per_usd": round(jpy_per_usd, 4),
+            "provider": "Frankfurter",
+            "effective_date": str(jpy_row.get("date") or ""),
+            "fetched_at": now.isoformat(),
+            "stale": False,
+        }
+    except Exception:
+        if cached_value is not None and isinstance(fetched_at, datetime):
+            return {
+                "jpy_per_usd": round(cached_value, 4),
+                "provider": str(_JPY_PER_USD_FX_CACHE.get("provider") or "Frankfurter"),
+                "effective_date": str(_JPY_PER_USD_FX_CACHE.get("effective_date") or ""),
+                "fetched_at": fetched_at.isoformat(),
+                "stale": True,
+            }
+        raise
+
+
 def _profitability_status(required_price: float | None, target_price: float | None, market_price: float | None) -> str:
     """Classify whether a SKU looks buyable under the current assumptions."""
     if required_price is None:
@@ -1166,17 +1288,17 @@ def supplier_profitability_data(
     store_mapping = load_current_store_mapping()
     market_targets = load_latest_market_targets()
 
-    jpy_per_usd = _safe_float(assumptions.get("jpy_per_usd")) or 145.0
+    jpy_per_usd = _safe_float(assumptions.get("jpy_per_usd")) or 159.0
     import_duty_pct = _safe_float(assumptions.get("import_duty_pct")) or 0.0
     inbound_shipping_mode = str(assumptions.get("inbound_shipping_mode") or "manual").strip().lower()
     inbound_shipping_usd = _safe_float(assumptions.get("inbound_shipping_usd")) or 0.0
     order_shipping_jpy = _safe_float(assumptions.get("order_shipping_jpy")) or 0.0
     order_box_count = _safe_float(assumptions.get("order_box_count")) or 0.0
     handling_cost_usd = _safe_float(assumptions.get("handling_cost_usd")) or 0.0
-    outbound_shipping_usd = _safe_float(assumptions.get("outbound_shipping_usd")) or 0.0
+    outbound_shipping_usd = _safe_float(assumptions.get("outbound_shipping_usd")) or 7.25
     shipping_credit_usd = _safe_float(assumptions.get("shipping_credit_usd")) or 0.0
     disbursement_fee_usd = _safe_float(assumptions.get("disbursement_fee_usd")) or 15.0
-    platform_fee_pct = _safe_float(assumptions.get("platform_fee_pct")) or 0.0
+    platform_fee_pct = _safe_float(assumptions.get("platform_fee_pct")) or 2.9
     payment_fee_pct = _safe_float(assumptions.get("payment_fee_pct")) or 0.0
     payment_fee_fixed = _safe_float(assumptions.get("payment_fee_fixed")) or 0.0
     income_tax_pct = _safe_float(assumptions.get("income_tax_pct")) or 0.0
@@ -1235,6 +1357,7 @@ def supplier_profitability_data(
         store_profit = profit_at_price(store_price, fixed_costs)
         market_profit = profit_at_price(market_price, fixed_costs)
         target_profit = profit_at_price(target_price, fixed_costs)
+        margin_price_profit = profit_at_price(required_price_for_target_margin, fixed_costs)
         recommended_floor = required_price_for_target_margin or break_even_price
         rows.append(
             {
@@ -1270,6 +1393,10 @@ def supplier_profitability_data(
                 "profit_at_target_after_tax": target_profit[1],
                 "margin_at_target_before_tax_pct": target_profit[2],
                 "margin_at_target_after_tax_pct": target_profit[3],
+                "profit_at_margin_price_before_tax": margin_price_profit[0],
+                "profit_at_margin_price_after_tax": margin_price_profit[1],
+                "margin_at_margin_price_before_tax_pct": margin_price_profit[2],
+                "margin_at_margin_price_after_tax_pct": margin_price_profit[3],
                 "headroom_vs_target": _round_money((target_price - required_price_for_target_margin) if target_price is not None and required_price_for_target_margin is not None else None),
                 "decision": _profitability_status(required_price_for_target_margin, target_price, market_price),
             }
@@ -1317,6 +1444,19 @@ def supplier_profitability_data(
             "target_margin_pct": target_margin_pct,
         },
     }
+
+
+@app.get("/supplier-profitability/fx")
+def supplier_profitability_fx(
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    """Return the latest available JPY-per-USD rate for pre-filling the profitability page."""
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    try:
+        return {"ok": True, **_latest_jpy_per_usd_rate()}
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Unable to refresh JPY/USD rate: {exc}") from exc
 
 
 @app.post("/pricing-upload/compare")
@@ -1918,6 +2058,105 @@ def search(query: str, limit: int = 12, category_id: int = 3):
     if len(term) < 2:
         return {"items": [], "query": term, "limit": limit, "total_count": 0}
 
+    def fuzzy_score(needle: str, haystack: str) -> float:
+        if not needle or not haystack:
+            return 0.0
+        return difflib.SequenceMatcher(None, needle, haystack).ratio()
+
+    def collapse_repeats(value: str) -> str:
+        if not value:
+            return ""
+        return re.sub(r"(.)\1+", r"\1", value)
+
+    def fold_expr(expr: str) -> str:
+        return (
+            "lower("
+            f"replace(replace(replace(replace(replace(replace(replace({expr}, '''', ''), '’', ''), ' ', ''), '-', ''), '.', ''), ':', ''), '/', '')"
+            ")"
+        )
+
+    def fuzzy_prefixes(normalized_term: str) -> list[str]:
+        if not normalized_term:
+            return []
+        collapsed = collapse_repeats(normalized_term)
+        prefixes: set[str] = set()
+        for token in (normalized_term, collapsed):
+            if not token:
+                continue
+            for length in (2, 3, 4):
+                if len(token) >= length:
+                    prefixes.add(token[:length])
+        return sorted(prefixes)
+
+    def fuzzy_candidate_rows(normalized_term: str) -> list[dict]:
+        if len(normalized_term) < 3:
+            return []
+        category = category_config(category_id)
+        product_signal_source = product_signal_from(category.category_id)
+        metadata_cte = build_metadata_cte(category.category_id, include_classification=True, cte_name="metadata")
+        prefixes = fuzzy_prefixes(normalized_term)
+        if not prefixes:
+            return []
+        product_fold_expr = fold_expr(
+            "CONCAT_WS(' ', COALESCE(m.productName, ''), COALESCE(m.groupName, ''), "
+            "COALESCE(m.groupAbbreviation, ''), COALESCE(m.number, ''), COALESCE(ap.subTypeName, ''))"
+        )
+        prefix_filter = " OR ".join(
+            f"{product_fold_expr} LIKE '%{prefix}%'"
+            for prefix in prefixes
+        )
+        sql = f"""
+        WITH
+        {metadata_cte}
+        SELECT
+          ap.productId,
+          ap.subTypeName,
+          ap.groupId,
+          m.groupName,
+          m.groupAbbreviation,
+          m.productName,
+          m.imageUrl,
+          m.rarity,
+          m.number,
+          m.productClass,
+          m.productKind,
+          ap.latest_price,
+          ap.latest_date
+        FROM {product_signal_source} ap
+        LEFT JOIN metadata m
+          ON m.productId = ap.productId
+         AND m.groupId = ap.groupId
+        WHERE {prefix_filter}
+        LIMIT 2000
+        """
+        cols, rows = q(sql)
+        items = [dict(zip(cols, row)) for row in rows]
+        return items
+
+    def fuzzy_group_rows(normalized_term: str) -> list[dict]:
+        if len(normalized_term) < 3:
+            return []
+        category = category_config(category_id)
+        prefixes = fuzzy_prefixes(normalized_term)
+        if not prefixes:
+            return []
+        group_fold_expr = fold_expr("CONCAT_WS(' ', COALESCE(g.name, ''), COALESCE(g.abbreviation, ''))")
+        prefix_filter = " OR ".join(
+            f"{group_fold_expr} LIKE '%{prefix}%'"
+            for prefix in prefixes
+        )
+        sql = f"""
+        SELECT
+          g.groupId,
+          COALESCE(g.name, 'Unknown Group') AS groupName,
+          COALESCE(g.abbreviation, '') AS groupAbbreviation
+        FROM {groups_from(category.category_id)} g
+        WHERE {prefix_filter}
+        LIMIT 800
+        """
+        cols, rows = q(sql)
+        return [dict(zip(cols, row)) for row in rows]
+
     safe_term = term.replace("'", "''")
     limit = max(1, min(limit, 500))
     category = category_config(category_id)
@@ -1957,54 +2196,54 @@ def search(query: str, limit: int = 12, category_id: int = 3):
 
     product_token_match_expr = _all_token_matches(
         "lower(CONCAT_WS(' ', COALESCE(m.productName, ''), COALESCE(m.groupName, ''), COALESCE(m.groupAbbreviation, ''), COALESCE(m.number, ''), COALESCE(ap.subTypeName, '')))",
-        "lower(regexp_replace(CONCAT_WS(' ', COALESCE(m.productName, ''), COALESCE(m.groupName, ''), COALESCE(m.groupAbbreviation, ''), COALESCE(m.number, ''), COALESCE(ap.subTypeName, '')), '[^a-z0-9]+', '', 'g'))",
+        fold_expr("CONCAT_WS(' ', COALESCE(m.productName, ''), COALESCE(m.groupName, ''), COALESCE(m.groupAbbreviation, ''), COALESCE(m.number, ''), COALESCE(ap.subTypeName, ''))"),
     )
     group_token_match_expr = _all_token_matches(
         "lower(CONCAT_WS(' ', COALESCE(g.name, ''), COALESCE(g.abbreviation, '')))",
-        "lower(regexp_replace(CONCAT_WS(' ', COALESCE(g.name, ''), COALESCE(g.abbreviation, '')), '[^a-z0-9]+', '', 'g'))",
+        fold_expr("CONCAT_WS(' ', COALESCE(g.name, ''), COALESCE(g.abbreviation, ''))"),
     )
     product_name_token_expr = _any_token_matches(
         "lower(COALESCE(m.productName, ''))",
-        "lower(regexp_replace(COALESCE(m.productName, ''), '[^a-z0-9]+', '', 'g'))",
+        fold_expr("COALESCE(m.productName, '')"),
     )
     product_group_token_expr = _any_token_matches(
         "lower(COALESCE(m.groupName, ''))",
-        "lower(regexp_replace(COALESCE(m.groupName, ''), '[^a-z0-9]+', '', 'g'))",
+        fold_expr("COALESCE(m.groupName, '')"),
     )
     product_group_abbrev_token_expr = _any_token_matches(
         "lower(COALESCE(m.groupAbbreviation, ''))",
-        "lower(regexp_replace(COALESCE(m.groupAbbreviation, ''), '[^a-z0-9]+', '', 'g'))",
+        fold_expr("COALESCE(m.groupAbbreviation, '')"),
     )
     product_number_token_expr = _any_token_matches(
         "lower(COALESCE(m.number, ''))",
-        "lower(regexp_replace(COALESCE(m.number, ''), '[^a-z0-9]+', '', 'g'))",
+        fold_expr("COALESCE(m.number, '')"),
     )
     product_subtype_token_expr = _any_token_matches(
         "lower(COALESCE(ap.subTypeName, ''))",
-        "lower(regexp_replace(COALESCE(ap.subTypeName, ''), '[^a-z0-9]+', '', 'g'))",
+        fold_expr("COALESCE(ap.subTypeName, '')"),
     )
     group_name_token_expr = _any_token_matches(
         "lower(COALESCE(g.name, ''))",
-        "lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g'))",
+        fold_expr("COALESCE(g.name, '')"),
     )
     group_abbrev_token_expr = _any_token_matches(
         "lower(COALESCE(g.abbreviation, ''))",
-        "lower(regexp_replace(COALESCE(g.abbreviation, ''), '[^a-z0-9]+', '', 'g'))",
+        fold_expr("COALESCE(g.abbreviation, '')"),
     )
     product_name_raw_expr = "lower(COALESCE(m.productName, ''))"
-    product_name_normalized_expr = "lower(regexp_replace(COALESCE(m.productName, ''), '[^a-z0-9]+', '', 'g'))"
+    product_name_normalized_expr = fold_expr("COALESCE(m.productName, '')")
     product_group_raw_expr = "lower(COALESCE(m.groupName, ''))"
-    product_group_normalized_expr = "lower(regexp_replace(COALESCE(m.groupName, ''), '[^a-z0-9]+', '', 'g'))"
+    product_group_normalized_expr = fold_expr("COALESCE(m.groupName, '')")
     product_group_abbrev_raw_expr = "lower(COALESCE(m.groupAbbreviation, ''))"
-    product_group_abbrev_normalized_expr = "lower(regexp_replace(COALESCE(m.groupAbbreviation, ''), '[^a-z0-9]+', '', 'g'))"
+    product_group_abbrev_normalized_expr = fold_expr("COALESCE(m.groupAbbreviation, '')")
     product_number_raw_expr = "lower(COALESCE(m.number, ''))"
-    product_number_normalized_expr = "lower(regexp_replace(COALESCE(m.number, ''), '[^a-z0-9]+', '', 'g'))"
+    product_number_normalized_expr = fold_expr("COALESCE(m.number, '')")
     product_subtype_raw_expr = "lower(COALESCE(ap.subTypeName, ''))"
-    product_subtype_normalized_expr = "lower(regexp_replace(COALESCE(ap.subTypeName, ''), '[^a-z0-9]+', '', 'g'))"
+    product_subtype_normalized_expr = fold_expr("COALESCE(ap.subTypeName, '')")
     group_name_raw_expr = "lower(COALESCE(g.name, ''))"
-    group_name_normalized_expr = "lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g'))"
+    group_name_normalized_expr = fold_expr("COALESCE(g.name, '')")
     group_abbrev_raw_expr = "lower(COALESCE(g.abbreviation, ''))"
-    group_abbrev_normalized_expr = "lower(regexp_replace(COALESCE(g.abbreviation, ''), '[^a-z0-9]+', '', 'g'))"
+    group_abbrev_normalized_expr = fold_expr("COALESCE(g.abbreviation, '')")
     product_token_score_expr = " + ".join(
         [
             f"CASE WHEN {_raw_or_normalized_like(product_name_raw_expr, product_name_normalized_expr, raw_token, normalized_token)} THEN 70 ELSE 0 END"
@@ -2077,11 +2316,11 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         ap.latest_date,
         CASE
           WHEN {product_token_match_expr} AND {product_name_token_expr} AND ({product_group_token_expr} OR {product_group_abbrev_token_expr}) THEN 470
-          WHEN lower(regexp_replace(COALESCE(m.productName, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 520
-          WHEN lower(regexp_replace(COALESCE(m.number, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 500
+          WHEN {product_name_normalized_expr} = lower('{safe_normalized_term}') THEN 520
+          WHEN {product_number_normalized_expr} = lower('{safe_normalized_term}') THEN 500
           WHEN lower(m.productName) = lower('{safe_term}') THEN 400
           WHEN lower(m.number) = lower('{safe_term}') THEN 340
-          WHEN lower(regexp_replace(COALESCE(m.productName, ''), '[^a-z0-9]+', '', 'g')) LIKE lower('{safe_normalized_term}') || '%' THEN 330
+          WHEN {product_name_normalized_expr} LIKE lower('{safe_normalized_term}') || '%' THEN 330
           WHEN lower(m.productName) LIKE lower('{safe_term}') || '%' THEN 300
           WHEN lower(m.number) LIKE lower('{safe_term}') || '%' THEN 260
           WHEN lower(m.productName) LIKE '%' || lower('{safe_term}') || '%' THEN 220
@@ -2096,9 +2335,9 @@ def search(query: str, limit: int = 12, category_id: int = 3):
        AND m.groupId = ap.groupId
       WHERE (
         lower(COALESCE(m.productName, '')) LIKE '%' || lower('{safe_term}') || '%'
-        OR lower(regexp_replace(COALESCE(m.productName, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
+        OR {product_name_normalized_expr} LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR lower(COALESCE(m.number, '')) LIKE '%' || lower('{safe_term}') || '%'
-        OR lower(regexp_replace(COALESCE(m.number, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
+        OR {product_number_normalized_expr} LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR lower(COALESCE(m.groupName, '')) LIKE '%' || lower('{safe_term}') || '%'
         OR lower(COALESCE(ap.subTypeName, '')) LIKE '%' || lower('{safe_term}') || '%'
         OR {product_token_match_expr}
@@ -2130,11 +2369,11 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         NULL AS latest_date,
         CASE
           WHEN {group_token_match_expr} AND {group_name_token_expr} THEN 300
-          WHEN lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 560
-          WHEN lower(regexp_replace(COALESCE(g.abbreviation, ''), '[^a-z0-9]+', '', 'g')) = lower('{safe_normalized_term}') THEN 540
+          WHEN {group_name_normalized_expr} = lower('{safe_normalized_term}') THEN 560
+          WHEN {group_abbrev_normalized_expr} = lower('{safe_normalized_term}') THEN 540
           WHEN lower(COALESCE(g.name, '')) = lower('{safe_term}') THEN 360
           WHEN lower(COALESCE(g.abbreviation, '')) = lower('{safe_term}') THEN 340
-          WHEN lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g')) LIKE lower('{safe_normalized_term}') || '%' THEN 320
+          WHEN {group_name_normalized_expr} LIKE lower('{safe_normalized_term}') || '%' THEN 320
           WHEN lower(COALESCE(g.name, '')) LIKE lower('{safe_term}') || '%' THEN 280
           WHEN lower(COALESCE(g.name, '')) LIKE '%' || lower('{safe_term}') || '%' THEN 200
           WHEN lower(COALESCE(g.abbreviation, '')) LIKE '%' || lower('{safe_term}') || '%' THEN 180
@@ -2145,9 +2384,9 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         ON g.groupId = ag.groupId
       WHERE (
         lower(COALESCE(g.name, '')) LIKE '%' || lower('{safe_term}') || '%'
-        OR lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
+        OR {group_name_normalized_expr} LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR lower(COALESCE(g.abbreviation, '')) LIKE '%' || lower('{safe_term}') || '%'
-        OR lower(regexp_replace(COALESCE(g.abbreviation, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
+        OR {group_abbrev_normalized_expr} LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR {group_token_match_expr}
       )
     ),
@@ -2187,9 +2426,9 @@ def search(query: str, limit: int = 12, category_id: int = 3):
        AND m.groupId = ap.groupId
       WHERE (
         lower(COALESCE(m.productName, '')) LIKE '%' || lower('{safe_term}') || '%'
-        OR lower(regexp_replace(COALESCE(m.productName, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
+        OR {product_name_normalized_expr} LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR lower(COALESCE(m.number, '')) LIKE '%' || lower('{safe_term}') || '%'
-        OR lower(regexp_replace(COALESCE(m.number, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
+        OR {product_number_normalized_expr} LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR lower(COALESCE(m.groupName, '')) LIKE '%' || lower('{safe_term}') || '%'
         OR lower(COALESCE(ap.subTypeName, '')) LIKE '%' || lower('{safe_term}') || '%'
         OR {product_token_match_expr}
@@ -2202,9 +2441,9 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         ON g.groupId = ag.groupId
       WHERE (
         lower(COALESCE(g.name, '')) LIKE '%' || lower('{safe_term}') || '%'
-        OR lower(regexp_replace(COALESCE(g.name, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
+        OR {group_name_normalized_expr} LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR lower(COALESCE(g.abbreviation, '')) LIKE '%' || lower('{safe_term}') || '%'
-        OR lower(regexp_replace(COALESCE(g.abbreviation, ''), '[^a-z0-9]+', '', 'g')) LIKE '%' || lower('{safe_normalized_term}') || '%'
+        OR {group_abbrev_normalized_expr} LIKE '%' || lower('{safe_normalized_term}') || '%'
         OR {group_token_match_expr}
       )
     )
@@ -2217,7 +2456,132 @@ def search(query: str, limit: int = 12, category_id: int = 3):
     """
     _, count_rows = q(count_sql)
     total_count = int(count_rows[0][0]) if count_rows else 0
-    return {"items": [dict(zip(cols, row)) for row in rows], "query": term, "limit": limit, "total_count": total_count}
+    items = [dict(zip(cols, row)) for row in rows]
+    used_fuzzy = False
+    did_you_mean: list[str] = []
+    if total_count == 0:
+        normalized_term = _normalize_search_text(term)
+        normalized_variants = {normalized_term}
+        collapsed_variant = collapse_repeats(normalized_term)
+        if collapsed_variant:
+            normalized_variants.add(collapsed_variant)
+        fuzzy_candidates = fuzzy_candidate_rows(normalized_term)
+        fuzzy_groups = fuzzy_group_rows(normalized_term)
+        scored = []
+
+        def token_candidates(text: str) -> list[str]:
+            return [
+                _normalize_search_text(token)
+                for token in re.split(r"\s+", text or "")
+                if _normalize_search_text(token)
+            ]
+
+        def fuzzy_row_score(needle_variants: set[str], *values: str) -> float:
+            tokens: list[str] = []
+            for value in values:
+                tokens.extend(token_candidates(value))
+                normalized_value = _normalize_search_text(value)
+                if normalized_value:
+                    tokens.append(normalized_value)
+            best = 0.0
+            for needle in needle_variants:
+                for token in tokens:
+                    if not token:
+                        continue
+                    if needle in token:
+                        best = max(best, 0.98)
+                        continue
+                    score = fuzzy_score(needle, token)
+                    if score > best:
+                        best = score
+            return best
+
+        for row in fuzzy_groups:
+            score = fuzzy_row_score(
+                normalized_variants,
+                str(row.get("groupName") or ""),
+                str(row.get("groupAbbreviation") or ""),
+            )
+            if score >= 0.58:
+                scored.append(
+                    {
+                        "kind": "set",
+                        "set_focus_rank": 1,
+                        "title": row.get("groupName"),
+                        "meta": "",
+                        "productId": None,
+                        "subTypeName": "",
+                        "groupId": row.get("groupId"),
+                        "groupName": row.get("groupName"),
+                        "groupAbbreviation": row.get("groupAbbreviation"),
+                        "productName": None,
+                        "imageUrl": None,
+                        "rarity": None,
+                        "number": None,
+                        "productClass": None,
+                        "productKind": "set",
+                        "latest_price": None,
+                        "latest_date": None,
+                        "score": round(score * 1000, 2),
+                    }
+                )
+        for row in fuzzy_candidates:
+            score = fuzzy_row_score(
+                normalized_variants,
+                str(row.get("productName") or ""),
+                str(row.get("groupName") or ""),
+                str(row.get("groupAbbreviation") or ""),
+                str(row.get("number") or ""),
+                str(row.get("subTypeName") or ""),
+            )
+            if score < 0.55:
+                continue
+            scored.append(
+                {
+                    "kind": "product",
+                    "set_focus_rank": 0,
+                    "title": row.get("productName"),
+                    "meta": " | ".join(
+                        [
+                            str(row.get("groupName") or "").strip(),
+                            str(row.get("number") or "").strip(),
+                            str(row.get("subTypeName") or "").strip(),
+                        ]
+                    ).strip(" |"),
+                    "productId": row.get("productId"),
+                    "subTypeName": row.get("subTypeName") or "",
+                    "groupId": row.get("groupId"),
+                    "groupName": row.get("groupName"),
+                    "groupAbbreviation": row.get("groupAbbreviation"),
+                    "productName": row.get("productName"),
+                    "imageUrl": row.get("imageUrl"),
+                    "rarity": row.get("rarity"),
+                    "number": row.get("number"),
+                    "productClass": row.get("productClass"),
+                    "productKind": row.get("productKind"),
+                    "latest_price": row.get("latest_price"),
+                    "latest_date": row.get("latest_date"),
+                    "score": round(score * 1000, 2),
+                }
+            )
+        if scored:
+            scored.sort(key=lambda item: (-float(item.get("score") or 0), item.get("kind", ""), str(item.get("title") or "")))
+            items = scored[:limit]
+            total_count = len(items)
+            used_fuzzy = True
+            did_you_mean = [
+                str(item.get("title") or "").strip()
+                for item in items[:3]
+                if str(item.get("title") or "").strip()
+            ]
+    return {
+        "items": items,
+        "query": term,
+        "limit": limit,
+        "total_count": total_count,
+        "fuzzy": used_fuzzy,
+        "did_you_mean": did_you_mean,
+    }
 
 
 @app.get("/group_products")
@@ -2353,13 +2717,13 @@ def product_signals(limit: int = 500, min_price: float = 0.0, category_id: int =
 def good_buys(
     limit: int = 250,
     min_price: float = 5.0,
-    max_30d_pct: float = -5.0,
-    max_90d_pct: float = 10.0,
-    max_7d_pct: float = 3.0,
+    max_30d_pct: float = 0.0,
+    max_90d_pct: float = 20.0,
+    max_7d_pct: float = 6.0,
     min_recent_distinct_prices_30d: int = 10,
     floor_days: int = 7,
-    min_floor_observations: int = 5,
-    max_floor_variance_pct: float = 8.0,
+    min_floor_observations: int = 4,
+    max_floor_variance_pct: float = 12.0,
     exclude_prize_packs: bool = False,
     product_kind: str | None = None,
     category_id: int = 3,
@@ -2388,6 +2752,7 @@ def good_buys(
     WITH latest_signal AS (
       SELECT
         latest_date,
+        categoryId,
         groupId,
         groupName,
         productId,
@@ -2406,6 +2771,8 @@ def good_buys(
         price_vs_sma30_pct,
         trend_score
       FROM {signal_source}
+      WHERE categoryId = {category.category_id}
+        AND latest_date = (SELECT MAX(latest_date) FROM {signal_source})
     ),
     recent_prices AS (
       SELECT
@@ -2436,9 +2803,7 @@ def good_buys(
         ON s.productId = rp.productId
        AND s.groupId = rp.groupId
        AND s.subTypeName = rp.subTypeName
-      WHERE s.categoryId = {category.category_id}
-        AND s.latest_date = (SELECT MAX(latest_date) FROM {signal_source})
-        AND rp.date >= s.latest_date - INTERVAL {floor_days} DAY
+      WHERE rp.date >= s.latest_date - INTERVAL {floor_days} DAY
       GROUP BY rp.productId, rp.groupId, rp.subTypeName
     ),
     recent_lift AS (
@@ -2455,24 +2820,24 @@ def good_buys(
       GROUP BY productId, groupId, subTypeName
     )
     SELECT
-      latest_date,
-      groupId,
-      groupName,
-      productId,
-      productName,
-      imageUrl,
-      rarity,
-      number,
-      productClass,
-      productKind,
-      subTypeName,
-      latest_price,
-      roc_7d_pct,
-      roc_30d_pct,
-      roc_90d_pct,
-      recent_distinct_prices_30d,
-      price_vs_sma30_pct,
-      trend_score
+      s.latest_date,
+      s.groupId,
+      s.groupName,
+      s.productId,
+      s.productName,
+      s.imageUrl,
+      s.rarity,
+      s.number,
+      s.productClass,
+      s.productKind,
+      s.subTypeName,
+      s.latest_price,
+      s.roc_7d_pct,
+      s.roc_30d_pct,
+      s.roc_90d_pct,
+      s.recent_distinct_prices_30d,
+      s.price_vs_sma30_pct,
+      s.trend_score
     FROM latest_signal s
     JOIN floor_window fw
       ON fw.productId = s.productId
@@ -2487,6 +2852,7 @@ def good_buys(
       {rarity_filter}
       AND COALESCE(roc_30d_pct, 0) <= {max_30d_pct}
       AND COALESCE(roc_90d_pct, 0) <= {max_90d_pct}
+      AND COALESCE(roc_90d_pct, 0) < 0
       AND COALESCE(roc_7d_pct, 0) <= {max_7d_pct}
       AND COALESCE(recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
       AND (

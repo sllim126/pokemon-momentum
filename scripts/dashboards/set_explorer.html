@@ -137,7 +137,7 @@
 
     .toolbar {
       display: grid;
-      grid-template-columns: 220px 220px minmax(260px, 320px) minmax(0, 1fr);
+      grid-template-columns: 220px 220px minmax(220px, 280px) minmax(220px, 280px) minmax(0, 1fr);
       gap: 12px;
       align-items: end;
       padding: 16px 18px;
@@ -209,11 +209,42 @@
       gap: 10px;
       color: var(--ink);
       font-size: 14px;
+      padding: 8px 10px;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
+    }
+
+    .filter-option.selected {
+      border-color: rgba(255, 189, 89, 0.4);
+      background: rgba(255, 189, 89, 0.12);
     }
 
     .filter-option input {
       width: auto;
       margin: 0;
+      accent-color: #ffbd59;
+    }
+
+    .filter-indicator {
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(184, 205, 255, 0.22);
+      border-radius: 6px;
+      background: rgba(10, 16, 32, 0.55);
+      color: transparent;
+      font-size: 12px;
+      line-height: 1;
+      flex: 0 0 18px;
+    }
+
+    .filter-option.selected .filter-indicator {
+      border-color: rgba(255, 189, 89, 0.5);
+      background: rgba(255, 189, 89, 0.2);
+      color: #ffbd59;
     }
 
     .sort-tabs {
@@ -543,6 +574,13 @@
           <div class="filter-panel" id="basketFilterPanel"></div>
         </details>
       </div>
+      <div class="field">
+        <label>Era</label>
+        <details class="filter-menu" id="eraFilterMenu">
+          <summary id="eraFilterSummary">All</summary>
+          <div class="filter-panel" id="eraFilterPanel"></div>
+        </details>
+      </div>
       <div>
         <div class="section-label">View</div>
         <div class="sort-tabs" id="sortTabs"></div>
@@ -604,6 +642,7 @@
       sortMode: "expensive",
       categories: [],
       rows: [],
+      eraFilters: ["all"],
       selectedGroupId: null,
       basketFilters: ["all"],
     };
@@ -611,8 +650,27 @@
     const sortModes = [
       { id: "expensive", label: "Most Expensive" },
       { id: "cheap", label: "Cheapest" },
+      { id: "set", label: "Set A-Z" },
+      { id: "era", label: "Era / Set" },
       { id: "topheavy", label: "Most Top-Heavy" },
       { id: "deep", label: "Deepest Sets" },
+    ];
+    const generationOrder = [
+      "SV",
+      "MEG",
+      "SWSH",
+      "SM",
+      "XY",
+      "BW",
+      "DP/HGSS",
+      "EX",
+      "POP",
+      "PROMO",
+      "PRIZE",
+      "TOTT",
+      "MCD",
+      "Legacy",
+      "Unknown",
     ];
     const basketFilters = [
       { id: "all", label: "All" },
@@ -639,6 +697,10 @@
     const rowsEl = document.getElementById("rows");
     const spotlightEl = document.getElementById("spotlight");
     const sortTabsEl = document.getElementById("sortTabs");
+    const eraFilterMenuEl = document.getElementById("eraFilterMenu");
+    const eraFilterSummaryEl = document.getElementById("eraFilterSummary");
+    const eraFilterPanelEl = document.getElementById("eraFilterPanel");
+    const basketFilterMenuEl = document.getElementById("basketFilterMenu");
     const basketFilterSummaryEl = document.getElementById("basketFilterSummary");
     const basketFilterPanelEl = document.getElementById("basketFilterPanel");
 
@@ -675,18 +737,40 @@
       }));
     }
 
+    function generationRank(generation) {
+      const rank = generationOrder.indexOf(generation || "Unknown");
+      return rank === -1 ? generationOrder.length : rank;
+    }
+
+    function compareGroupName(a, b) {
+      return String(a.groupName || "").localeCompare(String(b.groupName || ""), undefined, { sensitivity: "base" });
+    }
+
+    function getVisibleRows() {
+      if (!state.eraFilters.length || state.eraFilters.includes("all")) {
+        return [...state.rows];
+      }
+      return state.rows.filter((row) => state.eraFilters.includes(row.generation || "Unknown"));
+    }
+
     function getSortedRows() {
-      const rows = [...state.rows];
+      const rows = getVisibleRows();
       if (state.sortMode === "cheap") {
-        return rows.sort((a, b) => a.total_set_cost - b.total_set_cost);
+        return rows.sort((a, b) => a.total_set_cost - b.total_set_cost || compareGroupName(a, b));
+      }
+      if (state.sortMode === "set") {
+        return rows.sort((a, b) => compareGroupName(a, b) || generationRank(a.generation) - generationRank(b.generation));
+      }
+      if (state.sortMode === "era") {
+        return rows.sort((a, b) => generationRank(a.generation) - generationRank(b.generation) || compareGroupName(a, b));
       }
       if (state.sortMode === "topheavy") {
-        return rows.sort((a, b) => b.top3_share_pct - a.top3_share_pct || b.top_hit_share_pct - a.top_hit_share_pct);
+        return rows.sort((a, b) => b.top3_share_pct - a.top3_share_pct || b.top_hit_share_pct - a.top_hit_share_pct || compareGroupName(a, b));
       }
       if (state.sortMode === "deep") {
-        return rows.sort((a, b) => b.depth_score - a.depth_score || b.card_count - a.card_count);
+        return rows.sort((a, b) => b.depth_score - a.depth_score || b.card_count - a.card_count || compareGroupName(a, b));
       }
-      return rows.sort((a, b) => b.total_set_cost - a.total_set_cost);
+      return rows.sort((a, b) => b.total_set_cost - a.total_set_cost || compareGroupName(a, b));
     }
 
     function ensureSelection(sortedRows) {
@@ -726,11 +810,24 @@
       basketFilterSummaryEl.textContent = labels.join(", ") || "All";
     }
 
+    function availableGenerations() {
+      return [...new Set(state.rows.map((row) => row.generation || "Unknown"))]
+        .sort((a, b) => generationRank(a) - generationRank(b) || String(a).localeCompare(String(b)));
+    }
+
+    function updateEraFilterSummary() {
+      if (!state.eraFilters.length || state.eraFilters.includes("all")) {
+        eraFilterSummaryEl.textContent = "All";
+        return;
+      }
+      eraFilterSummaryEl.textContent = state.eraFilters.join(", ");
+    }
+
     function renderBasketFilters() {
       basketFilterPanelEl.innerHTML = "";
       basketFilters.forEach((option) => {
         const label = document.createElement("label");
-        label.className = "filter-option";
+        label.className = state.basketFilters.includes(option.id) ? "filter-option selected" : "filter-option";
         const input = document.createElement("input");
         input.type = "checkbox";
         input.checked = state.basketFilters.includes(option.id);
@@ -756,8 +853,12 @@
           await loadData();
         });
 
+        const indicator = document.createElement("span");
+        indicator.className = "filter-indicator";
+        indicator.textContent = "✓";
         const text = document.createElement("span");
         text.textContent = option.label;
+        label.appendChild(indicator);
         label.appendChild(input);
         label.appendChild(text);
         basketFilterPanelEl.appendChild(label);
@@ -765,17 +866,67 @@
       updateBasketFilterSummary();
     }
 
+    function renderEraFilters() {
+      eraFilterPanelEl.innerHTML = "";
+      const options = [{ id: "all", label: "All" }].concat(
+        availableGenerations().map((generation) => ({ id: generation, label: generation }))
+      );
+      options.forEach((option) => {
+        const label = document.createElement("label");
+        label.className = state.eraFilters.includes(option.id) ? "filter-option selected" : "filter-option";
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = state.eraFilters.includes(option.id);
+        input.addEventListener("change", () => {
+          if (option.id === "all") {
+            state.eraFilters = ["all"];
+          } else if (input.checked) {
+            state.eraFilters = state.eraFilters.filter((value) => value !== "all");
+            if (!state.eraFilters.includes(option.id)) {
+              state.eraFilters.push(option.id);
+            }
+          } else {
+            state.eraFilters = state.eraFilters.filter((value) => value !== option.id);
+          }
+
+          if (!state.eraFilters.length) {
+            state.eraFilters = ["all"];
+          } else {
+            state.eraFilters.sort((a, b) => generationRank(a) - generationRank(b) || String(a).localeCompare(String(b)));
+          }
+
+          state.selectedGroupId = null;
+          render();
+        });
+
+        const indicator = document.createElement("span");
+        indicator.className = "filter-indicator";
+        indicator.textContent = "✓";
+        const text = document.createElement("span");
+        text.textContent = option.label;
+        label.appendChild(indicator);
+        label.appendChild(input);
+        label.appendChild(text);
+        eraFilterPanelEl.appendChild(label);
+      });
+      updateEraFilterSummary();
+    }
+
     function renderSummary(sortedRows) {
-      const highest = [...state.rows].sort((a, b) => b.total_set_cost - a.total_set_cost)[0];
-      const cheapest = [...state.rows].sort((a, b) => a.total_set_cost - b.total_set_cost)[0];
-      const topHeavy = [...state.rows].sort((a, b) => b.top3_share_pct - a.top3_share_pct)[0];
-      const deepest = [...state.rows].sort((a, b) => b.depth_score - a.depth_score)[0];
+      const visibleRows = getVisibleRows();
+      const highest = [...visibleRows].sort((a, b) => b.total_set_cost - a.total_set_cost)[0];
+      const cheapest = [...visibleRows].sort((a, b) => a.total_set_cost - b.total_set_cost)[0];
+      const topHeavy = [...visibleRows].sort((a, b) => b.top3_share_pct - a.top3_share_pct)[0];
+      const deepest = [...visibleRows].sort((a, b) => b.depth_score - a.depth_score)[0];
+      const eraLabel = !state.eraFilters.length || state.eraFilters.includes("all")
+        ? "all eras"
+        : state.eraFilters.join(", ");
 
       const cards = [
         {
           label: "Tracked Sets",
-          value: int(state.rows.length),
-          subtle: `Filtered to sets with at least ${int(state.minCards)} tracked cards.`,
+          value: int(visibleRows.length),
+          subtle: `Filtered to ${eraLabel} with at least ${int(state.minCards)} tracked cards.`,
         },
         {
           label: "Most Expensive",
@@ -897,6 +1048,7 @@
     function render() {
       renderSortTabs();
       renderBasketFilters();
+      renderEraFilters();
       const sortedRows = getSortedRows();
       const selected = ensureSelection(sortedRows);
       renderSummary(sortedRows);
@@ -928,6 +1080,13 @@
       const res = await fetch(`/set_baskets?${params.toString()}`);
       const payload = await res.json();
       state.rows = hydrateRows(payload);
+      const visibleGenerations = new Set(availableGenerations());
+      if (!state.eraFilters.includes("all")) {
+        state.eraFilters = state.eraFilters.filter((generation) => visibleGenerations.has(generation));
+        if (!state.eraFilters.length) {
+          state.eraFilters = ["all"];
+        }
+      }
       render();
     }
 
@@ -942,6 +1101,22 @@
       minCardsEl.value = String(state.minCards);
       state.selectedGroupId = null;
       await loadData();
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!basketFilterMenuEl.contains(event.target)) {
+        basketFilterMenuEl.open = false;
+      }
+      if (!eraFilterMenuEl.contains(event.target)) {
+        eraFilterMenuEl.open = false;
+      }
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        basketFilterMenuEl.open = false;
+        eraFilterMenuEl.open = false;
+      }
     });
 
     async function init() {

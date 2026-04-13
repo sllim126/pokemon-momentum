@@ -1802,6 +1802,10 @@
       -ms-overflow-style: none;
     }
 
+    .signal-panel.good-buys-table .table-wrap {
+      max-height: min(40vh, 540px);
+    }
+
     .table-wrap::-webkit-scrollbar {
       display: none;
     }
@@ -3335,7 +3339,7 @@
             <div class="tracking-menu-pages" id="trackingAdminPages" hidden>
               <div class="field-label">Admin Pages</div>
               <div class="tracking-menu-page-list">
-                <a class="tracking-menu-link" href="/pricing-upload">Pricing Upload</a>
+                <a class="tracking-menu-link" href="/pricing-upload">Squarespace CSV Upload</a>
                 <a class="tracking-menu-link" href="/supplier-pricing">Supplier Pricing</a>
                 <a class="tracking-menu-link" href="/supplier-profitability">Supplier Profitability</a>
                 <a class="tracking-menu-link" href="/bug-reports">Bug Reports</a>
@@ -4038,7 +4042,7 @@
         title: "Fresh 90-day highs across all tracked cards and products."
       },
       good_buys: {
-        path: "/good_buys?limit=120&min_price=5&max_30d_pct=-5&max_90d_pct=10&max_7d_pct=3&floor_days=7&min_floor_observations=5&max_floor_variance_pct=8",
+        path: "/good_buys?limit=120&min_price=5",
         columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "roc_7d_pct", "roc_30d_pct", "roc_90d_pct", "price_vs_sma30_pct"],
         title: "Premium-rarity cards that have been drifting lower and may be entering buyable pullback territory."
       },
@@ -5196,13 +5200,19 @@
       return strongMatches.length >= 2;
     }
 
-    function renderHeaderSearchResults(results, totalCount) {
+    function renderHeaderSearchResults(results, totalCount, didYouMean = []) {
       headerSearchResults.innerHTML = "";
       headerSearchResultsData = results;
       headerSearchActiveIndex = results.length ? 0 : -1;
       if (!results.length) {
         setHeaderSearchResultsOpen(false);
         return;
+      }
+      if (didYouMean && didYouMean.length) {
+        const hint = document.createElement("div");
+        hint.className = "brandsearch-more";
+        hint.textContent = `Did you mean: ${didYouMean.join(", ")}?`;
+        headerSearchResults.appendChild(hint);
       }
       results.forEach((result, index) => {
         const btn = document.createElement("button");
@@ -5268,7 +5278,12 @@
       }
       activateTab("group_products");
       syncUrlState();
-      const rows = await loadTable();
+      let rows = await loadTable();
+      if ((!rows || !rows.length) && currentBrowseSetFilters.size && !currentBrowseSetFilters.has("all")) {
+        currentBrowseSetFilters = new Set(["all"]);
+        syncUrlState();
+        rows = await loadTable();
+      }
       if (!rows || !rows.length) {
         return null;
       }
@@ -5427,7 +5442,7 @@
         return;
       }
       const results = payload.items || [];
-      renderHeaderSearchResults(results, payload.total_count || results.length);
+      renderHeaderSearchResults(results, payload.total_count || results.length, payload.did_you_mean || []);
       if (!results.length) {
         setHeaderSearchStatus(`No results for "${headerSearchInput.value.trim()}".`, true);
         return;
@@ -5435,6 +5450,10 @@
       const totalCount = payload.total_count || results.length;
       if (results.length === 1) {
         setHeaderSearchStatus(`1 match found. Press Enter to open it.`);
+        return;
+      }
+      if (payload.fuzzy && payload.did_you_mean && payload.did_you_mean.length) {
+        setHeaderSearchStatus(`Did you mean: ${payload.did_you_mean.join(", ")}?`);
         return;
       }
       setHeaderSearchStatus(`${totalCount} matches found. Scroll, click, or press Enter to open.`);
@@ -6458,6 +6477,11 @@
       if (!signalSegments) return;
       const showSegments = segmentFilteredTabs.has(currentTab) && currentTab !== "browse_species";
       signalSegments.style.display = showSegments ? "inline-flex" : "none";
+    }
+
+    function updateTableWrapMode() {
+      if (!signalPanel) return;
+      signalPanel.classList.toggle("good-buys-table", currentTab === "good_buys");
     }
 
     function setGoodBuysSetPopoverOpen(open) {
@@ -7553,6 +7577,7 @@
       const cfg = tabConfig[currentTab];
       tableStatus.innerHTML = loadingMarkup("Loading screener");
       updateDevTabHelp(currentTab);
+      updateTableWrapMode();
       // Overlay makes loading state obvious during slower queries and filter changes.
       setTableLoading(true, "Loading market signals");
       let loadSucceeded = false;

@@ -117,6 +117,9 @@
       line-height: 1.5;
       margin-top: 10px;
     }
+    .helper strong {
+      color: var(--text);
+    }
     .field label {
       display: block;
       font-size: 12px;
@@ -204,7 +207,11 @@
           <div class="subpanel-title">Supplier Side</div>
           <div class="subpanel-copy">What it costs you to get the product into your hands.</div>
           <div class="form-grid">
-            <div class="field"><label for="jpyPerUsd">JPY per USD</label><input id="jpyPerUsd" type="number" step="0.01" value="145"></div>
+            <div class="field">
+              <label for="jpyPerUsd">JPY per USD</label>
+              <input id="jpyPerUsd" type="number" step="0.01" value="159">
+              <div class="helper" id="fxStatus">Using the current saved default until the live FX lookup completes.</div>
+            </div>
             <div class="field"><label for="importDutyPct">Import Duty %</label><input id="importDutyPct" type="number" step="0.01" value="10"></div>
             <div class="field"><label for="inboundShippingMode">Inbound Shipping Mode</label><select id="inboundShippingMode"><option value="order-estimate" selected>Estimate from Order</option><option value="manual">Manual per Item</option></select></div>
             <div class="field"><label for="orderShippingJpy">Order Shipping JPY</label><input id="orderShippingJpy" type="number" step="1" value="13800"></div>
@@ -225,9 +232,9 @@
           <div class="subpanel-title">Buyer Side</div>
           <div class="subpanel-copy">What it costs to sell, ship out, and still leave yourself profit.</div>
           <div class="form-grid">
-            <div class="field"><label for="outboundShippingUsd">Outbound Shipping USD</label><input id="outboundShippingUsd" type="number" step="0.01" value="6.25"></div>
+            <div class="field"><label for="outboundShippingUsd">Outbound Shipping USD</label><input id="outboundShippingUsd" type="number" step="0.01" value="7.25"></div>
             <div class="field"><label for="shippingCreditUsd">Buyer Shipping Credit USD</label><input id="shippingCreditUsd" type="number" step="0.01" value="0.00"></div>
-            <div class="field"><label for="platformFeePct">Platform Fee %</label><input id="platformFeePct" type="number" step="0.01" value="10.00"></div>
+            <div class="field"><label for="platformFeePct">Platform Fee %</label><input id="platformFeePct" type="number" step="0.01" value="2.90"></div>
             <div class="field"><label for="paymentFeePct">Payment Fee %</label><input id="paymentFeePct" type="number" step="0.01" value="0.00"></div>
             <div class="field"><label for="paymentFeeFixed">Payment Fixed Fee USD</label><input id="paymentFeeFixed" type="number" step="0.01" value="0.30"></div>
             <div class="field"><label for="incomeTaxPct">Income Tax %</label><input id="incomeTaxPct" type="number" step="0.01" value="25"></div>
@@ -276,13 +283,14 @@
               <th>Break Even</th>
               <th>Target Margin Price</th>
               <th>Recommended Floor</th>
-              <th>Target Profit</th>
+              <th>Saved Target Profit</th>
+              <th>Margin Price Profit</th>
               <th>Store Profit</th>
               <th>Headroom</th>
             </tr>
           </thead>
           <tbody id="profitRows">
-            <tr><td colspan="15" class="muted">Loading profitability rows…</td></tr>
+            <tr><td colspan="16" class="muted">Loading profitability rows…</td></tr>
           </tbody>
         </table>
       </div>
@@ -298,6 +306,7 @@
     const inboundShippingMode = document.getElementById("inboundShippingMode");
     const shippingModeHelp = document.getElementById("shippingModeHelp");
     const clearInboundShippingBtn = document.getElementById("clearInboundShippingBtn");
+    const fxStatusEl = document.getElementById("fxStatus");
     const profitRows = document.getElementById("profitRows");
     const statRows = document.getElementById("statRows");
     const statBuy = document.getElementById("statBuy");
@@ -358,7 +367,7 @@
         return `${row.sku} ${row.title} ${row.supplier_item}`.toLowerCase().includes(needle);
       });
       if (!visible.length) {
-        profitRows.innerHTML = '<tr><td colspan="15" class="muted">No rows match the current filters.</td></tr>';
+        profitRows.innerHTML = '<tr><td colspan="16" class="muted">No rows match the current filters.</td></tr>';
         return;
       }
       profitRows.innerHTML = visible.map((row) => `
@@ -376,6 +385,7 @@
           <td>${money(row.required_price_for_target_margin)}</td>
           <td>${money(row.recommended_floor_price)}</td>
           <td>${money(row.profit_at_target_before_tax)}<br><span class="muted">${pct(row.margin_at_target_before_tax_pct)}</span></td>
+          <td>${money(row.profit_at_margin_price_before_tax)}<br><span class="muted">${pct(row.margin_at_margin_price_before_tax_pct)}</span></td>
           <td>${money(row.profit_at_store_before_tax)}<br><span class="muted">${pct(row.margin_at_store_before_tax_pct)}</span></td>
           <td>${money(row.headroom_vs_target)}</td>
         </tr>
@@ -388,6 +398,33 @@
       statThin.textContent = stats.thin_margin_count ?? 0;
       statPass.textContent = stats.pass_count ?? 0;
       statAvgProfit.textContent = stats.avg_target_profit_after_tax == null ? "-" : money(stats.avg_target_profit_after_tax);
+    }
+
+    async function refreshFxRate() {
+      fxStatusEl.textContent = "Refreshing JPY/USD from the latest available source…";
+      try {
+        const response = await fetch("/supplier-profitability/fx", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.detail || `${response.status} ${response.statusText}`);
+        }
+        if (payload.jpy_per_usd != null) {
+          document.getElementById("jpyPerUsd").value = Number(payload.jpy_per_usd).toFixed(2);
+        }
+        const rateBits = [];
+        if (payload.provider) {
+          rateBits.push(payload.provider);
+        }
+        if (payload.effective_date) {
+          rateBits.push(`rate date ${payload.effective_date}`);
+        }
+        const freshness = payload.stale ? "cached fallback" : "latest available";
+        fxStatusEl.innerHTML = `<strong>${freshness}</strong>${rateBits.length ? ` from ${rateBits.join(" · ")}` : ""}.`;
+      } catch (err) {
+        fxStatusEl.textContent = "Live FX lookup failed, so the saved default is still in use.";
+      }
     }
 
     async function loadProfitability() {
@@ -415,7 +452,7 @@
           : `Loaded ${allRows.length} matched SKUs from your latest supplier quotes.`;
       } catch (err) {
         statusEl.textContent = err.message || "Failed to load profitability.";
-        profitRows.innerHTML = '<tr><td colspan="15" class="muted">Unable to load profitability data.</td></tr>';
+        profitRows.innerHTML = '<tr><td colspan="16" class="muted">Unable to load profitability data.</td></tr>';
       } finally {
         refreshBtn.disabled = false;
       }
@@ -429,6 +466,8 @@
     decisionFilter.addEventListener("change", () => render(allRows));
     searchInput.addEventListener("input", () => render(allRows));
     updateShippingModeHelp();
+    refreshFxRate();
+    window.setInterval(refreshFxRate, 15 * 60 * 1000);
     loadProfitability();
   </script>
 </body>

@@ -1,0 +1,13 @@
+sku,tcgplayer_product_id,pricing_mode,min_price,note
+ENG-BORING-PACK,,manual,,Self-made product; no TCGplayer equivalent
+ENG-PF-ART,664903,market_minus_5_pct,,Phantasmal Flames Sleeved Booster Pack Art Set
+ENG-SS-BB,565629,market_minus_5_pct,,Surging Sparks Booster Bundle
+ENG-SS-Costco,650397,market_minus_5_pct,,Costco Surging Sparks 2-Pack Trainer Box and Booster Bundle
+ENG-HOUNDex-MCAP,561521,market_minus_5_pct_with_floor,29.99,Keep at or above supplier-based floor
+ENG-RESHex-MCAP,666512,market_minus_5_pct_with_floor,29.99,Keep at or above supplier-based floor
+ENG-BLKYUec-MCAP,662745,market_minus_5_pct_with_floor,29.99,Keep at or above supplier-based floor
+ENG-MELex-MCAP,662750,market_minus_5_pct_with_floor,29.99,Keep at or above supplier-based floor
+ENG-ARCHex-MCAP,656955,market_minus_5_pct_with_floor,29.99,Keep at or above supplier-based floor
+ENG-MEGLATex-MCAP,654188,market_minus_5_pct_with_floor,29.99,Keep at or above supplier-based floor
+JP-RS-BOX,,manual,,Japanese product in English bucket; decide separately
+ENG-PO-ART4,672413,market_minus_5_pct,,Perfect Order Sleeved Booster Pack Art Bundle

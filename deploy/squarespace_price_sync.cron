@@ -1,0 +1,1 @@
+15 9 * * * cd /opt/pokemon-momentum && /bin/bash scripts/run_squarespace_price_sync.sh >> logs/squarespace_price_sync_cron.log 2>&1

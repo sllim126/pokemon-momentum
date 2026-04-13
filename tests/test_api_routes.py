@@ -1,4 +1,6 @@
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
@@ -31,6 +33,14 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Set Explorer", response.text)
+
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    def test_pricing_upload_page_serves_html(self, _get_session_user_mock):
+        response = self.client.get("/pricing-upload", cookies={"pm_tracking_token": "token"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/html", response.headers["content-type"])
+        self.assertIn("Pricing Upload", response.text)
 
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
     def test_bug_reports_page_serves_html(self, _get_session_user_mock):
@@ -215,6 +225,40 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("Details must be at least 10 characters", response.text)
 
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    def test_pricing_upload_compare_saves_csv_and_returns_summary(self, _get_session_user_mock):
+        source_csv = Path("/opt/pokemon-momentum/products_Apr-09_04-31-18PM.csv").read_bytes()
+        with TemporaryDirectory() as tmpdir:
+            tmp_root = Path(tmpdir)
+            export_path = tmp_root / "products.csv"
+            archive_dir = tmp_root / "archive"
+            with patch.object(api, "SQUARESPACE_EXPORT_CSV", export_path), patch.object(api, "SQUARESPACE_EXPORT_ARCHIVE_DIR", archive_dir):
+                response = self.client.post(
+                    "/pricing-upload/compare",
+                    files={"file": ("products.csv", source_csv, "text/csv")},
+                    cookies={"pm_tracking_token": "token"},
+                )
+
+                self.assertEqual(response.status_code, 200)
+                payload = response.json()
+                self.assertTrue(payload["ok"])
+                self.assertEqual(payload["saved_to"], str(export_path))
+                self.assertTrue(export_path.exists())
+                self.assertGreater(payload["export_rows"], 0)
+                self.assertGreater(payload["covered_rows"], 0)
+                self.assertTrue(payload["preview"])
+
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    def test_pricing_upload_compare_rejects_non_squarespace_csv(self, _get_session_user_mock):
+        response = self.client.post(
+            "/pricing-upload/compare",
+            files={"file": ("bad.csv", b"sku,price\nABC,1.00\n", "text/csv")},
+            cookies={"pm_tracking_token": "token"},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Squarespace", response.text)
+
     @patch.object(api, "list_bug_reports", return_value=[{"id": 1, "title": "Example"}])
     def test_bug_report_list_route_returns_items(self, list_bug_reports_mock):
         with patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})()):
@@ -299,19 +343,28 @@ class ApiRouteTests(unittest.TestCase):
     def test_good_buys_defaults_to_premium_cards(self):
         with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
             api, "product_signal_from", return_value="product_signal_snapshot"
-        ), patch.object(api, "category_config", return_value=api.category_config(3)):
+        ), patch.object(api, "prices_from", return_value="prices_source"), patch.object(
+            api, "category_config", return_value=api.category_config(3)
+        ):
             api.good_buys(category_id=3)
 
         sql = q_mock.call_args[0][0]
         self.assertIn("AND productKind = 'card'", sql)
         self.assertIn("ultra rare", sql.lower())
-        self.assertIn("AND COALESCE(roc_7d_pct, 0) >= -2.0", sql)
-        self.assertIn("ORDER BY ABS(COALESCE(roc_7d_pct, 0)) ASC", sql)
+        self.assertIn("COALESCE(roc_30d_pct, 0) <= 0.0", sql)
+        self.assertIn("COALESCE(roc_90d_pct, 0) <= 20.0", sql)
+        self.assertIn("COALESCE(roc_7d_pct, 0) <= 6.0", sql)
+        self.assertIn("rl.latest_price_1d < rl.latest_price_2d", sql)
+        self.assertIn("fw.floor_observations >= 4", sql)
+        self.assertIn("<= 12.0", sql)
+        self.assertIn("ORDER BY", sql)
 
     def test_good_buys_can_switch_to_sealed(self):
         with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
             api, "product_signal_from", return_value="product_signal_snapshot"
-        ), patch.object(api, "category_config", return_value=api.category_config(85)):
+        ), patch.object(api, "prices_from", return_value="prices_source"), patch.object(
+            api, "category_config", return_value=api.category_config(85)
+        ):
             api.good_buys(product_kind="sealed", category_id=85)
 
         sql = q_mock.call_args[0][0]
@@ -375,14 +428,22 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("AND m.productKind = 'card'", sql)
         self.assertIn("recent_distinct_prices_30d", sql)
 
-    def test_early_uptrends_orders_freshest_setups_first(self):
+    def test_early_uptrends_prefers_quiet_names_just_starting_to_lift(self):
         with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(
             api, "product_signal_from", return_value="product_signal_snapshot"
         ), patch.object(api, "category_config", return_value=api.category_config(3)):
             api.early_uptrends(category_id=3)
 
         sql = q_mock.call_args[0][0]
-        self.assertIn("ORDER BY early_streak ASC, pct_vs_sma30 ASC, latest_price DESC", sql)
+        self.assertIn("COALESCE(s.roc_7d_pct, 0) >= 1.0", sql)
+        self.assertIn("COALESCE(s.roc_7d_pct, 0) <= 10.0", sql)
+        self.assertIn("COALESCE(s.roc_30d_pct, 0) <= 12.0", sql)
+        self.assertIn("COALESCE(s.roc_90d_pct, 0) <= 25.0", sql)
+        self.assertIn("COALESCE(s.acceleration_7d_vs_30d, 0) >= 0.5", sql)
+        self.assertIn("rl.recent_price_points >= 3", sql)
+        self.assertIn("rl.latest_price_1d > rl.latest_price_2d", sql)
+        self.assertIn("rl.latest_price_2d > rl.latest_price_3d", sql)
+        self.assertIn("ORDER BY s.acceleration_7d_vs_30d DESC, pct_vs_sma30 ASC, s.roc_30d_pct ASC, s.latest_price DESC", sql)
         self.assertIn("<= 8.0", sql)
 
     def test_set_baskets_sql_stays_card_only(self):
