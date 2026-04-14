@@ -97,14 +97,14 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.json()["total_count"], 0)
 
     def test_search_sql_supports_card_and_set_token_queries(self):
-        with patch.object(api, "q", side_effect=[(["kind"], []), (["count"], [(0,)])]) as q_mock, patch.object(
+        with patch.object(api, "q", return_value=(["kind"], [])) as q_mock, patch.object(
             api, "product_signal_from", return_value="product_signal_snapshot"
         ), patch.object(api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"), patch.object(
             api, "groups_from", return_value="groups_source"
         ), patch.object(api, "category_config", return_value=api.category_config(3)):
             api.search(query="zekrom brilliant stars", limit=12, category_id=3)
 
-        sql = q_mock.call_args_list[0][0][0]
+        sql = "\n".join(call.args[0] for call in q_mock.call_args_list)
         self.assertIn("zekrom", sql.lower())
         self.assertIn("brilliant", sql.lower())
         self.assertIn("COALESCE(m.productName", sql)
@@ -112,26 +112,14 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("AND", sql)
 
     def test_search_sql_supports_set_code_tokens_on_product_matches(self):
-        with patch.object(api, "q", side_effect=[(["kind"], []), (["count"], [(0,)])]) as q_mock, patch.object(
+        with patch.object(api, "q", return_value=(["kind"], [])) as q_mock, patch.object(
             api, "product_signal_from", return_value="product_signal_snapshot"
         ), patch.object(api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"), patch.object(
             api, "groups_from", return_value="groups_source"
         ), patch.object(api, "category_config", return_value=api.category_config(3)):
             api.search(query="zekrom jtg", limit=12, category_id=3)
 
-        sql = q_mock.call_args_list[0][0][0]
-        self.assertIn("COALESCE(m.groupAbbreviation", sql)
-        self.assertIn("jtg", sql.lower())
-
-    def test_search_sql_supports_set_code_tokens_on_product_matches(self):
-        with patch.object(api, "q", side_effect=[(["kind"], []), (["count"], [(0,)])]) as q_mock, patch.object(
-            api, "product_signal_from", return_value="product_signal_snapshot"
-        ), patch.object(api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"), patch.object(
-            api, "groups_from", return_value="groups_source"
-        ), patch.object(api, "category_config", return_value=api.category_config(3)):
-            api.search(query="zekrom jtg", limit=12, category_id=3)
-
-        sql = q_mock.call_args_list[0][0][0]
+        sql = "\n".join(call.args[0] for call in q_mock.call_args_list)
         self.assertIn("COALESCE(m.groupAbbreviation", sql)
         self.assertIn("jtg", sql.lower())
 
@@ -227,12 +215,28 @@ class ApiRouteTests(unittest.TestCase):
 
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
     def test_pricing_upload_compare_saves_csv_and_returns_summary(self, _get_session_user_mock):
-        source_csv = Path("/opt/pokemon-momentum/products_Apr-09_04-31-18PM.csv").read_bytes()
+        source_csv = (
+            b"Product ID [Non Editable],SKU,Title,Price,Sale Price\n"
+            b"123,ABC-123,Test Product,12.00,0.00\n"
+        )
         with TemporaryDirectory() as tmpdir:
             tmp_root = Path(tmpdir)
             export_path = tmp_root / "products.csv"
             archive_dir = tmp_root / "archive"
-            with patch.object(api, "SQUARESPACE_EXPORT_CSV", export_path), patch.object(api, "SQUARESPACE_EXPORT_ARCHIVE_DIR", archive_dir):
+            summary = {
+                "export_rows": 1,
+                "covered_rows": 1,
+                "target_rows": 1,
+                "missing_from_export": [],
+                "unmatched_rules": [],
+                "preview": [{"sku": "ABC-123"}],
+                "total_rules": 1,
+                "manual_rules": 0,
+                "auto_rules": 1,
+            }
+            with patch.object(api, "SQUARESPACE_EXPORT_CSV", export_path), patch.object(api, "SQUARESPACE_EXPORT_ARCHIVE_DIR", archive_dir), patch.object(
+                api, "summarize_uploaded_export", return_value=summary
+            ):
                 response = self.client.post(
                     "/pricing-upload/compare",
                     files={"file": ("products.csv", source_csv, "text/csv")},
@@ -416,6 +420,24 @@ class ApiRouteTests(unittest.TestCase):
         sql = q_mock.call_args[0][0]
         self.assertIn("AND m.productKind = 'sealed'", sql)
 
+    def test_group_products_can_apply_server_side_browse_set_filters(self):
+        cols = ["productName", "groupName", "rarity", "subTypeName", "productId"]
+        rows = [
+            ("Common Card", "Black Bolt", "Common", "", 1),
+            ("Special Card", "Black Bolt", "Special Illustration Rare", "", 2),
+        ]
+        with patch.object(api, "q", return_value=(cols, rows)), patch.object(
+            api, "prices_from", return_value="prices_source"
+        ), patch.object(api, "product_signal_from", return_value="signal_source"), patch.object(
+            api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"
+        ), patch.object(api, "category_config", return_value=api.category_config(3)):
+            result = api.group_products(groupId=99, product_kind="card", filters="ir_plus")
+
+        self.assertEqual(len(result["rows"]), 1)
+        self.assertEqual(result["rows"][0][0], "Special Card")
+        self.assertIn("common", result["available_filters"])
+        self.assertIn("ir_plus", result["available_filters"])
+
     def test_breakouts_honors_product_kind_filter(self):
         with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(
             api, "prices_from", return_value="prices_source"
@@ -445,6 +467,193 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("rl.latest_price_2d > rl.latest_price_3d", sql)
         self.assertIn("ORDER BY s.acceleration_7d_vs_30d DESC, pct_vs_sma30 ASC, s.roc_30d_pct ASC, s.latest_price DESC", sql)
         self.assertIn("<= 8.0", sql)
+
+    def test_time_to_buy_returns_available_browse_set_filters(self):
+        cols = ["productName", "groupName", "rarity", "subTypeName", "productId"]
+        rows = [
+            ("Ball Variant", "White Flare", "Common", "Poke Ball Pattern", 1),
+            ("Hit Variant", "White Flare", "Double Rare", "", 2),
+        ]
+        with patch.object(api, "q", return_value=(cols, rows)), patch.object(
+            api, "product_signal_from", return_value="product_signal_snapshot"
+        ), patch.object(api, "prices_from", return_value="prices_source"), patch.object(
+            api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"
+        ), patch.object(api, "category_config", return_value=api.category_config(3)):
+            result = api.time_to_buy(category_id=3, group_id=123, product_kind="card", filters="pokeball_holo")
+
+        self.assertEqual(len(result["rows"]), 1)
+        self.assertEqual(result["rows"][0][0], "Ball Variant")
+        self.assertIn("pokeball_holo", result["available_filters"])
+
+    def test_tracking_items_resolve_assembles_rows_server_side(self):
+        universe_payload = {
+            "columns": [
+                "productId",
+                "subTypeName",
+                "groupId",
+                "groupName",
+                "productName",
+                "imageUrl",
+                "rarity",
+                "number",
+                "productClass",
+                "productKind",
+                "latest_price",
+                "latest_date",
+            ],
+            "rows": [
+                [123, "Normal", 77, "Test Set", "Test Card", "img.png", "Rare", "12/99", "card", "card", 9.5, "2026-04-14"],
+            ],
+        }
+        with patch.object(api, "universe", return_value=universe_payload):
+            result = api.tracking_items_resolve(
+                {
+                    "category_id": 3,
+                    "segment": "cards",
+                    "tracked_tag": "favorite",
+                    "tracked_sort": "productName",
+                    "items": [
+                        {"category_id": 3, "product_id": 123, "sub_type_name": "Normal", "tag": "favorite"},
+                        {"category_id": 3, "product_id": 123, "sub_type_name": "Normal", "tag": "watchlist"},
+                    ],
+                }
+            )
+
+        self.assertEqual(result["columns"][0], "productId")
+        self.assertEqual(len(result["rows"]), 1)
+        self.assertEqual(result["rows"][0][2], "Test Card")
+        self.assertEqual(result["rows"][0][-1], "Favorite, Watchlist")
+
+    def test_browse_species_returns_sorted_species_rows(self):
+        search_payload = {
+            "items": [
+                {
+                    "kind": "product",
+                    "productId": 2,
+                    "groupId": 10,
+                    "groupName": "Set B",
+                    "productName": "Pikachu - 010/100",
+                    "imageUrl": "b.png",
+                    "rarity": "Common",
+                    "number": "010/100",
+                    "productClass": "card",
+                    "productKind": "card",
+                    "subTypeName": "Normal",
+                    "latest_price": 2.5,
+                    "latest_date": "2026-04-14",
+                    "title": "Pikachu - 010/100",
+                },
+                {
+                    "kind": "product",
+                    "productId": 1,
+                    "groupId": 9,
+                    "groupName": "Set A",
+                    "productName": "Pikachu - 002/100",
+                    "imageUrl": "a.png",
+                    "rarity": "Rare",
+                    "number": "002/100",
+                    "productClass": "card",
+                    "productKind": "card",
+                    "subTypeName": "Normal",
+                    "latest_price": 4.0,
+                    "latest_date": "2026-04-14",
+                    "title": "Pikachu - 002/100",
+                },
+                {"kind": "set", "groupId": 99, "title": "Pikachu Set"},
+            ]
+        }
+        with patch.object(api, "search", return_value=search_payload):
+            result = api.browse_species("Pikachu")
+
+        self.assertEqual(result["species_query"], "pikachu")
+        self.assertEqual(len(result["rows"]), 2)
+        self.assertEqual(result["rows"][0][0], 1)
+        self.assertEqual(result["rows"][1][0], 2)
+
+    def test_store_link_prefers_visible_direct_sku_listing(self):
+        with patch.object(
+            api,
+            "load_squarespace_listing_by_sku",
+            return_value={"637647": {"sku": "637647", "title": "Prism Energy", "url": "https://www.poke6s.com/shop/p/prism-energy"}},
+        ), patch.object(api, "load_tcgplayer_sku_mapping", return_value={}), patch.object(
+            api, "_store_link_direct_match_allowed", return_value=True
+        ):
+            result = api.store_link(product_id=637647)
+
+        self.assertEqual(
+            result,
+            {
+                "listed": True,
+                "sku": "637647",
+                "title": "Prism Energy",
+                "url": "https://www.poke6s.com/shop/p/prism-energy",
+            },
+        )
+
+    def test_load_squarespace_listing_by_sku_skips_out_of_stock_rows(self):
+        export_path = api.SQUARESPACE_EXPORT_CSV
+        original_text = export_path.read_text() if export_path.exists() else None
+        try:
+            export_path.write_text(
+                "SKU,Visible,Stock,Product Page,Product URL,Title\n"
+                "IN-STOCK,Yes,2,shop,in-stock-item,In Stock Item\n"
+                "UNLIMITED,Yes,Unlimited,shop,unlimited-item,Unlimited Item\n"
+                "OUT-OF-STOCK,Yes,0,shop,out-of-stock-item,Out Of Stock Item\n"
+                "HIDDEN,No,5,shop,hidden-item,Hidden Item\n"
+            )
+            listing = api.load_squarespace_listing_by_sku()
+        finally:
+            if original_text is None:
+                export_path.unlink(missing_ok=True)
+            else:
+                export_path.write_text(original_text)
+
+        self.assertIn("IN-STOCK", listing)
+        self.assertIn("UNLIMITED", listing)
+        self.assertNotIn("OUT-OF-STOCK", listing)
+        self.assertNotIn("HIDDEN", listing)
+        self.assertEqual(listing["IN-STOCK"]["url"], "https://www.poke6s.com/shop/p/in-stock-item")
+
+    def test_store_link_can_resolve_mapped_product_listing(self):
+        with patch.object(
+            api,
+            "load_squarespace_listing_by_sku",
+            return_value={"JP-MD-BOX": {"sku": "JP-MD-BOX", "title": "Mega Dream", "url": "https://www.poke6s.com/shop/p/mega-dream"}},
+        ), patch.object(api, "load_tcgplayer_sku_mapping", return_value={"123456": "JP-MD-BOX"}):
+            result = api.store_link(product_id=123456)
+
+        self.assertTrue(result["listed"])
+        self.assertEqual(result["sku"], "JP-MD-BOX")
+
+    def test_load_tcgplayer_sku_mapping_supports_multiple_product_ids_per_sku(self):
+        mapping_path = api.SCRIPT_DIR.parents[1] / "data" / "squarespace_tcgplayer_mapping.csv"
+        original_text = mapping_path.read_text() if mapping_path.exists() else None
+        try:
+            mapping_path.write_text(
+                "sku,tcgplayer_product_id,pricing_mode,min_price,note\n"
+                "ENG-DR-ART,635053|649711,market_minus_5_pct_99,,Art bundle aliases\n"
+            )
+            mapping = api.load_tcgplayer_sku_mapping()
+        finally:
+            if original_text is None:
+                mapping_path.unlink(missing_ok=True)
+            else:
+                mapping_path.write_text(original_text)
+
+        self.assertEqual(mapping["635053"], "ENG-DR-ART")
+        self.assertEqual(mapping["649711"], "ENG-DR-ART")
+
+    def test_store_link_hides_direct_numeric_listing_for_non_card_products(self):
+        with patch.object(
+            api,
+            "load_squarespace_listing_by_sku",
+            return_value={"637647": {"sku": "637647", "title": "Prism Energy", "url": "https://www.poke6s.com/shop/p/prism-energy"}},
+        ), patch.object(api, "load_tcgplayer_sku_mapping", return_value={}), patch.object(
+            api, "_store_link_direct_match_allowed", return_value=False
+        ):
+            result = api.store_link(product_id=637647)
+
+        self.assertEqual(result, {"listed": False})
 
     def test_set_baskets_sql_stays_card_only(self):
         with patch.object(api, "q", return_value=(["groupId"], [])) as q_mock, patch.object(

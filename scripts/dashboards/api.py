@@ -1006,6 +1006,89 @@ def load_current_store_mapping() -> dict[str, dict]:
     return mapping
 
 
+def load_squarespace_listing_by_sku() -> dict[str, dict]:
+    """Load visible in-stock Squarespace listing URLs from the latest export file.
+
+    This powers the dashboard `Poke6s` button, so the function is intentionally strict:
+    only rows that are both visible and currently sellable should produce storefront links.
+    """
+    listing_by_sku: dict[str, dict] = {}
+    if not SQUARESPACE_EXPORT_CSV.exists():
+        return listing_by_sku
+    with SQUARESPACE_EXPORT_CSV.open(newline="") as handle:
+        for row in csv.DictReader(handle):
+            sku = str(row.get("SKU") or "").strip()
+            if not sku:
+                continue
+            visible = str(row.get("Visible") or "").strip().lower() == "yes"
+            stock_raw = str(row.get("Stock") or "").strip()
+            stock_lower = stock_raw.lower()
+            in_stock = False
+            if stock_lower == "unlimited":
+                in_stock = True
+            else:
+                try:
+                    in_stock = float(stock_raw) > 0
+                except (TypeError, ValueError):
+                    in_stock = False
+            slug = str(row.get("Product URL") or "").strip().strip("/")
+            page = str(row.get("Product Page") or "").strip().strip("/")
+            if not visible or not in_stock or not slug:
+                continue
+            if page:
+                url = f"https://www.poke6s.com/{page}/p/{slug}"
+            else:
+                url = f"https://www.poke6s.com/p/{slug}"
+            listing_by_sku[sku] = {
+                "sku": sku,
+                "title": str(row.get("Title") or "").strip(),
+                "url": url,
+            }
+    return listing_by_sku
+
+
+def load_tcgplayer_sku_mapping() -> dict[str, str]:
+    """Load TCGplayer product id -> store SKU mappings for products listed on the site.
+
+    `tcgplayer_product_id` may contain multiple aliases for the same store SKU when
+    TCGplayer has near-duplicate sealed products that should point to one storefront item.
+    """
+    mapping: dict[str, str] = {}
+    squarespace_mapping_path = SCRIPT_DIR.parents[1] / "data" / "squarespace_tcgplayer_mapping.csv"
+    if not squarespace_mapping_path.exists():
+        return mapping
+    with squarespace_mapping_path.open(newline="") as handle:
+        for row in csv.DictReader(handle):
+            product_id_raw = str(row.get("tcgplayer_product_id") or "").strip()
+            sku = str(row.get("sku") or "").strip()
+            if not product_id_raw or not sku:
+                continue
+            product_ids = [token.strip() for token in re.split(r"[|,]", product_id_raw) if token.strip()]
+            for product_id in product_ids:
+                mapping[product_id] = sku
+    return mapping
+
+
+def _store_link_direct_match_allowed(product_id: int, category_id: int) -> bool:
+    """Allow direct SKU==product_id links only for card listings; sealed uses explicit SKU mappings."""
+    category = category_config(category_id)
+    source = product_signal_from(category.category_id)
+    cols, rows = q(
+        f"""
+        SELECT productKind
+        FROM {source}
+        WHERE categoryId = {category.category_id}
+          AND productId = {int(product_id)}
+          AND latest_date = (SELECT MAX(latest_date) FROM {source})
+        LIMIT 1
+        """
+    )
+    if not rows:
+        return False
+    row = dict(zip(cols, rows[0]))
+    return str(row.get("productKind") or "").strip().lower() == "card"
+
+
 def load_latest_market_targets() -> dict[str, dict]:
     """Load the most recent generated pricing targets for SKU-level comparison.
 
@@ -1170,6 +1253,235 @@ def _round_money(value: float | None) -> float | None:
     if value is None:
         return None
     return round(value + 1e-9, 2)
+
+
+_BROWSE_SET_FILTER_IDS = (
+    "all",
+    "bulk",
+    "hits",
+    "ir_plus",
+    "common",
+    "uncommon",
+    "rare",
+    "holo_rare",
+    "double_rare",
+    "illustration_rare",
+    "special_illustration_rare",
+    "ultra_rare",
+    "hyper_rare",
+    "secret_rare",
+    "promo",
+    "stamped",
+    "reverse_holo",
+    "pokeball_holo",
+    "masterball_holo",
+    "ball_pattern",
+    "energy_symbol_pattern",
+)
+
+
+def _normalize_browse_set_filters(filters: str | None) -> list[str]:
+    """Parse and validate the dashboard's Browse Set filter tokens."""
+    tokens: list[str] = []
+    seen: set[str] = set()
+    for token in str(filters or "").split("|"):
+        normalized = str(token or "").strip().lower()
+        if not normalized or normalized not in _BROWSE_SET_FILTER_IDS or normalized in seen:
+            continue
+        seen.add(normalized)
+        tokens.append(normalized)
+    if not tokens or "all" in tokens:
+        return []
+    return tokens
+
+
+def _browse_set_filter_text(row: dict) -> str:
+    return " ".join(
+        [
+            str(row.get("productName") or ""),
+            str(row.get("subTypeName") or ""),
+            str(row.get("rarity") or ""),
+        ]
+    ).lower()
+
+
+def _browse_set_rarity_includes(row: dict, needle: str) -> bool:
+    return str(needle or "").lower() in str(row.get("rarity") or "").lower()
+
+
+def _browse_set_group_name(row: dict) -> str:
+    return str(row.get("groupName") or "").lower()
+
+
+def _matches_browse_set_filter(row: dict, filter_id: str) -> bool:
+    """Mirror the browser's rarity/variant buckets so the server can filter first."""
+    current = str(filter_id or "all").strip().lower()
+    if not current or current == "all":
+        return True
+    text = _browse_set_filter_text(row)
+    group_name = _browse_set_group_name(row)
+    if current == "common":
+        return _browse_set_rarity_includes(row, "common") and not _browse_set_rarity_includes(row, "uncommon")
+    if current == "uncommon":
+        return _browse_set_rarity_includes(row, "uncommon")
+    if current == "rare":
+        return str(row.get("rarity") or "").strip().lower() == "rare"
+    if current == "holo_rare":
+        return _browse_set_rarity_includes(row, "holo rare")
+    if current == "double_rare":
+        return _browse_set_rarity_includes(row, "double rare")
+    if current == "illustration_rare":
+        return _browse_set_rarity_includes(row, "illustration rare") and not _browse_set_rarity_includes(row, "special illustration rare")
+    if current == "special_illustration_rare":
+        return _browse_set_rarity_includes(row, "special illustration rare")
+    if current == "ultra_rare":
+        return _browse_set_rarity_includes(row, "ultra rare")
+    if current == "hyper_rare":
+        return _browse_set_rarity_includes(row, "hyper rare")
+    if current == "secret_rare":
+        return _browse_set_rarity_includes(row, "secret rare")
+    if current == "promo":
+        return "promo" in text
+    if current == "stamped":
+        return "stamp" in text
+    if current == "reverse_holo":
+        return "reverse holo" in text
+    if current == "pokeball_holo":
+        if "black bolt" in group_name or "white flare" in group_name or "prismatic evolutions" in group_name:
+            return "poke ball" in text
+        if "ascended heroes" in group_name:
+            return "ball" in text
+        return "poke ball" in text
+    if current == "masterball_holo":
+        return "master ball" in text
+    if current == "ball_pattern":
+        return "ball pattern" in text
+    if current == "energy_symbol_pattern":
+        return "energy symbol pattern" in text
+    if current == "ir_plus":
+        return any(
+            _matches_browse_set_filter(row, nested)
+            for nested in ("illustration_rare", "special_illustration_rare", "ultra_rare", "hyper_rare", "secret_rare")
+        )
+    if current == "hits":
+        return any(
+            _matches_browse_set_filter(row, nested)
+            for nested in ("double_rare", "ir_plus")
+        ) or _browse_set_rarity_includes(row, "shiny holo rare")
+    if current == "bulk":
+        return any(
+            _matches_browse_set_filter(row, nested)
+            for nested in (
+                "common",
+                "uncommon",
+                "rare",
+                "holo_rare",
+                "reverse_holo",
+                "pokeball_holo",
+                "masterball_holo",
+                "ball_pattern",
+                "energy_symbol_pattern",
+            )
+        )
+    return False
+
+
+def _filter_browse_set_rows(cols: list[str], rows: list[tuple], filters: str | None) -> tuple[list[tuple], list[str]]:
+    """Filter set-browser rows server-side and advertise which filters are available."""
+    row_dicts = [dict(zip(cols, row)) for row in rows]
+    available_filters = ["all"]
+    for filter_id in _BROWSE_SET_FILTER_IDS:
+        if filter_id == "all":
+            continue
+        if any(_matches_browse_set_filter(row, filter_id) for row in row_dicts):
+            available_filters.append(filter_id)
+    active_filters = _normalize_browse_set_filters(filters)
+    if not active_filters:
+        return rows, available_filters
+    filtered_rows = [
+        row
+        for row, row_dict in zip(rows, row_dicts)
+        if any(_matches_browse_set_filter(row_dict, filter_id) for filter_id in active_filters)
+    ]
+    return filtered_rows, available_filters
+
+
+def _format_tracked_tag_label(tag: str) -> str:
+    normalized = str(tag or "").strip().lower()
+    if normalized == "owned":
+        return "Buy List"
+    if normalized == "favorite":
+        return "Favorite"
+    if normalized == "watchlist":
+        return "Watchlist"
+    if normalized == "research":
+        return "Research"
+    return str(tag or "")
+
+
+def _tracking_sort_key(row: dict, tracked_sort: str) -> tuple:
+    def text(value) -> str:
+        return str(value or "").casefold()
+
+    if tracked_sort == "productName":
+        return (text(row.get("productName")), text(row.get("subTypeName")))
+    if tracked_sort == "groupName":
+        return (text(row.get("groupName")), text(row.get("productName")))
+    if tracked_sort == "rarity":
+        return (text(row.get("rarity")), text(row.get("productName")))
+    if tracked_sort == "number":
+        return (text(row.get("number")), text(row.get("productName")))
+    if tracked_sort == "subTypeName":
+        return (text(row.get("subTypeName")), text(row.get("productName")))
+    return (
+        text(row.get("tags")),
+        text(row.get("groupName")),
+        text(row.get("productName")),
+    )
+
+
+def _normalize_species_query(value: str) -> str:
+    return " ".join(str(value or "").strip().lower().split())
+
+
+def _derive_species_query_from_name(name: str) -> str:
+    raw = str(name or "").strip()
+    if not raw:
+        return ""
+    return (
+        re.sub(r"\s+(ex|gx|vmax|vstar|v-union|v)\b.*$", "", re.sub(r"^mega\s+", "", re.sub(r"\s*\([^)]*\)\s*$", "", re.sub(r"\s*-\s*[^-]+$", "", raw, flags=re.IGNORECASE)), flags=re.IGNORECASE), flags=re.IGNORECASE)
+        .strip()
+    )
+
+
+def _matches_species_query(product_name: str, query: str) -> bool:
+    species_query = _normalize_species_query(_derive_species_query_from_name(query))
+    if not species_query:
+        return False
+    product_species = _normalize_species_query(_derive_species_query_from_name(product_name))
+    return bool(product_species) and species_query in product_species
+
+
+def _parse_card_number_parts(value: str) -> tuple[int, str, str]:
+    raw = str(value or "").strip()
+    if not raw:
+        return (10**9, "", "")
+    match = re.match(r"^(\d+)(.*)$", raw)
+    if not match:
+        return (10**9, raw.casefold(), raw)
+    return (int(match.group(1)), str(match.group(2) or "").casefold(), raw)
+
+
+def _browse_species_sort_key(row: dict) -> tuple:
+    number_primary, number_suffix, number_raw = _parse_card_number_parts(str(row.get("number") or ""))
+    return (
+        number_primary,
+        number_suffix,
+        str(row.get("groupName") or "").casefold(),
+        str(row.get("subTypeName") or "").casefold(),
+        str(row.get("productName") or "").casefold(),
+        number_raw.casefold(),
+    )
 
 
 def _latest_jpy_per_usd_rate() -> dict:
@@ -1741,6 +2053,96 @@ def tracking_tags_merge(payload: dict, authorization: str | None = Header(defaul
     return {"ok": True, "count": len(items)}
 
 
+@app.post("/tracking/items/resolve")
+def tracking_items_resolve(payload: dict | None = None):
+    """Resolve tracked tag rows into display-ready dashboard items on the server."""
+    body = payload if isinstance(payload, dict) else {}
+    category_id = int(body.get("category_id", 3) or 3)
+    segment = str(body.get("segment") or "cards").strip().lower()
+    tracked_tag = str(body.get("tracked_tag") or "all").strip()
+    tracked_sort = str(body.get("tracked_sort") or "tags").strip()
+    raw_items = body.get("items") or []
+    if not isinstance(raw_items, list):
+        raise HTTPException(status_code=400, detail="items must be a list")
+
+    tags_by_key: dict[tuple[int, str], set[str]] = {}
+    for item in raw_items:
+        if not isinstance(item, dict):
+            continue
+        try:
+            item_category_id = int(item.get("category_id", category_id) or category_id)
+            product_id = int(item.get("product_id"))
+        except (TypeError, ValueError):
+            continue
+        if item_category_id != category_id:
+            continue
+        tag = str(item.get("tag") or "").strip()
+        if not tag:
+            continue
+        sub_type_name = str(item.get("sub_type_name") or "")
+        tags_by_key.setdefault((product_id, sub_type_name), set()).add(tag)
+
+    columns = [
+        "productId",
+        "groupId",
+        "productName",
+        "groupName",
+        "imageUrl",
+        "number",
+        "rarity",
+        "subTypeName",
+        "latest_price",
+        "latest_date",
+        "productClass",
+        "productKind",
+        "tags",
+    ]
+    if not tags_by_key:
+        return {"columns": columns, "rows": []}
+
+    key_expr = ",".join(f"{product_id}||{sub_type_name}" for product_id, sub_type_name in tags_by_key.keys())
+    universe_payload = universe(limit=max(1, len(tags_by_key)), category_id=category_id, keys=key_expr)
+    universe_cols = universe_payload.get("columns") or []
+    universe_rows = universe_payload.get("rows") or []
+
+    resolved_rows: list[dict] = []
+    for row in universe_rows:
+        item = dict(zip(universe_cols, row))
+        row_key = (int(item.get("productId")), str(item.get("subTypeName") or ""))
+        tags = sorted(tags_by_key.get(row_key, set()))
+        if not tags:
+            continue
+        product_kind = str(item.get("productKind") or "").strip().lower()
+        row_segment = "sealed" if product_kind == "sealed" else "cards"
+        if segment in {"cards", "sealed"} and row_segment != segment:
+            continue
+        if tracked_tag != "all" and tracked_tag not in tags:
+            continue
+        resolved_rows.append(
+            {
+                "productId": int(item.get("productId")),
+                "groupId": item.get("groupId"),
+                "productName": item.get("productName"),
+                "groupName": item.get("groupName"),
+                "imageUrl": item.get("imageUrl"),
+                "number": item.get("number"),
+                "rarity": item.get("rarity"),
+                "subTypeName": item.get("subTypeName"),
+                "latest_price": item.get("latest_price"),
+                "latest_date": item.get("latest_date"),
+                "productClass": item.get("productClass"),
+                "productKind": item.get("productKind"),
+                "tags": ", ".join(_format_tracked_tag_label(tag) for tag in tags),
+            }
+        )
+
+    resolved_rows.sort(key=lambda row: _tracking_sort_key(row, tracked_sort))
+    return {
+        "columns": columns,
+        "rows": [[row.get(col) for col in columns] for row in resolved_rows],
+    }
+
+
 @app.delete("/tracking/account")
 def tracking_delete_account(payload: dict | None = None, authorization: str | None = Header(default=None)):
     session_user = require_tracking_user(authorization)
@@ -2049,6 +2451,27 @@ def groups(limit: int = 1000, offset: int = 0, category_id: int = 3):
     """
     cols, rows = q(sql)
     return {"columns": cols, "rows": rows}
+
+
+@app.get("/store_link")
+def store_link(product_id: int, category_id: int = 3):
+    """Return the public Poke6s listing URL for a product when one exists and is in stock.
+
+    Singles can resolve directly when the store SKU equals the TCGplayer product id.
+    Sealed products go through the explicit Squarespace/TCGplayer mapping file instead.
+    """
+    product_id_text = str(int(product_id))
+    listing_by_sku = load_squarespace_listing_by_sku()
+    direct_listing = listing_by_sku.get(product_id_text)
+    if direct_listing is not None and _store_link_direct_match_allowed(product_id, category_id):
+        return {"listed": True, **direct_listing}
+
+    mapped_sku = load_tcgplayer_sku_mapping().get(product_id_text, "")
+    mapped_listing = listing_by_sku.get(mapped_sku) if mapped_sku else None
+    if mapped_listing is not None:
+        return {"listed": True, **mapped_listing}
+
+    return {"listed": False}
 
 
 @app.get("/search")
@@ -2584,8 +3007,77 @@ def search(query: str, limit: int = 12, category_id: int = 3):
     }
 
 
+@app.get("/browse_species")
+def browse_species(query: str, limit: int = 500, category_id: int = 3):
+    """Return a cross-set species view that is already filtered and sorted server-side."""
+    resolved_query = _normalize_species_query(_derive_species_query_from_name(query)) or _normalize_species_query(query)
+    columns = [
+        "productId",
+        "groupId",
+        "groupName",
+        "productName",
+        "imageUrl",
+        "rarity",
+        "number",
+        "productClass",
+        "productKind",
+        "subTypeName",
+        "latest_price",
+        "latest_date",
+    ]
+    if len(resolved_query) < 2:
+        return {
+            "columns": columns,
+            "rows": [],
+            "species_query": resolved_query,
+            "label": "Search for a card name to browse matching listings across sets.",
+        }
+
+    payload = search(query=resolved_query, limit=max(1, min(limit, 500)), category_id=category_id)
+    items = []
+    for result in payload.get("items", []):
+        if str(result.get("kind") or "") == "set":
+            continue
+        product_id = result.get("productId")
+        if product_id is None:
+            continue
+        product_name = str(result.get("productName") or result.get("title") or f"productId {product_id}")
+        if not _matches_species_query(product_name, resolved_query):
+            continue
+        items.append(
+            {
+                "productId": product_id,
+                "groupId": result.get("groupId"),
+                "groupName": result.get("groupName") or "",
+                "productName": product_name,
+                "imageUrl": result.get("imageUrl") or "",
+                "rarity": result.get("rarity") or "",
+                "number": result.get("number") or "",
+                "productClass": result.get("productClass"),
+                "productKind": result.get("productKind"),
+                "subTypeName": result.get("subTypeName") or "",
+                "latest_price": result.get("latest_price"),
+                "latest_date": result.get("latest_date") or "",
+            }
+        )
+    items.sort(key=_browse_species_sort_key)
+    rows = [[item.get(col) for col in columns] for item in items[: max(1, min(limit, 500))]]
+    return {
+        "columns": columns,
+        "rows": rows,
+        "species_query": resolved_query,
+        "label": f'Showing {len(rows)} matching listings for "{resolved_query}".' if rows else f'No matching listings found for "{resolved_query}".',
+    }
+
+
 @app.get("/group_products")
-def group_products(groupId: int, limit: int = 2000, product_kind: str | None = None, category_id: int = 3):
+def group_products(
+    groupId: int,
+    limit: int = 2000,
+    product_kind: str | None = None,
+    filters: str | None = None,
+    category_id: int = 3,
+):
     limit = max(1, min(limit, 10000))
     category = category_config(category_id)
     price_source = prices_from(category.category_id)
@@ -2673,7 +3165,10 @@ def group_products(groupId: int, limit: int = 2000, product_kind: str | None = N
     LIMIT {limit}
     """
     cols, rows = q(sql)
-    return {"columns": cols, "rows": rows}
+    available_filters = ["all"]
+    if product_kind != "sealed":
+        rows, available_filters = _filter_browse_set_rows(cols, rows, filters)
+    return {"columns": cols, "rows": rows, "available_filters": available_filters}
 
 
 @app.get("/product_signals")
@@ -2904,6 +3399,7 @@ def time_to_buy(
     max_90d_pct: float = 0.0,
     group_id: int | None = None,
     product_kind: str | None = None,
+    filters: str | None = None,
     category_id: int = 3,
 ):
     limit = max(1, min(limit, 5000))
@@ -2911,7 +3407,7 @@ def time_to_buy(
     min_recent_observations = max(3, min(min_recent_observations, lookback_days))
     min_recent_distinct_prices_30d = max(2, min(min_recent_distinct_prices_30d, 30))
     if group_id is None:
-        return {"columns": [], "rows": []}
+        return {"columns": [], "rows": [], "available_filters": ["all"]}
     category = category_config(category_id)
     signal_source = product_signal_from(category.category_id)
     price_source = prices_from(category.category_id)
@@ -3017,7 +3513,10 @@ def time_to_buy(
     LIMIT {limit}
     """
     cols, rows = q(sql)
-    return {"columns": cols, "rows": rows}
+    available_filters = ["all"]
+    if product_kind != "sealed":
+        rows, available_filters = _filter_browse_set_rows(cols, rows, filters)
+    return {"columns": cols, "rows": rows, "available_filters": available_filters}
 
 
 @app.get("/group_signals")

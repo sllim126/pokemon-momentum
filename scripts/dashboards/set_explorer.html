@@ -316,6 +316,12 @@
       margin-top: 12px;
       border-radius: 18px;
       border: 1px solid var(--line);
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .table-wrap::-webkit-scrollbar {
+      display: none;
     }
 
     table {
@@ -334,6 +340,7 @@
       font-size: 12px;
       letter-spacing: 0.14em;
       text-transform: uppercase;
+      white-space: nowrap;
     }
 
     th,

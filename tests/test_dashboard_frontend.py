@@ -38,6 +38,8 @@ class DashboardFrontendContractTests(unittest.TestCase):
         self.assertIn("Poke Ball Holo", self.html)
         self.assertIn("Master Ball Holo", self.html)
         self.assertIn("Energy Symbol Pattern", self.html)
+        self.assertIn("payload.available_filters", self.html)
+        self.assertIn("filters=${encodeURIComponent(", self.html)
 
     def test_segment_toggle_visibility_logic_hides_irrelevant_tabs(self):
         self.assertIn('currentTab !== "browse_species"', self.html)
@@ -45,6 +47,9 @@ class DashboardFrontendContractTests(unittest.TestCase):
         self.assertIn('"breakouts"', self.html)
         self.assertIn('"good_buys"', self.html)
         self.assertIn('"group_products"', self.html)
+        self.assertIn('/tracking/items/resolve', self.html)
+        self.assertIn('/browse_species?query=', self.html)
+        self.assertIn('species_query', self.html)
 
     def test_mobile_and_header_segment_controls_exist(self):
         self.assertGreaterEqual(self.html.count('data-segment="cards"'), 3)
@@ -70,4 +75,6 @@ class DashboardFrontendContractTests(unittest.TestCase):
         self.assertIn('const TCGPLAYER_AFFILIATE_BASE = "https://partner.tcgplayer.com/jR1OJb"', self.html)
         self.assertIn('affiliateUrl.searchParams.set("u", destination)', self.html)
         self.assertIn('id="heroBuyLink"', self.html)
+        self.assertIn('id="heroStoreLink"', self.html)
+        self.assertIn('/store_link?product_id=', self.html)
         self.assertIn('heroBuyLink.hidden = !tcgUrl', self.html)

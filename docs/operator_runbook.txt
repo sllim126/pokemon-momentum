@@ -101,6 +101,58 @@ Recommended operator flow when adding a new SKU:
 4. Save the latest supplier quote on `/supplier-pricing` if you want profit-floor protection.
 5. Review `/supplier-profitability` before allowing auto-pricing to move the SKU.
 
+Storefront linking (`Poke6s` button)
+------------------------------------
+
+The dashboard can now show a `Poke6s` button beside `TCGplayer`, but only when the
+current item is actually purchasable on the storefront.
+
+Files involved:
+
+- Squarespace export:
+  - `products_Apr-09_04-31-18PM.csv`
+- Store/TCGplayer mapping:
+  - `data/squarespace_tcgplayer_mapping.csv`
+
+Current link rules:
+
+- the storefront button only appears when the latest Squarespace export says:
+  - `Visible = Yes`
+  - `Stock > 0` or `Stock = Unlimited`
+- Japanese and English singles can resolve directly when:
+  - Squarespace `SKU == TCGplayer product ID`
+- sealed/store products resolve through:
+  - `data/squarespace_tcgplayer_mapping.csv`
+- one store SKU can map to multiple TCGplayer product ids by separating ids with `|`
+  or `,` in `tcgplayer_product_id`
+
+Recommended operator flow when a dashboard item should link to the storefront:
+
+1. Confirm the Squarespace product is visible and in stock in the latest export.
+2. If it is a single, confirm the store SKU matches the TCGplayer product id.
+3. If it is a sealed/store product, add or update its row in `data/squarespace_tcgplayer_mapping.csv`.
+4. Restart the app if the dashboard is still serving an older resolver path.
+
+If the `Poke6s` button appears when it should not:
+
+1. Check the selected `productId` in the dashboard URL or search payload.
+2. Confirm whether that exact `productId` is mapped in `data/squarespace_tcgplayer_mapping.csv`.
+3. Watch out for near-duplicate TCGplayer products:
+  - sleeved pack vs unsleeved pack
+  - art bundle vs standard pack bundle
+  - ETB vs Pokemon Center ETB
+
+If the `Poke6s` button is missing when it should appear:
+
+1. Check the latest Squarespace export row for:
+  - `Visible`
+  - `Stock`
+  - `Product URL`
+2. Confirm the dashboard category matches the actual item market:
+  - English -> category `3`
+  - Japanese -> category `85`
+3. For sealed products, confirm the exact TCGplayer product id is mapped to the store SKU.
+
 What each page is expected to do
 --------------------------------
 

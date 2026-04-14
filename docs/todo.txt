@@ -4,6 +4,16 @@ Pokemon Momentum TODO
 Recently Completed (April 2026)
 -------------------------------
 
+- Shifted more dashboard result-shaping server-side:
+  - Browse Set filters now resolve on the server
+  - Tracked Items rows now resolve on the server
+  - Browse Species now loads from a dedicated backend endpoint
+- Added stock-aware `Poke6s` store links on the dashboard.
+  - button now appears only for visible in-stock store items
+  - direct `SKU == product_id` links are limited to singles/cards
+  - sealed/store products now rely on explicit `data/squarespace_tcgplayer_mapping.csv`
+  - multiple TCGplayer ids can map to a single store SKU when the storefront item covers close aliases
+- Rebuilt `data/squarespace_tcgplayer_mapping.csv` so it matches the current visible store inventory.
 - Added supplier-aware pricing operations for Squarespace:
   - CSV upload and archive flow
   - supplier quote save/enrich flows
@@ -75,7 +85,6 @@ Recently Completed (March 2026)
 Next Up
 -------
 
-- Profile `/dashboard` in browser developer tools and write down the current slowest first-load requests.
 - Reduce first-render time by deferring any non-essential API calls still blocking the first usable paint.
 - Review current header search behavior and fix any remaining result-selection quirks. (Done 2026-04-10)
 - Improve search ranking for broad card names and edge cases. (Done 2026-04-10)
@@ -97,6 +106,26 @@ Next Up
   - key stat lookups
   - webhook notifications
   - bug report forwarding
+
+Profiling Notes (April 2026)
+----------------------------
+
+- First-load profiling pass completed on the current dashboard boot path.
+  - Container timing sample for the default card dashboard path:
+    - `/series?productId=88029&subTypeName=Reverse+Holofoil&days=365&category_id=3` ~= 472 ms
+    - `/health?category_id=3` ~= 227 ms
+    - `/top_movers?days=30&limit=120&min_prior=5&product_kind=card&category_id=3` ~= 169 ms
+    - `/sma30_holds?...` ~= 121 ms
+    - `/tracking/auth_config` and `/categories` were negligible by comparison
+  - Browser waterfall on a URL-selected `early_uptrends` view showed slower first paint requests:
+    - `/early_uptrends?...` ~= 2.19 s
+    - `/series?...` ~= 1.55 s
+    - `/universe?limit=1...` ~= 1.35 s
+    - `/health?category_id=3` ~= 1.27 s
+- Current first-load suspects worth reducing next:
+  - avoid first-paint dependence on `/health`
+  - avoid metadata fallback hits like `/universe?limit=1...` when a selected row already has enough payload
+  - keep heavier non-default table endpoints (`early_uptrends`, `group_products`, etc.) from blocking the first usable screen when they come from URL state
 
 Needs Decisions
 ---------------

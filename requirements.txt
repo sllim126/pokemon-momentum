@@ -6,6 +6,8 @@ fastparquet
 fastapi
 uvicorn
 requests
+httpx
+pytest
 jupyterlab
 matplotlib
 plotly

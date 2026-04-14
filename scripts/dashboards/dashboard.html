@@ -1247,6 +1247,10 @@
       transition: 0.14s ease;
     }
 
+    .hero-buy-link[hidden] {
+      display: none !important;
+    }
+
     .stage-product-copy .hero-buy-link {
       justify-content: flex-start;
     }
@@ -1255,6 +1259,19 @@
       background: rgba(34, 176, 255, 0.16);
       border-color: rgba(34, 176, 255, 0.4);
       color: #b8edff;
+    }
+
+    .hero-store-link {
+      margin-top: 8px;
+      border-color: rgba(37, 208, 165, 0.26);
+      background: rgba(20, 62, 59, 0.3);
+      color: #96f1d8;
+    }
+
+    .hero-store-link:hover {
+      background: rgba(37, 208, 165, 0.16);
+      border-color: rgba(37, 208, 165, 0.38);
+      color: #c2ffef;
     }
 
     .price-main {
@@ -3380,6 +3397,7 @@
                   <h1 id="cardTitle">Loading...</h1>
                   <div class="subtitle" id="cardSubtitle">Fetching product history and metadata.</div>
                   <a id="heroBuyLink" class="hero-buy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>TCGplayer</a>
+                  <a id="heroStoreLink" class="hero-buy-link hero-store-link" href="#" target="_blank" rel="noopener noreferrer" hidden>Poke6s</a>
                 </div>
               </div>
               <div class="price-block">
@@ -3776,6 +3794,7 @@
     const headlineChangeWrap = document.getElementById("headlineChangeWrap");
     const headlineWindowChangeWrap = document.getElementById("headlineWindowChangeWrap");
     const heroBuyLink = document.getElementById("heroBuyLink");
+    const heroStoreLink = document.getElementById("heroStoreLink");
     const freshnessBadge = document.getElementById("freshnessBadge");
     const detailStats = document.getElementById("detailStats");
     const mobileDetailStats = document.getElementById("mobileDetailStats");
@@ -3863,6 +3882,7 @@
     const localTags = new Map();
     const purchasedKeys = new Set();
     const sparklineCache = new Map();
+    const storeLinkByProductId = new Map();
     const categoryOptions = [];
 
     const initialParams = new URLSearchParams(window.location.search);
@@ -3901,6 +3921,7 @@
       .map((value) => value.trim())
       .filter(Boolean);
     let currentBrowseSetFilters = new Set(initialBrowseSetFilterTokens.length ? initialBrowseSetFilterTokens : ["all"]);
+    let lastBrowseSetAvailableFilters = ["all"];
     let currentGoodBuysSets = new Set(
       String(initialParams.get("good_buys_sets") || "")
         .split("|")
@@ -3922,6 +3943,7 @@
     let headerSearchDebounce = null;
     let headerSearchResultsData = [];
     let headerSearchActiveIndex = -1;
+    let currentSpeciesQuery = initialParams.get("species_query") || "";
     let currentSpeciesRows = [];
     let currentSpeciesLabel = "Search for a card name to browse matching listings across sets.";
     let tableLoadPending = 0;
@@ -4692,13 +4714,16 @@
     function buildLocalTrackingItems() {
       const items = [];
       for (const [key, tags] of localTags.entries()) {
+        if (!tags.size) continue;
         const meta = getMetaForKey(key);
-        if (!meta || !tags.size) continue;
+        const [productIdRaw, subTypeNameRaw = ""] = String(key || "").split("||");
+        const productId = Number(meta?.productId ?? productIdRaw);
+        if (Number.isNaN(productId)) continue;
         for (const tag of tags) {
           items.push({
             category_id: currentCategoryId,
-            product_id: meta.productId,
-            sub_type_name: meta.subTypeName || "",
+            product_id: productId,
+            sub_type_name: meta?.subTypeName ?? subTypeNameRaw,
             tag,
           });
         }
@@ -4781,6 +4806,11 @@
         url.searchParams.set("tracked_sort", currentTrackedSort);
       } else {
         url.searchParams.delete("tracked_sort");
+      }
+      if (currentSpeciesQuery) {
+        url.searchParams.set("species_query", currentSpeciesQuery);
+      } else {
+        url.searchParams.delete("species_query");
       }
       if (!currentBrowseSetFilters.size || currentBrowseSetFilters.has("all")) {
         url.searchParams.delete("browse_set_filters");
@@ -4994,6 +5024,25 @@
       }
       const directUrl = `https://www.tcgplayer.com/product/${parsed}?${params.toString()}`;
       return tcgplayerAffiliateUrl(directUrl);
+    }
+
+    async function loadStoreLink(productId, categoryId = currentCategoryId) {
+      const parsed = Number(productId);
+      const parsedCategory = Number(categoryId);
+      if (!Number.isFinite(parsed) || parsed <= 0) return null;
+      const cacheKey = `${Number.isFinite(parsedCategory) ? parsedCategory : 3}:${parsed}`;
+      if (storeLinkByProductId.has(cacheKey)) {
+        return storeLinkByProductId.get(cacheKey);
+      }
+      try {
+        const payload = await getJson(`/store_link?product_id=${encodeURIComponent(parsed)}&category_id=${encodeURIComponent(Number.isFinite(parsedCategory) ? parsedCategory : 3)}`);
+        const resolved = payload && payload.listed ? payload : null;
+        storeLinkByProductId.set(cacheKey, resolved);
+        return resolved;
+      } catch (_) {
+        storeLinkByProductId.set(cacheKey, null);
+        return null;
+      }
     }
 
     function formatNumber(value, digits = 2) {
@@ -5272,6 +5321,13 @@
       if (!groupsLoaded) {
         await loadGroups();
       }
+      const requestedSegment = fallbackItem ? classifyItem(fallbackItem) : null;
+      if (requestedSegment && requestedSegment !== currentSegment) {
+        currentSegment = requestedSegment;
+        syncSegmentButtons();
+        updateBrowseSetFilterVisibility();
+        updateSignalSegmentVisibility();
+      }
       currentGroupId = Number(groupId);
       if (!Number.isNaN(currentGroupId) && [...groupPicker.options].some((opt) => Number(opt.value) === currentGroupId)) {
         groupPicker.value = String(currentGroupId);
@@ -5298,29 +5354,11 @@
       return targetRow;
     }
 
-    async function openProductSearchResults(query, results = [], options = {}) {
-      // Browse Species acts like a research landing page for one card name across sets.
-      // Keep all matches together, sort them like card numbers, and let the chart follow
-      // the first listing so the user lands in a useful state immediately.
-      const productRows = getCardHeaderSearchResults(results).filter((result) => matchesSpeciesQuery(result.item, query)).map((result) => ({
-        ...result.item,
-        latest_price: result.item.latest_price ?? result.latest_price ?? null,
-        latest_date: result.item.latest_date || result.latest_date || ""
-      })).sort((left, right) => {
-        const numberCompare = compareCardNumberValues(left.number, right.number);
-        if (numberCompare !== 0) return numberCompare;
-        const setCompare = String(left.groupName || "").localeCompare(String(right.groupName || ""), undefined, { numeric: true, sensitivity: "base" });
-        if (setCompare !== 0) return setCompare;
-        const subtypeCompare = String(left.subTypeName || "").localeCompare(String(right.subTypeName || ""), undefined, { numeric: true, sensitivity: "base" });
-        if (subtypeCompare !== 0) return subtypeCompare;
-        return String(left.productName || "").localeCompare(String(right.productName || ""), undefined, { numeric: true, sensitivity: "base" });
-      });
-      if (!productRows.length) {
-        return null;
-      }
-      productRows.forEach((item) => ensurePickerOption(item));
-      currentSpeciesRows = productRows;
-      currentSpeciesLabel = `Showing ${productRows.length} matching listings for "${query}".`;
+    async function openProductSearchResults(query, options = {}) {
+      // Browse Species now asks the server for a pre-sorted species payload so the
+      // browser mainly renders rows instead of assembling them locally.
+      currentSpeciesQuery = normalizeSearchQuery(deriveSpeciesQueryFromName(query)) || normalizeSearchQuery(query);
+      currentSpeciesRows = [];
       activateTab("browse_species");
       currentChartMode = "product";
       syncUrlState();
@@ -5350,7 +5388,7 @@
       if (!shouldOpenProductSearchResults(speciesQuery, results)) {
         return false;
       }
-      await openProductSearchResults(speciesQuery, results, options);
+      await openProductSearchResults(speciesQuery, options);
       const matchCount = getCardHeaderSearchResults(results).filter((result) => matchesSpeciesQuery(result.item, speciesQuery)).length;
       setHeaderSearchStatus(`Loaded ${matchCount} matching listings for ${speciesQuery}.`);
       setHeaderSearchResultsOpen(false);
@@ -6312,7 +6350,7 @@
       if (!browseSetScopedTabs.has(currentTab) || currentSegment !== "cards") {
         return false;
       }
-      return lastBrowseSetRows.length > 0;
+      return lastBrowseSetAvailableFilters.length > 1 || lastBrowseSetRows.length > 0;
     }
 
     function browseSetFilterText(row) {
@@ -6393,7 +6431,11 @@
       return false;
     }
 
-    function getAvailableBrowseSetFilterOptions(rows = []) {
+    function getAvailableBrowseSetFilterOptions(rows = [], availableIds = null) {
+      if (Array.isArray(availableIds) && availableIds.length) {
+        const availableIdSet = new Set(availableIds.map((value) => String(value || "").trim().toLowerCase()));
+        return browseSetFilterOptions.filter((option) => availableIdSet.has(option.id));
+      }
       return browseSetFilterOptions.filter((option) => {
         if (option.id === "all") return true;
         return (rows || []).some((row) => matchesBrowseSetFilter(row, option.id));
@@ -6430,11 +6472,11 @@
       });
     }
 
-    function populateBrowseSetFilters(rows = []) {
+    function populateBrowseSetFilters(rows = [], availableIds = null) {
       if (!browseSetFilterPanel) return;
-      const availableOptions = getAvailableBrowseSetFilterOptions(rows);
-      const availableIds = new Set(availableOptions.map((option) => option.id));
-      currentBrowseSetFilters = new Set(Array.from(currentBrowseSetFilters).filter((value) => availableIds.has(value)));
+      const availableOptions = getAvailableBrowseSetFilterOptions(rows, availableIds);
+      const availableIdSet = new Set(availableOptions.map((option) => option.id));
+      currentBrowseSetFilters = new Set(Array.from(currentBrowseSetFilters).filter((value) => availableIdSet.has(value)));
       if (!currentBrowseSetFilters.size) {
         currentBrowseSetFilters = new Set(["all"]);
       }
@@ -6532,16 +6574,6 @@
         return rows;
       }
       return (rows || []).filter((row) => currentGoodBuysSets.has(String(row.groupName || "").trim()));
-    }
-
-    function applyBrowseSetVariantFilter(rows = []) {
-      if (!browseSetScopedTabs.has(currentTab) || !shouldShowBrowseSetVariantFilter()) {
-        return rows;
-      }
-      if (!currentBrowseSetFilters.size || currentBrowseSetFilters.has("all")) {
-        return rows;
-      }
-      return (rows || []).filter((row) => Array.from(currentBrowseSetFilters).some((filterId) => matchesBrowseSetFilter(row, filterId)));
     }
 
     function buildTrackedRows() {
@@ -6799,7 +6831,7 @@
       });
     }
 
-    function renderSummary(meta, series) {
+    async function renderSummary(meta, series, selectionKey = currentKey) {
       // The summary panel and persistent right-rail image are refreshed together from the
       // same selected product payload so browsing long lists does not drop visual context.
       const rows = series.rows || [];
@@ -6830,6 +6862,16 @@
         const tcgUrl = tcgplayerProductUrl(meta.productId, meta.productKind, meta.subTypeName);
         heroBuyLink.hidden = !tcgUrl;
         heroBuyLink.href = tcgUrl || "#";
+      }
+      if (heroStoreLink) {
+        heroStoreLink.hidden = true;
+        heroStoreLink.href = "#";
+        const storeLink = await loadStoreLink(meta.productId, currentCategoryId);
+        if (selectionKey !== currentKey) {
+          return;
+        }
+        heroStoreLink.hidden = !storeLink?.url;
+        heroStoreLink.href = storeLink?.url || "#";
       }
       if (chartMetricPills) {
         chartMetricPills.innerHTML = "";
@@ -7009,6 +7051,10 @@
       if (heroBuyLink) {
         heroBuyLink.hidden = true;
         heroBuyLink.href = "#";
+      }
+      if (heroStoreLink) {
+        heroStoreLink.hidden = true;
+        heroStoreLink.href = "#";
       }
       if (chartMetricPills) {
         chartMetricPills.innerHTML = "";
@@ -7545,7 +7591,7 @@
       chartEl.innerHTML = `<div class="sparkline-empty">${loadingMarkup("Loading chart")}</div>`;
       const series = await getJson(`/series?${qs.toString()}`);
       currentSeriesPayload = series;
-      renderSummary(meta, series);
+      await renderSummary(meta, series, currentKey);
       renderChart(series);
       updateTagButtons();
       updateMoverRailActiveState();
@@ -7588,17 +7634,34 @@
           updateBrowseSetFilterVisibility();
           updateGoodBuysFilterVisibility();
           updateMobileNavState("indicators");
+          if (!currentSpeciesQuery) {
+            currentSpeciesRows = [];
+            currentSpeciesLabel = "Search for a card name to browse matching listings across sets.";
+            renderTable(currentSpeciesRows);
+            loadSucceeded = true;
+            return currentSpeciesRows;
+          }
+          const payload = await getJson(`/browse_species?query=${encodeURIComponent(currentSpeciesQuery)}&limit=500`);
+          currentSpeciesRows = enrichRows(payload);
+          currentSpeciesLabel = payload.label || `Showing ${currentSpeciesRows.length} matching listings for "${currentSpeciesQuery}".`;
+          currentSpeciesRows.forEach((item) => ensurePickerOption(item));
           const rows = currentSpeciesRows || [];
           renderTable(rows);
           loadSucceeded = true;
           return rows;
         }
         if (currentTab === "tracked_items") {
-          await hydrateTrackedUniverseMeta();
           updateTrackedFilterVisibility();
           updateBrowseSetFilterVisibility();
           updateMobileNavState("tracked");
-          const rows = buildTrackedRows();
+          const payload = await postJson("/tracking/items/resolve", {
+            category_id: currentCategoryId,
+            segment: currentSegment,
+            tracked_tag: currentTrackedTag,
+            tracked_sort: currentTrackedSort,
+            items: buildLocalTrackingItems(),
+          });
+          const rows = enrichRows(payload);
           renderTable(rows);
           loadSucceeded = true;
           return rows;
@@ -7638,6 +7701,16 @@
         if (segmentFilteredTabs.has(currentTab)) {
           path += `${path.includes("?") ? "&" : "?"}product_kind=${encodeURIComponent(currentSegment === "sealed" ? "sealed" : "card")}`;
         }
+        if (
+          browseSetScopedTabs.has(currentTab)
+          && currentSegment === "cards"
+          && currentBrowseSetFilters.size
+          && !currentBrowseSetFilters.has("all")
+        ) {
+          path += `${path.includes("?") ? "&" : "?"}filters=${encodeURIComponent(
+            Array.from(currentBrowseSetFilters).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" })).join("|")
+          )}`;
+        }
         if (currentTab === "time_to_buy" && currentGroupId !== null && currentGroupId !== undefined && !Number.isNaN(currentGroupId)) {
           path += `${path.includes("?") ? "&" : "?"}group_id=${encodeURIComponent(currentGroupId)}`;
         }
@@ -7647,9 +7720,11 @@
         const payload = await getJson(path);
         let rows = enrichRows(payload);
         if (browseSetScopedTabs.has(currentTab)) {
+          lastBrowseSetAvailableFilters = Array.isArray(payload.available_filters) && payload.available_filters.length
+            ? payload.available_filters
+            : ["all"];
           lastBrowseSetRows = rows.slice();
-          populateBrowseSetFilters(lastBrowseSetRows);
-          rows = applyBrowseSetVariantFilter(lastBrowseSetRows);
+          populateBrowseSetFilters(lastBrowseSetRows, lastBrowseSetAvailableFilters);
         }
         if (currentTab === "good_buys") {
           lastGoodBuysRows = rows.slice();
@@ -8032,6 +8107,7 @@
             const openedSpecies = await maybeOpenBrowseSpeciesFromSearch(speciesQuery, headerSearchResultsData);
             if (!openedSpecies) {
               currentSpeciesRows = [];
+              currentSpeciesQuery = "";
               currentSpeciesLabel = "Search for a card name to browse matching listings across sets.";
             }
           }

@@ -1,13 +1,37 @@
 sku,tcgplayer_product_id,pricing_mode,min_price,note
-ENG-BORING-PACK,,manual,,Self-made product; no TCGplayer equivalent
-ENG-PF-ART,664903,market_minus_5_pct,,Phantasmal Flames Sleeved Booster Pack Art Set
-ENG-SS-BB,565629,market_minus_5_pct,,Surging Sparks Booster Bundle
-ENG-SS-Costco,650397,market_minus_5_pct,,Costco Surging Sparks 2-Pack Trainer Box and Booster Bundle
-ENG-HOUNDex-MCAP,561521,market_minus_5_pct_with_floor,29.99,Keep at or above supplier-based floor
-ENG-RESHex-MCAP,666512,market_minus_5_pct_with_floor,29.99,Keep at or above supplier-based floor
-ENG-BLKYUec-MCAP,662745,market_minus_5_pct_with_floor,29.99,Keep at or above supplier-based floor
-ENG-MELex-MCAP,662750,market_minus_5_pct_with_floor,29.99,Keep at or above supplier-based floor
-ENG-ARCHex-MCAP,656955,market_minus_5_pct_with_floor,29.99,Keep at or above supplier-based floor
-ENG-MEGLATex-MCAP,654188,market_minus_5_pct_with_floor,29.99,Keep at or above supplier-based floor
-JP-RS-BOX,,manual,,Japanese product in English bucket; decide separately
-ENG-PO-ART4,672413,market_minus_5_pct,,Perfect Order Sleeved Booster Pack Art Bundle
+567364,567364,market,,Japanese single at full market price
+567477,567477,market,,Japanese single at full market price
+567555,567555,market,,Japanese single at full market price
+602682,602682,market,,Japanese single at full market price
+636501,636501,market,,Japanese single at full market price
+637220,637220,market,,Japanese single at full market price
+637278,637278,market,,Japanese single at full market price
+637314,637314,market,,Japanese single at full market price
+637332,637332,market,,Japanese single at full market price
+637340,637340,market,,Japanese single at full market price
+637647,637647,market,,Japanese single at full market price
+665881,665881,market,,Japanese single at full market price
+EN-AH-ETB,668496,market_minus_5_pct_99,,English matched by title
+ENG-ARCHex-MCAP,656955,market_minus_5_pct_99_with_floor,29.99,Keep at or above supplier-based floor
+ENG-BB-BB,630431,market_minus_5_pct_99,,English matched by title
+ENG-BLKYUec-MCAP,662745,market_minus_5_pct_99_with_floor,29.99,Keep at or above supplier-based floor
+ENG-DR-ART,635053,market_minus_5_pct_99,,English matched by title
+ENG-DR-BUNDLE,625670,market_minus_5_pct_99,,English matched by title
+ENG-DR-PACK,624684,market_minus_5_pct_99,,English matched by title
+ENG-HOUNDex-MCAP,561521,market_minus_5_pct_99_with_floor,29.99,Keep at or above supplier-based floor
+ENG-JT-PACK,610934,market_minus_5_pct_99,,English matched by title
+ENG-MEGLATex-MCAP,654188,market_minus_5_pct_99_with_floor,29.99,Keep at or above supplier-based floor
+ENG-MELex-MCAP,662750,market_minus_5_pct_99_with_floor,29.99,Keep at or above supplier-based floor
+ENG-PF-ART,664903,market_minus_5_pct_99,,English TCGplayer-mapped product
+ENG-PO-ART4,672413,market_minus_5_pct_99,,English TCGplayer-mapped product
+ENG-SILTEM-BP,283397,market_minus_5_pct_99,,English matched by title
+ENG-SS-BB,565629,market_minus_5_pct_99,,English TCGplayer-mapped product
+ENG-WF-BB,630696,market_minus_5_pct_99,,English matched by title
+JP-INFX-BOX,655968,market_minus_5_pct_99,,Japanese booster box
+JP-MB-BOX,647500,market_minus_5_pct_99,,Japanese booster box
+JP-MD-BOX,666254,market_minus_5_pct_99,,Japanese booster box
+JP-MS-BOX,647501,market_minus_5_pct_99,,Japanese booster box
+JP-TF-BB,603428,manual,,Japanese product mapped for storefront linking
+JP-WIFO-BOX,565225,market_minus_5_pct_99,,Japanese booster box
+MYZ-JP-BB,674449,market_minus_5_pct_99,,Japanese booster box
+NS-JPN-BB,683774,market_minus_5_pct_99,,Japanese booster box
