@@ -323,6 +323,7 @@ Healthy result:
 - tracking sign-in works and tags persist after refresh
 - `Signals` tab is no longer present in the dashboard UI
 - `Good Buys` supports a `Filter Sets` popout so review can be narrowed to the specific sets you want to inspect
+- `Good Buys` supports `Min Price` / `Max Price` controls and those values persist in the URL after refresh
 - on phone/tablet widths:
   - mobile home shows `Singles / Sealed`
   - selected-product drilldown hides the indicator tabs below the chart

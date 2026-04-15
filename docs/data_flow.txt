@@ -46,12 +46,13 @@ Recent Data/Serving Changes (March 2026)
 - header search now routes set-oriented selections into `Browse Set` instead of acting like a raw product jump
 - `Good Buys` now filters for `recent_distinct_prices_30d >= 10`
 - `Good Buys` now supports a client-side `Filter Sets` popout over the current result set
+- `Good Buys` now sends `Min Price` / `Max Price` to the API so the spend range is enforced server-side before the table is rendered
 - `Breakouts` now honors the shared `Cards / Sealed` segment filter the same way as the other segmented tabs
 - `Browse Set` now owns the set-scoped `Time to Buy` workflow through the `Set View` toggle
 - `Browse Set` also has a client-side `Included Cards` filter that can narrow the loaded set rows by rarity and set-specific variants
 - Expected result:
   - search drops the user into the correct set context more often
-  - `Good Buys` is less likely to show thinly traded names by default and is easier to narrow to relevant sets
+  - `Good Buys` is less likely to show thinly traded names by default and is easier to narrow to relevant sets and price bands
 
 7. Tracking auth and outbound link routing
 - the dashboard now exposes Google-auth config to the frontend and verifies Google identity tokens
@@ -459,6 +460,51 @@ Recent API-side addition:
   publication date so the UI can filter set breadth screens by era
 - Japanese Mega-era overrides now cover multiple modern Mega prefixes so sets like `M2`,
   `M2a`, `M3`, `MBD`, `MBG`, and `MP1` stay in the `MEG` bucket instead of falling into generic SV
+
+
+Stage 7b: Screener snapshot
+---------------------------
+Script:
+
+- [build_screener_snapshot.py](/opt/pokemon-momentum/scripts/indicators/build_screener_snapshot.py)
+
+Purpose:
+
+- precompute request-time screener helpers that were still forcing the API to rescan recent price history
+- keep the expensive parts of `Good Buys` and `Early Movers` on the server-side snapshot pipeline
+
+Inputs:
+
+- category-specific product signal snapshot
+- `pokemon_prices`
+
+Outputs:
+
+- CSV:
+  - `pokemon_screener_snapshot.csv`
+  - `pokemon_jp_screener_snapshot.csv`
+- DuckDB tables:
+  - `pokemon_screener_snapshot`
+  - `pokemon_jp_screener_snapshot`
+
+Important fields:
+
+- `latest_price_1d`
+- `latest_price_2d`
+- `latest_price_3d`
+- `recent_price_points`
+- `floor_observations_7d`
+- `floor_low_7d`
+- `floor_high_7d`
+- `floor_variance_to_current_pct_7d`
+- `good_buys_default_flag`
+- `good_buys_default_rank`
+- `early_uptrends_default_flag`
+- `early_uptrends_default_rank`
+
+Result of this stage:
+
+- slower screener tabs can read prepared server-computed rows instead of rebuilding recent-lift and floor-window logic on every request
 
 
 Stage 8: Parquet export

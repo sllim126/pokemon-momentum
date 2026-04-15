@@ -33,6 +33,7 @@ from scripts.dashboards.query_support import (
     product_signal_from,
     products_from,
     q,
+    screener_snapshot_from,
     series_snapshot_from,
     sparkline_snapshot_from,
     to_jsonable,
@@ -3212,18 +3213,34 @@ def product_signals(limit: int = 500, min_price: float = 0.0, category_id: int =
 def good_buys(
     limit: int = 250,
     min_price: float = 5.0,
+    max_price: float | None = None,
     max_30d_pct: float = 0.0,
     max_90d_pct: float = 20.0,
+    max_365d_pct: float = 120.0,
     max_7d_pct: float = 6.0,
+    max_price_vs_sma90_pct: float = 20.0,
     min_recent_distinct_prices_30d: int = 10,
     floor_days: int = 7,
     min_floor_observations: int = 4,
     max_floor_variance_pct: float = 12.0,
+    premium_pullback_min_price: float = 80.0,
+    premium_pullback_max_30d_pct: float = 12.0,
+    premium_pullback_max_90d_pct: float = 35.0,
+    premium_pullback_max_7d_pct: float = 2.5,
+    premium_pullback_min_price_vs_sma30_pct: float = -12.0,
+    premium_pullback_max_price_vs_sma30_pct: float = 4.0,
     exclude_prize_packs: bool = False,
     product_kind: str | None = None,
     category_id: int = 3,
 ):
     limit = max(1, min(limit, 5000))
+    min_price = max(0.0, min_price)
+    max_price_filter = ""
+    if max_price is not None:
+        max_price = max(0.0, max_price)
+        if max_price < min_price:
+            min_price, max_price = max_price, min_price
+        max_price_filter = f"AND latest_price <= {max_price}"
     min_recent_distinct_prices_30d = max(2, min(min_recent_distinct_prices_30d, 30))
     floor_days = max(5, min(floor_days, 10))
     min_floor_observations = max(3, min(min_floor_observations, floor_days))
@@ -3242,6 +3259,97 @@ def good_buys(
         rarity_filter = f"AND {premium_rarity_filter}"
     if exclude_prize_packs:
         prize_pack_filter = "AND lower(COALESCE(groupName, '')) NOT LIKE '%prize pack%'"
+    use_snapshot = floor_days == 7
+
+    if use_snapshot:
+        try:
+            source = screener_snapshot_from(category.category_id)
+        except HTTPException:
+            source = ""
+        if source:
+            sql = f"""
+        SELECT
+          latest_date,
+          groupId,
+          groupName,
+          productId,
+          productName,
+          imageUrl,
+          rarity,
+          number,
+          productClass,
+          productKind,
+          subTypeName,
+          latest_price,
+          roc_7d_pct,
+          roc_30d_pct,
+          roc_90d_pct,
+          roc_365d_pct,
+          recent_distinct_prices_30d,
+          price_vs_sma30_pct,
+          price_vs_sma90_pct,
+          trend_score
+        FROM {source}
+        WHERE categoryId = {category.category_id}
+          AND latest_date = (SELECT MAX(latest_date) FROM {source})
+          AND latest_price >= {min_price}
+          {max_price_filter}
+          {product_kind_filter}
+          {rarity_filter}
+          AND COALESCE(recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
+          AND COALESCE(roc_365d_pct, 0) <= {max_365d_pct}
+          AND COALESCE(price_vs_sma90_pct, 0) <= {max_price_vs_sma90_pct}
+          AND (
+            (
+              COALESCE(roc_30d_pct, 0) <= {max_30d_pct}
+              AND COALESCE(roc_90d_pct, 0) <= {max_90d_pct}
+              AND COALESCE(roc_90d_pct, 0) < 0
+              AND COALESCE(roc_7d_pct, 0) <= {max_7d_pct}
+              AND (
+                (
+                  recent_price_points >= 3
+                  AND latest_price_1d < latest_price_2d
+                  AND latest_price_2d < latest_price_3d
+                )
+                OR (
+                  floor_observations_7d >= {min_floor_observations}
+                  AND COALESCE(floor_variance_to_current_pct_7d, 999999.0) <= {max_floor_variance_pct}
+                )
+              )
+            )
+            OR (
+              latest_price >= {premium_pullback_min_price}
+              AND floor_observations_7d >= {min_floor_observations}
+              AND COALESCE(floor_variance_to_current_pct_7d, 999999.0) <= {max_floor_variance_pct}
+              AND COALESCE(roc_30d_pct, 0) <= {premium_pullback_max_30d_pct}
+              AND COALESCE(roc_90d_pct, 0) <= {premium_pullback_max_90d_pct}
+              AND COALESCE(roc_7d_pct, 0) <= {premium_pullback_max_7d_pct}
+              AND COALESCE(price_vs_sma30_pct, 0) >= {premium_pullback_min_price_vs_sma30_pct}
+              AND COALESCE(price_vs_sma30_pct, 0) <= {premium_pullback_max_price_vs_sma30_pct}
+              AND (
+                COALESCE(roc_7d_pct, 0) < 0
+                OR COALESCE(price_vs_sma30_pct, 0) <= 0
+              )
+            )
+          )
+          {prize_pack_filter}
+        ORDER BY
+          CASE
+            WHEN floor_observations_7d >= {min_floor_observations}
+             AND COALESCE(floor_variance_to_current_pct_7d, 999999.0) <= {max_floor_variance_pct}
+            THEN 0 ELSE 1
+          END ASC,
+          ABS(COALESCE(roc_7d_pct, 0) + 6.0) ASC,
+          ABS(COALESCE(price_vs_sma30_pct, 0) + 4.0) ASC,
+          roc_7d_pct ASC,
+          COALESCE(floor_variance_to_current_pct_7d, 999999.0) ASC,
+          roc_30d_pct ASC,
+          price_vs_sma30_pct ASC,
+          latest_price DESC
+        LIMIT {limit}
+        """
+            cols, rows = q(sql)
+            return {"columns": cols, "rows": rows}
 
     sql = f"""
     WITH latest_signal AS (
@@ -3262,8 +3370,10 @@ def good_buys(
         roc_7d_pct,
         roc_30d_pct,
         roc_90d_pct,
+        roc_365d_pct,
         recent_distinct_prices_30d,
         price_vs_sma30_pct,
+        price_vs_sma90_pct,
         trend_score
       FROM {signal_source}
       WHERE categoryId = {category.category_id}
@@ -3343,25 +3453,49 @@ def good_buys(
      AND rl.groupId = s.groupId
      AND rl.subTypeName = s.subTypeName
     WHERE latest_price >= {min_price}
+      {max_price_filter}
       {product_kind_filter}
       {rarity_filter}
-      AND COALESCE(roc_30d_pct, 0) <= {max_30d_pct}
-      AND COALESCE(roc_90d_pct, 0) <= {max_90d_pct}
-      AND COALESCE(roc_90d_pct, 0) < 0
-      AND COALESCE(roc_7d_pct, 0) <= {max_7d_pct}
       AND COALESCE(recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
+      AND COALESCE(roc_365d_pct, 0) <= {max_365d_pct}
+      AND COALESCE(price_vs_sma90_pct, 0) <= {max_price_vs_sma90_pct}
       AND (
         (
-          rl.recent_price_points >= 3
-          AND rl.latest_price_1d < rl.latest_price_2d
-          AND rl.latest_price_2d < rl.latest_price_3d
+          COALESCE(roc_30d_pct, 0) <= {max_30d_pct}
+          AND COALESCE(roc_90d_pct, 0) <= {max_90d_pct}
+          AND COALESCE(roc_90d_pct, 0) < 0
+          AND COALESCE(roc_7d_pct, 0) <= {max_7d_pct}
+          AND (
+            (
+              rl.recent_price_points >= 3
+              AND rl.latest_price_1d < rl.latest_price_2d
+              AND rl.latest_price_2d < rl.latest_price_3d
+            )
+            OR (
+              fw.floor_observations >= {min_floor_observations}
+              AND GREATEST(
+                ABS(((fw.floor_high / NULLIF(latest_price, 0)) - 1) * 100.0),
+                ABS(((fw.floor_low / NULLIF(latest_price, 0)) - 1) * 100.0)
+              ) <= {max_floor_variance_pct}
+            )
+          )
         )
         OR (
-          fw.floor_observations >= {min_floor_observations}
+          latest_price >= {premium_pullback_min_price}
+          AND fw.floor_observations >= {min_floor_observations}
           AND GREATEST(
             ABS(((fw.floor_high / NULLIF(latest_price, 0)) - 1) * 100.0),
             ABS(((fw.floor_low / NULLIF(latest_price, 0)) - 1) * 100.0)
           ) <= {max_floor_variance_pct}
+          AND COALESCE(roc_30d_pct, 0) <= {premium_pullback_max_30d_pct}
+          AND COALESCE(roc_90d_pct, 0) <= {premium_pullback_max_90d_pct}
+          AND COALESCE(roc_7d_pct, 0) <= {premium_pullback_max_7d_pct}
+          AND COALESCE(price_vs_sma30_pct, 0) >= {premium_pullback_min_price_vs_sma30_pct}
+          AND COALESCE(price_vs_sma30_pct, 0) <= {premium_pullback_max_price_vs_sma30_pct}
+          AND (
+            COALESCE(roc_7d_pct, 0) < 0
+            OR COALESCE(price_vs_sma30_pct, 0) <= 0
+          )
         )
       )
       {prize_pack_filter}
@@ -3374,6 +3508,9 @@ def good_buys(
          ) <= {max_floor_variance_pct}
         THEN 0 ELSE 1
       END ASC,
+      ABS(COALESCE(roc_7d_pct, 0) + 6.0) ASC,
+      ABS(COALESCE(price_vs_sma30_pct, 0) + 4.0) ASC,
+      roc_7d_pct ASC,
       GREATEST(
         ABS(((fw.floor_high / NULLIF(latest_price, 0)) - 1) * 100.0),
         ABS(((fw.floor_low / NULLIF(latest_price, 0)) - 1) * 100.0)
@@ -4678,12 +4815,71 @@ def early_uptrends(
     min_recent_observations = max(2, min(min_recent_observations, 10))
     recent_change_within_days = max(1, min(recent_change_within_days, 15))
     category = category_config(category_id)
-    source = product_signal_from(category.category_id)
-    price_source = prices_from(category.category_id)
+    use_snapshot = True
+    try:
+        source = screener_snapshot_from(category.category_id)
+    except HTTPException:
+        use_snapshot = False
+        source = product_signal_from(category.category_id)
+        price_source = prices_from(category.category_id)
     product_kind_filter = ""
     if product_kind in {"card", "sealed"}:
         product_kind_filter = f"AND productKind = '{product_kind}'"
-    sql = f"""
+    if use_snapshot:
+        sql = f"""
+    SELECT
+        s.productId,
+        s.groupId,
+        s.subTypeName,
+        s.groupName,
+        s.productName,
+        s.imageUrl,
+        s.rarity,
+        s.number,
+        s.early_streak,
+        s.recent_observations_7d AS recent_observations,
+        s.recent_distinct_prices_7d,
+        s.recent_distinct_prices_30d,
+        s.last_change_date,
+        s.latest_price,
+        s.roc_7d_pct,
+        s.roc_30d_pct,
+        s.roc_90d_pct,
+        s.acceleration_7d_vs_30d,
+        s.latest_sma3,
+        s.latest_sma7,
+        s.latest_sma30,
+        s.latest_price_1d,
+        s.latest_price_2d,
+        s.latest_price_3d,
+        CASE WHEN latest_sma30 IS NULL OR latest_sma30 = 0 THEN NULL
+             ELSE ((latest_price / latest_sma30) - 1) * 100 END AS pct_vs_sma30
+    FROM {source} s
+    WHERE s.categoryId = {category.category_id}
+      AND s.latest_date = (SELECT MAX(latest_date) FROM {source})
+      AND s.latest_price >= {min_price}
+      AND s.early_streak >= {days_required}
+      AND s.latest_sma30 IS NOT NULL
+      AND COALESCE(s.recent_observations_7d, 0) >= {min_recent_observations}
+      AND COALESCE(s.recent_distinct_prices_7d, 0) >= 2
+      AND COALESCE(s.recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
+      AND s.last_change_date IS NOT NULL
+      AND s.last_change_date >= s.latest_date - INTERVAL {recent_change_within_days} DAY
+      AND COALESCE(s.roc_7d_pct, 0) >= {min_7d_pct}
+      AND COALESCE(s.roc_7d_pct, 0) <= {max_7d_pct}
+      AND COALESCE(s.roc_30d_pct, 0) <= {max_30d_pct}
+      AND COALESCE(s.roc_90d_pct, 0) <= {max_90d_pct}
+      AND COALESCE(s.acceleration_7d_vs_30d, 0) >= {min_acceleration_7d_vs_30d}
+      AND s.recent_price_points >= 3
+      AND s.latest_price_1d > s.latest_price_2d
+      AND s.latest_price_2d > s.latest_price_3d
+      AND ((s.latest_price / NULLIF(s.latest_sma30, 0)) - 1) * 100 <= {max_price_vs_sma30_pct}
+      {product_kind_filter}
+    ORDER BY s.acceleration_7d_vs_30d DESC, pct_vs_sma30 ASC, s.roc_30d_pct ASC, s.latest_price DESC
+    LIMIT {limit}
+    """
+    else:
+        sql = f"""
     WITH recent_prices AS (
       SELECT
         productId,

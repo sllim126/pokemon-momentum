@@ -278,7 +278,8 @@ Good Buys
 Shows premium-rarity cards that have been trending downward or pulling back.
 This is meant to surface high-end cards that may be moving into more interesting buy zones rather than already spiking.
 The first version focuses on rarities like Double Rare, Illustration Rare, Special Illustration Rare, Ultra Rare, Hyper Rare, and Secret Rare.
-This screen now also requires at least `10` distinct prices over the last `30` days, and it includes a `Filter Sets` popout so you can narrow the review to just the sets you care about.
+This screen now also requires at least `10` distinct prices over the last `30` days, includes a `Filter Sets` popout so you can narrow the review to just the sets you care about, and supports `Min Price` / `Max Price` inputs so you can focus on a realistic spend range.
+It also keeps some higher-priced premium cards that are softening near support, so strong names do not disappear just because the longer lookback is still positive.
 
 SMA30 Holds
 Shows products that reclaimed and held above the 30-day moving average.

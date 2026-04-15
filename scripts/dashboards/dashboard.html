@@ -2179,11 +2179,57 @@
 
     #goodBuysFilters {
       position: relative;
-      grid-template-columns: max-content;
+      grid-template-columns: minmax(0, max-content) minmax(280px, max-content);
       align-items: start;
       justify-content: start;
       gap: 12px;
       max-width: 100%;
+    }
+
+    .good-buys-price-filter {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(110px, 132px)) auto auto;
+      gap: 10px;
+      align-items: end;
+      width: 100%;
+    }
+
+    .good-buys-price-filter label {
+      display: grid;
+      gap: 6px;
+    }
+
+    .good-buys-price-filter .field-label {
+      margin: 0;
+      font-size: 11px;
+    }
+
+    .good-buys-price-filter input {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(44, 121, 197, 0.24);
+      background: rgba(14, 22, 38, 0.86);
+      color: var(--ink);
+      font: inherit;
+    }
+
+    .good-buys-price-filter button {
+      appearance: none;
+      border-radius: 14px;
+      border: 1px solid rgba(44, 121, 197, 0.24);
+      background: linear-gradient(180deg, rgba(17, 26, 43, 0.92), rgba(24, 35, 59, 0.92));
+      color: var(--ink);
+      padding: 11px 14px;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .good-buys-price-filter button:hover {
+      border-color: rgba(34, 176, 255, 0.28);
+      background: linear-gradient(180deg, rgba(20, 31, 51, 0.96), rgba(28, 42, 68, 0.96));
     }
 
     .good-buys-filter-trigger {
@@ -3126,6 +3172,14 @@
         max-width: 100%;
       }
 
+      .good-buys-price-filter {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .good-buys-price-filter button {
+        width: 100%;
+      }
+
       .good-buys-set-filter {
         width: min(100%, calc(100vw - 44px));
       }
@@ -3547,6 +3601,18 @@
               <button type="button" class="good-buys-filter-trigger" id="goodBuysFilterTrigger" aria-expanded="false">
                 Filter Sets
               </button>
+              <div class="good-buys-price-filter" aria-label="Good Buys price range">
+                <label>
+                  <span class="field-label">Min Price</span>
+                  <input type="number" id="goodBuysMinPriceInput" min="0" step="0.01" inputmode="decimal" placeholder="5.00">
+                </label>
+                <label>
+                  <span class="field-label">Max Price</span>
+                  <input type="number" id="goodBuysMaxPriceInput" min="0" step="0.01" inputmode="decimal" placeholder="No max">
+                </label>
+                <button type="button" id="goodBuysApplyPriceBtn">Apply</button>
+                <button type="button" id="goodBuysResetPriceBtn">Reset</button>
+              </div>
               <div class="good-buys-set-filter" id="goodBuysSetPopover" hidden>
                 <span class="field-label">Filter Sets</span>
                 <div class="good-buys-set-actions">
@@ -3758,6 +3824,10 @@
     const browseSetFilterPanel = document.getElementById("browseSetFilterPanel");
     const goodBuysFilters = document.getElementById("goodBuysFilters");
     const goodBuysFilterTrigger = document.getElementById("goodBuysFilterTrigger");
+    const goodBuysMinPriceInput = document.getElementById("goodBuysMinPriceInput");
+    const goodBuysMaxPriceInput = document.getElementById("goodBuysMaxPriceInput");
+    const goodBuysApplyPriceBtn = document.getElementById("goodBuysApplyPriceBtn");
+    const goodBuysResetPriceBtn = document.getElementById("goodBuysResetPriceBtn");
     const goodBuysSetPopover = document.getElementById("goodBuysSetPopover");
     const goodBuysSetList = document.getElementById("goodBuysSetList");
     const goodBuysSelectAll = document.getElementById("goodBuysSelectAll");
@@ -3928,6 +3998,15 @@
         .map((value) => value.trim())
         .filter((value) => value && value !== "__none__")
     );
+    const initialGoodBuysMinPrice = Number.parseFloat(initialParams.get("good_buys_min_price") || "");
+    const initialGoodBuysMaxPrice = Number.parseFloat(initialParams.get("good_buys_max_price") || "");
+    let currentGoodBuysMinPrice = Number.isFinite(initialGoodBuysMinPrice) ? Math.max(0, initialGoodBuysMinPrice) : 5;
+    let currentGoodBuysMaxPrice = Number.isFinite(initialGoodBuysMaxPrice) ? Math.max(0, initialGoodBuysMaxPrice) : null;
+    if (currentGoodBuysMaxPrice !== null && currentGoodBuysMaxPrice < currentGoodBuysMinPrice) {
+      const originalMinPrice = currentGoodBuysMinPrice;
+      currentGoodBuysMinPrice = currentGoodBuysMaxPrice;
+      currentGoodBuysMaxPrice = originalMinPrice;
+    }
     let currentGoodBuysSetFilterAll = !initialParams.has("good_buys_sets");
     let lastBrowseSetRows = [];
     let lastGoodBuysRows = [];
@@ -4064,7 +4143,7 @@
         title: "Fresh 90-day highs across all tracked cards and products."
       },
       good_buys: {
-        path: "/good_buys?limit=120&min_price=5",
+        path: "/good_buys?limit=120",
         columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "roc_7d_pct", "roc_30d_pct", "roc_90d_pct", "price_vs_sma30_pct"],
         title: "Premium-rarity cards that have been drifting lower and may be entering buyable pullback territory."
       },
@@ -4829,6 +4908,16 @@
       } else {
         url.searchParams.set("good_buys_sets", "__none__");
       }
+      if (currentGoodBuysMinPrice !== 5) {
+        url.searchParams.set("good_buys_min_price", String(currentGoodBuysMinPrice));
+      } else {
+        url.searchParams.delete("good_buys_min_price");
+      }
+      if (currentGoodBuysMaxPrice !== null) {
+        url.searchParams.set("good_buys_max_price", String(currentGoodBuysMaxPrice));
+      } else {
+        url.searchParams.delete("good_buys_max_price");
+      }
       if (currentKey) {
         url.searchParams.set("product", currentKey);
       } else {
@@ -4852,6 +4941,42 @@
       mobileHomeSegments?.querySelectorAll("[data-segment]").forEach((btn) => {
         btn.classList.toggle("active", btn.dataset.segment === currentSegment);
       });
+    }
+
+    function syncGoodBuysPriceInputs() {
+      if (goodBuysMinPriceInput) {
+        goodBuysMinPriceInput.value = currentGoodBuysMinPrice > 0 ? String(currentGoodBuysMinPrice) : "0";
+      }
+      if (goodBuysMaxPriceInput) {
+        goodBuysMaxPriceInput.value = currentGoodBuysMaxPrice === null ? "" : String(currentGoodBuysMaxPrice);
+      }
+    }
+
+    function parseGoodBuysPriceInput(input, fallback = null) {
+      if (!(input instanceof HTMLInputElement)) return fallback;
+      const raw = String(input.value || "").trim();
+      if (!raw) return fallback;
+      const parsed = Number.parseFloat(raw);
+      if (!Number.isFinite(parsed)) return fallback;
+      return Math.max(0, parsed);
+    }
+
+    async function applyGoodBuysPriceFilters(resetToDefault = false) {
+      const nextMin = resetToDefault ? 5 : parseGoodBuysPriceInput(goodBuysMinPriceInput, 5);
+      const nextMax = resetToDefault ? null : parseGoodBuysPriceInput(goodBuysMaxPriceInput, null);
+      currentGoodBuysMinPrice = nextMin;
+      currentGoodBuysMaxPrice = nextMax;
+      if (currentGoodBuysMaxPrice !== null && currentGoodBuysMaxPrice < currentGoodBuysMinPrice) {
+        const originalMin = currentGoodBuysMinPrice;
+        currentGoodBuysMinPrice = currentGoodBuysMaxPrice;
+        currentGoodBuysMaxPrice = originalMin;
+      }
+      syncGoodBuysPriceInputs();
+      syncUrlState();
+      if (tableWrap) {
+        tableWrap.scrollTop = 0;
+      }
+      await loadTable();
     }
 
     function resetCategoryState() {
@@ -7717,6 +7842,14 @@
         if (currentTab === "group_signals" && currentGeneration !== "all") {
           path += `&generation=${encodeURIComponent(currentGeneration)}`;
         }
+        if (currentTab === "good_buys") {
+          // Keep spend-range filtering on the server so the result set is already scoped
+          // before the client applies the lighter set checklist filtering.
+          path += `${path.includes("?") ? "&" : "?"}min_price=${encodeURIComponent(currentGoodBuysMinPrice)}`;
+          if (currentGoodBuysMaxPrice !== null) {
+            path += `&max_price=${encodeURIComponent(currentGoodBuysMaxPrice)}`;
+          }
+        }
         const payload = await getJson(path);
         let rows = enrichRows(payload);
         if (browseSetScopedTabs.has(currentTab)) {
@@ -7959,6 +8092,22 @@
 
       goodBuysFilterTrigger?.addEventListener("click", () => {
         setGoodBuysSetPopoverOpen(!goodBuysSetPopoverOpen);
+      });
+
+      const handleGoodBuysPriceSubmit = async (event) => {
+        event?.preventDefault?.();
+        await applyGoodBuysPriceFilters(false);
+      };
+
+      goodBuysApplyPriceBtn?.addEventListener("click", handleGoodBuysPriceSubmit);
+      goodBuysResetPriceBtn?.addEventListener("click", async () => {
+        await applyGoodBuysPriceFilters(true);
+      });
+      [goodBuysMinPriceInput, goodBuysMaxPriceInput].forEach((input) => {
+        input?.addEventListener("keydown", async (event) => {
+          if (event.key !== "Enter") return;
+          await handleGoodBuysPriceSubmit(event);
+        });
       });
 
       goodBuysSelectAll?.addEventListener("click", () => {
@@ -8577,6 +8726,7 @@
         hydratePurchasedKeys();
         await loadTrackingAuthConfig();
         updateTrackingUi();
+        syncGoodBuysPriceInputs();
         bindEvents();
         await restoreTrackingSession();
         if (!tabConfig[currentTab]) currentTab = "sma30_holds";
