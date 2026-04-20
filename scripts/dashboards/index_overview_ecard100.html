@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pokemon Momentum | e-Card 100</title>
+  <link rel="icon" type="image/png" href="/images/Favidon.png">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg: #070b1a;
+      --bg-2: #0c1228;
+      --panel: rgba(12, 18, 37, 0.95);
+      --panel-2: rgba(9, 14, 30, 0.98);
+      --line: rgba(123, 146, 196, 0.18);
+      --line-soft: rgba(123, 146, 196, 0.08);
+      --ink: #f3f7ff;
+      --muted: #96a7cf;
+      --accent: #9fe08d;
+      --accent-2: #59c36f;
+      --info: #76bbff;
+      --good: #9fe08d;
+      --radius: 18px;
+      --shadow: 0 28px 80px rgba(1, 4, 10, 0.5);
+      --font: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: var(--font);
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 6% 0%, rgba(42, 108, 255, 0.16), transparent 26%),
+        radial-gradient(circle at 92% 0%, rgba(126, 195, 113, 0.12), transparent 24%),
+        linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+    }
+
+    .shell {
+      width: min(1320px, calc(100vw - 28px));
+      margin: 18px auto 32px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      box-shadow: var(--shadow);
+    }
+
+    .overview {
+      padding: 22px 24px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .overview h1 {
+      margin: 0;
+      font-size: clamp(34px, 4.8vw, 54px);
+      letter-spacing: -0.04em;
+      line-height: 0.95;
+    }
+
+    .index-name {
+      margin: 0;
+      color: var(--muted);
+      font-size: 26px;
+      letter-spacing: -0.02em;
+      font-weight: 600;
+    }
+
+    .overview-meta {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      color: #d7e1fa;
+      font-size: 15px;
+      border-top: 1px solid var(--line-soft);
+      padding-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .overview-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .overview-meta a {
+      color: #a8d4ff;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .overview-meta a:hover {
+      text-decoration: underline;
+    }
+
+    details.overview-fold {
+      overflow: hidden;
+    }
+
+    details.overview-fold > summary {
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--line-soft);
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: #d7e1fa;
+      font-weight: 700;
+      user-select: none;
+      font-size: 15px;
+      letter-spacing: 0.01em;
+    }
+
+    details.overview-fold > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.overview-fold > summary::after {
+      content: "▾";
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    details.overview-fold[open] > summary::after {
+      content: "▴";
+    }
+
+    .overview-fold-body {
+      padding: 16px 24px 20px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .method-card {
+      display: grid;
+      gap: 12px;
+    }
+
+    .method-card h2,
+    .sets h2,
+    .index-panel h2,
+    .holdings h2 {
+      margin: 0;
+      font-size: clamp(26px, 2.8vw, 42px);
+      letter-spacing: -0.03em;
+    }
+
+    .method-card p,
+    .sets p,
+    .holdings p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    .method-list {
+      margin: 0;
+      padding-left: 22px;
+      display: grid;
+      gap: 10px;
+      color: #dce6ff;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .callout {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .callout h3 {
+      margin: 0;
+      font-size: 30px;
+      letter-spacing: -0.02em;
+    }
+
+    .callout p {
+      margin: 0;
+      color: #e3edff;
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    .callout strong {
+      color: var(--ink);
+    }
+
+    .callout.info {
+      border-color: rgba(118, 187, 255, 0.34);
+      background: linear-gradient(135deg, rgba(24, 46, 94, 0.52), rgba(14, 24, 47, 0.42));
+    }
+
+    .callout.info h3 {
+      color: var(--info);
+    }
+
+    .callout.good {
+      border-color: rgba(159, 224, 141, 0.32);
+      background: linear-gradient(135deg, rgba(28, 50, 33, 0.56), rgba(15, 27, 20, 0.5));
+    }
+
+    .callout.good h3 {
+      color: var(--good);
+    }
+
+    .sets,
+    .index-panel,
+    .holdings {
+      padding: 20px 24px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .sets-inline {
+      padding: 0;
+    }
+
+    .set-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .set-pill {
+      border: 1px solid var(--line-soft);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(15, 22, 42, 0.9);
+      display: grid;
+      gap: 8px;
+      min-height: 84px;
+      align-content: center;
+      text-align: center;
+    }
+
+    a.set-pill-link {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    a.set-pill-link:hover .set-pill {
+      border-color: rgba(159, 224, 141, 0.42);
+      background: rgba(17, 28, 50, 0.95);
+    }
+
+    .set-pill img {
+      height: 28px;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+      margin: 0 auto;
+    }
+
+    .set-pill span {
+      font-size: 13px;
+      line-height: 1.25;
+      color: #d8e3ff;
+      font-weight: 600;
+    }
+
+    .index-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(18, 26, 47, 0.95);
+      color: #d3def8;
+      padding: 8px 12px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn.active {
+      background: rgba(159, 224, 141, 0.95);
+      border-color: rgba(159, 224, 141, 0.95);
+      color: #071013;
+    }
+
+    .btn.soft-active {
+      background: rgba(159, 224, 141, 0.2);
+      border-color: rgba(159, 224, 141, 0.42);
+      color: #cbf3c0;
+    }
+
+    .index-summary-cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .summary-card {
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      background: rgba(12, 17, 35, 0.8);
+      padding: 12px 14px;
+      display: grid;
+      gap: 5px;
+    }
+
+    .summary-card .label {
+      color: #8798bf;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .summary-card .value {
+      font-size: 20px;
+      letter-spacing: -0.02em;
+      font-weight: 800;
+    }
+
+    .summary-card .delta {
+      color: #a6b6da;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .headline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 28px;
+      align-items: baseline;
+      padding-top: 2px;
+    }
+
+    .headline-item {
+      display: grid;
+      gap: 4px;
+    }
+
+    .headline-label {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #8798bf;
+    }
+
+    .headline-value {
+      font-size: clamp(34px, 4.2vw, 58px);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      font-weight: 800;
+    }
+
+    .headline-value.good {
+      color: var(--accent-2);
+    }
+
+    .chart-wrap {
+      border: 1px solid var(--line-soft);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(13, 20, 40, 0.94), rgba(10, 14, 30, 0.98));
+      padding: 14px;
+    }
+
+    .chart-status {
+      min-height: 18px;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .chart-status.error {
+      color: #ffb2a0;
+    }
+
+    .chart-plot {
+      width: 100%;
+      height: 420px;
+    }
+
+    .chart-plot .modebar {
+      opacity: 1 !important;
+      background: rgba(9, 14, 30, 0.72) !important;
+      border: 1px solid rgba(123, 146, 196, 0.2);
+      border-radius: 10px;
+      padding: 2px;
+    }
+
+    .chart-plot .modebar-btn svg {
+      fill: #d8e4ff !important;
+    }
+
+    .chart-axis {
+      fill: #8fa1c9;
+      font-size: 12px;
+    }
+
+    .chart-release {
+      fill: #9fe08d;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .holdings-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+
+    .holdings-meta {
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .holdings-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .holdings-stat {
+      border: 1px solid var(--line-soft);
+      border-radius: 12px;
+      padding: 14px;
+      background: rgba(12, 17, 35, 0.8);
+      display: grid;
+      gap: 8px;
+    }
+
+    .holdings-stat .label {
+      color: #8798bf;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .holdings-stat .value {
+      color: var(--accent);
+      font-size: 44px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      font-weight: 800;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .card-tile {
+      border: 1px solid var(--line-soft);
+      border-radius: 14px;
+      background: rgba(12, 17, 35, 0.82);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 116px minmax(0, 1fr);
+      min-height: 156px;
+    }
+
+    a.card-tile-link {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    a.card-tile-link:hover .card-tile {
+      border-color: rgba(159, 224, 141, 0.46);
+      background: rgba(14, 22, 43, 0.9);
+    }
+
+    .card-art {
+      position: relative;
+      background: radial-gradient(circle at 18% 14%, rgba(159, 224, 141, 0.25), transparent 44%), linear-gradient(145deg, #1d2f58, #121d39);
+      border-right: 1px solid var(--line-soft);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+    }
+
+    .rank {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      border-radius: 8px;
+      background: rgba(159, 224, 141, 0.95);
+      color: #04120b;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 3px 7px;
+      z-index: 2;
+    }
+
+    .card-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      filter: saturate(1.02) contrast(1.03);
+    }
+
+    .card-copy {
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .card-sub {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .card-set {
+      margin: 0;
+      color: #94beff;
+      font-style: italic;
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .card-value {
+      margin: 0;
+      color: var(--accent);
+      font-size: 28px;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      font-weight: 800;
+      margin-top: auto;
+    }
+
+    @media (max-width: 1280px) {
+      .set-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .cards-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 900px) {
+      .shell {
+        width: min(100vw - 12px, 1320px);
+        margin: 8px auto 16px;
+      }
+
+      .set-grid,
+      .index-summary-cards,
+      .holdings-stats,
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-plot {
+        height: 320px;
+      }
+
+      .index-head {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="panel overview">
+      <h1 id="indexPageTitle">e-Card 100</h1>
+      <p class="index-name" id="indexName">e-Card 100</p>
+      <div class="overview-meta">
+        <span>✚ Top 100 cards by market price</span>
+        <span>◷ Updated daily</span>
+        <span><a href="/index-overview">All Indexes ↗</a></span>
+        <span><a href="/index-overview-sv100">Scarlet &amp; Violet 100 ↗</a></span>
+        <span><a href="/index-overview-mega100">Mega Evolution 100 ↗</a></span>
+      </div>
+    </section>
+
+    <details class="panel overview-fold">
+      <summary>How This Index Works, Two Ways to View Performance, Reconstitution, Included Sets</summary>
+      <div class="overview-fold-body">
+        <article class="method-card">
+          <h2>How This Index Works</h2>
+          <p>This is a price-weighted index tracking the top 100 Pokemon cards by market price from selected e-Card era sets. Using an adjusted-divisor methodology (similar to the Dow Jones), the index maintains continuity when card membership changes significantly. Each day, we:</p>
+          <ul class="method-list">
+            <li>Scan all cards from the included sets below</li>
+            <li>Rank them by current market price (highest to lowest)</li>
+            <li>Select the top 100 cards</li>
+            <li>Calculate two values: Index Level (normalized) and Aggregate Value (total market cap)</li>
+            <li>Monitor membership changes - when more than 10% of cards change, adjust the divisor</li>
+            <li>Maintain continuity through "reconstitution events" (new sets, meta shifts)</li>
+          </ul>
+
+          <section class="callout info">
+            <h3>Two Ways to View Performance:</h3>
+            <p><strong>Index Level</strong> (default) - Normalized value starting at 1000 points. Best for tracking relative performance over time, similar to how the S&amp;P 500 or Dow Jones works. This view smooths out the impact of new cards entering/exiting the top 100.</p>
+            <p><strong>Aggregate Value</strong> - Raw dollar sum of all top 100 card prices. Shows the actual total market value without divisor adjustments. This view will show sharper changes when new sets release.</p>
+          </section>
+
+          <section class="callout good">
+            <p><strong>Reconstitution:</strong> Higher-priced cards have more influence on the index. Cards naturally enter and exit the top 100 daily as prices fluctuate. When membership changes by more than 10% (typically due to new set releases or major meta shifts), the divisor automatically adjusts to prevent artificial jumps in the index level. Between these "reconstitution events," only market prices drive the index movement. You can toggle between Index Level and Aggregate Value views using the chart controls. Sealed products (booster boxes, ETBs) are excluded.</p>
+          </section>
+        </article>
+
+        <section class="sets sets-inline">
+          <h2>Included Sets</h2>
+          <p>This index tracks cards from the following Pokemon TCG sets in the e-Card era:</p>
+          <div class="set-grid" id="includedSetGrid"></div>
+        </section>
+      </div>
+    </details>
+
+    <section class="panel index-panel">
+      <div class="index-head">
+        <h2 id="indexPanelTitle">e-Card 100</h2>
+        <div class="toolbar">
+          <button class="btn range-btn" data-range="30">1M</button>
+          <button class="btn range-btn" data-range="90">3M</button>
+          <button class="btn range-btn" data-range="180">6M</button>
+          <button class="btn range-btn" data-range="365">1Y</button>
+          <button class="btn range-btn active" data-range="all">All</button>
+          <button class="btn mode-btn soft-active" data-mode="index">Index Level</button>
+          <button class="btn mode-btn" data-mode="aggregate">Aggregate Value</button>
+          <button class="btn soft-active" id="releaseLinesToggleBtn" type="button" hidden aria-hidden="true">Set Releases</button>
+        </div>
+      </div>
+
+      <div class="index-summary-cards">
+        <article class="summary-card">
+          <div class="label">1 Day Change</div>
+          <div class="value" id="day1Value">+4.91 pts</div>
+          <div class="delta" id="day1Delta">+0.31%</div>
+        </article>
+        <article class="summary-card">
+          <div class="label">7 Day Change</div>
+          <div class="value" id="day7Value">+41.83 pts</div>
+          <div class="delta" id="day7Delta">+2.69%</div>
+        </article>
+        <article class="summary-card">
+          <div class="label">30 Day Change</div>
+          <div class="value" id="day30Value">+178.56 pts</div>
+          <div class="delta" id="day30Delta">+12.57%</div>
+        </article>
+        <article class="summary-card">
+          <div class="label">Current Level</div>
+          <div class="value" id="currentValue">1,599.30 pts</div>
+          <div class="delta" id="currentDelta">--</div>
+        </article>
+      </div>
+
+      <div class="headline">
+        <div class="headline-item">
+          <div class="headline-label">Current Level</div>
+          <div class="headline-value" id="headlineCurrent">1,599.30 pts</div>
+        </div>
+        <div class="headline-item">
+          <div class="headline-label">All Time</div>
+          <div class="headline-value good" id="headlineAllTime">+599.30 pts (+59.93%)</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-status" id="chartStatus"></div>
+        <div class="chart-plot" id="indexChart"></div>
+      </div>
+    </section>
+
+    <section class="panel holdings">
+      <div class="holdings-head">
+        <h2>Top 100 Holdings</h2>
+        <div class="holdings-meta" id="holdingsAsOf">As of: --</div>
+      </div>
+
+      <div class="holdings-stats">
+        <article class="holdings-stat">
+          <div class="label">Total Market Value</div>
+          <div class="value" id="holdingsTotal">$--</div>
+        </article>
+        <article class="holdings-stat">
+          <div class="label">Number of Holdings</div>
+          <div class="value" id="holdingsCount">--</div>
+        </article>
+        <article class="holdings-stat">
+          <div class="label">Average Card Price</div>
+          <div class="value" id="holdingsAverage">$--</div>
+        </article>
+      </div>
+
+      <div class="cards-grid" id="holdingsGrid"></div>
+    </section>
+  </main>
+
+  <script>
+    const fallbackSeries = [
+      { date: "2024-03-01", index: 1000.0, aggregate: 9500.0 },
+      { date: "2024-06-01", index: 1185.0, aggregate: 11257.5 },
+      { date: "2024-09-01", index: 1155.0, aggregate: 10972.5 },
+      { date: "2024-12-01", index: 1682.0, aggregate: 15979.0 },
+      { date: "2025-03-01", index: 1739.0, aggregate: 16520.5 },
+      { date: "2025-06-01", index: 1360.0, aggregate: 12920.0 },
+      { date: "2025-09-01", index: 1309.0, aggregate: 12435.5 },
+      { date: "2025-12-01", index: 1302.0, aggregate: 12369.0 },
+      { date: "2026-02-01", index: 1202.0, aggregate: 11419.0 },
+      { date: "2026-04-01", index: 1599.3, aggregate: 15193.35 }
+    ];
+
+    const fallbackReleases = [
+      { date: "2024-03-01", short: "TEF", long: "Temporal Forces" },
+      { date: "2024-06-01", short: "TWM", long: "Twilight Masquerade" },
+      { date: "2024-08-01", short: "SFA", long: "Shrouded Fable" },
+      { date: "2024-09-01", short: "SCR", long: "Stellar Crown" },
+      { date: "2024-11-01", short: "SSP", long: "Surging Sparks" },
+      { date: "2025-01-01", short: "PRE", long: "Prismatic Evolutions" },
+      { date: "2025-03-01", short: "JTG", long: "Journey Together" },
+      { date: "2025-05-01", short: "DRI", long: "Destined Rivals" },
+      { date: "2025-07-01", short: "WHT", long: "White Flare" }
+    ];
+
+    let fullSeries = [];
+    let releaseEvents = [];
+    let payloadSummary = null;
+
+    let mode = "index";
+    let range = "all";
+    let showReleaseLines = false;
+    let releaseMarkersEnabled = false;
+
+    const chartEl = document.getElementById("indexChart");
+    const chartStatus = document.getElementById("chartStatus");
+    const includedSetGrid = document.getElementById("includedSetGrid");
+    const rangeButtons = Array.from(document.querySelectorAll(".range-btn"));
+    const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
+    const releaseLinesToggleBtn = document.getElementById("releaseLinesToggleBtn");
+    const holdingsGrid = document.getElementById("holdingsGrid");
+    const indexPageTitle = document.getElementById("indexPageTitle");
+    const indexName = document.getElementById("indexName");
+    const indexPanelTitle = document.getElementById("indexPanelTitle");
+
+    function formatNumber(value, decimals = 2) {
+      return Number(value).toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function formatValue(value) {
+      if (mode === "aggregate") {
+        return `$${formatNumber(value, 2)}`;
+      }
+      return `${formatNumber(value, 2)} pts`;
+    }
+
+    function monthLabel(ym) {
+      const [year, month] = ym.split("-").map((n) => Number(n));
+      const dt = new Date(Date.UTC(year, month - 1, 1));
+      return dt.toLocaleString("en-US", { month: "short", year: "numeric", timeZone: "UTC" });
+    }
+
+    function filteredSeries() {
+      if (!fullSeries.length) {
+        return [];
+      }
+      if (range === "all") {
+        return fullSeries;
+      }
+      const days = Number(range);
+      if (!Number.isFinite(days) || days <= 0) {
+        return fullSeries;
+      }
+      const latestDate = new Date(fullSeries[fullSeries.length - 1].date);
+      const startDate = new Date(latestDate);
+      startDate.setUTCDate(startDate.getUTCDate() - days);
+      const sliced = fullSeries.filter((row) => new Date(row.date) >= startDate);
+      return sliced.length ? sliced : fullSeries;
+    }
+
+    function formatSigned(value, isCurrency) {
+      if (value == null) {
+        return "--";
+      }
+      const sign = value >= 0 ? "+" : "-";
+      const abs = Math.abs(value);
+      return isCurrency
+        ? `${sign}$${formatNumber(abs, 2)}`
+        : `${sign}${formatNumber(abs, 2)} pts`;
+    }
+
+    function formatSignedPct(value) {
+      if (value == null) {
+        return "--";
+      }
+      const sign = value >= 0 ? "+" : "-";
+      return `${sign}${formatNumber(Math.abs(value), 2)}%`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    // Normalize card numbers for duplicate-title detection (e.g. 48/108 vs 048/108).
+    function buildNumberVariants(num) {
+      const raw = String(num || "").trim();
+      if (!raw) {
+        return [];
+      }
+      const variants = new Set([raw.toLowerCase()]);
+      const parts = raw.split("/");
+      if (parts.length === 2) {
+        const normalized = parts
+          .map((part) => {
+            const stripped = part.replace(/^0+/, "");
+            return stripped || "0";
+          })
+          .join("/");
+        variants.add(normalized.toLowerCase());
+      }
+      return Array.from(variants);
+    }
+
+    function updateStatCards(current) {
+      const day1 = payloadSummary?.day1_change || {};
+      const day7 = payloadSummary?.day7_change || {};
+      const day30 = payloadSummary?.day30_change || {};
+      const allTime = mode === "aggregate"
+        ? (payloadSummary?.all_time_aggregate_change || {})
+        : (payloadSummary?.all_time_index_change || {});
+
+      document.getElementById("day1Value").textContent = formatSigned(day1.abs, mode === "aggregate");
+      document.getElementById("day1Delta").textContent = formatSignedPct(day1.pct);
+      document.getElementById("day7Value").textContent = formatSigned(day7.abs, mode === "aggregate");
+      document.getElementById("day7Delta").textContent = formatSignedPct(day7.pct);
+      document.getElementById("day30Value").textContent = formatSigned(day30.abs, mode === "aggregate");
+      document.getElementById("day30Delta").textContent = formatSignedPct(day30.pct);
+      document.getElementById("currentValue").textContent = mode === "aggregate"
+        ? `$${formatNumber(payloadSummary?.current_aggregate || 0, 2)}`
+        : `${formatNumber(payloadSummary?.current_level || 0, 2)} pts`;
+      document.getElementById("headlineCurrent").textContent = mode === "aggregate"
+        ? `$${formatNumber(current, 2)}`
+        : `${formatNumber(current, 2)} pts`;
+      document.getElementById("headlineAllTime").textContent = `${formatSigned(allTime.abs, mode === "aggregate")} (${formatSignedPct(allTime.pct)})`;
+    }
+
+    // Render up to top 100 holdings as linked tiles with card art and pricing.
+    function renderHoldings(holdings) {
+      if (!holdingsGrid) {
+        return;
+      }
+      const top = Array.isArray(holdings) ? holdings.slice(0, 100) : [];
+      if (!top.length) {
+        holdingsGrid.innerHTML = "";
+        return;
+      }
+      holdingsGrid.innerHTML = top.map((item) => {
+        const rarityLine = [item.rarity, item.number].filter(Boolean).join(" ");
+        const name = String(item.productName || "Unknown");
+        const num = String(item.number || "");
+        const numberVariants = buildNumberVariants(num);
+        const nameLower = name.toLowerCase();
+        const hasNumberInTitle = numberVariants.some((value) => value && nameLower.includes(value));
+        const safeTitle = num && !hasNumberInTitle ? `${name} - ${num}` : name;
+        const browseUrl = buildBrowseSetCardUrl(item);
+        const imageHtml = item.imageUrl
+          ? `<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(safeTitle)}">`
+          : "";
+        return `
+          <a class="card-tile-link" href="${escapeHtml(browseUrl)}" target="_blank" rel="noopener noreferrer">
+            <article class="card-tile">
+              <div class="card-art">
+                <span class="rank">#${item.rank}</span>
+                ${imageHtml}
+              </div>
+              <div class="card-copy">
+                <h3 class="card-title">${escapeHtml(safeTitle)}</h3>
+                <p class="card-sub">${escapeHtml(rarityLine || "") || "&nbsp;"}</p>
+                <p class="card-set">${escapeHtml(item.groupName || "")}</p>
+                <p class="card-value">$${formatNumber(item.marketPrice || 0, 2)}</p>
+              </div>
+            </article>
+          </a>
+        `;
+      }).join("");
+    }
+
+    function inferSpeciesQuery(name) {
+      const lowered = String(name || "").toLowerCase();
+      const base = lowered.split("-")[0]
+        .replace(/['’.]/g, " ")
+        .replace(/[^a-z0-9 ]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (!base) {
+        return "";
+      }
+      const drop = new Set(["ex", "gx", "v", "vmax", "vstar", "radiant", "trainer", "s"]);
+      const keep = base.split(" ").filter((token) => token && !drop.has(token));
+      if (!keep.length) {
+        return "";
+      }
+      return keep[keep.length - 1];
+    }
+
+    function buildBrowseSetCardUrl(item) {
+      const params = new URLSearchParams();
+      params.set("category_id", "3");
+      params.set("days", "365");
+      params.set("tab", "group_products");
+      params.set("segment", "cards");
+      params.set("chart_mode", "product");
+      params.set("product", `${item.productId || ""}||${item.subTypeName || ""}`);
+      params.set("group_id", String(item.groupId || ""));
+      const speciesQuery = inferSpeciesQuery(item.productName || "");
+      if (speciesQuery) {
+        params.set("species_query", speciesQuery);
+      }
+      return `https://market.poke6s.com/?${params.toString()}`;
+    }
+
+    function buildSetStrengthSetUrl(setItem) {
+      const params = new URLSearchParams();
+      params.set("category_id", "3");
+      params.set("days", "365");
+      params.set("tab", "group_signals");
+      params.set("segment", "cards");
+      params.set("chart_mode", "group");
+      params.set("group_id", String(setItem.groupId || ""));
+      if (setItem.top_product_id) {
+        params.set("product", `${setItem.top_product_id}||${setItem.top_sub_type_name || ""}`);
+      }
+      return `/dashboard?${params.toString()}`;
+    }
+
+    function renderIncludedSets(sets) {
+      if (!includedSetGrid) return;
+      if (!Array.isArray(sets) || !sets.length) {
+        includedSetGrid.innerHTML = "";
+        return;
+      }
+      includedSetGrid.innerHTML = sets.map((setItem) => {
+        const href = buildSetStrengthSetUrl(setItem);
+        const logoSrc = `/images/logos/${encodeURIComponent(String(setItem.groupId || ""))}.png`;
+        return `
+          <a class="set-pill-link" target="_blank" rel="noopener noreferrer" href="${escapeHtml(href)}">
+            <div class="set-pill">
+              <img src="${escapeHtml(logoSrc)}" alt="${escapeHtml(setItem.name || "Set logo")}" onerror="this.style.display='none'">
+              <span>${escapeHtml(setItem.name || `Set ${setItem.groupId || ""}`)}</span>
+            </div>
+          </a>
+        `;
+      }).join("");
+    }
+
+    // Draws the Plotly time-series using current range/mode and optional release markers.
+    function renderChart() {
+      const series = filteredSeries();
+      if (!series.length) {
+        if (window.Plotly && chartEl) {
+          window.Plotly.purge(chartEl);
+        } else if (chartEl) {
+          chartEl.innerHTML = "";
+        }
+        return;
+      }
+      if (!window.Plotly || !chartEl) {
+        setChartStatus("Interactive chart library failed to load.", true);
+        return;
+      }
+
+      const x = series.map((d) => d.date);
+      const y = series.map((d) => Number(d[mode] || 0));
+      const hoverValue = mode === "aggregate" ? "$%{y:,.2f}" : "%{y:,.2f} pts";
+      const minX = x[0];
+      const maxX = x[x.length - 1];
+
+      const trace = {
+        x,
+        y,
+        type: "scatter",
+        mode: "lines",
+        line: { color: "#9fe08d", width: 2.6 },
+        fill: "tozeroy",
+        fillcolor: "rgba(159,224,141,0.16)",
+        name: mode === "aggregate" ? "Aggregate Value" : "Index Level",
+        hovertemplate: `%{x}<br>${hoverValue}<extra></extra>`,
+      };
+
+      const shapes = [];
+      const annotations = [];
+      if (releaseMarkersEnabled && showReleaseLines) {
+        releaseEvents.forEach((release) => {
+          if (release.date < minX || release.date > maxX) {
+            return;
+          }
+          shapes.push({
+            type: "line",
+            xref: "x",
+            yref: "paper",
+            x0: release.date,
+            x1: release.date,
+            y0: 0,
+            y1: 1,
+            line: { color: "rgba(159,224,141,0.24)", width: 1, dash: "dot" },
+          });
+          annotations.push({
+            x: release.date,
+            y: 1.03,
+            xref: "x",
+            yref: "paper",
+            text: release.short || "SET",
+            showarrow: false,
+            font: { color: "#9fe08d", size: 10 },
+            align: "center",
+          });
+        });
+      }
+
+      const layout = {
+        margin: { l: 68, r: 18, t: 24, b: 46 },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(8, 13, 28, 0.64)",
+        hovermode: "x unified",
+        showlegend: false,
+        xaxis: {
+          type: "date",
+          range: [minX, maxX],
+          gridcolor: "rgba(143,161,201,0.14)",
+          tickfont: { color: "#8fa1c9", size: 12 },
+          linecolor: "rgba(143,161,201,0.2)",
+          zeroline: false,
+        },
+        yaxis: {
+          gridcolor: "rgba(143,161,201,0.14)",
+          tickfont: { color: "#8fa1c9", size: 12 },
+          linecolor: "rgba(143,161,201,0.2)",
+          zeroline: false,
+          tickprefix: mode === "aggregate" ? "$" : "",
+          ticksuffix: mode === "aggregate" ? "" : " pts",
+        },
+        shapes,
+        annotations,
+      };
+
+      const config = {
+        responsive: true,
+        displaylogo: false,
+        displayModeBar: true,
+        modeBarButtonsToRemove: ["lasso2d", "select2d", "autoScale2d"],
+      };
+
+      window.Plotly.react(chartEl, [trace], layout, config);
+      updateStatCards(y[y.length - 1]);
+    }
+
+    function setChartStatus(message, isError = false) {
+      if (!chartStatus) {
+        return;
+      }
+      chartStatus.textContent = message || "";
+      chartStatus.classList.toggle("error", Boolean(isError));
+    }
+
+    rangeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        range = btn.dataset.range || "all";
+        rangeButtons.forEach((node) => node.classList.toggle("active", node === btn));
+        renderChart();
+      });
+    });
+
+    modeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        mode = btn.dataset.mode || "index";
+        modeButtons.forEach((node) => node.classList.toggle("soft-active", node === btn));
+        renderChart();
+      });
+    });
+
+    if (releaseLinesToggleBtn) {
+      releaseLinesToggleBtn.addEventListener("click", () => {
+        if (!releaseMarkersEnabled) {
+          return;
+        }
+        showReleaseLines = !showReleaseLines;
+        releaseLinesToggleBtn.classList.toggle("soft-active", showReleaseLines);
+        releaseLinesToggleBtn.textContent = showReleaseLines ? "Set Releases" : "Set Releases (Off)";
+        renderChart();
+      });
+    }
+
+    // Fetches the backend index payload and hydrates all UI sections.
+    async function loadIndexOverviewData() {
+      const response = await fetch("/index-overview-data?index=ecard100");
+      if (!response.ok) {
+        throw new Error(`index-overview-data failed (${response.status})`);
+      }
+      const data = await response.json();
+      document.title = `Pokemon Momentum | ${data.index_name || "e-Card 100"}`;
+      if (indexPageTitle) indexPageTitle.textContent = data.index_name || "e-Card 100";
+      if (indexName) indexName.textContent = data.index_name || "e-Card 100";
+      if (indexPanelTitle) indexPanelTitle.textContent = data.index_name || "e-Card 100";
+      payloadSummary = data.summary || null;
+      fullSeries = (data.series || []).map((row) => ({
+        date: row.date,
+        index: Number(row.index_level || 0),
+        aggregate: Number(row.aggregate_value || 0)
+      }));
+      releaseEvents = (data.set_releases || [])
+        .filter((setRow) => (setRow.release_date || setRow.first_seen_date))
+        .map((setRow) => ({
+          date: setRow.release_date || setRow.first_seen_date,
+          short: setRow.abbreviation || "SET",
+          long: setRow.name || ""
+        }));
+      releaseMarkersEnabled = data.release_markers_enabled !== false;
+      if (!releaseMarkersEnabled) {
+        showReleaseLines = false;
+        releaseEvents = [];
+      }
+      if (releaseLinesToggleBtn) {
+        releaseLinesToggleBtn.hidden = !releaseMarkersEnabled;
+        releaseLinesToggleBtn.setAttribute("aria-hidden", releaseMarkersEnabled ? "false" : "true");
+      }
+
+      const asOf = data.summary?.as_of || "--";
+      document.getElementById("holdingsAsOf").textContent = `As of: ${asOf}`;
+      document.getElementById("holdingsTotal").textContent = `$${formatNumber(data.summary?.current_aggregate || 0, 2)}`;
+      document.getElementById("holdingsCount").textContent = String(data.summary?.holdings_count ?? "--");
+      document.getElementById("holdingsAverage").textContent = `$${formatNumber(data.summary?.average_card_price || 0, 2)}`;
+      renderIncludedSets(data.included_sets || []);
+      renderHoldings(data.holdings || []);
+      const statusMessage = releaseMarkersEnabled
+        ? `Live index data loaded (${data.summary?.as_of || "latest"}). Release markers currently use first market-observed date.`
+        : `Live index data loaded (${data.summary?.as_of || "latest"}).`;
+      setChartStatus(statusMessage, false);
+      renderChart();
+    }
+
+    loadIndexOverviewData().catch((err) => {
+      console.error(err);
+      fullSeries = fallbackSeries.slice();
+      releaseEvents = releaseMarkersEnabled ? fallbackReleases.slice() : [];
+      payloadSummary = {
+        current_level: fallbackSeries[fallbackSeries.length - 1].index,
+        current_aggregate: fallbackSeries[fallbackSeries.length - 1].aggregate,
+        day1_change: { abs: null, pct: null },
+        day7_change: { abs: null, pct: null },
+        day30_change: { abs: null, pct: null },
+        all_time_index_change: {
+          abs: fallbackSeries[fallbackSeries.length - 1].index - fallbackSeries[0].index,
+          pct: ((fallbackSeries[fallbackSeries.length - 1].index - fallbackSeries[0].index) / fallbackSeries[0].index) * 100
+        },
+        all_time_aggregate_change: {
+          abs: fallbackSeries[fallbackSeries.length - 1].aggregate - fallbackSeries[0].aggregate,
+          pct: ((fallbackSeries[fallbackSeries.length - 1].aggregate - fallbackSeries[0].aggregate) / fallbackSeries[0].aggregate) * 100
+        }
+      };
+      setChartStatus("Live data failed to load. Showing fallback chart. Check /index-overview-data and restart the API if needed.", true);
+      renderChart();
+    });
+  </script>
+</body>
+</html>

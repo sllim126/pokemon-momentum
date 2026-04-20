@@ -3,6 +3,7 @@ import difflib
 import json
 import os
 import re
+import bisect
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import unquote
@@ -67,6 +68,20 @@ BUG_REPORTS_HTML = SCRIPT_DIR / "bug_reports.html"
 PRICING_UPLOAD_HTML = SCRIPT_DIR / "pricing_upload.html"
 SUPPLIER_PRICING_HTML = SCRIPT_DIR / "supplier_pricing.html"
 SUPPLIER_PROFITABILITY_HTML = SCRIPT_DIR / "supplier_profitability.html"
+MOBILE_REBUILD_HTML = SCRIPT_DIR / "mobile_rebuild_mockup.html"
+INDEX_OVERVIEW_SV100_HTML = SCRIPT_DIR / "index_overview.html"
+INDEX_OVERVIEW_HUB_HTML = SCRIPT_DIR / "index_overview_hub.html"
+INDEX_OVERVIEW_MEGA100_HTML = SCRIPT_DIR / "index_overview_mega100.html"
+INDEX_OVERVIEW_WOTC100_HTML = SCRIPT_DIR / "index_overview_wotc100.html"
+INDEX_OVERVIEW_NEO100_HTML = SCRIPT_DIR / "index_overview_neo100.html"
+INDEX_OVERVIEW_ECARD100_HTML = SCRIPT_DIR / "index_overview_ecard100.html"
+INDEX_OVERVIEW_EX100_HTML = SCRIPT_DIR / "index_overview_ex100.html"
+INDEX_OVERVIEW_DP100_HTML = SCRIPT_DIR / "index_overview_dp100.html"
+INDEX_OVERVIEW_BW100_HTML = SCRIPT_DIR / "index_overview_bw100.html"
+INDEX_OVERVIEW_XY100_HTML = SCRIPT_DIR / "index_overview_xy100.html"
+INDEX_OVERVIEW_SM100_HTML = SCRIPT_DIR / "index_overview_sm100.html"
+INDEX_OVERVIEW_SWSH100_HTML = SCRIPT_DIR / "index_overview_swsh100.html"
+INDEX_OVERVIEW_POKEMON100_HTML = SCRIPT_DIR / "index_overview_pokemon100.html"
 DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
 IMAGE_DIR_CANDIDATES = [
     SCRIPT_DIR.parents[2] / "images",
@@ -87,6 +102,141 @@ ADMIN_USERNAMES = {
     if username.strip()
 }
 GOOGLE_CLIENT_ID = os.getenv("POKEMON_MOMENTUM_GOOGLE_CLIENT_ID", "").strip()
+
+SV100_GROUP_IDS = [
+    24325,  # SV: Black Bolt
+    24326,  # SV: White Flare
+    24269,  # SV10: Destined Rivals
+    24073,  # SV09: Journey Together
+    23821,  # SV: Prismatic Evolutions
+    23651,  # SV08: Surging Sparks
+    23537,  # SV07: Stellar Crown
+    23529,  # SV: Shrouded Fable
+    23473,  # SV06: Twilight Masquerade
+    23381,  # SV05: Temporal Forces
+    23353,  # SV: Paldean Fates
+    23286,  # SV04: Paradox Rift
+    23237,  # SV: Scarlet & Violet 151
+    23228,  # SV03: Obsidian Flames
+    23120,  # SV02: Paldea Evolved
+    22873,  # SV01: Scarlet & Violet Base Set
+]
+SV100_BASE_LEVEL = 1000.0
+MEGA100_BASE_LEVEL = 1000.0
+INDEX_OVERVIEW_CACHE_TTL_SECONDS = 15 * 60
+_INDEX_OVERVIEW_CACHE: dict[tuple[int, str], tuple[datetime, dict]] = {}
+# Index definition contract:
+# - index_name: UI display title.
+# - description: subtitle/summary text returned in API payload.
+# - base_level: normalization anchor (1000 => "index points" baseline).
+# - group_ids: explicit set universe (preferred for legacy eras with custom boundaries).
+# - generation: dynamic set universe resolved via build_generation_case().
+# - all_active_groups: special "Pokemon Top 100" mode using all active English groups.
+# - release_markers_enabled: tells frontend whether to show Set Releases toggle/markers.
+INDEX_DEFINITIONS = {
+    "pokemon100": {
+        "index_name": "Pokemon Top 100",
+        "description": "Top 100 cards by market price (all English sets)",
+        "base_level": 1000.0,
+        "all_active_groups": True,
+        "release_markers_enabled": False,
+    },
+    "sv100": {
+        "index_name": "Scarlet & Violet 100",
+        "description": "Top 100 cards by market price",
+        "base_level": SV100_BASE_LEVEL,
+        "group_ids": SV100_GROUP_IDS,
+        "release_markers_enabled": True,
+    },
+    "mega100": {
+        "index_name": "Mega Evolution 100",
+        "description": "Top 100 cards by market price",
+        "base_level": MEGA100_BASE_LEVEL,
+        "generation": "MEG",
+        "release_markers_enabled": True,
+    },
+    "swsh100": {
+        "index_name": "Sword & Shield 100",
+        "description": "Top 100 cards by market price",
+        "base_level": 1000.0,
+        "generation": "SWSH",
+        "release_markers_enabled": False,
+    },
+    "sm100": {
+        "index_name": "Sun & Moon 100",
+        "description": "Top 100 cards by market price",
+        "base_level": 1000.0,
+        "generation": "SM",
+        "release_markers_enabled": False,
+    },
+    "xy100": {
+        "index_name": "XY 100",
+        "description": "Top 100 cards by market price",
+        "base_level": 1000.0,
+        "generation": "XY",
+        "release_markers_enabled": False,
+    },
+    "bw100": {
+        "index_name": "Black & White 100",
+        "description": "Top 100 cards by market price",
+        "base_level": 1000.0,
+        "generation": "BW",
+        "release_markers_enabled": False,
+    },
+    "dp100": {
+        "index_name": "Diamond & Pearl 100",
+        "description": "Top 100 cards by market price",
+        "base_level": 1000.0,
+        "generation": "DP/HGSS",
+        "release_markers_enabled": False,
+    },
+    "ex100": {
+        "index_name": "EX 100",
+        "description": "Top 100 cards by market price",
+        "base_level": 1000.0,
+        "generation": "EX",
+        "release_markers_enabled": False,
+    },
+    "wotc100": {
+        "index_name": "Original WOTC 100",
+        "description": "Top 100 cards by market price",
+        "base_level": 1000.0,
+        "group_ids": [
+            604,   # Base Set
+            1663,  # Base Set (Shadowless)
+            635,   # Jungle
+            630,   # Fossil
+            605,   # Base Set 2
+            1373,  # Team Rocket
+            1441,  # Gym Heroes
+            1440,  # Gym Challenge
+        ],
+        "release_markers_enabled": False,
+    },
+    "neo100": {
+        "index_name": "Neo 100",
+        "description": "Top 100 cards by market price",
+        "base_level": 1000.0,
+        "group_ids": [
+            1396,  # Neo Genesis
+            1434,  # Neo Discovery
+            1389,  # Neo Revelation
+            1444,  # Neo Destiny
+        ],
+        "release_markers_enabled": False,
+    },
+    "ecard100": {
+        "index_name": "e-Card 100",
+        "description": "Top 100 cards by market price",
+        "base_level": 1000.0,
+        "group_ids": [
+            1375,  # Expedition
+            1397,  # Aquapolis
+            1372,  # Skyridge
+        ],
+        "release_markers_enabled": False,
+    },
+}
 
 
 app = FastAPI()
@@ -172,6 +322,80 @@ def supplier_pricing_page(authorization: str | None = Header(default=None), trac
 def supplier_profitability_page(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
     require_admin_user(authorization=authorization, tracking_token=tracking_token)
     return FileResponse(SUPPLIER_PROFITABILITY_HTML)
+
+
+@app.get("/mobile-rebuild")
+def mobile_rebuild_page():
+    """Serve a standalone mobile-first dashboard concept page."""
+    return FileResponse(MOBILE_REBUILD_HTML)
+
+
+@app.get("/index-overview")
+def index_overview_page():
+    """Serve the index-overview hub page listing all era-specific index pages."""
+    return FileResponse(INDEX_OVERVIEW_HUB_HTML)
+
+
+@app.get("/index-overview-sv100")
+def index_overview_sv100_page():
+    """Serve the desktop index-overview detail page for Scarlet & Violet 100."""
+    return FileResponse(INDEX_OVERVIEW_SV100_HTML)
+
+
+@app.get("/index-overview-mega100")
+def index_overview_mega100_page():
+    """Serve the desktop index-overview concept page for Mega Evolution 100."""
+    return FileResponse(INDEX_OVERVIEW_MEGA100_HTML)
+
+
+@app.get("/index-overview-wotc100")
+def index_overview_wotc100_page():
+    return FileResponse(INDEX_OVERVIEW_WOTC100_HTML)
+
+
+@app.get("/index-overview-neo100")
+def index_overview_neo100_page():
+    return FileResponse(INDEX_OVERVIEW_NEO100_HTML)
+
+
+@app.get("/index-overview-ecard100")
+def index_overview_ecard100_page():
+    return FileResponse(INDEX_OVERVIEW_ECARD100_HTML)
+
+
+@app.get("/index-overview-ex100")
+def index_overview_ex100_page():
+    return FileResponse(INDEX_OVERVIEW_EX100_HTML)
+
+
+@app.get("/index-overview-dp100")
+def index_overview_dp100_page():
+    return FileResponse(INDEX_OVERVIEW_DP100_HTML)
+
+
+@app.get("/index-overview-bw100")
+def index_overview_bw100_page():
+    return FileResponse(INDEX_OVERVIEW_BW100_HTML)
+
+
+@app.get("/index-overview-xy100")
+def index_overview_xy100_page():
+    return FileResponse(INDEX_OVERVIEW_XY100_HTML)
+
+
+@app.get("/index-overview-sm100")
+def index_overview_sm100_page():
+    return FileResponse(INDEX_OVERVIEW_SM100_HTML)
+
+
+@app.get("/index-overview-swsh100")
+def index_overview_swsh100_page():
+    return FileResponse(INDEX_OVERVIEW_SWSH100_HTML)
+
+
+@app.get("/index-overview-pokemon100")
+def index_overview_pokemon100_page():
+    return FileResponse(INDEX_OVERVIEW_POKEMON100_HTML)
 
 
 @app.get("/dashboard-common.js")
@@ -274,6 +498,467 @@ def categories():
             {"category_id": 85, "label": "Pokemon Japanese", "slug": "pokemon_jp"},
         ]
     }
+
+
+def _format_days_delta(series: list[dict], key: str, days: int) -> tuple[float | None, float | None]:
+    if not series:
+        return None, None
+    latest_date = datetime.strptime(series[-1]["date"], "%Y-%m-%d").date()
+    target = latest_date - timedelta(days=days)
+    dates = [datetime.strptime(row["date"], "%Y-%m-%d").date() for row in series]
+    idx = bisect.bisect_right(dates, target) - 1
+    if idx < 0:
+        idx = 0
+    latest_value = series[-1].get(key)
+    prior_value = series[idx].get(key)
+    if latest_value is None or prior_value is None:
+        return None, None
+    abs_change = float(latest_value) - float(prior_value)
+    pct_change = (abs_change / float(prior_value) * 100.0) if float(prior_value) else None
+    return abs_change, pct_change
+
+
+def _resolve_index_group_ids(index_key: str, category_id: int) -> list[int]:
+    """Resolve the set universe used to build an index.
+
+    Resolution priority is intentional:
+    1) explicit `group_ids` (exact historical boundaries, no ambiguity),
+    2) `all_active_groups` (global top 100 concept page),
+    3) `generation` bucket from build_generation_case (modern eras).
+    """
+    definition = INDEX_DEFINITIONS.get(index_key)
+    if definition is None:
+        raise HTTPException(status_code=404, detail=f"Unknown index key: {index_key}")
+    explicit_group_ids = definition.get("group_ids")
+    if explicit_group_ids:
+        return [int(group_id) for group_id in explicit_group_ids]
+
+    if definition.get("all_active_groups"):
+        price_source = prices_from(category_id)
+        sql = f"""
+        SELECT DISTINCT CAST(groupId AS BIGINT) AS groupId
+        FROM {price_source}
+        WHERE categoryId = {int(category_id)}
+        ORDER BY groupId
+        """
+        cols, rows = q(sql)
+        return [int(row[0]) for row in rows]
+
+    generation = str(definition.get("generation") or "").strip()
+    if not generation:
+        raise HTTPException(status_code=500, detail=f"Index {index_key} has no group selection configured.")
+
+    group_source = groups_from(category_id)
+    price_source = prices_from(category_id)
+    generation_case = build_generation_case(
+        group_id_column="g.groupId",
+        name_column="g.name",
+        abbreviation_column="g.abbreviation",
+        published_on_column="g.publishedOn",
+    )
+    sql = f"""
+    WITH active_groups AS (
+      SELECT DISTINCT groupId
+      FROM {price_source}
+      WHERE categoryId = {int(category_id)}
+    )
+    SELECT DISTINCT CAST(g.groupId AS BIGINT) AS groupId
+    FROM {group_source} g
+    JOIN active_groups a
+      ON a.groupId = g.groupId
+    WHERE {generation_case} = '{generation.replace("'", "''")}'
+    ORDER BY g.groupId
+    """
+    cols, rows = q(sql)
+    return [int(row[0]) for row in rows]
+
+
+def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100") -> dict:
+    """Build the full index payload used by all /index-overview-<era> pages.
+
+    Payload sections:
+    - series: daily aggregate + normalized index level + turnover metadata
+    - holdings: current top 100 card constituents with display metadata
+    - included_sets/set_releases: set-level cards + marker support for chart overlays
+    - summary: headline metrics used by the stat cards
+    """
+    definition = INDEX_DEFINITIONS.get(index_key)
+    if definition is None:
+        raise HTTPException(status_code=404, detail=f"Unknown index key: {index_key}")
+    group_ids = _resolve_index_group_ids(index_key=index_key, category_id=category_id)
+    if not group_ids:
+        raise HTTPException(status_code=404, detail=f"No groups found for index key: {index_key}")
+    group_ids_sql = ", ".join(str(int(group_id)) for group_id in group_ids)
+    price_source = prices_from(category_id)
+    metadata_cte = build_metadata_cte(category_id, include_classification=True, cte_name="metadata")
+
+    # Step 1: Build daily top-100 constituents for the selected set universe.
+    # We intentionally rank by raw marketPrice DESC per date to match the
+    # "Top 100 by market price" methodology shown in the UI text.
+    top100_sql = f"""
+    WITH
+    {metadata_cte},
+    filtered AS (
+      SELECT
+        p.date,
+        p.productId,
+        COALESCE(p.subTypeName, '') AS subTypeName,
+        p.groupId,
+        p.marketPrice
+      FROM {price_source} p
+      LEFT JOIN metadata m
+        ON m.productId = p.productId
+       AND m.groupId = p.groupId
+      WHERE p.categoryId = {int(category_id)}
+        AND p.groupId IN ({group_ids_sql})
+        AND p.marketPrice IS NOT NULL
+        AND p.marketPrice > 0
+        AND lower(COALESCE(m.productKind, '')) = 'card'
+    ),
+    ranked AS (
+      SELECT
+        date,
+        productId,
+        subTypeName,
+        groupId,
+        marketPrice,
+        ROW_NUMBER() OVER (
+          PARTITION BY date
+          ORDER BY marketPrice DESC, productId, COALESCE(subTypeName, '')
+        ) AS rn
+      FROM filtered
+    )
+    SELECT
+      date,
+      productId,
+      subTypeName,
+      groupId,
+      marketPrice,
+      rn
+    FROM ranked
+    WHERE rn <= 100
+    ORDER BY date, rn
+    """
+    cols, rows = q(top100_sql)
+    if not rows:
+        raise HTTPException(status_code=404, detail="No Scarlet & Violet index data available")
+    top_rows = [dict(zip(cols, row)) for row in rows]
+
+    # Step 2: Roll rows into per-day aggregates + membership snapshots.
+    # Membership snapshots are used later to compute turnover/reconstitution.
+    daily: list[dict] = []
+    current_date = None
+    bucket: list[dict] = []
+    for row in top_rows:
+        row_date = row["date"]
+        if current_date is None:
+            current_date = row_date
+        if row_date != current_date:
+            aggregate = float(sum(float(item["marketPrice"] or 0.0) for item in bucket))
+            members = {
+                (int(item["productId"]), str(item.get("subTypeName") or ""))
+                for item in bucket
+            }
+            daily.append(
+                {
+                    "date": str(current_date),
+                    "aggregate_value": aggregate,
+                    "constituent_count": len(bucket),
+                    "members": members,
+                }
+            )
+            current_date = row_date
+            bucket = []
+        bucket.append(row)
+
+    if bucket:
+        aggregate = float(sum(float(item["marketPrice"] or 0.0) for item in bucket))
+        members = {
+            (int(item["productId"]), str(item.get("subTypeName") or ""))
+            for item in bucket
+        }
+        daily.append(
+            {
+                "date": str(current_date),
+                "aggregate_value": aggregate,
+                "constituent_count": len(bucket),
+                "members": members,
+            }
+        )
+
+    # Step 3: Convert aggregate dollars into "index points" via divisor method.
+    #
+    # - First day is normalized to base level (typically 1000 pts).
+    # - On reconstitution events (>10% constituent turnover), divisor is adjusted
+    #   so the index level remains continuous and avoids artificial jumps.
+    divisor = (daily[0]["aggregate_value"] / SV100_BASE_LEVEL) if daily[0]["aggregate_value"] else 1.0
+    previous_index_level = SV100_BASE_LEVEL
+    previous_members: set[tuple[int, str]] | None = None
+    series: list[dict] = []
+    reconstitution_events: list[dict] = []
+    latest_reconstitution_date = None
+
+    for day in daily:
+        members = day["members"]
+        aggregate_value = float(day["aggregate_value"])
+        if previous_members is None:
+            turnover_pct = 0.0
+            reconstitution = False
+        else:
+            change_count = len(members - previous_members)
+            denom = max(1, min(len(previous_members), len(members)))
+            turnover_pct = float(change_count / denom * 100.0)
+            reconstitution = turnover_pct > 10.0
+
+        if reconstitution:
+            # Divisor reset keeps index continuity when membership shifts heavily.
+            divisor = (aggregate_value / previous_index_level) if previous_index_level else divisor
+            latest_reconstitution_date = day["date"]
+            reconstitution_events.append(
+                {
+                    "date": day["date"],
+                    "turnover_pct": turnover_pct,
+                }
+            )
+
+        index_level = (aggregate_value / divisor) if divisor else aggregate_value
+        series.append(
+            {
+                "date": day["date"],
+                "aggregate_value": aggregate_value,
+                "index_level": index_level,
+                "constituent_count": int(day["constituent_count"]),
+                "turnover_pct": turnover_pct,
+                "reconstitution": reconstitution,
+            }
+        )
+        previous_members = members
+        previous_index_level = index_level
+
+    latest_date = series[-1]["date"]
+
+    # Step 4: Snapshot latest-day top 100 holdings (cards shown in UI tiles).
+    holdings_sql = f"""
+    WITH
+    {metadata_cte},
+    ranked AS (
+      SELECT
+        p.date,
+        p.productId,
+        COALESCE(p.subTypeName, '') AS subTypeName,
+        p.groupId,
+        p.marketPrice,
+        ROW_NUMBER() OVER (
+          PARTITION BY p.date
+          ORDER BY p.marketPrice DESC, p.productId, COALESCE(p.subTypeName, '')
+        ) AS rn
+      FROM {price_source} p
+      LEFT JOIN metadata m
+        ON m.productId = p.productId
+       AND m.groupId = p.groupId
+      WHERE p.categoryId = {int(category_id)}
+        AND p.groupId IN ({group_ids_sql})
+        AND p.marketPrice IS NOT NULL
+        AND p.marketPrice > 0
+        AND p.date = DATE '{latest_date}'
+        AND lower(COALESCE(m.productKind, '')) = 'card'
+    )
+    SELECT
+      r.rn AS rank,
+      r.productId,
+      r.subTypeName,
+      r.groupId,
+      r.marketPrice,
+      COALESCE(NULLIF(trim(m.groupName), ''), 'Group ' || CAST(r.groupId AS VARCHAR)) AS groupName,
+      COALESCE(NULLIF(trim(m.productName), ''), 'productId ' || CAST(r.productId AS VARCHAR)) AS productName,
+      COALESCE(NULLIF(trim(m.imageUrl), ''), '') AS imageUrl,
+      COALESCE(NULLIF(trim(m.rarity), ''), '') AS rarity,
+      COALESCE(NULLIF(trim(m.number), ''), '') AS number
+    FROM ranked r
+    LEFT JOIN metadata m
+      ON m.productId = r.productId
+     AND m.groupId = r.groupId
+    WHERE r.rn <= 100
+    ORDER BY r.rn
+    """
+    holdings_cols, holdings_rows = q(holdings_sql)
+    holdings = [dict(zip(holdings_cols, row)) for row in holdings_rows]
+    for item in holdings:
+        item["rank"] = int(item["rank"])
+        item["marketPrice"] = float(item["marketPrice"] or 0.0)
+        item["productId"] = int(item["productId"])
+        item["groupId"] = int(item["groupId"])
+        item["subTypeName"] = str(item.get("subTypeName") or "")
+
+    # Step 5: Gather included-set metadata for set pills and set-strength links.
+    groups_sql = f"""
+    SELECT
+      g.groupId,
+      COALESCE(g.name, 'Group ' || CAST(g.groupId AS VARCHAR)) AS name,
+      COALESCE(g.abbreviation, '') AS abbreviation
+    FROM {groups_from(category_id)} g
+    WHERE g.groupId IN ({group_ids_sql})
+    """
+    group_cols, group_rows = q(groups_sql)
+    group_map = {
+        int(row[0]): {
+            "groupId": int(row[0]),
+            "name": row[1],
+            "abbreviation": row[2] or "",
+        }
+        for row in group_rows
+    }
+    # For each included set, precompute its top-priced card so the frontend can
+    # deep-link into Set Strength using a representative product context.
+    top_set_cards_sql = f"""
+    WITH
+    {metadata_cte},
+    ranked AS (
+      SELECT
+        p.groupId,
+        p.productId,
+        COALESCE(p.subTypeName, '') AS subTypeName,
+        p.marketPrice,
+        ROW_NUMBER() OVER (
+          PARTITION BY p.groupId
+          ORDER BY p.marketPrice DESC, p.productId, COALESCE(p.subTypeName, '')
+        ) AS rn
+      FROM {price_source} p
+      LEFT JOIN metadata m
+        ON m.productId = p.productId
+       AND m.groupId = p.groupId
+      WHERE p.categoryId = {int(category_id)}
+        AND p.groupId IN ({group_ids_sql})
+        AND p.date = DATE '{latest_date}'
+        AND p.marketPrice IS NOT NULL
+        AND p.marketPrice > 0
+        AND lower(COALESCE(m.productKind, '')) = 'card'
+    )
+    SELECT
+      groupId,
+      productId,
+      subTypeName,
+      marketPrice
+    FROM ranked
+    WHERE rn = 1
+    """
+    top_set_cols, top_set_rows = q(top_set_cards_sql)
+    top_set_map = {
+        int(group_id): {
+            "top_product_id": int(product_id),
+            "top_sub_type_name": str(sub_type_name or ""),
+            "top_market_price": float(market_price or 0.0),
+        }
+        for group_id, product_id, sub_type_name, market_price in top_set_rows
+    }
+
+    included_sets = []
+    for group_id in group_ids:
+        if group_id not in group_map:
+            continue
+        included_sets.append(
+            {
+                **group_map[group_id],
+                **top_set_map.get(group_id, {}),
+            }
+        )
+
+    # Step 6: Release marker backbone.
+    # We currently use first market-observed date for each set in the index.
+    release_sql = f"""
+    WITH
+    {metadata_cte}
+    SELECT
+      p.groupId,
+      MIN(p.date) AS first_seen_date
+    FROM {price_source} p
+    LEFT JOIN metadata m
+      ON m.productId = p.productId
+     AND m.groupId = p.groupId
+    WHERE p.categoryId = {int(category_id)}
+      AND p.groupId IN ({group_ids_sql})
+      AND p.marketPrice IS NOT NULL
+      AND p.marketPrice > 0
+      AND lower(COALESCE(m.productKind, '')) = 'card'
+    GROUP BY p.groupId
+    """
+    rel_cols, rel_rows = q(release_sql)
+    release_map = {int(group_id): str(first_seen_date) for group_id, first_seen_date in rel_rows}
+    set_releases = []
+    for group_id in group_ids:
+        group_info = group_map.get(group_id)
+        if not group_info:
+            continue
+        set_releases.append(
+            {
+                **group_info,
+                **top_set_map.get(group_id, {}),
+                "first_seen_date": release_map.get(group_id),
+                "release_date": release_map.get(group_id),
+                "release_date_source": "first_market_date",
+            }
+        )
+
+    latest_index = float(series[-1]["index_level"])
+    latest_aggregate = float(series[-1]["aggregate_value"])
+    day1_abs, day1_pct = _format_days_delta(series, "index_level", 1)
+    day7_abs, day7_pct = _format_days_delta(series, "index_level", 7)
+    day30_abs, day30_pct = _format_days_delta(series, "index_level", 30)
+    first_index = float(series[0]["index_level"]) if series else SV100_BASE_LEVEL
+    first_aggregate = float(series[0]["aggregate_value"]) if series else latest_aggregate
+    all_time_index_abs = latest_index - first_index
+    all_time_index_pct = (all_time_index_abs / first_index * 100.0) if first_index else None
+    all_time_aggregate_abs = latest_aggregate - first_aggregate
+    all_time_aggregate_pct = (all_time_aggregate_abs / first_aggregate * 100.0) if first_aggregate else None
+
+    summary = {
+        "as_of": latest_date,
+        "current_level": latest_index,
+        "current_aggregate": latest_aggregate,
+        "holdings_count": len(holdings),
+        "average_card_price": (latest_aggregate / len(holdings)) if holdings else None,
+        "day1_change": {"abs": day1_abs, "pct": day1_pct},
+        "day7_change": {"abs": day7_abs, "pct": day7_pct},
+        "day30_change": {"abs": day30_abs, "pct": day30_pct},
+        "all_time_index_change": {"abs": all_time_index_abs, "pct": all_time_index_pct},
+        "all_time_aggregate_change": {"abs": all_time_aggregate_abs, "pct": all_time_aggregate_pct},
+        "latest_reconstitution_date": latest_reconstitution_date,
+    }
+
+    return {
+        "index_key": index_key,
+        "index_name": str(definition.get("index_name") or index_key),
+        "description": str(definition.get("description") or "Top 100 cards by market price"),
+        "base_level": float(definition.get("base_level") or 1000.0),
+        "release_markers_enabled": bool(definition.get("release_markers_enabled", True)),
+        "latest_date": latest_date,
+        "included_sets": included_sets,
+        "set_releases": set_releases,
+        "summary": summary,
+        "series": series,
+        "reconstitution_events": reconstitution_events,
+        "holdings": holdings,
+    }
+
+
+@app.get("/index-overview-data")
+def index_overview_data(category_id: int = 3, index: str = "sv100", refresh: bool = False):
+    if int(category_id) != 3:
+        raise HTTPException(status_code=400, detail="Index overview is only configured for category_id=3.")
+    index_key = str(index or "sv100").strip().lower()
+    if index_key not in INDEX_DEFINITIONS:
+        raise HTTPException(status_code=404, detail=f"Unknown index key: {index_key}")
+    now = datetime.now(timezone.utc)
+    cache_key = (int(category_id), index_key)
+    cached = _INDEX_OVERVIEW_CACHE.get(cache_key)
+    if cached and not refresh:
+        cached_at, payload = cached
+        age = (now - cached_at).total_seconds()
+        if age <= INDEX_OVERVIEW_CACHE_TTL_SECONDS:
+            return payload
+    payload = _build_index_overview_payload(category_id=category_id, index_key=index_key)
+    _INDEX_OVERVIEW_CACHE[cache_key] = (now, payload)
+    return payload
 
 
 def _product_signal_source_resilient(category_id: int) -> str:

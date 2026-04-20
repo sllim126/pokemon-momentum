@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pokemon Momentum | Index Overview</title>
+  <link rel="icon" type="image/png" href="/images/Favidon.png">
+  <style>
+    :root {
+      --bg: #070b1a;
+      --bg-2: #0c1228;
+      --panel: rgba(12, 18, 37, 0.95);
+      --panel-2: rgba(9, 14, 30, 0.98);
+      --line: rgba(123, 146, 196, 0.18);
+      --ink: #f3f7ff;
+      --muted: #96a7cf;
+      --accent: #9fe08d;
+      --radius: 18px;
+      --shadow: 0 28px 80px rgba(1, 4, 10, 0.5);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(42, 108, 255, 0.16), transparent 26%),
+        radial-gradient(circle at 88% 0%, rgba(126, 195, 113, 0.12), transparent 24%),
+        linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+    }
+
+    .shell {
+      width: min(1040px, calc(100vw - 20px));
+      margin: 18px auto 28px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      box-shadow: var(--shadow);
+      padding: 20px 22px;
+      display: grid;
+      gap: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 4.8vw, 58px);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      border: 1px solid rgba(123, 146, 196, 0.22);
+      border-radius: 14px;
+      background: rgba(13, 20, 40, 0.68);
+      padding: 14px;
+      display: grid;
+      gap: 8px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .card:hover {
+      border-color: rgba(159, 224, 141, 0.5);
+      background: rgba(18, 28, 52, 0.9);
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 34px);
+      letter-spacing: -0.03em;
+    }
+
+    .card .status {
+      color: #bdebb2;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 800px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="panel">
+      <h1>Index Overview</h1>
+      <p>This page tracks all era-specific index pages. Open any index below for methodology, chart performance, and top-100 holdings.</p>
+      <div class="grid">
+        <a class="card" href="/index-overview-pokemon100">
+          <div class="status">Experimental</div>
+          <h2>Pokemon Top 100</h2>
+          <p>Top 100 cards by market price across all active English sets.</p>
+        </a>
+        <a class="card" href="/index-overview-wotc100">
+          <div class="status">Live</div>
+          <h2>Original WOTC 100</h2>
+          <p>Base Set through Gym Challenge.</p>
+        </a>
+        <a class="card" href="/index-overview-neo100">
+          <div class="status">Live</div>
+          <h2>Neo 100</h2>
+          <p>Neo Genesis through Neo Destiny.</p>
+        </a>
+        <a class="card" href="/index-overview-ecard100">
+          <div class="status">Live</div>
+          <h2>e-Card 100</h2>
+          <p>Expedition Base Set through Skyridge.</p>
+        </a>
+        <a class="card" href="/index-overview-ex100">
+          <div class="status">Live</div>
+          <h2>EX 100</h2>
+          <p>Ruby &amp; Sapphire through EX Power Keepers.</p>
+        </a>
+        <a class="card" href="/index-overview-dp100">
+          <div class="status">Live</div>
+          <h2>Diamond &amp; Pearl 100</h2>
+          <p>Diamond &amp; Pearl, Platinum, and HeartGold &amp; SoulSilver sets.</p>
+        </a>
+        <a class="card" href="/index-overview-bw100">
+          <div class="status">Live</div>
+          <h2>Black &amp; White 100</h2>
+          <p>Black &amp; White through Legendary Treasures.</p>
+        </a>
+        <a class="card" href="/index-overview-xy100">
+          <div class="status">Live</div>
+          <h2>XY 100</h2>
+          <p>XY through Evolutions.</p>
+        </a>
+        <a class="card" href="/index-overview-sm100">
+          <div class="status">Live</div>
+          <h2>Sun &amp; Moon 100</h2>
+          <p>Sun &amp; Moon through Cosmic Eclipse.</p>
+        </a>
+        <a class="card" href="/index-overview-swsh100">
+          <div class="status">Live</div>
+          <h2>Sword &amp; Shield 100</h2>
+          <p>Sword &amp; Shield through Crown Zenith / Galarian Gallery.</p>
+        </a>
+        <a class="card" href="/index-overview-sv100">
+          <div class="status">Live</div>
+          <h2>Scarlet &amp; Violet 100</h2>
+          <p>Active index page with live chart, holdings, and deep links to Set Strength/Browse Set.</p>
+        </a>
+        <a class="card" href="/index-overview-mega100">
+          <div class="status">Live</div>
+          <h2>Mega Evolution 100</h2>
+          <p>Mega Evolution through Perfect Order.</p>
+        </a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
