@@ -617,28 +617,28 @@
     </section>
 
     <details class="panel overview-fold">
-      <summary>How This Index Works, Two Ways to View Performance, Reconstitution, Included Sets</summary>
+      <summary>Methodology, Performance Modes, Reconstitution, Included Sets</summary>
       <div class="overview-fold-body">
         <article class="method-card">
           <h2>How This Index Works</h2>
-          <p>This is a price-weighted index tracking the top 100 Pokemon cards by market price from selected EX era sets. Using an adjusted-divisor methodology (similar to the Dow Jones), the index maintains continuity when card membership changes significantly. Each day, we:</p>
+          <p>This benchmark tracks the 100 highest-priced Pokemon cards by market value from selected EX era sets. We use a divisor-adjusted method to keep the series continuous when constituents rotate. Each daily run:</p>
           <ul class="method-list">
-            <li>Scan all cards from the included sets below</li>
-            <li>Rank them by current market price (highest to lowest)</li>
-            <li>Select the top 100 cards</li>
-            <li>Calculate two values: Index Level (normalized) and Aggregate Value (total market cap)</li>
-            <li>Monitor membership changes - when more than 10% of cards change, adjust the divisor</li>
-            <li>Maintain continuity through "reconstitution events" (new sets, meta shifts)</li>
+            <li>Collect all eligible cards from the included sets below</li>
+            <li>Sort cards by latest market price (highest to lowest)</li>
+            <li>Keep the top 100 constituents for that day</li>
+            <li>Compute two outputs: Index Level (normalized points) and Aggregate Value (raw dollar total)</li>
+            <li>Measure membership turnover and, when turnover exceeds 10%, apply a divisor rebalance</li>
+            <li>Preserve continuity across reconstitution events (for example new sets or major meta shifts)</li>
           </ul>
 
           <section class="callout info">
-            <h3>Two Ways to View Performance:</h3>
-            <p><strong>Index Level</strong> (default) - Normalized value starting at 1000 points. Best for tracking relative performance over time, similar to how the S&amp;P 500 or Dow Jones works. This view smooths out the impact of new cards entering/exiting the top 100.</p>
-            <p><strong>Aggregate Value</strong> - Raw dollar sum of all top 100 card prices. Shows the actual total market value without divisor adjustments. This view will show sharper changes when new sets release.</p>
+            <h3>Performance Views:</h3>
+            <p><strong>Index Level</strong> (default) - A normalized series that starts at 1000 points. Use this view to compare relative performance over time without overreacting to constituent swaps.</p>
+            <p><strong>Aggregate Value</strong> - The raw dollar sum of the current top-100 basket. This is the direct market-value view and will usually react more sharply when composition changes.</p>
           </section>
 
           <section class="callout good">
-            <p><strong>Reconstitution:</strong> Higher-priced cards have more influence on the index. Cards naturally enter and exit the top 100 daily as prices fluctuate. When membership changes by more than 10% (typically due to new set releases or major meta shifts), the divisor automatically adjusts to prevent artificial jumps in the index level. Between these "reconstitution events," only market prices drive the index movement. You can toggle between Index Level and Aggregate Value views using the chart controls. Sealed products (booster boxes, ETBs) are excluded.</p>
+            <p><strong>Reconstitution:</strong> Higher-priced cards carry more weight. Constituents can enter or leave daily as prices move. When turnover crosses 10% (often around new releases or major repricings), the divisor is recalibrated so the index line does not jump for mechanical reasons. Between rebalances, movement is driven by card pricing. Sealed products (booster boxes, ETBs) are excluded.</p>
           </section>
         </article>
 
