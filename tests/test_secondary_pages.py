@@ -18,6 +18,8 @@ INDEX_OVERVIEW_EX100_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overvi
 INDEX_OVERVIEW_NEO100_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overview_neo100.html"
 INDEX_OVERVIEW_ECARD100_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overview_ecard100.html"
 INDEX_OVERVIEW_WOTC100_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overview_wotc100.html"
+INDEX_OVERVIEW_JP_POKEMON100_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overview_jp_pokemon100.html"
+INDEX_OVERVIEW_JP_SV100_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overview_jp_sv100.html"
 
 
 class SecondaryPageContractTests(unittest.TestCase):
@@ -38,6 +40,8 @@ class SecondaryPageContractTests(unittest.TestCase):
         cls.index_overview_neo100_html = INDEX_OVERVIEW_NEO100_HTML.read_text(encoding="utf-8")
         cls.index_overview_ecard100_html = INDEX_OVERVIEW_ECARD100_HTML.read_text(encoding="utf-8")
         cls.index_overview_wotc100_html = INDEX_OVERVIEW_WOTC100_HTML.read_text(encoding="utf-8")
+        cls.index_overview_jp_pokemon100_html = INDEX_OVERVIEW_JP_POKEMON100_HTML.read_text(encoding="utf-8")
+        cls.index_overview_jp_sv100_html = INDEX_OVERVIEW_JP_SV100_HTML.read_text(encoding="utf-8")
 
     def test_sealed_deals_page_has_core_filters_and_table(self):
         self.assertIn("Poke6s Sealed Deals", self.sealed_deals_html)
@@ -72,6 +76,8 @@ class SecondaryPageContractTests(unittest.TestCase):
         self.assertIn("/index-overview-swsh100", self.index_overview_hub_html)
         self.assertIn("/index-overview-sv100", self.index_overview_hub_html)
         self.assertIn("/index-overview-mega100", self.index_overview_hub_html)
+        self.assertIn("/index-overview-jp-pokemon100", self.index_overview_hub_html)
+        self.assertIn("/index-overview-jp-sv100", self.index_overview_hub_html)
 
     def test_index_overview_sv100_page_has_core_sections(self):
         self.assertIn("Scarlet &amp; Violet 100", self.index_overview_sv100_html)
@@ -135,3 +141,13 @@ class SecondaryPageContractTests(unittest.TestCase):
         self.assertIn("Original WOTC 100", self.index_overview_wotc100_html)
         self.assertIn("/index-overview", self.index_overview_wotc100_html)
         self.assertIn("/index-overview-data?index=wotc100", self.index_overview_wotc100_html)
+
+    def test_jp_pokemon100_index_overview_page_has_entry_point(self):
+        self.assertIn("JP Pokemon Top 100", self.index_overview_jp_pokemon100_html)
+        self.assertIn("/index-overview", self.index_overview_jp_pokemon100_html)
+        self.assertIn("/index-overview-data?index=jp_pokemon100&category_id=85", self.index_overview_jp_pokemon100_html)
+
+    def test_jp_sv100_index_overview_page_has_entry_point(self):
+        self.assertIn("JP Scarlet &amp; Violet 100", self.index_overview_jp_sv100_html)
+        self.assertIn("/index-overview", self.index_overview_jp_sv100_html)
+        self.assertIn("/index-overview-data?index=jp_sv100&category_id=85", self.index_overview_jp_sv100_html)

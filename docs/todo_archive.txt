@@ -1,0 +1,110 @@
+Pokemon Momentum TODO Archive
+=============================
+
+Archived Completed Work
+-----------------------
+
+April 2026
+----------
+
+- Reviewed phone/tablet dashboard behavior and turned the generic mobile task into concrete layout findings. (Reviewed 2026-04-15)
+- Index Funds concept completed. (Done 2026-04-20)
+  - Built and shipped desktop `Index Overview` hub + live era pages:
+    - `Pokemon Top 100`
+    - `Scarlet & Violet 100`
+    - `Mega Evolution 100`
+    - `Sword & Shield 100`
+    - `Sun & Moon 100`
+    - `XY 100`
+    - `Black & White 100`
+    - `Diamond & Pearl 100`
+    - `EX 100`
+    - `Original WOTC 100`
+    - `Neo 100`
+    - `e-Card 100`
+  - Implemented shared index methodology/API with:
+    - top-100 daily ranking by market price
+    - normalized Index Level + Aggregate Value
+    - divisor reconstitution logic when membership turnover exceeds 10%
+    - included sets and top-holding card links
+  - Documentation added: `docs/index_overview_maintenance.md`.
+- Shifted more dashboard result-shaping server-side:
+  - Browse Set filters now resolve on the server
+  - Tracked Items rows now resolve on the server
+  - Browse Species now loads from a dedicated backend endpoint
+- Added stock-aware `Poke6s` store links on the dashboard.
+  - button now appears only for visible in-stock store items
+  - direct `SKU == product_id` links are limited to singles/cards
+  - sealed/store products now rely on explicit `data/squarespace_tcgplayer_mapping.csv`
+  - multiple TCGplayer ids can map to a single store SKU when the storefront item covers close aliases
+- Rebuilt `data/squarespace_tcgplayer_mapping.csv` so it matches the current visible store inventory.
+- Added supplier-aware pricing operations for Squarespace:
+  - CSV upload and archive flow
+  - supplier quote save/enrich flows
+  - supplier profitability analysis
+  - daily Squarespace price sync support
+- Added Japanese booster-box landed-cost pricing support for store targets.
+- Added singles pricing support using Squarespace SKU = TCGplayer product ID.
+- Expanded Set Explorer controls:
+  - era filtering
+  - extra sort modes
+  - clearer filter selection states
+  - close-on-outside-click filter menus
+- Retired `/embed` from active roadmap planning while keeping the page available.
+- Review current header search behavior and fix any remaining result-selection quirks. (Done 2026-04-10)
+- Improve search ranking for broad card names and edge cases. (Done 2026-04-10, reviewed 2026-04-14)
+- Update the mobile intro / guide overlay so highlighted areas stay legible and the step content fits without requiring awkward scrolling. (Done 2026-04-15)
+
+March 2026
+----------
+
+- Top ticker / marquee polish completed for now.
+  - moved to top broadcast-style band
+  - compact item payload and fast sparkline behavior
+  - click-through selection to main product context
+- Added visible loading states in Market Signals.
+  - table now shows an explicit spinner overlay while screener data is loading
+  - chart already shows loading state while selected series is fetched
+- Market Signals interaction improvement:
+  - clicking indicator tabs now auto-selects the first returned row
+  - main chart loads immediately without requiring a second click
+- Moved product image into the selected-product header area (left of title) for faster context.
+- Tracking actions moved into a dedicated right-rail `Track This Item` card.
+- Removed forced full-universe browser load in set-products flow.
+  - chart selection can resolve from `currentKey` directly
+  - set-products naming now resolved server-side
+- Added server/client fallback logic for placeholder names (`Product <id>`).
+  - server `group_products` now falls back to product-signal names when metadata name is placeholder
+  - client row normalization now prefers non-placeholder payload names
+- Moved the left-rail mover list into a top ticker / marquee band.
+- Added explicit loading states for chart and Market Signals table fetches.
+- Added a first server-side search pass and header search UI.
+- Reduced some forced full-universe loads so card/set detail can load more on demand.
+- Added `Browse Species` as a research tool for cross-set card-name browsing.
+- Added `Quick Buy Targets` to the selected-card details for fast bargaining references.
+- Reworked `Good Buys` set filtering into a popout checklist over the results area.
+- Renamed momentum labels for clarity:
+  - `Early Movers`
+  - `Confirmed Movers`
+- Added a first-pass onboarding guide:
+  - auto-opens once for new users
+  - can be reopened from the account menu
+  - now uses a spotlight/cutout overlay instead of a plain modal
+- Mobile dashboard pass:
+  - bottom nav now drives `Home`, `Search`, `Tracked`, and `Indicators`
+  - selected-product view is a mobile drilldown instead of always occupying the home screen
+  - `Singles / Sealed` mobile home toggle added
+  - pull-to-refresh added for phone / tablet layouts
+  - tapping images now opens a small in-page preview anchored over the clicked image
+- Removed the old `Signals` indicator from the dashboard UI for now.
+  - it can be added back later if it earns a clearer purpose
+- Account/support workflow updates:
+  - account dropdown now links to public companion pages
+  - `Report a Bug` flow now saves structured dashboard context
+  - admin-only pages stay hidden from normal users
+- Google auth and outbound link updates:
+  - dashboard tracking now uses Google sign-in
+  - TCGplayer links now route through the affiliate wrapper
+- Tablet/mobile interaction pass:
+  - smaller tablets now use a simpler stacked layout
+  - selected-product swipe navigation now works on smaller touch tablets too

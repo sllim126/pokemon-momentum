@@ -14,6 +14,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.common.category_config import get_category_config
+from scripts.utilities.tcgcsv_client import build_tcgcsv_session
 
 
 def parse_args() -> argparse.Namespace:
@@ -29,7 +30,8 @@ def main() -> int:
     table_name = category.groups_table
 
     url = f"https://tcgcsv.com/tcgplayer/{category.category_id}/groups"
-    r = requests.get(url, timeout=60)
+    session = build_tcgcsv_session()
+    r = session.get(url, timeout=60)
     r.raise_for_status()
 
     groups = r.json()["results"]

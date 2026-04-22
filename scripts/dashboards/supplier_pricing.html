@@ -180,6 +180,7 @@
         </div>
         <div class="actions">
           <button id="parseTextBtn" type="button">Parse OCR Text</button>
+          <button id="applyReviewedBtn" type="button">Apply Reviewed Rows</button>
           <button id="saveRowsBtn" type="button">Save Reviewed Rows</button>
           <div class="status" id="saveStatus">No quote saved yet.</div>
         </div>
@@ -226,6 +227,7 @@
     const ocrStatus = document.getElementById("ocrStatus");
     const ocrText = document.getElementById("ocrText");
     const parseTextBtn = document.getElementById("parseTextBtn");
+    const applyReviewedBtn = document.getElementById("applyReviewedBtn");
     const saveRowsBtn = document.getElementById("saveRowsBtn");
     const quoteRows = document.getElementById("quoteRows");
     const summaryGrid = document.getElementById("summaryGrid");
@@ -311,6 +313,24 @@
       return payload.rows || [];
     }
 
+    async function applyReviewedRows() {
+      if (!currentRows.length) {
+        saveStatus.textContent = "Nothing to apply yet.";
+        return;
+      }
+      saveStatus.textContent = "Applying reviewed rows...";
+      try {
+        // Re-enrich the edited rows so manual SKU or name fixes refresh the store/market
+        // columns before the final save call writes them to the quote ledger.
+        const enriched = await enrichRows(currentRows);
+        renderRows(enriched);
+        const matched = enriched.filter((row) => row.sku).length;
+        saveStatus.textContent = `Applied reviewed rows. ${matched}/${enriched.length} rows now have SKU matches.`;
+      } catch (error) {
+        saveStatus.textContent = `Apply failed: ${error}`;
+      }
+    }
+
     imageFile.addEventListener("change", () => {
       const file = imageFile.files[0];
       if (!file) return;
@@ -350,6 +370,10 @@
       } catch (error) {
         ocrStatus.textContent = `Parse failed: ${error}`;
       }
+    });
+
+    applyReviewedBtn.addEventListener("click", async () => {
+      await applyReviewedRows();
     });
 
     saveRowsBtn.addEventListener("click", async () => {

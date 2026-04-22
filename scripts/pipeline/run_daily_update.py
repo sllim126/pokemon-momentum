@@ -13,6 +13,10 @@ from scripts.common.category_config import get_category_config
 
 
 ROOT = Path("/app")
+METADATA_FALLBACK_STEPS = {
+    "Refresh group metadata",
+    "Refresh product metadata",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -173,6 +177,11 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     ["python", "scripts/indicators/build_group_signal_snapshot.py", "--category-id", str(args.category_id)],
                 ),
                 (
+                    # Expected result: screener helper rows exist so slow tabs can read prepared server-side results.
+                    f"Build {category.label} screener snapshot",
+                    ["python", "scripts/indicators/build_screener_snapshot.py", "--category-id", str(args.category_id)],
+                ),
+                (
                     # Expected result: compact per-product sparkline payloads exist for ticker mini charts.
                     f"Build {category.label} sparkline snapshot",
                     ["python", "scripts/indicators/build_sparkline_snapshot.py", "--category-id", str(args.category_id)],
@@ -213,6 +222,16 @@ def run_step(name: str, cmd: list[str], dry_run: bool) -> int:
     return proc.returncode
 
 
+def can_fall_back_to_cached_metadata(step_name: str) -> bool:
+    """Return whether a failed step can safely reuse the previous metadata snapshot.
+
+    Only tcgcsv-backed metadata refresh stages should be treated as soft failures.
+    Price loads and analytics rebuilds must still fail loudly because they directly
+    control whether the charts advance to a new date.
+    """
+    return step_name in METADATA_FALLBACK_STEPS
+
+
 def main() -> int:
     """Run the full ordered pipeline and stop on the first failure by default.
 
@@ -230,10 +249,19 @@ def main() -> int:
     print(f"Steps queued: {len(steps)}")
 
     failures: list[tuple[str, int]] = []
+    warnings: list[str] = []
 
     for name, cmd in steps:
         code = run_step(name, cmd, args.dry_run)
         if code == 0:
+            continue
+        if can_fall_back_to_cached_metadata(name):
+            warning = (
+                f"{name} failed (exit {code}); continuing with the last known metadata "
+                "snapshot so price refresh and analytics can still complete."
+            )
+            print(f"Warning: {warning}")
+            warnings.append(warning)
             continue
         failures.append((name, code))
         if not args.continue_on_error:
@@ -245,6 +273,11 @@ def main() -> int:
         for name, code in failures:
             print(f"- {name}: exit {code}")
         return 1
+
+    if warnings:
+        print("\nPipeline finished with warnings:")
+        for warning in warnings:
+            print(f"- {warning}")
 
     print("\nPipeline finished successfully.")
     return 0

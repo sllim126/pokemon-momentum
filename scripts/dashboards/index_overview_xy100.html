@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pokemon Momentum | XY 100</title>
+  <title>Poke6s Market | XY 100</title>
   <link rel="icon" type="image/png" href="/images/Favidon.png">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <style>
@@ -605,11 +605,14 @@
 <body>
   <main class="shell">
     <section class="panel overview">
-      <h1 id="indexPageTitle">XY 100</h1>
+      <h1 id="indexPageTitle">Poke6s Market Indexes</h1>
       <p class="index-name" id="indexName">XY 100</p>
       <div class="overview-meta">
         <span>✚ Top 100 cards by market price</span>
         <span>◷ Updated daily</span>
+        <span><a href="/dashboard">Dashboard ↗</a></span>
+        <span><a href="/set-explorer">Set Explorer ↗</a></span>
+        <span><a href="https://www.poke6s.com" target="_blank" rel="noopener noreferrer">Poke6s Market ↗</a></span>
         <span><a href="/index-overview">All Indexes ↗</a></span>
         <span><a href="/index-overview-sv100">Scarlet &amp; Violet 100 ↗</a></span>
         <span><a href="/index-overview-mega100">Mega Evolution 100 ↗</a></span>
@@ -1138,8 +1141,8 @@
         throw new Error(`index-overview-data failed (${response.status})`);
       }
       const data = await response.json();
-      document.title = `Pokemon Momentum | ${data.index_name || "XY 100"}`;
-      if (indexPageTitle) indexPageTitle.textContent = data.index_name || "XY 100";
+      document.title = `Poke6s Market | ${data.index_name || "XY 100"}`;
+      if (indexPageTitle) indexPageTitle.textContent = "Poke6s Market Indexes";
       if (indexName) indexName.textContent = data.index_name || "XY 100";
       if (indexPanelTitle) indexPanelTitle.textContent = data.index_name || "XY 100";
       payloadSummary = data.summary || null;

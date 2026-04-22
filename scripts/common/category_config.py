@@ -76,6 +76,14 @@ class CategoryConfig:
     def series_snapshot_csv(self) -> str:
         return f"{self.slug}_series_snapshot.csv"
 
+    @property
+    def screener_snapshot_table(self) -> str:
+        return f"{self.slug}_screener_snapshot"
+
+    @property
+    def screener_snapshot_csv(self) -> str:
+        return f"{self.slug}_screener_snapshot.csv"
+
 
 def get_category_config(category_id: int) -> CategoryConfig:
     """Resolve known categories to friendly names and stable storage prefixes."""

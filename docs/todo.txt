@@ -1,104 +1,36 @@
 Pokemon Momentum TODO
 =====================
 
-Recently Completed (April 2026)
--------------------------------
+Active work only. Archived completed items live in `docs/todo_archive.txt`.
 
-- Shifted more dashboard result-shaping server-side:
-  - Browse Set filters now resolve on the server
-  - Tracked Items rows now resolve on the server
-  - Browse Species now loads from a dedicated backend endpoint
-- Added stock-aware `Poke6s` store links on the dashboard.
-  - button now appears only for visible in-stock store items
-  - direct `SKU == product_id` links are limited to singles/cards
-  - sealed/store products now rely on explicit `data/squarespace_tcgplayer_mapping.csv`
-  - multiple TCGplayer ids can map to a single store SKU when the storefront item covers close aliases
-- Rebuilt `data/squarespace_tcgplayer_mapping.csv` so it matches the current visible store inventory.
-- Added supplier-aware pricing operations for Squarespace:
-  - CSV upload and archive flow
-  - supplier quote save/enrich flows
-  - supplier profitability analysis
-  - daily Squarespace price sync support
-- Added Japanese booster-box landed-cost pricing support for store targets.
-- Added singles pricing support using Squarespace SKU = TCGplayer product ID.
-- Expanded Set Explorer controls:
-  - era filtering
-  - extra sort modes
-  - clearer filter selection states
-  - close-on-outside-click filter menus
-- Retired `/embed` from active roadmap planning while keeping the page available.
+High Priority
+-------------
 
-Recently Completed (March 2026)
--------------------------------
+- Mobile / tablet layout pass:
+  - iPhone 14 Pro Max: stop the bottom mobile nav from overlapping the last visible `Filter Sets` card.
+  - iPhone 14 Pro Max: reduce aggressive card-row title truncation so premium-card names stay distinguishable.
+  - iPad Air / iPad Pro: give tablet a dedicated analysis layout with stronger information hierarchy instead of enlarged mobile.
+  - Tablet workflow: reduce the chart/list scroll ping-pong so comparing cards does not require repeated long scrolls.
+  - Rebalance the selected-product hero and `Market Signals` panel so the main screener/chart stay primary on tablet.
+- Screener quality pass:
+  - tighten `Good Buys` so premium cards that are weakening but not clearly broken can still survive.
+  - tighten `Top Movers` and `Early Movers` so stale one-sale jumps are less likely to pass.
+- Mobile search/discovery UX follow-up from bug ticket `id=6` (2026-04-16):
+  - review 5 leading commerce/mobile shopping layouts and document shared patterns worth borrowing
+  - increase search-result thumbnail size on mobile so card recognition is faster
+  - prioritize fast "find card quickly" flow over dense data in the mobile search experience
+- Market-switch/search intent follow-up from bug ticket `id=5` (2026-04-15):
+  - make EN vs JP market switching more obvious on mobile
+  - evaluate auto-market suggestion/switch when query strongly matches market-specific sealed terms (example: EN query typed while JP is intended)
+- Make tool/page navigation more discoverable on desktop and mobile instead of hiding too much in the bottom-left account/menu area.
+- Improve narrower laptop / small-desktop responsiveness so the chart, indicators, and table columns stay more obvious without requiring ultra-wide screens.
 
-- Top ticker / marquee polish completed for now.
-  - moved to top broadcast-style band
-  - compact item payload and fast sparkline behavior
-  - click-through selection to main product context
-- Added visible loading states in Market Signals.
-  - table now shows an explicit spinner overlay while screener data is loading
-  - chart already shows loading state while selected series is fetched
-- Market Signals interaction improvement:
-  - clicking indicator tabs now auto-selects the first returned row
-  - main chart loads immediately without requiring a second click
-- Moved product image into the selected-product header area (left of title) for faster context.
-- Tracking actions moved into a dedicated right-rail `Track This Item` card.
-- Removed forced full-universe browser load in set-products flow.
-  - chart selection can resolve from `currentKey` directly
-  - set-products naming now resolved server-side
-- Added server/client fallback logic for placeholder names (`Product <id>`).
-  - server `group_products` now falls back to product-signal names when metadata name is placeholder
-  - client row normalization now prefers non-placeholder payload names
-- Moved the left-rail mover list into a top ticker / marquee band.
-- Added explicit loading states for chart and Market Signals table fetches.
-- Added a first server-side search pass and header search UI.
-- Reduced some forced full-universe loads so card/set detail can load more on demand.
-- Added `Browse Species` as a research tool for cross-set card-name browsing.
-- Added `Quick Buy Targets` to the selected-card details for fast bargaining references.
-- Reworked `Good Buys` set filtering into a popout checklist over the results area.
-- Renamed momentum labels for clarity:
-  - `Early Movers`
-  - `Confirmed Movers`
-- Added a first-pass onboarding guide:
-  - auto-opens once for new users
-  - can be reopened from the account menu
-  - now uses a spotlight/cutout overlay instead of a plain modal
-- Mobile dashboard pass:
-  - bottom nav now drives `Home`, `Search`, `Tracked`, and `Indicators`
-  - selected-product view is a mobile drilldown instead of always occupying the home screen
-  - `Singles / Sealed` mobile home toggle added
-  - pull-to-refresh added for phone / tablet layouts
-  - tapping images now opens a small in-page preview anchored over the clicked image
-- Removed the old `Signals` indicator from the dashboard UI for now.
-  - it can be added back later if it earns a clearer purpose
-- Account/support workflow updates:
-  - account dropdown now links to public companion pages
-  - `Report a Bug` flow now saves structured dashboard context
-  - admin-only pages stay hidden from normal users
-- Google auth and outbound link updates:
-  - dashboard tracking now uses Google sign-in
-  - TCGplayer links now route through the affiliate wrapper
-- Tablet/mobile interaction pass:
-  - smaller tablets now use a simpler stacked layout
-  - selected-product swipe navigation now works on smaller touch tablets too
+Active Queue
+------------
 
-Next Up
--------
-
-- Reduce first-render time by deferring any non-essential API calls still blocking the first usable paint.
-- Review current header search behavior and fix any remaining result-selection quirks. (Done 2026-04-10)
-- Improve search ranking for broad card names and edge cases. (Done 2026-04-10)
-- Test the dashboard on:
-  - iPhone / phone
-  - iPad / tablet
-  and write down the concrete layout problems instead of keeping this as a generic mobile task.
-- Update the mobile intro / guide overlay so highlighted areas stay legible and the step content fits without requiring awkward scrolling.
-- Tighten `Good Buys` so it keeps premium cards that are weakening but not obviously broken.
-- Tighten `Top Movers` and `Early Movers` so stale one-sale jumps are less likely to pass.
+- Add a `Good Buys` price-range filter so users can narrow results by minimum and/or maximum target spend.
 - Expand Set Explorer rarity / variant filters beyond the current first pass.
 - Fix any remaining generation grouping mistakes when a set clearly lands in the wrong era bucket.
-- Keep high-resolution image support deferred until there is a stronger need than the current fast-loading image flow.
-- Keep camera / photo card lookup as a later project after the main phone workflow settles.
 - Extend tracking into:
   - `/set-explorer`
 - Add keyboard shortcuts beyond the current up/down row stepping if they clearly improve desktop workflow.
@@ -106,6 +38,13 @@ Next Up
   - key stat lookups
   - webhook notifications
   - bug report forwarding
+- Review first-load performance again after real usage and confirm the server-computed screener path actually solved the slow default loads.
+
+Deferred / Not Now
+------------------
+
+- Keep high-resolution image support deferred until there is a stronger need than the current fast-loading image flow.
+- Keep camera / photo card lookup as a later project after the main phone workflow settles.
 
 Profiling Notes (April 2026)
 ----------------------------
@@ -173,6 +112,7 @@ Future Data / Research
 ----------------------
 
 - Find a condition-aware price source before building any real resale/condition layer.
+- Find a source with usable sales-volume / listing-liquidity signals before adding any real `possible buyout` flag.
 - Confirm whether a future source can provide usable condition tiers such as:
   - Near Mint
   - Lightly Played
@@ -181,6 +121,10 @@ Future Data / Research
   - historical condition pricing
   - current condition pricing only
   - broad enough card coverage to matter
+- Confirm whether a future source can provide usable buyout-adjacent signals such as:
+  - sales volume
+  - listing count / available quantity
+  - time-windowed activity that is reliable enough to avoid false alarms
 - If condition data becomes available later, revisit:
   - NM vs LP spreads
   - condition-aware buy logic

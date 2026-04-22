@@ -196,6 +196,16 @@ def series_snapshot_from(category_id: int) -> str:
     raise HTTPException(status_code=500, detail=f"{category.series_snapshot_table} snapshot not found")
 
 
+def screener_snapshot_from(category_id: int) -> str:
+    category = category_config(category_id)
+    if db_has_table(category.screener_snapshot_table):
+        return category.screener_snapshot_table
+    csv_path = EXTRACTED_DIR / category.screener_snapshot_csv
+    if csv_path.exists():
+        return f"read_csv_auto('{csv_path}')"
+    raise HTTPException(status_code=500, detail=f"{category.screener_snapshot_table} snapshot not found")
+
+
 def get_con():
     if DB_PATH.exists():
         try:

@@ -82,6 +82,8 @@ INDEX_OVERVIEW_XY100_HTML = SCRIPT_DIR / "index_overview_xy100.html"
 INDEX_OVERVIEW_SM100_HTML = SCRIPT_DIR / "index_overview_sm100.html"
 INDEX_OVERVIEW_SWSH100_HTML = SCRIPT_DIR / "index_overview_swsh100.html"
 INDEX_OVERVIEW_POKEMON100_HTML = SCRIPT_DIR / "index_overview_pokemon100.html"
+INDEX_OVERVIEW_JP_POKEMON100_HTML = SCRIPT_DIR / "index_overview_jp_pokemon100.html"
+INDEX_OVERVIEW_JP_SV100_HTML = SCRIPT_DIR / "index_overview_jp_sv100.html"
 DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
 IMAGE_DIR_CANDIDATES = [
     SCRIPT_DIR.parents[2] / "images",
@@ -235,6 +237,22 @@ INDEX_DEFINITIONS = {
             1372,  # Skyridge
         ],
         "release_markers_enabled": False,
+    },
+    "jp_pokemon100": {
+        "index_name": "JP Pokemon Top 100",
+        "description": "Top 100 cards by market price (all active Japanese sets)",
+        "base_level": 1000.0,
+        "all_active_groups": True,
+        "release_markers_enabled": False,
+        "category_id": 85,
+    },
+    "jp_sv100": {
+        "index_name": "JP Scarlet & Violet 100",
+        "description": "Top 100 cards by market price",
+        "base_level": 1000.0,
+        "generation": "SV",
+        "release_markers_enabled": True,
+        "category_id": 85,
     },
 }
 
@@ -396,6 +414,16 @@ def index_overview_swsh100_page():
 @app.get("/index-overview-pokemon100")
 def index_overview_pokemon100_page():
     return FileResponse(INDEX_OVERVIEW_POKEMON100_HTML)
+
+
+@app.get("/index-overview-jp-pokemon100")
+def index_overview_jp_pokemon100_page():
+    return FileResponse(INDEX_OVERVIEW_JP_POKEMON100_HTML)
+
+
+@app.get("/index-overview-jp-sv100")
+def index_overview_jp_sv100_page():
+    return FileResponse(INDEX_OVERVIEW_JP_SV100_HTML)
 
 
 @app.get("/dashboard-common.js")
@@ -943,20 +971,27 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
 
 @app.get("/index-overview-data")
 def index_overview_data(category_id: int = 3, index: str = "sv100", refresh: bool = False):
-    if int(category_id) != 3:
-        raise HTTPException(status_code=400, detail="Index overview is only configured for category_id=3.")
+    requested_category = int(category_id)
+    if requested_category not in (3, 85):
+        raise HTTPException(status_code=400, detail="Index overview is only configured for category_id in {3, 85}.")
     index_key = str(index or "sv100").strip().lower()
     if index_key not in INDEX_DEFINITIONS:
         raise HTTPException(status_code=404, detail=f"Unknown index key: {index_key}")
+    expected_category = INDEX_DEFINITIONS[index_key].get("category_id")
+    if expected_category is not None and int(expected_category) != requested_category:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Index {index_key} is configured for category_id={int(expected_category)}.",
+        )
     now = datetime.now(timezone.utc)
-    cache_key = (int(category_id), index_key)
+    cache_key = (requested_category, index_key)
     cached = _INDEX_OVERVIEW_CACHE.get(cache_key)
     if cached and not refresh:
         cached_at, payload = cached
         age = (now - cached_at).total_seconds()
         if age <= INDEX_OVERVIEW_CACHE_TTL_SECONDS:
             return payload
-    payload = _build_index_overview_payload(category_id=category_id, index_key=index_key)
+    payload = _build_index_overview_payload(category_id=requested_category, index_key=index_key)
     _INDEX_OVERVIEW_CACHE[cache_key] = (now, payload)
     return payload
 

@@ -560,7 +560,6 @@
       <div class="site-header-copy">
         <div class="section-label">Pokemon Momentum</div>
         <h1>Poke6s Set Explorer</h1>
-        <p>Secondary research pages now carry the same brand layer as the main dashboard, so they still feel like part of one tool instead of one-off utilities.</p>
         <div><a href="https://market.poke6s.com">market.poke6s.com</a></div>
       </div>
     </section>
@@ -643,14 +642,17 @@
     // This page is intentionally lighter than the main screener. It uses precomputed
     // product snapshot data to answer "fun" set questions quickly without requiring
     // visitors to understand chart signals first.
+    const initialParams = new URLSearchParams(window.location.search);
+    const initialCategoryId = Number(initialParams.get("category_id") || 3);
+    const initialGroupId = Number(initialParams.get("group_id"));
     const state = {
-      categoryId: 3,
+      categoryId: Number.isFinite(initialCategoryId) ? initialCategoryId : 3,
       minCards: 10,
       sortMode: "expensive",
       categories: [],
       rows: [],
       eraFilters: ["all"],
-      selectedGroupId: null,
+      selectedGroupId: Number.isFinite(initialGroupId) ? initialGroupId : null,
       basketFilters: ["all"],
     };
 

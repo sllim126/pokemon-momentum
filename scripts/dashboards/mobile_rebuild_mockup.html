@@ -1,0 +1,1804 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pokemon Momentum Mobile Rebuild</title>
+  <link rel="icon" type="image/png" href="/images/Favidon.png">
+  <style>
+    :root {
+      --bg: #11192f;
+      --bg-2: #15203a;
+      --panel: #1d2840;
+      --panel-2: #202d49;
+      --panel-3: #172137;
+      --line: rgba(140, 163, 199, 0.18);
+      --line-2: rgba(94, 116, 148, 0.28);
+      --ink: #e6efff;
+      --muted: #8d9dbc;
+      --accent: #22b0ff;
+      --accent-2: #25d0a5;
+      --good: #2fd386;
+      --warn: #ff8a5b;
+      --pill: #24365c;
+      --radius: 22px;
+      --phone-width: 430px;
+      --safe-top: max(14px, env(safe-area-inset-top));
+      --safe-bottom: max(12px, env(safe-area-inset-bottom));
+      --bottom-nav-space: calc(20px + var(--safe-bottom));
+      --shadow: 0 18px 48px rgba(5, 10, 22, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(34, 176, 255, 0.12), transparent 26%),
+        radial-gradient(circle at 82% 14%, rgba(37, 208, 165, 0.1), transparent 24%),
+        linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+    }
+
+    body.drawer-open {
+      overflow: hidden;
+    }
+
+    .app {
+      width: min(100vw, var(--phone-width));
+      max-width: var(--phone-width);
+      min-height: 100dvh;
+      padding: var(--safe-top) 14px var(--bottom-nav-space);
+      display: grid;
+      gap: 10px;
+      margin: 0 auto;
+    }
+
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 12, 0.68);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 49;
+    }
+
+    .drawer-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .hamburger-drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: min(92vw, 520px);
+      height: 100dvh;
+      background: #1d2840;
+      color: var(--ink);
+      overflow-y: auto;
+      transform: translateX(-102%);
+      transition: transform 0.24s ease;
+      z-index: 50;
+      box-shadow: 16px 0 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .hamburger-drawer.open {
+      transform: translateX(0);
+    }
+
+    .user-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(92vw, 520px);
+      height: 100dvh;
+      background: #1d2840;
+      color: var(--ink);
+      overflow-y: auto;
+      transform: translateX(102%);
+      transition: transform 0.24s ease;
+      z-index: 51;
+      box-shadow: -16px 0 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .user-drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-head {
+      background: #172137;
+      color: var(--ink);
+      padding: max(16px, env(safe-area-inset-top)) 20px 18px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .drawer-account-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      opacity: 0.96;
+    }
+
+    .drawer-account-row button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .drawer-brand {
+      font-size: 50px;
+      line-height: 0.86;
+      letter-spacing: -0.03em;
+      font-weight: 700;
+    }
+
+    .drawer-brand small {
+      display: block;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+      opacity: 0.94;
+    }
+
+    .drawer-section {
+      padding: 16px 20px;
+      border-top: 1px solid var(--line);
+    }
+
+    .drawer-section h4 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .drawer-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 44px;
+      text-decoration: none;
+      color: var(--ink);
+      font-size: 16px;
+      padding: 2px 0;
+    }
+
+    .drawer-link strong {
+      font-size: 24px;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+    }
+
+    .user-head {
+      background: #172137;
+      color: var(--ink);
+      padding: max(16px, env(safe-area-inset-top)) 20px 18px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .user-head-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .user-head-btn {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+      padding: 0;
+      font-size: 38px;
+      line-height: 1;
+    }
+
+    .user-head-browse {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 34px;
+      line-height: 1;
+      font-weight: 600;
+    }
+
+    .user-greeting {
+      font-size: 48px;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      font-weight: 700;
+    }
+
+    .user-greeting small {
+      font-size: 28px;
+      opacity: 0.95;
+    }
+
+    .user-section {
+      padding: 16px 20px;
+      border-top: 1px solid var(--line);
+    }
+
+    .user-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .user-section-head h4 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .user-see-all {
+      appearance: none;
+      border: 1px solid rgba(34, 176, 255, 0.42);
+      background: rgba(17, 26, 43, 0.84);
+      color: #8dddff;
+      border-radius: 8px;
+      min-height: 34px;
+      padding: 0 10px;
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .user-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.4;
+      max-width: 30ch;
+    }
+
+    .user-links {
+      margin-top: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .user-link {
+      display: block;
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 18px;
+      line-height: 1.45;
+      padding: 4px 0;
+    }
+
+    .user-rule {
+      border-top: 1px solid var(--line);
+      margin: 10px 0;
+    }
+
+    .header {
+      position: sticky;
+      top: 8px;
+      z-index: 15;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: linear-gradient(180deg, rgba(29, 40, 64, 0.96), rgba(23, 33, 55, 0.98));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      padding: 10px;
+      display: grid;
+      grid-template-rows: 34px 42px;
+      row-gap: 8px;
+      height: 104px;
+      min-height: 104px;
+      max-height: 104px;
+      align-content: start;
+    }
+
+    .commerce-top {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      padding: 0;
+    }
+
+    .menu-btn,
+    .account-btn,
+    .cart-btn {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+      min-height: 34px;
+      min-width: 34px;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .menu-btn {
+      font-size: 30px;
+      line-height: 1;
+      margin-top: -2px;
+    }
+
+    .brand-lockup {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .brand-logo {
+      display: block;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      object-fit: contain;
+      object-position: center;
+      flex: 0 0 auto;
+    }
+
+    .brand-wordmark {
+      color: var(--ink);
+      font-size: 31px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .account-btn {
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1;
+      text-align: right;
+      min-height: 32px;
+      min-width: 32px;
+      padding: 0 2px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .account-btn small {
+      display: inline;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .account-icon {
+      font-size: 24px;
+      line-height: 1;
+      color: var(--ink);
+    }
+
+    .cart-btn {
+      position: relative;
+      font-size: 27px;
+      line-height: 1;
+      text-decoration: none;
+    }
+
+    .cart-count {
+      position: absolute;
+      top: -2px;
+      right: -4px;
+      min-width: 18px;
+      min-height: 18px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #083535;
+      font-size: 11px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+    }
+
+    .search {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 0;
+      border: 1px solid rgba(94, 116, 148, 0.32);
+      border-radius: 999px;
+      height: 42px;
+      min-height: 42px;
+      max-height: 42px;
+      background: rgba(10, 18, 34, 0.92);
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .search-inline {
+      min-width: 0;
+      height: 42px;
+      min-height: 42px;
+      max-height: 42px;
+      margin: 0;
+    }
+
+    .search-inline .search-go {
+      height: 42px;
+      min-height: 42px;
+      max-height: 42px;
+      min-width: 58px;
+      font-size: 21px;
+    }
+
+    .search-inline input {
+      font-size: 15px;
+    }
+
+    .search-go {
+      appearance: none;
+      border: 0;
+      background: linear-gradient(180deg, rgba(34, 176, 255, 0.94), rgba(30, 132, 201, 0.96));
+      color: #f2fbff;
+      font-size: 22px;
+      line-height: 1;
+      height: 42px;
+      min-height: 42px;
+      max-height: 42px;
+      min-width: 52px;
+      cursor: pointer;
+    }
+
+    .search input {
+      width: 100%;
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--ink);
+      font: inherit;
+      font-size: 14px;
+      padding: 0 12px;
+      letter-spacing: 0;
+      height: 42px;
+      line-height: 42px;
+    }
+
+    .search input::placeholder {
+      color: #8ea1c4;
+    }
+
+
+    .chip,
+    .tab,
+    .seg-btn,
+    .quick-btn {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: var(--panel-3);
+      color: var(--muted);
+      font: inherit;
+      border-radius: 999px;
+      min-height: 38px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .chip.active,
+    .tab.active,
+    .seg-btn.active,
+    .quick-btn.active {
+      background: rgba(34, 176, 255, 0.14);
+      border-color: rgba(34, 176, 255, 0.32);
+      color: #8dddff;
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.12);
+    }
+
+    .switch-stack {
+      display: grid;
+      grid-template-rows: 34px 28px;
+      row-gap: 4px;
+      height: 66px;
+      min-height: 66px;
+      max-height: 66px;
+      margin-top: 0;
+      overflow: hidden;
+      align-content: start;
+    }
+
+    .switch-row {
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .switch-row-tabs {
+      height: 34px;
+      min-height: 34px;
+      max-height: 34px;
+    }
+
+    .switch-row-scope {
+      height: 28px;
+      min-height: 28px;
+      max-height: 28px;
+    }
+
+    .market-tabs {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 34px;
+      min-height: 34px;
+      max-height: 34px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+      padding: 0 2px;
+      border: 0;
+      background: transparent;
+      margin: 0;
+    }
+
+    .market-tabs::-webkit-scrollbar,
+    .scope-rail::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+      display: none;
+    }
+
+    .market-tab {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      appearance: none;
+      border: 0;
+      border-radius: 0;
+      height: 34px;
+      padding: 0 0 3px;
+      line-height: 1;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 17px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .market-tab::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 3px;
+      border-radius: 999px;
+      background: #8dddff;
+      opacity: 0;
+    }
+
+    .market-tab.active {
+      color: #8dddff;
+    }
+
+    .market-tab.active::after {
+      opacity: 1;
+    }
+
+    .scope-rail {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 28px;
+      min-height: 28px;
+      max-height: 28px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      -webkit-overflow-scrolling: touch;
+      padding: 0 2px;
+      background: transparent;
+      margin: 0;
+    }
+
+    .scope-btn {
+      flex: 0 0 auto;
+      height: 28px !important;
+      min-height: 28px !important;
+      padding: 0 10px !important;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel-3);
+      color: var(--muted);
+      font: inherit;
+      font-size: 13px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      white-space: nowrap;
+      cursor: pointer;
+      box-shadow: none;
+      transition: none;
+    }
+
+    .scope-btn.active {
+      background: rgba(34, 176, 255, 0.14);
+      border-color: rgba(34, 176, 255, 0.32);
+      color: #8dddff;
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.12);
+    }
+
+    .intent-tabs,
+    .filters,
+    .quick-filters {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .intent-tabs::-webkit-scrollbar,
+    .filters::-webkit-scrollbar,
+    .quick-filters::-webkit-scrollbar {
+      display: none;
+    }
+
+    .intent-tabs .tab,
+    .filters .chip,
+    .quick-filters .quick-btn {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    .layout {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+
+
+    .feed,
+    .detail {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(29, 40, 64, 0.96), rgba(23, 33, 55, 0.98));
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .feed {
+      padding: 10px;
+      display: grid;
+      gap: 6px;
+      align-content: start;
+    }
+
+    .feed-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .feed-head-copy {
+      min-width: 0;
+    }
+
+    .feed-title {
+      margin: 0;
+      font-size: clamp(28px, 8vw, 38px);
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+    }
+
+    .feed-subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .feed-section-title {
+      margin: 4px 0 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .row-count {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      min-height: 28px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #9fd4ff;
+      background: rgba(34, 176, 255, 0.12);
+      white-space: nowrap;
+      margin-top: 4px;
+    }
+
+    .deal-check {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(11, 20, 36, 0.86);
+      padding: 10px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .deal-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .deal-title {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+
+    .deal-subtitle {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .deal-badge {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      min-height: 28px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+      color: #9fd4ff;
+      background: rgba(34, 176, 255, 0.12);
+    }
+
+    .deal-badge.good {
+      color: #a5f0c6;
+      background: rgba(47, 211, 134, 0.18);
+      border-color: rgba(47, 211, 134, 0.34);
+    }
+
+    .deal-badge.fair {
+      color: #ffe3b6;
+      background: rgba(239, 182, 94, 0.16);
+      border-color: rgba(239, 182, 94, 0.34);
+    }
+
+    .deal-badge.warn {
+      color: #ffc4b5;
+      background: rgba(255, 138, 91, 0.16);
+      border-color: rgba(255, 138, 91, 0.34);
+    }
+
+    .deal-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    .deal-cell {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+      background: rgba(17, 26, 43, 0.75);
+    }
+
+    .deal-label {
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .deal-value {
+      margin-top: 4px;
+      font-size: 21px;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .deal-input-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: end;
+    }
+
+    .deal-input-wrap {
+      display: grid;
+      gap: 4px;
+    }
+
+    .deal-input-wrap label {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .deal-input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      min-height: 40px;
+      padding: 0 10px;
+      background: rgba(10, 18, 34, 0.92);
+      color: var(--ink);
+      font: inherit;
+      font-size: 18px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .deal-input:focus {
+      outline: 0;
+      border-color: rgba(34, 176, 255, 0.5);
+      box-shadow: 0 0 0 2px rgba(34, 176, 255, 0.14);
+    }
+
+    .deal-max-btn {
+      appearance: none;
+      border: 1px solid rgba(34, 176, 255, 0.34);
+      border-radius: 10px;
+      min-height: 40px;
+      padding: 0 12px;
+      background: rgba(34, 176, 255, 0.12);
+      color: #9fd4ff;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .deal-copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .results {
+      display: grid;
+      gap: 0;
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(16, 23, 39, 0.86);
+    }
+
+    .market-table-head {
+      display: grid;
+      grid-template-columns: minmax(108px, 1fr) 54px 72px 64px;
+      gap: 8px;
+      align-items: center;
+      padding: 9px 10px;
+      color: var(--muted);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-bottom: 1px solid var(--line);
+      background: rgba(17, 26, 43, 0.9);
+    }
+
+    .market-row {
+      appearance: none;
+      border: 0;
+      border-bottom: 1px solid rgba(121, 146, 182, 0.2);
+      background: transparent;
+      color: var(--ink);
+      width: 100%;
+      text-align: left;
+      padding: 9px 10px;
+      display: grid;
+      grid-template-columns: minmax(108px, 1fr) 54px 72px 64px;
+      gap: 8px;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .market-row:last-child {
+      border-bottom: 0;
+    }
+
+    .market-row.active {
+      background: rgba(34, 176, 255, 0.12);
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.2);
+    }
+
+    .symbol-cell {
+      min-width: 0;
+    }
+
+    .symbol-main {
+      display: block;
+      font-size: clamp(16px, 4.4vw, 23px);
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      color: #9dd7ff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .symbol-sub {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .mini-spark {
+      height: 22px;
+      border-radius: 7px;
+      background: rgba(10, 16, 31, 0.88);
+      border: 1px solid rgba(121, 146, 182, 0.2);
+      padding: 2px 3px;
+      display: flex;
+      align-items: center;
+    }
+
+    .mini-spark svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .price-cell {
+      text-align: right;
+      font-size: clamp(16px, 4.2vw, 22px);
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .change-cell {
+      text-align: right;
+      font-size: clamp(14px, 3.8vw, 18px);
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .good { color: var(--good); }
+    .warn { color: var(--warn); }
+
+    .detail {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+      display: none;
+    }
+
+    .detail-title {
+      display: grid;
+      gap: 4px;
+    }
+
+    .detail-title h2 {
+      margin: 0;
+      font-size: clamp(22px, 5vw, 32px);
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .detail-title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .chart {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(10, 16, 31, 0.88);
+      min-height: 210px;
+      padding: 8px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: rgba(16, 23, 39, 0.72);
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat .value {
+      margin-top: 4px;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .cta-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .cta {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      min-height: 44px;
+      color: var(--ink);
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .cta.primary {
+      background: linear-gradient(180deg, rgba(30, 113, 181, 0.94), rgba(21, 91, 150, 0.96));
+      border-color: rgba(74, 164, 234, 0.38);
+      color: var(--ink);
+    }
+
+    .cta.secondary {
+      background: rgba(17, 26, 43, 0.84);
+    }
+
+    .empty {
+      border: 1px dashed var(--line-2);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: var(--muted);
+      text-align: left;
+      font-size: 13px;
+    }
+
+    @media (max-width: 389px) {
+      .app {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+  <aside class="hamburger-drawer" id="hamburgerDrawer" aria-hidden="true">
+    <div class="drawer-head">
+      <div class="drawer-account-row">
+        <button type="button" id="drawerAccountBtn">Your Account</button>
+        <button type="button" id="drawerCloseBtn" aria-label="Close menu">◯</button>
+      </div>
+      <div class="drawer-brand"><small>Menu</small>Momentum</div>
+    </div>
+    <section class="drawer-section">
+      <a class="drawer-link" href="#" data-drawer-action="home"><strong>Momentum Home</strong><span>⌂</span></a>
+    </section>
+    <section class="drawer-section">
+      <h4>App Navigation</h4>
+      <a class="drawer-link" href="#" data-drawer-action="home"><span>Home</span></a>
+      <a class="drawer-link" href="#" data-drawer-action="search"><span>Search</span></a>
+      <a class="drawer-link" href="#" data-drawer-action="tracked"><span>Tracked</span></a>
+      <a class="drawer-link" href="#" data-drawer-action="signals"><span>Signals</span></a>
+    </section>
+    <section class="drawer-section">
+      <h4>Trending</h4>
+      <a class="drawer-link" href="#" data-drawer-action="best-sellers"><span>Best Sellers</span></a>
+      <a class="drawer-link" href="#" data-drawer-action="new-releases"><span>New Releases</span></a>
+      <a class="drawer-link" href="#" data-drawer-action="movers"><span>Movers &amp; Shakers</span></a>
+      <a class="drawer-link" href="#" data-drawer-action="price-drop-watch"><span>Price Drop Watch</span></a>
+    </section>
+    <section class="drawer-section">
+      <h4>Top Departments for You</h4>
+      <a class="drawer-link" href="#"><span>Singles</span></a>
+      <a class="drawer-link" href="#"><span>Sealed Product</span></a>
+      <a class="drawer-link" href="#"><span>Japanese Market</span></a>
+      <a class="drawer-link" href="#"><span>Set Explorer</span></a>
+      <a class="drawer-link" href="#"><span>See all</span><span>⌄</span></a>
+    </section>
+    <section class="drawer-section">
+      <h4>Top Programs for You</h4>
+      <a class="drawer-link" href="#"><span>Buy List Tracker</span></a>
+      <a class="drawer-link" href="#"><span>Good Buys Radar</span></a>
+      <a class="drawer-link" href="#"><span>Momentum Alerts</span></a>
+    </section>
+  </aside>
+  <aside class="user-drawer" id="userDrawer" aria-hidden="true">
+    <div class="user-head">
+      <div class="user-head-top">
+        <button type="button" class="user-head-btn" id="userCloseBtn" aria-label="Close user menu">✕</button>
+        <div class="user-head-browse">
+          <span>Menu</span>
+          <span>☰</span>
+        </div>
+      </div>
+      <div class="user-greeting"><small>Hello,</small> Adam</div>
+    </div>
+
+    <section class="user-section">
+      <div class="user-section-head">
+        <h4>Profile</h4>
+        <button type="button" class="user-see-all">See All</button>
+      </div>
+      <p class="user-note">Please pick a profile to start your personalized experience</p>
+      <div class="user-rule"></div>
+      <div class="user-links">
+        <a class="user-link" href="#">Switch Accounts</a>
+        <a class="user-link" href="#">Sign Out</a>
+      </div>
+    </section>
+
+    <section class="user-section">
+      <div class="user-section-head">
+        <h4>Your Tracking</h4>
+        <button type="button" class="user-see-all">See All</button>
+      </div>
+      <div class="user-links">
+        <a class="user-link" href="#">Track &amp; Manage Watched Cards</a>
+        <a class="user-link" href="#">Buy List</a>
+        <a class="user-link" href="#">Recent Alerts</a>
+        <a class="user-link" href="#">Price Targets &amp; Notes</a>
+      </div>
+      <div class="user-rule"></div>
+      <div class="user-links">
+        <a class="user-link" href="#">Feedback &amp; Support</a>
+      </div>
+    </section>
+
+    <section class="user-section">
+      <div class="user-section-head">
+        <h4>Your Account</h4>
+        <button type="button" class="user-see-all">See All</button>
+      </div>
+      <div class="user-links">
+        <a class="user-link" href="#">Lists</a>
+        <a class="user-link" href="#">Recommendations</a>
+        <a class="user-link" href="#">Browsing History</a>
+        <a class="user-link" href="#">Shopping Preferences</a>
+      </div>
+    </section>
+  </aside>
+  <div class="app">
+    <header class="header">
+      <div class="commerce-top">
+        <button type="button" class="menu-btn" id="menuToggleBtn" aria-label="Open navigation menu" aria-expanded="false">☰</button>
+        <div class="brand-lockup">
+          <img class="brand-logo" src="/images/Favidon.png" alt="">
+          <span class="brand-wordmark">Poke6s</span>
+        </div>
+        <button type="button" class="account-btn" id="accountToggleBtn" aria-label="Open account" aria-expanded="false">
+          <small>Adam</small>
+          <span class="account-icon">◯</span>
+        </button>
+        <a class="cart-btn" id="favoritesBtn" href="/favorites" aria-label="Open favorites list">
+          ♡
+          <span class="cart-count">0</span>
+        </a>
+      </div>
+      <label class="search search-inline" aria-label="Search products">
+        <input id="searchInput" type="search" placeholder="Search cards, sets, numbers">
+        <button type="button" class="search-go" aria-label="Run search">🔍</button>
+      </label>
+    </header>
+    <section class="switch-stack" aria-label="Market and scope switches">
+      <div class="switch-row switch-row-tabs">
+        <div class="market-tabs" id="marketTabs" aria-label="Market sections">
+          <button type="button" class="market-tab active" data-market-tab="overview">Overview</button>
+          <button type="button" class="market-tab" data-market-tab="early">Early Movers</button>
+          <button type="button" class="market-tab" data-market-tab="buys">Good Buys</button>
+          <button type="button" class="market-tab" data-market-tab="set">Set Focus</button>
+          <button type="button" class="market-tab" data-market-tab="drops">Price Drops</button>
+        </div>
+      </div>
+      <div class="switch-row switch-row-scope">
+        <div class="scope-rail" id="scopeRail" aria-label="Scope controls">
+          <button type="button" class="scope-btn active" data-rail-language="EN">EN</button>
+          <button type="button" class="scope-btn" data-rail-language="JP">JP</button>
+          <button type="button" class="scope-btn active" data-rail-kind="singles">Singles</button>
+          <button type="button" class="scope-btn" data-rail-kind="sealed">Sealed</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <main class="feed">
+        <div class="feed-head">
+          <div class="feed-head-copy">
+            <h2 class="feed-title" id="feedTitle">Markets Overview</h2>
+            <p class="feed-subtitle" id="feedSubtitle">Pokemon Cards</p>
+            <p class="feed-section-title">Card Indices →</p>
+          </div>
+          <span class="row-count" id="resultCount">0 rows</span>
+        </div>
+        <section class="deal-check" id="dealCheck">
+          <div class="deal-head">
+            <div>
+              <h3 class="deal-title">Deal Check</h3>
+              <p class="deal-subtitle" id="dealItemLabel">Select a card to compare against market.</p>
+            </div>
+            <span class="deal-badge" id="dealVerdictBadge">Waiting</span>
+          </div>
+          <div class="deal-grid">
+            <div class="deal-cell">
+              <div class="deal-label">Market Price</div>
+              <div class="deal-value" id="dealMarketPrice">$0.00</div>
+            </div>
+            <div class="deal-cell">
+              <div class="deal-label">Edge vs Market</div>
+              <div class="deal-value" id="dealEdgePct">0.0%</div>
+            </div>
+          </div>
+          <div class="deal-input-row">
+            <div class="deal-input-wrap">
+              <label for="dealAskInput">Ask Price At Table</label>
+              <input class="deal-input" id="dealAskInput" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Enter ask price">
+            </div>
+            <button type="button" class="deal-max-btn" id="dealMaxBtn">Use Max Buy</button>
+          </div>
+          <p class="deal-copy" id="dealGuidance">Tip: use this to sanity-check offers at card shows and LCS tables before you buy.</p>
+        </section>
+        <div class="results" id="results"></div>
+        <div class="empty" id="emptyState" hidden>No products matched this filter.</div>
+      </main>
+
+      <aside class="detail" id="detailPanel">
+        <div class="detail-title">
+          <h2 id="detailName">Select a card</h2>
+          <p id="detailMeta">Tap any result to open full analysis context.</p>
+        </div>
+        <div class="chart" id="detailChart"></div>
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Latest Price</div>
+            <div class="value" id="statPrice">-</div>
+          </div>
+          <div class="stat">
+            <div class="label">30D Change</div>
+            <div class="value" id="stat30d">-</div>
+          </div>
+          <div class="stat">
+            <div class="label">Momentum</div>
+            <div class="value" id="statMomentum">-</div>
+          </div>
+          <div class="stat">
+            <div class="label">Volatility</div>
+            <div class="value" id="statVolatility">-</div>
+          </div>
+        </div>
+        <div class="cta-row">
+          <button type="button" class="cta primary">Open Full Profile</button>
+          <button type="button" class="cta secondary">Track Item</button>
+        </div>
+      </aside>
+    </section>
+
+  </div>
+
+  <script>
+    const PRICE_DROP_WATCH = {
+      EN: {
+        singles: [
+          { key: "pd-en-s-1", symbol: "Mega Sharpedo ex", name: "SIR 127/094 · Phantasmal Flames", set: "ME02", price: 25.36, change30d: -9.2, score: 92, volatility: "Medium", trend: [35.2, 33.8, 32.4, 30.7, 29.1, 28.2, 27.3, 26.4, 25.36] },
+          { key: "pd-en-s-2", symbol: "M Venusaur EX", name: "Full Art 100/108 · Evolutions", set: "XY Evolutions", price: 33.62, change30d: -7.7, score: 88, volatility: "Medium", trend: [40.4, 39.8, 38.7, 37.9, 36.8, 35.7, 35.0, 34.1, 33.62] },
+          { key: "pd-en-s-3", symbol: "Meloetta EX", name: "Full Art RC25 · Radiant Collection", set: "Legendary Treasures", price: 31.48, change30d: -8.2, score: 89, volatility: "Medium", trend: [38.6, 37.8, 36.9, 35.8, 34.9, 34.2, 33.6, 32.8, 31.48] },
+          { key: "pd-en-s-4", symbol: "Zekrom", name: "Full Art 114/114 · Black & White", set: "Black & White", price: 130.66, change30d: -11.1, score: 95, volatility: "High", trend: [153.4, 150.8, 148.3, 145.1, 142.9, 140.2, 137.6, 133.9, 130.66] },
+          { key: "pd-en-s-5", symbol: "Ultra Ball", name: "Secret 161/149 · SM Base", set: "SM Base", price: 30.19, change30d: -6.9, score: 84, volatility: "Low", trend: [35.0, 34.2, 33.4, 32.8, 32.2, 31.5, 31.1, 30.6, 30.19] },
+          { key: "pd-en-s-6", symbol: "Cynthia's Garchomp ex", name: "Double Rare 104/182", set: "Prize Pack Series", price: 14.73, change30d: -13.8, score: 93, volatility: "High", trend: [19.5, 19.2, 18.6, 17.8, 17.1, 16.4, 15.9, 15.2, 14.73] },
+        ],
+        sealed: [
+          { key: "pd-en-z-1", symbol: "Perfect Order ETB", name: "Elite Trainer Box", set: "ME03", price: 65.85, change30d: -29.0, score: 99, volatility: "High", trend: [99.2, 96.4, 93.1, 88.7, 84.0, 79.2, 74.8, 70.3, 65.85] },
+          { key: "pd-en-z-2", symbol: "Perfect Order BB", name: "Booster Box", set: "ME03", price: 204.14, change30d: -12.7, score: 94, volatility: "High", trend: [238.0, 235.2, 231.8, 226.4, 221.5, 216.9, 212.8, 208.3, 204.14] },
+          { key: "pd-en-z-3", symbol: "Black Bolt Binder", name: "Binder Collection", set: "SV Black Bolt", price: 49.44, change30d: -12.4, score: 92, volatility: "Medium", trend: [58.9, 57.6, 56.2, 54.7, 53.4, 52.1, 51.0, 50.1, 49.44] },
+          { key: "pd-en-z-4", symbol: "Chaos Rising BB", name: "Booster Box", set: "ME04", price: 246.15, change30d: -5.7, score: 82, volatility: "Medium", trend: [263.7, 261.2, 259.1, 257.6, 255.3, 252.8, 250.6, 248.1, 246.15] },
+          { key: "pd-en-z-5", symbol: "Scarlet & Violet BB", name: "Booster Box", set: "SV01", price: 250.1, change30d: -7.3, score: 86, volatility: "Medium", trend: [272.4, 269.8, 266.4, 262.3, 259.1, 256.6, 254.4, 252.1, 250.1] },
+        ],
+      },
+      JP: {
+        singles: [
+          { key: "pd-jp-s-1", symbol: "Mega Gengar ex", name: "Double Rare 003/021", set: "MEGA Starter Set", price: 8.36, change30d: -14.4, score: 94, volatility: "High", trend: [10.8, 10.6, 10.3, 9.9, 9.6, 9.3, 9.0, 8.7, 8.36] },
+          { key: "pd-jp-s-2", symbol: "Mega Zygarde ex", name: "Mega Ultra Rare 117/080", set: "M3 Nihil Zero", price: 187.29, change30d: -13.2, score: 96, volatility: "High", trend: [219.5, 215.8, 212.0, 207.7, 203.1, 198.9, 194.8, 190.8, 187.29] },
+          { key: "pd-jp-s-3", symbol: "Reshiram & Zekrom GX", name: "Double Rare 036/049", set: "Dream League", price: 32.4, change30d: -6.4, score: 82, volatility: "Medium", trend: [37.1, 36.3, 35.8, 35.1, 34.4, 33.9, 33.3, 32.9, 32.4] },
+        ],
+        sealed: [
+          { key: "pd-jp-z-1", symbol: "Crimson Haze BB", name: "Booster Box", set: "SV5a", price: 86.95, change30d: -6.7, score: 83, volatility: "Medium", trend: [95.4, 94.1, 92.8, 91.2, 90.0, 89.2, 88.4, 87.7, 86.95] },
+          { key: "pd-jp-z-2", symbol: "Mega Brave BB", name: "Booster Box", set: "m1L", price: 93.49, change30d: -2.0, score: 74, volatility: "Low", trend: [97.8, 97.2, 96.7, 96.2, 95.6, 95.1, 94.7, 94.1, 93.49] },
+        ],
+      },
+    };
+
+    const SAMPLE_DATA = {
+      EN: {
+        singles: [
+          { key: "en-s-1", symbol: "Charizard ex", name: "Special Illustration Rare", set: "Paldean Fates", price: 129.99, change30d: 14.8, score: 92, volatility: "Medium", trend: [82, 87, 85, 92, 98, 105, 113, 121, 128] },
+          { key: "en-s-2", symbol: "Pikachu Felt Hat", name: "Scream Promo", set: "Promo", price: 242.00, change30d: -3.4, score: 74, volatility: "High", trend: [286, 280, 274, 271, 267, 258, 252, 246, 242] },
+          { key: "en-s-3", symbol: "Mew ex", name: "Hyper Rare", set: "151", price: 41.20, change30d: 9.1, score: 83, volatility: "Low", trend: [28, 29, 31, 32, 34, 36, 38, 40, 41] },
+          { key: "en-s-4", symbol: "Gengar VMAX", name: "Alt Art", set: "Fusion Strike", price: 372.50, change30d: 6.2, score: 89, volatility: "Medium", trend: [328, 332, 336, 340, 351, 358, 362, 367, 372] },
+          { key: "en-s-5", symbol: "Umbreon VMAX", name: "Moonbreon Alt Art", set: "Evolving Skies", price: 1035.00, change30d: 2.8, score: 78, volatility: "Medium", trend: [947, 956, 968, 981, 995, 1007, 1013, 1022, 1035] },
+          { key: "en-s-6", symbol: "Blastoise ex", name: "Special Illustration Rare", set: "151", price: 58.30, change30d: 11.9, score: 88, volatility: "Low", trend: [37, 40, 42, 44, 46, 49, 52, 55, 58] }
+        ],
+        sealed: [
+          { key: "en-z-1", symbol: "Evolving Skies", name: "Booster Box", set: "SWSH", price: 780.00, change30d: 5.6, score: 90, volatility: "Medium", trend: [702, 710, 719, 731, 739, 752, 760, 771, 780] },
+          { key: "en-z-2", symbol: "151", name: "Elite Trainer Box", set: "Scarlet & Violet", price: 67.20, change30d: 7.9, score: 86, volatility: "Low", trend: [53, 55, 56, 58, 60, 62, 64, 65, 67] },
+          { key: "en-z-3", symbol: "Paldean Fates", name: "Mini Tin Display", set: "Scarlet & Violet", price: 119.00, change30d: 3.1, score: 75, volatility: "Low", trend: [104, 105, 107, 109, 110, 112, 114, 117, 119] },
+          { key: "en-z-4", symbol: "Crown Zenith", name: "Pokemon Center ETB", set: "SWSH", price: 145.00, change30d: -1.7, score: 72, volatility: "Medium", trend: [152, 151, 150, 149, 148, 147, 146, 145, 145] }
+        ],
+      },
+      JP: {
+        singles: [
+          { key: "jp-s-1", symbol: "Lillie", name: "SR", set: "SM Collection", price: 1980.00, change30d: 12.4, score: 94, volatility: "High", trend: [1580, 1622, 1660, 1718, 1770, 1840, 1892, 1938, 1980] },
+          { key: "jp-s-2", symbol: "Mew ex", name: "SAR", set: "Pokemon 151 JP", price: 95.00, change30d: 8.7, score: 84, volatility: "Medium", trend: [67, 70, 73, 76, 79, 83, 87, 91, 95] },
+          { key: "jp-s-3", symbol: "Pikachu", name: "AR", set: "VSTAR Universe", price: 31.40, change30d: -2.2, score: 66, volatility: "Low", trend: [35, 35, 34, 34, 33, 33, 32, 32, 31] },
+          { key: "jp-s-4", symbol: "Giratina V", name: "SA", set: "Lost Abyss", price: 412.00, change30d: 4.9, score: 87, volatility: "Medium", trend: [358, 362, 369, 376, 384, 392, 399, 406, 412] }
+        ],
+        sealed: [
+          { key: "jp-z-1", symbol: "VSTAR Universe", name: "Booster Box", set: "S12a", price: 118.00, change30d: 9.3, score: 88, volatility: "Low", trend: [86, 89, 91, 95, 99, 104, 108, 113, 118] },
+          { key: "jp-z-2", symbol: "Shiny Treasure ex", name: "Booster Box", set: "SV4a", price: 52.30, change30d: 6.5, score: 81, volatility: "Low", trend: [39, 40, 42, 44, 45, 47, 49, 51, 52] },
+          { key: "jp-z-3", symbol: "Pokemon 151", name: "Booster Box", set: "SV2a", price: 170.00, change30d: -1.2, score: 73, volatility: "Medium", trend: [178, 177, 176, 175, 174, 173, 172, 171, 170] },
+          { key: "jp-z-4", symbol: "Paradigm Trigger", name: "Booster Box", set: "S12", price: 74.50, change30d: 2.4, score: 70, volatility: "Low", trend: [67, 68, 69, 70, 71, 72, 73, 73, 74] }
+        ],
+      },
+    };
+
+    const searchInput = document.getElementById("searchInput");
+    const resultsEl = document.getElementById("results");
+    const resultCount = document.getElementById("resultCount");
+    const emptyState = document.getElementById("emptyState");
+    const detailName = document.getElementById("detailName");
+    const detailMeta = document.getElementById("detailMeta");
+    const detailChart = document.getElementById("detailChart");
+    const statPrice = document.getElementById("statPrice");
+    const stat30d = document.getElementById("stat30d");
+    const statMomentum = document.getElementById("statMomentum");
+    const statVolatility = document.getElementById("statVolatility");
+    const dealItemLabel = document.getElementById("dealItemLabel");
+    const dealMarketPrice = document.getElementById("dealMarketPrice");
+    const dealEdgePct = document.getElementById("dealEdgePct");
+    const dealVerdictBadge = document.getElementById("dealVerdictBadge");
+    const dealAskInput = document.getElementById("dealAskInput");
+    const dealMaxBtn = document.getElementById("dealMaxBtn");
+    const dealGuidance = document.getElementById("dealGuidance");
+
+    const marketTabs = document.getElementById("marketTabs");
+    const scopeRail = document.getElementById("scopeRail");
+    const feedTitle = document.getElementById("feedTitle");
+    const feedSubtitle = document.getElementById("feedSubtitle");
+    const menuToggleBtn = document.getElementById("menuToggleBtn");
+    const accountToggleBtn = document.getElementById("accountToggleBtn");
+    const drawerBackdrop = document.getElementById("drawerBackdrop");
+    const hamburgerDrawer = document.getElementById("hamburgerDrawer");
+    const drawerCloseBtn = document.getElementById("drawerCloseBtn");
+    const drawerAccountBtn = document.getElementById("drawerAccountBtn");
+    const userDrawer = document.getElementById("userDrawer");
+    const userCloseBtn = document.getElementById("userCloseBtn");
+
+    let activeFilter = "all";
+    let activeSort = "score";
+    let activeIntent = "movers";
+    let activeMarket = "EN";
+    let activeKind = "singles";
+    let activeKey = null;
+    let activeMode = "default";
+    let activeItem = null;
+
+    function activeItems() {
+      if (activeMode === "price-drop-watch") {
+        return PRICE_DROP_WATCH[activeMarket]?.[activeKind] || [];
+      }
+      return SAMPLE_DATA[activeMarket]?.[activeKind] || [];
+    }
+
+    function applyScopeLabels() {
+      if (!feedSubtitle) return;
+      const scopeLabel = activeKind === "singles" ? "Singles" : "Sealed";
+      if (activeMode === "price-drop-watch") {
+        if (feedTitle) {
+          feedTitle.textContent = "Markets Overview";
+        }
+        feedSubtitle.textContent = `Price Drop Watch · ${activeMarket} ${scopeLabel}`;
+        return;
+      }
+      if (feedTitle) {
+        feedTitle.textContent = "Markets Overview";
+      }
+      feedSubtitle.textContent = `Pokemon ${scopeLabel} · ${activeMarket}`;
+    }
+
+    function formatPct(value) {
+      const sign = value > 0 ? "+" : "";
+      return `${sign}${value.toFixed(1)}%`;
+    }
+
+    function sparkline(values, stroke = "#25d0a5", width = 320, height = 40) {
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const range = Math.max(max - min, 1);
+      const points = values.map((v, i) => {
+        const x = (i / (values.length - 1)) * width;
+        const y = height - ((v - min) / range) * height;
+        return `${x},${y}`;
+      }).join(" ");
+      return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Price trend"><polyline points="${points}" fill="none" stroke="${stroke}" stroke-width="3" stroke-linecap="round" /></svg>`;
+    }
+
+    function applyFilters(items) {
+      const q = searchInput.value.trim().toLowerCase();
+      let next = items.filter((item) => {
+        return (
+          item.name.toLowerCase().includes(q)
+          || item.set.toLowerCase().includes(q)
+          || (item.symbol || "").toLowerCase().includes(q)
+        );
+      });
+
+      if (activeFilter === "sv151") next = next.filter((item) => item.set === "151");
+      if (activeFilter === "jp151") next = next.filter((item) => item.set.toLowerCase().includes("151"));
+      if (activeFilter === "altarts") next = next.filter((item) => item.name.toLowerCase().includes("alt"));
+      if (activeFilter === "boosterbox") next = next.filter((item) => item.name.toLowerCase().includes("booster box"));
+      if (activeFilter === "etb") next = next.filter((item) => item.name.toLowerCase().includes("etb") || item.name.toLowerCase().includes("special"));
+      if (activeFilter === "gainers") next = next.filter((item) => item.change30d > 0);
+      if (activeFilter === "decliners") next = next.filter((item) => item.change30d < 0);
+
+      if (activeMode !== "price-drop-watch") {
+        if (activeIntent === "buys") next = next.filter((item) => item.score >= 85 && item.change30d > 0 && item.price <= 180);
+        if (activeIntent === "early") next = next.filter((item) => item.change30d > 0 && item.change30d <= 10);
+        if (activeIntent === "set") next = next.filter((item) => activeKind === "singles"
+          ? (item.set.includes("151") || item.set.includes("Paldean"))
+          : (item.name.toLowerCase().includes("box") || item.name.toLowerCase().includes("etb"))
+        );
+      }
+
+      const sorted = [...next];
+      if (activeSort === "price") sorted.sort((a, b) => b.price - a.price);
+      if (activeSort === "momentum") sorted.sort((a, b) => b.change30d - a.change30d);
+      if (activeSort === "score") sorted.sort((a, b) => b.score - a.score);
+      return sorted;
+    }
+
+    function renderCards(items) {
+      const visible = applyFilters(items);
+      resultsEl.innerHTML = "";
+      resultCount.textContent = `${visible.length} rows`;
+      emptyState.hidden = visible.length !== 0;
+      resultsEl.hidden = visible.length === 0;
+      if (!visible.length) {
+        activeItem = null;
+        clearDealCheck();
+      }
+
+      if (visible.length) {
+        const head = document.createElement("div");
+        head.className = "market-table-head";
+        head.innerHTML = `
+          <span>Card</span>
+          <span>Trend</span>
+          <span style="text-align:right;">Price</span>
+          <span style="text-align:right;">Change %</span>
+        `;
+        resultsEl.appendChild(head);
+      }
+
+      visible.forEach((item) => {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = `market-row${item.key === activeKey ? " active" : ""}`;
+        const trendClass = item.change30d >= 0 ? "good" : "warn";
+        row.innerHTML = `
+          <div class="symbol-cell">
+            <span class="symbol-main">${item.symbol || item.name}</span>
+            <span class="symbol-sub">${item.name}</span>
+          </div>
+          <div class="mini-spark">${sparkline(item.trend, item.change30d >= 0 ? "#25d0a5" : "#ff8a5b", 120, 24)}</div>
+          <div class="price-cell">$${item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          <div class="change-cell ${trendClass}">${formatPct(item.change30d)}</div>
+        `;
+        row.addEventListener("click", () => {
+          activeKey = item.key;
+          renderCards(activeItems());
+          renderDetail(item);
+        });
+        resultsEl.appendChild(row);
+      });
+
+      if (!activeKey && visible.length) {
+        activeKey = visible[0].key;
+        renderDetail(visible[0]);
+      } else if (activeKey) {
+        const selected = visible.find((item) => item.key === activeKey);
+        if (selected) {
+          renderDetail(selected);
+        }
+      }
+    }
+
+    function renderDetail(item) {
+      if (!item) return;
+      activeItem = item;
+      detailName.textContent = item.symbol || item.name;
+      const scope = activeKind === "singles" ? "Singles" : "Sealed";
+      detailMeta.textContent = `${item.name} · ${item.set} · ${activeMarket} ${scope}`;
+      detailChart.innerHTML = sparkline(item.trend, item.change30d >= 0 ? "#25d0a5" : "#ff8a5b");
+      statPrice.textContent = `$${item.price.toFixed(2)}`;
+      stat30d.textContent = formatPct(item.change30d);
+      stat30d.className = `value ${item.change30d >= 0 ? "good" : "warn"}`;
+      statMomentum.textContent = `${item.score}`;
+      statVolatility.textContent = item.volatility;
+      renderDealCheck(item);
+    }
+
+    function classifyDeal(askPrice, marketPrice) {
+      if (!Number.isFinite(askPrice) || askPrice <= 0 || !Number.isFinite(marketPrice) || marketPrice <= 0) {
+        return { verdict: "Waiting", className: "", edgePct: 0 };
+      }
+      const edgePct = ((marketPrice - askPrice) / marketPrice) * 100;
+      if (edgePct >= 15) return { verdict: "Great Deal", className: "good", edgePct };
+      if (edgePct >= 6) return { verdict: "Good Deal", className: "good", edgePct };
+      if (edgePct >= -5) return { verdict: "Fair Price", className: "fair", edgePct };
+      if (edgePct >= -12) return { verdict: "High Ask", className: "warn", edgePct };
+      return { verdict: "Pass", className: "warn", edgePct };
+    }
+
+    function updateDealVerdict() {
+      if (!activeItem) return;
+      const ask = Number.parseFloat(dealAskInput.value);
+      const market = activeItem.price;
+      const result = classifyDeal(ask, market);
+      dealVerdictBadge.textContent = result.verdict;
+      dealVerdictBadge.className = `deal-badge${result.className ? ` ${result.className}` : ""}`;
+      dealEdgePct.textContent = `${result.edgePct >= 0 ? "+" : ""}${result.edgePct.toFixed(1)}%`;
+      dealEdgePct.className = `deal-value ${result.edgePct >= 0 ? "good" : "warn"}`;
+      const maxBuy = market * 0.92;
+      dealGuidance.textContent = Number.isFinite(ask) && ask > 0
+        ? `Market ${market.toFixed(2)} · Ask ${ask.toFixed(2)} · Max buy target ${maxBuy.toFixed(2)} (${activeMarket} ${activeKind}).`
+        : `Quick rule: try to buy at or below ${maxBuy.toFixed(2)} (about 8% under market).`;
+    }
+
+    function renderDealCheck(item) {
+      if (!item) return;
+      dealItemLabel.textContent = `${item.symbol || item.name} · ${item.set}`;
+      dealMarketPrice.textContent = `$${item.price.toFixed(2)}`;
+      dealAskInput.value = item.price.toFixed(2);
+      updateDealVerdict();
+    }
+
+    function clearDealCheck() {
+      dealItemLabel.textContent = "No matching card. Adjust search or filters.";
+      dealMarketPrice.textContent = "$0.00";
+      dealEdgePct.textContent = "0.0%";
+      dealEdgePct.className = "deal-value";
+      dealAskInput.value = "";
+      dealVerdictBadge.textContent = "Waiting";
+      dealVerdictBadge.className = "deal-badge";
+      dealGuidance.textContent = "Tip: use this to sanity-check offers at card shows and LCS tables before you buy.";
+    }
+
+    function setActiveButton(container, selector, value, dataKey) {
+      container.querySelectorAll(selector).forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset[dataKey] === value);
+      });
+    }
+
+    function setDrawerOpen(open) {
+      const isOpen = Boolean(open);
+      if (isOpen) {
+        setUserDrawerOpen(false);
+      }
+      document.body.classList.toggle("drawer-open", isOpen);
+      drawerBackdrop.hidden = !isOpen;
+      drawerBackdrop.classList.toggle("open", isOpen);
+      hamburgerDrawer.classList.toggle("open", isOpen);
+      hamburgerDrawer.setAttribute("aria-hidden", isOpen ? "false" : "true");
+      menuToggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    }
+
+    function setUserDrawerOpen(open) {
+      const isOpen = Boolean(open);
+      if (isOpen) {
+        setDrawerOpen(false);
+      }
+      document.body.classList.toggle("drawer-open", isOpen);
+      drawerBackdrop.hidden = !isOpen;
+      drawerBackdrop.classList.toggle("open", isOpen);
+      userDrawer.classList.toggle("open", isOpen);
+      userDrawer.setAttribute("aria-hidden", isOpen ? "false" : "true");
+      if (accountToggleBtn) {
+        accountToggleBtn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+      }
+    }
+
+    function syncHeaderControls() {
+      if (scopeRail) {
+        scopeRail.querySelectorAll("[data-rail-language]").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.railLanguage === activeMarket);
+        });
+        scopeRail.querySelectorAll("[data-rail-kind]").forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.railKind === activeKind);
+        });
+      }
+      if (marketTabs) {
+        marketTabs.querySelectorAll("[data-market-tab]").forEach((btn) => {
+          const tab = btn.dataset.marketTab;
+          const isActive = (
+            (tab === "overview" && activeMode !== "price-drop-watch" && activeIntent === "movers")
+            || (tab === "early" && activeMode !== "price-drop-watch" && activeIntent === "early")
+            || (tab === "buys" && activeMode !== "price-drop-watch" && activeIntent === "buys")
+            || (tab === "set" && activeMode !== "price-drop-watch" && activeIntent === "set")
+            || (tab === "drops" && activeMode === "price-drop-watch")
+          );
+          btn.classList.toggle("active", isActive);
+        });
+      }
+    }
+
+    function setMode(mode) {
+      activeMode = mode || "default";
+      if (activeMode === "price-drop-watch") {
+        activeFilter = "decliners";
+        activeSort = "score";
+        activeIntent = "movers";
+      } else {
+        activeFilter = "all";
+        activeSort = "score";
+      }
+      activeKey = null;
+      applyScopeLabels();
+      syncHeaderControls();
+      renderCards(activeItems());
+    }
+
+    function applyMarketTab(tab) {
+      if (tab === "drops") {
+        setMode("price-drop-watch");
+        return;
+      }
+      if (activeMode === "price-drop-watch") {
+        activeMode = "default";
+      }
+      if (tab === "early") activeIntent = "early";
+      if (tab === "buys") activeIntent = "buys";
+      if (tab === "set") activeIntent = "set";
+      if (tab === "overview") activeIntent = "movers";
+      setMode("default");
+    }
+
+    if (marketTabs) {
+      marketTabs.addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-market-tab]");
+        if (!btn) return;
+        applyMarketTab(btn.dataset.marketTab || "overview");
+      });
+    }
+
+    if (scopeRail) {
+      scopeRail.addEventListener("click", (event) => {
+        const languageBtn = event.target.closest("[data-rail-language]");
+        if (languageBtn) {
+          activeMarket = languageBtn.dataset.railLanguage || "EN";
+          setMode(activeMode);
+          return;
+        }
+        const kindBtn = event.target.closest("[data-rail-kind]");
+        if (kindBtn) {
+          activeKind = kindBtn.dataset.railKind || "singles";
+          setMode(activeMode);
+        }
+      });
+    }
+
+    menuToggleBtn.addEventListener("click", () => {
+      const currentlyOpen = hamburgerDrawer.classList.contains("open");
+      setDrawerOpen(!currentlyOpen);
+    });
+    if (accountToggleBtn) {
+      accountToggleBtn.addEventListener("click", () => {
+        const currentlyOpen = userDrawer.classList.contains("open");
+        setUserDrawerOpen(!currentlyOpen);
+      });
+    }
+
+    drawerCloseBtn.addEventListener("click", () => setDrawerOpen(false));
+    drawerAccountBtn.addEventListener("click", () => setUserDrawerOpen(true));
+    userCloseBtn.addEventListener("click", () => setUserDrawerOpen(false));
+    drawerBackdrop.addEventListener("click", () => {
+      setDrawerOpen(false);
+      setUserDrawerOpen(false);
+    });
+    hamburgerDrawer.querySelectorAll(".drawer-link").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        const action = link.dataset.drawerAction || "";
+        if (action === "price-drop-watch") {
+          setMode("price-drop-watch");
+        } else if (action === "home") {
+          setMode("default");
+        }
+        setDrawerOpen(false);
+      });
+    });
+    userDrawer.querySelectorAll(".user-link").forEach((link) => {
+      link.addEventListener("click", () => setUserDrawerOpen(false));
+    });
+
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && hamburgerDrawer.classList.contains("open")) {
+        setDrawerOpen(false);
+      }
+      if (event.key === "Escape" && userDrawer.classList.contains("open")) {
+        setUserDrawerOpen(false);
+      }
+    });
+
+    searchInput.addEventListener("input", () => renderCards(activeItems()));
+    dealAskInput.addEventListener("input", () => updateDealVerdict());
+    dealMaxBtn.addEventListener("click", () => {
+      if (!activeItem) return;
+      dealAskInput.value = (activeItem.price * 0.92).toFixed(2);
+      updateDealVerdict();
+    });
+    setMode("default");
+  </script>
+</body>
+</html>

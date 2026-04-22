@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Poke6s Market | Sun &amp; Moon 100</title>
+  <title>Poke6s Market | JP Scarlet &amp; Violet 100</title>
   <link rel="icon" type="image/png" href="/images/Favidon.png">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <style>
@@ -606,7 +606,7 @@
   <main class="shell">
     <section class="panel overview">
       <h1 id="indexPageTitle">Poke6s Market Indexes</h1>
-      <p class="index-name" id="indexName">Sun &amp; Moon 100</p>
+      <p class="index-name" id="indexName">JP Scarlet &amp; Violet 100</p>
       <div class="overview-meta">
         <span>✚ Top 100 cards by market price</span>
         <span>◷ Updated daily</span>
@@ -624,7 +624,7 @@
       <div class="overview-fold-body">
         <article class="method-card">
           <h2>How This Index Works</h2>
-          <p>This benchmark tracks the 100 highest-priced Pokemon cards by market value from selected Sun &amp; Moon era sets. We use a divisor-adjusted method to keep the series continuous when constituents rotate. Each daily run:</p>
+          <p>This benchmark tracks the 100 highest-priced Pokemon cards by market value from selected Japanese Scarlet &amp; Violet sets. We use a divisor-adjusted method to keep the series continuous when constituents rotate. Each daily run:</p>
           <ul class="method-list">
             <li>Collect all eligible cards from the included sets below</li>
             <li>Sort cards by latest market price (highest to lowest)</li>
@@ -647,7 +647,7 @@
 
         <section class="sets sets-inline">
           <h2>Included Sets</h2>
-          <p>This index tracks cards from the following Pokemon TCG sets in the Sun &amp; Moon era:</p>
+          <p>This index tracks cards from the following Pokemon TCG sets in the Japanese Scarlet &amp; Violet era:</p>
           <div class="set-grid" id="includedSetGrid"></div>
         </section>
       </div>
@@ -655,7 +655,7 @@
 
     <section class="panel index-panel">
       <div class="index-head">
-        <h2 id="indexPanelTitle">Sun &amp; Moon 100</h2>
+        <h2 id="indexPanelTitle">JP Scarlet &amp; Violet 100</h2>
         <div class="toolbar">
           <button class="btn range-btn" data-range="30">1M</button>
           <button class="btn range-btn" data-range="90">3M</button>
@@ -664,7 +664,7 @@
           <button class="btn range-btn active" data-range="all">All</button>
           <button class="btn mode-btn soft-active" data-mode="index">Index Level</button>
           <button class="btn mode-btn" data-mode="aggregate">Aggregate Value</button>
-          <button class="btn soft-active" id="releaseLinesToggleBtn" type="button" hidden aria-hidden="true">Set Releases</button>
+          <button class="btn soft-active" id="releaseLinesToggleBtn" type="button">Set Releases</button>
         </div>
       </div>
 
@@ -765,8 +765,8 @@
 
     let mode = "index";
     let range = "all";
-    let showReleaseLines = false;
-    let releaseMarkersEnabled = false;
+    let showReleaseLines = true;
+    let releaseMarkersEnabled = true;
 
     const chartEl = document.getElementById("indexChart");
     const chartStatus = document.getElementById("chartStatus");
@@ -949,7 +949,7 @@
 
     function buildBrowseSetCardUrl(item) {
       const params = new URLSearchParams();
-      params.set("category_id", "3");
+      params.set("category_id", "85");
       params.set("days", "365");
       params.set("tab", "group_products");
       params.set("segment", "cards");
@@ -965,7 +965,7 @@
 
     function buildSetStrengthSetUrl(setItem) {
       const params = new URLSearchParams();
-      params.set("category_id", "3");
+      params.set("category_id", "85");
       params.set("days", "365");
       params.set("tab", "group_signals");
       params.set("segment", "cards");
@@ -1136,15 +1136,15 @@
 
     // Fetches the backend index payload and hydrates all UI sections.
     async function loadIndexOverviewData() {
-      const response = await fetch("/index-overview-data?index=sm100");
+      const response = await fetch("/index-overview-data?index=jp_sv100&category_id=85");
       if (!response.ok) {
         throw new Error(`index-overview-data failed (${response.status})`);
       }
       const data = await response.json();
-      document.title = `Poke6s Market | ${data.index_name || "Sun & Moon 100"}`;
+      document.title = `Poke6s Market | ${data.index_name || "JP Scarlet & Violet 100"}`;
       if (indexPageTitle) indexPageTitle.textContent = "Poke6s Market Indexes";
-      if (indexName) indexName.textContent = data.index_name || "Sun & Moon 100";
-      if (indexPanelTitle) indexPanelTitle.textContent = data.index_name || "Sun & Moon 100";
+      if (indexName) indexName.textContent = data.index_name || "JP Scarlet & Violet 100";
+      if (indexPanelTitle) indexPanelTitle.textContent = data.index_name || "JP Scarlet & Violet 100";
       payloadSummary = data.summary || null;
       fullSeries = (data.series || []).map((row) => ({
         date: row.date,
@@ -1175,17 +1175,14 @@
       document.getElementById("holdingsAverage").textContent = `$${formatNumber(data.summary?.average_card_price || 0, 2)}`;
       renderIncludedSets(data.included_sets || []);
       renderHoldings(data.holdings || []);
-      const statusMessage = releaseMarkersEnabled
-        ? `Live index data loaded (${data.summary?.as_of || "latest"}). Release markers currently use first market-observed date.`
-        : `Live index data loaded (${data.summary?.as_of || "latest"}).`;
-      setChartStatus(statusMessage, false);
+      setChartStatus(`Live index data loaded (${data.summary?.as_of || "latest"}). Release markers currently use first market-observed date.`, false);
       renderChart();
     }
 
     loadIndexOverviewData().catch((err) => {
       console.error(err);
       fullSeries = fallbackSeries.slice();
-      releaseEvents = releaseMarkersEnabled ? fallbackReleases.slice() : [];
+      releaseEvents = fallbackReleases.slice();
       payloadSummary = {
         current_level: fallbackSeries[fallbackSeries.length - 1].index,
         current_aggregate: fallbackSeries[fallbackSeries.length - 1].aggregate,

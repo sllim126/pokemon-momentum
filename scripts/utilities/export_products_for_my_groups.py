@@ -12,6 +12,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.common.category_config import get_category_config
+from scripts.utilities.tcgcsv_client import build_tcgcsv_session
 
 DATA_DIR = "/app/data/extracted"
 PROCESSED_DIR = Path("/app/data/processed")
@@ -19,6 +20,7 @@ DB_PATH = PROCESSED_DIR / "prices_db.duckdb"
 REQUEST_TIMEOUT = (10, 45)
 MAX_RETRIES = 3
 HEADERS = ["groupId", "productId", "name", "cleanName", "imageUrl", "rarity", "number"]
+SESSION = build_tcgcsv_session()
 
 
 def parse_args() -> argparse.Namespace:
@@ -136,7 +138,7 @@ def fetch_products_for_group(category_id: int, group_id: int) -> list[dict]:
     last_error = None
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            r = requests.get(url, timeout=REQUEST_TIMEOUT)
+            r = SESSION.get(url, timeout=REQUEST_TIMEOUT)
             r.raise_for_status()
             return r.json().get("results", [])
         except Exception as exc:

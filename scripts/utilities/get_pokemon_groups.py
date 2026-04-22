@@ -2,10 +2,13 @@ import json
 import requests
 import csv
 
+from scripts.utilities.tcgcsv_client import build_tcgcsv_session
+
 CATEGORY_ID = 3  # Pokemon
 URL = f"https://tcgcsv.com/tcgplayer/{CATEGORY_ID}/groups"
 
-r = requests.get(URL, timeout=60)
+session = build_tcgcsv_session()
+r = session.get(URL, timeout=60)
 r.raise_for_status()
 data = r.json()["results"]
 
