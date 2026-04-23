@@ -12,6 +12,7 @@ class DashboardFrontendContractTests(unittest.TestCase):
         cls.html = DASHBOARD_HTML.read_text(encoding="utf-8")
 
     def test_research_tabs_use_current_labels(self):
+        self.assertIn('data-tab="under_the_radar">Under the Radar</button>', self.html)
         self.assertIn('data-tab="group_signals">Set Strength</button>', self.html)
         self.assertIn('data-tab="group_products">Browse Set</button>', self.html)
         self.assertIn('data-tab="browse_species">Browse Species</button>', self.html)
@@ -46,6 +47,7 @@ class DashboardFrontendContractTests(unittest.TestCase):
         self.assertIn('segmentFilteredTabs = new Set([', self.html)
         self.assertIn('"breakouts"', self.html)
         self.assertIn('"good_buys"', self.html)
+        self.assertIn('"under_the_radar"', self.html)
         self.assertIn('"group_products"', self.html)
         self.assertIn('/tracking/items/resolve', self.html)
         self.assertIn('/browse_species?query=', self.html)

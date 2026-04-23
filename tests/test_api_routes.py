@@ -361,13 +361,14 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("COALESCE(roc_7d_pct, 0) <= 6.0", sql)
         self.assertIn("COALESCE(price_vs_sma90_pct, 0) <= 20.0", sql)
         self.assertIn("recent_price_points >= 3", sql)
-        self.assertIn("floor_observations_7d >= 4", sql)
-        self.assertIn("<= 12.0", sql)
+        self.assertIn("floor_observations_7d >= 5", sql)
+        self.assertIn("<= 10.0", sql)
         self.assertIn("latest_price >= 80.0", sql)
         self.assertIn("COALESCE(price_vs_sma30_pct, 0) >= -12.0", sql)
-        self.assertIn("COALESCE(price_vs_sma30_pct, 0) <= 4.0", sql)
+        self.assertIn("COALESCE(price_vs_sma30_pct, 0) <= 2.5", sql)
         self.assertIn("FROM screener_snapshot", sql)
         self.assertIn("ORDER BY", sql)
+        self.assertIn("COALESCE(recent_distinct_prices_30d, 0) DESC", sql)
 
     def test_good_buys_keeps_premium_pullbacks_near_support(self):
         with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
@@ -379,13 +380,13 @@ class ApiRouteTests(unittest.TestCase):
 
         sql = q_mock.call_args[0][0]
         self.assertIn("latest_price >= 80.0", sql)
-        self.assertIn("COALESCE(roc_30d_pct, 0) <= 12.0", sql)
+        self.assertIn("COALESCE(roc_30d_pct, 0) <= 0.0", sql)
         self.assertIn("COALESCE(roc_90d_pct, 0) <= 35.0", sql)
         self.assertIn("COALESCE(roc_365d_pct, 0) <= 120.0", sql)
-        self.assertIn("COALESCE(roc_7d_pct, 0) <= 2.5", sql)
+        self.assertIn("COALESCE(roc_7d_pct, 0) <= 2.0", sql)
         self.assertIn("COALESCE(price_vs_sma90_pct, 0) <= 20.0", sql)
         self.assertIn("COALESCE(price_vs_sma30_pct, 0) >= -12.0", sql)
-        self.assertIn("COALESCE(price_vs_sma30_pct, 0) <= 4.0", sql)
+        self.assertIn("COALESCE(price_vs_sma30_pct, 0) <= 2.5", sql)
         self.assertIn("COALESCE(roc_7d_pct, 0) < 0", sql)
 
     def test_good_buys_can_switch_to_sealed(self):
@@ -423,6 +424,37 @@ class ApiRouteTests(unittest.TestCase):
         sql = q_mock.call_args[0][0]
         self.assertIn("FROM prices_source", sql)
         self.assertIn("fw.floor_observations", sql)
+
+    def test_top_movers_defaults_require_stronger_recent_activity(self):
+        with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(
+            api, "product_signal_from", return_value="product_signal_snapshot"
+        ), patch.object(api, "category_config", return_value=api.category_config(3)):
+            api.top_movers(category_id=3)
+
+        sql = q_mock.call_args[0][0]
+        self.assertIn("COALESCE(top_mover_signal_days, 0) >= 4", sql)
+        self.assertIn("COALESCE(top_mover_recent_observations, 0) >= 5", sql)
+        self.assertIn("COALESCE(top_mover_recent_distinct_prices, 0) >= 4", sql)
+        self.assertIn("top_mover_last_change_date >= latest_date - INTERVAL 3 DAY", sql)
+        self.assertIn("ORDER BY", sql)
+        self.assertIn("top_mover_recent_distinct_prices DESC", sql)
+        self.assertIn("top_mover_signal_days DESC", sql)
+
+    def test_top_movers_live_query_uses_quality_tiebreakers(self):
+        with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(
+            api, "prices_from", return_value="prices_source"
+        ), patch.object(api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"), patch.object(
+            api, "category_config", return_value=api.category_config(3)
+        ):
+            api.top_movers(category_id=3, recent_variation_window_days=10)
+
+        sql = q_mock.call_args[0][0]
+        self.assertIn("COALESCE(rv.recent_observations, 0) >= 5", sql)
+        self.assertIn("COALESCE(rv.recent_distinct_prices, 0) >= 4", sql)
+        self.assertIn("ra.last_change_date >= (SELECT max_date FROM d) - INTERVAL 3 DAY", sql)
+        self.assertIn("ORDER BY", sql)
+        self.assertIn("rv.recent_distinct_prices DESC", sql)
+        self.assertIn("a.signal_days DESC", sql)
 
     def test_time_to_buy_uses_recent_variance_floor_logic(self):
         with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
@@ -490,7 +522,9 @@ class ApiRouteTests(unittest.TestCase):
     def test_breakouts_honors_product_kind_filter(self):
         with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(
             api, "prices_from", return_value="prices_source"
-        ), patch.object(api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"), patch.object(
+        ), patch.object(api, "product_signal_from", return_value="product_signal_snapshot"), patch.object(
+            api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"
+        ), patch.object(
             api, "category_config", return_value=api.category_config(85)
         ):
             api.breakouts(product_kind="card", category_id=85)
@@ -498,6 +532,22 @@ class ApiRouteTests(unittest.TestCase):
         sql = q_mock.call_args[0][0]
         self.assertIn("AND m.productKind = 'card'", sql)
         self.assertIn("recent_distinct_prices_30d", sql)
+        self.assertIn("COALESCE(ls.hold_days, 0) <= 7", sql)
+        self.assertIn("FROM product_signal_snapshot", sql)
+
+    def test_breakouts_excludes_established_sma30_holds(self):
+        with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(
+            api, "prices_from", return_value="prices_source"
+        ), patch.object(api, "product_signal_from", return_value="product_signal_snapshot"), patch.object(
+            api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"
+        ), patch.object(
+            api, "category_config", return_value=api.category_config(85)
+        ):
+            api.breakouts(category_id=85, max_hold_days=7)
+
+        sql = q_mock.call_args[0][0]
+        self.assertIn("COALESCE(ls.hold_days, 0) <= 7", sql)
+        self.assertIn("LEFT JOIN latest_signal ls", sql)
 
     def test_early_uptrends_prefers_quiet_names_just_starting_to_lift(self):
         with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(
@@ -507,16 +557,73 @@ class ApiRouteTests(unittest.TestCase):
 
         sql = q_mock.call_args[0][0]
         self.assertIn("COALESCE(s.roc_7d_pct, 0) >= 1.0", sql)
-        self.assertIn("COALESCE(s.roc_7d_pct, 0) <= 10.0", sql)
-        self.assertIn("COALESCE(s.roc_30d_pct, 0) <= 12.0", sql)
-        self.assertIn("COALESCE(s.roc_90d_pct, 0) <= 25.0", sql)
+        self.assertIn("COALESCE(s.roc_7d_pct, 0) <= 7.0", sql)
+        self.assertIn("COALESCE(s.roc_30d_pct, 0) <= 8.0", sql)
+        self.assertIn("COALESCE(s.roc_90d_pct, 0) <= 20.0", sql)
         self.assertIn("COALESCE(s.acceleration_7d_vs_30d, 0) >= 0.5", sql)
+        self.assertIn("COALESCE(s.recent_observations_7d, 0) >= 4", sql)
+        self.assertIn("COALESCE(s.hold_days, 0) <= 10", sql)
+        self.assertIn("s.cross_date >= s.latest_date - INTERVAL 14 DAY", sql)
         self.assertIn("s.recent_price_points >= 3", sql)
         self.assertIn("s.latest_price_1d > s.latest_price_2d", sql)
         self.assertIn("s.latest_price_2d > s.latest_price_3d", sql)
         self.assertIn("FROM screener_snapshot s", sql)
-        self.assertIn("ORDER BY s.acceleration_7d_vs_30d DESC, pct_vs_sma30 ASC, s.roc_30d_pct ASC, s.latest_price DESC", sql)
+        self.assertIn("ORDER BY", sql)
+        self.assertIn("pct_vs_sma30 ASC", sql)
+        self.assertIn("s.roc_7d_pct ASC", sql)
+        self.assertIn("s.acceleration_7d_vs_30d DESC", sql)
+        self.assertIn("s.recent_distinct_prices_7d DESC", sql)
         self.assertIn("<= 8.0", sql)
+
+    def test_early_uptrends_live_query_requires_fresh_cross_and_short_hold(self):
+        with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(
+            api, "screener_snapshot_from", side_effect=api.HTTPException(status_code=404, detail="missing")
+        ), patch.object(api, "product_signal_from", return_value="product_signal_snapshot"), patch.object(
+            api, "prices_from", return_value="prices_source"
+        ), patch.object(api, "category_config", return_value=api.category_config(3)):
+            api.early_uptrends(category_id=3)
+
+        sql = q_mock.call_args[0][0]
+        self.assertIn("COALESCE(s.hold_days, 0) <= 10", sql)
+        self.assertIn("s.cross_date >= s.latest_date - INTERVAL 14 DAY", sql)
+        self.assertIn("rl.latest_price_1d > rl.latest_price_2d", sql)
+        self.assertIn("rl.latest_price_2d > rl.latest_price_3d", sql)
+
+    def test_under_the_radar_prefers_quiet_bases_with_fresh_lift(self):
+        with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(
+            api, "screener_snapshot_from", return_value="screener_snapshot"
+        ), patch.object(api, "category_config", return_value=api.category_config(3)):
+            api.under_the_radar(category_id=3)
+
+        sql = q_mock.call_args[0][0]
+        self.assertIn("COALESCE(s.hold_days, 0) <= 7", sql)
+        self.assertIn("s.cross_date >= s.latest_date - INTERVAL 14 DAY", sql)
+        self.assertIn("COALESCE(s.roc_7d_pct, 0) >= 2.0", sql)
+        self.assertIn("COALESCE(s.roc_7d_pct, 0) <= 8.0", sql)
+        self.assertIn("COALESCE(s.roc_30d_pct, 0) <= 8.0", sql)
+        self.assertIn("COALESCE(s.roc_90d_pct, 0) <= 15.0", sql)
+        self.assertIn("COALESCE(s.acceleration_7d_vs_30d, 0) >= 2.0", sql)
+        self.assertIn("COALESCE(s.recent_observations_7d, 0) >= 4", sql)
+        self.assertIn("COALESCE(rac.above30_crosses_180d, 0) <= 5", sql)
+        self.assertIn("ORDER BY", sql)
+        self.assertIn("s.roc_30d_pct ASC", sql)
+        self.assertIn("s.roc_90d_pct ASC", sql)
+        self.assertIn("pct_vs_sma30 ASC", sql)
+
+    def test_under_the_radar_live_query_uses_recent_lift_checks(self):
+        with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(
+            api, "screener_snapshot_from", side_effect=api.HTTPException(status_code=404, detail="missing")
+        ), patch.object(api, "product_signal_from", return_value="product_signal_snapshot"), patch.object(
+            api, "prices_from", return_value="prices_source"
+        ), patch.object(api, "category_config", return_value=api.category_config(3)):
+            api.under_the_radar(category_id=3)
+
+        sql = q_mock.call_args[0][0]
+        self.assertIn("COALESCE(s.hold_days, 0) <= 7", sql)
+        self.assertIn("s.cross_date >= s.latest_date - INTERVAL 14 DAY", sql)
+        self.assertIn("COALESCE(rac.above30_crosses_180d, 0) <= 5", sql)
+        self.assertIn("rl.latest_price_1d > rl.latest_price_2d", sql)
+        self.assertIn("rl.latest_price_2d > rl.latest_price_3d", sql)
 
     def test_time_to_buy_returns_available_browse_set_filters(self):
         cols = ["productName", "groupName", "rarity", "subTypeName", "productId"]

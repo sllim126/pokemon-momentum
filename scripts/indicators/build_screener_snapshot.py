@@ -200,8 +200,10 @@ def main() -> int:
                 s.subTypeName,
                 ROW_NUMBER() OVER (
                     ORDER BY
-                        s.acceleration_7d_vs_30d DESC,
                         s.price_vs_sma30_pct ASC,
+                        s.roc_7d_pct ASC,
+                        s.acceleration_7d_vs_30d DESC,
+                        s.recent_distinct_prices_7d DESC,
                         s.roc_30d_pct ASC,
                         s.latest_price DESC
                 ) AS early_uptrends_default_rank
@@ -209,27 +211,66 @@ def main() -> int:
             WHERE s.latest_price >= 5.0
               AND s.early_streak >= 3
               AND s.latest_sma30 IS NOT NULL
-              AND COALESCE(s.recent_observations_7d, 0) >= 3
+              AND COALESCE(s.recent_observations_7d, 0) >= 4
               AND COALESCE(s.recent_distinct_prices_7d, 0) >= 2
               AND COALESCE(s.recent_distinct_prices_30d, 0) >= 10
               AND s.last_change_date IS NOT NULL
               AND s.last_change_date >= s.latest_date - INTERVAL 5 DAY
               AND COALESCE(s.roc_7d_pct, 0) >= 1.0
-              AND COALESCE(s.roc_7d_pct, 0) <= 10.0
-              AND COALESCE(s.roc_30d_pct, 0) <= 12.0
-              AND COALESCE(s.roc_90d_pct, 0) <= 25.0
+              AND COALESCE(s.roc_7d_pct, 0) <= 7.0
+              AND COALESCE(s.roc_30d_pct, 0) <= 8.0
+              AND COALESCE(s.roc_90d_pct, 0) <= 20.0
               AND COALESCE(s.acceleration_7d_vs_30d, 0) >= 0.5
               AND s.recent_price_points >= 3
               AND s.latest_price_1d > s.latest_price_2d
               AND s.latest_price_2d > s.latest_price_3d
               AND COALESCE(s.price_vs_sma30_pct, 0) <= 8.0
+        ),
+        under_the_radar_ranked AS (
+            SELECT
+                s.productId,
+                s.groupId,
+                s.subTypeName,
+                ROW_NUMBER() OVER (
+                    ORDER BY
+                        s.roc_30d_pct ASC,
+                        s.roc_90d_pct ASC,
+                        s.price_vs_sma30_pct ASC,
+                        s.roc_7d_pct ASC,
+                        s.acceleration_7d_vs_30d DESC,
+                        s.recent_distinct_prices_7d DESC,
+                        s.latest_price DESC
+                ) AS under_the_radar_default_rank
+            FROM enriched s
+            WHERE s.latest_price >= 5.0
+              AND s.early_streak >= 3
+              AND s.latest_sma30 IS NOT NULL
+              AND COALESCE(s.hold_days, 0) <= 7
+              AND s.cross_date IS NOT NULL
+              AND s.cross_date >= s.latest_date - INTERVAL 14 DAY
+              AND COALESCE(s.recent_observations_7d, 0) >= 4
+              AND COALESCE(s.recent_distinct_prices_7d, 0) >= 2
+              AND COALESCE(s.recent_distinct_prices_30d, 0) >= 10
+              AND s.last_change_date IS NOT NULL
+              AND s.last_change_date >= s.latest_date - INTERVAL 5 DAY
+              AND COALESCE(s.roc_7d_pct, 0) >= 2.0
+              AND COALESCE(s.roc_7d_pct, 0) <= 8.0
+              AND COALESCE(s.roc_30d_pct, 0) <= 8.0
+              AND COALESCE(s.roc_90d_pct, 0) <= 15.0
+              AND COALESCE(s.acceleration_7d_vs_30d, 0) >= 2.0
+              AND s.recent_price_points >= 3
+              AND s.latest_price_1d > s.latest_price_2d
+              AND s.latest_price_2d > s.latest_price_3d
+              AND COALESCE(s.price_vs_sma30_pct, 0) <= 5.0
         )
         SELECT
             e.*,
             CASE WHEN gb.good_buys_default_rank IS NULL THEN 0 ELSE 1 END AS good_buys_default_flag,
             gb.good_buys_default_rank,
             CASE WHEN eu.early_uptrends_default_rank IS NULL THEN 0 ELSE 1 END AS early_uptrends_default_flag,
-            eu.early_uptrends_default_rank
+            eu.early_uptrends_default_rank,
+            CASE WHEN ur.under_the_radar_default_rank IS NULL THEN 0 ELSE 1 END AS under_the_radar_default_flag,
+            ur.under_the_radar_default_rank
         FROM enriched e
         LEFT JOIN good_buys_ranked gb
           ON gb.productId = e.productId
@@ -239,6 +280,10 @@ def main() -> int:
           ON eu.productId = e.productId
          AND eu.groupId = e.groupId
          AND eu.subTypeName = e.subTypeName
+        LEFT JOIN under_the_radar_ranked ur
+          ON ur.productId = e.productId
+         AND ur.groupId = e.groupId
+         AND ur.subTypeName = e.subTypeName
         """
     )
 
@@ -247,7 +292,7 @@ def main() -> int:
         COPY (
             SELECT *
             FROM {table_name}
-            ORDER BY COALESCE(good_buys_default_rank, 999999), COALESCE(early_uptrends_default_rank, 999999), trend_score DESC
+            ORDER BY COALESCE(under_the_radar_default_rank, 999999), COALESCE(good_buys_default_rank, 999999), COALESCE(early_uptrends_default_rank, 999999), trend_score DESC
         ) TO '{out_csv}' WITH (HEADER, DELIMITER ',')
         """
     )

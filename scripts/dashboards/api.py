@@ -91,9 +91,17 @@ IMAGE_DIR_CANDIDATES = [
     Path("/opt/pokemon-momentum/images"),
     Path.cwd() / "images",
 ]
-MS_SCRIPTS_ROOT = Path("/app/MS_Scripts")
-if str(MS_SCRIPTS_ROOT) not in sys.path:
-    sys.path.insert(0, str(MS_SCRIPTS_ROOT))
+MS_SCRIPTS_ROOT_CANDIDATES = [
+    Path("/app/MS_Scripts"),
+    SCRIPT_DIR.parents[2] / "MS_Scripts",
+    Path("/opt/pokemon-momentum/MS_Scripts"),
+]
+for ms_scripts_root in MS_SCRIPTS_ROOT_CANDIDATES:
+    if ms_scripts_root.exists():
+        ms_scripts_root_str = str(ms_scripts_root)
+        if ms_scripts_root_str not in sys.path:
+            sys.path.insert(0, ms_scripts_root_str)
+        break
 
 from processor.utilities.pokemon_eodhistoricaldata_api import EodApi as PokemonEodApi
 
@@ -3941,14 +3949,14 @@ def good_buys(
     max_price_vs_sma90_pct: float = 20.0,
     min_recent_distinct_prices_30d: int = 10,
     floor_days: int = 7,
-    min_floor_observations: int = 4,
-    max_floor_variance_pct: float = 12.0,
+    min_floor_observations: int = 5,
+    max_floor_variance_pct: float = 10.0,
     premium_pullback_min_price: float = 80.0,
-    premium_pullback_max_30d_pct: float = 12.0,
+    premium_pullback_max_30d_pct: float = 0.0,
     premium_pullback_max_90d_pct: float = 35.0,
-    premium_pullback_max_7d_pct: float = 2.5,
+    premium_pullback_max_7d_pct: float = 2.0,
     premium_pullback_min_price_vs_sma30_pct: float = -12.0,
-    premium_pullback_max_price_vs_sma30_pct: float = 4.0,
+    premium_pullback_max_price_vs_sma30_pct: float = 2.5,
     exclude_prize_packs: bool = False,
     product_kind: str | None = None,
     category_id: int = 3,
@@ -4059,10 +4067,11 @@ def good_buys(
              AND COALESCE(floor_variance_to_current_pct_7d, 999999.0) <= {max_floor_variance_pct}
             THEN 0 ELSE 1
           END ASC,
+          COALESCE(floor_variance_to_current_pct_7d, 999999.0) ASC,
           ABS(COALESCE(roc_7d_pct, 0) + 6.0) ASC,
           ABS(COALESCE(price_vs_sma30_pct, 0) + 4.0) ASC,
+          COALESCE(recent_distinct_prices_30d, 0) DESC,
           roc_7d_pct ASC,
-          COALESCE(floor_variance_to_current_pct_7d, 999999.0) ASC,
           roc_30d_pct ASC,
           price_vs_sma30_pct ASC,
           latest_price DESC
@@ -4228,13 +4237,14 @@ def good_buys(
          ) <= {max_floor_variance_pct}
         THEN 0 ELSE 1
       END ASC,
-      ABS(COALESCE(roc_7d_pct, 0) + 6.0) ASC,
-      ABS(COALESCE(price_vs_sma30_pct, 0) + 4.0) ASC,
-      roc_7d_pct ASC,
       GREATEST(
         ABS(((fw.floor_high / NULLIF(latest_price, 0)) - 1) * 100.0),
         ABS(((fw.floor_low / NULLIF(latest_price, 0)) - 1) * 100.0)
       ) ASC,
+      ABS(COALESCE(roc_7d_pct, 0) + 6.0) ASC,
+      ABS(COALESCE(price_vs_sma30_pct, 0) + 4.0) ASC,
+      COALESCE(recent_distinct_prices_30d, 0) DESC,
+      roc_7d_pct ASC,
       roc_30d_pct ASC,
       price_vs_sma30_pct ASC,
       latest_price DESC
@@ -5029,13 +5039,13 @@ def top_movers(
     days: int = 30,
     limit: int = 200,
     min_prior: float = 5.0,
-    min_signal_days: int = 3,
+    min_signal_days: int = 4,
     min_daily_move_pct: float = 1.0,
-    min_recent_observations: int = 4,
-    min_recent_distinct_prices: int = 3,
+    min_recent_observations: int = 5,
+    min_recent_distinct_prices: int = 4,
     recent_variation_window_days: int = 14,
     require_recent_change: bool = True,
-    recent_change_within_days: int = 4,
+    recent_change_within_days: int = 3,
     product_kind: str | None = None,
     category_id: int = 3,
 ):
@@ -5090,7 +5100,11 @@ def top_movers(
               AND top_mover_last_change_date >= latest_date - INTERVAL {recent_change_within_days} DAY
             )
           )
-        ORDER BY roc_30d_pct DESC
+        ORDER BY
+          roc_30d_pct DESC,
+          top_mover_recent_distinct_prices DESC,
+          top_mover_signal_days DESC,
+          latest_price DESC
         LIMIT {limit}
         """
         cols, rows = q(sql)
@@ -5258,7 +5272,11 @@ def top_movers(
           AND ra.last_change_date >= (SELECT max_date FROM d) - INTERVAL {recent_change_within_days} DAY
         )
       )
-    ORDER BY roc_pct DESC
+    ORDER BY
+      roc_pct DESC,
+      rv.recent_distinct_prices DESC,
+      a.signal_days DESC,
+      b.p_now DESC
     LIMIT {limit}
     """
 
@@ -5274,12 +5292,15 @@ def breakouts(
     min_breakout_pct: float = 1.0,
     recent_change_within_days: int = 5,
     min_recent_distinct_prices_30d: int = 10,
+    max_hold_days: int = 7,
     product_kind: str | None = None,
     category_id: int = 3,
 ):
     category = category_config(category_id)
     price_source = prices_from(category.category_id)
+    signal_source = product_signal_from(category.category_id)
     metadata_cte = build_metadata_cte(category.category_id, include_classification=True, cte_name="metadata")
+    max_hold_days = max(1, min(max_hold_days, 30))
     product_kind_filter = ""
     if product_kind in {"card", "sealed"}:
         product_kind_filter = f"AND m.productKind = '{product_kind}'"
@@ -5366,6 +5387,16 @@ def breakouts(
         WHERE b.date >= l.latest_date - INTERVAL 30 DAY
         GROUP BY b.productId, b.groupId, b.subTypeName
     ),
+    latest_signal AS (
+        SELECT
+            productId,
+            groupId,
+            subTypeName,
+            hold_days
+        FROM {signal_source}
+        WHERE categoryId = {category.category_id}
+          AND latest_date = (SELECT MAX(latest_date) FROM {signal_source})
+    ),
     {metadata_cte}
     SELECT
         w.productId,
@@ -5381,6 +5412,7 @@ def breakouts(
         w.marketPrice AS latest_price,
         ph.prior_high_n AS prior_high_window,
         ((w.marketPrice / NULLIF(ph.prior_high_n, 0)) - 1) * 100.0 AS breakout_pct,
+        ls.hold_days,
         ph.last_change_date,
         ra.recent_observations_30d,
         ra.recent_distinct_prices_30d
@@ -5397,6 +5429,10 @@ def breakouts(
       ON w.productId = ra.productId
      AND w.groupId = ra.groupId
      AND w.subTypeName = ra.subTypeName
+    LEFT JOIN latest_signal ls
+      ON w.productId = ls.productId
+     AND w.groupId = ls.groupId
+     AND w.subTypeName = ls.subTypeName
     LEFT JOIN metadata m
       ON m.productId = w.productId
      AND m.groupId = w.groupId
@@ -5407,6 +5443,7 @@ def breakouts(
       AND ((w.marketPrice / NULLIF(ph.prior_high_n, 0)) - 1) * 100.0 >= {min_breakout_pct}
       AND ph.last_change_date >= w.latest_date - INTERVAL {recent_change_within_days} DAY
       AND ra.recent_distinct_prices_30d >= {min_recent_distinct_prices_30d}
+      AND COALESCE(ls.hold_days, 0) <= {max_hold_days}
       {product_kind_filter}
     ORDER BY breakout_pct DESC, w.marketPrice DESC
     LIMIT {limit}
@@ -5512,20 +5549,23 @@ def confirmed_uptrends(
     return {"columns": cols, "rows": rows}
 
 
-@app.get("/early_uptrends")
-def early_uptrends(
+@app.get("/under_the_radar")
+def under_the_radar(
     days_required: int = 3,
     limit: int = 200,
     min_price: float = 5.0,
-    max_price_vs_sma30_pct: float = 8.0,
-    min_7d_pct: float = 1.0,
-    max_7d_pct: float = 10.0,
-    max_30d_pct: float = 12.0,
-    max_90d_pct: float = 25.0,
-    min_acceleration_7d_vs_30d: float = 0.5,
+    max_price_vs_sma30_pct: float = 5.0,
+    min_7d_pct: float = 2.0,
+    max_7d_pct: float = 8.0,
+    max_30d_pct: float = 8.0,
+    max_90d_pct: float = 15.0,
+    min_acceleration_7d_vs_30d: float = 2.0,
     min_recent_distinct_prices_30d: int = 10,
-    min_recent_observations: int = 3,
+    min_recent_observations: int = 4,
     recent_change_within_days: int = 5,
+    max_hold_days: int = 7,
+    recent_cross_within_days: int = 14,
+    max_above30_crosses_180d: int = 5,
     product_kind: str | None = None,
     category_id: int = 3,
 ):
@@ -5534,6 +5574,309 @@ def early_uptrends(
     min_recent_distinct_prices_30d = max(2, min(min_recent_distinct_prices_30d, 30))
     min_recent_observations = max(2, min(min_recent_observations, 10))
     recent_change_within_days = max(1, min(recent_change_within_days, 15))
+    max_hold_days = max(1, min(max_hold_days, 30))
+    recent_cross_within_days = max(1, min(recent_cross_within_days, 30))
+    max_above30_crosses_180d = max(1, min(max_above30_crosses_180d, 20))
+    category = category_config(category_id)
+    use_snapshot = True
+    try:
+        source = screener_snapshot_from(category.category_id)
+    except HTTPException:
+        use_snapshot = False
+        source = product_signal_from(category.category_id)
+    price_source = prices_from(category.category_id)
+    product_kind_filter = ""
+    if product_kind in {"card", "sealed"}:
+        product_kind_filter = f"AND productKind = '{product_kind}'"
+    if use_snapshot:
+        sql = f"""
+    WITH recent_prices AS (
+      SELECT
+        date,
+        productId,
+        groupId,
+        subTypeName,
+        marketPrice,
+        AVG(marketPrice) OVER (
+          PARTITION BY productId, groupId, subTypeName
+          ORDER BY date
+          ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
+        ) AS sma_30
+      FROM {price_source}
+      WHERE categoryId = {category.category_id}
+        AND marketPrice IS NOT NULL
+        AND date >= (SELECT MAX(latest_date) FROM {source}) - INTERVAL 240 DAY
+    ),
+    above30_state AS (
+      SELECT
+        date,
+        productId,
+        groupId,
+        subTypeName,
+        CASE WHEN sma_30 IS NOT NULL AND marketPrice > sma_30 THEN 1 ELSE 0 END AS above30,
+        LAG(CASE WHEN sma_30 IS NOT NULL AND marketPrice > sma_30 THEN 1 ELSE 0 END) OVER (
+          PARTITION BY productId, groupId, subTypeName
+          ORDER BY date
+        ) AS prev_above30
+      FROM recent_prices
+    ),
+    recent_above30_crosses AS (
+      SELECT
+        productId,
+        groupId,
+        subTypeName,
+        COUNT(*) FILTER (
+          WHERE date >= (SELECT MAX(latest_date) FROM {source}) - INTERVAL 180 DAY
+            AND above30 = 1
+            AND COALESCE(prev_above30, 0) = 0
+        ) AS above30_crosses_180d
+      FROM above30_state
+      GROUP BY productId, groupId, subTypeName
+    )
+    SELECT
+        s.productId,
+        s.groupId,
+        s.subTypeName,
+        s.groupName,
+        s.productName,
+        s.imageUrl,
+        s.rarity,
+        s.number,
+        s.early_streak,
+        s.cross_date,
+        s.hold_days,
+        s.recent_observations_7d AS recent_observations,
+        s.recent_distinct_prices_7d,
+        s.recent_distinct_prices_30d,
+        s.last_change_date,
+        s.latest_price,
+        s.roc_7d_pct,
+        s.roc_30d_pct,
+        s.roc_90d_pct,
+        s.acceleration_7d_vs_30d,
+        s.latest_sma3,
+        s.latest_sma7,
+        s.latest_sma30,
+        s.latest_price_1d,
+        s.latest_price_2d,
+        s.latest_price_3d,
+        rac.above30_crosses_180d,
+        CASE WHEN latest_sma30 IS NULL OR latest_sma30 = 0 THEN NULL
+             ELSE ((latest_price / latest_sma30) - 1) * 100 END AS pct_vs_sma30
+    FROM {source} s
+    LEFT JOIN recent_above30_crosses rac
+      ON rac.productId = s.productId
+     AND rac.groupId = s.groupId
+     AND rac.subTypeName = s.subTypeName
+    WHERE s.categoryId = {category.category_id}
+      AND s.latest_date = (SELECT MAX(latest_date) FROM {source})
+      AND s.latest_price >= {min_price}
+      AND s.early_streak >= {days_required}
+      AND s.latest_sma30 IS NOT NULL
+      AND COALESCE(s.hold_days, 0) <= {max_hold_days}
+      AND s.cross_date IS NOT NULL
+      AND s.cross_date >= s.latest_date - INTERVAL {recent_cross_within_days} DAY
+      AND COALESCE(s.recent_observations_7d, 0) >= {min_recent_observations}
+      AND COALESCE(s.recent_distinct_prices_7d, 0) >= 2
+      AND COALESCE(s.recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
+      AND s.last_change_date IS NOT NULL
+      AND s.last_change_date >= s.latest_date - INTERVAL {recent_change_within_days} DAY
+      AND COALESCE(s.roc_7d_pct, 0) >= {min_7d_pct}
+      AND COALESCE(s.roc_7d_pct, 0) <= {max_7d_pct}
+      AND COALESCE(s.roc_30d_pct, 0) <= {max_30d_pct}
+      AND COALESCE(s.roc_90d_pct, 0) <= {max_90d_pct}
+      AND COALESCE(s.acceleration_7d_vs_30d, 0) >= {min_acceleration_7d_vs_30d}
+      AND s.recent_price_points >= 3
+      AND s.latest_price_1d > s.latest_price_2d
+      AND s.latest_price_2d > s.latest_price_3d
+      AND ((s.latest_price / NULLIF(s.latest_sma30, 0)) - 1) * 100 <= {max_price_vs_sma30_pct}
+      AND COALESCE(rac.above30_crosses_180d, 0) <= {max_above30_crosses_180d}
+      {product_kind_filter}
+    ORDER BY
+      s.roc_30d_pct ASC,
+      s.roc_90d_pct ASC,
+      pct_vs_sma30 ASC,
+      s.roc_7d_pct ASC,
+      s.acceleration_7d_vs_30d DESC,
+      s.recent_distinct_prices_7d DESC,
+      s.latest_price DESC
+    LIMIT {limit}
+    """
+    else:
+        sql = f"""
+    WITH recent_prices AS (
+      SELECT
+        date,
+        productId,
+        groupId,
+        subTypeName,
+        marketPrice,
+        ROW_NUMBER() OVER (
+          PARTITION BY productId, groupId, subTypeName
+          ORDER BY date DESC
+        ) AS rn
+      FROM {price_source}
+      WHERE categoryId = {category.category_id}
+        AND marketPrice IS NOT NULL
+        AND date >= (SELECT MAX(latest_date) FROM {source}) - INTERVAL 240 DAY
+    ),
+    above30_windows AS (
+      SELECT
+        date,
+        productId,
+        groupId,
+        subTypeName,
+        marketPrice,
+        AVG(marketPrice) OVER (
+          PARTITION BY productId, groupId, subTypeName
+          ORDER BY date
+          ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
+        ) AS sma_30
+      FROM recent_prices
+    ),
+    above30_state AS (
+      SELECT
+        date,
+        productId,
+        groupId,
+        subTypeName,
+        CASE WHEN sma_30 IS NOT NULL AND marketPrice > sma_30 THEN 1 ELSE 0 END AS above30,
+        LAG(CASE WHEN sma_30 IS NOT NULL AND marketPrice > sma_30 THEN 1 ELSE 0 END) OVER (
+          PARTITION BY productId, groupId, subTypeName
+          ORDER BY date
+        ) AS prev_above30
+      FROM above30_windows
+    ),
+    recent_above30_crosses AS (
+      SELECT
+        productId,
+        groupId,
+        subTypeName,
+        COUNT(*) FILTER (
+          WHERE date >= (SELECT MAX(latest_date) FROM {source}) - INTERVAL 180 DAY
+            AND above30 = 1
+            AND COALESCE(prev_above30, 0) = 0
+        ) AS above30_crosses_180d
+      FROM above30_state
+      GROUP BY productId, groupId, subTypeName
+    ),
+    recent_lift AS (
+      SELECT
+        productId,
+        groupId,
+        subTypeName,
+        MAX(CASE WHEN rn = 1 THEN marketPrice END) AS latest_price_1d,
+        MAX(CASE WHEN rn = 2 THEN marketPrice END) AS latest_price_2d,
+        MAX(CASE WHEN rn = 3 THEN marketPrice END) AS latest_price_3d,
+        COUNT(*) FILTER (WHERE rn <= 3) AS recent_price_points
+      FROM recent_prices
+      WHERE rn <= 3
+      GROUP BY productId, groupId, subTypeName
+    )
+    SELECT
+        s.productId,
+        s.groupId,
+        s.subTypeName,
+        s.groupName,
+        s.productName,
+        s.imageUrl,
+        s.rarity,
+        s.number,
+        s.early_streak,
+        s.cross_date,
+        s.hold_days,
+        s.recent_observations_7d AS recent_observations,
+        s.recent_distinct_prices_7d,
+        s.recent_distinct_prices_30d,
+        s.last_change_date,
+        s.latest_price,
+        s.roc_7d_pct,
+        s.roc_30d_pct,
+        s.roc_90d_pct,
+        s.acceleration_7d_vs_30d,
+        s.latest_sma3,
+        s.latest_sma7,
+        s.latest_sma30,
+        rl.latest_price_1d,
+        rl.latest_price_2d,
+        rl.latest_price_3d,
+        rac.above30_crosses_180d,
+        CASE WHEN latest_sma30 IS NULL OR latest_sma30 = 0 THEN NULL
+             ELSE ((latest_price / latest_sma30) - 1) * 100 END AS pct_vs_sma30
+    FROM {source} s
+    JOIN recent_lift rl
+      ON rl.productId = s.productId
+     AND rl.groupId = s.groupId
+     AND rl.subTypeName = s.subTypeName
+    LEFT JOIN recent_above30_crosses rac
+      ON rac.productId = s.productId
+     AND rac.groupId = s.groupId
+     AND rac.subTypeName = s.subTypeName
+    WHERE s.categoryId = {category.category_id}
+      AND s.latest_date = (SELECT MAX(latest_date) FROM {source})
+      AND s.latest_price >= {min_price}
+      AND s.early_streak >= {days_required}
+      AND s.latest_sma30 IS NOT NULL
+      AND COALESCE(s.hold_days, 0) <= {max_hold_days}
+      AND s.cross_date IS NOT NULL
+      AND s.cross_date >= s.latest_date - INTERVAL {recent_cross_within_days} DAY
+      AND COALESCE(s.recent_observations_7d, 0) >= {min_recent_observations}
+      AND COALESCE(s.recent_distinct_prices_7d, 0) >= 2
+      AND COALESCE(s.recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
+      AND s.last_change_date IS NOT NULL
+      AND s.last_change_date >= s.latest_date - INTERVAL {recent_change_within_days} DAY
+      AND COALESCE(s.roc_7d_pct, 0) >= {min_7d_pct}
+      AND COALESCE(s.roc_7d_pct, 0) <= {max_7d_pct}
+      AND COALESCE(s.roc_30d_pct, 0) <= {max_30d_pct}
+      AND COALESCE(s.roc_90d_pct, 0) <= {max_90d_pct}
+      AND COALESCE(s.acceleration_7d_vs_30d, 0) >= {min_acceleration_7d_vs_30d}
+      AND rl.recent_price_points >= 3
+      AND rl.latest_price_1d > rl.latest_price_2d
+      AND rl.latest_price_2d > rl.latest_price_3d
+      AND ((s.latest_price / NULLIF(s.latest_sma30, 0)) - 1) * 100 <= {max_price_vs_sma30_pct}
+      AND COALESCE(rac.above30_crosses_180d, 0) <= {max_above30_crosses_180d}
+      {product_kind_filter}
+    ORDER BY
+      s.roc_30d_pct ASC,
+      s.roc_90d_pct ASC,
+      pct_vs_sma30 ASC,
+      s.roc_7d_pct ASC,
+      s.acceleration_7d_vs_30d DESC,
+      s.recent_distinct_prices_7d DESC,
+      s.latest_price DESC
+    LIMIT {limit}
+    """
+
+    cols, rows = q(sql)
+    return {"columns": cols, "rows": rows}
+
+
+@app.get("/early_uptrends")
+def early_uptrends(
+    days_required: int = 3,
+    limit: int = 200,
+    min_price: float = 5.0,
+    max_price_vs_sma30_pct: float = 8.0,
+    min_7d_pct: float = 1.0,
+    max_7d_pct: float = 7.0,
+    max_30d_pct: float = 8.0,
+    max_90d_pct: float = 20.0,
+    min_acceleration_7d_vs_30d: float = 0.5,
+    min_recent_distinct_prices_30d: int = 10,
+    min_recent_observations: int = 4,
+    recent_change_within_days: int = 5,
+    max_hold_days: int = 10,
+    recent_cross_within_days: int = 14,
+    product_kind: str | None = None,
+    category_id: int = 3,
+):
+    days_required = max(1, min(days_required, 15))
+    limit = max(1, min(limit, 1000))
+    min_recent_distinct_prices_30d = max(2, min(min_recent_distinct_prices_30d, 30))
+    min_recent_observations = max(2, min(min_recent_observations, 10))
+    recent_change_within_days = max(1, min(recent_change_within_days, 15))
+    max_hold_days = max(1, min(max_hold_days, 30))
+    recent_cross_within_days = max(1, min(recent_cross_within_days, 30))
     category = category_config(category_id)
     use_snapshot = True
     try:
@@ -5557,6 +5900,8 @@ def early_uptrends(
         s.rarity,
         s.number,
         s.early_streak,
+        s.cross_date,
+        s.hold_days,
         s.recent_observations_7d AS recent_observations,
         s.recent_distinct_prices_7d,
         s.recent_distinct_prices_30d,
@@ -5580,6 +5925,9 @@ def early_uptrends(
       AND s.latest_price >= {min_price}
       AND s.early_streak >= {days_required}
       AND s.latest_sma30 IS NOT NULL
+      AND COALESCE(s.hold_days, 0) <= {max_hold_days}
+      AND s.cross_date IS NOT NULL
+      AND s.cross_date >= s.latest_date - INTERVAL {recent_cross_within_days} DAY
       AND COALESCE(s.recent_observations_7d, 0) >= {min_recent_observations}
       AND COALESCE(s.recent_distinct_prices_7d, 0) >= 2
       AND COALESCE(s.recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
@@ -5595,7 +5943,13 @@ def early_uptrends(
       AND s.latest_price_2d > s.latest_price_3d
       AND ((s.latest_price / NULLIF(s.latest_sma30, 0)) - 1) * 100 <= {max_price_vs_sma30_pct}
       {product_kind_filter}
-    ORDER BY s.acceleration_7d_vs_30d DESC, pct_vs_sma30 ASC, s.roc_30d_pct ASC, s.latest_price DESC
+    ORDER BY
+      pct_vs_sma30 ASC,
+      s.roc_7d_pct ASC,
+      s.acceleration_7d_vs_30d DESC,
+      s.recent_distinct_prices_7d DESC,
+      s.roc_30d_pct ASC,
+      s.latest_price DESC
     LIMIT {limit}
     """
     else:
@@ -5637,6 +5991,8 @@ def early_uptrends(
         s.rarity,
         s.number,
         s.early_streak,
+        s.cross_date,
+        s.hold_days,
         s.recent_observations_7d AS recent_observations,
         s.recent_distinct_prices_7d,
         s.recent_distinct_prices_30d,
@@ -5664,6 +6020,9 @@ def early_uptrends(
       AND s.latest_price >= {min_price}
       AND s.early_streak >= {days_required}
       AND s.latest_sma30 IS NOT NULL
+      AND COALESCE(s.hold_days, 0) <= {max_hold_days}
+      AND s.cross_date IS NOT NULL
+      AND s.cross_date >= s.latest_date - INTERVAL {recent_cross_within_days} DAY
       AND COALESCE(s.recent_observations_7d, 0) >= {min_recent_observations}
       AND COALESCE(s.recent_distinct_prices_7d, 0) >= 2
       AND COALESCE(s.recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
@@ -5679,7 +6038,13 @@ def early_uptrends(
       AND rl.latest_price_2d > rl.latest_price_3d
       AND ((s.latest_price / NULLIF(s.latest_sma30, 0)) - 1) * 100 <= {max_price_vs_sma30_pct}
       {product_kind_filter}
-    ORDER BY s.acceleration_7d_vs_30d DESC, pct_vs_sma30 ASC, s.roc_30d_pct ASC, s.latest_price DESC
+    ORDER BY
+      pct_vs_sma30 ASC,
+      s.roc_7d_pct ASC,
+      s.acceleration_7d_vs_30d DESC,
+      s.recent_distinct_prices_7d DESC,
+      s.roc_30d_pct ASC,
+      s.latest_price DESC
     LIMIT {limit}
     """
 

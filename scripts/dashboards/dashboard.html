@@ -3495,6 +3495,7 @@
             <div class="hero-tab-group">
               <div class="hero-tab-group-label">Market Momentum</div>
               <div class="tab-bar hero-tab-row">
+                <button type="button" data-tab="under_the_radar">Under the Radar</button>
                 <button type="button" data-tab="early_uptrends">Early Movers</button>
                 <button type="button" data-tab="confirmed_uptrends">Confirmed Movers</button>
                 <button type="button" data-tab="top_movers" class="active">Top Movers</button>
@@ -3505,7 +3506,7 @@
               <div class="hero-tab-group-label">Research Tools</div>
               <div class="tab-bar hero-tab-row">
                 <button type="button" data-tab="breakouts">Breakouts</button>
-                <button type="button" data-tab="good_buys">Good Buys</button>
+                <button type="button" data-tab="good_buys">Pullbacks</button>
                 <button type="button" data-tab="group_signals">Set Strength</button>
                 <button type="button" data-tab="group_products">Browse Set</button>
                 <button type="button" data-tab="browse_species">Browse Species</button>
@@ -3605,7 +3606,7 @@
               <button type="button" class="good-buys-filter-trigger" id="goodBuysFilterTrigger" aria-expanded="false">
                 Filter Sets
               </button>
-              <div class="good-buys-price-filter" aria-label="Good Buys price range">
+              <div class="good-buys-price-filter" aria-label="Pullbacks price range">
                 <label>
                   <span class="field-label">Min Price</span>
                   <input type="number" id="goodBuysMinPriceInput" min="0" step="0.01" inputmode="decimal" placeholder="5.00">
@@ -3625,7 +3626,7 @@
                   <button type="button" class="done" id="goodBuysFilterDone">Done</button>
                 </div>
                 <div class="good-buys-set-list" id="goodBuysSetList">
-                  <div class="status">Set filters load from the current Good Buys results.</div>
+                  <div class="status">Set filters load from the current Pullbacks results.</div>
                 </div>
               </div>
             </div>
@@ -3787,12 +3788,13 @@
     <div class="mobile-indicator-menu" id="mobileIndicatorMenu" hidden>
       <p class="mobile-indicator-title">Choose Indicator</p>
       <div class="mobile-indicator-grid" id="mobileIndicatorGrid">
+        <button type="button" data-indicator-tab="under_the_radar">Under the Radar</button>
         <button type="button" data-indicator-tab="early_uptrends">Early Movers</button>
         <button type="button" data-indicator-tab="confirmed_uptrends">Confirmed Movers</button>
         <button type="button" data-indicator-tab="top_movers">Top Movers</button>
         <button type="button" data-indicator-tab="sma30_holds">Consistent Movers</button>
         <button type="button" data-indicator-tab="breakouts">Breakouts</button>
-        <button type="button" data-indicator-tab="good_buys">Good Buys</button>
+        <button type="button" data-indicator-tab="good_buys">Pullbacks</button>
         <button type="button" data-indicator-tab="group_signals">Set Strength</button>
         <button type="button" data-indicator-tab="group_products">Browse Set</button>
         <button type="button" data-indicator-tab="browse_species">Browse Species</button>
@@ -3985,7 +3987,7 @@
     // These tabs all honor the shared Cards / Sealed segment toggle. Breakouts and Tracked
     // Items both need to be in this set so the toggle actually rebuilds their rows instead of
     // just changing button state.
-    const segmentFilteredTabs = new Set(["top_movers", "sma30_holds", "early_uptrends", "confirmed_uptrends", "breakouts", "good_buys", "time_to_buy", "group_products", "tracked_items"]);
+    const segmentFilteredTabs = new Set(["top_movers", "sma30_holds", "early_uptrends", "confirmed_uptrends", "breakouts", "good_buys", "under_the_radar", "time_to_buy", "group_products", "tracked_items"]);
     const browseSetScopedTabs = new Set(["group_products", "time_to_buy"]);
     let currentGeneration = initialParams.get("generation") || "all";
     let currentTrackedTag = initialParams.get("tracked_tag") || "all";
@@ -4093,8 +4095,9 @@
         copy: "On mobile, the indicator button opens the main research views.",
         points: [
           "Top Movers shows what already moved.",
+          "Under the Radar looks for quiet names that are just starting to wake up.",
           "Early Movers and Confirmed Movers separate early setups from stronger trends.",
-          "Browse Set, Browse Species, Good Buys, and Breakouts are the main research tools."
+          "Browse Set, Browse Species, Pullbacks, and Breakouts are the main research tools."
         ],
         mobileMenuOpen: true,
         mobileCardPosition: "top"
@@ -4137,7 +4140,7 @@
     const tabConfig = {
       // Each tab maps to one API screen plus the columns that should be surfaced in the lower table.
       top_movers: {
-        path: "/top_movers?days=30&limit=120&min_prior=5",
+        path: "/top_movers?days=30&limit=120&min_prior=5&min_signal_days=4&min_recent_observations=5&min_recent_distinct_prices=4&recent_change_within_days=3",
         columns: ["productName", "groupName", "number", "subTypeName", "p_now", "p_prior", "roc_pct"],
         title: "Largest 30-day movers across all tracked cards and products."
       },
@@ -4149,7 +4152,7 @@
       good_buys: {
         path: "/good_buys?limit=120",
         columns: ["productName", "groupName", "number", "rarity", "subTypeName", "latest_price", "roc_7d_pct", "roc_30d_pct", "roc_90d_pct", "price_vs_sma30_pct"],
-        title: "Premium-rarity cards that have been drifting lower and may be entering buyable pullback territory."
+        title: "Premium-rarity cards that have been drifting lower and may be entering attractive pullback territory."
       },
       time_to_buy: {
         path: "/time_to_buy?limit=120&min_price=5&lookback_days=10&min_recent_observations=10&min_recent_distinct_prices_30d=10&max_variance_to_current_pct=10",
@@ -4160,6 +4163,11 @@
         path: "/sma30_holds?days_required=30&limit=120&min_price=5&min_recent_distinct_prices_30d=10",
         columns: ["productName", "groupName", "number", "subTypeName", "cross_date", "hold_days", "recent_distinct_prices_30d", "latest_price", "latest_sma30", "pct_vs_sma30"],
         title: "Names that have held above SMA30 for 30 straight days with real 30-day price movement."
+      },
+      under_the_radar: {
+        path: "/under_the_radar?days_required=3&limit=120&min_price=5&max_price_vs_sma30_pct=5&min_recent_distinct_prices_30d=10",
+        columns: ["productName", "groupName", "number", "subTypeName", "cross_date", "hold_days", "recent_distinct_prices_30d", "latest_price", "roc_7d_pct", "roc_30d_pct", "pct_vs_sma30"],
+        title: "Under the Radar highlights quiet names emerging from flatter bases before the move looks obvious."
       },
       early_uptrends: {
         path: "/early_uptrends?days_required=3&limit=120&min_price=5&max_price_vs_sma30_pct=8&min_recent_distinct_prices_30d=10",
@@ -4195,6 +4203,7 @@
       "top_movers",
       "breakouts",
       "good_buys",
+      "under_the_radar",
       "sma30_holds",
       "early_uptrends",
       "confirmed_uptrends"
@@ -6656,7 +6665,7 @@
     }
 
     function setGoodBuysSetPopoverOpen(open) {
-      // Good Buys set filters now behave like an inspector popout so the screen can stay
+      // Pullbacks set filters now behave like an inspector popout so the screen can stay
       // focused on the results table until the operator explicitly wants to narrow the set list.
       const isOpen = Boolean(open) && currentTab === "good_buys";
       goodBuysSetPopoverOpen = isOpen;
@@ -6676,7 +6685,7 @@
           .filter(Boolean)
       )).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }));
       if (!setNames.length) {
-        goodBuysSetList.innerHTML = `<div class="status">No set filters available for the current Good Buys results.</div>`;
+        goodBuysSetList.innerHTML = `<div class="status">No set filters available for the current Pullbacks results.</div>`;
         currentGoodBuysSets.clear();
         return;
       }

@@ -107,4 +107,10 @@ March 2026
   - TCGplayer links now route through the affiliate wrapper
 - Tablet/mobile interaction pass:
   - smaller tablets now use a simpler stacked layout
-  - selected-product swipe navigation now works on smaller touch tablets too
+- selected-product swipe navigation now works on smaller touch tablets too
+- Completed screener review/tuning pass:
+  - tightened `Top Movers` so stale one-sale jumps and thin recent reprices are less likely to pass
+  - renamed `Good Buys` to `Pullbacks` in the product-facing UI and tightened it toward true premium pullbacks
+  - tightened `Early Movers` toward steadier early uptrends instead of mini-breakouts
+  - tightened `Breakouts` so longer-established SMA30 holds are less likely to appear
+  - added and lightly loosened `Under the Radar` as a rare-signal quiet-base screener to monitor over time
