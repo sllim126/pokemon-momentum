@@ -2331,6 +2331,89 @@ def _profitability_status(required_price: float | None, target_price: float | No
     return "Pass"
 
 
+def _pricing_reference_value(reference_source: str, store_price: float | None, market_price: float | None, target_price: float | None) -> float | None:
+    """Resolve which price anchor a channel should use for its profitability check."""
+    source = str(reference_source or "").strip().lower()
+    if source == "store":
+        return store_price
+    if source == "market":
+        return market_price
+    if source == "target":
+        return target_price
+    return None
+
+
+def _channel_profitability(
+    *,
+    name: str,
+    reference_source: str,
+    store_price: float | None,
+    market_price: float | None,
+    target_price: float | None,
+    fixed_costs: float,
+    income_tax_pct: float,
+    target_margin_pct: float,
+    platform_fee_pct: float,
+    payment_fee_pct: float,
+    payment_fee_fixed: float,
+) -> dict:
+    """Return the required prices and reference-price profit for one sales channel."""
+    fee_rate = max(0.0, (platform_fee_pct + payment_fee_pct) / 100.0)
+    tax_rate = max(0.0, income_tax_pct / 100.0)
+    target_margin_rate = max(0.0, target_margin_pct / 100.0)
+    margin_denominator = 1.0 - fee_rate - target_margin_rate
+    break_even_denominator = 1.0 - fee_rate
+    channel_fixed_costs = fixed_costs + payment_fee_fixed
+    reference_price = _pricing_reference_value(reference_source, store_price, market_price, target_price)
+
+    def profit_at_price(price: float | None) -> tuple[float | None, float | None, float | None, float | None]:
+        if price is None:
+            return None, None, None, None
+        profit_before_tax = price * (1.0 - fee_rate) - channel_fixed_costs
+        profit_after_tax = profit_before_tax if profit_before_tax <= 0 else profit_before_tax * (1.0 - tax_rate)
+        margin_before_tax = (profit_before_tax / price) * 100.0 if price > 0 else None
+        margin_after_tax = (profit_after_tax / price) * 100.0 if price > 0 else None
+        return (
+            _round_money(profit_before_tax),
+            _round_money(profit_after_tax),
+            _round_money(margin_before_tax),
+            _round_money(margin_after_tax),
+        )
+
+    break_even_price = (channel_fixed_costs / break_even_denominator) if break_even_denominator > 0 else None
+    required_price_for_target_margin = (channel_fixed_costs / margin_denominator) if margin_denominator > 0 else None
+    profit_at_reference = profit_at_price(reference_price)
+    if reference_price is None:
+        decision = "No ref price"
+    elif required_price_for_target_margin is not None and reference_price >= required_price_for_target_margin:
+        decision = "Buy"
+    elif break_even_price is not None and reference_price >= break_even_price:
+        decision = "Thin margin"
+    else:
+        decision = "Pass"
+    return {
+        "name": name,
+        "reference_source": reference_source,
+        "reference_price": _round_money(reference_price),
+        "platform_fee_pct": _round_money(platform_fee_pct),
+        "payment_fee_pct": _round_money(payment_fee_pct),
+        "payment_fee_fixed": _round_money(payment_fee_fixed),
+        "channel_fixed_costs_usd": _round_money(channel_fixed_costs),
+        "break_even_price": _round_money(break_even_price),
+        "required_price_for_target_margin": _round_money(required_price_for_target_margin),
+        "profit_at_reference_before_tax": profit_at_reference[0],
+        "profit_at_reference_after_tax": profit_at_reference[1],
+        "margin_at_reference_before_tax_pct": profit_at_reference[2],
+        "margin_at_reference_after_tax_pct": profit_at_reference[3],
+        "headroom_vs_reference": _round_money(
+            (reference_price - required_price_for_target_margin)
+            if reference_price is not None and required_price_for_target_margin is not None
+            else None
+        ),
+        "decision": decision,
+    }
+
+
 @app.post("/supplier-profitability/data")
 def supplier_profitability_data(
     payload: dict,
@@ -2368,32 +2451,31 @@ def supplier_profitability_data(
     outbound_shipping_usd = _safe_float(assumptions.get("outbound_shipping_usd")) or 7.25
     shipping_credit_usd = _safe_float(assumptions.get("shipping_credit_usd")) or 0.0
     disbursement_fee_usd = _safe_float(assumptions.get("disbursement_fee_usd")) or 15.0
-    platform_fee_pct = _safe_float(assumptions.get("platform_fee_pct")) or 2.9
-    payment_fee_pct = _safe_float(assumptions.get("payment_fee_pct")) or 0.0
-    payment_fee_fixed = _safe_float(assumptions.get("payment_fee_fixed")) or 0.0
     income_tax_pct = _safe_float(assumptions.get("income_tax_pct")) or 0.0
     target_margin_pct = _safe_float(assumptions.get("target_margin_pct")) or 0.0
-
-    fee_rate = max(0.0, (platform_fee_pct + payment_fee_pct) / 100.0)
-    tax_rate = max(0.0, income_tax_pct / 100.0)
-    target_margin_rate = max(0.0, target_margin_pct / 100.0)
-    margin_denominator = 1.0 - fee_rate - target_margin_rate
-    break_even_denominator = 1.0 - fee_rate
-
-    def profit_at_price(price: float | None, fixed_costs: float) -> tuple[float | None, float | None, float | None, float | None]:
-        """Return before/after-tax profit and margin for one hypothetical sale price."""
-        if price is None:
-            return None, None, None, None
-        profit_before_tax = price * (1.0 - fee_rate) - fixed_costs
-        profit_after_tax = profit_before_tax if profit_before_tax <= 0 else profit_before_tax * (1.0 - tax_rate)
-        margin_before_tax = (profit_before_tax / price) * 100.0 if price > 0 else None
-        margin_after_tax = (profit_after_tax / price) * 100.0 if price > 0 else None
-        return (
-            _round_money(profit_before_tax),
-            _round_money(profit_after_tax),
-            _round_money(margin_before_tax),
-            _round_money(margin_after_tax),
-        )
+    channel_defaults = {
+        "site": {"name": "Own Site", "reference_source": "store", "platform_fee_pct": 0.0, "payment_fee_pct": 2.9, "payment_fee_fixed": 0.30},
+        "ebay": {"name": "eBay", "reference_source": "target", "platform_fee_pct": 13.25, "payment_fee_pct": 0.0, "payment_fee_fixed": 0.30},
+        "tcgplayer": {"name": "TCGplayer", "reference_source": "market", "platform_fee_pct": 10.25, "payment_fee_pct": 2.5, "payment_fee_fixed": 0.30},
+    }
+    channel_payload = assumptions.get("channels") if isinstance(assumptions.get("channels"), dict) else {}
+    channel_configs: dict[str, dict] = {}
+    for key, defaults in channel_defaults.items():
+        payload_row = channel_payload.get(key) if isinstance(channel_payload, dict) else {}
+        payload_row = payload_row if isinstance(payload_row, dict) else {}
+        channel_configs[key] = {
+            "name": str(payload_row.get("name") or defaults["name"]),
+            "reference_source": str(payload_row.get("reference_source") or defaults["reference_source"]),
+            "platform_fee_pct": _safe_float(payload_row.get("platform_fee_pct")),
+            "payment_fee_pct": _safe_float(payload_row.get("payment_fee_pct")),
+            "payment_fee_fixed": _safe_float(payload_row.get("payment_fee_fixed")),
+        }
+        if channel_configs[key]["platform_fee_pct"] is None:
+            channel_configs[key]["platform_fee_pct"] = defaults["platform_fee_pct"]
+        if channel_configs[key]["payment_fee_pct"] is None:
+            channel_configs[key]["payment_fee_pct"] = defaults["payment_fee_pct"]
+        if channel_configs[key]["payment_fee_fixed"] is None:
+            channel_configs[key]["payment_fee_fixed"] = defaults["payment_fee_fixed"]
 
     rows: list[dict] = []
     for quote in latest_quotes:
@@ -2418,17 +2500,42 @@ def supplier_profitability_data(
             estimated_inbound_shipping_usd = estimated_inbound_shipping_jpy / jpy_per_usd
             effective_inbound_shipping_usd = estimated_inbound_shipping_usd
         landed_cost_usd = supplier_cost_usd + import_cost_usd + effective_inbound_shipping_usd + handling_cost_usd + disbursement_fee_usd
-        fixed_costs = landed_cost_usd + outbound_shipping_usd + payment_fee_fixed - shipping_credit_usd
-        break_even_price = (fixed_costs / break_even_denominator) if break_even_denominator > 0 else None
-        required_price_for_target_margin = (fixed_costs / margin_denominator) if margin_denominator > 0 else None
+        fixed_costs = landed_cost_usd + outbound_shipping_usd - shipping_credit_usd
         store_price = _safe_float(store_row.get("current_price"))
         market_price = _safe_float(market_row.get("market_price"))
         target_price = _safe_float(market_row.get("target_price"))
-        store_profit = profit_at_price(store_price, fixed_costs)
-        market_profit = profit_at_price(market_price, fixed_costs)
-        target_profit = profit_at_price(target_price, fixed_costs)
-        margin_price_profit = profit_at_price(required_price_for_target_margin, fixed_costs)
-        recommended_floor = required_price_for_target_margin or break_even_price
+        channels = {
+            key: _channel_profitability(
+                name=config["name"],
+                reference_source=config["reference_source"],
+                store_price=store_price,
+                market_price=market_price,
+                target_price=target_price,
+                fixed_costs=fixed_costs,
+                income_tax_pct=income_tax_pct,
+                target_margin_pct=target_margin_pct,
+                platform_fee_pct=float(config["platform_fee_pct"]),
+                payment_fee_pct=float(config["payment_fee_pct"]),
+                payment_fee_fixed=float(config["payment_fee_fixed"]),
+            )
+            for key, config in channel_configs.items()
+        }
+        ranked_channels = sorted(
+            channels.items(),
+            key=lambda item: (
+                {"Buy": 0, "Thin margin": 1, "Pass": 2, "No ref price": 3, "Check assumptions": 4}.get(item[1]["decision"], 9),
+                -(float(item[1]["headroom_vs_reference"]) if item[1]["headroom_vs_reference"] is not None else -10_000.0),
+            ),
+        )
+        best_channel_key, best_channel = ranked_channels[0]
+        recommended_floor = min(
+            (
+                float(channel["required_price_for_target_margin"])
+                for channel in channels.values()
+                if channel.get("required_price_for_target_margin") is not None
+            ),
+            default=None,
+        )
         rows.append(
             {
                 "sku": sku,
@@ -2448,34 +2555,19 @@ def supplier_profitability_data(
                 "store_price": _round_money(store_price),
                 "market_price": _round_money(market_price),
                 "target_price": _round_money(target_price),
-                "break_even_price": _round_money(break_even_price),
-                "required_price_for_target_margin": _round_money(required_price_for_target_margin),
                 "recommended_floor_price": _round_money(recommended_floor),
-                "profit_at_store_before_tax": store_profit[0],
-                "profit_at_store_after_tax": store_profit[1],
-                "margin_at_store_before_tax_pct": store_profit[2],
-                "margin_at_store_after_tax_pct": store_profit[3],
-                "profit_at_market_before_tax": market_profit[0],
-                "profit_at_market_after_tax": market_profit[1],
-                "margin_at_market_before_tax_pct": market_profit[2],
-                "margin_at_market_after_tax_pct": market_profit[3],
-                "profit_at_target_before_tax": target_profit[0],
-                "profit_at_target_after_tax": target_profit[1],
-                "margin_at_target_before_tax_pct": target_profit[2],
-                "margin_at_target_after_tax_pct": target_profit[3],
-                "profit_at_margin_price_before_tax": margin_price_profit[0],
-                "profit_at_margin_price_after_tax": margin_price_profit[1],
-                "margin_at_margin_price_before_tax_pct": margin_price_profit[2],
-                "margin_at_margin_price_after_tax_pct": margin_price_profit[3],
-                "headroom_vs_target": _round_money((target_price - required_price_for_target_margin) if target_price is not None and required_price_for_target_margin is not None else None),
-                "decision": _profitability_status(required_price_for_target_margin, target_price, market_price),
+                "channels": channels,
+                "best_channel_key": best_channel_key,
+                "best_channel_name": best_channel["name"],
+                "headroom_vs_best_reference": best_channel.get("headroom_vs_reference"),
+                "decision": best_channel.get("decision"),
             }
         )
 
     rows.sort(
         key=lambda row: (
             {"Buy": 0, "Thin margin": 1, "Pass": 2, "Check assumptions": 3}.get(str(row.get("decision")), 9),
-            -(float(row.get("headroom_vs_target")) if row.get("headroom_vs_target") is not None else -10_000.0),
+            -(float(row.get("headroom_vs_best_reference")) if row.get("headroom_vs_best_reference") is not None else -10_000.0),
             str(row.get("sku") or ""),
         )
     )
@@ -2487,8 +2579,21 @@ def supplier_profitability_data(
         "pass_count": sum(1 for row in rows if row.get("decision") == "Pass"),
         "unmatched_quote_rows": len(unmatched_quotes),
         "avg_target_profit_after_tax": _round_money(
-            sum(float(row["profit_at_target_after_tax"]) for row in rows if row.get("profit_at_target_after_tax") is not None)
-            / max(1, sum(1 for row in rows if row.get("profit_at_target_after_tax") is not None))
+            sum(
+                float(row["channels"][row["best_channel_key"]]["profit_at_reference_after_tax"])
+                for row in rows
+                if row.get("best_channel_key")
+                and row.get("channels", {}).get(row["best_channel_key"], {}).get("profit_at_reference_after_tax") is not None
+            )
+            / max(
+                1,
+                sum(
+                    1
+                    for row in rows
+                    if row.get("best_channel_key")
+                    and row.get("channels", {}).get(row["best_channel_key"], {}).get("profit_at_reference_after_tax") is not None
+                ),
+            )
         ) if rows else None,
     }
 
@@ -2507,11 +2612,9 @@ def supplier_profitability_data(
             "outbound_shipping_usd": outbound_shipping_usd,
             "shipping_credit_usd": shipping_credit_usd,
             "disbursement_fee_usd": disbursement_fee_usd,
-            "platform_fee_pct": platform_fee_pct,
-            "payment_fee_pct": payment_fee_pct,
-            "payment_fee_fixed": payment_fee_fixed,
             "income_tax_pct": income_tax_pct,
             "target_margin_pct": target_margin_pct,
+            "channels": channel_configs,
         },
     }
 

@@ -111,6 +111,12 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
       margin-top: 12px;
     }
+    .channel-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
     .helper {
       color: var(--muted);
       font-size: 12px;
@@ -156,6 +162,33 @@
       border: 1px solid rgba(102, 145, 214, 0.16);
       overflow: auto;
     }
+    .manual-result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .result-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(102, 145, 214, 0.16);
+      border-radius: 18px;
+      padding: 16px;
+    }
+    .result-card h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+    .result-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(102, 145, 214, 0.12);
+    }
+    .result-line:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
     table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 1480px; }
     th, td {
       text-align: left;
@@ -177,12 +210,12 @@
     .badge.warn { background: rgba(244, 195, 123, 0.14); color: #ffd69d; border-color: rgba(244, 195, 123, 0.22); }
     .badge.bad { background: rgba(255, 154, 154, 0.14); color: #ffc7c7; border-color: rgba(255, 154, 154, 0.22); }
     @media (max-width: 1120px) {
-      .split-grid, .form-grid, .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .split-grid, .form-grid, .grid, .channel-grid, .manual-result-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 640px) {
       .shell { padding: 14px; }
       h1 { font-size: 31px; }
-      .split-grid, .form-grid, .grid { grid-template-columns: 1fr; }
+      .split-grid, .form-grid, .grid, .channel-grid, .manual-result-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -229,16 +262,43 @@
           <div class="helper" id="shippingModeHelp">Order estimate mode allocates shipping per item as `total JPY shipping / boxes in order`, then converts that to USD. Disbursement sits here too, since you’re treating it as part of import / FedEx landing cost.</div>
         </div>
         <div class="subpanel">
-          <div class="subpanel-title">Buyer Side</div>
-          <div class="subpanel-copy">What it costs to sell, ship out, and still leave yourself profit.</div>
+          <div class="subpanel-title">Shared Selling Costs</div>
+          <div class="subpanel-copy">These apply no matter where the sale happens. Channel fees live just below.</div>
           <div class="form-grid">
             <div class="field"><label for="outboundShippingUsd">Outbound Shipping USD</label><input id="outboundShippingUsd" type="number" step="0.01" value="7.25"></div>
             <div class="field"><label for="shippingCreditUsd">Buyer Shipping Credit USD</label><input id="shippingCreditUsd" type="number" step="0.01" value="0.00"></div>
-            <div class="field"><label for="platformFeePct">Platform Fee %</label><input id="platformFeePct" type="number" step="0.01" value="2.90"></div>
-            <div class="field"><label for="paymentFeePct">Payment Fee %</label><input id="paymentFeePct" type="number" step="0.01" value="0.00"></div>
-            <div class="field"><label for="paymentFeeFixed">Payment Fixed Fee USD</label><input id="paymentFeeFixed" type="number" step="0.01" value="0.30"></div>
             <div class="field"><label for="incomeTaxPct">Income Tax %</label><input id="incomeTaxPct" type="number" step="0.01" value="25"></div>
             <div class="field"><label for="targetMarginPct">Target Margin %</label><input id="targetMarginPct" type="number" step="0.01" value="15"></div>
+          </div>
+          <div class="helper"><strong>Reference source</strong> decides which saved price to compare against for that channel: your live site price, the imported market price, or the imported target price.</div>
+          <div class="channel-grid">
+            <div class="subpanel">
+              <div class="subpanel-title">Own Site</div>
+              <div class="form-grid">
+                <div class="field"><label for="siteReferenceSource">Reference Price</label><select id="siteReferenceSource"><option value="store" selected>Store Price</option><option value="market">Market Price</option><option value="target">Target Price</option><option value="none">No Reference</option></select></div>
+                <div class="field"><label for="sitePlatformFeePct">Platform Fee %</label><input id="sitePlatformFeePct" type="number" step="0.01" value="0.00"></div>
+                <div class="field"><label for="sitePaymentFeePct">Payment Fee %</label><input id="sitePaymentFeePct" type="number" step="0.01" value="2.90"></div>
+                <div class="field"><label for="sitePaymentFeeFixed">Fixed Fee USD</label><input id="sitePaymentFeeFixed" type="number" step="0.01" value="0.30"></div>
+              </div>
+            </div>
+            <div class="subpanel">
+              <div class="subpanel-title">eBay</div>
+              <div class="form-grid">
+                <div class="field"><label for="ebayReferenceSource">Reference Price</label><select id="ebayReferenceSource"><option value="target" selected>Target Price</option><option value="market">Market Price</option><option value="store">Store Price</option><option value="none">No Reference</option></select></div>
+                <div class="field"><label for="ebayPlatformFeePct">Platform Fee %</label><input id="ebayPlatformFeePct" type="number" step="0.01" value="13.25"></div>
+                <div class="field"><label for="ebayPaymentFeePct">Payment Fee %</label><input id="ebayPaymentFeePct" type="number" step="0.01" value="0.00"></div>
+                <div class="field"><label for="ebayPaymentFeeFixed">Fixed Fee USD</label><input id="ebayPaymentFeeFixed" type="number" step="0.01" value="0.30"></div>
+              </div>
+            </div>
+            <div class="subpanel">
+              <div class="subpanel-title">TCGplayer</div>
+              <div class="form-grid">
+                <div class="field"><label for="tcgReferenceSource">Reference Price</label><select id="tcgReferenceSource"><option value="market" selected>Market Price</option><option value="target">Target Price</option><option value="store">Store Price</option><option value="none">No Reference</option></select></div>
+                <div class="field"><label for="tcgPlatformFeePct">Platform Fee %</label><input id="tcgPlatformFeePct" type="number" step="0.01" value="10.25"></div>
+                <div class="field"><label for="tcgPaymentFeePct">Payment Fee %</label><input id="tcgPaymentFeePct" type="number" step="0.01" value="2.50"></div>
+                <div class="field"><label for="tcgPaymentFeeFixed">Fixed Fee USD</label><input id="tcgPaymentFeeFixed" type="number" step="0.01" value="0.30"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -249,13 +309,48 @@
     </section>
 
     <section class="panel">
+      <div class="eyebrow">Quick Calculator</div>
+      <div class="sub">Type a vendor quote here when you just want to sanity-check profitability. Nothing in this section saves or syncs anywhere.</div>
+      <div class="split-grid">
+        <div class="subpanel">
+          <div class="subpanel-title">Manual Vendor Quote</div>
+          <div class="form-grid">
+            <div class="field"><label for="manualItemName">Item Name</label><input id="manualItemName" type="text" placeholder="Black Bolt box"></div>
+            <div class="field"><label for="manualVendorName">Vendor</label><input id="manualVendorName" type="text" placeholder="Optional"></div>
+            <div class="field"><label for="manualCostValue">Vendor Price</label><input id="manualCostValue" type="number" step="0.01" value="0"></div>
+            <div class="field"><label for="manualCostCurrency">Currency</label><select id="manualCostCurrency"><option value="usd" selected>USD</option><option value="jpy">JPY</option></select></div>
+            <div class="field"><label for="manualSitePrice">Your Site Price</label><input id="manualSitePrice" type="number" step="0.01" placeholder="Optional"></div>
+            <div class="field"><label for="manualEbayPrice">Your eBay Price</label><input id="manualEbayPrice" type="number" step="0.01" placeholder="Optional"></div>
+          </div>
+          <div class="actions">
+            <button class="primary" id="manualCalcBtn" type="button">Calculate Manual Quote</button>
+            <div class="status" id="manualStatus">Waiting for a manual quote.</div>
+          </div>
+        </div>
+        <div class="subpanel">
+          <div class="subpanel-title">Notes</div>
+          <div class="helper"><strong>Uses the same assumptions above</strong> for FX, duties, inbound shipping, outbound shipping, tax, and channel fees.</div>
+          <div class="helper"><strong>Own Site</strong> and <strong>eBay</strong> are the two outputs here, since those are the channels you called out.</div>
+          <div class="helper"><strong>If you enter your intended sell price</strong>, the calculator will label it as Buy, Thin margin, or Pass.</div>
+          <div class="helper"><strong>If you leave sell price blank</strong>, you still get the break-even and target-margin price you need to charge.</div>
+        </div>
+      </div>
+      <div class="manual-result-grid" id="manualResults">
+        <div class="result-card">
+          <h3>Manual Quote Result</h3>
+          <div class="muted">Enter a vendor quote, then click calculate.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
       <div class="eyebrow">Summary</div>
       <div class="grid">
         <div class="stat"><div class="stat-label">Quoted SKUs</div><div class="stat-value" id="statRows">0</div></div>
         <div class="stat"><div class="stat-label">Buy Now</div><div class="stat-value" id="statBuy">0</div></div>
         <div class="stat"><div class="stat-label">Thin Margin</div><div class="stat-value" id="statThin">0</div></div>
         <div class="stat"><div class="stat-label">Pass</div><div class="stat-value" id="statPass">0</div></div>
-        <div class="stat"><div class="stat-label">Avg Target Profit</div><div class="stat-value" id="statAvgProfit">-</div></div>
+        <div class="stat"><div class="stat-label">Avg Best-Channel Profit</div><div class="stat-value" id="statAvgProfit">-</div></div>
       </div>
 
       <div class="table-wrap">
@@ -272,25 +367,19 @@
           <thead>
             <tr>
               <th>Decision</th>
+              <th>Best Channel</th>
               <th>SKU</th>
               <th>Title</th>
               <th>Quote</th>
-              <th>Supplier Cost</th>
               <th>Landed Cost</th>
-              <th>Store</th>
-              <th>Market</th>
-              <th>Target</th>
-              <th>Break Even</th>
-              <th>Target Margin Price</th>
               <th>Recommended Floor</th>
-              <th>Saved Target Profit</th>
-              <th>Margin Price Profit</th>
-              <th>Store Profit</th>
-              <th>Headroom</th>
+              <th>Own Site</th>
+              <th>eBay</th>
+              <th>TCGplayer</th>
             </tr>
           </thead>
           <tbody id="profitRows">
-            <tr><td colspan="16" class="muted">Loading profitability rows…</td></tr>
+            <tr><td colspan="10" class="muted">Loading profitability rows…</td></tr>
           </tbody>
         </table>
       </div>
@@ -308,6 +397,9 @@
     const clearInboundShippingBtn = document.getElementById("clearInboundShippingBtn");
     const fxStatusEl = document.getElementById("fxStatus");
     const profitRows = document.getElementById("profitRows");
+    const manualResults = document.getElementById("manualResults");
+    const manualStatusEl = document.getElementById("manualStatus");
+    const manualCalcBtn = document.getElementById("manualCalcBtn");
     const statRows = document.getElementById("statRows");
     const statBuy = document.getElementById("statBuy");
     const statThin = document.getElementById("statThin");
@@ -323,28 +415,53 @@
       return value == null ? "-" : `${Number(value).toFixed(1)}%`;
     }
 
+    function num(id) {
+      return Number(document.getElementById(id).value || 0);
+    }
+
+    function optionalNum(id) {
+      const raw = String(document.getElementById(id).value || "").trim();
+      return raw === "" ? null : Number(raw);
+    }
+
+    function text(id) {
+      return String(document.getElementById(id).value || "").trim();
+    }
+
     function badge(decision) {
       const cls = decision === "Buy" ? "good" : (decision === "Thin margin" ? "warn" : "bad");
       return `<span class="badge ${cls}">${decision}</span>`;
     }
 
+    function channelPayload(prefix, name) {
+      return {
+        name,
+        reference_source: document.getElementById(`${prefix}ReferenceSource`).value,
+        platform_fee_pct: Number(document.getElementById(`${prefix}PlatformFeePct`).value || 0),
+        payment_fee_pct: Number(document.getElementById(`${prefix}PaymentFeePct`).value || 0),
+        payment_fee_fixed: Number(document.getElementById(`${prefix}PaymentFeeFixed`).value || 0),
+      };
+    }
+
     function assumptionsPayload() {
       return {
-        jpy_per_usd: Number(document.getElementById("jpyPerUsd").value || 0),
-        import_duty_pct: Number(document.getElementById("importDutyPct").value || 0),
+        jpy_per_usd: num("jpyPerUsd"),
+        import_duty_pct: num("importDutyPct"),
         inbound_shipping_mode: document.getElementById("inboundShippingMode").value || "manual",
-        order_shipping_jpy: Number(document.getElementById("orderShippingJpy").value || 0),
-        order_box_count: Number(document.getElementById("orderBoxCount").value || 0),
-        inbound_shipping_usd: Number(document.getElementById("inboundShippingUsd").value || 0),
-        handling_cost_usd: Number(document.getElementById("handlingCostUsd").value || 0),
-        outbound_shipping_usd: Number(document.getElementById("outboundShippingUsd").value || 0),
-        shipping_credit_usd: Number(document.getElementById("shippingCreditUsd").value || 0),
-        disbursement_fee_usd: Number(document.getElementById("disbursementFeeUsd").value || 0),
-        platform_fee_pct: Number(document.getElementById("platformFeePct").value || 0),
-        payment_fee_pct: Number(document.getElementById("paymentFeePct").value || 0),
-        payment_fee_fixed: Number(document.getElementById("paymentFeeFixed").value || 0),
-        income_tax_pct: Number(document.getElementById("incomeTaxPct").value || 0),
-        target_margin_pct: Number(document.getElementById("targetMarginPct").value || 0),
+        order_shipping_jpy: num("orderShippingJpy"),
+        order_box_count: num("orderBoxCount"),
+        inbound_shipping_usd: num("inboundShippingUsd"),
+        handling_cost_usd: num("handlingCostUsd"),
+        outbound_shipping_usd: num("outboundShippingUsd"),
+        shipping_credit_usd: num("shippingCreditUsd"),
+        disbursement_fee_usd: num("disbursementFeeUsd"),
+        income_tax_pct: num("incomeTaxPct"),
+        target_margin_pct: num("targetMarginPct"),
+        channels: {
+          site: channelPayload("site", "Own Site"),
+          ebay: channelPayload("ebay", "eBay"),
+          tcgplayer: channelPayload("tcg", "TCGplayer"),
+        },
       };
     }
 
@@ -358,6 +475,108 @@
         : "Manual mode uses the per-item inbound shipping USD you enter, which is handy once you know the real landed number.";
     }
 
+    function inboundShippingForManualQuote(jpyPerUsd) {
+      const mode = document.getElementById("inboundShippingMode").value;
+      if (mode === "order-estimate") {
+        const totalJpy = num("orderShippingJpy");
+        const boxCount = num("orderBoxCount");
+        return totalJpy > 0 && boxCount > 0 && jpyPerUsd > 0 ? (totalJpy / boxCount) / jpyPerUsd : 0;
+      }
+      return num("inboundShippingUsd");
+    }
+
+    function evaluateManualChannel(referencePrice, fixedCosts, channelConfig) {
+      const feeRate = ((Number(channelConfig.platform_fee_pct) || 0) + (Number(channelConfig.payment_fee_pct) || 0)) / 100;
+      const taxRate = num("incomeTaxPct") / 100;
+      const targetMarginRate = num("targetMarginPct") / 100;
+      const paymentFeeFixed = Number(channelConfig.payment_fee_fixed) || 0;
+      const channelFixedCosts = fixedCosts + paymentFeeFixed;
+      const breakEvenDenominator = 1 - feeRate;
+      const targetDenominator = 1 - feeRate - targetMarginRate;
+      const breakEvenPrice = breakEvenDenominator > 0 ? channelFixedCosts / breakEvenDenominator : null;
+      const targetMarginPrice = targetDenominator > 0 ? channelFixedCosts / targetDenominator : null;
+      let profitAfterTax = null;
+      let marginAfterTax = null;
+      let decision = "No ref price";
+      if (referencePrice != null && referencePrice > 0) {
+        const profitBeforeTax = referencePrice * (1 - feeRate) - channelFixedCosts;
+        profitAfterTax = profitBeforeTax <= 0 ? profitBeforeTax : profitBeforeTax * (1 - taxRate);
+        marginAfterTax = (profitAfterTax / referencePrice) * 100;
+        if (targetMarginPrice != null && referencePrice >= targetMarginPrice) {
+          decision = "Buy";
+        } else if (breakEvenPrice != null && referencePrice >= breakEvenPrice) {
+          decision = "Thin margin";
+        } else {
+          decision = "Pass";
+        }
+      }
+      return {
+        break_even_price: breakEvenPrice,
+        required_price_for_target_margin: targetMarginPrice,
+        profit_at_reference_after_tax: profitAfterTax,
+        margin_at_reference_after_tax_pct: marginAfterTax,
+        decision,
+      };
+    }
+
+    function renderManualResults(result) {
+      manualResults.innerHTML = `
+        <div class="result-card">
+          <h3>${result.itemName || "Manual Quote"}</h3>
+          <div class="result-line"><span>Vendor</span><strong>${result.vendorName || "-"}</strong></div>
+          <div class="result-line"><span>Vendor Price</span><strong>${result.vendorPriceLabel}</strong></div>
+          <div class="result-line"><span>Landed Cost</span><strong>${money(result.landedCostUsd)}</strong></div>
+          <div class="result-line"><span>Sell-Side Cost Base</span><strong>${money(result.fixedCostsUsd)}</strong></div>
+        </div>
+        <div class="result-card">
+          <h3>Own Site</h3>
+          <div class="result-line"><span>Break Even</span><strong>${money(result.site.break_even_price)}</strong></div>
+          <div class="result-line"><span>Target Margin Price</span><strong>${money(result.site.required_price_for_target_margin)}</strong></div>
+          <div class="result-line"><span>Your Price</span><strong>${result.sitePrice == null ? "-" : money(result.sitePrice)}</strong></div>
+          <div class="result-line"><span>Status</span><strong>${badge(result.site.decision)}</strong></div>
+        </div>
+        <div class="result-card">
+          <h3>eBay</h3>
+          <div class="result-line"><span>Break Even</span><strong>${money(result.ebay.break_even_price)}</strong></div>
+          <div class="result-line"><span>Target Margin Price</span><strong>${money(result.ebay.required_price_for_target_margin)}</strong></div>
+          <div class="result-line"><span>Your Price</span><strong>${result.ebayPrice == null ? "-" : money(result.ebayPrice)}</strong></div>
+          <div class="result-line"><span>Status</span><strong>${badge(result.ebay.decision)}</strong></div>
+        </div>
+      `;
+    }
+
+    function calculateManualQuote() {
+      const costValue = num("manualCostValue");
+      if (costValue <= 0) {
+        manualStatusEl.textContent = "Enter a vendor price first.";
+        manualResults.innerHTML = '<div class="result-card"><h3>Manual Quote Result</h3><div class="muted">Enter a vendor quote, then click calculate.</div></div>';
+        return;
+      }
+      const currency = document.getElementById("manualCostCurrency").value;
+      const jpyPerUsd = num("jpyPerUsd");
+      const supplierCostUsd = currency === "jpy" ? (jpyPerUsd > 0 ? costValue / jpyPerUsd : 0) : costValue;
+      const importCostUsd = supplierCostUsd * (num("importDutyPct") / 100);
+      const inboundShippingUsd = inboundShippingForManualQuote(jpyPerUsd);
+      const landedCostUsd = supplierCostUsd + importCostUsd + inboundShippingUsd + num("handlingCostUsd") + num("disbursementFeeUsd");
+      const fixedCostsUsd = landedCostUsd + num("outboundShippingUsd") - num("shippingCreditUsd");
+      const sitePrice = optionalNum("manualSitePrice");
+      const ebayPrice = optionalNum("manualEbayPrice");
+      const site = evaluateManualChannel(sitePrice, fixedCostsUsd, channelPayload("site", "Own Site"));
+      const ebay = evaluateManualChannel(ebayPrice, fixedCostsUsd, channelPayload("ebay", "eBay"));
+      renderManualResults({
+        itemName: text("manualItemName"),
+        vendorName: text("manualVendorName"),
+        vendorPriceLabel: currency === "jpy" ? `${Math.round(costValue)} JPY` : money(costValue),
+        landedCostUsd,
+        fixedCostsUsd,
+        sitePrice,
+        ebayPrice,
+        site,
+        ebay,
+      });
+      manualStatusEl.textContent = "Manual quote calculated locally. Nothing was saved.";
+    }
+
     function render(rows) {
       const filter = decisionFilter.value;
       const needle = searchInput.value.trim().toLowerCase();
@@ -367,27 +586,32 @@
         return `${row.sku} ${row.title} ${row.supplier_item}`.toLowerCase().includes(needle);
       });
       if (!visible.length) {
-        profitRows.innerHTML = '<tr><td colspan="16" class="muted">No rows match the current filters.</td></tr>';
+        profitRows.innerHTML = '<tr><td colspan="10" class="muted">No rows match the current filters.</td></tr>';
         return;
       }
+      const channelCell = (channel) => {
+        if (!channel) {
+          return `<span class="muted">No channel math</span>`;
+        }
+        return `
+          ${badge(channel.decision)}
+          <div class="muted">${channel.reference_source}: ${money(channel.reference_price)}</div>
+          <div>Floor ${money(channel.required_price_for_target_margin)}</div>
+          <div class="muted">${money(channel.profit_at_reference_after_tax)} after tax · ${pct(channel.margin_at_reference_after_tax_pct)}</div>
+        `;
+      };
       profitRows.innerHTML = visible.map((row) => `
         <tr>
           <td>${badge(row.decision)}</td>
+          <td>${row.best_channel_name || "-"}</td>
           <td>${row.sku}</td>
           <td><strong>${row.title || row.supplier_item}</strong><br><span class="muted">${row.supplier_name || ""}</span></td>
           <td>${row.quote_date || "-"}<br><span class="muted">${row.cost_jpy} JPY</span></td>
-          <td>${money(row.supplier_cost_usd)}<br><span class="muted">import ${money(row.import_cost_usd)}</span></td>
-          <td>${money(row.landed_cost_usd)}<br><span class="muted">inbound ${money(row.inbound_shipping_usd)} / fixed ${money(row.fixed_costs_usd)}</span></td>
-          <td>${money(row.store_price)}<br><span class="muted">${money(row.profit_at_store_after_tax)} after tax</span></td>
-          <td>${money(row.market_price)}<br><span class="muted">${money(row.profit_at_market_after_tax)} after tax</span></td>
-          <td>${money(row.target_price)}<br><span class="muted">${money(row.profit_at_target_after_tax)} after tax</span></td>
-          <td>${money(row.break_even_price)}</td>
-          <td>${money(row.required_price_for_target_margin)}</td>
-          <td>${money(row.recommended_floor_price)}</td>
-          <td>${money(row.profit_at_target_before_tax)}<br><span class="muted">${pct(row.margin_at_target_before_tax_pct)}</span></td>
-          <td>${money(row.profit_at_margin_price_before_tax)}<br><span class="muted">${pct(row.margin_at_margin_price_before_tax_pct)}</span></td>
-          <td>${money(row.profit_at_store_before_tax)}<br><span class="muted">${pct(row.margin_at_store_before_tax_pct)}</span></td>
-          <td>${money(row.headroom_vs_target)}</td>
+          <td>${money(row.landed_cost_usd)}<br><span class="muted">supplier ${money(row.supplier_cost_usd)} · inbound ${money(row.inbound_shipping_usd)}</span></td>
+          <td>${money(row.recommended_floor_price)}<br><span class="muted">lowest channel floor</span></td>
+          <td>${channelCell(row.channels?.site)}</td>
+          <td>${channelCell(row.channels?.ebay)}</td>
+          <td>${channelCell(row.channels?.tcgplayer)}</td>
         </tr>
       `).join("");
     }
@@ -452,13 +676,14 @@
           : `Loaded ${allRows.length} matched SKUs from your latest supplier quotes.`;
       } catch (err) {
         statusEl.textContent = err.message || "Failed to load profitability.";
-        profitRows.innerHTML = '<tr><td colspan="16" class="muted">Unable to load profitability data.</td></tr>';
+        profitRows.innerHTML = '<tr><td colspan="10" class="muted">Unable to load profitability data.</td></tr>';
       } finally {
         refreshBtn.disabled = false;
       }
     }
 
     refreshBtn.addEventListener("click", loadProfitability);
+    manualCalcBtn.addEventListener("click", calculateManualQuote);
     inboundShippingMode.addEventListener("change", updateShippingModeHelp);
     clearInboundShippingBtn.addEventListener("click", () => {
       document.getElementById("inboundShippingUsd").value = "0";

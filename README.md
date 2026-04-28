@@ -129,10 +129,32 @@ The repo now includes a lightweight test harness for:
 - frontend dashboard contract checks
 - shared dashboard/query helper logic
 
+Python app and test dependencies such as `fastapi` and `pytest` are installed in the
+Docker image from `requirements.txt`. You do not need to install them on the Linux
+host unless you intentionally want a separate non-Docker Python workflow.
+
+Start the app container if it is not already running:
+
+```bash
+docker-compose up -d
+```
+
 Run the suite inside the app container:
 
 ```bash
-docker-compose exec -T pokemon-momentum python tests/run_with_coverage.py
+make test
+```
+
+Run every discovered test with plain `pytest`:
+
+```bash
+make test-all
+```
+
+Run just the API route module:
+
+```bash
+make test-api
 ```
 
 Current expectations:

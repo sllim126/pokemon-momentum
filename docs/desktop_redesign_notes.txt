@@ -1,0 +1,119 @@
+Pokemon Momentum Desktop Redesign Notes
+=======================================
+
+Purpose
+-------
+
+Desktop should be the exploration and analysis product.
+
+Where mobile is a fast decision engine for a single card or sealed product, desktop should feel like a
+market command center: filters, strategy tabs, broad tables, and a persistent drilldown panel.
+
+Core Desktop Job
+----------------
+
+Assume the user is sitting down to hunt for opportunities, compare sets, and build inventory strategy.
+
+The desktop experience should prioritize:
+
+- broad market scanning
+- flexible filters
+- English / Japanese market switching
+- singles / sealed / graded product switching
+- ranked opportunity tables
+- dynamic selected-product drilldown
+- deal calculator in context
+- watchlist and bulk workflow actions
+
+Desktop Mockup Direction
+------------------------
+
+The submitted desktop mockup is titled:
+
+Poke6s Market Command Center Mockup
+
+Its main structure is:
+
+- top command bar
+  - brand / product label
+  - global search
+  - export action
+  - add watch action
+- left sidebar
+  - strategy filter
+  - set / era filter
+  - price range filter
+  - data quality toggles
+  - minimum momentum selector
+  - watchlist preview
+- center workspace
+  - strategy tabs
+  - English / Japanese segment
+  - Singles / Sealed / Graded segment
+  - summary metric cards
+  - opportunity table
+- right drilldown panel
+  - selected product title and image/thumbnail
+  - price trend
+  - deal calculator
+  - momentum / product breakdown
+  - action targets
+  - insight text
+
+Important Product Ideas
+-----------------------
+
+- Desktop can carry more data than mobile, but should still be organized around decisions.
+- The table is the stock screener equivalent.
+- The right rail is the selected-product workbench.
+- The deal calculator should remain visible on desktop, but it should support analysis instead of dominating the page.
+- English / Japanese and Singles / Sealed / Graded should be first-class mode switches.
+- Graded is not currently a full production data path, but the mockup shows where it could fit later.
+
+Candidate Desktop Tabs
+----------------------
+
+The mockup uses:
+
+- Top Opportunities
+- Top Movers
+- Undervalued
+- Breakouts
+- Watchlist
+
+These should be reconciled with current dashboard tabs:
+
+- Under the Radar
+- Early Movers
+- Confirmed Movers
+- Top Movers
+- Consistent Movers
+- Breakouts
+- Pullbacks
+- Set Strength
+- Browse Set
+- Browse Species
+- Time to Buy
+
+Candidate Desktop Filters
+-------------------------
+
+- Strategy
+- Set / Era
+- Price Range
+- Data Quality
+- Minimum Momentum
+- Market
+- Product Type
+
+The existing API already supports many of these concepts through dashboard tab parameters and category/product-kind filters.
+Future filters like condition, graded, volume, and liquidity need real data support before becoming production controls.
+
+Open Product Questions
+----------------------
+
+- Should "Top Opportunities" become a new composite ranking, or just a renamed default tab?
+- Should "Undervalued" map to Pullbacks / Good Buys, or become a separate score?
+- Should graded be shown as a future disabled mode, or omitted until data exists?
+- Should the desktop redesign replace `/dashboard`, or live first as a new `/dashboard-lab` style prototype?
+- How should watchlist actions connect to the existing tracking tags?
