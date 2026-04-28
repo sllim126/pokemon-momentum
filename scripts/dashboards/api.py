@@ -13,7 +13,7 @@ import urllib.error
 import duckdb
 import pandas as pd
 import requests
-from fastapi import Cookie, FastAPI, File, Header, HTTPException, UploadFile
+from fastapi import Cookie, FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from scripts.build_store_price_targets import build_target_rows
@@ -68,6 +68,7 @@ BUG_REPORTS_HTML = SCRIPT_DIR / "bug_reports.html"
 PRICING_UPLOAD_HTML = SCRIPT_DIR / "pricing_upload.html"
 SUPPLIER_PRICING_HTML = SCRIPT_DIR / "supplier_pricing.html"
 SUPPLIER_PROFITABILITY_HTML = SCRIPT_DIR / "supplier_profitability.html"
+MOBILE_DASHBOARD_HTML = SCRIPT_DIR / "mobile_dashboard.html"
 MOBILE_REBUILD_HTML = SCRIPT_DIR / "mobile_rebuild_mockup.html"
 INDEX_OVERVIEW_SV100_HTML = SCRIPT_DIR / "index_overview.html"
 INDEX_OVERVIEW_HUB_HTML = SCRIPT_DIR / "index_overview_hub.html"
@@ -277,14 +278,42 @@ app.add_middleware(
 ensure_tracking_schema()
 
 
-@app.get("/")
-def dashboard():
+def is_mobile_request(request: Request) -> bool:
+    """Route phone and tablet browsers to the mobile-first decision page."""
+    user_agent = request.headers.get("user-agent", "").lower()
+    mobile_markers = (
+        "android",
+        "iphone",
+        "ipad",
+        "ipod",
+        "mobile",
+        "tablet",
+        "silk/",
+        "kindle",
+    )
+    return any(marker in user_agent for marker in mobile_markers)
+
+
+def dashboard_response_for_request(request: Request) -> FileResponse:
+    if is_mobile_request(request):
+        return FileResponse(MOBILE_DASHBOARD_HTML)
     return FileResponse(DASHBOARD_HTML)
+
+
+@app.get("/")
+def dashboard(request: Request):
+    return dashboard_response_for_request(request)
 
 
 @app.get("/dashboard")
-def dashboard_alias():
-    return FileResponse(DASHBOARD_HTML)
+def dashboard_alias(request: Request):
+    return dashboard_response_for_request(request)
+
+
+@app.get("/mobile")
+def mobile_dashboard_page():
+    """Serve the live mobile-first decision dashboard directly."""
+    return FileResponse(MOBILE_DASHBOARD_HTML)
 
 
 @app.get("/dashboard-lab")

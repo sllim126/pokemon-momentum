@@ -20,6 +20,25 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Market Signals", response.text)
 
+    def test_dashboard_route_serves_mobile_page_for_mobile_user_agents(self):
+        response = self.client.get(
+            "/dashboard",
+            headers={
+                "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148"
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/html", response.headers["content-type"])
+        self.assertIn("Deal Checker", response.text)
+
+    def test_mobile_route_serves_mobile_dashboard(self):
+        response = self.client.get("/mobile")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/html", response.headers["content-type"])
+        self.assertIn("Deal Checker", response.text)
+
     def test_sealed_deals_page_serves_html(self):
         response = self.client.get("/sealed-deals")
 

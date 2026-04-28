@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Pokemon Momentum Mobile Rebuild</title>
+  <title>Poke6s Mobile Dashboard</title>
   <link rel="icon" type="image/png" href="/images/Favidon.png">
   <style>
     :root {
@@ -1698,6 +1698,9 @@
     let activeKey = null;
     let activeMode = "default";
     let activeItem = null;
+    let activeChartDays = 30;
+    let activeDetailPanel = "stats";
+    const rowSparklineCache = new Map();
 
     function activeItems() {
       if (activeMode === "price-drop-watch") {
@@ -1748,7 +1751,120 @@
       return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     }
 
-    function fallbackDateLabels(days = 30) {
+    function columnIndex(columns, name) {
+      return Array.isArray(columns) ? columns.indexOf(name) : -1;
+    }
+
+    function cell(row, columns, name, fallback = null) {
+      const index = columnIndex(columns, name);
+      return index >= 0 ? row[index] : fallback;
+    }
+
+    function syntheticTrend(price, change30d) {
+      const current = Number(price || 0);
+      const change = Number(change30d || 0);
+      if (!current) return [0, 0, 0, 0, 0, 0, 0, 0, 0];
+      const start = change <= -99 ? current : current / (1 + change / 100);
+      return Array.from({ length: 9 }, (_, index) => {
+        const progress = index / 8;
+        return start + (current - start) * progress;
+      });
+    }
+
+    function volatilityLabel(change7d, change30d) {
+      const size = Math.max(Math.abs(Number(change7d || 0)), Math.abs(Number(change30d || 0)));
+      if (size >= 18) return "High";
+      if (size >= 7) return "Medium";
+      return "Low";
+    }
+
+    function liveRowToItem(row, columns, market, categoryId) {
+      const productId = cell(row, columns, "productId", "");
+      const subTypeName = String(cell(row, columns, "subTypeName", "") || "");
+      const productName = String(cell(row, columns, "productName", "") || "Unknown Product");
+      const groupName = String(cell(row, columns, "groupName", "") || "Unknown Set");
+      const number = String(cell(row, columns, "number", "") || "");
+      const rarity = String(cell(row, columns, "rarity", "") || "");
+      const productKind = String(cell(row, columns, "productKind", "") || "card").toLowerCase();
+      const latestPrice = Number(cell(row, columns, "latest_price", 0) || 0);
+      const currentPrice = Number(cell(row, columns, "p_now", latestPrice) || latestPrice || 0);
+      const priorPrice = Number(cell(row, columns, "p_prior", 0) || 0);
+      const change7d = Number(cell(row, columns, "roc_7d_pct", 0) || 0);
+      const change30d = Number(cell(row, columns, "roc_30d_pct", cell(row, columns, "roc_pct", 0)) || 0);
+      const score = Math.round(Number(cell(row, columns, "trend_score", 0) || 0));
+      const descriptor = [rarity, number, subTypeName].filter(Boolean).join(" · ");
+      return {
+        key: `${market}-${productId}-${subTypeName || "raw"}`,
+        productId: Number(productId),
+        subTypeName,
+        categoryId,
+        symbol: productName,
+        name: descriptor || subTypeName || productKind,
+        set: groupName,
+        imageUrl: String(cell(row, columns, "imageUrl", "") || ""),
+        price: currentPrice,
+        change30d,
+        score: score || Math.round(Math.max(0, change30d)),
+        volatility: volatilityLabel(change7d, change30d),
+        trend: priorPrice > 0 ? syntheticTrend(currentPrice, change30d) : syntheticTrend(currentPrice, change30d),
+        kind: productKind === "sealed" ? "sealed" : "singles",
+        signalDays: Number(cell(row, columns, "signal_days", 0) || 0),
+        recentObservations: Number(cell(row, columns, "recent_observations", 0) || 0),
+        recentDistinctPrices: Number(cell(row, columns, "recent_distinct_prices", 0) || 0),
+        lastChangeDate: String(cell(row, columns, "last_change_date", "") || ""),
+        seriesCache: {},
+      };
+    }
+
+    async function loadLiveMarketData() {
+      const configs = [
+        ["EN", 3, "singles", "card"],
+        ["EN", 3, "sealed", "sealed"],
+        ["JP", 85, "singles", "card"],
+        ["JP", 85, "sealed", "sealed"],
+      ];
+      const responses = await Promise.allSettled(
+        configs.map(async ([market, categoryId, kind, productKind]) => {
+          const params = new URLSearchParams({
+            days: "30",
+            limit: "120",
+            min_prior: "5",
+            min_signal_days: "4",
+            min_recent_observations: "5",
+            min_recent_distinct_prices: "4",
+            recent_change_within_days: "3",
+            product_kind: productKind,
+            category_id: String(categoryId),
+          });
+          const response = await fetch(`/top_movers?${params.toString()}`, {
+            headers: { "accept": "application/json" },
+          });
+          if (!response.ok) throw new Error(`Failed to load ${market} ${kind} top movers`);
+          const payload = await response.json();
+          return [market, kind, categoryId, payload];
+        })
+      );
+
+      responses.forEach((result) => {
+        if (result.status !== "fulfilled") return;
+        const [market, kind, categoryId, payload] = result.value;
+        const columns = payload.columns || [];
+        const rows = payload.rows || [];
+        const liveItems = rows
+          .map((row) => liveRowToItem(row, columns, market, categoryId))
+          .filter((item) => item.price > 0);
+        if (liveItems.length) SAMPLE_DATA[market][kind] = liveItems;
+      });
+    }
+
+    function shortChartDate(value) {
+      if (!value) return "";
+      const date = new Date(`${value}T00:00:00Z`);
+      if (Number.isNaN(date.getTime())) return String(value);
+      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
+
+    function fallbackDateLabels(days) {
       const end = new Date();
       const start = new Date(end);
       start.setDate(end.getDate() - Number(days || 30));
@@ -1758,7 +1874,7 @@
       };
     }
 
-    function sparkline(values, stroke = "#25d0a5", width = 320, height = 104, days = 30) {
+    function sparkline(values, stroke = "#25d0a5", width = 320, height = 104, dates = null, days = activeChartDays) {
       const cleanValues = values.filter((value) => Number.isFinite(Number(value))).map(Number);
       if (!cleanValues.length) return "";
       const min = Math.min(...cleanValues);
@@ -1781,7 +1897,9 @@
       const fillId = `sparkFill${Math.random().toString(36).slice(2)}`;
       const labelY = chartBottom + 16;
       const dateLabelY = chartBottom + 30;
-      const dateLabels = fallbackDateLabels(days);
+      const fallbackLabels = fallbackDateLabels(days);
+      const startDate = dates?.length ? shortChartDate(dates[0]) : fallbackLabels.start;
+      const endDate = dates?.length ? shortChartDate(dates[dates.length - 1]) : fallbackLabels.end;
       return `
         <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Price trend">
           <defs>
@@ -1801,8 +1919,8 @@
           <circle cx="${last.x}" cy="${last.y}" r="4" fill="${stroke}" stroke="#e6efff" stroke-width="1.5" />
           <text x="2" y="${labelY}" fill="#8d9dbc" font-size="11">${formatMoney(first.value)}</text>
           <text x="${width - 2}" y="${labelY}" fill="#e6efff" font-size="11" text-anchor="end">${formatMoney(last.value)}</text>
-          <text x="2" y="${dateLabelY}" fill="#6f7f9d" font-size="10">${dateLabels.start}</text>
-          <text x="${width - 2}" y="${dateLabelY}" fill="#6f7f9d" font-size="10" text-anchor="end">${dateLabels.end}</text>
+          <text x="2" y="${dateLabelY}" fill="#6f7f9d" font-size="10">${startDate}</text>
+          <text x="${width - 2}" y="${dateLabelY}" fill="#6f7f9d" font-size="10" text-anchor="end">${endDate}</text>
         </svg>`;
     }
 
@@ -1822,23 +1940,123 @@
       return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Trend line"><polyline points="${points}" fill="none" stroke="${stroke}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg>`;
     }
 
+    function sparklineKey(item, days = 30) {
+      return `${item.categoryId || activeMarket}:${item.productId || item.key}:${item.subTypeName || ""}:${days}`;
+    }
+
+    async function hydrateRowSparklines(items, days = 30) {
+      const rows = items
+        .filter((item) => item.productId && item.categoryId)
+        .slice(0, 30);
+      const byCategory = new Map();
+      rows.forEach((item) => {
+        const cacheKey = sparklineKey(item, days);
+        if (rowSparklineCache.has(cacheKey)) return;
+        const categoryItems = byCategory.get(item.categoryId) || [];
+        categoryItems.push(item);
+        byCategory.set(item.categoryId, categoryItems);
+      });
+
+      await Promise.allSettled(Array.from(byCategory.entries()).map(async ([categoryId, categoryItems]) => {
+        const response = await fetch(`/sparkline_batch?category_id=${categoryId}`, {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            days,
+            items: categoryItems.map((item) => ({
+              productId: item.productId,
+              subTypeName: item.subTypeName || "",
+            })),
+          }),
+        });
+        if (!response.ok) throw new Error("Failed to load row sparklines");
+        const payload = await response.json();
+        const seriesMap = payload.items || {};
+        categoryItems.forEach((item) => {
+          const values = seriesMap[`${item.productId}||${item.subTypeName || ""}`] || [];
+          rowSparklineCache.set(sparklineKey(item, days), values);
+        });
+      }));
+
+      rows.forEach((item) => {
+        const values = rowSparklineCache.get(sparklineKey(item, days)) || [];
+        if (!values.length) return;
+        resultsEl.querySelectorAll(`[data-row-sparkline="${CSS.escape(item.key)}"]`).forEach((node) => {
+          node.innerHTML = trendLine(values, item.change30d >= 0 ? "#25d0a5" : "#ff8a5b", 120, 24);
+        });
+      });
+    }
+
+    function seriesDataFromPayload(payload) {
+      const columns = payload.columns || [];
+      const priceIndex = columnIndex(columns, "price");
+      const dateIndex = columnIndex(columns, "date");
+      if (priceIndex < 0) return { values: [], dates: [] };
+      const values = [];
+      const dates = [];
+      (payload.rows || []).forEach((row) => {
+        const value = Number(row[priceIndex] || 0);
+        if (!Number.isFinite(value) || value <= 0) return;
+        values.push(value);
+        dates.push(dateIndex >= 0 ? row[dateIndex] : "");
+      });
+      return { values, dates };
+    }
+
+    async function loadSeriesForItem(item, days = activeChartDays) {
+      if (!item || !item.productId || !item.categoryId) {
+        return { values: item?.trend || [], dates: [] };
+      }
+      item.seriesCache = item.seriesCache || {};
+      if (item.seriesCache[days]) return item.seriesCache[days];
+      const params = new URLSearchParams({
+        productId: String(item.productId),
+        subTypeName: item.subTypeName || "",
+        days: String(days),
+        category_id: String(item.categoryId),
+      });
+      const response = await fetch(`/series?${params.toString()}`, {
+        headers: { "accept": "application/json" },
+      });
+      if (!response.ok) throw new Error("Failed to load product series");
+      const seriesData = seriesDataFromPayload(await response.json());
+      item.seriesCache[days] = seriesData.values.length ? seriesData : { values: item.trend, dates: [] };
+      return item.seriesCache[days];
+    }
+
+    async function renderMiniGraph(item = activeItem, days = activeChartDays) {
+      if (!item) return;
+      decisionChart.innerHTML = "<div class=\"confidence-line\">Loading chart...</div>";
+      try {
+        const seriesData = await loadSeriesForItem(item, days);
+        decisionChart.innerHTML = sparkline(seriesData.values, item.change30d >= 0 ? "#25d0a5" : "#ff8a5b", 320, 104, seriesData.dates, days);
+      } catch (_) {
+        decisionChart.innerHTML = sparkline(item.trend, item.change30d >= 0 ? "#25d0a5" : "#ff8a5b", 320, 104, null, days);
+      }
+    }
+
     function buildInsight(item) {
       const move = formatPct(item.change30d);
       const signalDays = Number(item.signalDays || 0);
+      const observations = Number(item.recentObservations || 0);
       const distinctPrices = Number(item.recentDistinctPrices || 0);
+      const lastChange = formatLastChange(item.lastChangeDate);
       const evidence = signalDays && distinctPrices
         ? `${signalDays} signal days and ${distinctPrices} recent distinct prices`
         : "limited confirmation data";
       if (item.change30d >= 50) {
-        return `${move} in 30 days. This is a very fast mover with ${evidence}. Verify the ask carefully so you are not buying into the spike.`;
+        return `${move} in 30 days. This is a very fast mover with ${evidence}. Treat it as momentum, but verify the seller price carefully so you are not buying into the spike. Last change: ${lastChange}.`;
       }
       if (item.change30d >= 15) {
-        return `${move} in 30 days with ${evidence}. A buy is most attractive when the ask is below the suggested offer.`;
+        return `${move} in 30 days with ${evidence}. This has real upward movement; a buy is most attractive when the ask is below the suggested offer. Last change: ${lastChange}.`;
       }
       if (item.change30d < 0) {
-        return `${move} in 30 days. Momentum is cooling, so only chase it if the discount is meaningful.`;
+        return `${move} in 30 days. Momentum is cooling, so only chase it if the discount is meaningful and liquidity still looks healthy. Recent observations: ${observations || "-"}.`;
       }
-      return `${move} in 30 days. This looks steadier than explosive, so the deal check matters more than momentum.`;
+      return `${move} in 30 days. This looks steadier than explosive, so the deal check matters more than momentum. Recent observations: ${observations || "-"}.`;
     }
 
     function applyFilters(items) {
@@ -1929,6 +2147,7 @@
           renderDetail(selected);
         }
       }
+      hydrateRowSparklines(visible, 30);
     }
 
     function renderDetail(item) {
@@ -1944,7 +2163,10 @@
       quick30d.textContent = formatCount(item.signalDays);
       quick90d.textContent = formatCount(item.recentDistinctPrices);
       quickVolatility.textContent = formatLastChange(item.lastChangeDate);
-      decisionChart.innerHTML = sparkline(item.trend, item.change30d >= 0 ? "#25d0a5" : "#ff8a5b", 320, 104, 30);
+      decisionChart.innerHTML = sparkline(item.trend, item.change30d >= 0 ? "#25d0a5" : "#ff8a5b", 320, 104, null, activeChartDays);
+      if (activeDetailPanel === "graph") {
+        renderMiniGraph(item, activeChartDays);
+      }
       decisionInsight.textContent = buildInsight(item);
       renderDealCheck(item);
     }
@@ -2215,13 +2437,25 @@
     searchInput.addEventListener("input", () => renderCards(activeItems()));
     document.querySelectorAll("[data-detail-panel]").forEach((button) => {
       button.addEventListener("click", () => {
-        const activePanel = button.dataset.detailPanel || "stats";
+        activeDetailPanel = button.dataset.detailPanel || "stats";
         document.querySelectorAll("[data-detail-panel]").forEach((node) => {
           node.classList.toggle("active", node === button);
         });
         document.querySelectorAll("[data-detail-content]").forEach((panel) => {
-          panel.classList.toggle("active", panel.dataset.detailContent === activePanel);
+          panel.classList.toggle("active", panel.dataset.detailContent === activeDetailPanel);
         });
+        if (activeDetailPanel === "graph") {
+          renderMiniGraph(activeItem, activeChartDays);
+        }
+      });
+    });
+    document.querySelectorAll("[data-chart-days]").forEach((button) => {
+      button.addEventListener("click", () => {
+        activeChartDays = Number(button.dataset.chartDays || 30);
+        document.querySelectorAll("[data-chart-days]").forEach((node) => {
+          node.classList.toggle("active", node === button);
+        });
+        renderMiniGraph(activeItem, activeChartDays);
       });
     });
     dealAskInput.addEventListener("input", () => updateDealVerdict());
@@ -2231,6 +2465,14 @@
       updateDealVerdict();
     });
     setMode("default");
+    loadLiveMarketData()
+      .then(() => {
+        activeKey = null;
+        setMode(activeMode);
+      })
+      .catch(() => {
+        // Keep the resilient mock payload if the live signal endpoint is unavailable.
+      });
   </script>
 </body>
 </html>

@@ -1,0 +1,148 @@
+Pokemon Momentum Mobile Redesign Notes
+======================================
+
+Purpose
+-------
+
+Mobile and desktop should be treated as related but different products:
+
+- Desktop is for exploration, filtering, and deep analysis.
+- Mobile is a decision engine for fast card-show / store / table checks.
+
+The mobile experience should answer "what should I do?" faster than it explains every metric.
+
+Core Mobile Job
+---------------
+
+Assume the user is standing at a card table with poor signal and about ten seconds to decide.
+
+The first mobile product experience should prioritize:
+
+- search
+- selected card identity
+- market price
+- short-term trend
+- seller price input
+- deal status
+- suggested offer
+
+Detailed charts, indicators, and historical context should be available through expandable sections
+or a full-data action, not shown by default.
+
+Decision Card Mockup
+--------------------
+
+The original reference shape for the mobile decision-card UI was:
+
+```html
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <button>←</button>
+    <div class="title">Umbreon VMAX</div>
+    <button>☆</button>
+  </div>
+
+  <!-- CARD IMAGE -->
+  <div class="card-image">
+    <img src="card.jpg" />
+  </div>
+
+  <!-- MARKET SUMMARY -->
+  <div class="market-box">
+    <div class="price">$542.00</div>
+    <div class="trend up">↑ +12% (30d)</div>
+  </div>
+
+  <!-- DEAL CHECKER (PRIMARY FEATURE) -->
+  <div class="deal-box">
+    <label>Seller Price</label>
+    <input type="number" placeholder="$300" />
+
+    <div class="deal-result good">
+      You're 44% under market
+    </div>
+
+    <div class="deal-label good">
+      🟢 STRONG BUY
+    </div>
+
+    <div class="suggestion">
+      Offer: $480
+    </div>
+  </div>
+
+  <!-- QUICK STATS -->
+  <div class="stats-box">
+    <div>7d: +4%</div>
+    <div>30d: +12%</div>
+    <div>90d: +35%</div>
+    <div>Volatility: Med</div>
+  </div>
+
+  <!-- MINI GRAPH -->
+  <div class="chart-box">
+    <div class="tabs">7D | 30D | 90D</div>
+    <canvas></canvas>
+  </div>
+
+  <!-- INSIGHT -->
+  <div class="insight-box">
+    "Rising steadily. Often sells 10-15% under."
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottom-bar">
+    <button>Compare</button>
+    <button class="primary">Full Data</button>
+  </div>
+
+</div>
+```
+
+Live Mobile Page Status
+-----------------------
+
+As of 2026-04-28, the mobile decision-card direction has been promoted into a live mobile page:
+
+- Live file: `scripts/dashboards/mobile_dashboard.html`
+- Mockup/design file: `scripts/dashboards/mobile_rebuild_mockup.html`
+- Direct route: `/mobile`
+- `/` and `/dashboard` serve the mobile page for mobile/tablet user agents.
+- Desktop `/dashboard` continues to serve the existing desktop dashboard.
+
+The current mobile landing/detail flow includes:
+
+- Amazon-style hamburger and account drawers with dimmed backdrop and outside close button.
+- Header/search/menu/account area that scrolls with the page instead of staying pinned.
+- Top Movers as the default live feed, matching the current desktop default indicator.
+- English/Japanese and singles/sealed data loaded from existing dashboard endpoints.
+- Selected-product decision header with image, name, market price, and 30d trend.
+- Deal checker with seller price first, then edge vs market and suggested offer.
+- Deal copy phrased from the seller ask perspective.
+- Stats / Graph / Insight tab row with only one detail panel visible at a time.
+- Quick Stats backed by Top Movers fields: 30d move, signal days, recent distinct prices, and last change.
+- Graph tab lazy-loads real `/series` data and includes underfill, vertical markers, dates, and price endpoints.
+- Search-result row sparklines are line-only and hydrate from `/sparkline_batch`.
+- Full Data and Save remain visible bottom actions; Compare was removed.
+
+Implementation Notes
+--------------------
+
+- Keep the global search/header shell consistent across mobile pages, but not necessarily sticky.
+- Make the deal checker the primary card detail interaction, not a secondary utility.
+- Use a compact Stats / Graph / Insight tab row instead of stacking multiple expanded sections.
+- Add a bottom action bar for save/watch and full data.
+- Keep mobile chart payloads lightweight.
+- Lazy-load chart/history data only when the Graph panel is opened.
+- Cache recent searches and recently opened products where possible.
+
+Open Product Questions
+----------------------
+
+- Should the mobile landing screen open directly to search or to the last viewed card?
+- Should "Deal Check" stay as the default home/detail mode long term?
+- How should the first version of deal score weight discount, trend, volatility, and signal quality?
+- What exactly should Save mean in v1: favorite, watchlist, tracked item, or a combined saved-work item?
+- Which account menu pages should become real first: watchlist, buy list, alerts, notes, or price targets?

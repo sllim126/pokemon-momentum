@@ -6,7 +6,38 @@ Active work only. Archived completed items live in `docs/todo_archive.txt`.
 High Priority
 -------------
 
-- Mobile / tablet layout pass:
+- Mobile-first UI/UX refresh:
+  - Source notes and the decision-card HTML reference live in `docs/mobile_redesign_notes.txt`.
+  - Treat this as both a UI refresh (visual system, shared components, responsive layout) and a UX refresh (task flow, navigation, wording, speed, and confidence).
+  - Rebuild around the core user questions:
+    - what should I look up quickly?
+    - is this card/sealed item buyable at market or below market?
+    - is it likely rising, flattening, declining, or caught in hype/a spike?
+    - how healthy is the overall market, and how healthy is this set?
+    - what can I buy with a specific budget?
+    - what is worth picking up now, including items going down while the broader market rises?
+  - Use a cohesive site shell across dashboard, set explorer, sealed deals, index pages, tracking, and future assistant flows instead of standalone pages with separate navigation patterns.
+  - Borrow mobile patterns intentionally from Amazon/Walmart/Yahoo Finance:
+    - persistent search-first header
+    - obvious category/scope switching
+    - list-first results with recognizable thumbnails
+    - quick price/change/sparkline summary rows
+    - tap-through product detail that answers "buy, wait, avoid, or research more?"
+  - Make phone the primary design target, tablet the analysis/comparison target, and desktop the power-user target.
+  - Align English/Japanese and Singles/Sealed as first-class scope switches throughout the experience.
+  - Make the public-facing value proposition obvious on first view: Pokemon market screening for long-term momentum without chasing hype, buyouts, or short spikes.
+- Mobile decision-card prototype:
+  - Live first pass promoted on 2026-04-28 as `/mobile`, with mobile/tablet `/` and `/dashboard` routed to the new decision-card page.
+  - The phone card detail screen now acts as a fast decision engine using Top Movers, card image, market price, 30d trend, seller price input, deal status, and suggested offer.
+  - Stats / Graph / Insight now live behind a compact tab row, with real series data lazy-loaded for the graph and line-only hydrated sparklines in result rows.
+  - Save / Full Data remain thumb reachable in a bottom action area; Compare was removed for now.
+  - Follow-up: wire Save, Full Data, account menu destinations, search behavior, and final deal-score weighting to production flows.
+- Desktop command-center redesign:
+  - source notes for the desktop mockup live in `docs/desktop_redesign_notes.txt`
+  - preserve desktop as the exploration / analysis product rather than forcing the mobile decision-card flow onto large screens
+  - center the desktop around filters, ranked opportunity tables, and a persistent selected-product drilldown
+  - reconcile proposed tabs like `Top Opportunities` and `Undervalued` with current dashboard indicators
+- Mobile / tablet layout acceptance criteria:
   - iPhone 14 Pro Max: stop the bottom mobile nav from overlapping the last visible `Filter Sets` card.
   - iPhone 14 Pro Max: reduce aggressive card-row title truncation so premium-card names stay distinguishable.
   - iPad Air / iPad Pro: give tablet a dedicated analysis layout with stronger information hierarchy instead of enlarged mobile.
@@ -66,9 +97,9 @@ Profiling Notes (April 2026)
 Needs Decisions
 ---------------
 
-- Decide whether mobile should keep the current three-panel structure or move to a more task-based stacked layout.
-- Decide whether the right rail should stay a side column on smaller screens or collapse into a more mobile-first detail flow.
-- Decide how prominent the Market Signals block should stay relative to the main chart on mobile/tablet.
+- Mobile should move to a task-based stacked layout instead of preserving the current desktop three-panel structure.
+- Right-rail content should collapse into the selected product/detail flow on phone and compact tablet layouts.
+- Market Signals should become the mobile home/feed layer, while the chart/product detail becomes a drilldown or comparison view.
 - Decide whether the site should use shorter / cleaner public-facing URLs and shared links.
 - Decide whether the dashboard still has too many indicators or whether the current set is now stable enough.
 - Decide whether tracking should stay private-only or support lightweight sharing.
@@ -91,11 +122,6 @@ Future Ideas
   - universe metadata
 - Keep detailed card/set data loading on selection instead of preloading broad datasets.
 - Keep left-rail / ticker mini-graph payloads minimal and snapshot-backed.
-- Clarify the public-facing product story:
-  - what am I searching for?
-  - what am I buying?
-  - what action should I take next?
-- Make the main value proposition clearer on first view.
 - Build `Buy List` into a stronger sourcing / card-show workflow with target prices and shopping-list behavior.
 - Explore budget-based assistant prompts.
 - Explore collection-completion prompts.
