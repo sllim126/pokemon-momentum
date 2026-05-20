@@ -2,46 +2,130 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Poke6s Account Settings</title>
   <link rel="icon" type="image/png" href="/images/Favidon.png">
   <style>
     :root {
       --bg: #11192f;
-      --panel: rgba(29, 40, 64, 0.96);
-      --panel-2: rgba(24, 34, 56, 0.98);
+      --panel: rgba(10, 18, 34, 0.34);
+      --panel-2: rgba(7, 13, 24, 0.72);
       --line: rgba(140, 163, 199, 0.18);
       --ink: #e6efff;
-      --muted: #8d9dbc;
+      --muted: #9eb4dc;
       --accent: #22b0ff;
+      --accent-2: #25d0a5;
       --warn: #ff8a5b;
-      --radius: 24px;
-      --shadow: 0 18px 48px rgba(5, 10, 22, 0.35);
+      --radius: 22px;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     * { box-sizing: border-box; }
+
+    html {
+      min-height: 100%;
+      background: #243f35;
+    }
+
     body {
       margin: 0;
-      min-height: 100vh;
+      min-height: 100dvh;
       font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
       color: var(--ink);
       background:
-        radial-gradient(circle at top left, rgba(34, 176, 255, 0.08), transparent 20%),
-        linear-gradient(180deg, #11192f 0%, #0f1830 100%);
+        radial-gradient(circle at 8% 0%, rgba(34, 176, 255, 0.18), transparent 34%),
+        radial-gradient(circle at 90% 22%, rgba(37, 208, 165, 0.08), transparent 32%),
+        linear-gradient(180deg, #132944 0%, #11192f 42%, #0f1830 100%);
     }
+
+    a,
+    button,
+    input {
+      -webkit-tap-highlight-color: rgba(34, 176, 255, 0.18);
+      touch-action: manipulation;
+    }
+
+    button,
+    a {
+      transition:
+        transform 120ms ease,
+        background-color 120ms ease,
+        border-color 120ms ease,
+        box-shadow 120ms ease;
+    }
+
+    button:active,
+    a:active {
+      transform: scale(0.985);
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    input:focus-visible {
+      outline: 2px solid rgba(34, 176, 255, 0.72);
+      outline-offset: 3px;
+    }
+
     .shell {
-      width: min(920px, calc(100vw - 28px));
-      margin: 26px auto;
+      width: min(720px, 100%);
+      min-height: 100dvh;
+      margin: 0 auto;
+      padding: calc(18px + var(--safe-top)) 14px calc(30px + var(--safe-bottom));
       display: grid;
-      gap: 18px;
+      grid-auto-rows: max-content;
+      gap: 12px;
+      align-content: start;
     }
+
+    .mobile-header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      min-height: 54px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      color: var(--ink);
+      text-decoration: none;
+    }
+
+    .brand img {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: #050b14;
+    }
+
+    .brand span {
+      font-size: clamp(34px, 11vw, 48px);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.07em;
+    }
+
     .panel {
-      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      background:
+        linear-gradient(180deg, rgba(10, 18, 34, 0.38), rgba(10, 18, 34, 0.24)),
+        var(--panel);
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 22px;
+      box-shadow: none;
+      padding: 16px;
     }
+
+    .hero-panel {
+      border-color: rgba(34, 176, 255, 0.22);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(34, 176, 255, 0.16), transparent 36%),
+        rgba(10, 18, 34, 0.28);
+    }
+
     .section-label {
       color: var(--muted);
       font-size: 11px;
@@ -51,20 +135,57 @@
     h1, h2, p { margin: 0; }
     h1 {
       margin-top: 8px;
-      font-size: clamp(32px, 5vw, 52px);
+      font-size: clamp(34px, 11vw, 54px);
       line-height: 0.95;
       letter-spacing: -0.05em;
     }
     p {
       color: var(--muted);
-      line-height: 1.55;
+      line-height: 1.45;
       margin-top: 10px;
+      font-size: 14px;
     }
-    .grid {
+
+    .account-summary {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid rgba(140, 163, 199, 0.16);
+      border-radius: 18px;
+      background: rgba(7, 13, 24, 0.46);
     }
+
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(34, 176, 255, 0.28);
+      background:
+        radial-gradient(circle at 50% 32%, #e6efff 0 17%, transparent 18%),
+        radial-gradient(circle at 50% 88%, rgba(230, 239, 255, 0.82) 0 31%, transparent 32%),
+        rgba(34, 176, 255, 0.18);
+    }
+
+    .summary-copy strong {
+      display: block;
+      color: var(--ink);
+      font-size: 17px;
+      line-height: 1.15;
+    }
+
+    .summary-copy span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.3;
+      margin-top: 4px;
+    }
+
     label {
       display: grid;
       gap: 8px;
@@ -87,37 +208,107 @@
       padding: 12px;
     }
     .actions {
-      display: flex;
+      display: grid;
       gap: 10px;
-      flex-wrap: wrap;
       margin-top: 14px;
     }
+
     button, .cta-link {
       appearance: none;
       border: 1px solid var(--line);
-      background: rgba(23, 33, 55, 0.96);
+      background: rgba(7, 13, 24, 0.64);
       color: var(--ink);
-      border-radius: 999px;
-      padding: 10px 14px;
+      border-radius: 16px;
+      padding: 13px 14px;
       cursor: pointer;
       text-decoration: none;
-      min-height: 40px;
+      min-height: 48px;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 15px;
+      font-weight: 900;
     }
+
+    .cta-link::after {
+      content: "›";
+      color: var(--muted);
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .primary {
+      border-color: rgba(34, 176, 255, 0.34);
+      background: linear-gradient(180deg, rgba(34, 176, 255, 0.92), rgba(31, 141, 206, 0.94));
+      color: #f2fbff;
+      box-shadow: 0 16px 34px rgba(34, 176, 255, 0.14);
+    }
+
     .danger {
       border-color: rgba(255, 138, 91, 0.28);
       color: #ffb39a;
+      background: rgba(255, 138, 91, 0.08);
+      justify-content: center;
+      width: 100%;
     }
+
+    button:disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
+    }
+
     .status {
       margin-top: 14px;
       color: var(--muted);
       min-height: 20px;
+      font-size: 13px;
+      line-height: 1.4;
+      padding: 10px 12px;
+      border: 1px solid rgba(37, 208, 165, 0.18);
+      border-radius: 14px;
+      background: rgba(37, 208, 165, 0.07);
     }
+
     .status.warn {
       color: #ffb39a;
+      border-color: rgba(255, 138, 91, 0.22);
+      background: rgba(255, 138, 91, 0.08);
     }
+
+    .danger-zone {
+      border-color: rgba(255, 138, 91, 0.18);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(255, 138, 91, 0.1), transparent 36%),
+        rgba(10, 18, 34, 0.28);
+    }
+
+    .saved-views-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .saved-view-card {
+      border: 1px solid rgba(140, 163, 199, 0.16);
+      border-radius: 16px;
+      padding: 12px;
+      background: rgba(7, 13, 24, 0.34);
+    }
+
+    .saved-view-card strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .saved-view-card span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
     @media (max-width: 760px) {
       .grid { grid-template-columns: 1fr; }
     }
@@ -125,12 +316,42 @@
 </head>
 <body>
   <div class="shell">
-    <section class="panel">
+    <header class="mobile-header">
+      <a class="brand" href="/dashboard" aria-label="Back to Poke6s dashboard">
+        <img src="/images/Favidon.png" alt="">
+        <span>Poke6s</span>
+      </a>
+      <a class="cta-link" href="/dashboard">Dashboard</a>
+    </header>
+
+    <section class="panel hero-panel">
       <div class="section-label">Account</div>
       <h1 id="accountTitle">Tracking Settings</h1>
       <p>Manage the lightweight tracking account used for synced favorites, watchlists, research tags, and buy-list markers. This page only controls the tracking account, not site-wide membership.</p>
+      <div class="account-summary">
+        <div class="avatar" aria-hidden="true"></div>
+        <div class="summary-copy">
+          <strong id="accountSummaryName">Checking sign-in...</strong>
+          <span id="accountSummaryMeta">Saved research syncs through your tracking account.</span>
+        </div>
+      </div>
       <div class="actions">
-        <a class="cta-link" href="/dashboard">Back to Dashboard</a>
+        <a class="cta-link primary" href="/dashboard">Back to Dashboard</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-label">Sign-In</div>
+      <h2>Google Sign-In</h2>
+      <p>Google sign-in now handles tracking access on the dashboard. There is no separate username or PIN to manage here.</p>
+      <div class="status" id="accountStatus"></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-label">Desktop Tools</div>
+      <h2>Admin Shortcuts</h2>
+      <p>These are desktop-oriented tools. They stay here for convenience, but the mobile dashboard remains focused on quick card decisions.</p>
+      <div class="actions">
         <a class="cta-link" href="/pricing-upload">Squarespace CSV Upload</a>
         <a class="cta-link" href="/supplier-pricing">Supplier Pricing</a>
         <a class="cta-link" href="/supplier-profitability">Supplier Profitability</a>
@@ -138,14 +359,17 @@
     </section>
 
     <section class="panel">
-      <div class="section-label">Sign-In Method</div>
-      <p>Google sign-in now handles tracking access on the dashboard. There is no separate username or PIN to manage here.</p>
-      <div class="status" id="accountStatus"></div>
+      <div class="section-label">Saved Views</div>
+      <h2>Synced Filters</h2>
+      <p>Your dashboard views, saved filters, and personalized ticker presets are attached to this tracking account.</p>
+      <div class="status" id="savedViewsStatus">Checking saved views...</div>
+      <div class="saved-views-list" id="savedViewsList"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel danger-zone">
       <div class="section-label">Delete Account</div>
-      <p>This deletes the tracking account, its saved tags, and all active tracking sessions. Google sign-in itself is not removed; only this dashboard’s synced tracking data is deleted.</p>
+      <h2>Danger Zone</h2>
+      <p>This deletes the tracking account, its saved tags, saved views, and all active tracking sessions. Google sign-in itself is not removed; only this dashboard’s synced tracking data is deleted.</p>
       <div class="actions">
         <button type="button" class="danger" id="deleteAccountBtn">Delete Tracking Account</button>
       </div>
@@ -158,6 +382,10 @@
     const token = localStorage.getItem(tokenKey) || "";
     const accountTitle = document.getElementById("accountTitle");
     const accountStatus = document.getElementById("accountStatus");
+    const accountSummaryName = document.getElementById("accountSummaryName");
+    const accountSummaryMeta = document.getElementById("accountSummaryMeta");
+    const savedViewsStatus = document.getElementById("savedViewsStatus");
+    const savedViewsList = document.getElementById("savedViewsList");
     const deleteStatus = document.getElementById("deleteStatus");
     const deleteAccountBtn = document.getElementById("deleteAccountBtn");
 
@@ -191,24 +419,52 @@
       // account, not broader site membership or profile settings.
       if (!token) {
         accountTitle.textContent = "Tracking Sign-In Required";
+        accountSummaryName.textContent = "Signed out";
+        accountSummaryMeta.textContent = "Open the dashboard and sign in with Google to sync saved lists.";
         setStatus(accountStatus, "Sign in on the dashboard first, then come back to this page.", true);
+        setStatus(savedViewsStatus, "Saved views appear here after you sign in on the dashboard.", true);
         deleteAccountBtn.disabled = true;
         return;
       }
       try {
         const payload = await api("/tracking/session", { method: "GET" });
-        accountTitle.textContent = `Tracking Settings: ${payload.user.username}`;
+        accountTitle.textContent = "Tracking Settings";
+        accountSummaryName.textContent = payload.user.username || "Tracking account";
+        accountSummaryMeta.textContent = "Connected through Google sign-in.";
         setStatus(accountStatus, "This tracking account is connected through Google sign-in on the dashboard.");
+        const savedViewsPayload = await api("/tracking/views", { method: "GET" });
+        const items = Array.isArray(savedViewsPayload.items) ? savedViewsPayload.items : [];
+        savedViewsList.innerHTML = "";
+        if (!items.length) {
+          setStatus(savedViewsStatus, "No saved views yet. Save one from the dashboard to reuse filters later.");
+        } else {
+          setStatus(savedViewsStatus, `${items.length} saved view${items.length === 1 ? "" : "s"} synced to this account.`);
+          items.forEach((item) => {
+            const card = document.createElement("div");
+            card.className = "saved-view-card";
+            const tabLabel = String(item.state?.tab || "top_movers").replaceAll("_", " ");
+            const segmentLabel = item.state?.segment === "sealed" ? "sealed" : "cards";
+            const title = document.createElement("strong");
+            title.textContent = item.name || "Saved View";
+            const meta = document.createElement("span");
+            meta.textContent = `${tabLabel} | ${segmentLabel}${item.ticker_enabled ? " | personalized ticker" : ""}`;
+            card.append(title, meta);
+            savedViewsList.appendChild(card);
+          });
+        }
       } catch (err) {
         localStorage.removeItem(tokenKey);
         accountTitle.textContent = "Tracking Session Expired";
+        accountSummaryName.textContent = "Session expired";
+        accountSummaryMeta.textContent = "Sign in again from the dashboard to reconnect saved research.";
         setStatus(accountStatus, "Sign in again on the dashboard, then reopen account settings.", true);
+        setStatus(savedViewsStatus, "Saved views are unavailable until you sign in again.", true);
         deleteAccountBtn.disabled = true;
       }
     }
 
     deleteAccountBtn.addEventListener("click", async () => {
-      if (!confirm("Delete this tracking account and all saved tags?")) return;
+      if (!confirm("Delete this tracking account, all saved tags, and all saved views?")) return;
       setStatus(deleteStatus, "Deleting account...");
       try {
         await api("/tracking/account", {

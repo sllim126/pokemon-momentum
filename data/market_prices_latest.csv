@@ -1,68 +1,69 @@
 sku,market_price,target_price,profit_floor_price,supplier_cost_jpy,target_source,title,market_title,pricing_mode,market_source
 567364,0.24,0.24,,,market,Meowscarada ex - 014/190 - SV4a: Shiny Treasure ex (SV4a) Japanese,Meowscarada ex - 014/190,market,jp
-567477,0.30,0.30,,,market,Gardevoir ex - 082/190 - SV4a: Shiny Treasure ex (SV4a) Japanese,Gardevoir ex - 082/190,market,jp
-567555,0.23,0.23,,,market,Squawkabilly ex - 154/190 - SV4a: Shiny Treasure ex (SV4a) Japanese,Squawkabilly ex - 154/190,market,jp
-602682,28.49,28.49,,,market,Pokemon Card Roaring Moon ex SAR 218/187 sv8a Terastal Festival ex Japanese,Roaring Moon ex - 218/187,market,jp
-636501,2.99,2.99,,,market,Pawniard - 147/086 - SV11B: Black Bolt (SV11B) Japanese,Pawniard - 147/086,market,jp
+567477,0.34,0.34,,,market,Gardevoir ex - 082/190 - SV4a: Shiny Treasure ex (SV4a) Japanese,Gardevoir ex - 082/190,market,jp
+567555,0.24,0.24,,,market,Squawkabilly ex - 154/190 - SV4a: Shiny Treasure ex (SV4a) Japanese,Squawkabilly ex - 154/190,market,jp
+602682,30.52,30.52,,,market,Pokemon Card Roaring Moon ex SAR 218/187 sv8a Terastal Festival ex Japanese,Roaring Moon ex - 218/187,market,jp
+636501,3.42,3.42,,,market,Pawniard - 147/086 - SV11B: Black Bolt (SV11B) Japanese,Pawniard - 147/086,market,jp
 637220,0.35,0.35,,,market,Krookodile - 062/086 (Poke Ball Pattern) - SV11B: Black Bolt (SV11B) Japanese,Krookodile - 062/086 (Poke Ball Pattern),market,jp
-637278,3.70,3.70,,,market,Archen - 047/086 (Master Ball Pattern) - SV11W: White Flare (SV11W)  Japanese,Archen - 047/086 (Master Ball Pattern),market,jp
-637314,0.47,0.47,,,market,Shelmet - 008/086 (Poke Ball Pattern) - SV11W: White Flare (SV11W) - Japanese,Shelmet - 008/086 (Poke Ball Pattern),market,jp
-637332,0.35,0.35,,,market,Blitzle - 028/086 (Poke Ball Pattern) - SV11W: White Flare (SV11W) Japanese,Blitzle - 028/086 (Poke Ball Pattern),market,jp
+637278,3.49,3.49,,,market,Archen - 047/086 (Master Ball Pattern) - SV11W: White Flare (SV11W)  Japanese,Archen - 047/086 (Master Ball Pattern),market,jp
+637314,0.48,0.48,,,market,Shelmet - 008/086 (Poke Ball Pattern) - SV11W: White Flare (SV11W) - Japanese,Shelmet - 008/086 (Poke Ball Pattern),market,jp
+637332,0.36,0.36,,,market,Blitzle - 028/086 (Poke Ball Pattern) - SV11W: White Flare (SV11W) Japanese,Blitzle - 028/086 (Poke Ball Pattern),market,jp
 637340,0.33,0.33,,,market,Yamask - 036/086 (Poke Ball Pattern) - SV11W: White Flare (SV11W) Japanese,Yamask - 036/086 (Poke Ball Pattern),market,jp
-637647,0.57,0.57,,,market,Prism Energy (Poke Ball Pattern) - SV11B: Black Bolt (SV11B) Japanese,Prism Energy (Poke Ball Pattern),market,jp
-665881,5.81,5.81,,,market,N's Zekrom - 210/193 - M2a: High Class Pack: MEGA Dream ex (M2a) Japanese,N's Zekrom - 210/193,market,jp
-EN-AH-ETB,144.20,136.99,,,market,Pokemon Ascended Heroes Elite Trainer Box - English,Ascended Heroes Elite Trainer Box,market_minus_5_pct_99,en
-EN-PF-SB,11.47,9.99,,,market,Phantasmal Flames Sleeved Booster - English,Phantasmal Flames Sleeved Booster Pack,market_minus_5_pct_99,en
-ENG-ARCHex-MCAP,29.12,29.99,,,market,Pokemon Archaludon ex Box - English,Archaludon ex Box,market_minus_5_pct_99_with_floor,en
-ENG-BB-BB,63.85,59.99,,,market,Pokemon Black Bolt Booster Bundle - English,Black Bolt Booster Bundle,market_minus_5_pct_99,en
-ENG-BLKYUec-MCAP,31.09,29.99,,,market,Pokemon Black Kyurem ex - English,Black Kyurem ex Box,market_minus_5_pct_99_with_floor,en
-ENG-DR-ART,39.13,36.99,,,market,Destined Rivals Booster Pack Art Set (4-Pack Set) - English,Destined Rivals Booster Pack Art Bundle [Set of 4],market_minus_5_pct_99,en
-ENG-DR-BUNDLE,67.05,62.99,,,market,Destined Rivals Booster Bundle - English,Destined Rivals Booster Bundle,market_minus_5_pct_99,en
-ENG-DR-PACK,9.55,8.99,,,market,Destined Rivals Sleeved Booster Pack - English,Destined Rivals Sleeved Booster Pack,market_minus_5_pct_99,en
+637647,0.56,0.56,,,market,Prism Energy (Poke Ball Pattern) - SV11B: Black Bolt (SV11B) Japanese,Prism Energy (Poke Ball Pattern),market,jp
+665881,6.03,6.03,,,market,N's Zekrom - 210/193 - M2a: High Class Pack: MEGA Dream ex (M2a) Japanese,N's Zekrom - 210/193,market,jp
+EN-AH-ETB,181.80,171.99,,,market,Pokemon Ascended Heroes Elite Trainer Box - English,Ascended Heroes Elite Trainer Box,market_minus_5_pct_99,en
+EN-PF-SB,12.72,11.99,,,market,Phantasmal Flames Sleeved Booster - English,Phantasmal Flames Sleeved Booster Pack,market_minus_5_pct_99,en
+ENG-ARCHex-MCAP,30.20,29.99,,,market,Pokemon Archaludon ex Box - English,Archaludon ex Box,market_minus_5_pct_99_with_floor,en
+ENG-BB-BB,71.60,67.99,,,market,Pokemon Black Bolt Booster Bundle - English,Black Bolt Booster Bundle,market_minus_5_pct_99,en
+ENG-BLKYUec-MCAP,35.47,32.99,,,market,Pokemon Black Kyurem ex - English,Black Kyurem ex Box,market_minus_5_pct_99_with_floor,en
+ENG-DR-ART,39.12,36.99,,,market,Destined Rivals Booster Pack Art Set (4-Pack Set) - English,Destined Rivals Booster Pack Art Bundle [Set of 4],market_minus_5_pct_99,en
+ENG-DR-BUNDLE,83.71,78.99,,,market,Destined Rivals Booster Bundle - English,Destined Rivals Booster Bundle,market_minus_5_pct_99,en
+ENG-DR-PACK,11.38,9.99,,,market,Destined Rivals Sleeved Booster Pack - English,Destined Rivals Sleeved Booster Pack,market_minus_5_pct_99,en
 ENG-HOUNDex-MCAP,36.48,33.99,,,market,Pokemon Houndstone ex Box - English,Houndstone ex Box,market_minus_5_pct_99_with_floor,en
-ENG-JT-PACK,7.34,5.99,,,market,Journey Together Sleeved Booster Pack - English,Journey Together Sleeved Booster Pack,market_minus_5_pct_99,en
-ENG-MEGA-PACK,8.99,7.99,,,market,Mega Evolution Sleeved Booster Pack - English,Mega Evolution Sleeved Booster Pack,market_minus_5_pct_99,en
-ENG-MEGLATex-MCAP,35.06,32.99,,,market,Pokemon Mega Latias ex Box - English,Mega Latias ex Box,market_minus_5_pct_99_with_floor,en
-ENG-MELex-MCAP,28.41,29.99,,,market,Pokemon Melmetal ex Box - English,Melmetal ex Box,market_minus_5_pct_99_with_floor,en
-ENG-PF-ART,47.93,44.99,,,market,Phantasmal Flames Sleeved Booster Pack Art Set (4-Pack Complete Artwork Set) – English,Phantasmal Flames Sleeved Booster Pack Art Bundle [Set of 4],market_minus_5_pct_99,en
-ENG-PF-BB,63.77,59.99,,,market,Pokemon Phantasmal Flames Booster Bundle - English,Phantasmal Flames Booster Bundle,market_minus_5_pct_99,en
-ENG-PO-ART4,28.46,26.99,,,market,Perfect Order Sleeved Booster Pack Art Bundle [Set of 4] - ME03: Perfect Order (ME03),Perfect Order Sleeved Booster Pack Art Bundle [Set of 4],market_minus_5_pct_99,en
-ENG-RESHex-MCAP,25.61,29.99,,,market,Pokemon Reshiram ex Box - English,Reshiram ex Box,market_minus_5_pct_99_with_floor,en
-ENG-SILTEM-BP,14.27,12.99,,,market,Silver Tempest Sleeved Booster Pack - (SWSH12) - English,Silver Tempest Sleeved Booster Pack,market_minus_5_pct_99,en
-ENG-SS-BB,47.32,43.99,,,market,Pokemon Surging Sparks Booster Bundle - English,Surging Sparks Booster Bundle (LGS),market_minus_5_pct_99,en
-ENG-SS-Costco,146.31,138.99,,,market,Costco Pokémon Surging Sparks 2-Pack Trainer Box & Booster Bundle - English,Costco Pokemon Surging Sparks 2-Pack Trainer Box and Booster Bundle,market_minus_5_pct_99,en
-ENG-SS-ETB,106.61,100.99,,,market,Pokemon Surging Sparks Elite Trainer Box - English,Surging Sparks Elite Trainer Box,market_minus_5_pct_99,en
-ENG-TM-ETB,90.20,84.99,,,market,Pokemon Twilight Masquerade Elite Trainer Box - English,Twilight Masquerade Elite Trainer Box,market_minus_5_pct_99,en
-ENG-WF-BB,59.54,55.99,,,market,Pokemon White Flare Booster Bundle - English,White Flare Booster Bundle,market_minus_5_pct_99,en
-JP-151-BOX,334.43,609.99,609.99,70000,jp_landed_markup,Pokemon 151 Booster Box - Japanese,Pokemon Card 151 Booster Box,market_minus_5_pct_99,jp
-JP-AR-BOX,80.01,121.99,121.99,11200,jp_landed_markup,Pokemon Ancient Roar Booster Box - Japanese,Ancient Roar Booster Box,market_minus_5_pct_99,jp
-JP-BB-BOX,155.96,272.99,272.99,29400,jp_landed_markup,Pokemon Black Bolt Booster Box - Japanese,Black Bolt Booster Box,market_minus_5_pct_99,jp
-JP-BBD-BOX,126.68,252.99,252.99,27000,jp_landed_markup,Pokemon Black Bolt Deluxe Booster Box Japanese,Black Bolt Deluxe Booster Box,market_minus_5_pct_99,jp
-JP-BP-BOX,85.18,121.99,121.99,11200,jp_landed_markup,Pokemon Battle Partners Booster Box - Japanese,Battle Partners Booster Box,market_minus_5_pct_99,jp
-JP-CH-BOX,95.54,167.99,167.99,16800,jp_landed_markup,Pokemon Crimson Haze Booster Box - Japanese,Crimson Haze Booster Box,market_minus_5_pct_99,jp
-JP-CJ-BOX,77.92,121.99,121.99,11200,jp_landed_markup,Pokemon Cyber Judge Booster Box - Japanese,Cyber Judge Booster Box,market_minus_5_pct_99,jp
-JP-FF-BOX,76.67,117.99,117.99,10800,jp_landed_markup,Pokemon Future Flash Booster Box - Japanese,Future Flash Booster Box,market_minus_5_pct_99,jp
-JP-HWA-BOX,119.07,216.99,216.99,22700,jp_landed_markup,Pokemon Heat Wave Arena Booster Box - Japanese,Heat Wave Arena Booster Box,market_minus_5_pct_99,jp
-JP-INFX-BOX,160.07,275.99,275.99,29800,jp_landed_markup,Pokemon Inferno X Booster Box - Japanese,Inferno X Booster Box,market_minus_5_pct_99,jp
-JP-MB-BOX,99.01,152.99,152.99,15000,jp_landed_markup,Pokemon Mega Brave Booster Box - Japanese,Mega Brave Booster Box,market_minus_5_pct_99,jp
-JP-MD-BOX,126.54,179.99,179.99,18200,jp_landed_markup,Pokemon Mega Dream Ex Booster Box - Japanese,Mega Dream ex Booster Box,market_minus_5_pct_99,jp
-JP-MS-BOX,93.68,131.99,131.99,12400,jp_landed_markup,Pokemon Mega Symphonia Booster Box - Japanese,Mega Symphonia Booster Box,market_minus_5_pct_99,jp
-JP-NW-BOX,87.16,121.99,121.99,11200,jp_landed_markup,Pokemon Night Wanderer Booster Box - Japanese,Night Wanderer Booster Box,market_minus_5_pct_99,jp
-JP-PD-BOX,90.84,85.99,,,market,Pokemon Paradise Dragona Booster Box - Japanese,Paradise Dragona Booster Box,market_minus_5_pct_99,jp
-JP-RBF-BOX,116.62,109.99,,,market,Pokemon Ruler of the Black Flame Booster Box - Japanese,Ruler of the Black Flame Booster Box,market_minus_5_pct_99,jp
-JP-RS-BOX,97.46,148.99,148.99,14500,jp_landed_markup,Pokemon Raging Surf Booster Box - Japanese,Raging Surf Booster Box,market_minus_5_pct_99,jp
-JP-S-BOX,86.93,81.99,,,market,Pokemon Scarlet ex Booster Box - Japanese,Scarlet ex Booster Box,market_minus_5_pct_99,jp
-JP-SEB-BOX,156.62,395.99,395.99,44200,jp_landed_markup,Pokemon Super Electric Breaker Booster Box - Japanese,Super Electric Breaker Booster Box,market_minus_5_pct_99,jp
-JP-SH-BOX,80.26,75.99,,,market,Pokemon Snow Hazard Booster Box - Japanese,Snow Hazard Booster Box,market_minus_5_pct_99,jp
-JP-SHINY-BOX,131.30,206.99,206.99,21500,jp_landed_markup,Pokemon Shiny Treasures EX Box Japanese,Shiny Treasure ex High Class Booster Box,market_minus_5_pct_99,jp
-JP-SM-BOX,78.12,121.99,121.99,11200,jp_landed_markup,Pokemon Stellar Miracle Booster Box - Japanese,Stellar Miracle Booster Box,market_minus_5_pct_99,jp
-JP-TB-BOX,112.79,172.99,172.99,17400,jp_landed_markup,Pokemon Triple Beat Booster Box - Japanese,Triple Beat Booster Box,market_minus_5_pct_99,jp
-JP-TM-BOX,90.44,146.99,146.99,14200,jp_landed_markup,Pokemon Transformation Mask Booster Box - Japanese,Transformation Mask Booster Box,market_minus_5_pct_99,jp
-JP-TR-BB,170.49,308.99,308.99,33700,jp_landed_markup,Pokemon Glory of Team Rocket Booster Box - Japanese,Glory of Team Rocket Booster Box,market_minus_5_pct_99,jp
-JP-V-BOX,80.69,117.99,117.99,10800,jp_landed_markup,Pokemon Violet ex Booster Box - Japanese,Violet ex Booster Box,market_minus_5_pct_99,jp
-JP-VSTAR-BOX,193.78,277.99,277.99,30000,jp_landed_markup,Pokemon VSTAR Universe Booster Box - Japanese,VSTAR Universe Booster Box,market_minus_5_pct_99,jp
-JP-WF-BOX,146.32,249.99,249.99,26700,jp_landed_markup,Pokemon White Flare Booster Box - Japanese,White Flare Booster Box,market_minus_5_pct_99,jp
-JP-WFD-BOX,117.63,211.99,211.99,22100,jp_landed_markup,Pokemon White Flare Deluxe Booster Box Japanese,White Flare Deluxe Booster Box,market_minus_5_pct_99,jp
-JP-WIFO-BOX,85.14,142.99,142.99,13700,jp_landed_markup,Pokemon Wild Force Booster Box - Japanese,Wild Force Booster Box,market_minus_5_pct_99,jp
-MYZ-JP-BB,73.02,106.99,106.99,9400,jp_landed_markup,Pokemon Mega Nihil Zero Booster Box - Japanese,Nihil Zero Booster Box,market_minus_5_pct_99,jp
-NS-JPN-BB,116.87,142.99,142.99,13700,jp_landed_markup,Pokemon Ninja Spinner Booster Box - Japanese,Ninja Spinner Booster Box,market_minus_5_pct_99,jp
+ENG-JT-PACK,7.83,6.99,,,market,Journey Together Sleeved Booster Pack - English,Journey Together Sleeved Booster Pack,market_minus_5_pct_99,en
+ENG-MEGA-PACK,9.23,7.99,,,market,Mega Evolution Sleeved Booster Pack - English,Mega Evolution Sleeved Booster Pack,market_minus_5_pct_99,en
+ENG-MEGLATex-MCAP,37.86,34.99,,,market,Pokemon Mega Latias ex Box - English,Mega Latias ex Box,market_minus_5_pct_99_with_floor,en
+ENG-MELex-MCAP,31.45,29.99,,,market,Pokemon Melmetal ex Box - English,Melmetal ex Box,market_minus_5_pct_99_with_floor,en
+ENG-PF-ART,50.85,47.99,,,market,Phantasmal Flames Sleeved Booster Pack Art Set (4-Pack Complete Artwork Set) – English,Phantasmal Flames Sleeved Booster Pack Art Bundle [Set of 4],market_minus_5_pct_99,en
+ENG-PF-BB,71.28,66.99,,,market,Pokemon Phantasmal Flames Booster Bundle - English,Phantasmal Flames Booster Bundle,market_minus_5_pct_99,en
+ENG-PO-ART4,27.69,25.99,,,market,Perfect Order Sleeved Booster Pack Art Bundle [Set of 4] - ME03: Perfect Order (ME03),Perfect Order Sleeved Booster Pack Art Bundle [Set of 4],market_minus_5_pct_99,en
+ENG-RESHex-MCAP,25.81,29.99,,,market,Pokemon Reshiram ex Box - English,Reshiram ex Box,market_minus_5_pct_99_with_floor,en
+ENG-SILTEM-BP,15.30,13.99,,,market,Silver Tempest Sleeved Booster Pack - (SWSH12) - English,Silver Tempest Sleeved Booster Pack,market_minus_5_pct_99,en
+ENG-SS-BB,61.45,57.99,,,market,Pokemon Surging Sparks Booster Bundle - English,Surging Sparks Booster Bundle (LGS),market_minus_5_pct_99,en
+ENG-SS-Costco,159.54,150.99,,,market,Costco Pokémon Surging Sparks 2-Pack Trainer Box & Booster Bundle - English,Costco Pokemon Surging Sparks 2-Pack Trainer Box and Booster Bundle,market_minus_5_pct_99,en
+ENG-SS-ETB,120.67,113.99,,,market,Pokemon Surging Sparks Elite Trainer Box - English,Surging Sparks Elite Trainer Box,market_minus_5_pct_99,en
+ENG-TM-ETB,117.23,110.99,,,market,Pokemon Twilight Masquerade Elite Trainer Box - English,Twilight Masquerade Elite Trainer Box,market_minus_5_pct_99,en
+ENG-WF-BB,69.11,64.99,,,market,Pokemon White Flare Booster Bundle - English,White Flare Booster Bundle,market_minus_5_pct_99,en
+JP-151-BOX,365.16,569.99,569.99,65200,jp_landed_markup,Pokemon 151 Booster Box - Japanese,Pokemon Card 151 Booster Box,market_minus_5_pct_99,jp
+JP-AR-BOX,79.75,121.99,121.99,11200,jp_landed_markup,Pokemon Ancient Roar Booster Box - Japanese,Ancient Roar Booster Box,market_minus_5_pct_99,jp
+JP-BB-BOX,153.55,266.99,266.99,28700,jp_landed_markup,Pokemon Black Bolt Booster Box - Japanese,Black Bolt Booster Box,market_minus_5_pct_99,jp
+JP-BBD-BOX,137.45,171.81,,27000,jp_market_plus_25_stale_quote,Pokemon Black Bolt Deluxe Booster Box Japanese,Black Bolt Deluxe Booster Box,market_minus_5_pct_99,jp
+JP-BP-BOX,88.76,121.99,121.99,11200,jp_landed_markup,Pokemon Battle Partners Booster Box - Japanese,Battle Partners Booster Box,market_minus_5_pct_99,jp
+JP-CH-BOX,101.76,162.99,162.99,16200,jp_landed_markup,Pokemon Crimson Haze Booster Box - Japanese,Crimson Haze Booster Box,market_minus_5_pct_99,jp
+JP-CJ-BOX,81.22,121.99,121.99,11200,jp_landed_markup,Pokemon Cyber Judge Booster Box - Japanese,Cyber Judge Booster Box,market_minus_5_pct_99,jp
+JP-FF-BOX,78.53,117.99,117.99,10800,jp_landed_markup,Pokemon Future Flash Booster Box - Japanese,Future Flash Booster Box,market_minus_5_pct_99,jp
+JP-HWA-BOX,128.91,223.99,223.99,23500,jp_landed_markup,Pokemon Heat Wave Arena Booster Box - Japanese,Heat Wave Arena Booster Box,market_minus_5_pct_99,jp
+JP-INFX-BOX,130.27,162.84,,29800,jp_market_plus_25_stale_quote,Pokemon Inferno X Booster Box - Japanese,Inferno X Booster Box,market_minus_5_pct_99,jp
+JP-MB-BOX,106.49,147.99,147.99,14400,jp_landed_markup,Pokemon Mega Brave Booster Box - Japanese,Mega Brave Booster Box,market_minus_5_pct_99,jp
+JP-MD-BOX,126.05,175.99,175.99,17700,jp_landed_markup,Pokemon Mega Dream Ex Booster Box - Japanese,Mega Dream ex Booster Box,market_minus_5_pct_99,jp
+JP-MS-BOX,101.47,131.99,131.99,12400,jp_landed_markup,Pokemon Mega Symphonia Booster Box - Japanese,Mega Symphonia Booster Box,market_minus_5_pct_99,jp
+JP-NW-BOX,91.23,121.99,121.99,11200,jp_landed_markup,Pokemon Night Wanderer Booster Box - Japanese,Night Wanderer Booster Box,market_minus_5_pct_99,jp
+JP-PD-BOX,92.33,203.99,203.99,21100,jp_landed_markup,Pokemon Paradise Dragona Booster Box - Japanese,Paradise Dragona Booster Box,market_minus_5_pct_99,jp
+JP-RBF-BOX,128.45,121.99,,,market,Pokemon Ruler of the Black Flame Booster Box - Japanese,Ruler of the Black Flame Booster Box,market_minus_5_pct_99,jp
+JP-RS-BOX,104.48,148.99,148.99,14500,jp_landed_markup,Pokemon Raging Surf Booster Box - Japanese,Raging Surf Booster Box,market_minus_5_pct_99,jp
+JP-S-BOX,88.79,83.99,,,market,Pokemon Scarlet ex Booster Box - Japanese,Scarlet ex Booster Box,market_minus_5_pct_99,jp
+JP-SEB-BOX,160.07,372.99,372.99,41500,jp_landed_markup,Pokemon Super Electric Breaker Booster Box - Japanese,Super Electric Breaker Booster Box,market_minus_5_pct_99,jp
+JP-SH-BOX,83.21,123.99,123.99,11500,jp_landed_markup,Pokemon Snow Hazard Booster Box - Japanese,Snow Hazard Booster Box,market_minus_5_pct_99,jp
+JP-SHINY-BOX,137.79,197.99,197.99,20400,jp_landed_markup,Pokemon Shiny Treasures EX Box Japanese,Shiny Treasure ex High Class Booster Box,market_minus_5_pct_99,jp
+JP-SM-BOX,81.29,121.99,121.99,11200,jp_landed_markup,Pokemon Stellar Miracle Booster Box - Japanese,Stellar Miracle Booster Box,market_minus_5_pct_99,jp
+JP-TB-BOX,123.99,183.99,183.99,18700,jp_landed_markup,Pokemon Triple Beat Booster Box - Japanese,Triple Beat Booster Box,market_minus_5_pct_99,jp
+JP-TF-BB,134.78,225.99,225.99,23700,jp_landed_markup,Pokemon Terastal Festival Booster Box - Japanese,Terastal Fest ex Booster Box,market_minus_5_pct_99,jp
+JP-TM-BOX,93.46,146.99,146.99,14200,jp_landed_markup,Pokemon Transformation Mask Booster Box - Japanese,Transformation Mask Booster Box,market_minus_5_pct_99,jp
+JP-TR-BB,200.86,295.99,295.99,32200,jp_landed_markup,Pokemon Glory of Team Rocket Booster Box - Japanese,Glory of Team Rocket Booster Box,market_minus_5_pct_99,jp
+JP-V-BOX,82.90,122.99,122.99,11300,jp_landed_markup,Pokemon Violet ex Booster Box - Japanese,Violet ex Booster Box,market_minus_5_pct_99,jp
+JP-VSTAR-BOX,227.55,310.99,310.99,34000,jp_landed_markup,Pokemon VSTAR Universe Booster Box - Japanese,VSTAR Universe Booster Box,market_minus_5_pct_99,jp
+JP-WF-BOX,147.96,237.99,237.99,25200,jp_landed_markup,Pokemon White Flare Booster Box - Japanese,White Flare Booster Box,market_minus_5_pct_99,jp
+JP-WFD-BOX,117.19,146.49,,22100,jp_market_plus_25_stale_quote,Pokemon White Flare Deluxe Booster Box Japanese,White Flare Deluxe Booster Box,market_minus_5_pct_99,jp
+JP-WIFO-BOX,91.11,142.99,142.99,13700,jp_landed_markup,Pokemon Wild Force Booster Box - Japanese,Wild Force Booster Box,market_minus_5_pct_99,jp
+MYZ-JP-BB,84.33,106.99,106.99,9400,jp_landed_markup,Pokemon Mega Nihil Zero Booster Box - Japanese,Nihil Zero Booster Box,market_minus_5_pct_99,jp
+NS-JPN-BB,110.75,132.99,132.99,12500,jp_landed_markup,Pokemon Ninja Spinner Booster Box - Japanese,Ninja Spinner Booster Box,market_minus_5_pct_99,jp

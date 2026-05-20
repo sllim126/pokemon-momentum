@@ -17,7 +17,7 @@ Every page pulls data from `/index-overview-data`, then renders:
 - stat cards
 - Plotly chart (index level / aggregate value)
 - included set grid
-- top 100 holdings
+- top-N holdings based on each index definition's `constituent_limit`
 
 ## Source Files
 
@@ -62,11 +62,11 @@ For each index key:
 1. Resolve included sets using one of:
 - explicit `group_ids`
 - `generation` via `build_generation_case(...)`
-- `all_active_groups` (Pokemon Top 100)
+- `all_active_groups` (Pokemon Top 151)
 
 2. For each date:
 - rank cards by `marketPrice` descending
-- keep top 100 rows
+- keep the top rows for the index definition's `constituent_limit`
 - compute aggregate market value for that day
 
 3. Build index series:
@@ -75,7 +75,7 @@ For each index key:
 - if turnover exceeds 10%, trigger reconstitution and adjust divisor
 
 4. Build latest-day holdings:
-- top 100 cards (rank, set, image, number, rarity, subtype, price)
+- top cards for that index limit (rank, set, image, number, rarity, subtype, price)
 
 ## Release Marker Toggle Rules
 
@@ -113,5 +113,5 @@ Current policy:
 ## Known UX Behavior
 
 - Chart defaults to `All` range and `Index Level`.
-- Holdings are capped to top 100 for consistency.
+- Holdings are capped to each index definition's constituent limit; the all-English Pokemon index uses 151 while era-specific indexes generally use 100.
 - Card title dedupe handles number formatting differences like `48/108` vs `048/108`.

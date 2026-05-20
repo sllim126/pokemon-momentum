@@ -26,12 +26,76 @@ High Priority
   - Make phone the primary design target, tablet the analysis/comparison target, and desktop the power-user target.
   - Align English/Japanese and Singles/Sealed as first-class scope switches throughout the experience.
   - Make the public-facing value proposition obvious on first view: Pokemon market screening for long-term momentum without chasing hype, buyouts, or short spikes.
+  - Add spike/dip suppression to price-history indicators:
+    - for cards valued over `$200`, ignore single-observation moves greater than roughly `25%` up or down as likely manipulation, bad data, buyout noise, or non-repeatable market distortion
+    - make the threshold configurable later by price band, liquidity, and observation count instead of hard-coding one global rule
 - Mobile decision-card prototype:
-  - Live first pass promoted on 2026-04-28 as `/mobile`, with mobile/tablet `/` and `/dashboard` routed to the new decision-card page.
-  - The phone card detail screen now acts as a fast decision engine using Top Movers, card image, market price, 30d trend, seller price input, deal status, and suggested offer.
-  - Stats / Graph / Insight now live behind a compact tab row, with real series data lazy-loaded for the graph and line-only hydrated sparklines in result rows.
-  - Save / Full Data remain thumb reachable in a bottom action area; Compare was removed for now.
-  - Follow-up: wire Save, Full Data, account menu destinations, search behavior, and final deal-score weighting to production flows.
+  - Accomplished on 2026-04-28:
+    - Promoted the mobile decision-card redesign to the live mobile/tablet `/` and `/dashboard` experience.
+    - Preserved the preferred hamburger menu and account drawer patterns from the mockup.
+    - Removed the old visual-card wrapper styling so the mobile shell feels more integrated with the site background.
+    - Added persistent search/header shell plus obvious English/Japanese and Singles/Sealed switches.
+    - Defaulted the landing feed to the current desktop `Top Movers` indicator.
+    - Moved market price next to the selected item name and kept the selected item detail above the result feed.
+    - Reworked the deal checker layout with seller price first, edge vs market, suggested offer, and corrected buyer/seller wording.
+    - Added Stats / Graph / Insight tabs so only one supporting panel is visible at a time.
+    - Made the graph functional with lazy-loaded real series data, underfill, date markers, and chart range controls.
+    - Hydrated row sparklines for all visible results in safe batches instead of limiting to the first 30.
+    - Added card/product images where available.
+    - Added Save bottom-sheet behavior with Favorite, Watchlist, Needs Review, and Buy List options.
+    - Added Full Data modal behavior for the previous full-detail style flow.
+    - Improved touch targets, focus states, and thumb-friendly controls across header, drawers, rows, tabs, and bottom actions.
+    - Updated the account icon, tracked-count heart badge, and heart click behavior.
+    - Made the heart open all tracked items.
+    - Made account menu saved-research links open filtered tracked views:
+      - Tracked Items = all saved items
+      - Favorites = `favorite`
+      - Watchlist = `watchlist`
+      - Needs Review = `research`
+      - Buy List = `owned`
+    - Built, then intentionally hid, the first Alerts & Targets mobile workspace while the notification strategy waits:
+      - Price Targets = local buy-below / sell-above target inputs for tracked items
+      - Momentum Alerts = local rule toggles for breakout, pullback, momentum shift, and stale tracking ideas
+      - Recent Alerts = first-pass inbox shape using saved targets and tracked-item movement context
+    - Hid the deal checker while viewing tracked/favorites lists but kept Stats / Graph / Insight visible.
+    - Added URL refresh persistence for selected market, product type, feed/mode, search query, selected product, subtype, and tracked tag.
+    - Mapped hamburger indicator links to mobile in-page feeds for:
+      - Top Movers
+      - Early Movers
+      - Pullbacks
+      - Under the Radar
+      - Confirmed Movers
+      - Consistent Movers
+      - Breakouts
+    - Removed the live menu link back to the Mobile Rebuild Mockup.
+    - Built the mobile Feedback & Support page shell:
+      - account-menu links now open Feedback, Report a Bug, and View Guide tabs
+      - feedback and bug reports submit into the existing `/bug_reports` internal review queue with mobile context
+      - View Guide now has a first-pass quick guide for search, scope switches, deal check, and saved lists
+  - Next pass to review:
+    - Decide whether tracked account lists should show English and Japanese together by default, with row-level EN/JP labels and optional list filtering.
+    - Store or migrate tracking metadata so saved items reliably retain category/market, not just `productId||subTypeName`.
+    - Build proper mobile flows for Browse Set, Browse Species, Set Strength, and Time to Buy instead of relying on desktop-dashboard tab concepts.
+    - Make Set Explorer mobile-friendly with the same mobile shell, readable set cards, thumb-friendly filters, and quick tap-through behavior.
+    - Make Sealed Deals mobile-friendly with the same mobile shell, clearer deal rows/cards, and phone-first sorting/filter controls.
+    - Tidy index overview pages for mobile: improve spacing, row readability, tap targets, and index navigation without rebuilding the whole index experience yet.
+    - Revisit Alerts & Targets later:
+      - keep this section hidden from the account menu for now
+      - site-specific/in-site notifications should be workable because market data updates daily, not continuously
+      - define daily alert evaluation rules for target hits, watchlist movement, breakouts, pullbacks, stale tracked items, and sell-above targets
+      - decide whether alert targets/rules should sync to the tracking account instead of localStorage
+      - decide whether notification delivery should start as in-site badges/inbox only before email, Discord, PWA push, or native-app push
+    - Upgrade View Guide from first-pass static help into a real guided walkthrough if users need more onboarding.
+    - Mobile account follow-up: add the desktop Google sign-in block later if mobile should manage sign-in directly; for now mobile can reuse an existing tracking token and supports sign-out.
+    - Review hamburger menu labels after real usage and remove anything that does not earn its spot on mobile.
+    - Improve mobile search results and search suggestions beyond filtering the currently loaded feed.
+    - Decide if tracked/favorites should have their own internal All / EN / JP / Singles / Sealed filter row.
+    - Decide whether the deal checker should remain hidden for all tracked views or be available behind a secondary action.
+    - Add better empty states for filtered tracked lists and list-specific onboarding text.
+    - Confirm Full Data modal has every field/link needed from the previous mobile details page.
+    - Confirm all indicator feeds use the right mobile row labels, scoring, and sorting behavior.
+    - Review performance on real phones after the full-result sparkline hydration change.
+    - Run a link-by-link mobile QA pass after the next migration/deployment.
 - Desktop command-center redesign:
   - source notes for the desktop mockup live in `docs/desktop_redesign_notes.txt`
   - preserve desktop as the exploration / analysis product rather than forcing the mobile decision-card flow onto large screens
@@ -50,6 +114,8 @@ High Priority
 - Market-switch/search intent follow-up from bug ticket `id=5` (2026-04-15):
   - make EN vs JP market switching more obvious on mobile
   - evaluate auto-market suggestion/switch when query strongly matches market-specific sealed terms (example: EN query typed while JP is intended)
+- Product classification cleanup:
+  - verify product-kind rebuild results now that broad `other` classifications default into sealed instead of singles/cards.
 - Make tool/page navigation more discoverable on desktop and mobile instead of hiding too much in the bottom-left account/menu area.
 - Improve narrower laptop / small-desktop responsiveness so the chart, indicators, and table columns stay more obvious without requiring ultra-wide screens.
 
@@ -123,6 +189,7 @@ Future Ideas
 - Keep detailed card/set data loading on selection instead of preloading broad datasets.
 - Keep left-rail / ticker mini-graph payloads minimal and snapshot-backed.
 - Build `Buy List` into a stronger sourcing / card-show workflow with target prices and shopping-list behavior.
+- Build a flip-focused budget basket page that uses local snapshot fields like `recent_distinct_prices_30d`, ROC windows, rarity buckets, and spend caps to suggest resale-oriented buys.
 - Explore budget-based assistant prompts.
 - Explore collection-completion prompts.
 - Explore entry / exit prompts such as:

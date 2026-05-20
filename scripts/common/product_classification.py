@@ -10,6 +10,9 @@ def get_product_class_sql(alias: str = "p") -> str:
     name = _name_expr(alias)
     return f"""
 CASE
+  WHEN {name} LIKE 'code card%'
+    OR lower(COALESCE({alias}.rarity, '')) = 'code card'
+    THEN 'excluded_code_card'
   WHEN {name} LIKE '%ultra-premium collection%'
     OR {name} LIKE '%ultra premium collection%'
     THEN 'mcap'
@@ -55,9 +58,12 @@ def get_product_kind_sql(alias: str = "p") -> str:
     name = _name_expr(alias)
     return f"""
 CASE
+  WHEN {name} LIKE 'code card%'
+    OR lower(COALESCE({alias}.rarity, '')) = 'code card'
+    THEN 'excluded'
   WHEN {name} LIKE '%ultra-premium collection%'
     OR {name} LIKE '%ultra premium collection%'
-    THEN 'mcap'
+    THEN 'sealed'
   WHEN {name} LIKE '%booster box%'
     OR {name} LIKE '%booster box case%'
     OR ({name} LIKE '%booster%' AND {name} LIKE '%case%')
@@ -88,6 +94,6 @@ CASE
   WHEN COALESCE(NULLIF({alias}.number, ''), '') <> ''
     OR COALESCE(NULLIF({alias}.rarity, ''), '') <> ''
     THEN 'card'
-  ELSE 'other'
+  ELSE 'sealed'
 END
 """.strip()

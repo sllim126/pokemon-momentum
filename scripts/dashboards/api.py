@@ -44,6 +44,7 @@ from scripts.dashboards.tracking_store import (
     create_bug_report,
     create_google_user,
     create_user,
+    delete_saved_view,
     delete_user,
     delete_session,
     ensure_tracking_schema,
@@ -51,7 +52,9 @@ from scripts.dashboards.tracking_store import (
     get_tags_for_user,
     get_user_by_username,
     list_bug_reports,
+    list_saved_views_for_user,
     merge_tags,
+    save_saved_view,
     set_tag,
     verify_user,
 )
@@ -142,14 +145,16 @@ _INDEX_OVERVIEW_CACHE: dict[tuple[int, str], tuple[datetime, dict]] = {}
 # - base_level: normalization anchor (1000 => "index points" baseline).
 # - group_ids: explicit set universe (preferred for legacy eras with custom boundaries).
 # - generation: dynamic set universe resolved via build_generation_case().
-# - all_active_groups: special "Pokemon Top 100" mode using all active English groups.
+# - all_active_groups: special all-English Pokemon index mode using all active groups.
+# - constituent_limit: number of ranked card constituents to keep for each day.
 # - release_markers_enabled: tells frontend whether to show Set Releases toggle/markers.
 INDEX_DEFINITIONS = {
     "pokemon100": {
-        "index_name": "Pokemon Top 100",
-        "description": "Top 100 cards by market price (all English sets)",
+        "index_name": "Pokemon Top 151",
+        "description": "Top 151 cards by market price (all English sets)",
         "base_level": 1000.0,
         "all_active_groups": True,
+        "constituent_limit": 151,
         "release_markers_enabled": False,
     },
     "sv100": {
@@ -248,10 +253,11 @@ INDEX_DEFINITIONS = {
         "release_markers_enabled": False,
     },
     "jp_pokemon100": {
-        "index_name": "JP Pokemon Top 100",
-        "description": "Top 100 cards by market price (all active Japanese sets)",
+        "index_name": "JP Pokemon Top 151",
+        "description": "Top 151 cards by market price (all active Japanese sets)",
         "base_level": 1000.0,
         "all_active_groups": True,
+        "constituent_limit": 151,
         "release_markers_enabled": False,
         "category_id": 85,
     },
@@ -643,7 +649,7 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
 
     Payload sections:
     - series: daily aggregate + normalized index level + turnover metadata
-    - holdings: current top 100 card constituents with display metadata
+    - holdings: current ranked card constituents with display metadata
     - included_sets/set_releases: set-level cards + marker support for chart overlays
     - summary: headline metrics used by the stat cards
     """
@@ -654,12 +660,13 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
     if not group_ids:
         raise HTTPException(status_code=404, detail=f"No groups found for index key: {index_key}")
     group_ids_sql = ", ".join(str(int(group_id)) for group_id in group_ids)
+    constituent_limit = max(1, int(definition.get("constituent_limit") or 100))
     price_source = prices_from(category_id)
     metadata_cte = build_metadata_cte(category_id, include_classification=True, cte_name="metadata")
 
-    # Step 1: Build daily top-100 constituents for the selected set universe.
+    # Step 1: Build daily ranked constituents for the selected set universe.
     # We intentionally rank by raw marketPrice DESC per date to match the
-    # "Top 100 by market price" methodology shown in the UI text.
+    # "Top N by market price" methodology shown in the UI text.
     top100_sql = f"""
     WITH
     {metadata_cte},
@@ -701,7 +708,7 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
       marketPrice,
       rn
     FROM ranked
-    WHERE rn <= 100
+    WHERE rn <= {constituent_limit}
     ORDER BY date, rn
     """
     cols, rows = q(top100_sql)
@@ -802,7 +809,7 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
 
     latest_date = series[-1]["date"]
 
-    # Step 4: Snapshot latest-day top 100 holdings (cards shown in UI tiles).
+    # Step 4: Snapshot latest-day ranked holdings (cards shown in UI tiles).
     holdings_sql = f"""
     WITH
     {metadata_cte},
@@ -843,7 +850,7 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
     LEFT JOIN metadata m
       ON m.productId = r.productId
      AND m.groupId = r.groupId
-    WHERE r.rn <= 100
+    WHERE r.rn <= {constituent_limit}
     ORDER BY r.rn
     """
     holdings_cols, holdings_rows = q(holdings_sql)
@@ -995,6 +1002,7 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
         "index_name": str(definition.get("index_name") or index_key),
         "description": str(definition.get("description") or "Top 100 cards by market price"),
         "base_level": float(definition.get("base_level") or 1000.0),
+        "constituent_limit": constituent_limit,
         "release_markers_enabled": bool(definition.get("release_markers_enabled", True)),
         "latest_date": latest_date,
         "included_sets": included_sets,
@@ -2914,6 +2922,106 @@ def tracking_tags_merge(payload: dict, authorization: str | None = Header(defaul
     return {"ok": True, "count": len(items)}
 
 
+def _normalize_tracking_view_state(payload: dict | None) -> dict:
+    body = payload if isinstance(payload, dict) else {}
+    browse_set_filters = body.get("browse_set_filters") or []
+    if not isinstance(browse_set_filters, list):
+        browse_set_filters = []
+    good_buys_sets = body.get("good_buys_sets") or []
+    if not isinstance(good_buys_sets, list):
+        good_buys_sets = []
+
+    state = {
+        "category_id": int(body.get("category_id", 3) or 3),
+        "tab": str(body.get("tab") or "top_movers").strip() or "top_movers",
+        "segment": str(body.get("segment") or "cards").strip().lower() or "cards",
+        "group_id": body.get("group_id"),
+        "generation": str(body.get("generation") or "all").strip() or "all",
+        "tracked_tag": str(body.get("tracked_tag") or "all").strip() or "all",
+        "tracked_sort": str(body.get("tracked_sort") or "tags").strip() or "tags",
+        "species_query": str(body.get("species_query") or "").strip(),
+        "browse_set_filters": [str(value).strip() for value in browse_set_filters if str(value).strip()],
+        "good_buys_sets": [str(value).strip() for value in good_buys_sets if str(value).strip()],
+        "good_buys_set_filter_all": bool(body.get("good_buys_set_filter_all", True)),
+        "good_buys_min_price": body.get("good_buys_min_price"),
+        "good_buys_max_price": body.get("good_buys_max_price"),
+    }
+    try:
+        state["group_id"] = int(state["group_id"]) if state["group_id"] is not None else None
+    except (TypeError, ValueError):
+        state["group_id"] = None
+    try:
+        state["good_buys_min_price"] = float(state["good_buys_min_price"]) if state["good_buys_min_price"] is not None else 5.0
+    except (TypeError, ValueError):
+        state["good_buys_min_price"] = 5.0
+    try:
+        state["good_buys_max_price"] = float(state["good_buys_max_price"]) if state["good_buys_max_price"] is not None else None
+    except (TypeError, ValueError):
+        state["good_buys_max_price"] = None
+    if state["segment"] not in {"cards", "sealed"}:
+        state["segment"] = "cards"
+    if state["good_buys_max_price"] is not None and state["good_buys_max_price"] < state["good_buys_min_price"]:
+        state["good_buys_min_price"], state["good_buys_max_price"] = state["good_buys_max_price"], state["good_buys_min_price"]
+    return state
+
+
+def _tracking_view_payload(row: dict) -> dict:
+    state_json = row.get("state_json") or "{}"
+    try:
+        state = json.loads(state_json)
+    except json.JSONDecodeError:
+        state = {}
+    return {
+        "id": int(row["id"]),
+        "name": str(row.get("name") or "").strip(),
+        "category_id": int(row.get("category_id") or state.get("category_id") or 3),
+        "ticker_enabled": bool(row.get("ticker_enabled")),
+        "created_at": row.get("created_at"),
+        "updated_at": row.get("updated_at"),
+        "state": _normalize_tracking_view_state(state),
+    }
+
+
+@app.get("/tracking/views")
+def tracking_saved_views(authorization: str | None = Header(default=None)):
+    session_user = require_tracking_user(authorization)
+    return {
+        "items": [
+            _tracking_view_payload(row)
+            for row in list_saved_views_for_user(session_user.user_id)
+        ]
+    }
+
+
+@app.post("/tracking/views")
+def tracking_saved_views_upsert(payload: dict | None = None, authorization: str | None = Header(default=None)):
+    session_user = require_tracking_user(authorization)
+    body = payload if isinstance(payload, dict) else {}
+    name = str(body.get("name") or "").strip()
+    if len(name) < 2:
+        raise HTTPException(status_code=400, detail="Saved view name must be at least 2 characters")
+    state = _normalize_tracking_view_state(body.get("state"))
+    try:
+        saved_row = save_saved_view(
+            session_user.user_id,
+            name=name[:80],
+            category_id=int(state["category_id"]),
+            state_json=json.dumps(state, sort_keys=True),
+            ticker_enabled=bool(body.get("ticker_enabled")),
+            view_id=int(body["id"]) if body.get("id") is not None else None,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    return {"item": _tracking_view_payload(saved_row)}
+
+
+@app.delete("/tracking/views/{view_id}")
+def tracking_saved_views_delete(view_id: int, authorization: str | None = Header(default=None)):
+    session_user = require_tracking_user(authorization)
+    delete_saved_view(session_user.user_id, view_id)
+    return {"ok": True}
+
+
 @app.post("/tracking/items/resolve")
 def tracking_items_resolve(payload: dict | None = None):
     """Resolve tracked tag rows into display-ready dashboard items on the server."""
@@ -3411,6 +3519,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
           ON m.productId = ap.productId
          AND m.groupId = ap.groupId
         WHERE {prefix_filter}
+          AND COALESCE(m.productKind, '') <> 'excluded'
         LIMIT 2000
         """
         cols, rows = q(sql)
@@ -3626,6 +3735,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         OR lower(COALESCE(ap.subTypeName, '')) LIKE '%' || lower('{safe_term}') || '%'
         OR {product_token_match_expr}
       )
+        AND COALESCE(m.productKind, '') <> 'excluded'
     ),
     group_matches AS (
       SELECT
@@ -3717,6 +3827,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         OR lower(COALESCE(ap.subTypeName, '')) LIKE '%' || lower('{safe_term}') || '%'
         OR {product_token_match_expr}
       )
+        AND COALESCE(m.productKind, '') <> 'excluded'
     ),
     group_matches AS (
       SELECT 1 AS marker
@@ -4062,6 +4173,7 @@ def product_signals(limit: int = 500, min_price: float = 0.0, category_id: int =
       trend_score
     FROM {product_signal_from(category.category_id)}
     WHERE latest_price >= {min_price}
+      AND COALESCE(productKind, '') <> 'excluded'
     ORDER BY trend_score DESC, roc_30d_pct DESC, latest_price DESC
     LIMIT {limit}
     """

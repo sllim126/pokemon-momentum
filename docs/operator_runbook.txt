@@ -228,6 +228,27 @@ python3 scripts/build_store_price_targets.py
 
 5. Inspect the resulting row in `data/market_prices_latest.csv`.
 
+Pricing coverage audit:
+
+```bash
+cd /opt/pokemon-momentum
+python3 scripts/utilities/audit_store_pricing_coverage.py
+```
+
+- `automated`
+  - visible SKU is covered by the generated pricing target file
+- `manual_expected`
+  - visible SKU is intentionally manual, such as custom or print-on-demand items
+- `hold_expected`
+  - visible SKU is intentionally excluded until release or usable market data exists
+- `missing_unexpected`
+  - visible SKU is missing a rule or failed to generate a target and needs attention
+
+Daily automation:
+
+- the host-driven daily update now runs this audit once after the category pipelines finish
+- if the audit finds `missing_unexpected` SKUs, the daily update log records a warning without failing the whole refresh
+
 
 Environment
 -----------

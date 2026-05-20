@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Poke6s Market | JP Pokemon Top 100</title>
+  <title>Poke6s Market | JP Pokemon Top 151</title>
   <link rel="icon" type="image/png" href="/images/Favidon.png">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <style>
@@ -606,9 +606,9 @@
   <main class="shell">
     <section class="panel overview">
       <h1 id="indexPageTitle">Poke6s Market Indexes</h1>
-      <p class="index-name" id="indexName">JP Pokemon Top 100</p>
+      <p class="index-name" id="indexName">JP Pokemon Top 151</p>
       <div class="overview-meta">
-        <span>✚ Top 100 cards by market price</span>
+        <span>✚ Top 151 cards by market price</span>
         <span>◷ Updated daily</span>
         <span><a href="/dashboard">Dashboard ↗</a></span>
         <span><a href="/set-explorer">Set Explorer ↗</a></span>
@@ -623,11 +623,11 @@
       <div class="overview-fold-body">
         <article class="method-card">
           <h2>How This Index Works</h2>
-          <p>This benchmark tracks the 100 highest-priced Pokemon cards by market value from all active Japanese Pokemon sets. We use a divisor-adjusted method to keep the series continuous when constituents rotate. Each daily run:</p>
+          <p>This benchmark tracks the 151 highest-priced Pokemon cards by market value from all active Japanese Pokemon sets. We use a divisor-adjusted method to keep the series continuous when constituents rotate. Each daily run:</p>
           <ul class="method-list">
             <li>Collect all eligible cards from the included sets below</li>
             <li>Sort cards by latest market price (highest to lowest)</li>
-            <li>Keep the top 100 constituents for that day</li>
+            <li>Keep the top 151 constituents for that day</li>
             <li>Compute two outputs: Index Level (normalized points) and Aggregate Value (raw dollar total)</li>
             <li>Measure membership turnover and, when turnover exceeds 10%, apply a divisor rebalance</li>
             <li>Preserve continuity across reconstitution events (for example new sets or major meta shifts)</li>
@@ -636,7 +636,7 @@
           <section class="callout info">
             <h3>Performance Views:</h3>
             <p><strong>Index Level</strong> (default) - A normalized series that starts at 1000 points. Use this view to compare relative performance over time without overreacting to constituent swaps.</p>
-            <p><strong>Aggregate Value</strong> - The raw dollar sum of the current top-100 basket. This is the direct market-value view and will usually react more sharply when composition changes.</p>
+            <p><strong>Aggregate Value</strong> - The raw dollar sum of the current top-151 basket. This is the direct market-value view and will usually react more sharply when composition changes.</p>
           </section>
 
           <section class="callout good">
@@ -646,7 +646,7 @@
 
         <section class="sets sets-inline">
           <h2>Included Sets</h2>
-          <p>This index tracks cards from the following active English Pokemon TCG sets:</p>
+          <p>This index tracks cards from the following active Japanese Pokemon TCG sets:</p>
           <div class="set-grid" id="includedSetGrid"></div>
         </section>
       </div>
@@ -654,7 +654,7 @@
 
     <section class="panel index-panel">
       <div class="index-head">
-        <h2 id="indexPanelTitle">JP Pokemon Top 100</h2>
+        <h2 id="indexPanelTitle">JP Pokemon Top 151</h2>
         <div class="toolbar">
           <button class="btn range-btn" data-range="30">1M</button>
           <button class="btn range-btn" data-range="90">3M</button>
@@ -709,7 +709,7 @@
 
     <section class="panel holdings">
       <div class="holdings-head">
-        <h2>Top 100 Holdings</h2>
+        <h2 id="holdingsTitle">Top 151 Holdings</h2>
         <div class="holdings-meta" id="holdingsAsOf">As of: --</div>
       </div>
 
@@ -886,12 +886,14 @@
       document.getElementById("headlineAllTime").textContent = `${formatSigned(allTime.abs, mode === "aggregate")} (${formatSignedPct(allTime.pct)})`;
     }
 
-    // Render up to top 100 holdings as linked tiles with card art and pricing.
+    let holdingsLimit = 151;
+
+    // Render ranked holdings as linked tiles with card art and pricing.
     function renderHoldings(holdings) {
       if (!holdingsGrid) {
         return;
       }
-      const top = Array.isArray(holdings) ? holdings.slice(0, 100) : [];
+      const top = Array.isArray(holdings) ? holdings.slice(0, holdingsLimit) : [];
       if (!top.length) {
         holdingsGrid.innerHTML = "";
         return;
@@ -1136,10 +1138,13 @@
         throw new Error(`index-overview-data failed (${response.status})`);
       }
       const data = await response.json();
-      document.title = `Poke6s Market | ${data.index_name || "JP Pokemon Top 100"}`;
+      document.title = `Poke6s Market | ${data.index_name || "JP Pokemon Top 151"}`;
       if (indexPageTitle) indexPageTitle.textContent = "Poke6s Market Indexes";
-      if (indexName) indexName.textContent = data.index_name || "JP Pokemon Top 100";
-      if (indexPanelTitle) indexPanelTitle.textContent = data.index_name || "JP Pokemon Top 100";
+      if (indexName) indexName.textContent = data.index_name || "JP Pokemon Top 151";
+      if (indexPanelTitle) indexPanelTitle.textContent = data.index_name || "JP Pokemon Top 151";
+      holdingsLimit = Number(data.constituent_limit || 151);
+      const holdingsTitle = document.getElementById("holdingsTitle");
+      if (holdingsTitle) holdingsTitle.textContent = `Top ${holdingsLimit} Holdings`;
       payloadSummary = data.summary || null;
       fullSeries = (data.series || []).map((row) => ({
         date: row.date,

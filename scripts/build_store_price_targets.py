@@ -8,6 +8,7 @@ from __future__ import annotations
 import csv
 import os
 import re
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal, ROUND_FLOOR, ROUND_HALF_UP
 from pathlib import Path
 
@@ -38,6 +39,8 @@ DEFAULT_JP_BOOSTER_BOX_JPY_PER_USD = Decimal(os.getenv("JP_BOOSTER_BOX_JPY_PER_U
 DEFAULT_JP_BOOSTER_BOX_ORDER_SHIPPING_JPY = Decimal(os.getenv("JP_BOOSTER_BOX_ORDER_SHIPPING_JPY", "13800"))
 DEFAULT_JP_BOOSTER_BOX_ORDER_COUNT = Decimal(os.getenv("JP_BOOSTER_BOX_ORDER_COUNT", "10"))
 DEFAULT_JP_BOOSTER_BOX_MARKUP_PCT = Decimal(os.getenv("JP_BOOSTER_BOX_MARKUP_PCT", "20"))
+DEFAULT_JP_STALE_QUOTE_DAYS = int(os.getenv("JP_STALE_QUOTE_DAYS", "7"))
+DEFAULT_JP_STALE_MARKUP_PCT = Decimal(os.getenv("JP_STALE_MARKUP_PCT", "25"))
 
 
 def parse_decimal(value: str) -> Decimal | None:
@@ -57,6 +60,17 @@ def parse_decimal(value: str) -> Decimal | None:
     try:
         return Decimal(value)
     except Exception:
+        return None
+
+
+def parse_iso_date(value: str) -> datetime | None:
+    """Return a UTC datetime for `YYYY-MM-DD` input, or None when invalid."""
+    value = (value or "").strip()
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value).replace(tzinfo=UTC)
+    except ValueError:
         return None
 
 
@@ -276,6 +290,26 @@ def compute_target_price(market_price: Decimal, pricing_mode: str, min_price: De
     return round_price(target, 2)
 
 
+def compute_market_plus_markup_target(market_price: Decimal, markup_pct: Decimal) -> Decimal:
+    """Return a simple market-plus-percent target rounded to cents."""
+    return round_price(market_price * (Decimal("1") + (markup_pct / Decimal("100"))), 2)
+
+
+def supplier_quote_is_stale(
+    supplier_quote: dict[str, str] | None,
+    max_age_days: int = DEFAULT_JP_STALE_QUOTE_DAYS,
+    now: datetime | None = None,
+) -> bool:
+    """Return whether a supplier quote has aged past the allowed freshness window."""
+    if supplier_quote is None:
+        return False
+    quote_date = parse_iso_date(supplier_quote.get("quote_date") or "")
+    if quote_date is None:
+        return False
+    current_time = now or datetime.now(UTC)
+    return current_time - quote_date > timedelta(days=max_age_days)
+
+
 def load_signal_rows(path: Path) -> tuple[dict[str, dict[str, str]], dict[str, dict[str, str]]]:
     """Load market snapshot rows keyed by both product id and normalized name.
 
@@ -314,7 +348,10 @@ def load_store_rows(path: Path) -> dict[str, dict[str, str]]:
     return rows
 
 
-def build_target_rows(export_csv: Path = DEFAULT_EXPORT_CSV) -> tuple[list[dict[str, str]], list[str]]:
+def build_target_rows(
+    export_csv: Path = DEFAULT_EXPORT_CSV,
+    now: datetime | None = None,
+) -> tuple[list[dict[str, str]], list[str]]:
     """Build the complete store pricing feed consumed by the Squarespace sync job.
 
     Inputs:
@@ -381,17 +418,30 @@ def build_target_rows(export_csv: Path = DEFAULT_EXPORT_CSV) -> tuple[list[dict[
             target_price = compute_target_price(market_price, pricing_mode, min_price)
             supplier_quote = latest_supplier_quotes.get(sku)
             supplier_cost_jpy = parse_decimal((supplier_quote or {}).get("cost_jpy") or "")
-            if supplier_cost_jpy is not None and is_jp_booster_box_rule(rule):
+            is_jp_rule = source.strip().lower() == "jp"
+            if is_jp_rule and supplier_quote_is_stale(supplier_quote, now=now):
+                final_target_price = compute_market_plus_markup_target(market_price, DEFAULT_JP_STALE_MARKUP_PCT)
+                profit_floor_price = ""
+                supplier_cost_jpy_value = str(supplier_cost_jpy) if supplier_cost_jpy is not None else ""
+                target_source = "jp_market_plus_25_stale_quote"
+            elif supplier_cost_jpy is not None and is_jp_booster_box_rule(rule):
                 profit_floor_price = compute_jp_booster_box_floor(supplier_cost_jpy)
                 target_source = "jp_landed_markup"
+                final_target_price = target_price
+                if profit_floor_price is not None and profit_floor_price > final_target_price:
+                    final_target_price = profit_floor_price
+                profit_floor_price = str(profit_floor_price) if profit_floor_price is not None else ""
+                supplier_cost_jpy_value = str(supplier_cost_jpy)
             else:
                 profit_floor_price = compute_profit_floor(supplier_cost_jpy) if supplier_cost_jpy is not None else None
                 target_source = "profit_floor"
-            final_target_price = target_price
-            # Prefer the higher of the market-aware target and the supplier-cost
-            # floor so automation protects margin by default.
-            if profit_floor_price is not None and profit_floor_price > final_target_price:
-                final_target_price = profit_floor_price
+                final_target_price = target_price
+                # Prefer the higher of the market-aware target and the supplier-cost
+                # floor so automation protects margin by default.
+                if profit_floor_price is not None and profit_floor_price > final_target_price:
+                    final_target_price = profit_floor_price
+                profit_floor_price = str(profit_floor_price) if profit_floor_price is not None else ""
+                supplier_cost_jpy_value = str(supplier_cost_jpy) if supplier_cost_jpy is not None else ""
             output_rows.append(
                 {
                     "sku": sku,
@@ -401,9 +451,14 @@ def build_target_rows(export_csv: Path = DEFAULT_EXPORT_CSV) -> tuple[list[dict[
                     "market_title": market_row.get("productName") or "",
                     "pricing_mode": pricing_mode,
                     "market_source": source,
-                    "profit_floor_price": str(profit_floor_price) if profit_floor_price is not None else "",
-                    "supplier_cost_jpy": str(supplier_cost_jpy) if supplier_cost_jpy is not None else "",
-                    "target_source": target_source if profit_floor_price is not None and profit_floor_price > target_price else "market",
+                    "profit_floor_price": profit_floor_price,
+                    "supplier_cost_jpy": supplier_cost_jpy_value,
+                    "target_source": (
+                        target_source
+                        if target_source == "jp_market_plus_25_stale_quote"
+                        or (profit_floor_price and Decimal(profit_floor_price) > target_price)
+                        else "market"
+                    ),
                 }
             )
 

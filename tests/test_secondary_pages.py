@@ -3,6 +3,7 @@ import unittest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+DESKTOP_LAB_HTML = REPO_ROOT / "scripts" / "dashboards" / "dashboard_lab.html"
 SEALED_DEALS_HTML = REPO_ROOT / "scripts" / "dashboards" / "sealed_deals.html"
 SET_EXPLORER_HTML = REPO_ROOT / "scripts" / "dashboards" / "set_explorer.html"
 INDEX_OVERVIEW_HUB_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overview_hub.html"
@@ -25,6 +26,7 @@ INDEX_OVERVIEW_JP_SV100_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_ove
 class SecondaryPageContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.desktop_lab_html = DESKTOP_LAB_HTML.read_text(encoding="utf-8")
         cls.sealed_deals_html = SEALED_DEALS_HTML.read_text(encoding="utf-8")
         cls.set_explorer_html = SET_EXPLORER_HTML.read_text(encoding="utf-8")
         cls.index_overview_hub_html = INDEX_OVERVIEW_HUB_HTML.read_text(encoding="utf-8")
@@ -42,6 +44,16 @@ class SecondaryPageContractTests(unittest.TestCase):
         cls.index_overview_wotc100_html = INDEX_OVERVIEW_WOTC100_HTML.read_text(encoding="utf-8")
         cls.index_overview_jp_pokemon100_html = INDEX_OVERVIEW_JP_POKEMON100_HTML.read_text(encoding="utf-8")
         cls.index_overview_jp_sv100_html = INDEX_OVERVIEW_JP_SV100_HTML.read_text(encoding="utf-8")
+
+    def test_desktop_lab_page_exposes_live_route_reference_links(self):
+        self.assertIn("Desktop Lab", self.desktop_lab_html)
+        self.assertIn("Market Command Center", self.desktop_lab_html)
+        self.assertIn("/dashboard", self.desktop_lab_html)
+        self.assertIn("/set-explorer", self.desktop_lab_html)
+        self.assertIn("/sealed-deals", self.desktop_lab_html)
+        self.assertIn("/dashboard?tab=group_products", self.desktop_lab_html)
+        self.assertIn("/dashboard?tab=browse_species", self.desktop_lab_html)
+        self.assertIn("/dashboard?tab=under_the_radar", self.desktop_lab_html)
 
     def test_sealed_deals_page_has_core_filters_and_table(self):
         self.assertIn("Poke6s Sealed Deals", self.sealed_deals_html)
@@ -93,7 +105,7 @@ class SecondaryPageContractTests(unittest.TestCase):
         self.assertIn("/index-overview-data?index=mega100", self.index_overview_mega100_html)
 
     def test_pokemon100_index_overview_page_has_entry_point(self):
-        self.assertIn("Pokemon Top 100", self.index_overview_pokemon100_html)
+        self.assertIn("Pokemon Top 151", self.index_overview_pokemon100_html)
         self.assertIn("/index-overview", self.index_overview_pokemon100_html)
         self.assertIn("/index-overview-data?index=pokemon100", self.index_overview_pokemon100_html)
 
@@ -143,7 +155,7 @@ class SecondaryPageContractTests(unittest.TestCase):
         self.assertIn("/index-overview-data?index=wotc100", self.index_overview_wotc100_html)
 
     def test_jp_pokemon100_index_overview_page_has_entry_point(self):
-        self.assertIn("JP Pokemon Top 100", self.index_overview_jp_pokemon100_html)
+        self.assertIn("JP Pokemon Top 151", self.index_overview_jp_pokemon100_html)
         self.assertIn("/index-overview", self.index_overview_jp_pokemon100_html)
         self.assertIn("/index-overview-data?index=jp_pokemon100&category_id=85", self.index_overview_jp_pokemon100_html)
 

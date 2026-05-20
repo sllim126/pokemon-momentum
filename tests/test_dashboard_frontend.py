@@ -68,6 +68,9 @@ class DashboardFrontendContractTests(unittest.TestCase):
         self.assertIn("maybeOpenGuideOnFirstVisit", self.html)
         self.assertIn("Google Sign-In", self.html)
         self.assertIn('id="googleSignInMount"', self.html)
+        self.assertIn("Save Current View", self.html)
+        self.assertIn('id="savedViewsList"', self.html)
+        self.assertIn("/tracking/views", self.html)
 
     def test_header_search_results_render_with_thumbnail_support(self):
         self.assertIn("brandsearch-result-thumb", self.html)

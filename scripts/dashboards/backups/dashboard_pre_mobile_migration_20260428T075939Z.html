@@ -594,78 +594,6 @@
       gap: 8px;
     }
 
-    .saved-views-section {
-      display: grid;
-      gap: 8px;
-      margin-top: 4px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(91, 112, 146, 0.22);
-    }
-
-    .saved-views-list {
-      display: grid;
-      gap: 8px;
-    }
-
-    .saved-view-card {
-      display: grid;
-      gap: 8px;
-      padding: 10px 12px;
-      border: 1px solid rgba(91, 112, 146, 0.26);
-      border-radius: 16px;
-      background: rgba(17, 26, 43, 0.72);
-    }
-
-    .saved-view-card.active {
-      border-color: rgba(34, 176, 255, 0.42);
-      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.14);
-    }
-
-    .saved-view-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .saved-view-head strong {
-      font-size: 13px;
-    }
-
-    .saved-view-badge {
-      color: var(--accent-2);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .saved-view-meta {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.4;
-    }
-
-    .saved-view-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .saved-view-actions button {
-      flex: 1 1 0;
-    }
-
-    .saved-views-status {
-      min-height: 18px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.4;
-    }
-
-    .saved-views-status.warn {
-      color: #ffb39a;
-    }
-
     .tracking-menu-link {
       width: 100%;
       justify-content: flex-start;
@@ -3464,12 +3392,6 @@
                   <span id="trackingUserSubtext">Tracking tags sync to this account.</span>
                 </div>
               </div>
-              <div class="saved-views-section" id="savedViewsSection">
-                <div class="field-label">Saved Views</div>
-                <button type="button" class="tracking-menu-link" id="saveCurrentViewBtn">Save Current View</button>
-                <div class="saved-views-status" id="savedViewsStatus">Saved filters and ticker presets sync here.</div>
-                <div class="saved-views-list" id="savedViewsList"></div>
-              </div>
               <div class="tracking-header-actions split">
                 <a class="tracking-menu-link" href="/account-settings" id="trackingSettingsLink">Account Settings</a>
                 <button type="button" id="trackingLogoutBtn">Sign Out</button>
@@ -3482,7 +3404,7 @@
               <div class="field-label">More Pages</div>
               <div class="tracking-menu-page-list">
                 <a class="tracking-menu-link" href="/index-overview">Index Overview</a>
-                <a class="tracking-menu-link" href="/index-overview-pokemon100">Pokemon Top 151</a>
+                <a class="tracking-menu-link" href="/index-overview-pokemon100">Pokemon Top 100</a>
                 <a class="tracking-menu-link" href="/index-overview-sv100">Scarlet &amp; Violet 100</a>
                 <a class="tracking-menu-link" href="/index-overview-mega100">Mega Evolution 100</a>
                 <a class="tracking-menu-link" href="/set-explorer">Set Explorer</a>
@@ -3972,10 +3894,6 @@
     const trackingStatus = document.getElementById("trackingStatus");
     const trackingUserLabel = document.getElementById("trackingUserLabel");
     const trackingUserSubtext = document.getElementById("trackingUserSubtext");
-    const savedViewsSection = document.getElementById("savedViewsSection");
-    const saveCurrentViewBtn = document.getElementById("saveCurrentViewBtn");
-    const savedViewsStatus = document.getElementById("savedViewsStatus");
-    const savedViewsList = document.getElementById("savedViewsList");
     const trackingAdminPages = document.getElementById("trackingAdminPages");
     const headerSearchForm = document.getElementById("headerSearchForm");
     const headerSearchInput = document.getElementById("headerSearchInput");
@@ -4107,9 +4025,6 @@
     let trackingAuthConfig = { google_enabled: false, google_client_id: "" };
     let googleSignInInitialized = false;
     let trackingMenuOpen = false;
-    let savedViews = [];
-    let activeSavedViewId = null;
-    let savedViewTickerEnabled = false;
     let headerSearchDebounce = null;
     let headerSearchResultsData = [];
     let headerSearchActiveIndex = -1;
@@ -4742,12 +4657,7 @@
       }
       if (signedIn) {
         setTrackingStatus(isDevMode ? `Syncing tags for ${trackingUser.username}.` : "");
-        setSavedViewsStatus("Loading saved views...");
       } else {
-        savedViews = [];
-        activeSavedViewId = null;
-        savedViewTickerEnabled = false;
-        renderSavedViews();
         initializeGoogleTrackingButton();
         if (trackingAuthConfig.google_enabled) {
           setTrackingStatus("Sign in with Google to sync tracked cards and tags.");
@@ -4794,7 +4704,6 @@
           });
         }
         await loadRemoteTags();
-        await loadSavedViews();
         if (currentTab === "tracked_items") {
           await loadTable();
         }
@@ -4890,201 +4799,6 @@
       return res.json();
     }
 
-    function setSavedViewsStatus(message, isWarn = false) {
-      if (!savedViewsStatus) return;
-      savedViewsStatus.textContent = message;
-      savedViewsStatus.classList.toggle("warn", Boolean(isWarn));
-    }
-
-    function buildCurrentSavedViewState() {
-      return {
-        category_id: currentCategoryId,
-        tab: currentTab,
-        segment: currentSegment,
-        group_id: Number.isFinite(Number(currentGroupId)) ? Number(currentGroupId) : null,
-        generation: currentGeneration || "all",
-        tracked_tag: currentTrackedTag || "all",
-        tracked_sort: currentTrackedSort || "tags",
-        species_query: currentSpeciesQuery || "",
-        browse_set_filters: currentBrowseSetFilters.has("all") ? [] : Array.from(currentBrowseSetFilters),
-        good_buys_sets: currentGoodBuysSetFilterAll ? [] : Array.from(currentGoodBuysSets),
-        good_buys_set_filter_all: Boolean(currentGoodBuysSetFilterAll),
-        good_buys_min_price: currentGoodBuysMinPrice,
-        good_buys_max_price: currentGoodBuysMaxPrice,
-      };
-    }
-
-    function savedViewMetaText(view) {
-      const state = view?.state || {};
-      const pieces = [];
-      const categoryLabel = categoryOptions.find((item) => Number(item.category_id) === Number(view?.category_id || state.category_id))?.label;
-      if (categoryLabel) pieces.push(categoryLabel);
-      if (state.tab) {
-        pieces.push(String(state.tab).replaceAll("_", " "));
-      }
-      if (state.segment) {
-        pieces.push(state.segment === "sealed" ? "sealed" : "cards");
-      }
-      if (view?.ticker_enabled) {
-        pieces.push("ticker");
-      }
-      return pieces.join(" | ");
-    }
-
-    function renderSavedViews() {
-      if (!savedViewsList) return;
-      savedViewsList.innerHTML = "";
-      if (!trackingToken || !trackingUser) {
-        setSavedViewsStatus("Sign in to sync saved views and ticker presets.");
-        return;
-      }
-      if (!savedViews.length) {
-        setSavedViewsStatus("No saved views yet. Save a filter stack to bring it back later.");
-        return;
-      }
-      setSavedViewsStatus(`${savedViews.length} saved view${savedViews.length === 1 ? "" : "s"} synced.`);
-      savedViews.forEach((view) => {
-        const card = document.createElement("div");
-        card.className = `saved-view-card${Number(view.id) === Number(activeSavedViewId) ? " active" : ""}`;
-        const meta = savedViewMetaText(view) || "Saved dashboard filters";
-        const head = document.createElement("div");
-        head.className = "saved-view-head";
-        const title = document.createElement("strong");
-        title.textContent = view.name || "Saved View";
-        head.appendChild(title);
-        if (view.ticker_enabled) {
-          const badge = document.createElement("span");
-          badge.className = "saved-view-badge";
-          badge.textContent = "Ticker";
-          head.appendChild(badge);
-        }
-        const metaEl = document.createElement("div");
-        metaEl.className = "saved-view-meta";
-        metaEl.textContent = meta;
-        const actions = document.createElement("div");
-        actions.className = "saved-view-actions";
-        const loadBtn = document.createElement("button");
-        loadBtn.type = "button";
-        loadBtn.dataset.viewAction = "load";
-        loadBtn.dataset.viewId = String(view.id);
-        loadBtn.textContent = "Load";
-        const deleteBtn = document.createElement("button");
-        deleteBtn.type = "button";
-        deleteBtn.dataset.viewAction = "delete";
-        deleteBtn.dataset.viewId = String(view.id);
-        deleteBtn.textContent = "Delete";
-        actions.append(loadBtn, deleteBtn);
-        card.append(head, metaEl, actions);
-        savedViewsList.appendChild(card);
-      });
-    }
-
-    async function loadSavedViews() {
-      if (!trackingToken) {
-        savedViews = [];
-        renderSavedViews();
-        return;
-      }
-      const payload = await trackingJson("/tracking/views", { method: "GET" });
-      savedViews = Array.isArray(payload.items) ? payload.items : [];
-      if (activeSavedViewId && !savedViews.some((view) => Number(view.id) === Number(activeSavedViewId))) {
-        activeSavedViewId = null;
-        savedViewTickerEnabled = false;
-      }
-      renderSavedViews();
-    }
-
-    async function applySavedView(view) {
-      const state = view?.state || {};
-      const previousCategoryId = currentCategoryId;
-      const desiredGroupId = Number.isFinite(Number(state.group_id)) ? Number(state.group_id) : null;
-      currentCategoryId = Number(view?.category_id || state.category_id || currentCategoryId || 3);
-      currentTab = state.tab || "top_movers";
-      currentSegment = state.segment === "sealed" ? "sealed" : "cards";
-      currentGroupId = desiredGroupId;
-      currentGeneration = state.generation || "all";
-      currentTrackedTag = state.tracked_tag || "all";
-      currentTrackedSort = state.tracked_sort || "tags";
-      currentSpeciesQuery = state.species_query || "";
-      currentBrowseSetFilters = new Set(Array.isArray(state.browse_set_filters) && state.browse_set_filters.length ? state.browse_set_filters : ["all"]);
-      currentGoodBuysSetFilterAll = Boolean(state.good_buys_set_filter_all ?? true);
-      currentGoodBuysSets = new Set(Array.isArray(state.good_buys_sets) ? state.good_buys_sets : []);
-      currentGoodBuysMinPrice = Number.isFinite(Number(state.good_buys_min_price)) ? Math.max(0, Number(state.good_buys_min_price)) : 5;
-      currentGoodBuysMaxPrice = Number.isFinite(Number(state.good_buys_max_price)) ? Math.max(0, Number(state.good_buys_max_price)) : null;
-      currentChartMode = currentTab === "group_signals" ? "group" : "product";
-      activeSavedViewId = Number(view.id);
-      savedViewTickerEnabled = Boolean(view.ticker_enabled);
-      if (marketPicker) {
-        marketPicker.value = String(currentCategoryId);
-      }
-      syncGoodBuysPriceInputs();
-      syncPrimaryTabButtons();
-      syncSegmentButtons();
-      updateBrowseSetFilterSummary();
-      updateGroupSignalFilterVisibility();
-      updateTrackedFilterVisibility();
-      updateBrowseSetFilterVisibility();
-      updateGoodBuysFilterVisibility();
-      updateSignalSegmentVisibility();
-      updateDevTabHelp(currentTab);
-      syncUrlState();
-      if (previousCategoryId !== currentCategoryId) {
-        resetCategoryState();
-        currentGroupId = desiredGroupId;
-        await loadHealth();
-        await loadTopMovers(currentSegment, true, false);
-      } else if (currentTab === "top_movers") {
-        await loadTopMovers(currentSegment, true, false);
-      }
-      syncUrlState();
-      const rows = await loadTable();
-      if (rows && rows.length && currentTab !== "group_signals") {
-        currentChartMode = "product";
-        await selectItem(rows[0], { openDetail: false });
-        activeTableIndex = 0;
-        syncActiveTableRow(true);
-      } else if (currentTab === "top_movers") {
-        adoptTopMoverSelection(currentSegment);
-        await loadSeries();
-      }
-      renderSavedViews();
-      setSavedViewsStatus(`Loaded ${view.name}.`);
-      setTrackingStatus(`Loaded saved view: ${view.name}.`);
-      setTrackingMenuOpen(false);
-    }
-
-    async function saveCurrentView() {
-      if (!trackingToken) {
-        setSavedViewsStatus("Sign in first to save views.", true);
-        return;
-      }
-      const existing = savedViews.find((view) => Number(view.id) === Number(activeSavedViewId));
-      const defaultName = existing?.name || "";
-      const name = window.prompt("Name this saved view", defaultName);
-      if (name === null) return;
-      const trimmedName = String(name || "").trim();
-      if (trimmedName.length < 2) {
-        setSavedViewsStatus("Saved view names need at least 2 characters.", true);
-        return;
-      }
-      const tickerEnabled = window.confirm("Should this saved view drive your personalized ticker when loaded?");
-      const payload = await trackingJson("/tracking/views", {
-        method: "POST",
-        body: JSON.stringify({
-          id: existing?.id || null,
-          name: trimmedName,
-          ticker_enabled: tickerEnabled,
-          state: buildCurrentSavedViewState(),
-        }),
-      });
-      const saved = payload.item || null;
-      activeSavedViewId = saved?.id || activeSavedViewId;
-      savedViewTickerEnabled = Boolean(saved?.ticker_enabled);
-      await loadSavedViews();
-      setSavedViewsStatus(`Saved ${trimmedName}.`);
-      setTrackingStatus(`Saved view: ${trimmedName}.`);
-    }
-
     function getMetaForKey(key) {
       return universeByKey.get(key) || null;
     }
@@ -5135,7 +4849,6 @@
         setTrackingCookie(trackingToken);
         updateTrackingUi();
         await loadRemoteTags();
-        await loadSavedViews();
       } catch (err) {
         trackingToken = "";
         trackingUser = null;
@@ -5154,9 +4867,6 @@
       } finally {
         trackingToken = "";
         trackingUser = null;
-        savedViews = [];
-        activeSavedViewId = null;
-        savedViewTickerEnabled = false;
         localStorage.removeItem(trackingTokenKey);
         clearTrackingCookie();
         updateTrackingUi();
@@ -5356,7 +5066,6 @@
       categoryOptions.length = 0;
       categoryOptions.push(...(payload.items || []));
       currentCategoryId = Common.populateCategoryPicker(marketPicker, categoryOptions, currentCategoryId);
-      renderSavedViews();
       syncUrlState();
     }
 
@@ -6710,9 +6419,6 @@
       if (mobileFeedMode) {
         renderMobileSignalResults(rows).catch((err) => console.error(err));
       }
-      if (savedViewTickerEnabled && activeSavedViewId) {
-        renderMoverRail(false);
-      }
     }
 
     function updateGroupSignalFilterVisibility() {
@@ -7077,33 +6783,6 @@
         : "No singles have been tracked yet.";
     }
 
-    function railRowsForCurrentState() {
-      if (savedViewTickerEnabled && activeSavedViewId && activeTableRows.length) {
-        return activeTableRows.slice(0, 18);
-      }
-      return (moverFeeds[currentSegment] || []).slice(0, 18);
-    }
-
-    function railPrice(item) {
-      const candidates = [item?.p_now, item?.latest_price, item?.latestPrice];
-      for (const value of candidates) {
-        const num = Number(value);
-        if (Number.isFinite(num)) return num;
-      }
-      return null;
-    }
-
-    function railChangeMeta(item) {
-      const candidates = [item?.roc_pct, item?.roc_30d_pct, item?.pct_vs_sma30, item?.pct_change];
-      for (const value of candidates) {
-        const num = Number(value);
-        if (Number.isFinite(num)) {
-          return formatPercent(num);
-        }
-      }
-      return { text: "Saved", cls: "neutral" };
-    }
-
     async function moveTableSelection(delta) {
       // Keyboard stepping should feel like moving through a screener. The lower table
       // remains the source of truth, and arrow navigation simply triggers the same row
@@ -7155,14 +6834,10 @@
     function renderMoverRail(hydrateSparklines = true) {
       // The top ticker is a quick-scan market band: compact movers with just enough
       // context and sparkline history to jump the main chart to a name immediately.
-      const rows = railRowsForCurrentState();
+      const rows = (moverFeeds[currentSegment] || []).slice(0, 18);
       moverList.innerHTML = "";
       if (leftStatus) {
-        leftStatus.textContent = moverFeedLoading[currentSegment]
-          ? "Loading"
-          : savedViewTickerEnabled && activeSavedViewId
-            ? `${rows.length} in view`
-            : `${rows.length} live`;
+        leftStatus.textContent = moverFeedLoading[currentSegment] ? "Loading" : `${rows.length} live`;
       }
       if (!rows.length) {
         moverList.innerHTML = `<div class="sparkline-empty">${moverFeedLoading[currentSegment] ? loadingMarkup("Loading ticker") : "No movers"}</div>`;
@@ -7176,8 +6851,7 @@
           track.setAttribute("aria-hidden", "true");
         }
         rows.forEach((item) => {
-        const pct = railChangeMeta(item);
-        const price = railPrice(item);
+        const pct = formatPercent(item.roc_pct);
         const div = document.createElement("button");
         div.type = "button";
         div.className = `mover-card${item.key === currentKey ? " active" : ""}`;
@@ -7196,7 +6870,7 @@
               </div>
             </div>
             <div class="mover-price">
-              <strong>${formatNumber(price, 2)}</strong>
+              <strong>${formatNumber(item.p_now, 2)}</strong>
               <span class="price-pill ${pct.cls}">${pct.text}</span>
             </div>
           </div>
@@ -8758,45 +8432,6 @@
           await openTrackedItemsView();
         });
       }
-
-      saveCurrentViewBtn?.addEventListener("click", async () => {
-        try {
-          await saveCurrentView();
-        } catch (err) {
-          setSavedViewsStatus(`Could not save view: ${err.message}`, true);
-        }
-      });
-
-      savedViewsList?.addEventListener("click", async (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLButtonElement)) return;
-        const viewId = Number(target.dataset.viewId || "");
-        if (!Number.isFinite(viewId)) return;
-        const view = savedViews.find((item) => Number(item.id) === viewId);
-        if (!view) return;
-        if (target.dataset.viewAction === "load") {
-          try {
-            await applySavedView(view);
-          } catch (err) {
-            setSavedViewsStatus(`Could not load view: ${err.message}`, true);
-          }
-          return;
-        }
-        if (target.dataset.viewAction === "delete") {
-          if (!window.confirm(`Delete saved view "${view.name}"?`)) return;
-          try {
-            await trackingJson(`/tracking/views/${viewId}`, { method: "DELETE" });
-            if (Number(activeSavedViewId) === viewId) {
-              activeSavedViewId = null;
-              savedViewTickerEnabled = false;
-            }
-            await loadSavedViews();
-            setSavedViewsStatus(`Deleted ${view.name}.`);
-          } catch (err) {
-            setSavedViewsStatus(`Could not delete view: ${err.message}`, true);
-          }
-        }
-      });
 
       trackingLogoutBtn.addEventListener("click", async () => {
         await signOutTracking();

@@ -60,6 +60,18 @@ def ensure_tracking_schema() -> None:
                 FOREIGN KEY(user_id) REFERENCES tracking_users(id)
             );
 
+            CREATE TABLE IF NOT EXISTS tracking_saved_views (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                category_id INTEGER NOT NULL,
+                state_json TEXT NOT NULL,
+                ticker_enabled INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES tracking_users(id)
+            );
+
             CREATE TABLE IF NOT EXISTS bug_reports (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 created_at TEXT NOT NULL,
@@ -246,6 +258,7 @@ def delete_user(user_id: int) -> None:
     ensure_tracking_schema()
     con = get_con()
     try:
+        con.execute("DELETE FROM tracking_saved_views WHERE user_id = ?", [user_id])
         con.execute("DELETE FROM tracking_tags WHERE user_id = ?", [user_id])
         con.execute("DELETE FROM tracking_sessions WHERE user_id = ?", [user_id])
         con.execute("DELETE FROM tracking_users WHERE id = ?", [user_id])
@@ -333,6 +346,105 @@ def merge_tags(user_id: int, items: list[dict]) -> None:
                     now,
                 ],
             )
+        con.commit()
+    finally:
+        con.close()
+
+
+def list_saved_views_for_user(user_id: int) -> list[dict]:
+    ensure_tracking_schema()
+    con = get_con()
+    try:
+        rows = con.execute(
+            """
+            SELECT id, name, category_id, state_json, ticker_enabled, created_at, updated_at
+            FROM tracking_saved_views
+            WHERE user_id = ?
+            ORDER BY updated_at DESC, id DESC
+            """,
+            [user_id],
+        ).fetchall()
+        return [
+            {
+                "id": int(row["id"]),
+                "name": row["name"],
+                "category_id": int(row["category_id"]),
+                "state_json": row["state_json"],
+                "ticker_enabled": bool(row["ticker_enabled"]),
+                "created_at": row["created_at"],
+                "updated_at": row["updated_at"],
+            }
+            for row in rows
+        ]
+    finally:
+        con.close()
+
+
+def save_saved_view(
+    user_id: int,
+    *,
+    name: str,
+    category_id: int,
+    state_json: str,
+    ticker_enabled: bool = False,
+    view_id: int | None = None,
+) -> dict:
+    ensure_tracking_schema()
+    now = utc_now_iso()
+    con = get_con()
+    try:
+        if view_id is None:
+            cur = con.execute(
+                """
+                INSERT INTO tracking_saved_views (
+                    user_id, name, category_id, state_json, ticker_enabled, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                [user_id, name, category_id, state_json, 1 if ticker_enabled else 0, now, now],
+            )
+            saved_id = int(cur.lastrowid)
+        else:
+            cur = con.execute(
+                """
+                UPDATE tracking_saved_views
+                SET name = ?, category_id = ?, state_json = ?, ticker_enabled = ?, updated_at = ?
+                WHERE id = ? AND user_id = ?
+                """,
+                [name, category_id, state_json, 1 if ticker_enabled else 0, now, int(view_id), user_id],
+            )
+            if cur.rowcount <= 0:
+                raise KeyError(f"Saved view {view_id} was not found")
+            saved_id = int(view_id)
+        con.commit()
+        row = con.execute(
+            """
+            SELECT id, name, category_id, state_json, ticker_enabled, created_at, updated_at
+            FROM tracking_saved_views
+            WHERE id = ? AND user_id = ?
+            """,
+            [saved_id, user_id],
+        ).fetchone()
+        return {
+            "id": int(row["id"]),
+            "name": row["name"],
+            "category_id": int(row["category_id"]),
+            "state_json": row["state_json"],
+            "ticker_enabled": bool(row["ticker_enabled"]),
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
+        }
+    finally:
+        con.close()
+
+
+def delete_saved_view(user_id: int, view_id: int) -> None:
+    ensure_tracking_schema()
+    con = get_con()
+    try:
+        con.execute(
+            "DELETE FROM tracking_saved_views WHERE user_id = ? AND id = ?",
+            [user_id, int(view_id)],
+        )
         con.commit()
     finally:
         con.close()

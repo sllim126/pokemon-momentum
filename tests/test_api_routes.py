@@ -418,6 +418,67 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.json(), {"ok": True})
         delete_user_mock.assert_called_once_with(9)
 
+    @patch.object(api, "list_saved_views_for_user", return_value=[{
+        "id": 12,
+        "name": "Stamped Movers",
+        "category_id": 3,
+        "ticker_enabled": True,
+        "created_at": "2026-05-13T09:03:00+00:00",
+        "updated_at": "2026-05-13T09:03:00+00:00",
+        "state_json": '{"category_id": 3, "tab": "group_products", "segment": "cards"}',
+    }])
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "collector@example.com", "user_id": 9})())
+    def test_tracking_saved_views_list_returns_saved_view_payload(self, _get_session_user_mock, list_saved_views_mock):
+        response = self.client.get("/tracking/views", headers={"Authorization": "Bearer token"})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["items"][0]["name"], "Stamped Movers")
+        self.assertEqual(payload["items"][0]["state"]["tab"], "group_products")
+        self.assertTrue(payload["items"][0]["ticker_enabled"])
+        list_saved_views_mock.assert_called_once_with(9)
+
+    @patch.object(api, "save_saved_view", return_value={
+        "id": 12,
+        "name": "Stamped Movers",
+        "category_id": 3,
+        "ticker_enabled": True,
+        "created_at": "2026-05-13T09:03:00+00:00",
+        "updated_at": "2026-05-13T09:03:00+00:00",
+        "state_json": '{"category_id": 3, "tab": "group_products", "segment": "cards", "browse_set_filters": ["hits"]}',
+    })
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "collector@example.com", "user_id": 9})())
+    def test_tracking_saved_views_upsert_normalizes_state(self, _get_session_user_mock, save_saved_view_mock):
+        response = self.client.post(
+            "/tracking/views",
+            headers={"Authorization": "Bearer token"},
+            json={
+                "name": "Stamped Movers",
+                "ticker_enabled": True,
+                "state": {
+                    "category_id": 3,
+                    "tab": "group_products",
+                    "segment": "cards",
+                    "browse_set_filters": ["hits"],
+                },
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["item"]["state"]["browse_set_filters"], ["hits"])
+        save_saved_view_mock.assert_called_once()
+        self.assertEqual(save_saved_view_mock.call_args.kwargs["name"], "Stamped Movers")
+        self.assertTrue(save_saved_view_mock.call_args.kwargs["ticker_enabled"])
+
+    @patch.object(api, "delete_saved_view")
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "collector@example.com", "user_id": 9})())
+    def test_tracking_saved_views_delete_scopes_to_signed_in_user(self, _get_session_user_mock, delete_saved_view_mock):
+        response = self.client.request("DELETE", "/tracking/views/12", headers={"Authorization": "Bearer token"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"ok": True})
+        delete_saved_view_mock.assert_called_once_with(9, 12)
+
     def test_good_buys_defaults_to_premium_cards(self):
         with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
             api, "screener_snapshot_from", return_value="screener_snapshot"

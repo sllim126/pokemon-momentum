@@ -54,5 +54,15 @@ for CATEGORY_ID in $DAILY_CATEGORY_IDS; do
   " 2>&1 | tee -a "$LOG_DIR/daily_update.log"
 done
 
+echo "[$STAMP] Running store pricing coverage audit"
+if ! docker-compose run --rm -T "$SERVICE_NAME" bash -lc "
+  set -euo pipefail
+  cd /app
+  python scripts/utilities/audit_store_pricing_coverage.py
+" 2>&1 | tee -a "$LOG_DIR/daily_update.log"; then
+  AUDIT_STAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  echo "[$AUDIT_STAMP] Warning: store pricing coverage audit reported missing_unexpected SKUs" | tee -a "$LOG_DIR/daily_update.log"
+fi
+
 END_STAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "[$END_STAMP] Daily update finished"
