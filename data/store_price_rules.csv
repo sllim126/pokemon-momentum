@@ -31,6 +31,7 @@ JP-HWA-BOX,jp,name,Heat Wave Arena Booster Box,market_minus_5_pct_99,,Japanese b
 JP-TF-BB,jp,name,Terastal Fest ex Booster Box,market_minus_5_pct_99,,Japanese booster box
 MYZ-JP-BB,jp,name,Nihil Zero Booster Box,market_minus_5_pct_99,,Japanese booster box
 NS-JPN-BB,jp,name,Ninja Spinner Booster Box,market_minus_5_pct_99,,Japanese booster box
+JP-AE-BB,jp,name,Abyss Eye Booster Box,market_minus_5_pct_99,,Japanese booster box
 JP-RS-BOX,jp,name,Raging Surf Booster Box,market_minus_5_pct_99,,Japanese booster box kept explicit while export is stale
 ENG-DR-PACK,en,name,Destined Rivals Sleeved Booster Pack,market_minus_5_pct_99,,English matched by title
 ENG-JT-PACK,en,name,Journey Together Sleeved Booster Pack,market_minus_5_pct_99,,English matched by title
@@ -56,6 +57,8 @@ ENG-MELex-MCAP,en,product_id,662750,market_minus_5_pct_99_with_floor,29.99,Keep 
 ENG-ARCHex-MCAP,en,product_id,656955,market_minus_5_pct_99_with_floor,29.99,Keep at or above supplier-based floor
 ENG-MEGLATex-MCAP,en,product_id,654188,market_minus_5_pct_99_with_floor,29.99,Keep at or above supplier-based floor
 ENG-PO-ART4,en,product_id,672413,market_minus_5_pct_99,,English TCGplayer-mapped product
+610541,en,product_id,610541,market,,English single at full market price
+610604,en,product_id,610604,market,,English single at full market price
 602682,jp,product_id,602682,market,,Japanese single at full market price
 567555,jp,product_id,567555,market,,Japanese single at full market price
 665881,jp,product_id,665881,market,,Japanese single at full market price

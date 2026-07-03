@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PRE - Prismatic Evolutions Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;PRE&quot;}'>
+    <header>
+      <div>
+        <h1>PRE - Prismatic Evolutions</h1>
+        <p class="meta">36 checklist rows - 2025-01-17</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/pre.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Stamped Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre006_leafeon_ex_expansion_logo_stamp_us_uk" aria-label="PRE006 Leafeon ex Expansion Logo Stamp"></td>
+        <td class="number">PRE006</td>
+        <td class="name">Leafeon ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Prismatic Evolutions - Surprise Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre014_flareon_ex_expansion_logo_stamp_us_uk" aria-label="PRE014 Flareon ex Expansion Logo Stamp"></td>
+        <td class="number">PRE014</td>
+        <td class="name">Flareon ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Prismatic Evolutions - Surprise Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre023_vaporeon_ex_expansion_logo_stamp_us_uk" aria-label="PRE023 Vaporeon ex Expansion Logo Stamp"></td>
+        <td class="number">PRE023</td>
+        <td class="name">Vaporeon ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Prismatic Evolutions - Surprise Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre026_glaceon_ex_expansion_logo_stamp_us_uk" aria-label="PRE026 Glaceon ex Expansion Logo Stamp"></td>
+        <td class="number">PRE026</td>
+        <td class="name">Glaceon ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Prismatic Evolutions - Surprise Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre026_glaceon_ex_snowflake_stamp_us_uk" aria-label="PRE026 Glaceon ex Snowflake Stamp"></td>
+        <td class="number">PRE026</td>
+        <td class="name">Glaceon ex</td>
+        <td class="variant">Snowflake Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Holiday Calendar 2025</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre030_jolteon_ex_expansion_logo_stamp_us_uk" aria-label="PRE030 Jolteon ex Expansion Logo Stamp"></td>
+        <td class="number">PRE030</td>
+        <td class="name">Jolteon ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Prismatic Evolutions - Surprise Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre034_espeon_ex_expansion_logo_stamp_us_uk" aria-label="PRE034 Espeon ex Expansion Logo Stamp"></td>
+        <td class="number">PRE034</td>
+        <td class="name">Espeon ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Prismatic Evolutions - Surprise Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre041_sylveon_ex_expansion_logo_stamp_us_uk" aria-label="PRE041 Sylveon ex Expansion Logo Stamp"></td>
+        <td class="number">PRE041</td>
+        <td class="name">Sylveon ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Prismatic Evolutions - Surprise Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre060_umbreon_ex_expansion_logo_stamp_us_uk" aria-label="PRE060 Umbreon ex Expansion Logo Stamp"></td>
+        <td class="number">PRE060</td>
+        <td class="name">Umbreon ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Prismatic Evolutions - Surprise Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre074_eevee_cosmos_parallel_holo_pokemon_day_2025_stamp_us_uk" aria-label="PRE074 Eevee Cosmos Parallel Holo Pokemon Day 2025 Stamp"></td>
+        <td class="number">PRE074</td>
+        <td class="name">Eevee</td>
+        <td class="variant">Cosmos Parallel Holo Pokemon Day 2025 Stamp</td>
+        <td class="sources">Prismatic Evolutions - Prismatic Evolutions Two Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre075_eevee_ex_expansion_logo_stamp_us_uk" aria-label="PRE075 Eevee ex Expansion Logo Stamp"></td>
+        <td class="number">PRE075</td>
+        <td class="name">Eevee ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Prismatic Evolutions - Surprise Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre082_lugia_ex_prismatic_evolutions_stamp_us_uk" aria-label="PRE082 Lugia ex Prismatic Evolutions Stamp"></td>
+        <td class="number">PRE082</td>
+        <td class="name">Lugia ex</td>
+        <td class="variant">Prismatic Evolutions Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Lugia ex &amp; Latias ex Premium Collection</td>
+      </tr><tr class="category-row"><th colspan="5">Promo Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp167_flareon_cosmos_holo_us_uk" aria-label="SVP167 Flareon Cosmos Holo"></td>
+        <td class="number">SVP167</td>
+        <td class="name">Flareon</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Prismatic Evolutions - Poster Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp168_vaporeon_cosmos_holo_us_uk" aria-label="SVP168 Vaporeon Cosmos Holo"></td>
+        <td class="number">SVP168</td>
+        <td class="name">Vaporeon</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Prismatic Evolutions - Poster Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp169_jolteon_cosmos_holo_us_uk" aria-label="SVP169 Jolteon Cosmos Holo"></td>
+        <td class="number">SVP169</td>
+        <td class="name">Jolteon</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Prismatic Evolutions - Poster Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp170_leafeon_cosmos_holo_us_uk" aria-label="SVP170 Leafeon Cosmos Holo"></td>
+        <td class="number">SVP170</td>
+        <td class="name">Leafeon</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Prismatic Evolutions - Tech Sticker Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp171_glaceon_cosmos_holo_us_uk" aria-label="SVP171 Glaceon Cosmos Holo"></td>
+        <td class="number">SVP171</td>
+        <td class="name">Glaceon</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Prismatic Evolutions - Tech Sticker Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp172_sylveon_cosmos_holo_us_uk" aria-label="SVP172 Sylveon Cosmos Holo"></td>
+        <td class="number">SVP172</td>
+        <td class="name">Sylveon</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Prismatic Evolutions - Tech Sticker Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp173_eevee_black_star_promo_us_uk" aria-label="SVP173 Eevee Black Star Promo"></td>
+        <td class="number">SVP173</td>
+        <td class="name">Eevee</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Prismatic Evolutions - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp173_eevee_pokemon_center_stamp_us_uk" aria-label="SVP173 Eevee Pokemon Center Stamp"></td>
+        <td class="number">SVP173</td>
+        <td class="name">Eevee</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Prismatic Evolutions - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp174_eevee_ex_black_star_promo_us_uk" aria-label="SVP174 Eevee ex Black Star Promo"></td>
+        <td class="number">SVP174</td>
+        <td class="name">Eevee ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Journey Together - Prismatic Evolutions Super-Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp178_kyogre_ex_black_star_promo_us_uk" aria-label="SVP178 Kyogre ex Black Star Promo"></td>
+        <td class="number">SVP178</td>
+        <td class="name">Kyogre ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Prismatic Evolutions - Azure Legends Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp179_xerneas_ex_black_star_promo_us_uk" aria-label="SVP179 Xerneas ex Black Star Promo"></td>
+        <td class="number">SVP179</td>
+        <td class="name">Xerneas ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Prismatic Evolutions - Azure Legends Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp180_dialga_ex_black_star_promo_us_uk" aria-label="SVP180 Dialga ex Black Star Promo"></td>
+        <td class="number">SVP180</td>
+        <td class="name">Dialga ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Prismatic Evolutions - Azure Legends Tin</td>
+      </tr><tr class="category-row"><th colspan="5">Prize Pack Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre004_budew_play_pokemon_stamp_us_uk" aria-label="PRE004 Budew Play Pokemon Stamp"></td>
+        <td class="number">PRE004</td>
+        <td class="name">Budew</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre006_leafeon_ex_play_pokemon_stamp_us_uk" aria-label="PRE006 Leafeon ex Play Pokemon Stamp"></td>
+        <td class="number">PRE006</td>
+        <td class="name">Leafeon ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre014_flareon_ex_play_pokemon_stamp_us_uk" aria-label="PRE014 Flareon ex Play Pokemon Stamp"></td>
+        <td class="number">PRE014</td>
+        <td class="name">Flareon ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre023_vaporeon_ex_play_pokemon_stamp_us_uk" aria-label="PRE023 Vaporeon ex Play Pokemon Stamp"></td>
+        <td class="number">PRE023</td>
+        <td class="name">Vaporeon ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre026_glaceon_ex_play_pokemon_stamp_us_uk" aria-label="PRE026 Glaceon ex Play Pokemon Stamp"></td>
+        <td class="number">PRE026</td>
+        <td class="name">Glaceon ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre030_jolteon_ex_play_pokemon_stamp_us_uk" aria-label="PRE030 Jolteon ex Play Pokemon Stamp"></td>
+        <td class="number">PRE030</td>
+        <td class="name">Jolteon ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre034_espeon_ex_play_pokemon_stamp_us_uk" aria-label="PRE034 Espeon ex Play Pokemon Stamp"></td>
+        <td class="number">PRE034</td>
+        <td class="name">Espeon ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre060_umbreon_ex_play_pokemon_stamp_us_uk" aria-label="PRE060 Umbreon ex Play Pokemon Stamp"></td>
+        <td class="number">PRE060</td>
+        <td class="name">Umbreon ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre075_eevee_ex_play_pokemon_stamp_us_uk" aria-label="PRE075 Eevee ex Play Pokemon Stamp"></td>
+        <td class="number">PRE075</td>
+        <td class="name">Eevee ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre086_regigigas_play_pokemon_stamp_us_uk" aria-label="PRE086 Regigigas Play Pokemon Stamp"></td>
+        <td class="number">PRE086</td>
+        <td class="name">Regigigas</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre116_max_rod_play_pokemon_stamp_us_uk" aria-label="PRE116 Max Rod Play Pokemon Stamp"></td>
+        <td class="number">PRE116</td>
+        <td class="name">Max Rod</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pre129_sparkling_crystal_play_pokemon_stamp_us_uk" aria-label="PRE129 Sparkling Crystal Play Pokemon Stamp"></td>
+        <td class="number">PRE129</td>
+        <td class="name">Sparkling Crystal</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SSP - Surging Sparks Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;SSP&quot;}'>
+    <header>
+      <div>
+        <h1>SSP - Surging Sparks</h1>
+        <p class="meta">62 checklist rows - 2024-11-08</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/ssp.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Stamped Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp047_cryogonal_cosmos_holo_snowflake_stamp_us_uk" aria-label="SSP047 Cryogonal Cosmos Holo Snowflake Stamp"></td>
+        <td class="number">SSP047</td>
+        <td class="name">Cryogonal</td>
+        <td class="variant">Cosmos Holo Snowflake Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Holiday Calendar 2025</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp076_latias_ex_surging_sparks_stamp_us_uk" aria-label="SSP076 Latias ex Surging Sparks Stamp"></td>
+        <td class="number">SSP076</td>
+        <td class="name">Latias ex</td>
+        <td class="variant">Surging Sparks Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Lugia ex &amp; Latias ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp161_terapagos_best_buy_stamp_us_australia_canada" aria-label="SSP161 Terapagos Best Buy Stamp"></td>
+        <td class="number">SSP161</td>
+        <td class="name">Terapagos</td>
+        <td class="variant">Best Buy Stamp</td>
+        <td class="sources">Surging Sparks - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp161_terapagos_gamestop_stamp_us_canada_australia" aria-label="SSP161 Terapagos GameStop Stamp"></td>
+        <td class="number">SSP161</td>
+        <td class="name">Terapagos</td>
+        <td class="variant">GameStop Stamp</td>
+        <td class="sources">Surging Sparks - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp151_gouging_fire_black_star_promo_us_uk" aria-label="SVP151 Gouging Fire Black Star Promo"></td>
+        <td class="number">SVP151</td>
+        <td class="name">Gouging Fire</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Surging Sparks - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp152_chien_pao_black_star_promo_us_uk" aria-label="SVP152 Chien-Pao Black Star Promo"></td>
+        <td class="number">SVP152</td>
+        <td class="name">Chien-Pao</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Surging Sparks - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp153_magneton_black_star_promo_us_uk" aria-label="SVP153 Magneton Black Star Promo"></td>
+        <td class="number">SVP153</td>
+        <td class="name">Magneton</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Surging Sparks - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp154_indeedee_black_star_promo_us_uk" aria-label="SVP154 Indeedee Black Star Promo"></td>
+        <td class="number">SVP154</td>
+        <td class="name">Indeedee</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Surging Sparks - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp191_sprigatito_gamestop_stamp_us_canada_australia" aria-label="SVP191 Sprigatito GameStop Stamp"></td>
+        <td class="number">SVP191</td>
+        <td class="name">Sprigatito</td>
+        <td class="variant">GameStop Stamp</td>
+        <td class="sources">Surging Sparks - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp192_fuecoco_best_buy_stamp_us_australia_canada" aria-label="SVP192 Fuecoco Best Buy Stamp"></td>
+        <td class="number">SVP192</td>
+        <td class="name">Fuecoco</td>
+        <td class="variant">Best Buy Stamp</td>
+        <td class="sources">Surging Sparks - Retailer Gift With Purchase</td>
+      </tr><tr class="category-row"><th colspan="5">Staff Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp151_gouging_fire_staff_stamp_us_uk" aria-label="SVP151 Gouging Fire Staff Stamp"></td>
+        <td class="number">SVP151</td>
+        <td class="name">Gouging Fire</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Surging Sparks - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp152_chien_pao_staff_stamp_us_uk" aria-label="SVP152 Chien-Pao Staff Stamp"></td>
+        <td class="number">SVP152</td>
+        <td class="name">Chien-Pao</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Surging Sparks - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp153_magneton_staff_stamp_us_uk" aria-label="SVP153 Magneton Staff Stamp"></td>
+        <td class="number">SVP153</td>
+        <td class="name">Magneton</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Surging Sparks - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp154_indeedee_staff_stamp_us_uk" aria-label="SVP154 Indeedee Staff Stamp"></td>
+        <td class="number">SVP154</td>
+        <td class="name">Indeedee</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Surging Sparks - Build &amp; Battle Box</td>
+      </tr><tr class="category-row"><th colspan="5">Promo Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp054_greninja_ex_black_star_promo_us_uk" aria-label="SVP054 Greninja ex Black Star Promo"></td>
+        <td class="number">SVP054</td>
+        <td class="name">Greninja ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Surging Sparks - Greninja ex Ultra-Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp155_wooper_cosmos_holo_us_uk" aria-label="SVP155 Wooper Cosmos Holo"></td>
+        <td class="number">SVP155</td>
+        <td class="name">Wooper</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp156_quagsire_cosmos_holo_us_uk" aria-label="SVP156 Quagsire Cosmos Holo"></td>
+        <td class="number">SVP156</td>
+        <td class="name">Quagsire</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp157_zapdos_cosmos_holo_us_uk" aria-label="SVP157 Zapdos Cosmos Holo"></td>
+        <td class="number">SVP157</td>
+        <td class="name">Zapdos</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp158_pachirisu_cosmos_holo_us_uk" aria-label="SVP158 Pachirisu Cosmos Holo"></td>
+        <td class="number">SVP158</td>
+        <td class="name">Pachirisu</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp159_magneton_black_star_promo_us_uk" aria-label="SVP159 Magneton Black Star Promo"></td>
+        <td class="number">SVP159</td>
+        <td class="name">Magneton</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Surging Sparks - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp159_magneton_pokemon_center_stamp_us_uk" aria-label="SVP159 Magneton Pokemon Center Stamp"></td>
+        <td class="number">SVP159</td>
+        <td class="name">Magneton</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Surging Sparks - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp163_cinderace_ex_black_star_promo_us_uk" aria-label="SVP163 Cinderace ex Black Star Promo"></td>
+        <td class="number">SVP163</td>
+        <td class="name">Cinderace ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Surging Sparks - Terapagos ex Ultra-Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp164_lapras_ex_black_star_promo_us_uk" aria-label="SVP164 Lapras ex Black Star Promo"></td>
+        <td class="number">SVP164</td>
+        <td class="name">Lapras ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Surging Sparks - Terapagos ex Ultra-Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp165_terapagos_ex_black_star_promo_us_uk" aria-label="SVP165 Terapagos ex Black Star Promo"></td>
+        <td class="number">SVP165</td>
+        <td class="name">Terapagos ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Surging Sparks - Terapagos ex Ultra-Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp166_teal_mask_ogerpon_ex_black_star_promo_us_uk" aria-label="SVP166 Teal Mask Ogerpon ex Black Star Promo"></td>
+        <td class="number">SVP166</td>
+        <td class="name">Teal Mask Ogerpon ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Surging Sparks - Ogerpon ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp177_bloodmoon_ursaluna_ex_black_star_promo_us_uk" aria-label="SVP177 Bloodmoon Ursaluna ex Black Star Promo"></td>
+        <td class="number">SVP177</td>
+        <td class="name">Bloodmoon Ursaluna ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Surging Sparks - Bloodmoon Ursaluna ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp191_sprigatito_black_star_promo_us_uk" aria-label="SVP191 Sprigatito Black Star Promo"></td>
+        <td class="number">SVP191</td>
+        <td class="name">Sprigatito</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Surging Sparks - Grand Adventure Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp192_fuecoco_black_star_promo_us_uk" aria-label="SVP192 Fuecoco Black Star Promo"></td>
+        <td class="number">SVP192</td>
+        <td class="name">Fuecoco</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Surging Sparks - Grand Adventure Collection</td>
+      </tr><tr class="category-row"><th colspan="5">MCAP Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp013_rellor_non_holo_us_uk" aria-label="SSP013 Rellor Non Holo"></td>
+        <td class="number">SSP013</td>
+        <td class="name">Rellor</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Destined Rivals - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp014_rabsca_cosmos_holo_us_uk" aria-label="SSP014 Rabsca Cosmos Holo"></td>
+        <td class="number">SSP014</td>
+        <td class="name">Rabsca</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Destined Rivals - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp014_rabsca_non_holo_us_uk" aria-label="SSP014 Rabsca Non Holo"></td>
+        <td class="number">SSP014</td>
+        <td class="name">Rabsca</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Surging Sparks - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp029_fuecoco_non_holo_us_uk" aria-label="SSP029 Fuecoco Non Holo"></td>
+        <td class="number">SSP029</td>
+        <td class="name">Fuecoco</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Destined Rivals - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp030_crocalor_non_holo_us_uk" aria-label="SSP030 Crocalor Non Holo"></td>
+        <td class="number">SSP030</td>
+        <td class="name">Crocalor</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Destined Rivals - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp031_skeledirge_cosmos_holo_us_uk" aria-label="SSP031 Skeledirge Cosmos Holo"></td>
+        <td class="number">SSP031</td>
+        <td class="name">Skeledirge</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Destined Rivals - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp038_gouging_fire_non_holo_us_uk" aria-label="SSP038 Gouging Fire Non Holo"></td>
+        <td class="number">SSP038</td>
+        <td class="name">Gouging Fire</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Surging Sparks - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp046_shellos_non_holo_us_uk" aria-label="SSP046 Shellos Non Holo"></td>
+        <td class="number">SSP046</td>
+        <td class="name">Shellos</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Destined Rivals - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp065_tapu_koko_non_holo_us_uk" aria-label="SSP065 Tapu Koko Non Holo"></td>
+        <td class="number">SSP065</td>
+        <td class="name">Tapu Koko</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Surging Sparks - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp070_togepi_non_holo_us_uk" aria-label="SSP070 Togepi Non Holo"></td>
+        <td class="number">SSP070</td>
+        <td class="name">Togepi</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Destined Rivals - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp071_togetic_non_holo_us_uk" aria-label="SSP071 Togetic Non Holo"></td>
+        <td class="number">SSP071</td>
+        <td class="name">Togetic</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Destined Rivals - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp072_togekiss_cosmos_holo_us_uk" aria-label="SSP072 Togekiss Cosmos Holo"></td>
+        <td class="number">SSP072</td>
+        <td class="name">Togekiss</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Destined Rivals - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp107_gastrodon_cosmos_holo_us_uk" aria-label="SSP107 Gastrodon Cosmos Holo"></td>
+        <td class="number">SSP107</td>
+        <td class="name">Gastrodon</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Destined Rivals - Stage 1 Blister</td>
+      </tr><tr class="category-row"><th colspan="5">Prize Pack Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp019_ho_oh_play_pokemon_stamp_us_uk" aria-label="SSP019 Ho-Oh Play Pokemon Stamp"></td>
+        <td class="number">SSP019</td>
+        <td class="name">Ho-Oh</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp036_ceruledge_ex_play_pokemon_stamp_us_uk" aria-label="SSP036 Ceruledge ex Play Pokemon Stamp"></td>
+        <td class="number">SSP036</td>
+        <td class="name">Ceruledge ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp057_pikachu_ex_play_pokemon_stamp_us_uk" aria-label="SSP057 Pikachu ex Play Pokemon Stamp"></td>
+        <td class="number">SSP057</td>
+        <td class="name">Pikachu ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp059_magneton_play_pokemon_stamp_us_uk" aria-label="SSP059 Magneton Play Pokemon Stamp"></td>
+        <td class="number">SSP059</td>
+        <td class="name">Magneton</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp065_tapu_koko_play_pokemon_stamp_us_uk" aria-label="SSP065 Tapu Koko Play Pokemon Stamp"></td>
+        <td class="number">SSP065</td>
+        <td class="name">Tapu Koko</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp074_azumarill_play_pokemon_stamp_us_uk" aria-label="SSP074 Azumarill Play Pokemon Stamp"></td>
+        <td class="number">SSP074</td>
+        <td class="name">Azumarill</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp076_latias_ex_play_pokemon_stamp_us_uk" aria-label="SSP076 Latias ex Play Pokemon Stamp"></td>
+        <td class="number">SSP076</td>
+        <td class="name">Latias ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp086_sylveon_ex_play_pokemon_stamp_us_uk" aria-label="SSP086 Sylveon ex Play Pokemon Stamp"></td>
+        <td class="number">SSP086</td>
+        <td class="name">Sylveon ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp107_gastrodon_play_pokemon_stamp_us_uk" aria-label="SSP107 Gastrodon Play Pokemon Stamp"></td>
+        <td class="number">SSP107</td>
+        <td class="name">Gastrodon</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp130_archaludon_ex_play_pokemon_stamp_us_uk" aria-label="SSP130 Archaludon ex Play Pokemon Stamp"></td>
+        <td class="number">SSP130</td>
+        <td class="name">Archaludon ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp143_eevee_play_pokemon_stamp_us_uk" aria-label="SSP143 Eevee Play Pokemon Stamp"></td>
+        <td class="number">SSP143</td>
+        <td class="name">Eevee</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp161_terapagos_play_pokemon_stamp_us_uk" aria-label="SSP161 Terapagos Play Pokemon Stamp"></td>
+        <td class="number">SSP161</td>
+        <td class="name">Terapagos</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp164_brilliant_blender_play_pokemon_stamp_us_uk" aria-label="SSP164 Brilliant Blender Play Pokemon Stamp"></td>
+        <td class="number">SSP164</td>
+        <td class="name">Brilliant Blender</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp169_counter_gain_play_pokemon_stamp_us_uk" aria-label="SSP169 Counter Gain Play Pokemon Stamp"></td>
+        <td class="number">SSP169</td>
+        <td class="name">Counter Gain</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp176_energy_search_pro_play_pokemon_stamp_us_uk" aria-label="SSP176 Energy Search Pro Play Pokemon Stamp"></td>
+        <td class="number">SSP176</td>
+        <td class="name">Energy Search Pro</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp177_gravity_mountain_play_pokemon_stamp_us_uk" aria-label="SSP177 Gravity Mountain Play Pokemon Stamp"></td>
+        <td class="number">SSP177</td>
+        <td class="name">Gravity Mountain</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp185_precious_trolley_play_pokemon_stamp_us_uk" aria-label="SSP185 Precious Trolley Play Pokemon Stamp"></td>
+        <td class="number">SSP185</td>
+        <td class="name">Precious Trolley</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp186_scramble_switch_play_pokemon_stamp_us_uk" aria-label="SSP186 Scramble Switch Play Pokemon Stamp"></td>
+        <td class="number">SSP186</td>
+        <td class="name">Scramble Switch</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp189_tera_orb_play_pokemon_stamp_us_uk" aria-label="SSP189 Tera Orb Play Pokemon Stamp"></td>
+        <td class="number">SSP189</td>
+        <td class="name">Tera Orb</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr class="category-row"><th colspan="5">Other Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="ssp161_terapagos_pokemon_center_stamp_us" aria-label="SSP161 Terapagos Pokemon Center Stamp"></td>
+        <td class="number">SSP161</td>
+        <td class="name">Terapagos</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Surging Sparks - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="quaxly_pokemon_center_stamp_us" aria-label="Quaxly Pokemon Center Stamp"></td>
+        <td class="number"></td>
+        <td class="name">Quaxly</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Surging Sparks - Retailer Gift With Purchase</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

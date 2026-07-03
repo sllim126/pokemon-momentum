@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OBF - Obsidian Flames Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;OBF&quot;}'>
+    <header>
+      <div>
+        <h1>OBF - Obsidian Flames</h1>
+        <p class="meta">55 checklist rows - 2023-08-11</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/obf.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Stamped Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf042_eiscue_ex_snowflake_stamp_us_uk" aria-label="OBF042 Eiscue ex Snowflake Stamp"></td>
+        <td class="number">OBF042</td>
+        <td class="name">Eiscue ex</td>
+        <td class="variant">Snowflake Stamp</td>
+        <td class="sources">Shrouded Fable - Holiday Calendar 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf086_espeon_obsidian_flames_stamp_us" aria-label="OBF086 Espeon Obsidian Flames Stamp"></td>
+        <td class="number">OBF086</td>
+        <td class="name">Espeon</td>
+        <td class="variant">Obsidian Flames Stamp</td>
+        <td class="sources">Obsidian Flames - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf130_umbreon_eb_games_stamp_australia_new_zealand" aria-label="OBF130 Umbreon EB Games Stamp"></td>
+        <td class="number">OBF130</td>
+        <td class="name">Umbreon</td>
+        <td class="variant">EB Games Stamp</td>
+        <td class="sources">Obsidian Flames - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf130_umbreon_gamestop_stamp_us_canada" aria-label="OBF130 Umbreon GameStop Stamp"></td>
+        <td class="number">OBF130</td>
+        <td class="name">Umbreon</td>
+        <td class="variant">GameStop Stamp</td>
+        <td class="sources">Obsidian Flames - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp036_palafin_black_star_promo_us_uk" aria-label="SVP036 Palafin Black Star Promo"></td>
+        <td class="number">SVP036</td>
+        <td class="name">Palafin</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Obsidian Flames - Build &amp; Battle Box; Obsidian Flames - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp037_cleffa_black_star_promo_us_uk" aria-label="SVP037 Cleffa Black Star Promo"></td>
+        <td class="number">SVP037</td>
+        <td class="name">Cleffa</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Obsidian Flames - Build &amp; Battle Box; Obsidian Flames - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp038_togekiss_black_star_promo_us_uk" aria-label="SVP038 Togekiss Black Star Promo"></td>
+        <td class="number">SVP038</td>
+        <td class="name">Togekiss</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Obsidian Flames - Build &amp; Battle Box; Obsidian Flames - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp039_mawile_black_star_promo_us_uk" aria-label="SVP039 Mawile Black Star Promo"></td>
+        <td class="number">SVP039</td>
+        <td class="name">Mawile</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Obsidian Flames - Build &amp; Battle Box; Obsidian Flames - Build &amp; Battle Stadium</td>
+      </tr><tr class="category-row"><th colspan="5">Staff Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp036_palafin_staff_stamp_us_uk" aria-label="SVP036 Palafin Staff Stamp"></td>
+        <td class="number">SVP036</td>
+        <td class="name">Palafin</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Obsidian Flames - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp037_cleffa_staff_stamp_us_uk" aria-label="SVP037 Cleffa Staff Stamp"></td>
+        <td class="number">SVP037</td>
+        <td class="name">Cleffa</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Obsidian Flames - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp038_togekiss_staff_stamp_us_uk" aria-label="SVP038 Togekiss Staff Stamp"></td>
+        <td class="number">SVP038</td>
+        <td class="name">Togekiss</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Obsidian Flames - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp039_mawile_staff_stamp_us_uk" aria-label="SVP039 Mawile Staff Stamp"></td>
+        <td class="number">SVP039</td>
+        <td class="name">Mawile</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Obsidian Flames - Build &amp; Battle Box</td>
+      </tr><tr class="category-row"><th colspan="5">Promo Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp033_meowscarada_ex_black_star_promo_us_uk" aria-label="SVP033 Meowscarada ex Black Star Promo"></td>
+        <td class="number">SVP033</td>
+        <td class="name">Meowscarada ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Obsidian Flames - Paldea Partners Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp034_skeledirge_ex_black_star_promo_us_uk" aria-label="SVP034 Skeledirge ex Black Star Promo"></td>
+        <td class="number">SVP034</td>
+        <td class="name">Skeledirge ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Obsidian Flames - Paldea Partners Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp035_quaquaval_ex_black_star_promo_us_uk" aria-label="SVP035 Quaquaval ex Black Star Promo"></td>
+        <td class="number">SVP035</td>
+        <td class="name">Quaquaval ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Obsidian Flames - Paldea Partners Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp040_pawmi_smooth_cosmos_us_uk" aria-label="SVP040 Pawmi Smooth Cosmos"></td>
+        <td class="number">SVP040</td>
+        <td class="name">Pawmi</td>
+        <td class="variant">Smooth Cosmos</td>
+        <td class="sources">Obsidian Flames - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp041_paldean_wooper_smooth_cosmos_us_uk" aria-label="SVP041 Paldean Wooper Smooth Cosmos"></td>
+        <td class="number">SVP041</td>
+        <td class="name">Paldean Wooper</td>
+        <td class="variant">Smooth Cosmos</td>
+        <td class="sources">Obsidian Flames - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp042_houndstone_pixel_cosmos_us_uk" aria-label="SVP042 Houndstone Pixel Cosmos"></td>
+        <td class="number">SVP042</td>
+        <td class="name">Houndstone</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Obsidian Flames - 3-Pack Blister (Reprint)</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp042_houndstone_smooth_cosmos_us_uk" aria-label="SVP042 Houndstone Smooth Cosmos"></td>
+        <td class="number">SVP042</td>
+        <td class="name">Houndstone</td>
+        <td class="variant">Smooth Cosmos</td>
+        <td class="sources">Obsidian Flames - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp043_eevee_pixel_cosmos_us_uk" aria-label="SVP043 Eevee Pixel Cosmos"></td>
+        <td class="number">SVP043</td>
+        <td class="name">Eevee</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Obsidian Flames - 3-Pack Blister (Reprint)</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp043_eevee_smooth_cosmos_us_uk" aria-label="SVP043 Eevee Smooth Cosmos"></td>
+        <td class="number">SVP043</td>
+        <td class="name">Eevee</td>
+        <td class="variant">Smooth Cosmos</td>
+        <td class="sources">Obsidian Flames - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp044_charmander_black_star_promo_us_uk" aria-label="SVP044 Charmander Black Star Promo"></td>
+        <td class="number">SVP044</td>
+        <td class="name">Charmander</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Obsidian Flames - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp044_charmander_pokemon_center_stamp_us_uk" aria-label="SVP044 Charmander Pokemon Center Stamp"></td>
+        <td class="number">SVP044</td>
+        <td class="name">Charmander</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Obsidian Flames - Pokemon Center ETB</td>
+      </tr><tr class="category-row"><th colspan="5">MCAP Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf013_rowlet_cosmos_holo_europe_canada" aria-label="OBF013 Rowlet Cosmos Holo"></td>
+        <td class="number">OBF013</td>
+        <td class="name">Rowlet</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Stellar Crown - Decidueye ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf014_dartrix_cosmos_holo_europe_canada" aria-label="OBF014 Dartrix Cosmos Holo"></td>
+        <td class="number">OBF014</td>
+        <td class="name">Dartrix</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Stellar Crown - Decidueye ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf015_decidueye_ex_holo_europe_canada" aria-label="OBF015 Decidueye ex Holo"></td>
+        <td class="number">OBF015</td>
+        <td class="name">Decidueye ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Stellar Crown - Decidueye ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf016_bounsweet_cosmos_holo_us_uk" aria-label="OBF016 Bounsweet Cosmos Holo"></td>
+        <td class="number">OBF016</td>
+        <td class="name">Bounsweet</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Tsareena ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf017_steenee_cosmos_holo_us_uk" aria-label="OBF017 Steenee Cosmos Holo"></td>
+        <td class="number">OBF017</td>
+        <td class="name">Steenee</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Tsareena ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf024_capsakid_non_holo_us_uk" aria-label="OBF024 Capsakid Non Holo"></td>
+        <td class="number">OBF024</td>
+        <td class="name">Capsakid</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf025_scovillain_cosmos_holo_us_uk" aria-label="OBF025 Scovillain Cosmos Holo"></td>
+        <td class="number">OBF025</td>
+        <td class="name">Scovillain</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf026_charmander_mirage_holo_us_uk" aria-label="OBF026 Charmander Mirage Holo"></td>
+        <td class="number">OBF026</td>
+        <td class="name">Charmander</td>
+        <td class="variant">Mirage Holo</td>
+        <td class="sources">151 - Charizard ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf027_charmeleon_mirage_holo_us_uk" aria-label="OBF027 Charmeleon Mirage Holo"></td>
+        <td class="number">OBF027</td>
+        <td class="name">Charmeleon</td>
+        <td class="variant">Mirage Holo</td>
+        <td class="sources">151 - Charizard ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf056_froakie_cosmos_holo_us_uk" aria-label="OBF056 Froakie Cosmos Holo"></td>
+        <td class="number">OBF056</td>
+        <td class="name">Froakie</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Shrouded Fable - Greninja ex Special Illustration Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf057_frogadier_cosmos_holo_us_uk" aria-label="OBF057 Frogadier Cosmos Holo"></td>
+        <td class="number">OBF057</td>
+        <td class="name">Frogadier</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Shrouded Fable - Greninja ex Special Illustration Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf060_finizen_non_holo_us_uk" aria-label="OBF060 Finizen Non Holo"></td>
+        <td class="number">OBF060</td>
+        <td class="name">Finizen</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf062_palafin_cosmos_holo_us_uk" aria-label="OBF062 Palafin Cosmos Holo"></td>
+        <td class="number">OBF062</td>
+        <td class="name">Palafin</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Stage 1 Blister; Temporal Forces - Enhanced 2-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf062_palafin_non_holo_us_uk" aria-label="OBF062 Palafin Non Holo"></td>
+        <td class="number">OBF062</td>
+        <td class="name">Palafin</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Obsidian Flames - Build &amp; Battle Box; Obsidian Flames - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf066_tyranitar_ex_holo_us_uk" aria-label="OBF066 Tyranitar ex Holo"></td>
+        <td class="number">OBF066</td>
+        <td class="name">Tyranitar ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Surging Sparks - Tyranitar ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf072_toxtricity_non_holo_us_uk" aria-label="OBF072 Toxtricity Non Holo"></td>
+        <td class="number">OBF072</td>
+        <td class="name">Toxtricity</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Obsidian Flames - Build &amp; Battle Box; Obsidian Flames - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf083_togepi_non_holo_us_uk" aria-label="OBF083 Togepi Non Holo"></td>
+        <td class="number">OBF083</td>
+        <td class="name">Togepi</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf084_togetic_non_holo_us_uk" aria-label="OBF084 Togetic Non Holo"></td>
+        <td class="number">OBF084</td>
+        <td class="name">Togetic</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf085_togekiss_cosmos_holo_us_uk" aria-label="OBF085 Togekiss Cosmos Holo"></td>
+        <td class="number">OBF085</td>
+        <td class="name">Togekiss</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf085_togekiss_non_holo_us_uk" aria-label="OBF085 Togekiss Non Holo"></td>
+        <td class="number">OBF085</td>
+        <td class="name">Togekiss</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Obsidian Flames - Build &amp; Battle Box; Obsidian Flames - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf100_greavard_cosmos_holo_us_uk" aria-label="OBF100 Greavard Cosmos Holo"></td>
+        <td class="number">OBF100</td>
+        <td class="name">Greavard</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Stellar Crown - Houndstone ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf105_larvitar_cosmos_holo_us_uk" aria-label="OBF105 Larvitar Cosmos Holo"></td>
+        <td class="number">OBF105</td>
+        <td class="name">Larvitar</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Tyranitar ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf106_pupitar_cosmos_holo_us_uk" aria-label="OBF106 Pupitar Cosmos Holo"></td>
+        <td class="number">OBF106</td>
+        <td class="name">Pupitar</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Tyranitar ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf125_charizard_ex_reprint_us_uk" aria-label="OBF125 Charizard ex Reprint"></td>
+        <td class="number">OBF125</td>
+        <td class="name">Charizard ex</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">Shrouded Fable - Tera Brawlers Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf136_darkrai_cosmos_holo_us_uk" aria-label="OBF136 Darkrai Cosmos Holo"></td>
+        <td class="number">OBF136</td>
+        <td class="name">Darkrai</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Triple Whammy Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf141_scizor_cosmos_holo_us_uk" aria-label="OBF141 Scizor Cosmos Holo"></td>
+        <td class="number">OBF141</td>
+        <td class="name">Scizor</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Meddling Sparks Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf148_pawniard_cosmos_holo_us_uk" aria-label="OBF148 Pawniard Cosmos Holo"></td>
+        <td class="number">OBF148</td>
+        <td class="name">Pawniard</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Shrouded Fable - Kingambit Illustration Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf149_bisharp_cosmos_holo_us_uk" aria-label="OBF149 Bisharp Cosmos Holo"></td>
+        <td class="number">OBF149</td>
+        <td class="name">Bisharp</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Shrouded Fable - Kingambit Illustration Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf159_dragonite_ex_reprint_us_uk" aria-label="OBF159 Dragonite ex Reprint"></td>
+        <td class="number">OBF159</td>
+        <td class="name">Dragonite ex</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">Shrouded Fable - Tera Brawlers Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf179_greedent_ex_reprint_us_uk" aria-label="OBF179 Greedent ex Reprint"></td>
+        <td class="number">OBF179</td>
+        <td class="name">Greedent ex</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">Shrouded Fable - Tera Brawlers Premium Collection</td>
+      </tr><tr class="category-row"><th colspan="5">Other Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf073_pawmot_ex_holo_us_uk" aria-label="OBF073 Pawmot ex Holo"></td>
+        <td class="number">OBF073</td>
+        <td class="name">Pawmot ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Paldean Fates - Paldea Adventure Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="obf135_absol_ex_holo_us_uk" aria-label="OBF135 Absol ex Holo"></td>
+        <td class="number">OBF135</td>
+        <td class="name">Absol ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Shrouded Fable - Dark Powers ex Special Collection</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

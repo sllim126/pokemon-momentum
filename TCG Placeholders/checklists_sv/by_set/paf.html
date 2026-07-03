@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PAF - Paldean Fates Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;PAF&quot;}'>
+    <header>
+      <div>
+        <h1>PAF - Paldean Fates</h1>
+        <p class="meta">29 checklist rows - 2024-01-26</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/paf.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Promo Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp069_fidough_black_star_promo_us_uk" aria-label="SVP069 Fidough Black Star Promo"></td>
+        <td class="number">SVP069</td>
+        <td class="name">Fidough</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Tech Sticker Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp070_greavard_black_star_promo_us_uk" aria-label="SVP070 Greavard Black Star Promo"></td>
+        <td class="number">SVP070</td>
+        <td class="name">Greavard</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Tech Sticker Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp071_maschiff_black_star_promo_us_uk" aria-label="SVP071 Maschiff Black Star Promo"></td>
+        <td class="number">SVP071</td>
+        <td class="name">Maschiff</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Tech Sticker Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp072_great_tusk_ex_black_star_promo_us_uk" aria-label="SVP072 Great Tusk ex Black Star Promo"></td>
+        <td class="number">SVP072</td>
+        <td class="name">Great Tusk ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Paldean Fates Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp073_iron_treads_ex_black_star_promo_us_uk" aria-label="SVP073 Iron Treads ex Black Star Promo"></td>
+        <td class="number">SVP073</td>
+        <td class="name">Iron Treads ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Paldean Fates Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp074_charizard_ex_black_star_promo_us_uk" aria-label="SVP074 Charizard ex Black Star Promo"></td>
+        <td class="number">SVP074</td>
+        <td class="name">Charizard ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Paldean Fates Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp075_mimikyu_black_star_promo_us_uk" aria-label="SVP075 Mimikyu Black Star Promo"></td>
+        <td class="number">SVP075</td>
+        <td class="name">Mimikyu</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp075_mimikyu_pokemon_center_stamp_us_uk" aria-label="SVP075 Mimikyu Pokemon Center Stamp"></td>
+        <td class="number">SVP075</td>
+        <td class="name">Mimikyu</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Paldean Fates - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp076_sprigatito_black_star_promo_us_uk" aria-label="SVP076 Sprigatito Black Star Promo"></td>
+        <td class="number">SVP076</td>
+        <td class="name">Sprigatito</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Meowscarada ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp077_floragato_black_star_promo_us_uk" aria-label="SVP077 Floragato Black Star Promo"></td>
+        <td class="number">SVP077</td>
+        <td class="name">Floragato</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Meowscarada ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp078_meowscarada_ex_black_star_promo_us_uk" aria-label="SVP078 Meowscarada ex Black Star Promo"></td>
+        <td class="number">SVP078</td>
+        <td class="name">Meowscarada ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Meowscarada ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp079_fuecoco_black_star_promo_us_uk" aria-label="SVP079 Fuecoco Black Star Promo"></td>
+        <td class="number">SVP079</td>
+        <td class="name">Fuecoco</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Skeledirge ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp080_crocalor_black_star_promo_us_uk" aria-label="SVP080 Crocalor Black Star Promo"></td>
+        <td class="number">SVP080</td>
+        <td class="name">Crocalor</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Skeledirge ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp081_skeledirge_ex_black_star_promo_us_uk" aria-label="SVP081 Skeledirge ex Black Star Promo"></td>
+        <td class="number">SVP081</td>
+        <td class="name">Skeledirge ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Skeledirge ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp082_quaxly_black_star_promo_us_uk" aria-label="SVP082 Quaxly Black Star Promo"></td>
+        <td class="number">SVP082</td>
+        <td class="name">Quaxly</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Quaquaval ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp083_quaxwell_black_star_promo_us_uk" aria-label="SVP083 Quaxwell Black Star Promo"></td>
+        <td class="number">SVP083</td>
+        <td class="name">Quaxwell</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Quaquaval ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp084_quaquaval_ex_black_star_promo_us_uk" aria-label="SVP084 Quaquaval ex Black Star Promo"></td>
+        <td class="number">SVP084</td>
+        <td class="name">Quaquaval ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Quaquaval ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp086_mabosstiff_ex_black_star_promo_us_uk" aria-label="SVP086 Mabosstiff ex Black Star Promo"></td>
+        <td class="number">SVP086</td>
+        <td class="name">Mabosstiff ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Mabosstiff ex Box; Paldean Fates - Mabosstiff ex Showcase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp087_sprigatito_ex_black_star_promo_us_uk" aria-label="SVP087 Sprigatito ex Black Star Promo"></td>
+        <td class="number">SVP087</td>
+        <td class="name">Sprigatito ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Paldea Adventure Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp088_pikachu_black_star_promo_us_uk" aria-label="SVP088 Pikachu Black Star Promo"></td>
+        <td class="number">SVP088</td>
+        <td class="name">Pikachu</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldean Fates - Paldea Adventure Chest</td>
+      </tr><tr class="category-row"><th colspan="5">MCAP Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="paf006_espathra_ex_reprint_us_uk" aria-label="PAF006 Espathra ex Reprint"></td>
+        <td class="number">PAF006</td>
+        <td class="name">Espathra ex</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">Shrouded Fable - Tera Team Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="paf007_charmander_cosmos_holo_us_uk" aria-label="PAF007 Charmander Cosmos Holo"></td>
+        <td class="number">PAF007</td>
+        <td class="name">Charmander</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Destined Rivals - Charizard ex Special Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="paf008_charmeleon_cosmos_holo_us_uk" aria-label="PAF008 Charmeleon Cosmos Holo"></td>
+        <td class="number">PAF008</td>
+        <td class="name">Charmeleon</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Destined Rivals - Charizard ex Special Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="paf010_magmortar_non_holo_us_uk" aria-label="PAF010 Magmortar Non Holo"></td>
+        <td class="number">PAF010</td>
+        <td class="name">Magmortar</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Victini &amp; Miraidon ex Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="paf018_pikachu_cosmos_parallel_holo_us_uk" aria-label="PAF018 Pikachu Cosmos Parallel Holo"></td>
+        <td class="number">PAF018</td>
+        <td class="name">Pikachu</td>
+        <td class="variant">Cosmos Parallel Holo</td>
+        <td class="sources">Stellar Crown - Paldean Fates Mini Tin 5-Pack</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="paf019_raichu_non_holo_us_uk" aria-label="PAF019 Raichu Non Holo"></td>
+        <td class="number">PAF019</td>
+        <td class="name">Raichu</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Victini &amp; Miraidon ex Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="paf038_fidough_cosmos_parallel_holo_us_uk" aria-label="PAF038 Fidough Cosmos Parallel Holo"></td>
+        <td class="number">PAF038</td>
+        <td class="name">Fidough</td>
+        <td class="variant">Cosmos Parallel Holo</td>
+        <td class="sources">Stellar Crown - Paldean Fates Mini Tin 5-Pack</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="paf042_greavard_cosmos_parallel_holo_us_uk" aria-label="PAF042 Greavard Cosmos Parallel Holo"></td>
+        <td class="number">PAF042</td>
+        <td class="name">Greavard</td>
+        <td class="variant">Cosmos Parallel Holo</td>
+        <td class="sources">Stellar Crown - Paldean Fates Mini Tin 5-Pack</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="paf062_maschiff_cosmos_parallel_holo_us_uk" aria-label="PAF062 Maschiff Cosmos Parallel Holo"></td>
+        <td class="number">PAF062</td>
+        <td class="name">Maschiff</td>
+        <td class="variant">Cosmos Parallel Holo</td>
+        <td class="sources">Stellar Crown - Paldean Fates Mini Tin 5-Pack</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

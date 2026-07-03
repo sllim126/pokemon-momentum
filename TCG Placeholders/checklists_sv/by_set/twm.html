@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TWM - Twilight Masquerade Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;TWM&quot;}'>
+    <header>
+      <div>
+        <h1>TWM - Twilight Masquerade</h1>
+        <p class="meta">73 checklist rows - 2024-05-24</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/twm.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Stamped Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp115_thwackey_black_star_promo_us_uk" aria-label="SVP115 Thwackey Black Star Promo"></td>
+        <td class="number">SVP115</td>
+        <td class="name">Thwackey</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp116_infernape_black_star_promo_us_uk" aria-label="SVP116 Infernape Black Star Promo"></td>
+        <td class="number">SVP116</td>
+        <td class="name">Infernape</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp117_froslass_black_star_promo_us_uk" aria-label="SVP117 Froslass Black Star Promo"></td>
+        <td class="number">SVP117</td>
+        <td class="name">Froslass</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp118_tatsugiri_black_star_promo_us_uk" aria-label="SVP118 Tatsugiri Black Star Promo"></td>
+        <td class="number">SVP118</td>
+        <td class="name">Tatsugiri</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm022_sinistcha_best_buy_stamp_us" aria-label="TWM022 Sinistcha Best Buy Stamp"></td>
+        <td class="number">TWM022</td>
+        <td class="name">Sinistcha</td>
+        <td class="variant">Best Buy Stamp</td>
+        <td class="sources">Twilight Masquerade - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm024_teal_mask_ogerpon_eb_games_stamp_australia_new_zealand" aria-label="TWM024 Teal Mask Ogerpon EB Games Stamp"></td>
+        <td class="number">TWM024</td>
+        <td class="name">Teal Mask Ogerpon</td>
+        <td class="variant">EB Games Stamp</td>
+        <td class="sources">Twilight Masquerade - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm024_teal_mask_ogerpon_gamestop_stamp_canada" aria-label="TWM024 Teal Mask Ogerpon GameStop Stamp"></td>
+        <td class="number">TWM024</td>
+        <td class="name">Teal Mask Ogerpon</td>
+        <td class="variant">GameStop Stamp</td>
+        <td class="sources">Twilight Masquerade - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm040_hearthflame_mask_ogerpon_ex_expansion_logo_stamp_us_uk" aria-label="TWM040 Hearthflame Mask Ogerpon ex Expansion Logo Stamp"></td>
+        <td class="number">TWM040</td>
+        <td class="name">Hearthflame Mask Ogerpon ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Destined Rivals - Masks of Ogerpon Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm062_iron_bundle_cosmos_holo_snowflake_stamp_us_uk" aria-label="TWM062 Iron Bundle Cosmos Holo Snowflake Stamp"></td>
+        <td class="number">TWM062</td>
+        <td class="name">Iron Bundle</td>
+        <td class="variant">Cosmos Holo Snowflake Stamp</td>
+        <td class="sources">Shrouded Fable - Holiday Calendar 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm064_wellspring_mask_ogerpon_ex_expansion_logo_stamp_us_uk" aria-label="TWM064 Wellspring Mask Ogerpon ex Expansion Logo Stamp"></td>
+        <td class="number">TWM064</td>
+        <td class="name">Wellspring Mask Ogerpon ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Destined Rivals - Masks of Ogerpon Premium Collection</td>
+      </tr><tr class="category-row"><th colspan="5">Staff Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp115_thwackey_staff_stamp_us_uk" aria-label="SVP115 Thwackey Staff Stamp"></td>
+        <td class="number">SVP115</td>
+        <td class="name">Thwackey</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Twilight Masquerade - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp116_infernape_staff_stamp_us_uk" aria-label="SVP116 Infernape Staff Stamp"></td>
+        <td class="number">SVP116</td>
+        <td class="name">Infernape</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Twilight Masquerade - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp117_froslass_staff_stamp_us_uk" aria-label="SVP117 Froslass Staff Stamp"></td>
+        <td class="number">SVP117</td>
+        <td class="name">Froslass</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Twilight Masquerade - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp118_tatsugiri_staff_stamp_us_uk" aria-label="SVP118 Tatsugiri Staff Stamp"></td>
+        <td class="number">SVP118</td>
+        <td class="name">Tatsugiri</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Twilight Masquerade - Build &amp; Battle Box</td>
+      </tr><tr class="category-row"><th colspan="5">Promo Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp105_armarouge_ex_black_star_promo_us_uk" aria-label="SVP105 Armarouge ex Black Star Promo"></td>
+        <td class="number">SVP105</td>
+        <td class="name">Armarouge ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Battle Academy 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp106_pikachu_ex_black_star_promo_us_uk" aria-label="SVP106 Pikachu ex Black Star Promo"></td>
+        <td class="number">SVP106</td>
+        <td class="name">Pikachu ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Battle Academy 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp107_mareep_black_star_promo_us_uk" aria-label="SVP107 Mareep Black Star Promo"></td>
+        <td class="number">SVP107</td>
+        <td class="name">Mareep</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Battle Academy 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp108_flaaffy_black_star_promo_us_uk" aria-label="SVP108 Flaaffy Black Star Promo"></td>
+        <td class="number">SVP108</td>
+        <td class="name">Flaaffy</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Battle Academy 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp109_ampharos_black_star_promo_us_uk" aria-label="SVP109 Ampharos Black Star Promo"></td>
+        <td class="number">SVP109</td>
+        <td class="name">Ampharos</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Battle Academy 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp110_darkrai_ex_black_star_promo_us_uk" aria-label="SVP110 Darkrai ex Black Star Promo"></td>
+        <td class="number">SVP110</td>
+        <td class="name">Darkrai ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Battle Academy 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp111_pawniard_black_star_promo_us_uk" aria-label="SVP111 Pawniard Black Star Promo"></td>
+        <td class="number">SVP111</td>
+        <td class="name">Pawniard</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Battle Academy 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp112_bisharp_black_star_promo_us_uk" aria-label="SVP112 Bisharp Black Star Promo"></td>
+        <td class="number">SVP112</td>
+        <td class="name">Bisharp</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Battle Academy 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp113_kingambit_black_star_promo_us_uk" aria-label="SVP113 Kingambit Black Star Promo"></td>
+        <td class="number">SVP113</td>
+        <td class="name">Kingambit</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Battle Academy 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp114_picnicker_black_star_promo_us_uk" aria-label="SVP114 Picnicker Black Star Promo"></td>
+        <td class="number">SVP114</td>
+        <td class="name">Picnicker</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Battle Academy 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp114_picnicker_non_holo_us_uk" aria-label="SVP114 Picnicker Non Holo"></td>
+        <td class="number">SVP114</td>
+        <td class="name">Picnicker</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp119_toxel_cosmos_holo_us_uk" aria-label="SVP119 Toxel Cosmos Holo"></td>
+        <td class="number">SVP119</td>
+        <td class="name">Toxel</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Twilight Masquerade - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp120_pupitar_cosmos_holo_us_uk" aria-label="SVP120 Pupitar Cosmos Holo"></td>
+        <td class="number">SVP120</td>
+        <td class="name">Pupitar</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Twilight Masquerade - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp121_revavroom_cosmos_holo_us_uk" aria-label="SVP121 Revavroom Cosmos Holo"></td>
+        <td class="number">SVP121</td>
+        <td class="name">Revavroom</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Twilight Masquerade - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp122_snorlax_cosmos_holo_us_uk" aria-label="SVP122 Snorlax Cosmos Holo"></td>
+        <td class="number">SVP122</td>
+        <td class="name">Snorlax</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Twilight Masquerade - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp123_teal_mask_ogerpon_black_star_promo_us_uk" aria-label="SVP123 Teal Mask Ogerpon Black Star Promo"></td>
+        <td class="number">SVP123</td>
+        <td class="name">Teal Mask Ogerpon</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp123_teal_mask_ogerpon_pokemon_center_stamp_us_uk" aria-label="SVP123 Teal Mask Ogerpon Pokemon Center Stamp"></td>
+        <td class="number">SVP123</td>
+        <td class="name">Teal Mask Ogerpon</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Twilight Masquerade - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp126_palafin_ex_black_star_promo_us_uk" aria-label="SVP126 Palafin ex Black Star Promo"></td>
+        <td class="number">SVP126</td>
+        <td class="name">Palafin ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Palafin ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp127_walking_wake_ex_black_star_promo_us_uk" aria-label="SVP127 Walking Wake ex Black Star Promo"></td>
+        <td class="number">SVP127</td>
+        <td class="name">Walking Wake ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Paradox Clash Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp128_iron_leaves_ex_black_star_promo_us_uk" aria-label="SVP128 Iron Leaves ex Black Star Promo"></td>
+        <td class="number">SVP128</td>
+        <td class="name">Iron Leaves ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Paradox Clash Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp142_victini_ex_black_star_promo_us_uk" aria-label="SVP142 Victini ex Black Star Promo"></td>
+        <td class="number">SVP142</td>
+        <td class="name">Victini ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Victini ex Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp143_miraidon_ex_black_star_promo_us_uk" aria-label="SVP143 Miraidon ex Black Star Promo"></td>
+        <td class="number">SVP143</td>
+        <td class="name">Miraidon ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Miraidon ex Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp148_miraidon_black_star_promo_us_uk" aria-label="SVP148 Miraidon Black Star Promo"></td>
+        <td class="number">SVP148</td>
+        <td class="name">Miraidon</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Twilight Masquerade - Battle Academy 2024</td>
+      </tr><tr class="category-row"><th colspan="5">MCAP Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm018_dipplin_cosmos_holo_us_uk" aria-label="TWM018 Dipplin Cosmos Holo"></td>
+        <td class="number">TWM018</td>
+        <td class="name">Dipplin</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Fall 2024 Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm020_poltchageist_non_holo_us_uk" aria-label="TWM020 Poltchageist Non Holo"></td>
+        <td class="number">TWM020</td>
+        <td class="name">Poltchageist</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Surging Sparks - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm022_sinistcha_cosmos_holo_us_uk" aria-label="TWM022 Sinistcha Cosmos Holo"></td>
+        <td class="number">TWM022</td>
+        <td class="name">Sinistcha</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm024_teal_mask_ogerpon_cosmos_holo_us_uk" aria-label="TWM024 Teal Mask Ogerpon Cosmos Holo"></td>
+        <td class="number">TWM024</td>
+        <td class="name">Teal Mask Ogerpon</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Ogerpon ex Premium Collection; Surging Sparks - Fall 2024 Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm033_infernape_non_holo_us_uk" aria-label="TWM033 Infernape Non Holo"></td>
+        <td class="number">TWM033</td>
+        <td class="name">Infernape</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm036_litwick_non_holo_us_uk" aria-label="TWM036 Litwick Non Holo"></td>
+        <td class="number">TWM036</td>
+        <td class="name">Litwick</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Surging Sparks - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm037_lampent_non_holo_us_uk" aria-label="TWM037 Lampent Non Holo"></td>
+        <td class="number">TWM037</td>
+        <td class="name">Lampent</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Surging Sparks - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm038_chandelure_cosmos_holo_us_uk" aria-label="TWM038 Chandelure Cosmos Holo"></td>
+        <td class="number">TWM038</td>
+        <td class="name">Chandelure</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm053_froslass_non_holo_us_uk" aria-label="TWM053 Froslass Non Holo"></td>
+        <td class="number">TWM053</td>
+        <td class="name">Froslass</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm059_finizen_cosmos_holo_us_uk" aria-label="TWM059 Finizen Cosmos Holo"></td>
+        <td class="number">TWM059</td>
+        <td class="name">Finizen</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Twilight Masquerade - Palafin ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm060_palafin_cosmos_holo_us_uk" aria-label="TWM060 Palafin Cosmos Holo"></td>
+        <td class="number">TWM060</td>
+        <td class="name">Palafin</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Twilight Masquerade - Palafin ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm068_luxray_ex_holo_us_uk" aria-label="TWM068 Luxray ex Holo"></td>
+        <td class="number">TWM068</td>
+        <td class="name">Luxray ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Surging Sparks - Meddling Sparks Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm080_abra_non_holo_us_uk" aria-label="TWM080 Abra Non Holo"></td>
+        <td class="number">TWM080</td>
+        <td class="name">Abra</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Surging Sparks - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm081_kadabra_non_holo_us_uk" aria-label="TWM081 Kadabra Non Holo"></td>
+        <td class="number">TWM081</td>
+        <td class="name">Kadabra</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Surging Sparks - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm082_alakazam_cosmos_holo_us_uk" aria-label="TWM082 Alakazam Cosmos Holo"></td>
+        <td class="number">TWM082</td>
+        <td class="name">Alakazam</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Premium Checklane Blister; Surging Sparks - Scarlet &amp; Violet Knock Out Collection: Alakazam &amp; Chien-Pao</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm095_munkidori_non_holo_us_uk" aria-label="TWM095 Munkidori Non Holo"></td>
+        <td class="number">TWM095</td>
+        <td class="name">Munkidori</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm096_fezandipiti_non_holo_us_uk" aria-label="TWM096 Fezandipiti Non Holo"></td>
+        <td class="number">TWM096</td>
+        <td class="name">Fezandipiti</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm099_hisuian_growlithe_non_holo_us_uk" aria-label="TWM099 Hisuian Growlithe Non Holo"></td>
+        <td class="number">TWM099</td>
+        <td class="name">Hisuian Growlithe</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Surging Sparks - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm100_hisuian_arcanine_cosmos_holo_us_uk" aria-label="TWM100 Hisuian Arcanine Cosmos Holo"></td>
+        <td class="number">TWM100</td>
+        <td class="name">Hisuian Arcanine</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm106_greninja_ex_holo_us_uk" aria-label="TWM106 Greninja ex Holo"></td>
+        <td class="number">TWM106</td>
+        <td class="name">Greninja ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Surging Sparks - Greninja ex Ultra-Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm106_greninja_ex_metal_card_us_uk" aria-label="TWM106 Greninja ex Metal Card"></td>
+        <td class="number">TWM106</td>
+        <td class="name">Greninja ex</td>
+        <td class="variant">Metal Card</td>
+        <td class="sources">Surging Sparks - Greninja ex Ultra-Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm111_okidogi_non_holo_us_uk" aria-label="TWM111 Okidogi Non Holo"></td>
+        <td class="number">TWM111</td>
+        <td class="name">Okidogi</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm159_ogre_s_mask_cosmos_holo_us_uk" aria-label="TWM159 Ogre&#x27;s Mask Cosmos Holo"></td>
+        <td class="number">TWM159</td>
+        <td class="name">Ogre&#x27;s Mask</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Ogerpon ex Premium Collection</td>
+      </tr><tr class="category-row"><th colspan="5">Prize Pack Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm025_teal_mask_ogerpon_ex_play_pokemon_stamp_us_uk" aria-label="TWM025 Teal Mask Ogerpon ex Play Pokemon Stamp"></td>
+        <td class="number">TWM025</td>
+        <td class="name">Teal Mask Ogerpon ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm053_froslass_play_pokemon_stamp_us_uk" aria-label="TWM053 Froslass Play Pokemon Stamp"></td>
+        <td class="number">TWM053</td>
+        <td class="name">Froslass</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm077_iron_thorns_ex_play_pokemon_stamp_us_uk" aria-label="TWM077 Iron Thorns ex Play Pokemon Stamp"></td>
+        <td class="number">TWM077</td>
+        <td class="name">Iron Thorns ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm095_munkidori_play_pokemon_stamp_us_uk" aria-label="TWM095 Munkidori Play Pokemon Stamp"></td>
+        <td class="number">TWM095</td>
+        <td class="name">Munkidori</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm105_conkeldurr_play_pokemon_stamp_us_uk" aria-label="TWM105 Conkeldurr Play Pokemon Stamp"></td>
+        <td class="number">TWM105</td>
+        <td class="name">Conkeldurr</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm106_greninja_ex_play_pokemon_stamp_us_uk" aria-label="TWM106 Greninja ex Play Pokemon Stamp"></td>
+        <td class="number">TWM106</td>
+        <td class="name">Greninja ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm131_tatsugiri_play_pokemon_stamp_us_uk" aria-label="TWM131 Tatsugiri Play Pokemon Stamp"></td>
+        <td class="number">TWM131</td>
+        <td class="name">Tatsugiri</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm134_blissey_ex_play_pokemon_stamp_us_uk" aria-label="TWM134 Blissey ex Play Pokemon Stamp"></td>
+        <td class="number">TWM134</td>
+        <td class="name">Blissey ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm141_bloodmoon_ursaluna_ex_play_pokemon_stamp_us_uk" aria-label="TWM141 Bloodmoon Ursaluna ex Play Pokemon Stamp"></td>
+        <td class="number">TWM141</td>
+        <td class="name">Bloodmoon Ursaluna ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm143_bug_catching_set_play_pokemon_stamp_us_uk" aria-label="TWM143 Bug Catching Set Play Pokemon Stamp"></td>
+        <td class="number">TWM143</td>
+        <td class="name">Bug Catching Set</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm145_carmine_play_pokemon_stamp_us_uk" aria-label="TWM145 Carmine Play Pokemon Stamp"></td>
+        <td class="number">TWM145</td>
+        <td class="name">Carmine</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm148_enhanced_hammer_play_pokemon_stamp_us_uk" aria-label="TWM148 Enhanced Hammer Play Pokemon Stamp"></td>
+        <td class="number">TWM148</td>
+        <td class="name">Enhanced Hammer</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="twm153_jamming_tower_play_pokemon_stamp_us_uk" aria-label="TWM153 Jamming Tower Play Pokemon Stamp"></td>
+        <td class="number">TWM153</td>
+        <td class="name">Jamming Tower</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

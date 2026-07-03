@@ -60,9 +60,12 @@ from scripts.dashboards.tracking_store import (
 )
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent.parent
 DASHBOARD_HTML = SCRIPT_DIR / "dashboard.html"
 ALT_DASHBOARD_HTML = SCRIPT_DIR / "dashboard_lab.html"
+COLLECTOR_HUB_HTML = SCRIPT_DIR / "collector_hub.html"
 SET_EXPLORER_HTML = SCRIPT_DIR / "set_explorer.html"
+BUDGET_BUILDER_HTML = SCRIPT_DIR / "budget_builder.html"
 SEALED_DEALS_HTML = SCRIPT_DIR / "sealed_deals.html"
 ACCOUNT_SETTINGS_HTML = SCRIPT_DIR / "account_settings.html"
 EOD_DASHBOARD_HTML = SCRIPT_DIR / "eod_dashboard.html"
@@ -89,6 +92,15 @@ INDEX_OVERVIEW_POKEMON100_HTML = SCRIPT_DIR / "index_overview_pokemon100.html"
 INDEX_OVERVIEW_JP_POKEMON100_HTML = SCRIPT_DIR / "index_overview_jp_pokemon100.html"
 INDEX_OVERVIEW_JP_SV100_HTML = SCRIPT_DIR / "index_overview_jp_sv100.html"
 DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
+TCG_PLACEHOLDERS_DIR = REPO_ROOT / "TCG Placeholders"
+COLLECTOR_PUBLIC_BUCKETS = {
+    "checklists-sv": TCG_PLACEHOLDERS_DIR / "checklists_sv",
+    "checklists-mega": TCG_PLACEHOLDERS_DIR / "checklists_mega",
+    "print-sv": TCG_PLACEHOLDERS_DIR / "output",
+    "print-mega": TCG_PLACEHOLDERS_DIR / "output_mega",
+    "print-combined": TCG_PLACEHOLDERS_DIR / "output_combined",
+    "docs": TCG_PLACEHOLDERS_DIR / "docs",
+}
 IMAGE_DIR_CANDIDATES = [
     SCRIPT_DIR.parents[2] / "images",
     Path("/app/images"),
@@ -139,6 +151,145 @@ SV100_BASE_LEVEL = 1000.0
 MEGA100_BASE_LEVEL = 1000.0
 INDEX_OVERVIEW_CACHE_TTL_SECONDS = 15 * 60
 _INDEX_OVERVIEW_CACHE: dict[tuple[int, str], tuple[datetime, dict]] = {}
+DEFAULT_BUDGET_RARITY_FILTERS = [
+    "illustration_rare",
+    "special_illustration_rare",
+    "ultra_rare",
+    "hyper_rare",
+    "secret_rare",
+]
+BUDGET_RARITY_FILTER_OPTIONS = [
+    {"key": "illustration_rare", "label": "Illustration Rare", "short_label": "IR"},
+    {"key": "special_illustration_rare", "label": "Special Illustration Rare", "short_label": "SIR"},
+    {"key": "ultra_rare", "label": "Ultra Rare", "short_label": "UR"},
+    {"key": "hyper_rare", "label": "Hyper Rare", "short_label": "HR"},
+    {"key": "secret_rare", "label": "Secret Rare", "short_label": "SR"},
+    {"key": "double_rare", "label": "Double Rare", "short_label": "DR"},
+    {"key": "holo_rare", "label": "Holo Rare", "short_label": "Holo"},
+    {"key": "promo", "label": "Promo", "short_label": "Promo"},
+]
+
+
+def _collector_bucket_root(bucket: str) -> Path:
+    try:
+        return COLLECTOR_PUBLIC_BUCKETS[bucket]
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Unknown collector asset bucket.") from exc
+
+
+def collector_asset_path(bucket: str, asset_path: str) -> Path:
+    root = _collector_bucket_root(bucket).resolve()
+    target = (root / asset_path).resolve()
+    if not str(target).startswith(str(root)):
+        raise HTTPException(status_code=404, detail="Collector asset not found.")
+    if not target.is_file():
+        raise HTTPException(status_code=404, detail="Collector asset not found.")
+    return target
+
+
+def collector_asset_url(bucket: str, asset_path: str) -> str:
+    return f"/collector-assets/{bucket}/{asset_path}"
+
+
+def collector_file_count(root: Path, pattern: str) -> int:
+    if not root.exists():
+        return 0
+    return sum(1 for _ in root.glob(pattern))
+
+
+def collector_manifest() -> dict:
+    sv_checklist_root = COLLECTOR_PUBLIC_BUCKETS["checklists-sv"]
+    mega_checklist_root = COLLECTOR_PUBLIC_BUCKETS["checklists-mega"]
+    sv_print_root = COLLECTOR_PUBLIC_BUCKETS["print-sv"]
+    mega_print_root = COLLECTOR_PUBLIC_BUCKETS["print-mega"]
+    combined_print_root = COLLECTOR_PUBLIC_BUCKETS["print-combined"]
+    docs_root = COLLECTOR_PUBLIC_BUCKETS["docs"]
+
+    items = [
+        {
+            "id": "sv-checklists",
+            "section": "Checklist Sites",
+            "title": "Scarlet & Violet Checklists",
+            "summary": "Interactive set pages with saved checkboxes, printable tables, and CSV exports.",
+            "href": collector_asset_url("checklists-sv", "index.html"),
+            "preview_href": collector_asset_url("checklists-sv", "index.html"),
+            "stats": [
+                f"{collector_file_count(sv_checklist_root / 'by_set', '*.html')} set pages",
+                f"{collector_file_count(sv_checklist_root / 'csv', '*.csv')} CSV exports",
+            ],
+            "tags": ["SV", "Checklist", "Interactive"],
+        },
+        {
+            "id": "mega-checklists",
+            "section": "Checklist Sites",
+            "title": "Mega Evolution Checklists",
+            "summary": "Mega-era set tracking, promo rows, and Prize Pack carryover in the same checklist format.",
+            "href": collector_asset_url("checklists-mega", "index.html"),
+            "preview_href": collector_asset_url("checklists-mega", "index.html"),
+            "stats": [
+                f"{collector_file_count(mega_checklist_root / 'by_set', '*.html')} set pages",
+                f"{collector_file_count(mega_checklist_root / 'csv', '*.csv')} CSV exports",
+            ],
+            "tags": ["Mega", "Checklist", "Interactive"],
+        },
+        {
+            "id": "combined-placeholders",
+            "section": "Print Dashboards",
+            "title": "Combined Placeholder Print Hub",
+            "summary": "Unified printable placeholder cards across Scarlet & Violet, Mega-era carryover, and Prize Pack sources.",
+            "href": collector_asset_url("print-combined", "index.html"),
+            "preview_href": collector_asset_url("print-combined", "index.html"),
+            "stats": [
+                f"{collector_file_count(combined_print_root / 'by_card_code', '*.html')} card-code views",
+                f"{collector_file_count(combined_print_root / 'by_release_block', '*.html')} release blocks",
+            ],
+            "tags": ["Combined", "Print", "Binder"],
+        },
+        {
+            "id": "mega-placeholders",
+            "section": "Print Dashboards",
+            "title": "Mega Placeholder Print Hub",
+            "summary": "Mega Evolution placeholder sheets grouped for binder work, promos, and release-block printing.",
+            "href": collector_asset_url("print-mega", "index.html"),
+            "preview_href": collector_asset_url("print-mega", "index.html"),
+            "stats": [
+                f"{collector_file_count(mega_print_root / 'by_card_code', '*.html')} card-code views",
+                f"{collector_file_count(mega_print_root / 'by_release_block', '*.html')} release blocks",
+            ],
+            "tags": ["Mega", "Print", "Binder"],
+        },
+        {
+            "id": "sv-placeholders",
+            "section": "Print Dashboards",
+            "title": "Scarlet & Violet Placeholder Print Hub",
+            "summary": "SV-era placeholder cards with release-block and card-code slicing for master set prep.",
+            "href": collector_asset_url("print-sv", "index.html"),
+            "preview_href": collector_asset_url("print-sv", "index.html"),
+            "stats": [
+                f"{collector_file_count(sv_print_root / 'by_card_code', '*.html')} card-code views",
+                f"{collector_file_count(sv_print_root / 'by_release_block', '*.html')} release blocks",
+            ],
+            "tags": ["SV", "Print", "Binder"],
+        },
+        {
+            "id": "release-dates",
+            "section": "Reference Docs",
+            "title": "Set Release Date Notes",
+            "summary": "Human-readable release-date notes for sets, promo blocks, and special releases across eras.",
+            "href": collector_asset_url("docs", "set_release_dates.md"),
+            "preview_href": collector_asset_url("docs", "set_release_dates.md"),
+            "stats": [
+                f"{collector_file_count(docs_root, '*.md')} reference docs",
+                "Source planning notes",
+            ],
+            "tags": ["Reference", "Dates", "Planning"],
+        },
+    ]
+    return {
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "project_root_exists": TCG_PLACEHOLDERS_DIR.exists(),
+        "items": items,
+    }
 # Index definition contract:
 # - index_name: UI display title.
 # - description: subtitle/summary text returned in API payload.
@@ -327,10 +478,31 @@ def dashboard_lab():
     return FileResponse(ALT_DASHBOARD_HTML)
 
 
+@app.get("/collector-hub")
+def collector_hub():
+    return FileResponse(COLLECTOR_HUB_HTML)
+
+
+@app.get("/collector-manifest")
+def collector_manifest_route():
+    return collector_manifest()
+
+
+@app.get("/collector-assets/{bucket}/{asset_path:path}")
+def collector_asset(bucket: str, asset_path: str):
+    return FileResponse(collector_asset_path(bucket, asset_path))
+
+
 @app.get("/set-explorer")
 def set_explorer():
     """Serve the lighter-weight set explorer page used for basket and concentration browsing."""
     return FileResponse(SET_EXPLORER_HTML)
+
+
+@app.get("/budget-builder")
+def budget_builder_page():
+    """Serve a standalone budget-based card recommendation page."""
+    return FileResponse(BUDGET_BUILDER_HTML)
 
 
 @app.get("/sealed-deals")
@@ -569,6 +741,177 @@ def categories():
             {"category_id": 85, "label": "Pokemon Japanese", "slug": "pokemon_jp"},
         ]
     }
+
+
+def _row_dicts(columns: list[str], rows: list[tuple]) -> list[dict]:
+    return [dict(zip(columns, row)) for row in rows]
+
+
+def _budget_filter_keys(raw_filters: str | None) -> list[str]:
+    allowed = {item["key"] for item in BUDGET_RARITY_FILTER_OPTIONS}
+    parsed: list[str] = []
+    for value in str(raw_filters or "").split(","):
+        key = value.strip().lower()
+        if key and key in allowed and key not in parsed:
+            parsed.append(key)
+    return parsed or list(DEFAULT_BUDGET_RARITY_FILTERS)
+
+
+def _budget_exclude_keys(raw_keys: str | None) -> set[tuple[int, str]]:
+    parsed: set[tuple[int, str]] = set()
+    for raw_key in str(raw_keys or "").split(","):
+        product_part, _, subtype_part = raw_key.partition("||")
+        try:
+            product_id = int(product_part)
+        except (TypeError, ValueError):
+            continue
+        parsed.add((product_id, subtype_part))
+    return parsed
+
+
+def _safe_float(value, default: float = 0.0) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    if pd.isna(number):
+        return default
+    return number
+
+
+def _safe_int(value, default: int = 0) -> int:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return default
+    return number
+
+
+def _truthy_flag(value) -> bool:
+    if value in (None, "", 0, "0", False):
+        return False
+    return True
+
+
+def _budget_name_root(name: str | None) -> str:
+    text = re.sub(r"\s*\([^)]*\)", "", str(name or "")).strip().lower()
+    return re.sub(r"\s+", " ", text)
+
+
+def _budget_candidate_score(row: dict, budget: float) -> float:
+    price = max(_safe_float(row.get("latest_price")), 0.0)
+    roc_7d = _safe_float(row.get("roc_7d_pct"))
+    roc_30d = _safe_float(row.get("roc_30d_pct"))
+    accel = _safe_float(row.get("acceleration_7d_vs_30d"))
+    trend = _safe_float(row.get("trend_score"))
+    price_vs_sma30 = _safe_float(row.get("price_vs_sma30_pct"))
+    recent_distinct_7d = _safe_float(row.get("recent_distinct_prices_7d"))
+    recent_distinct_30d = _safe_float(row.get("recent_distinct_prices_30d"))
+    ratio_to_budget = (price / budget) if budget > 0 else 1.0
+
+    score = 0.0
+    score += min(max(roc_7d, -6.0), 18.0) * 1.6
+    score += min(max(roc_30d, -10.0), 22.0) * 0.75
+    score += min(max(accel, -8.0), 16.0) * 1.1
+    score += min(trend, 120.0) * 0.22
+    score += min(recent_distinct_7d, 8.0) * 2.5
+    score += min(recent_distinct_30d, 16.0) * 0.8
+
+    if _truthy_flag(row.get("under_the_radar_default_flag")):
+        score += 16.0
+    if _truthy_flag(row.get("early_uptrends_default_flag")):
+        score += 12.0
+    if _truthy_flag(row.get("good_buys_default_flag")):
+        score += 8.0
+
+    score -= abs(price_vs_sma30 - 4.0) * 0.5
+
+    if ratio_to_budget <= 0.08:
+        score -= 6.0
+    elif ratio_to_budget <= 0.32:
+        score += 8.0
+    elif ratio_to_budget <= 0.48:
+        score += 4.0
+    elif ratio_to_budget > 0.72:
+        score -= 14.0
+
+    if roc_7d > 18.0:
+        score -= (roc_7d - 18.0) * 1.2
+    if roc_30d > 30.0:
+        score -= (roc_30d - 30.0) * 0.8
+    if price_vs_sma30 > 16.0:
+        score -= (price_vs_sma30 - 16.0) * 0.9
+
+    return round(score, 3)
+
+
+def _budget_candidate_reasons(row: dict) -> list[str]:
+    reasons: list[str] = []
+    if _truthy_flag(row.get("under_the_radar_default_flag")):
+        reasons.append("under the radar")
+    if _truthy_flag(row.get("early_uptrends_default_flag")):
+        reasons.append("early uptrend")
+    if _truthy_flag(row.get("good_buys_default_flag")):
+        reasons.append("good buy setup")
+
+    roc_7d = _safe_float(row.get("roc_7d_pct"))
+    recent_distinct_30d = _safe_int(row.get("recent_distinct_prices_30d"))
+    price_vs_sma30 = _safe_float(row.get("price_vs_sma30_pct"))
+    if roc_7d > 0:
+        reasons.append(f"+{roc_7d:.1f}% 7d")
+    if recent_distinct_30d >= 8:
+        reasons.append("active movement")
+    if 0.0 <= price_vs_sma30 <= 10.0:
+        reasons.append("near 30d trend")
+    return reasons[:4]
+
+
+def _select_budget_candidates(
+    candidates: list[dict],
+    budget: float,
+    limit: int,
+    max_per_set: int,
+    allow_duplicates: bool = False,
+) -> list[dict]:
+    if budget <= 0:
+        return []
+
+    group_counts: dict[int, int] = {}
+    name_counts: dict[str, int] = {}
+    selected: list[dict] = []
+    remaining = budget
+    passes = [
+        {"max_ratio": 0.45, "respect_name_cap": True},
+        {"max_ratio": 0.65, "respect_name_cap": True},
+        {"max_ratio": 1.00, "respect_name_cap": False},
+    ]
+
+    for pass_config in passes:
+        for candidate in candidates:
+            if len(selected) >= limit:
+                return selected
+
+            key = (candidate.get("productId"), candidate.get("subTypeName") or "")
+            if any((item.get("productId"), item.get("subTypeName") or "") == key for item in selected):
+                continue
+
+            price = _safe_float(candidate.get("latest_price"))
+            group_id = _safe_int(candidate.get("groupId"))
+            name_root = _budget_name_root(candidate.get("productName"))
+            if price <= 0 or price > remaining or price > budget * pass_config["max_ratio"]:
+                continue
+            if group_counts.get(group_id, 0) >= max_per_set:
+                continue
+            if not allow_duplicates and pass_config["respect_name_cap"] and name_counts.get(name_root, 0) >= 1:
+                continue
+
+            selected.append(candidate)
+            remaining = round(remaining - price, 2)
+            group_counts[group_id] = group_counts.get(group_id, 0) + 1
+            if name_root:
+                name_counts[name_root] = name_counts.get(name_root, 0) + 1
+
+    return selected
 
 
 def _format_days_delta(series: list[dict], key: str, days: int) -> tuple[float | None, float | None]:
@@ -4179,6 +4522,165 @@ def product_signals(limit: int = 500, min_price: float = 0.0, category_id: int =
     """
     cols, rows = q(sql)
     return {"columns": cols, "rows": rows}
+
+
+@app.get("/budget_builder")
+def budget_builder_recommendations(
+    budget: float = 150.0,
+    min_price: float = 5.0,
+    limit: int = 12,
+    max_per_set: int = 2,
+    rarities: str | None = None,
+    exclude_keys: str | None = None,
+    allow_duplicates: bool = False,
+    category_id: int = 3,
+):
+    budget = max(5.0, min(float(budget), 5000.0))
+    min_price = max(0.5, min(float(min_price), budget))
+    limit = max(1, min(int(limit), 24))
+    max_per_set = max(1, min(int(max_per_set), 4))
+    category = category_config(category_id)
+    rarity_filters = _budget_filter_keys(rarities)
+    excluded_keys = _budget_exclude_keys(exclude_keys)
+    rarity_clause = build_set_basket_filter(rarity_filters, "s.rarity", "s.subTypeName", "s.productName")
+
+    use_snapshot = True
+    try:
+        source = screener_snapshot_from(category.category_id)
+        snapshot_fields = """
+          COALESCE(s.good_buys_default_flag, 0) AS good_buys_default_flag,
+          COALESCE(s.early_uptrends_default_flag, 0) AS early_uptrends_default_flag,
+          COALESCE(s.under_the_radar_default_flag, 0) AS under_the_radar_default_flag,
+        """
+    except HTTPException:
+        use_snapshot = False
+        source = product_signal_from(category.category_id)
+        snapshot_fields = """
+          0 AS good_buys_default_flag,
+          0 AS early_uptrends_default_flag,
+          0 AS under_the_radar_default_flag,
+        """
+
+    sql = f"""
+    SELECT
+      s.latest_date,
+      s.groupId,
+      s.groupName,
+      s.productId,
+      s.productName,
+      s.imageUrl,
+      s.rarity,
+      s.number,
+      s.productClass,
+      s.productKind,
+      s.subTypeName,
+      s.latest_price,
+      s.roc_7d_pct,
+      s.roc_30d_pct,
+      s.roc_90d_pct,
+      s.price_vs_sma30_pct,
+      s.price_vs_sma90_pct,
+      s.acceleration_7d_vs_30d,
+      s.trend_score,
+      s.recent_observations_7d,
+      s.recent_distinct_prices_7d,
+      s.recent_distinct_prices_30d,
+      s.last_change_date,
+      {snapshot_fields}
+      COALESCE(s.breakout_90d_flag, 0) AS breakout_90d_flag
+    FROM {source} s
+    WHERE s.categoryId = {category.category_id}
+      AND s.latest_date = (SELECT MAX(latest_date) FROM {source})
+      AND COALESCE(s.productKind, '') = 'card'
+      AND COALESCE(s.latest_price, 0) >= {min_price}
+      AND COALESCE(s.latest_price, 0) <= {budget}
+      AND COALESCE(s.recent_observations_7d, 0) >= 4
+      AND COALESCE(s.recent_distinct_prices_30d, 0) >= 3
+      AND {rarity_clause}
+    ORDER BY
+      COALESCE(s.trend_score, 0) DESC,
+      COALESCE(s.roc_7d_pct, 0) DESC,
+      COALESCE(s.recent_distinct_prices_30d, 0) DESC,
+      COALESCE(s.latest_price, 0) DESC
+    LIMIT 500
+    """
+    columns, rows = q(sql)
+    candidates = _row_dicts(columns, rows)
+    if excluded_keys:
+        candidates = [
+            item for item in candidates
+            if (_safe_int(item.get("productId")), str(item.get("subTypeName") or "")) not in excluded_keys
+        ]
+    for candidate in candidates:
+        candidate["score"] = _budget_candidate_score(candidate, budget)
+        candidate["reasons"] = _budget_candidate_reasons(candidate)
+
+    candidates.sort(
+        key=lambda item: (
+            -_safe_float(item.get("score")),
+            -_safe_float(item.get("trend_score")),
+            -_safe_float(item.get("roc_7d_pct")),
+            _safe_float(item.get("latest_price")),
+        )
+    )
+    selected = _select_budget_candidates(
+        candidates,
+        budget=budget,
+        limit=limit,
+        max_per_set=max_per_set,
+        allow_duplicates=allow_duplicates,
+    )
+
+    items: list[dict] = []
+    spent = 0.0
+    for row in selected:
+        price = round(_safe_float(row.get("latest_price")), 2)
+        spent += price
+        items.append(
+            {
+                "latest_date": row.get("latest_date"),
+                "groupId": row.get("groupId"),
+                "groupName": row.get("groupName"),
+                "productId": row.get("productId"),
+                "productName": row.get("productName"),
+                "imageUrl": row.get("imageUrl"),
+                "rarity": row.get("rarity"),
+                "number": row.get("number"),
+                "subTypeName": row.get("subTypeName"),
+                "latest_price": price,
+                "roc_7d_pct": round(_safe_float(row.get("roc_7d_pct")), 2),
+                "roc_30d_pct": round(_safe_float(row.get("roc_30d_pct")), 2),
+                "roc_90d_pct": round(_safe_float(row.get("roc_90d_pct")), 2),
+                "price_vs_sma30_pct": round(_safe_float(row.get("price_vs_sma30_pct")), 2),
+                "price_vs_sma90_pct": round(_safe_float(row.get("price_vs_sma90_pct")), 2),
+                "acceleration_7d_vs_30d": round(_safe_float(row.get("acceleration_7d_vs_30d")), 2),
+                "trend_score": round(_safe_float(row.get("trend_score")), 2),
+                "recent_distinct_prices_30d": _safe_int(row.get("recent_distinct_prices_30d")),
+                "score": round(_safe_float(row.get("score")), 2),
+                "reasons": row.get("reasons") or [],
+                "budget_share_pct": round((price / budget) * 100.0, 2) if budget > 0 else None,
+            }
+        )
+
+    spent = round(spent, 2)
+    remaining = round(max(budget - spent, 0.0), 2)
+    return {
+        "budget": budget,
+        "spent": spent,
+        "remaining": remaining,
+        "count": len(items),
+        "set_count": len({item["groupId"] for item in items}),
+        "latest_date": items[0]["latest_date"] if items else None,
+        "category_id": category.category_id,
+        "category": category.label,
+        "rarities": rarity_filters,
+        "exclude_keys": [f"{product_id}||{subtype}" for product_id, subtype in sorted(excluded_keys)],
+        "max_per_set": max_per_set,
+        "allow_duplicates": allow_duplicates,
+        "used_screener_snapshot": use_snapshot,
+        "available_rarity_filters": BUDGET_RARITY_FILTER_OPTIONS,
+        "items": items,
+    }
 
 
 @app.get("/good_buys")

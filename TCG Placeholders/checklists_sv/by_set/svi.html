@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SVI - Scarlet &amp; Violet Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;SVI&quot;}'>
+    <header>
+      <div>
+        <h1>SVI - Scarlet &amp; Violet</h1>
+        <p class="meta">90 checklist rows - 2023-03-31</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/svi.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Stamped Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi154_lechonk_best_buy_stamp_us" aria-label="SVI154 Lechonk Best Buy Stamp"></td>
+        <td class="number">SVI154</td>
+        <td class="name">Lechonk</td>
+        <td class="variant">Best Buy Stamp</td>
+        <td class="sources">Scarlet &amp; Violet - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi154_lechonk_gamestop_stamp_us_canada" aria-label="SVI154 Lechonk GameStop Stamp"></td>
+        <td class="number">SVI154</td>
+        <td class="name">Lechonk</td>
+        <td class="variant">GameStop Stamp</td>
+        <td class="sources">Scarlet &amp; Violet - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp005_quaquaval_black_star_promo_us_uk" aria-label="SVP005 Quaquaval Black Star Promo"></td>
+        <td class="number">SVP005</td>
+        <td class="name">Quaquaval</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Scarlet &amp; Violet - Build &amp; Battle Box; Scarlet &amp; Violet - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp006_pawmot_black_star_promo_us_uk" aria-label="SVP006 Pawmot Black Star Promo"></td>
+        <td class="number">SVP006</td>
+        <td class="name">Pawmot</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Scarlet &amp; Violet - Build &amp; Battle Box; Scarlet &amp; Violet - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp007_hawlucha_black_star_promo_us_uk" aria-label="SVP007 Hawlucha Black Star Promo"></td>
+        <td class="number">SVP007</td>
+        <td class="name">Hawlucha</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Scarlet &amp; Violet - Build &amp; Battle Box; Scarlet &amp; Violet - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp008_revavroom_black_star_promo_us_uk" aria-label="SVP008 Revavroom Black Star Promo"></td>
+        <td class="number">SVP008</td>
+        <td class="name">Revavroom</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Scarlet &amp; Violet - Build &amp; Battle Box; Scarlet &amp; Violet - Build &amp; Battle Stadium</td>
+      </tr><tr class="category-row"><th colspan="5">Staff Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp005_quaquaval_staff_stamp_us_uk" aria-label="SVP005 Quaquaval Staff Stamp"></td>
+        <td class="number">SVP005</td>
+        <td class="name">Quaquaval</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Scarlet &amp; Violet - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp006_pawmot_staff_stamp_us_uk" aria-label="SVP006 Pawmot Staff Stamp"></td>
+        <td class="number">SVP006</td>
+        <td class="name">Pawmot</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Scarlet &amp; Violet - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp007_hawlucha_staff_stamp_us_uk" aria-label="SVP007 Hawlucha Staff Stamp"></td>
+        <td class="number">SVP007</td>
+        <td class="name">Hawlucha</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Scarlet &amp; Violet - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp008_revavroom_staff_stamp_us_uk" aria-label="SVP008 Revavroom Staff Stamp"></td>
+        <td class="number">SVP008</td>
+        <td class="name">Revavroom</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Scarlet &amp; Violet - Build &amp; Battle Box</td>
+      </tr><tr class="category-row"><th colspan="5">Promo Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp001_sprigatito_black_star_promo_us_uk" aria-label="SVP001 Sprigatito Black Star Promo"></td>
+        <td class="number">SVP001</td>
+        <td class="name">Sprigatito</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Scarlet &amp; Violet - Sprigatito Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp002_fuecoco_black_star_promo_us_uk" aria-label="SVP002 Fuecoco Black Star Promo"></td>
+        <td class="number">SVP002</td>
+        <td class="name">Fuecoco</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Scarlet &amp; Violet - Fuecoco Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp003_quaxly_black_star_promo_us_uk" aria-label="SVP003 Quaxly Black Star Promo"></td>
+        <td class="number">SVP003</td>
+        <td class="name">Quaxly</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Scarlet &amp; Violet - Quaxly Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp004_mimikyu_ex_black_star_promo_us_uk" aria-label="SVP004 Mimikyu ex Black Star Promo"></td>
+        <td class="number">SVP004</td>
+        <td class="name">Mimikyu ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Scarlet &amp; Violet - Mimikyu ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp009_spidops_pixel_cosmos_us_uk" aria-label="SVP009 Spidops Pixel Cosmos"></td>
+        <td class="number">SVP009</td>
+        <td class="name">Spidops</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Scarlet &amp; Violet - Single Pack Blister (Reprint)</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp009_spidops_smooth_cosmos_us_uk" aria-label="SVP009 Spidops Smooth Cosmos"></td>
+        <td class="number">SVP009</td>
+        <td class="name">Spidops</td>
+        <td class="variant">Smooth Cosmos</td>
+        <td class="sources">Scarlet &amp; Violet - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp010_espathra_smooth_cosmos_us_uk" aria-label="SVP010 Espathra Smooth Cosmos"></td>
+        <td class="number">SVP010</td>
+        <td class="name">Espathra</td>
+        <td class="variant">Smooth Cosmos</td>
+        <td class="sources">Scarlet &amp; Violet - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp011_arcanine_pixel_cosmos_us_uk" aria-label="SVP011 Arcanine Pixel Cosmos"></td>
+        <td class="number">SVP011</td>
+        <td class="name">Arcanine</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Scarlet &amp; Violet - 3-Pack Blister (Reprint)</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp011_arcanine_smooth_cosmos_us_uk" aria-label="SVP011 Arcanine Smooth Cosmos"></td>
+        <td class="number">SVP011</td>
+        <td class="name">Arcanine</td>
+        <td class="variant">Smooth Cosmos</td>
+        <td class="sources">Scarlet &amp; Violet - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp012_dondozo_pixel_cosmos_us_uk" aria-label="SVP012 Dondozo Pixel Cosmos"></td>
+        <td class="number">SVP012</td>
+        <td class="name">Dondozo</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Scarlet &amp; Violet - 3-Pack Blister (Reprint)</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp012_dondozo_smooth_cosmos_us_uk" aria-label="SVP012 Dondozo Smooth Cosmos"></td>
+        <td class="number">SVP012</td>
+        <td class="name">Dondozo</td>
+        <td class="variant">Smooth Cosmos</td>
+        <td class="sources">Scarlet &amp; Violet - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp013_miraidon_black_star_promo_us_uk" aria-label="SVP013 Miraidon Black Star Promo"></td>
+        <td class="number">SVP013</td>
+        <td class="name">Miraidon</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Scarlet &amp; Violet - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp013_miraidon_pokemon_center_stamp_us_uk" aria-label="SVP013 Miraidon Pokemon Center Stamp"></td>
+        <td class="number">SVP013</td>
+        <td class="name">Miraidon</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Scarlet &amp; Violet - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp014_koraidon_black_star_promo_us_uk" aria-label="SVP014 Koraidon Black Star Promo"></td>
+        <td class="number">SVP014</td>
+        <td class="name">Koraidon</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Scarlet &amp; Violet - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp014_koraidon_pokemon_center_stamp_us_uk" aria-label="SVP014 Koraidon Pokemon Center Stamp"></td>
+        <td class="number">SVP014</td>
+        <td class="name">Koraidon</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Scarlet &amp; Violet - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp015_flaaffy_black_star_promo_us_uk" aria-label="SVP015 Flaaffy Black Star Promo"></td>
+        <td class="number">SVP015</td>
+        <td class="name">Flaaffy</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Scarlet &amp; Violet - Ampharos ex Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp016_ampharos_ex_black_star_promo_us_uk" aria-label="SVP016 Ampharos ex Black Star Promo"></td>
+        <td class="number">SVP016</td>
+        <td class="name">Ampharos ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Scarlet &amp; Violet - Ampharos ex Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp017_lucario_ex_black_star_promo_us_uk" aria-label="SVP017 Lucario ex Black Star Promo"></td>
+        <td class="number">SVP017</td>
+        <td class="name">Lucario ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Scarlet &amp; Violet - Lucario ex Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp018_cyclizar_ex_black_star_promo_us_uk" aria-label="SVP018 Cyclizar ex Black Star Promo"></td>
+        <td class="number">SVP018</td>
+        <td class="name">Cyclizar ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Scarlet &amp; Violet - Cyclizar ex Box</td>
+      </tr><tr class="category-row"><th colspan="5">MCAP Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi013_sprigatito_mirage_holo_us_uk" aria-label="SVI013 Sprigatito Mirage Holo"></td>
+        <td class="number">SVI013</td>
+        <td class="name">Sprigatito</td>
+        <td class="variant">Mirage Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Sprigatito Collection; Scarlet &amp; Violet - Fuecoco Collection; Scarlet &amp; Violet - Quaxly Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi015_meowscarada_cosmos_holo_north_america" aria-label="SVI015 Meowscarada Cosmos Holo"></td>
+        <td class="number">SVI015</td>
+        <td class="name">Meowscarada</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - Fall 2023 Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi020_smoliv_non_holo_us_uk" aria-label="SVI020 Smoliv Non Holo"></td>
+        <td class="number">SVI020</td>
+        <td class="name">Smoliv</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paldea Evolved - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi022_dolliv_non_holo_us_uk" aria-label="SVI022 Dolliv Non Holo"></td>
+        <td class="number">SVI022</td>
+        <td class="name">Dolliv</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paldea Evolved - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi023_arboliva_non_holo_us_uk" aria-label="SVI023 Arboliva Non Holo"></td>
+        <td class="number">SVI023</td>
+        <td class="name">Arboliva</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">151 - Greninja &amp; Kangaskhan ex Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi023_arboliva_vertical_line_holo_us_uk" aria-label="SVI023 Arboliva Vertical Line Holo"></td>
+        <td class="number">SVI023</td>
+        <td class="name">Arboliva</td>
+        <td class="variant">Vertical Line Holo</td>
+        <td class="sources">Paldea Evolved - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi032_arcanine_ex_reprint_us_uk" aria-label="SVI032 Arcanine ex Reprint"></td>
+        <td class="number">SVI032</td>
+        <td class="name">Arcanine ex</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">Shrouded Fable - Tera Team Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi036_fuecoco_mirage_holo_us_uk" aria-label="SVI036 Fuecoco Mirage Holo"></td>
+        <td class="number">SVI036</td>
+        <td class="name">Fuecoco</td>
+        <td class="variant">Mirage Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Sprigatito Collection; Scarlet &amp; Violet - Fuecoco Collection; Scarlet &amp; Violet - Quaxly Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi038_skeledirge_cosmos_holo_north_america" aria-label="SVI038 Skeledirge Cosmos Holo"></td>
+        <td class="number">SVI038</td>
+        <td class="name">Skeledirge</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - Fall 2023 Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi038_skeledirge_non_holo_us_uk" aria-label="SVI038 Skeledirge Non Holo"></td>
+        <td class="number">SVI038</td>
+        <td class="name">Skeledirge</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Victini &amp; Miraidon ex Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi039_charcadet_non_holo_us_uk" aria-label="SVI039 Charcadet Non Holo"></td>
+        <td class="number">SVI039</td>
+        <td class="name">Charcadet</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paldea Evolved - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi041_armarouge_mirage_holo_us_uk" aria-label="SVI041 Armarouge Mirage Holo"></td>
+        <td class="number">SVI041</td>
+        <td class="name">Armarouge</td>
+        <td class="variant">Mirage Holo</td>
+        <td class="sources">Obsidian Flames - Enhanced 2-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi041_armarouge_vertical_line_holo_us_uk" aria-label="SVI041 Armarouge Vertical Line Holo"></td>
+        <td class="number">SVI041</td>
+        <td class="name">Armarouge</td>
+        <td class="variant">Vertical Line Holo</td>
+        <td class="sources">Paldea Evolved - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi044_magikarp_parallel_holo_us_uk" aria-label="SVI044 Magikarp Parallel Holo"></td>
+        <td class="number">SVI044</td>
+        <td class="name">Magikarp</td>
+        <td class="variant">Parallel Holo</td>
+        <td class="sources">Paradox Rift - Gyarados ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi052_quaxly_mirage_holo_us_uk" aria-label="SVI052 Quaxly Mirage Holo"></td>
+        <td class="number">SVI052</td>
+        <td class="name">Quaxly</td>
+        <td class="variant">Mirage Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Sprigatito Collection; Scarlet &amp; Violet - Fuecoco Collection; Scarlet &amp; Violet - Quaxly Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi054_quaquaval_cosmos_holo_north_america" aria-label="SVI054 Quaquaval Cosmos Holo"></td>
+        <td class="number">SVI054</td>
+        <td class="name">Quaquaval</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - Fall 2023 Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi054_quaquaval_non_holo_us_uk" aria-label="SVI054 Quaquaval Non Holo"></td>
+        <td class="number">SVI054</td>
+        <td class="name">Quaquaval</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Build &amp; Battle Box; Scarlet &amp; Violet - Build &amp; Battle Stadium; 151 - Greninja &amp; Kangaskhan ex Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi061_dondozo_non_holo_us_uk" aria-label="SVI061 Dondozo Non Holo"></td>
+        <td class="number">SVI061</td>
+        <td class="name">Dondozo</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Build &amp; Battle Box; Scarlet &amp; Violet - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi061_dondozo_vertical_line_holo_us_uk" aria-label="SVI061 Dondozo Vertical Line Holo"></td>
+        <td class="number">SVI061</td>
+        <td class="name">Dondozo</td>
+        <td class="variant">Vertical Line Holo</td>
+        <td class="sources">Paldea Evolved - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi062_tatsugiri_non_holo_us_uk" aria-label="SVI062 Tatsugiri Non Holo"></td>
+        <td class="number">SVI062</td>
+        <td class="name">Tatsugiri</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paldea Evolved - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi063_magnemite_reprint_us_uk" aria-label="SVI063 Magnemite Reprint"></td>
+        <td class="number">SVI063</td>
+        <td class="name">Magnemite</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">151 - Evolving Powers Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi064_magneton_reprint_us_uk" aria-label="SVI064 Magneton Reprint"></td>
+        <td class="number">SVI064</td>
+        <td class="name">Magneton</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">151 - Evolving Powers Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi065_magnezone_ex_reprint_us_uk" aria-label="SVI065 Magnezone ex Reprint"></td>
+        <td class="number">SVI065</td>
+        <td class="name">Magnezone ex</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">151 - Evolving Powers Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi070_rotom_cosmos_holo_us_uk" aria-label="SVI070 Rotom Cosmos Holo"></td>
+        <td class="number">SVI070</td>
+        <td class="name">Rotom</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Cyclizar ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi073_pawmi_non_holo_us_uk" aria-label="SVI073 Pawmi Non Holo"></td>
+        <td class="number">SVI073</td>
+        <td class="name">Pawmi</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paldea Evolved - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi075_pawmo_non_holo_us_uk" aria-label="SVI075 Pawmo Non Holo"></td>
+        <td class="number">SVI075</td>
+        <td class="name">Pawmo</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paldea Evolved - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi076_pawmot_non_holo_us_uk" aria-label="SVI076 Pawmot Non Holo"></td>
+        <td class="number">SVI076</td>
+        <td class="name">Pawmot</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Build &amp; Battle Box; Scarlet &amp; Violet - Build &amp; Battle Stadium; Temporal Forces - Ninetales &amp; Zapdos ex Deluxe Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi076_pawmot_vertical_line_holo_us_uk" aria-label="SVI076 Pawmot Vertical Line Holo"></td>
+        <td class="number">SVI076</td>
+        <td class="name">Pawmot</td>
+        <td class="variant">Vertical Line Holo</td>
+        <td class="sources">Paldea Evolved - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi080_miraidon_non_holo_us_uk" aria-label="SVI080 Miraidon Non Holo"></td>
+        <td class="number">SVI080</td>
+        <td class="name">Miraidon</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Ampharos ex Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi084_ralts_reprint_us_uk" aria-label="SVI084 Ralts Reprint"></td>
+        <td class="number">SVI084</td>
+        <td class="name">Ralts</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">151 - Evolving Powers Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi085_kirlia_reprint_us_uk" aria-label="SVI085 Kirlia Reprint"></td>
+        <td class="number">SVI085</td>
+        <td class="name">Kirlia</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">151 - Evolving Powers Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi086_gardevoir_ex_reprint_us_uk" aria-label="SVI086 Gardevoir ex Reprint"></td>
+        <td class="number">SVI086</td>
+        <td class="name">Gardevoir ex</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">151 - Evolving Powers Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi104_greavard_non_holo_us_uk" aria-label="SVI104 Greavard Non Holo"></td>
+        <td class="number">SVI104</td>
+        <td class="name">Greavard</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Obsidian Flames - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi105_greavard_mirage_holo_us_uk" aria-label="SVI105 Greavard Mirage Holo"></td>
+        <td class="number">SVI105</td>
+        <td class="name">Greavard</td>
+        <td class="variant">Mirage Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Mimikyu ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi106_houndstone_mirage_holo_us_uk" aria-label="SVI106 Houndstone Mirage Holo"></td>
+        <td class="number">SVI106</td>
+        <td class="name">Houndstone</td>
+        <td class="variant">Mirage Holo</td>
+        <td class="sources">Obsidian Flames - Enhanced 2-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi106_houndstone_non_holo_us_uk" aria-label="SVI106 Houndstone Non Holo"></td>
+        <td class="number">SVI106</td>
+        <td class="name">Houndstone</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Obsidian Flames - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi107_mankey_non_holo_us_uk" aria-label="SVI107 Mankey Non Holo"></td>
+        <td class="number">SVI107</td>
+        <td class="name">Mankey</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Obsidian Flames - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi108_primeape_non_holo_us_uk" aria-label="SVI108 Primeape Non Holo"></td>
+        <td class="number">SVI108</td>
+        <td class="name">Primeape</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Obsidian Flames - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi109_annihilape_non_holo_us_uk" aria-label="SVI109 Annihilape Non Holo"></td>
+        <td class="number">SVI109</td>
+        <td class="name">Annihilape</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Lucario ex Battle Deck; Obsidian Flames - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi118_hawlucha_non_holo_us_uk" aria-label="SVI118 Hawlucha Non Holo"></td>
+        <td class="number">SVI118</td>
+        <td class="name">Hawlucha</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Ninetales &amp; Zapdos ex Deluxe Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi122_klawf_pixel_cosmos_us_uk" aria-label="SVI122 Klawf Pixel Cosmos"></td>
+        <td class="number">SVI122</td>
+        <td class="name">Klawf</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Paradox Rift - Paldea Friends Mini Tin 5-Pack</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi124_koraidon_non_holo_us_uk" aria-label="SVI124 Koraidon Non Holo"></td>
+        <td class="number">SVI124</td>
+        <td class="name">Koraidon</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Lucario ex Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi129_spiritomb_cosmos_holo_us_uk" aria-label="SVI129 Spiritomb Cosmos Holo"></td>
+        <td class="number">SVI129</td>
+        <td class="name">Spiritomb</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Triple Whammy Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi132_pawniard_non_holo_us_uk" aria-label="SVI132 Pawniard Non Holo"></td>
+        <td class="number">SVI132</td>
+        <td class="name">Pawniard</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Obsidian Flames - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi133_bisharp_non_holo_us_uk" aria-label="SVI133 Bisharp Non Holo"></td>
+        <td class="number">SVI133</td>
+        <td class="name">Bisharp</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Obsidian Flames - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi134_kingambit_non_holo_us_uk" aria-label="SVI134 Kingambit Non Holo"></td>
+        <td class="number">SVI134</td>
+        <td class="name">Kingambit</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Obsidian Flames - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi141_varoom_non_holo_us_uk" aria-label="SVI141 Varoom Non Holo"></td>
+        <td class="number">SVI141</td>
+        <td class="name">Varoom</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Obsidian Flames - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi142_revavroom_mirage_holo_us_uk" aria-label="SVI142 Revavroom Mirage Holo"></td>
+        <td class="number">SVI142</td>
+        <td class="name">Revavroom</td>
+        <td class="variant">Mirage Holo</td>
+        <td class="sources">Obsidian Flames - Enhanced 2-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi142_revavroom_non_holo_us_uk" aria-label="SVI142 Revavroom Non Holo"></td>
+        <td class="number">SVI142</td>
+        <td class="name">Revavroom</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Build &amp; Battle Box; Scarlet &amp; Violet - Build &amp; Battle Stadium; Obsidian Flames - Stage 1 Blister; Temporal Forces - Houndoom &amp; Melmetal ex Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi153_indeedee_non_holo_us_uk" aria-label="SVI153 Indeedee Non Holo"></td>
+        <td class="number">SVI153</td>
+        <td class="name">Indeedee</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Obsidian Flames - Meowscarada ex Deluxe Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi154_lechonk_cosmos_holo_us_uk" aria-label="SVI154 Lechonk Cosmos Holo"></td>
+        <td class="number">SVI154</td>
+        <td class="name">Lechonk</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - Oinkologne ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi158_oinkologne_ex_holo_us_uk" aria-label="SVI158 Oinkologne ex Holo"></td>
+        <td class="number">SVI158</td>
+        <td class="name">Oinkologne ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Paradox Rift - Oinkologne ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi164_cyclizar_non_holo_us_uk" aria-label="SVI164 Cyclizar Non Holo"></td>
+        <td class="number">SVI164</td>
+        <td class="name">Cyclizar</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Lucario ex Battle Deck; Twilight Masquerade - Victini &amp; Miraidon ex Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi189_professor_s_research_non_holo_us_uk" aria-label="SVI189 Professor&#x27;s Research Non Holo"></td>
+        <td class="number">SVI189</td>
+        <td class="name">Professor&#x27;s Research</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Build &amp; Battle Box; Scarlet &amp; Violet - Build &amp; Battle Stadium; Paldea Evolved - Build &amp; Battle Box; Paldea Evolved - Trainer&#x27;s Toolkit 2023; Paldea Evolved - Build &amp; Battle Stadium; Obsidian Flames - Build &amp; Battle Box; Obsidian Flames - Build &amp; Battle Stadium; Obsidian Flames - Meowscarada ex Deluxe Battle Deck; Temporal Forces - Ninetales &amp; Zapdos ex Deluxe Battle Decks; Temporal Forces - Gardevoir ex League Battle Deck; Shrouded Fable - Koraidon &amp; Miraidon ex Deluxe Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi190_professor_s_research_non_holo_us_uk" aria-label="SVI190 Professor&#x27;s Research Non Holo"></td>
+        <td class="number">SVI190</td>
+        <td class="name">Professor&#x27;s Research</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Scarlet &amp; Violet - Build &amp; Battle Box; Scarlet &amp; Violet - Build &amp; Battle Stadium; Paldea Evolved - Build &amp; Battle Box; Paldea Evolved - Trainer&#x27;s Toolkit 2023; Paldea Evolved - Build &amp; Battle Stadium; Obsidian Flames - Build &amp; Battle Box; Obsidian Flames - Build &amp; Battle Stadium; Paradox Rift - Miraidon ex League Battle Deck; Shrouded Fable - Koraidon &amp; Miraidon ex Deluxe Battle Decks; Surging Sparks - Charizard ex League Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi225_gyarados_ex_holo_us_uk" aria-label="SVI225 Gyarados ex Holo"></td>
+        <td class="number">SVI225</td>
+        <td class="name">Gyarados ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Paradox Rift - Gyarados ex Premium Collection</td>
+      </tr><tr class="category-row"><th colspan="5">Other Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi015_meowscarada_starlight_holo_europe" aria-label="SVI015 Meowscarada Starlight Holo"></td>
+        <td class="number">SVI015</td>
+        <td class="name">Meowscarada</td>
+        <td class="variant">Starlight Holo</td>
+        <td class="sources">Paradox Rift - Fall 2023 Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi038_skeledirge_starlight_holo_europe" aria-label="SVI038 Skeledirge Starlight Holo"></td>
+        <td class="number">SVI038</td>
+        <td class="name">Skeledirge</td>
+        <td class="variant">Starlight Holo</td>
+        <td class="sources">Paradox Rift - Fall 2023 Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi054_quaquaval_starlight_holo_europe" aria-label="SVI054 Quaquaval Starlight Holo"></td>
+        <td class="number">SVI054</td>
+        <td class="name">Quaquaval</td>
+        <td class="variant">Starlight Holo</td>
+        <td class="sources">Paradox Rift - Fall 2023 Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi081_miraidon_ex_holo_us_uk" aria-label="SVI081 Miraidon ex Holo"></td>
+        <td class="number">SVI081</td>
+        <td class="name">Miraidon ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Obsidian Flames - Paradox Powers ex Special Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svi125_koraidon_ex_holo_us_uk" aria-label="SVI125 Koraidon ex Holo"></td>
+        <td class="number">SVI125</td>
+        <td class="name">Koraidon ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Obsidian Flames - Paradox Powers ex Special Collection</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

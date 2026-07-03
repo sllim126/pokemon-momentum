@@ -1,0 +1,699 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PAL - Paldea Evolved Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;PAL&quot;}'>
+    <header>
+      <div>
+        <h1>PAL - Paldea Evolved</h1>
+        <p class="meta">79 checklist rows - 2023-06-09</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/pal.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Stamped Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal046_delibird_cosmos_holo_snowflake_stamp_us_uk" aria-label="PAL046 Delibird Cosmos Holo Snowflake Stamp"></td>
+        <td class="number">PAL046</td>
+        <td class="name">Delibird</td>
+        <td class="variant">Cosmos Holo Snowflake Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Holiday Calendar 2025</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal053_cetoddle_cosmos_holo_snowflake_stamp_us_uk" aria-label="PAL053 Cetoddle Cosmos Holo Snowflake Stamp"></td>
+        <td class="number">PAL053</td>
+        <td class="name">Cetoddle</td>
+        <td class="variant">Cosmos Holo Snowflake Stamp</td>
+        <td class="sources">Shrouded Fable - Holiday Calendar 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal058_frigibax_cosmos_holo_snowflake_stamp_us_uk" aria-label="PAL058 Frigibax Cosmos Holo Snowflake Stamp"></td>
+        <td class="number">PAL058</td>
+        <td class="name">Frigibax</td>
+        <td class="variant">Cosmos Holo Snowflake Stamp</td>
+        <td class="sources">Shrouded Fable - Holiday Calendar 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal061_chien_pao_ex_snowflake_stamp_us_uk" aria-label="PAL061 Chien-Pao ex Snowflake Stamp"></td>
+        <td class="number">PAL061</td>
+        <td class="name">Chien-Pao ex</td>
+        <td class="variant">Snowflake Stamp</td>
+        <td class="sources">Shrouded Fable - Holiday Calendar 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal063_pikachu_ex_snowflake_stamp_us_uk" aria-label="PAL063 Pikachu ex Snowflake Stamp"></td>
+        <td class="number">PAL063</td>
+        <td class="name">Pikachu ex</td>
+        <td class="variant">Snowflake Stamp</td>
+        <td class="sources">Shrouded Fable - Holiday Calendar 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal105_tinkaton_gamestop_stamp_us_canada" aria-label="PAL105 Tinkaton GameStop Stamp"></td>
+        <td class="number">PAL105</td>
+        <td class="name">Tinkaton</td>
+        <td class="variant">GameStop Stamp</td>
+        <td class="sources">Paldea Evolved - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal105_tinkaton_paldea_evolved_stamp_us" aria-label="PAL105 Tinkaton Paldea Evolved Stamp"></td>
+        <td class="number">PAL105</td>
+        <td class="name">Tinkaton</td>
+        <td class="variant">Paldea Evolved Stamp</td>
+        <td class="sources">Paldea Evolved - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal185_iono_cosmos_holo_iono_zone_stamp_us_uk" aria-label="PAL185 Iono Cosmos Holo Iono Zone Stamp"></td>
+        <td class="number">PAL185</td>
+        <td class="name">Iono</td>
+        <td class="variant">Cosmos Holo Iono Zone Stamp</td>
+        <td class="sources">Temporal Forces - Iono Premium Tournament Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp019_baxcalibur_black_star_promo_us_uk" aria-label="SVP019 Baxcalibur Black Star Promo"></td>
+        <td class="number">SVP019</td>
+        <td class="name">Baxcalibur</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldea Evolved - Build &amp; Battle Box; Paldea Evolved - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp020_tinkaton_black_star_promo_us_uk" aria-label="SVP020 Tinkaton Black Star Promo"></td>
+        <td class="number">SVP020</td>
+        <td class="name">Tinkaton</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldea Evolved - Build &amp; Battle Box; Paldea Evolved - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp021_murkrow_black_star_promo_us_uk" aria-label="SVP021 Murkrow Black Star Promo"></td>
+        <td class="number">SVP021</td>
+        <td class="name">Murkrow</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldea Evolved - Build &amp; Battle Box; Paldea Evolved - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp022_pelipper_black_star_promo_us_uk" aria-label="SVP022 Pelipper Black Star Promo"></td>
+        <td class="number">SVP022</td>
+        <td class="name">Pelipper</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldea Evolved - Build &amp; Battle Box; Paldea Evolved - Build &amp; Battle Stadium</td>
+      </tr><tr class="category-row"><th colspan="5">Staff Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp019_baxcalibur_staff_stamp_us_uk" aria-label="SVP019 Baxcalibur Staff Stamp"></td>
+        <td class="number">SVP019</td>
+        <td class="name">Baxcalibur</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Paldea Evolved - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp020_tinkaton_staff_stamp_us_uk" aria-label="SVP020 Tinkaton Staff Stamp"></td>
+        <td class="number">SVP020</td>
+        <td class="name">Tinkaton</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Paldea Evolved - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp021_murkrow_staff_stamp_us_uk" aria-label="SVP021 Murkrow Staff Stamp"></td>
+        <td class="number">SVP021</td>
+        <td class="name">Murkrow</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Paldea Evolved - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp022_pelipper_staff_stamp_us_uk" aria-label="SVP022 Pelipper Staff Stamp"></td>
+        <td class="number">SVP022</td>
+        <td class="name">Pelipper</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Paldea Evolved - Build &amp; Battle Box</td>
+      </tr><tr class="category-row"><th colspan="5">Promo Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp023_smoliv_pixel_cosmos_us_uk" aria-label="SVP023 Smoliv Pixel Cosmos"></td>
+        <td class="number">SVP023</td>
+        <td class="name">Smoliv</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Paldea Evolved - Single Pack Blister (Reprint)</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp023_smoliv_smooth_cosmos_us_uk" aria-label="SVP023 Smoliv Smooth Cosmos"></td>
+        <td class="number">SVP023</td>
+        <td class="name">Smoliv</td>
+        <td class="variant">Smooth Cosmos</td>
+        <td class="sources">Paldea Evolved - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp024_growlithe_pixel_cosmos_us_uk" aria-label="SVP024 Growlithe Pixel Cosmos"></td>
+        <td class="number">SVP024</td>
+        <td class="name">Growlithe</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Paldea Evolved - Single Pack Blister (Reprint)</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp024_growlithe_smooth_cosmos_us_uk" aria-label="SVP024 Growlithe Smooth Cosmos"></td>
+        <td class="number">SVP024</td>
+        <td class="name">Growlithe</td>
+        <td class="variant">Smooth Cosmos</td>
+        <td class="sources">Paldea Evolved - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp025_tinkatink_smooth_cosmos_us_uk" aria-label="SVP025 Tinkatink Smooth Cosmos"></td>
+        <td class="number">SVP025</td>
+        <td class="name">Tinkatink</td>
+        <td class="variant">Smooth Cosmos</td>
+        <td class="sources">Paldea Evolved - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp026_varoom_pixel_cosmos_us_uk" aria-label="SVP026 Varoom Pixel Cosmos"></td>
+        <td class="number">SVP026</td>
+        <td class="name">Varoom</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Paldea Evolved - 3-Pack Blister (Reprint)</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp026_varoom_smooth_cosmos_us_uk" aria-label="SVP026 Varoom Smooth Cosmos"></td>
+        <td class="number">SVP026</td>
+        <td class="name">Varoom</td>
+        <td class="variant">Smooth Cosmos</td>
+        <td class="sources">Paldea Evolved - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp027_pikachu_black_star_promo_us_uk" aria-label="SVP027 Pikachu Black Star Promo"></td>
+        <td class="number">SVP027</td>
+        <td class="name">Pikachu</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldea Evolved - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp027_pikachu_pokemon_center_stamp_us_uk" aria-label="SVP027 Pikachu Pokemon Center Stamp"></td>
+        <td class="number">SVP027</td>
+        <td class="name">Pikachu</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Paldea Evolved - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp028_miraidon_ex_black_star_promo_us_uk" aria-label="SVP028 Miraidon ex Black Star Promo"></td>
+        <td class="number">SVP028</td>
+        <td class="name">Miraidon ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldea Evolved - Paldea Legends Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp029_koraidon_ex_black_star_promo_us_uk" aria-label="SVP029 Koraidon ex Black Star Promo"></td>
+        <td class="number">SVP029</td>
+        <td class="name">Koraidon ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldea Evolved - Paldea Legends Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp030_chien_pao_ex_black_star_promo_us_uk" aria-label="SVP030 Chien-Pao ex Black Star Promo"></td>
+        <td class="number">SVP030</td>
+        <td class="name">Chien-Pao ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldea Evolved - Chien-Pao ex Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp031_tinkaton_ex_black_star_promo_us_uk" aria-label="SVP031 Tinkaton ex Black Star Promo"></td>
+        <td class="number">SVP031</td>
+        <td class="name">Tinkaton ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldea Evolved - Tinkaton ex Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp032_annihilape_ex_black_star_promo_us_uk" aria-label="SVP032 Annihilape ex Black Star Promo"></td>
+        <td class="number">SVP032</td>
+        <td class="name">Annihilape ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paldea Evolved - Annihilape ex Box</td>
+      </tr><tr class="category-row"><th colspan="5">MCAP Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal013_sprigatito_mirage_holo_us_uk" aria-label="PAL013 Sprigatito Mirage Holo"></td>
+        <td class="number">PAL013</td>
+        <td class="name">Sprigatito</td>
+        <td class="variant">Mirage Holo</td>
+        <td class="sources">Obsidian Flames - Summer 2023 Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal021_lokix_non_holo_us_uk" aria-label="PAL021 Lokix Non Holo"></td>
+        <td class="number">PAL021</td>
+        <td class="name">Lokix</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paldea Evolved - Build &amp; Battle Box; Paldea Evolved - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal034_fuecoco_mirage_holo_us_uk" aria-label="PAL034 Fuecoco Mirage Holo"></td>
+        <td class="number">PAL034</td>
+        <td class="name">Fuecoco</td>
+        <td class="variant">Mirage Holo</td>
+        <td class="sources">Obsidian Flames - Summer 2023 Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal039_charcadet_non_holo_us_uk" aria-label="PAL039 Charcadet Non Holo"></td>
+        <td class="number">PAL039</td>
+        <td class="name">Charcadet</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paradox Rift - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal043_gyarados_pixel_cosmos_us_uk" aria-label="PAL043 Gyarados Pixel Cosmos"></td>
+        <td class="number">PAL043</td>
+        <td class="name">Gyarados</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Paradox Rift - Paldea Friends Mini Tin 5-Pack</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal050_quaxly_mirage_holo_us_uk" aria-label="PAL050 Quaxly Mirage Holo"></td>
+        <td class="number">PAL050</td>
+        <td class="name">Quaxly</td>
+        <td class="variant">Mirage Holo</td>
+        <td class="sources">Obsidian Flames - Summer 2023 Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal058_frigibax_non_holo_us_uk" aria-label="PAL058 Frigibax Non Holo"></td>
+        <td class="number">PAL058</td>
+        <td class="name">Frigibax</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal059_arctibax_non_holo_us_uk" aria-label="PAL059 Arctibax Non Holo"></td>
+        <td class="number">PAL059</td>
+        <td class="name">Arctibax</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal060_baxcalibur_cosmos_holo_us_uk" aria-label="PAL060 Baxcalibur Cosmos Holo"></td>
+        <td class="number">PAL060</td>
+        <td class="name">Baxcalibur</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Premium Checklane Blister; Temporal Forces - Enhanced 2-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal060_baxcalibur_non_holo_us_uk" aria-label="PAL060 Baxcalibur Non Holo"></td>
+        <td class="number">PAL060</td>
+        <td class="name">Baxcalibur</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paldea Evolved - Build &amp; Battle Box; Paldea Evolved - Build &amp; Battle Stadium; Paldea Evolved - Chien-Pao ex Battle Deck; Obsidian Flames - Quaquaval ex Deluxe Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal071_luxray_cosmos_holo_us_uk" aria-label="PAL071 Luxray Cosmos Holo"></td>
+        <td class="number">PAL071</td>
+        <td class="name">Luxray</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Meddling Sparks Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal071_luxray_pixel_cosmos_us_uk" aria-label="PAL071 Luxray Pixel Cosmos"></td>
+        <td class="number">PAL071</td>
+        <td class="name">Luxray</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Paradox Rift - Paldea Friends Mini Tin 5-Pack</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal074_pawmi_cosmos_holo_us_uk" aria-label="PAL074 Pawmi Cosmos Holo"></td>
+        <td class="number">PAL074</td>
+        <td class="name">Pawmi</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paldean Fates - Paldea Adventure Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal075_pawmo_cosmos_holo_us_uk" aria-label="PAL075 Pawmo Cosmos Holo"></td>
+        <td class="number">PAL075</td>
+        <td class="name">Pawmo</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paldean Fates - Paldea Adventure Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal075_rhydon_non_holo_us_uk" aria-label="PAL075 Rhydon Non Holo"></td>
+        <td class="number">PAL075</td>
+        <td class="name">Rhydon</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Journey Together - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal076_pawmot_reprint_us_uk" aria-label="PAL076 Pawmot Reprint"></td>
+        <td class="number">PAL076</td>
+        <td class="name">Pawmot</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">Paradox Rift - Enhanced 2-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal093_dedenne_ex_reprint_us_uk" aria-label="PAL093 Dedenne ex Reprint"></td>
+        <td class="number">PAL093</td>
+        <td class="name">Dedenne ex</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">Shrouded Fable - Tera Brawlers Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal098_ceruledge_cosmos_holo_us_uk" aria-label="PAL098 Ceruledge Cosmos Holo"></td>
+        <td class="number">PAL098</td>
+        <td class="name">Ceruledge</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - Stage 1 Blister; Temporal Forces - Armarouge ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal099_klink_non_holo_us_uk" aria-label="PAL099 Klink Non Holo"></td>
+        <td class="number">PAL099</td>
+        <td class="name">Klink</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Journey Together - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal100_klang_non_holo_us_uk" aria-label="PAL100 Klang Non Holo"></td>
+        <td class="number">PAL100</td>
+        <td class="name">Klang</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Journey Together - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal102_tinkatink_non_holo_us_uk" aria-label="PAL102 Tinkatink Non Holo"></td>
+        <td class="number">PAL102</td>
+        <td class="name">Tinkatink</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paradox Rift - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal103_meltan_non_holo_us_uk" aria-label="PAL103 Meltan Non Holo"></td>
+        <td class="number">PAL103</td>
+        <td class="name">Meltan</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Journey Together - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal104_tinkatuff_non_holo_us_uk" aria-label="PAL104 Tinkatuff Non Holo"></td>
+        <td class="number">PAL104</td>
+        <td class="name">Tinkatuff</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paradox Rift - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal105_tinkaton_cosmos_holo_us_uk" aria-label="PAL105 Tinkaton Cosmos Holo"></td>
+        <td class="number">PAL105</td>
+        <td class="name">Tinkaton</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal105_tinkaton_non_holo_us_uk" aria-label="PAL105 Tinkaton Non Holo"></td>
+        <td class="number">PAL105</td>
+        <td class="name">Tinkaton</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paldea Evolved - Build &amp; Battle Box; Paldea Evolved - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal106_duraludon_non_holo_us_uk" aria-label="PAL106 Duraludon Non Holo"></td>
+        <td class="number">PAL106</td>
+        <td class="name">Duraludon</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Journey Together - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal106_mankey_pixel_cosmos_us_uk" aria-label="PAL106 Mankey Pixel Cosmos"></td>
+        <td class="number">PAL106</td>
+        <td class="name">Mankey</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Paldea Evolved - Annihilape ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal107_primeape_pixel_cosmos_us_uk" aria-label="PAL107 Primeape Pixel Cosmos"></td>
+        <td class="number">PAL107</td>
+        <td class="name">Primeape</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Paldea Evolved - Annihilape ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal110_larvitar_cosmos_holo_us_uk" aria-label="PAL110 Larvitar Cosmos Holo"></td>
+        <td class="number">PAL110</td>
+        <td class="name">Larvitar</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Triple Whammy Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal111_pupitar_cosmos_holo_us_uk" aria-label="PAL111 Pupitar Cosmos Holo"></td>
+        <td class="number">PAL111</td>
+        <td class="name">Pupitar</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Triple Whammy Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal116_rockruff_cosmos_holo_europe_canada" aria-label="PAL116 Rockruff Cosmos Holo"></td>
+        <td class="number">PAL116</td>
+        <td class="name">Rockruff</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Shrouded Fable - Lycanroc ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal117_lycanroc_ex_holo_europe_canada" aria-label="PAL117 Lycanroc ex Holo"></td>
+        <td class="number">PAL117</td>
+        <td class="name">Lycanroc ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Shrouded Fable - Lycanroc ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal123_garganacl_cosmos_holo_us_uk" aria-label="PAL123 Garganacl Cosmos Holo"></td>
+        <td class="number">PAL123</td>
+        <td class="name">Garganacl</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Enhanced 2-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal124_glimmet_non_holo_us_uk" aria-label="PAL124 Glimmet Non Holo"></td>
+        <td class="number">PAL124</td>
+        <td class="name">Glimmet</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paradox Rift - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal126_glimmora_cosmos_holo_us_uk" aria-label="PAL126 Glimmora Cosmos Holo"></td>
+        <td class="number">PAL126</td>
+        <td class="name">Glimmora</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal135_tyranitar_cosmos_holo_us_uk" aria-label="PAL135 Tyranitar Cosmos Holo"></td>
+        <td class="number">PAL135</td>
+        <td class="name">Tyranitar</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Triple Whammy Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal136_sableye_cosmos_holo_us_uk" aria-label="PAL136 Sableye Cosmos Holo"></td>
+        <td class="number">PAL136</td>
+        <td class="name">Sableye</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Triple Whammy Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal138_deino_non_holo_us_uk" aria-label="PAL138 Deino Non Holo"></td>
+        <td class="number">PAL138</td>
+        <td class="name">Deino</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paradox Rift - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal139_zweilous_non_holo_us_uk" aria-label="PAL139 Zweilous Non Holo"></td>
+        <td class="number">PAL139</td>
+        <td class="name">Zweilous</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paradox Rift - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal140_hydreigon_cosmos_holo_us_uk" aria-label="PAL140 Hydreigon Cosmos Holo"></td>
+        <td class="number">PAL140</td>
+        <td class="name">Hydreigon</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal142_maschiff_cosmos_holo_us_uk" aria-label="PAL142 Maschiff Cosmos Holo"></td>
+        <td class="number">PAL142</td>
+        <td class="name">Maschiff</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paldean Fates - Mabosstiff ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal151_orthworm_non_holo_us_uk" aria-label="PAL151 Orthworm Non Holo"></td>
+        <td class="number">PAL151</td>
+        <td class="name">Orthworm</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Houndoom &amp; Melmetal ex Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal151_orthworm_pixel_cosmos_us_uk" aria-label="PAL151 Orthworm Pixel Cosmos"></td>
+        <td class="number">PAL151</td>
+        <td class="name">Orthworm</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Paradox Rift - Paldea Friends Mini Tin 5-Pack</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal160_slakoth_cosmos_holo_us_uk" aria-label="PAL160 Slakoth Cosmos Holo"></td>
+        <td class="number">PAL160</td>
+        <td class="name">Slakoth</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Triple Whammy Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal161_vigoroth_cosmos_holo_us_uk" aria-label="PAL161 Vigoroth Cosmos Holo"></td>
+        <td class="number">PAL161</td>
+        <td class="name">Vigoroth</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Triple Whammy Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal162_slaking_cosmos_holo_us_uk" aria-label="PAL162 Slaking Cosmos Holo"></td>
+        <td class="number">PAL162</td>
+        <td class="name">Slaking</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Triple Whammy Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal167_tandemaus_cosmos_holo_us_uk" aria-label="PAL167 Tandemaus Cosmos Holo"></td>
+        <td class="number">PAL167</td>
+        <td class="name">Tandemaus</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paldean Fates - Paldea Adventure Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal172_boss_s_orders_non_holo_us_uk" aria-label="PAL172 Boss&#x27;s Orders Non Holo"></td>
+        <td class="number">PAL172</td>
+        <td class="name">Boss&#x27;s Orders</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paldea Evolved - Build &amp; Battle Box; Paldea Evolved - Build &amp; Battle Stadium; Obsidian Flames - Quaquaval ex Deluxe Battle Deck; 151 - Greninja &amp; Kangaskhan ex Battle Decks; Paradox Rift - Miraidon ex League Battle Deck; Temporal Forces - Ninetales &amp; Zapdos ex Deluxe Battle Decks; Temporal Forces - Gardevoir ex League Battle Deck; Shrouded Fable - Koraidon &amp; Miraidon ex Deluxe Battle Decks; Surging Sparks - Charizard ex League Battle Deck; Journey Together - Dragapult ex League Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="pal172_boss_s_orders_ghetsis_non_holo_us_uk" aria-label="PAL172 Boss&#x27;s Orders [Ghetsis] Non Holo"></td>
+        <td class="number">PAL172</td>
+        <td class="name">Boss&#x27;s Orders [Ghetsis]</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Mega Evolution - Trainer&#x27;s Toolkit 2025</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

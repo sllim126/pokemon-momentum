@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PAR - Paradox Rift Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;PAR&quot;}'>
+    <header>
+      <div>
+        <h1>PAR - Paradox Rift</h1>
+        <p class="meta">64 checklist rows - 2023-11-03</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/par.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Stamped Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par028_iron_moth_eb_games_stamp_australia_new_zealand" aria-label="PAR028 Iron Moth EB Games Stamp"></td>
+        <td class="number">PAR028</td>
+        <td class="name">Iron Moth</td>
+        <td class="variant">EB Games Stamp</td>
+        <td class="sources">Paradox Rift - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par028_iron_moth_gamestop_stamp_us_canada" aria-label="PAR028 Iron Moth GameStop Stamp"></td>
+        <td class="number">PAR028</td>
+        <td class="name">Iron Moth</td>
+        <td class="variant">GameStop Stamp</td>
+        <td class="sources">Paradox Rift - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par037_snorunt_cosmos_holo_snowflake_stamp_us_uk" aria-label="PAR037 Snorunt Cosmos Holo Snowflake Stamp"></td>
+        <td class="number">PAR037</td>
+        <td class="name">Snorunt</td>
+        <td class="variant">Cosmos Holo Snowflake Stamp</td>
+        <td class="sources">Shrouded Fable - Holiday Calendar 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par045_vanilluxe_cosmos_holo_snowflake_stamp_us_uk" aria-label="PAR045 Vanilluxe Cosmos Holo Snowflake Stamp"></td>
+        <td class="number">PAR045</td>
+        <td class="name">Vanilluxe</td>
+        <td class="variant">Cosmos Holo Snowflake Stamp</td>
+        <td class="sources">Shrouded Fable - Holiday Calendar 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par107_slither_wing_paradox_rift_stamp_us" aria-label="PAR107 Slither Wing Paradox Rift Stamp"></td>
+        <td class="number">PAR107</td>
+        <td class="name">Slither Wing</td>
+        <td class="variant">Paradox Rift Stamp</td>
+        <td class="sources">Paradox Rift - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par190_vanillish_snowflake_stamp_us_uk" aria-label="PAR190 Vanillish Snowflake Stamp"></td>
+        <td class="number">PAR190</td>
+        <td class="name">Vanillish</td>
+        <td class="variant">Snowflake Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Holiday Calendar 2025</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp057_chi_yu_black_star_promo_us_uk" aria-label="SVP057 Chi-Yu Black Star Promo"></td>
+        <td class="number">SVP057</td>
+        <td class="name">Chi-Yu</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paradox Rift - Build &amp; Battle Box; Paradox Rift - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp058_iron_bundle_black_star_promo_us_uk" aria-label="SVP058 Iron Bundle Black Star Promo"></td>
+        <td class="number">SVP058</td>
+        <td class="name">Iron Bundle</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paradox Rift - Build &amp; Battle Box; Paradox Rift - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp059_xatu_black_star_promo_us_uk" aria-label="SVP059 Xatu Black Star Promo"></td>
+        <td class="number">SVP059</td>
+        <td class="name">Xatu</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paradox Rift - Build &amp; Battle Box; Paradox Rift - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp060_aegislash_black_star_promo_us_uk" aria-label="SVP060 Aegislash Black Star Promo"></td>
+        <td class="number">SVP060</td>
+        <td class="name">Aegislash</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paradox Rift - Build &amp; Battle Box; Paradox Rift - Build &amp; Battle Stadium</td>
+      </tr><tr class="category-row"><th colspan="5">Staff Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp057_chi_yu_staff_stamp_us_uk" aria-label="SVP057 Chi-Yu Staff Stamp"></td>
+        <td class="number">SVP057</td>
+        <td class="name">Chi-Yu</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Paradox Rift - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp058_iron_bundle_staff_stamp_us_uk" aria-label="SVP058 Iron Bundle Staff Stamp"></td>
+        <td class="number">SVP058</td>
+        <td class="name">Iron Bundle</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Paradox Rift - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp059_xatu_staff_stamp_us_uk" aria-label="SVP059 Xatu Staff Stamp"></td>
+        <td class="number">SVP059</td>
+        <td class="name">Xatu</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Paradox Rift - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp060_aegislash_staff_stamp_us_uk" aria-label="SVP060 Aegislash Staff Stamp"></td>
+        <td class="number">SVP060</td>
+        <td class="name">Aegislash</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Paradox Rift - Build &amp; Battle Box</td>
+      </tr><tr class="category-row"><th colspan="5">Promo Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp061_pineco_cosmos_holo_us_uk" aria-label="SVP061 Pineco Cosmos Holo"></td>
+        <td class="number">SVP061</td>
+        <td class="name">Pineco</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp062_sinistea_cosmos_holo_us_uk" aria-label="SVP062 Sinistea Cosmos Holo"></td>
+        <td class="number">SVP062</td>
+        <td class="name">Sinistea</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp063_cetitan_cosmos_holo_us_uk" aria-label="SVP063 Cetitan Cosmos Holo"></td>
+        <td class="number">SVP063</td>
+        <td class="name">Cetitan</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp064_arctibax_cosmos_holo_us_uk" aria-label="SVP064 Arctibax Cosmos Holo"></td>
+        <td class="number">SVP064</td>
+        <td class="name">Arctibax</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp065_scream_tail_black_star_promo_us_uk" aria-label="SVP065 Scream Tail Black Star Promo"></td>
+        <td class="number">SVP065</td>
+        <td class="name">Scream Tail</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paradox Rift - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp065_scream_tail_pokemon_center_stamp_us_uk" aria-label="SVP065 Scream Tail Pokemon Center Stamp"></td>
+        <td class="number">SVP065</td>
+        <td class="name">Scream Tail</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Paradox Rift - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp066_iron_bundle_black_star_promo_us_uk" aria-label="SVP066 Iron Bundle Black Star Promo"></td>
+        <td class="number">SVP066</td>
+        <td class="name">Iron Bundle</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paradox Rift - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp066_iron_bundle_pokemon_center_stamp_us_uk" aria-label="SVP066 Iron Bundle Pokemon Center Stamp"></td>
+        <td class="number">SVP066</td>
+        <td class="name">Iron Bundle</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Paradox Rift - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp067_roaring_moon_ex_black_star_promo_us_uk" aria-label="SVP067 Roaring Moon ex Black Star Promo"></td>
+        <td class="number">SVP067</td>
+        <td class="name">Roaring Moon ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paradox Rift - Roaring Moon ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp068_iron_valiant_ex_black_star_promo_us_uk" aria-label="SVP068 Iron Valiant ex Black Star Promo"></td>
+        <td class="number">SVP068</td>
+        <td class="name">Iron Valiant ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paradox Rift - Iron Valiant ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp102_oddish_black_star_promo_us_uk" aria-label="SVP102 Oddish Black Star Promo"></td>
+        <td class="number">SVP102</td>
+        <td class="name">Oddish</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Paradox Rift - Hobby Co-Op Marketing Kit</td>
+      </tr><tr class="category-row"><th colspan="5">MCAP Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par014_nymble_non_holo_us_uk" aria-label="PAR014 Nymble Non Holo"></td>
+        <td class="number">PAR014</td>
+        <td class="name">Nymble</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par026_charcadet_cosmos_holo_us_uk" aria-label="PAR026 Charcadet Cosmos Holo"></td>
+        <td class="number">PAR026</td>
+        <td class="name">Charcadet</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Armarouge ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par028_iron_moth_cosmos_holo_us_uk" aria-label="PAR028 Iron Moth Cosmos Holo"></td>
+        <td class="number">PAR028</td>
+        <td class="name">Iron Moth</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - Iron Valiant ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par028_iron_moth_non_holo_us_uk" aria-label="PAR028 Iron Moth Non Holo"></td>
+        <td class="number">PAR028</td>
+        <td class="name">Iron Moth</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paradox Rift - Build &amp; Battle Box; Paradox Rift - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par029_chi_yu_non_holo_us_uk" aria-label="PAR029 Chi-Yu Non Holo"></td>
+        <td class="number">PAR029</td>
+        <td class="name">Chi-Yu</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paradox Rift - Build &amp; Battle Box; Paradox Rift - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par030_horsea_non_holo_us_uk" aria-label="PAR030 Horsea Non Holo"></td>
+        <td class="number">PAR030</td>
+        <td class="name">Horsea</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par031_seadra_non_holo_us_uk" aria-label="PAR031 Seadra Non Holo"></td>
+        <td class="number">PAR031</td>
+        <td class="name">Seadra</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par032_kingdra_cosmos_holo_us_uk" aria-label="PAR032 Kingdra Cosmos Holo"></td>
+        <td class="number">PAR032</td>
+        <td class="name">Kingdra</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Twilight Masquerade - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par038_garchomp_ex_reprint_us_uk" aria-label="PAR038 Garchomp ex Reprint"></td>
+        <td class="number">PAR038</td>
+        <td class="name">Garchomp ex</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">Shrouded Fable - Tera Team Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par040_palkia_cosmos_holo_us_uk" aria-label="PAR040 Palkia Cosmos Holo"></td>
+        <td class="number">PAR040</td>
+        <td class="name">Palkia</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Stellar Crown - Enhanced 2-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par046_tsareena_ex_holo_us_uk" aria-label="PAR046 Tsareena ex Holo"></td>
+        <td class="number">PAR046</td>
+        <td class="name">Tsareena ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Surging Sparks - Tsareena ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par049_golisopod_non_holo_us_uk" aria-label="PAR049 Golisopod Non Holo"></td>
+        <td class="number">PAR049</td>
+        <td class="name">Golisopod</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paradox Rift - Build &amp; Battle Box; Paradox Rift - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par057_chien_pao_cosmos_holo_us_uk" aria-label="PAR057 Chien-Pao Cosmos Holo"></td>
+        <td class="number">PAR057</td>
+        <td class="name">Chien-Pao</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Scarlet &amp; Violet Knock Out Collection: Alakazam &amp; Chien-Pao</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par058_mewtwo_ex_reprint_us_uk" aria-label="PAR058 Mewtwo ex Reprint"></td>
+        <td class="number">PAR058</td>
+        <td class="name">Mewtwo ex</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">Shrouded Fable - Tera Team Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par066_zekrom_cosmos_holo_us_uk" aria-label="PAR066 Zekrom Cosmos Holo"></td>
+        <td class="number">PAR066</td>
+        <td class="name">Zekrom</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Stellar Crown - Enhanced 2-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par072_xatu_non_holo_us_uk" aria-label="PAR072 Xatu Non Holo"></td>
+        <td class="number">PAR072</td>
+        <td class="name">Xatu</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paradox Rift - Build &amp; Battle Box; Paradox Rift - Build &amp; Battle Stadium; Journey Together - Dragapult ex League Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par073_latios_cosmos_holo_us_uk" aria-label="PAR073 Latios Cosmos Holo"></td>
+        <td class="number">PAR073</td>
+        <td class="name">Latios</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Stellar Crown - Enhanced 2-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par081_espathra_cosmos_holo_us_uk" aria-label="PAR081 Espathra Cosmos Holo"></td>
+        <td class="number">PAR081</td>
+        <td class="name">Espathra</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Shrouded Fable - Espathra Two Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par081_espathra_non_holo_us_uk" aria-label="PAR081 Espathra Non Holo"></td>
+        <td class="number">PAR081</td>
+        <td class="name">Espathra</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paradox Rift - Build &amp; Battle Box; Paradox Rift - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par090_onix_non_holo_us_uk" aria-label="PAR090 Onix Non Holo"></td>
+        <td class="number">PAR090</td>
+        <td class="name">Onix</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par098_hoopa_ex_reprint_us_uk" aria-label="PAR098 Hoopa ex Reprint"></td>
+        <td class="number">PAR098</td>
+        <td class="name">Hoopa ex</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">Shrouded Fable - Tera Team Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par121_morpeko_non_holo_us_uk" aria-label="PAR121 Morpeko Non Holo"></td>
+        <td class="number">PAR121</td>
+        <td class="name">Morpeko</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Houndoom &amp; Melmetal ex Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par122_lokix_cosmos_holo_us_uk" aria-label="PAR122 Lokix Cosmos Holo"></td>
+        <td class="number">PAR122</td>
+        <td class="name">Lokix</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Twilight Masquerade - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par122_lokix_non_holo_us_uk" aria-label="PAR122 Lokix Non Holo"></td>
+        <td class="number">PAR122</td>
+        <td class="name">Lokix</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Houndoom &amp; Melmetal ex Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par123_brute_bonnet_cosmos_holo_us_uk" aria-label="PAR123 Brute Bonnet Cosmos Holo"></td>
+        <td class="number">PAR123</td>
+        <td class="name">Brute Bonnet</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - Roaring Moon ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par125_steelix_cosmos_holo_us_uk" aria-label="PAR125 Steelix Cosmos Holo"></td>
+        <td class="number">PAR125</td>
+        <td class="name">Steelix</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Twilight Masquerade - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par131_honedge_cosmos_holo_europe" aria-label="PAR131 Honedge Cosmos Holo"></td>
+        <td class="number">PAR131</td>
+        <td class="name">Honedge</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Shrouded Fable - Aegislash ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par132_doublade_cosmos_holo_europe" aria-label="PAR132 Doublade Cosmos Holo"></td>
+        <td class="number">PAR132</td>
+        <td class="name">Doublade</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Shrouded Fable - Aegislash ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par134_aegislash_non_holo_us_uk" aria-label="PAR134 Aegislash Non Holo"></td>
+        <td class="number">PAR134</td>
+        <td class="name">Aegislash</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Paradox Rift - Build &amp; Battle Box; Paradox Rift - Build &amp; Battle Stadium</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par135_aegislash_ex_holo_europe" aria-label="PAR135 Aegislash ex Holo"></td>
+        <td class="number">PAR135</td>
+        <td class="name">Aegislash ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Shrouded Fable - Aegislash ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par136_zacian_non_holo_us_uk" aria-label="PAR136 Zacian Non Holo"></td>
+        <td class="number">PAR136</td>
+        <td class="name">Zacian</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Houndoom &amp; Melmetal ex Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par137_skeledirge_ex_reprint_us_uk" aria-label="PAR137 Skeledirge ex Reprint"></td>
+        <td class="number">PAR137</td>
+        <td class="name">Skeledirge ex</td>
+        <td class="variant">Reprint</td>
+        <td class="sources">Shrouded Fable - Tera Brawlers Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par142_porygon_non_holo_us_uk" aria-label="PAR142 Porygon Non Holo"></td>
+        <td class="number">PAR142</td>
+        <td class="name">Porygon</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par143_porygon2_non_holo_us_uk" aria-label="PAR143 Porygon2 Non Holo"></td>
+        <td class="number">PAR143</td>
+        <td class="name">Porygon2</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Twilight Masquerade - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par144_porygon_z_cosmos_holo_us_uk" aria-label="PAR144 Porygon-Z Cosmos Holo"></td>
+        <td class="number">PAR144</td>
+        <td class="name">Porygon-Z</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Twilight Masquerade - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par159_ancient_booster_energy_capsule_cosmos_holo_us_uk" aria-label="PAR159 Ancient Booster Energy Capsule Cosmos Holo"></td>
+        <td class="number">PAR159</td>
+        <td class="name">Ancient Booster Energy Capsule</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - Roaring Moon ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par164_future_booster_energy_capsule_cosmos_holo_us_uk" aria-label="PAR164 Future Booster Energy Capsule Cosmos Holo"></td>
+        <td class="number">PAR164</td>
+        <td class="name">Future Booster Energy Capsule</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Paradox Rift - Iron Valiant ex Box</td>
+      </tr><tr class="category-row"><th colspan="5">Other Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par155_maushold_ex_holo_us_uk" aria-label="PAR155 Maushold ex Holo"></td>
+        <td class="number">PAR155</td>
+        <td class="name">Maushold ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Paldean Fates - Paldea Adventure Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="par158_iron_jugulis_pixel_cosmos_us_uk" aria-label="PAR158 Iron Jugulis Pixel Cosmos"></td>
+        <td class="number">PAR158</td>
+        <td class="name">Iron Jugulis</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Paradox Rift - Scarlet &amp; Violet Knock Out Collection: Iron Jugulis</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

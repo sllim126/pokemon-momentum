@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TEF - Temporal Forces Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;TEF&quot;}'>
+    <header>
+      <div>
+        <h1>TEF - Temporal Forces</h1>
+        <p class="meta">62 checklist rows - 2024-03-22</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/tef.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Stamped Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp089_feraligatr_black_star_promo_us_uk" aria-label="SVP089 Feraligatr Black Star Promo"></td>
+        <td class="number">SVP089</td>
+        <td class="name">Feraligatr</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Temporal Forces - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp090_metang_black_star_promo_us_uk" aria-label="SVP090 Metang Black Star Promo"></td>
+        <td class="number">SVP090</td>
+        <td class="name">Metang</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Temporal Forces - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp091_koraidon_black_star_promo_us_uk" aria-label="SVP091 Koraidon Black Star Promo"></td>
+        <td class="number">SVP091</td>
+        <td class="name">Koraidon</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Temporal Forces - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp092_miraidon_black_star_promo_us_uk" aria-label="SVP092 Miraidon Black Star Promo"></td>
+        <td class="number">SVP092</td>
+        <td class="name">Miraidon</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Temporal Forces - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef051_pikachu_2026_pokemon_day_stamp_us_uk" aria-label="TEF051 Pikachu 2026 Pokemon Day Stamp"></td>
+        <td class="number">TEF051</td>
+        <td class="name">Pikachu</td>
+        <td class="variant">2026 Pokemon Day Stamp</td>
+        <td class="sources">Mega Evolution - Pokemon Day 2026 Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef119_koraidon_gamestop_stamp_us" aria-label="TEF119 Koraidon GameStop Stamp"></td>
+        <td class="number">TEF119</td>
+        <td class="name">Koraidon</td>
+        <td class="variant">GameStop Stamp</td>
+        <td class="sources">Temporal Forces - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef121_miraidon_best_buy_stamp_us" aria-label="TEF121 Miraidon Best Buy Stamp"></td>
+        <td class="number">TEF121</td>
+        <td class="name">Miraidon</td>
+        <td class="variant">Best Buy Stamp</td>
+        <td class="sources">Temporal Forces - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef123_raging_bolt_best_buy_stamp_us" aria-label="TEF123 Raging Bolt Best Buy Stamp"></td>
+        <td class="number">TEF123</td>
+        <td class="name">Raging Bolt</td>
+        <td class="variant">Best Buy Stamp</td>
+        <td class="sources">Stellar Crown - Retailer Gift With Purchase</td>
+      </tr><tr class="category-row"><th colspan="5">Staff Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp089_feraligatr_staff_stamp_us_uk" aria-label="SVP089 Feraligatr Staff Stamp"></td>
+        <td class="number">SVP089</td>
+        <td class="name">Feraligatr</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Temporal Forces - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp090_metang_staff_stamp_us_uk" aria-label="SVP090 Metang Staff Stamp"></td>
+        <td class="number">SVP090</td>
+        <td class="name">Metang</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Temporal Forces - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp091_koraidon_staff_stamp_us_uk" aria-label="SVP091 Koraidon Staff Stamp"></td>
+        <td class="number">SVP091</td>
+        <td class="name">Koraidon</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Temporal Forces - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp092_miraidon_staff_stamp_us_uk" aria-label="SVP092 Miraidon Staff Stamp"></td>
+        <td class="number">SVP092</td>
+        <td class="name">Miraidon</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Temporal Forces - Build &amp; Battle Box</td>
+      </tr><tr class="category-row"><th colspan="5">Promo Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp093_carvanha_cosmos_holo_us_uk" aria-label="SVP093 Carvanha Cosmos Holo"></td>
+        <td class="number">SVP093</td>
+        <td class="name">Carvanha</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp094_bellibolt_cosmos_holo_us_uk" aria-label="SVP094 Bellibolt Cosmos Holo"></td>
+        <td class="number">SVP094</td>
+        <td class="name">Bellibolt</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp095_cleffa_cosmos_holo_us_uk" aria-label="SVP095 Cleffa Cosmos Holo"></td>
+        <td class="number">SVP095</td>
+        <td class="name">Cleffa</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp096_cyclizar_cosmos_holo_us_uk" aria-label="SVP096 Cyclizar Cosmos Holo"></td>
+        <td class="number">SVP096</td>
+        <td class="name">Cyclizar</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp097_flutter_mane_black_star_promo_us_uk" aria-label="SVP097 Flutter Mane Black Star Promo"></td>
+        <td class="number">SVP097</td>
+        <td class="name">Flutter Mane</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Temporal Forces - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp097_flutter_mane_pokemon_center_stamp_us_uk" aria-label="SVP097 Flutter Mane Pokemon Center Stamp"></td>
+        <td class="number">SVP097</td>
+        <td class="name">Flutter Mane</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Temporal Forces - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp098_iron_thorns_black_star_promo_us_uk" aria-label="SVP098 Iron Thorns Black Star Promo"></td>
+        <td class="number">SVP098</td>
+        <td class="name">Iron Thorns</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Temporal Forces - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp098_iron_thorns_pokemon_center_stamp_us_uk" aria-label="SVP098 Iron Thorns Pokemon Center Stamp"></td>
+        <td class="number">SVP098</td>
+        <td class="name">Iron Thorns</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Temporal Forces - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp099_shroodle_cosmos_holo_us_uk" aria-label="SVP099 Shroodle Cosmos Holo"></td>
+        <td class="number">SVP099</td>
+        <td class="name">Shroodle</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Temporal Forces - Grafaiai ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp100_grafaiai_ex_black_star_promo_us_uk" aria-label="SVP100 Grafaiai ex Black Star Promo"></td>
+        <td class="number">SVP100</td>
+        <td class="name">Grafaiai ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Temporal Forces - Grafaiai ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp103_houndoom_ex_black_star_promo_us_uk" aria-label="SVP103 Houndoom ex Black Star Promo"></td>
+        <td class="number">SVP103</td>
+        <td class="name">Houndoom ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Temporal Forces - Houndoom ex Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp104_melmetal_ex_black_star_promo_us_uk" aria-label="SVP104 Melmetal ex Black Star Promo"></td>
+        <td class="number">SVP104</td>
+        <td class="name">Melmetal ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Temporal Forces - Melmetal ex Battle Deck</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp124_iono_black_star_promo_us_uk" aria-label="SVP124 Iono Black Star Promo"></td>
+        <td class="number">SVP124</td>
+        <td class="name">Iono</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Temporal Forces - Iono Premium Tournament Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp125_armarouge_ex_black_star_promo_us_uk" aria-label="SVP125 Armarouge ex Black Star Promo"></td>
+        <td class="number">SVP125</td>
+        <td class="name">Armarouge ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Temporal Forces - Armarouge ex Premium Collection</td>
+      </tr><tr class="category-row"><th colspan="5">MCAP Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef025_iron_leaves_ex_holo_us_uk" aria-label="TEF025 Iron Leaves ex Holo"></td>
+        <td class="number">TEF025</td>
+        <td class="name">Iron Leaves ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Stellar Crown - Paradox Wisdom Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef038_gouging_fire_ex_holo_us_uk" aria-label="TEF038 Gouging Fire ex Holo"></td>
+        <td class="number">TEF038</td>
+        <td class="name">Gouging Fire ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Stellar Crown - Paradox Fury Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef041_feraligatr_non_holo_us_uk" aria-label="TEF041 Feraligatr Non Holo"></td>
+        <td class="number">TEF041</td>
+        <td class="name">Feraligatr</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef050_walking_wake_ex_holo_us_uk" aria-label="TEF050 Walking Wake ex Holo"></td>
+        <td class="number">TEF050</td>
+        <td class="name">Walking Wake ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Stellar Crown - Paradox Fury Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef051_pikachu_cosmos_holo_us_uk" aria-label="TEF051 Pikachu Cosmos Holo"></td>
+        <td class="number">TEF051</td>
+        <td class="name">Pikachu</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Fall 2024 Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef061_iron_hands_non_holo_us_uk" aria-label="TEF061 Iron Hands Non Holo"></td>
+        <td class="number">TEF061</td>
+        <td class="name">Iron Hands</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Stellar Crown - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef062_iron_thorns_cosmos_holo_us_uk" aria-label="TEF062 Iron Thorns Cosmos Holo"></td>
+        <td class="number">TEF062</td>
+        <td class="name">Iron Thorns</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Stellar Crown - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef062_iron_thorns_non_holo_us_uk" aria-label="TEF062 Iron Thorns Non Holo"></td>
+        <td class="number">TEF062</td>
+        <td class="name">Iron Thorns</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef077_scream_tail_cosmos_holo_us_uk" aria-label="TEF077 Scream Tail Cosmos Holo"></td>
+        <td class="number">TEF077</td>
+        <td class="name">Scream Tail</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Twilight Masquerade - Collector Chest (Back-to-School 2024)</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef078_flutter_mane_non_holo_us_uk" aria-label="TEF078 Flutter Mane Non Holo"></td>
+        <td class="number">TEF078</td>
+        <td class="name">Flutter Mane</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef079_iron_valiant_cosmos_holo_us_uk" aria-label="TEF079 Iron Valiant Cosmos Holo"></td>
+        <td class="number">TEF079</td>
+        <td class="name">Iron Valiant</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Twilight Masquerade - Collector Chest (Back-to-School 2024)</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef079_iron_valiant_non_holo_us_uk" aria-label="TEF079 Iron Valiant Non Holo"></td>
+        <td class="number">TEF079</td>
+        <td class="name">Iron Valiant</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Stellar Crown - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef079_scream_tail_non_holo_us_uk" aria-label="TEF079 Scream Tail Non Holo"></td>
+        <td class="number">TEF079</td>
+        <td class="name">Scream Tail</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Stellar Crown - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef081_iron_crown_ex_holo_us_uk" aria-label="TEF081 Iron Crown ex Holo"></td>
+        <td class="number">TEF081</td>
+        <td class="name">Iron Crown ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Stellar Crown - Paradox Wisdom Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef089_relicanth_non_holo_us_uk" aria-label="TEF089 Relicanth Non Holo"></td>
+        <td class="number">TEF089</td>
+        <td class="name">Relicanth</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef097_great_tusk_non_holo_us_uk" aria-label="TEF097 Great Tusk Non Holo"></td>
+        <td class="number">TEF097</td>
+        <td class="name">Great Tusk</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Stellar Crown - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef098_sandy_shocks_non_holo_us_uk" aria-label="TEF098 Sandy Shocks Non Holo"></td>
+        <td class="number">TEF098</td>
+        <td class="name">Sandy Shocks</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Stellar Crown - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef099_iron_boulder_ex_holo_us_uk" aria-label="TEF099 Iron Boulder ex Holo"></td>
+        <td class="number">TEF099</td>
+        <td class="name">Iron Boulder ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Stellar Crown - Paradox Wisdom Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef109_roaring_moon_cosmos_holo_us_uk" aria-label="TEF109 Roaring Moon Cosmos Holo"></td>
+        <td class="number">TEF109</td>
+        <td class="name">Roaring Moon</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Stellar Crown - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef111_scizor_ex_holo_us_uk" aria-label="TEF111 Scizor ex Holo"></td>
+        <td class="number">TEF111</td>
+        <td class="name">Scizor ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Surging Sparks - Meddling Sparks Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef118_iron_treads_non_holo_us_uk" aria-label="TEF118 Iron Treads Non Holo"></td>
+        <td class="number">TEF118</td>
+        <td class="name">Iron Treads</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Stellar Crown - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef119_koraidon_cosmos_holo_us_uk" aria-label="TEF119 Koraidon Cosmos Holo"></td>
+        <td class="number">TEF119</td>
+        <td class="name">Koraidon</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Stellar Crown - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef119_koraidon_non_holo_us_uk" aria-label="TEF119 Koraidon Non Holo"></td>
+        <td class="number">TEF119</td>
+        <td class="name">Koraidon</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Build &amp; Battle Box; Shrouded Fable - Koraidon &amp; Miraidon ex Deluxe Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef121_miraidon_cosmos_holo_us_uk" aria-label="TEF121 Miraidon Cosmos Holo"></td>
+        <td class="number">TEF121</td>
+        <td class="name">Miraidon</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Stellar Crown - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef121_miraidon_non_holo_us_uk" aria-label="TEF121 Miraidon Non Holo"></td>
+        <td class="number">TEF121</td>
+        <td class="name">Miraidon</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Temporal Forces - Build &amp; Battle Box; Shrouded Fable - Koraidon &amp; Miraidon ex Deluxe Battle Decks</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef123_raging_bolt_ex_holo_us_uk" aria-label="TEF123 Raging Bolt ex Holo"></td>
+        <td class="number">TEF123</td>
+        <td class="name">Raging Bolt ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Stellar Crown - Paradox Fury Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef126_hoothoot_cosmos_holo_us_uk" aria-label="TEF126 Hoothoot Cosmos Holo"></td>
+        <td class="number">TEF126</td>
+        <td class="name">Hoothoot</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Bloodmoon Ursaluna ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef127_noctowl_cosmos_holo_us_uk" aria-label="TEF127 Noctowl Cosmos Holo"></td>
+        <td class="number">TEF127</td>
+        <td class="name">Noctowl</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Bloodmoon Ursaluna ex Box</td>
+      </tr><tr class="category-row"><th colspan="5">Prize Pack Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef024_rabsca_play_pokemon_stamp_us_uk" aria-label="TEF024 Rabsca Play Pokemon Stamp"></td>
+        <td class="number">TEF024</td>
+        <td class="name">Rabsca</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef085_drilbur_play_pokemon_stamp_us_uk" aria-label="TEF085 Drilbur Play Pokemon Stamp"></td>
+        <td class="number">TEF085</td>
+        <td class="name">Drilbur</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef114_metang_play_pokemon_stamp_us_uk" aria-label="TEF114 Metang Play Pokemon Stamp"></td>
+        <td class="number">TEF114</td>
+        <td class="name">Metang</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef129_dudunsparce_play_pokemon_stamp_us_uk" aria-label="TEF129 Dudunsparce Play Pokemon Stamp"></td>
+        <td class="number">TEF129</td>
+        <td class="name">Dudunsparce</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef142_bianca_s_devotion_play_pokemon_stamp_us_uk" aria-label="TEF142 Bianca&#x27;s Devotion Play Pokemon Stamp"></td>
+        <td class="number">TEF142</td>
+        <td class="name">Bianca&#x27;s Devotion</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef144_buddy_buddy_poffin_play_pokemon_stamp_us_uk" aria-label="TEF144 Buddy-Buddy Poffin Play Pokemon Stamp"></td>
+        <td class="number">TEF144</td>
+        <td class="name">Buddy-Buddy Poffin</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef157_prime_catcher_play_pokemon_stamp_us_uk" aria-label="TEF157 Prime Catcher Play Pokemon Stamp"></td>
+        <td class="number">TEF157</td>
+        <td class="name">Prime Catcher</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr class="category-row"><th colspan="5">Other Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="tef104_gengar_ex_holo_us_uk" aria-label="TEF104 Gengar ex Holo"></td>
+        <td class="number">TEF104</td>
+        <td class="name">Gengar ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Shrouded Fable - Dark Powers ex Special Collection</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

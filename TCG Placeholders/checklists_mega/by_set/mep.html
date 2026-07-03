@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MEP - Mega Evolution Black Star Promos Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;MEP&quot;}'>
+    <header>
+      <div>
+        <h1>MEP - Mega Evolution Black Star Promos</h1>
+        <p class="meta">93 checklist rows - September 2025 - Present</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/mep.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Stamped Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep001_meganium_black_star_promo_us_uk" aria-label="MEP001 Meganium Black Star Promo"></td>
+        <td class="number">MEP001</td>
+        <td class="name">Meganium</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep002_inteleon_black_star_promo_us_uk" aria-label="MEP002 Inteleon Black Star Promo"></td>
+        <td class="number">MEP002</td>
+        <td class="name">Inteleon</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep003_alakazam_black_star_promo_us_uk" aria-label="MEP003 Alakazam Black Star Promo"></td>
+        <td class="number">MEP003</td>
+        <td class="name">Alakazam</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep004_lunatone_black_star_promo_us_uk" aria-label="MEP004 Lunatone Black Star Promo"></td>
+        <td class="number">MEP004</td>
+        <td class="name">Lunatone</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep014_ceruledge_black_star_promo_us_uk" aria-label="MEP014 Ceruledge Black Star Promo"></td>
+        <td class="number">MEP014</td>
+        <td class="name">Ceruledge</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Phantasmal Flames - Phantasmal Flames Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep015_zacian_black_star_promo_us_uk" aria-label="MEP015 Zacian Black Star Promo"></td>
+        <td class="number">MEP015</td>
+        <td class="name">Zacian</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Phantasmal Flames - Phantasmal Flames Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep016_flygon_black_star_promo_us_uk" aria-label="MEP016 Flygon Black Star Promo"></td>
+        <td class="number">MEP016</td>
+        <td class="name">Flygon</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Phantasmal Flames - Phantasmal Flames Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep017_toxtricity_black_star_promo_us_uk" aria-label="MEP017 Toxtricity Black Star Promo"></td>
+        <td class="number">MEP017</td>
+        <td class="name">Toxtricity</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Phantasmal Flames - Phantasmal Flames Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep064_serperior_black_star_promo_us_uk" aria-label="MEP064 Serperior Black Star Promo"></td>
+        <td class="number">MEP064</td>
+        <td class="name">Serperior</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Perfect Order - Perfect Order Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep065_barbaracle_black_star_promo_us_uk" aria-label="MEP065 Barbaracle Black Star Promo"></td>
+        <td class="number">MEP065</td>
+        <td class="name">Barbaracle</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Perfect Order - Perfect Order Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep066_tyrantrum_black_star_promo_us_uk" aria-label="MEP066 Tyrantrum Black Star Promo"></td>
+        <td class="number">MEP066</td>
+        <td class="name">Tyrantrum</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Perfect Order - Perfect Order Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep067_doublade_black_star_promo_us_uk" aria-label="MEP067 Doublade Black Star Promo"></td>
+        <td class="number">MEP067</td>
+        <td class="name">Doublade</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Perfect Order - Perfect Order Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep074_delphox_black_star_promo_us_uk" aria-label="MEP074 Delphox Black Star Promo"></td>
+        <td class="number">MEP074</td>
+        <td class="name">Delphox</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Chaos Rising - Chaos Rising Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep075_ampharos_black_star_promo_us_uk" aria-label="MEP075 Ampharos Black Star Promo"></td>
+        <td class="number">MEP075</td>
+        <td class="name">Ampharos</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Chaos Rising - Chaos Rising Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep076_crobat_black_star_promo_us_uk" aria-label="MEP076 Crobat Black Star Promo"></td>
+        <td class="number">MEP076</td>
+        <td class="name">Crobat</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Chaos Rising - Chaos Rising Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep077_goodra_black_star_promo_us_uk" aria-label="MEP077 Goodra Black Star Promo"></td>
+        <td class="number">MEP077</td>
+        <td class="name">Goodra</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Chaos Rising - Chaos Rising Build &amp; Battle Box</td>
+      </tr><tr class="category-row"><th colspan="5">MCAP Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep005_drifloon_pixel_cosmos_holo_us_uk" aria-label="MEP005 Drifloon Pixel Cosmos Holo"></td>
+        <td class="number">MEP005</td>
+        <td class="name">Drifloon</td>
+        <td class="variant">Pixel Cosmos Holo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep006_drifblim_pixel_cosmos_holo_us_uk" aria-label="MEP006 Drifblim Pixel Cosmos Holo"></td>
+        <td class="number">MEP006</td>
+        <td class="name">Drifblim</td>
+        <td class="variant">Pixel Cosmos Holo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep007_psyduck_pixel_cosmos_holo_us_uk" aria-label="MEP007 Psyduck Pixel Cosmos Holo"></td>
+        <td class="number">MEP007</td>
+        <td class="name">Psyduck</td>
+        <td class="variant">Pixel Cosmos Holo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep008_golduck_pixel_cosmos_holo_us_uk" aria-label="MEP008 Golduck Pixel Cosmos Holo"></td>
+        <td class="number">MEP008</td>
+        <td class="name">Golduck</td>
+        <td class="variant">Pixel Cosmos Holo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep009_alakazam_black_star_promo_us_uk" aria-label="MEP009 Alakazam Black Star Promo"></td>
+        <td class="number">MEP009</td>
+        <td class="name">Alakazam</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep009_alakazam_pokemon_center_stamp_us_uk" aria-label="MEP009 Alakazam Pokemon Center Stamp"></td>
+        <td class="number">MEP009</td>
+        <td class="name">Alakazam</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Mega Evolution - Mega Evolution Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep010_riolu_black_star_promo_us_uk" aria-label="MEP010 Riolu Black Star Promo"></td>
+        <td class="number">MEP010</td>
+        <td class="name">Riolu</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep010_riolu_pokemon_center_stamp_us_uk" aria-label="MEP010 Riolu Pokemon Center Stamp"></td>
+        <td class="number">MEP010</td>
+        <td class="name">Riolu</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Mega Evolution - Mega Evolution Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep011_mega_latias_ex_black_star_promo_us_uk" aria-label="MEP011 Mega Latias ex Black Star Promo"></td>
+        <td class="number">MEP011</td>
+        <td class="name">Mega Latias ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Mega Latias ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep013_mega_venusaur_ex_black_star_promo_us_uk" aria-label="MEP013 Mega Venusaur ex Black Star Promo"></td>
+        <td class="number">MEP013</td>
+        <td class="name">Mega Venusaur ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Mega Venusaur ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep018_cottonee_smooth_cosmos_holo_us_uk" aria-label="MEP018 Cottonee Smooth Cosmos Holo"></td>
+        <td class="number">MEP018</td>
+        <td class="name">Cottonee</td>
+        <td class="variant">Smooth Cosmos Holo</td>
+        <td class="sources">Phantasmal Flames - Phantasmal Flames Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep019_whimsicott_smooth_cosmos_holo_us_uk" aria-label="MEP019 Whimsicott Smooth Cosmos Holo"></td>
+        <td class="number">MEP019</td>
+        <td class="name">Whimsicott</td>
+        <td class="variant">Smooth Cosmos Holo</td>
+        <td class="sources">Phantasmal Flames - Phantasmal Flames Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep020_sneasel_smooth_cosmos_holo_us_uk" aria-label="MEP020 Sneasel Smooth Cosmos Holo"></td>
+        <td class="number">MEP020</td>
+        <td class="name">Sneasel</td>
+        <td class="variant">Smooth Cosmos Holo</td>
+        <td class="sources">Phantasmal Flames - Phantasmal Flames Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep021_weavile_smooth_cosmos_holo_us_uk" aria-label="MEP021 Weavile Smooth Cosmos Holo"></td>
+        <td class="number">MEP021</td>
+        <td class="name">Weavile</td>
+        <td class="variant">Smooth Cosmos Holo</td>
+        <td class="sources">Phantasmal Flames - Phantasmal Flames Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep022_charcadet_black_star_promo_us_uk" aria-label="MEP022 Charcadet Black Star Promo"></td>
+        <td class="number">MEP022</td>
+        <td class="name">Charcadet</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Phantasmal Flames - Phantasmal Flames Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep022_charcadet_pokemon_center_stamp_us_uk" aria-label="MEP022 Charcadet Pokemon Center Stamp"></td>
+        <td class="number">MEP022</td>
+        <td class="name">Charcadet</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Phantasmal Flames - Phantasmal Flames Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep023_mega_charizard_x_ex_black_star_promo_us_uk" aria-label="MEP023 Mega Charizard X ex Black Star Promo"></td>
+        <td class="number">MEP023</td>
+        <td class="name">Mega Charizard X ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Phantasmal Flames - Mega Charizard X ex Ultra-Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep024_oricorio_ex_black_star_promo_us_uk" aria-label="MEP024 Oricorio ex Black Star Promo"></td>
+        <td class="number">MEP024</td>
+        <td class="name">Oricorio ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Phantasmal Flames - Mega Charizard X ex Ultra-Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep025_mega_kangaskhan_ex_black_star_promo_us_uk" aria-label="MEP025 Mega Kangaskhan ex Black Star Promo"></td>
+        <td class="number">MEP025</td>
+        <td class="name">Mega Kangaskhan ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Mega Kangaskhan ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep029_mega_charizard_x_ex_black_star_promo_us_uk" aria-label="MEP029 Mega Charizard X ex Black Star Promo"></td>
+        <td class="number">MEP029</td>
+        <td class="name">Mega Charizard X ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Ascended Heroes - Mega Charizard Tins</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep030_mega_charizard_y_ex_black_star_promo_us_uk" aria-label="MEP030 Mega Charizard Y ex Black Star Promo"></td>
+        <td class="number">MEP030</td>
+        <td class="name">Mega Charizard Y ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Ascended Heroes - Mega Charizard Tins</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep031_n_s_zekrom_black_star_promo_us_uk" aria-label="MEP031 N&#x27;s Zekrom Black Star Promo"></td>
+        <td class="number">MEP031</td>
+        <td class="name">N&#x27;s Zekrom</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Ascended Heroes - Ascended Heroes Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep031_n_s_zekrom_pokemon_center_stamp_us_uk" aria-label="MEP031 N&#x27;s Zekrom Pokemon Center Stamp"></td>
+        <td class="number">MEP031</td>
+        <td class="name">N&#x27;s Zekrom</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Ascended Heroes - Ascended Heroes Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep034_mega_meganium_ex_black_star_promo_us_uk" aria-label="MEP034 Mega Meganium ex Black Star Promo"></td>
+        <td class="number">MEP034</td>
+        <td class="name">Mega Meganium ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Ascended Heroes - Mega Meganium ex Box; Ascended Heroes - Ascended Heroes Tins</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep035_mega_emboar_ex_black_star_promo_us_uk" aria-label="MEP035 Mega Emboar ex Black Star Promo"></td>
+        <td class="number">MEP035</td>
+        <td class="name">Mega Emboar ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Ascended Heroes - Mega Emboar ex Box; Ascended Heroes - Ascended Heroes Tins</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep036_mega_feraligatr_ex_black_star_promo_us_uk" aria-label="MEP036 Mega Feraligatr ex Black Star Promo"></td>
+        <td class="number">MEP036</td>
+        <td class="name">Mega Feraligatr ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Ascended Heroes - Mega Feraligatr ex Box; Ascended Heroes - Ascended Heroes Tins</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep068_makuhita_smooth_cosmos_holo_us_uk" aria-label="MEP068 Makuhita Smooth Cosmos Holo"></td>
+        <td class="number">MEP068</td>
+        <td class="name">Makuhita</td>
+        <td class="variant">Smooth Cosmos Holo</td>
+        <td class="sources">Perfect Order - Perfect Order Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep069_chikorita_smooth_cosmos_holo_us_uk" aria-label="MEP069 Chikorita Smooth Cosmos Holo"></td>
+        <td class="number">MEP069</td>
+        <td class="name">Chikorita</td>
+        <td class="variant">Smooth Cosmos Holo</td>
+        <td class="sources">Perfect Order - Perfect Order Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep070_tyrunt_black_star_promo_us_uk" aria-label="MEP070 Tyrunt Black Star Promo"></td>
+        <td class="number">MEP070</td>
+        <td class="name">Tyrunt</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Perfect Order - Perfect Order Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep070_tyrunt_pokemon_center_stamp_us_uk" aria-label="MEP070 Tyrunt Pokemon Center Stamp"></td>
+        <td class="number">MEP070</td>
+        <td class="name">Tyrunt</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Perfect Order - Perfect Order Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep071_mega_zygarde_ex_black_star_promo_us_uk" aria-label="MEP071 Mega Zygarde ex Black Star Promo"></td>
+        <td class="number">MEP071</td>
+        <td class="name">Mega Zygarde ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Perfect Order - Mega Zygarde ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep072_mega_clefable_ex_black_star_promo_us_uk" aria-label="MEP072 Mega Clefable ex Black Star Promo"></td>
+        <td class="number">MEP072</td>
+        <td class="name">Mega Clefable ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Chaos Rising - Mega Moonlit Tins</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep073_mega_gengar_ex_black_star_promo_us_uk" aria-label="MEP073 Mega Gengar ex Black Star Promo"></td>
+        <td class="number">MEP073</td>
+        <td class="name">Mega Gengar ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Chaos Rising - Mega Moonlit Tins</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep078_toxel_smooth_cosmos_holo_us_uk" aria-label="MEP078 Toxel Smooth Cosmos Holo"></td>
+        <td class="number">MEP078</td>
+        <td class="name">Toxel</td>
+        <td class="variant">Smooth Cosmos Holo</td>
+        <td class="sources">Chaos Rising - Chaos Rising Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep079_charmeleon_smooth_cosmos_holo_us_uk" aria-label="MEP079 Charmeleon Smooth Cosmos Holo"></td>
+        <td class="number">MEP079</td>
+        <td class="name">Charmeleon</td>
+        <td class="variant">Smooth Cosmos Holo</td>
+        <td class="sources">Chaos Rising - Chaos Rising Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep080_fennekin_black_star_promo_us_uk" aria-label="MEP080 Fennekin Black Star Promo"></td>
+        <td class="number">MEP080</td>
+        <td class="name">Fennekin</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Chaos Rising - Chaos Rising Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep080_fennekin_pokemon_center_stamp_us_uk" aria-label="MEP080 Fennekin Pokemon Center Stamp"></td>
+        <td class="number">MEP080</td>
+        <td class="name">Fennekin</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Chaos Rising - Chaos Rising Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep081_mega_greninja_ex_black_star_promo_us_uk" aria-label="MEP081 Mega Greninja ex Black Star Promo"></td>
+        <td class="number">MEP081</td>
+        <td class="name">Mega Greninja ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Chaos Rising - Mega Greninja ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep086_slowpoke_smooth_cosmos_holo_us_uk" aria-label="MEP086 Slowpoke Smooth Cosmos Holo"></td>
+        <td class="number">MEP086</td>
+        <td class="name">Slowpoke</td>
+        <td class="variant">Smooth Cosmos Holo</td>
+        <td class="sources">Pitch Black - Pitch Black Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep087_binacle_smooth_cosmos_holo_us_uk" aria-label="MEP087 Binacle Smooth Cosmos Holo"></td>
+        <td class="number">MEP087</td>
+        <td class="name">Binacle</td>
+        <td class="variant">Smooth Cosmos Holo</td>
+        <td class="sources">Pitch Black - Pitch Black Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep088_zarude_black_star_promo_us_uk" aria-label="MEP088 Zarude Black Star Promo"></td>
+        <td class="number">MEP088</td>
+        <td class="name">Zarude</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Pitch Black - Pitch Black Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep088_zarude_pokemon_center_stamp_us_uk" aria-label="MEP088 Zarude Pokemon Center Stamp"></td>
+        <td class="number">MEP088</td>
+        <td class="name">Zarude</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Pitch Black - Pitch Black Elite Trainer Box</td>
+      </tr><tr class="category-row"><th colspan="5">League and Championship Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep092_paradise_resort_world_championships_2026_stamp_us" aria-label="MEP092 Paradise Resort World Championships 2026 Stamp"></td>
+        <td class="number">MEP092</td>
+        <td class="name">Paradise Resort</td>
+        <td class="variant">World Championships 2026 Stamp</td>
+        <td class="sources">Mega Evolution - 2026 Pokemon World Championships merchandise</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep093_pikachu_2026_pokemon_world_championships_logo_stamp_us" aria-label="MEP093 Pikachu 2026 Pokemon World Championships Logo Stamp"></td>
+        <td class="number">MEP093</td>
+        <td class="name">Pikachu</td>
+        <td class="variant">2026 Pokemon World Championships Logo Stamp</td>
+        <td class="sources">Mega Evolution - 2026 Pokemon World Championships merchandise</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep093_pikachu_play_pokemon_winner_stamp_us" aria-label="MEP093 Pikachu Play Pokemon Winner Stamp"></td>
+        <td class="number">MEP093</td>
+        <td class="name">Pikachu</td>
+        <td class="variant">Play Pokemon Winner Stamp</td>
+        <td class="sources">Mega Evolution - 2026 Pokemon World Championships merchandise</td>
+      </tr><tr class="category-row"><th colspan="5">Other Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep012_mega_lucario_ex_black_star_promo_us_uk" aria-label="MEP012 Mega Lucario ex Black Star Promo"></td>
+        <td class="number">MEP012</td>
+        <td class="name">Mega Lucario ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Mega Lucario ex Figure Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep026_meloetta_black_star_promo_us_uk" aria-label="MEP026 Meloetta Black Star Promo"></td>
+        <td class="number">MEP026</td>
+        <td class="name">Meloetta</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Mega Battle Deck Mega Diancie ex</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep027_haunter_black_star_promo_us_uk" aria-label="MEP027 Haunter Black Star Promo"></td>
+        <td class="number">MEP027</td>
+        <td class="name">Haunter</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Mega Battle Deck Mega Gengar ex</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep032_mega_gardevoir_ex_black_star_promo_us_uk" aria-label="MEP032 Mega Gardevoir ex Black Star Promo"></td>
+        <td class="number">MEP032</td>
+        <td class="name">Mega Gardevoir ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Ascended Heroes - Ascended Heroes Premium Poster Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep033_mega_lucario_ex_black_star_promo_us_uk" aria-label="MEP033 Mega Lucario ex Black Star Promo"></td>
+        <td class="number">MEP033</td>
+        <td class="name">Mega Lucario ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Ascended Heroes - Ascended Heroes Premium Poster Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep037_bulbasaur_black_star_promo_us_uk" aria-label="MEP037 Bulbasaur Black Star Promo"></td>
+        <td class="number">MEP037</td>
+        <td class="name">Bulbasaur</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 1</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep038_charmander_black_star_promo_us_uk" aria-label="MEP038 Charmander Black Star Promo"></td>
+        <td class="number">MEP038</td>
+        <td class="name">Charmander</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 1</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep039_squirtle_black_star_promo_us_uk" aria-label="MEP039 Squirtle Black Star Promo"></td>
+        <td class="number">MEP039</td>
+        <td class="name">Squirtle</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 1</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep040_turtwig_black_star_promo_us_uk" aria-label="MEP040 Turtwig Black Star Promo"></td>
+        <td class="number">MEP040</td>
+        <td class="name">Turtwig</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 1</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep041_chimchar_black_star_promo_us_uk" aria-label="MEP041 Chimchar Black Star Promo"></td>
+        <td class="number">MEP041</td>
+        <td class="name">Chimchar</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 1</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep042_piplup_black_star_promo_us_uk" aria-label="MEP042 Piplup Black Star Promo"></td>
+        <td class="number">MEP042</td>
+        <td class="name">Piplup</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 1</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep043_rowlet_black_star_promo_us_uk" aria-label="MEP043 Rowlet Black Star Promo"></td>
+        <td class="number">MEP043</td>
+        <td class="name">Rowlet</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 1</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep044_litten_black_star_promo_us_uk" aria-label="MEP044 Litten Black Star Promo"></td>
+        <td class="number">MEP044</td>
+        <td class="name">Litten</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 1</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep045_popplio_black_star_promo_us_uk" aria-label="MEP045 Popplio Black Star Promo"></td>
+        <td class="number">MEP045</td>
+        <td class="name">Popplio</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 1</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep046_chikorita_black_star_promo_us_uk" aria-label="MEP046 Chikorita Black Star Promo"></td>
+        <td class="number">MEP046</td>
+        <td class="name">Chikorita</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 2</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep047_cyndaquil_black_star_promo_us_uk" aria-label="MEP047 Cyndaquil Black Star Promo"></td>
+        <td class="number">MEP047</td>
+        <td class="name">Cyndaquil</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 2</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep048_totodile_black_star_promo_us_uk" aria-label="MEP048 Totodile Black Star Promo"></td>
+        <td class="number">MEP048</td>
+        <td class="name">Totodile</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 2</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep049_snivy_black_star_promo_us_uk" aria-label="MEP049 Snivy Black Star Promo"></td>
+        <td class="number">MEP049</td>
+        <td class="name">Snivy</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 2</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep050_tepig_black_star_promo_us_uk" aria-label="MEP050 Tepig Black Star Promo"></td>
+        <td class="number">MEP050</td>
+        <td class="name">Tepig</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 2</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep051_oshawott_black_star_promo_us_uk" aria-label="MEP051 Oshawott Black Star Promo"></td>
+        <td class="number">MEP051</td>
+        <td class="name">Oshawott</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 2</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep052_grookey_black_star_promo_us_uk" aria-label="MEP052 Grookey Black Star Promo"></td>
+        <td class="number">MEP052</td>
+        <td class="name">Grookey</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 2</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep053_scorbunny_black_star_promo_us_uk" aria-label="MEP053 Scorbunny Black Star Promo"></td>
+        <td class="number">MEP053</td>
+        <td class="name">Scorbunny</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 2</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep054_sobble_black_star_promo_us_uk" aria-label="MEP054 Sobble Black Star Promo"></td>
+        <td class="number">MEP054</td>
+        <td class="name">Sobble</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 2</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep055_treecko_black_star_promo_us_uk" aria-label="MEP055 Treecko Black Star Promo"></td>
+        <td class="number">MEP055</td>
+        <td class="name">Treecko</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 3</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep056_torchic_black_star_promo_us_uk" aria-label="MEP056 Torchic Black Star Promo"></td>
+        <td class="number">MEP056</td>
+        <td class="name">Torchic</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 3</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep057_mudkip_black_star_promo_us_uk" aria-label="MEP057 Mudkip Black Star Promo"></td>
+        <td class="number">MEP057</td>
+        <td class="name">Mudkip</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 3</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep058_chespin_black_star_promo_us_uk" aria-label="MEP058 Chespin Black Star Promo"></td>
+        <td class="number">MEP058</td>
+        <td class="name">Chespin</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 3</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep059_fennekin_black_star_promo_us_uk" aria-label="MEP059 Fennekin Black Star Promo"></td>
+        <td class="number">MEP059</td>
+        <td class="name">Fennekin</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 3</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep060_froakie_black_star_promo_us_uk" aria-label="MEP060 Froakie Black Star Promo"></td>
+        <td class="number">MEP060</td>
+        <td class="name">Froakie</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 3</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep061_sprigatito_black_star_promo_us_uk" aria-label="MEP061 Sprigatito Black Star Promo"></td>
+        <td class="number">MEP061</td>
+        <td class="name">Sprigatito</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 3</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep062_fuecoco_black_star_promo_us_uk" aria-label="MEP062 Fuecoco Black Star Promo"></td>
+        <td class="number">MEP062</td>
+        <td class="name">Fuecoco</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 3</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="mep063_quaxly_black_star_promo_us_uk" aria-label="MEP063 Quaxly Black Star Promo"></td>
+        <td class="number">MEP063</td>
+        <td class="name">Quaxly</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - First Partner Illustration Collection Series 3</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

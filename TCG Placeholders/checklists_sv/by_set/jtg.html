@@ -1,0 +1,597 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JTG - Journey Together Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;JTG&quot;}'>
+    <header>
+      <div>
+        <h1>JTG - Journey Together</h1>
+        <p class="meta">62 checklist rows - 2025-03-28</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/jtg.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Stamped Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg032_articuno_cosmos_holo_snowflake_stamp_us_uk" aria-label="JTG032 Articuno Cosmos Holo Snowflake Stamp"></td>
+        <td class="number">JTG032</td>
+        <td class="name">Articuno</td>
+        <td class="variant">Cosmos Holo Snowflake Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Holiday Calendar 2025</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg069_mimikyu_ex_journey_together_stamp_us_uk" aria-label="JTG069 Mimikyu ex Journey Together Stamp"></td>
+        <td class="number">JTG069</td>
+        <td class="name">Mimikyu ex</td>
+        <td class="variant">Journey Together Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Mimikyu ex &amp; Alcremie ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg075_alcremie_ex_journey_together_stamp_us_uk" aria-label="JTG075 Alcremie ex Journey Together Stamp"></td>
+        <td class="number">JTG075</td>
+        <td class="name">Alcremie ex</td>
+        <td class="variant">Journey Together Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Mimikyu ex &amp; Alcremie ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg117_hop_s_snorlax_eb_games_stamp_australia" aria-label="JTG117 Hop&#x27;s Snorlax EB Games Stamp"></td>
+        <td class="number">JTG117</td>
+        <td class="name">Hop&#x27;s Snorlax</td>
+        <td class="variant">EB Games Stamp</td>
+        <td class="sources">Journey Together - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg117_hop_s_snorlax_gamestop_stamp_us_canada" aria-label="JTG117 Hop&#x27;s Snorlax GameStop Stamp"></td>
+        <td class="number">JTG117</td>
+        <td class="name">Hop&#x27;s Snorlax</td>
+        <td class="variant">GameStop Stamp</td>
+        <td class="sources">Journey Together - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg136_hop_s_dubwool_best_buy_stamp_us" aria-label="JTG136 Hop&#x27;s Dubwool Best Buy Stamp"></td>
+        <td class="number">JTG136</td>
+        <td class="name">Hop&#x27;s Dubwool</td>
+        <td class="variant">Best Buy Stamp</td>
+        <td class="sources">Journey Together - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg167_n_s_reshiram_expansion_logo_stamp_us_uk" aria-label="JTG167 N&#x27;s Reshiram Expansion Logo Stamp"></td>
+        <td class="number">JTG167</td>
+        <td class="name">N&#x27;s Reshiram</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Journey Together - Enhanced Booster Display Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp181_n_s_darmanitan_black_star_promo_us_uk" aria-label="SVP181 N&#x27;s Darmanitan Black Star Promo"></td>
+        <td class="number">SVP181</td>
+        <td class="name">N&#x27;s Darmanitan</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Journey Together - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp182_iono_s_kilowattrel_black_star_promo_us_uk" aria-label="SVP182 Iono&#x27;s Kilowattrel Black Star Promo"></td>
+        <td class="number">SVP182</td>
+        <td class="name">Iono&#x27;s Kilowattrel</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Journey Together - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp183_lillie_s_ribombee_black_star_promo_us_uk" aria-label="SVP183 Lillie&#x27;s Ribombee Black Star Promo"></td>
+        <td class="number">SVP183</td>
+        <td class="name">Lillie&#x27;s Ribombee</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Journey Together - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp184_hop_s_snorlax_black_star_promo_us_uk" aria-label="SVP184 Hop&#x27;s Snorlax Black Star Promo"></td>
+        <td class="number">SVP184</td>
+        <td class="name">Hop&#x27;s Snorlax</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Journey Together - Build &amp; Battle Box</td>
+      </tr><tr class="category-row"><th colspan="5">Staff Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp181_n_s_darmanitan_staff_stamp_us_uk" aria-label="SVP181 N&#x27;s Darmanitan Staff Stamp"></td>
+        <td class="number">SVP181</td>
+        <td class="name">N&#x27;s Darmanitan</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Journey Together - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp182_iono_s_kilowattrel_staff_stamp_us_uk" aria-label="SVP182 Iono&#x27;s Kilowattrel Staff Stamp"></td>
+        <td class="number">SVP182</td>
+        <td class="name">Iono&#x27;s Kilowattrel</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Journey Together - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp183_lillie_s_ribombee_staff_stamp_us_uk" aria-label="SVP183 Lillie&#x27;s Ribombee Staff Stamp"></td>
+        <td class="number">SVP183</td>
+        <td class="name">Lillie&#x27;s Ribombee</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Journey Together - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp184_hop_s_snorlax_staff_stamp_us_uk" aria-label="SVP184 Hop&#x27;s Snorlax Staff Stamp"></td>
+        <td class="number">SVP184</td>
+        <td class="name">Hop&#x27;s Snorlax</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Journey Together - Build &amp; Battle Box</td>
+      </tr><tr class="category-row"><th colspan="5">Promo Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp185_yanma_cosmos_holo_us_uk" aria-label="SVP185 Yanma Cosmos Holo"></td>
+        <td class="number">SVP185</td>
+        <td class="name">Yanma</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Journey Together - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp186_scraggy_cosmos_holo_us_uk" aria-label="SVP186 Scraggy Cosmos Holo"></td>
+        <td class="number">SVP186</td>
+        <td class="name">Scraggy</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Journey Together - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp187_yanmega_cosmos_holo_us_uk" aria-label="SVP187 Yanmega Cosmos Holo"></td>
+        <td class="number">SVP187</td>
+        <td class="name">Yanmega</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Journey Together - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp188_scrafty_cosmos_holo_us_uk" aria-label="SVP188 Scrafty Cosmos Holo"></td>
+        <td class="number">SVP188</td>
+        <td class="name">Scrafty</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Journey Together - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp189_n_s_zorua_black_star_promo_us_uk" aria-label="SVP189 N&#x27;s Zorua Black Star Promo"></td>
+        <td class="number">SVP189</td>
+        <td class="name">N&#x27;s Zorua</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Journey Together - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp189_n_s_zorua_pokemon_center_stamp_us_uk" aria-label="SVP189 N&#x27;s Zorua Pokemon Center Stamp"></td>
+        <td class="number">SVP189</td>
+        <td class="name">N&#x27;s Zorua</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Journey Together - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp193_hop_s_zacian_ex_black_star_promo_us_uk" aria-label="SVP193 Hop&#x27;s Zacian ex Black Star Promo"></td>
+        <td class="number">SVP193</td>
+        <td class="name">Hop&#x27;s Zacian ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Journey Together - Hop&#x27;s Zacian ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp194_iono_s_bellibolt_ex_black_star_promo_us_uk" aria-label="SVP194 Iono&#x27;s Bellibolt ex Black Star Promo"></td>
+        <td class="number">SVP194</td>
+        <td class="name">Iono&#x27;s Bellibolt ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Journey Together - Iono&#x27;s Bellibolt ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp195_lillie_s_clefairy_ex_black_star_promo_us_uk" aria-label="SVP195 Lillie&#x27;s Clefairy ex Black Star Promo"></td>
+        <td class="number">SVP195</td>
+        <td class="name">Lillie&#x27;s Clefairy ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Journey Together - Lillie Premium Tournament Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp197_koraidon_ex_black_star_promo_us_uk" aria-label="SVP197 Koraidon ex Black Star Promo"></td>
+        <td class="number">SVP197</td>
+        <td class="name">Koraidon ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Journey Together - Slashing Legends Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp198_zacian_ex_black_star_promo_us_uk" aria-label="SVP198 Zacian ex Black Star Promo"></td>
+        <td class="number">SVP198</td>
+        <td class="name">Zacian ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Journey Together - Slashing Legends Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp206_marnie_s_morpeko_black_star_promo_us_uk" aria-label="SVP206 Marnie&#x27;s Morpeko Black Star Promo"></td>
+        <td class="number">SVP206</td>
+        <td class="name">Marnie&#x27;s Morpeko</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Journey Together - Rival Battle Deck - Marnie</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp207_steven_s_beldum_black_star_promo_us_uk" aria-label="SVP207 Steven&#x27;s Beldum Black Star Promo"></td>
+        <td class="number">SVP207</td>
+        <td class="name">Steven&#x27;s Beldum</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Journey Together - Rival Battle Deck - Steven</td>
+      </tr><tr class="category-row"><th colspan="5">MCAP Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg018_meowscarada_cosmos_holo_us_uk" aria-label="JTG018 Meowscarada Cosmos Holo"></td>
+        <td class="number">JTG018</td>
+        <td class="name">Meowscarada</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg024_blaziken_ex_holo_us_uk" aria-label="JTG024 Blaziken ex Holo"></td>
+        <td class="number">JTG024</td>
+        <td class="name">Blaziken ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Black Bolt &amp; White Flare - Blaziken ex &amp; Volcanion ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg031_volcanion_ex_holo_us_uk" aria-label="JTG031 Volcanion ex Holo"></td>
+        <td class="number">JTG031</td>
+        <td class="name">Volcanion ex</td>
+        <td class="variant">Holo</td>
+        <td class="sources">Black Bolt &amp; White Flare - Blaziken ex &amp; Volcanion ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg041_wailord_cosmos_holo_us_uk" aria-label="JTG041 Wailord Cosmos Holo"></td>
+        <td class="number">JTG041</td>
+        <td class="name">Wailord</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg052_iono_s_tadbulb_cosmos_holo_us_uk" aria-label="JTG052 Iono&#x27;s Tadbulb Cosmos Holo"></td>
+        <td class="number">JTG052</td>
+        <td class="name">Iono&#x27;s Tadbulb</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Journey Together - Iono&#x27;s Bellibolt ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg055_iono_s_kilowattrel_non_holo_us_uk" aria-label="JTG055 Iono&#x27;s Kilowattrel Non Holo"></td>
+        <td class="number">JTG055</td>
+        <td class="name">Iono&#x27;s Kilowattrel</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Journey Together - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg085_lycanroc_cosmos_holo_us_uk" aria-label="JTG085 Lycanroc Cosmos Holo"></td>
+        <td class="number">JTG085</td>
+        <td class="name">Lycanroc</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg095_tyranitar_cosmos_holo_us_uk" aria-label="JTG095 Tyranitar Cosmos Holo"></td>
+        <td class="number">JTG095</td>
+        <td class="name">Tyranitar</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg128_noivern_non_holo_us_uk" aria-label="JTG128 Noivern Non Holo"></td>
+        <td class="number">JTG128</td>
+        <td class="name">Noivern</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Journey Together - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg135_hop_s_wooloo_cosmos_holo_us_uk" aria-label="JTG135 Hop&#x27;s Wooloo Cosmos Holo"></td>
+        <td class="number">JTG135</td>
+        <td class="name">Hop&#x27;s Wooloo</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Journey Together - Hop&#x27;s Zacian ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg136_hop_s_dubwool_cosmos_holo_us_uk" aria-label="JTG136 Hop&#x27;s Dubwool Cosmos Holo"></td>
+        <td class="number">JTG136</td>
+        <td class="name">Hop&#x27;s Dubwool</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Journey Together - Hop&#x27;s Zacian ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg151_lillie_s_pearl_cosmos_holo_us_uk" aria-label="JTG151 Lillie&#x27;s Pearl Cosmos Holo"></td>
+        <td class="number">JTG151</td>
+        <td class="name">Lillie&#x27;s Pearl</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Journey Together - Lillie Premium Tournament Collection</td>
+      </tr><tr class="category-row"><th colspan="5">Prize Pack Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg027_n_s_darmanitan_play_pokemon_stamp_us_uk" aria-label="JTG027 N&#x27;s Darmanitan Play Pokemon Stamp"></td>
+        <td class="number">JTG027</td>
+        <td class="name">N&#x27;s Darmanitan</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg047_iono_s_voltorb_play_pokemon_stamp_us_uk" aria-label="JTG047 Iono&#x27;s Voltorb Play Pokemon Stamp"></td>
+        <td class="number">JTG047</td>
+        <td class="name">Iono&#x27;s Voltorb</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg053_iono_s_bellibolt_ex_play_pokemon_stamp_us_uk" aria-label="JTG053 Iono&#x27;s Bellibolt ex Play Pokemon Stamp"></td>
+        <td class="number">JTG053</td>
+        <td class="name">Iono&#x27;s Bellibolt ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg055_iono_s_kilowattrel_play_pokemon_stamp_us_uk" aria-label="JTG055 Iono&#x27;s Kilowattrel Play Pokemon Stamp"></td>
+        <td class="number">JTG055</td>
+        <td class="name">Iono&#x27;s Kilowattrel</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg056_lillie_s_clefairy_ex_play_pokemon_stamp_us_uk" aria-label="JTG056 Lillie&#x27;s Clefairy ex Play Pokemon Stamp"></td>
+        <td class="number">JTG056</td>
+        <td class="name">Lillie&#x27;s Clefairy ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg067_lillie_s_ribombee_play_pokemon_stamp_us_uk" aria-label="JTG067 Lillie&#x27;s Ribombee Play Pokemon Stamp"></td>
+        <td class="number">JTG067</td>
+        <td class="name">Lillie&#x27;s Ribombee</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg079_mamoswine_ex_play_pokemon_stamp_us_uk" aria-label="JTG079 Mamoswine ex Play Pokemon Stamp"></td>
+        <td class="number">JTG079</td>
+        <td class="name">Mamoswine ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg095_tyranitar_play_pokemon_stamp_us_uk" aria-label="JTG095 Tyranitar Play Pokemon Stamp"></td>
+        <td class="number">JTG095</td>
+        <td class="name">Tyranitar</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg098_n_s_zoroark_ex_play_pokemon_stamp_us_uk" aria-label="JTG098 N&#x27;s Zoroark ex Play Pokemon Stamp"></td>
+        <td class="number">JTG098</td>
+        <td class="name">N&#x27;s Zoroark ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg111_hop_s_zacian_ex_play_pokemon_stamp_us_uk" aria-label="JTG111 Hop&#x27;s Zacian ex Play Pokemon Stamp"></td>
+        <td class="number">JTG111</td>
+        <td class="name">Hop&#x27;s Zacian ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg116_n_s_reshiram_play_pokemon_stamp_us_uk" aria-label="JTG116 N&#x27;s Reshiram Play Pokemon Stamp"></td>
+        <td class="number">JTG116</td>
+        <td class="name">N&#x27;s Reshiram</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg117_hop_s_snorlax_play_pokemon_stamp_us_uk" aria-label="JTG117 Hop&#x27;s Snorlax Play Pokemon Stamp"></td>
+        <td class="number">JTG117</td>
+        <td class="name">Hop&#x27;s Snorlax</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg136_hop_s_dubwool_play_pokemon_stamp_us_uk" aria-label="JTG136 Hop&#x27;s Dubwool Play Pokemon Stamp"></td>
+        <td class="number">JTG136</td>
+        <td class="name">Hop&#x27;s Dubwool</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg146_brock_s_scouting_play_pokemon_stamp_us_uk" aria-label="JTG146 Brock&#x27;s Scouting Play Pokemon Stamp"></td>
+        <td class="number">JTG146</td>
+        <td class="name">Brock&#x27;s Scouting</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg147_hop_s_bag_play_pokemon_stamp_us_uk" aria-label="JTG147 Hop&#x27;s Bag Play Pokemon Stamp"></td>
+        <td class="number">JTG147</td>
+        <td class="name">Hop&#x27;s Bag</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg148_hop_s_choice_band_play_pokemon_stamp_us_uk" aria-label="JTG148 Hop&#x27;s Choice Band Play Pokemon Stamp"></td>
+        <td class="number">JTG148</td>
+        <td class="name">Hop&#x27;s Choice Band</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg149_iris_s_fighting_spirit_play_pokemon_stamp_us_uk" aria-label="JTG149 Iris&#x27;s Fighting Spirit Play Pokemon Stamp"></td>
+        <td class="number">JTG149</td>
+        <td class="name">Iris&#x27;s Fighting Spirit</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg150_levincia_play_pokemon_stamp_us_uk" aria-label="JTG150 Levincia Play Pokemon Stamp"></td>
+        <td class="number">JTG150</td>
+        <td class="name">Levincia</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg151_lillie_s_pearl_play_pokemon_stamp_us_uk" aria-label="JTG151 Lillie&#x27;s Pearl Play Pokemon Stamp"></td>
+        <td class="number">JTG151</td>
+        <td class="name">Lillie&#x27;s Pearl</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg152_n_s_castle_play_pokemon_stamp_us_uk" aria-label="JTG152 N&#x27;s Castle Play Pokemon Stamp"></td>
+        <td class="number">JTG152</td>
+        <td class="name">N&#x27;s Castle</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg153_n_s_pp_up_play_pokemon_stamp_us_uk" aria-label="JTG153 N&#x27;s PP Up Play Pokemon Stamp"></td>
+        <td class="number">JTG153</td>
+        <td class="name">N&#x27;s PP Up</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="jtg154_postwick_play_pokemon_stamp_us_uk" aria-label="JTG154 Postwick Play Pokemon Stamp"></td>
+        <td class="number">JTG154</td>
+        <td class="name">Postwick</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

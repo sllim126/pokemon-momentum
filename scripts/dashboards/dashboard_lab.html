@@ -778,6 +778,25 @@
       font-size: 12px;
     }
 
+    .product-copy {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .product-sparkline {
+      width: 132px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+    }
+
+    .product-sparkline svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
     .badge {
       color: #dceeff;
       background: rgba(70, 184, 255, 0.08);
@@ -875,11 +894,71 @@
     .big-chart {
       height: 190px;
       border-radius: 16px;
+      position: relative;
       background:
         linear-gradient(to right, rgba(136, 162, 205, 0.1) 1px, transparent 1px),
         linear-gradient(to bottom, rgba(136, 162, 205, 0.1) 1px, transparent 1px);
       background-size: 25% 25%;
       overflow: hidden;
+    }
+
+    .chart-window {
+      display: inline-flex;
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid rgba(136, 162, 205, 0.18);
+      border-radius: 999px;
+      background: rgba(11, 20, 35, 0.72);
+    }
+
+    .chart-window button {
+      appearance: none;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 6px 9px;
+      border-radius: 999px;
+      cursor: pointer;
+      min-height: 32px;
+    }
+
+    .chart-window button.active {
+      background: rgba(70, 184, 255, 0.16);
+      color: #e4f5ff;
+      border-color: rgba(70, 184, 255, 0.34);
+    }
+
+    .chart-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .chart-canvas svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .chart-empty,
+    .sparkline-empty {
+      width: 100%;
+      color: var(--muted);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      line-height: 1.45;
+    }
+
+    .chart-empty {
+      height: 100%;
+      padding: 16px;
     }
 
     .deal-input {
@@ -1097,6 +1176,7 @@
         <div class="route-strip" aria-label="Live routes reflected in demo">
           <a class="route-chip" href="/dashboard"><span>Live Dashboard</span><small>/dashboard</small></a>
           <a class="route-chip" href="/set-explorer"><span>Set Explorer</span><small>/set-explorer</small></a>
+          <a class="route-chip" href="/collector-hub"><span>Collector Hub</span><small>/collector-hub</small></a>
           <a class="route-chip" href="/sealed-deals"><span>Sealed Deals</span><small>/sealed-deals</small></a>
           <a class="route-chip" href="/account-settings"><span>Account</span><small>/account-settings</small></a>
         </div>
@@ -1357,28 +1437,30 @@
 
         <div class="detail-scroll">
           <div class="detail-card">
-            <h3><span id="chartTitle">Price Trend</span><span>7D · 30D · 90D · 1Y</span></h3>
+            <h3>
+              <span id="chartTitle">Price Trend</span>
+              <span class="chart-window" aria-label="Chart range">
+                <button type="button" data-chart-days="30">30D</button>
+                <button type="button" data-chart-days="90">90D</button>
+                <button type="button" data-chart-days="180">180D</button>
+                <button type="button" data-chart-days="365" class="active">1Y</button>
+              </span>
+            </h3>
             <div class="big-chart">
-              <svg viewBox="0 0 390 190" preserveAspectRatio="none" aria-label="Mock price trend chart">
-                <path d="M0,150 C42,146 58,126 92,132 C126,138 148,94 184,100 C218,106 234,74 266,76 C306,78 326,48 390,38" fill="none" stroke="rgba(65,211,138,.96)" stroke-width="5" stroke-linecap="round"></path>
-                <path d="M0,170 C42,166 58,146 92,152 C126,158 148,114 184,120 C218,126 234,94 266,96 C306,98 326,68 390,58" fill="none" stroke="rgba(70,184,255,.65)" stroke-width="3" stroke-linecap="round" stroke-dasharray="8 8"></path>
-                <path d="M0,150 C42,146 58,126 92,132 C126,138 148,94 184,100 C218,106 234,74 266,76 C306,78 326,48 390,38 L390,190 L0,190 Z" fill="rgba(65,211,138,.10)"></path>
-              </svg>
+              <div class="chart-canvas" id="detailChart">
+                <div class="chart-empty">Loading live chart...</div>
+              </div>
             </div>
           </div>
 
           <div class="detail-card">
-            <h3><span id="calculatorTitle">Deal Calculator</span><span id="detailMarket">Market $542</span></h3>
-            <div class="deal-input">
-              <div>
-                <label id="sellerLabel" for="sellerInput">Seller Price</label>
-                <input id="sellerInput" type="number" value="450" inputmode="decimal">
-              </div>
-              <button class="btn primary" type="button">Check</button>
+            <h3><span id="toolShortcutTitle">Research Shortcuts</span><span id="detailMarket">Market $542</span></h3>
+            <div class="detail-links">
+              <a class="live-link" id="dealToolLink" href="/sealed-deals"><span>Open deal tool page</span><span>Separate utility</span></a>
+              <a class="live-link" id="indexToolLink" href="/index-overview"><span>Open index research</span><span>/index-overview</span></a>
             </div>
-            <div class="deal-result" id="dealResult">
-              <strong>GOOD DEAL</strong>
-              <span>$92 under market, 17.0% discount. Good buy if condition is clean.</span>
+            <div class="insight" id="toolShortcutCopy">
+              Deal checking is useful, but it works better as a separate utility than as a main desktop dashboard panel.
             </div>
           </div>
 
@@ -1486,15 +1568,20 @@
     let selectedRow = null;
     let currentSearchQuery = "";
     let groupsCache = {};
+    let sparklineCache = {};
+    let seriesCache = {};
+    let currentChartDays = 365;
+    let chartRequestToken = 0;
     let isLoading = false;
 
     const rowsEl = document.getElementById("rows");
     const tableHead = document.getElementById("tableHead");
-    const sellerInput = document.getElementById("sellerInput");
     const detailThumb = document.getElementById("detailThumb");
     const primaryDetailLink = document.getElementById("primaryDetailLink");
     const secondaryDetailLink = document.getElementById("secondaryDetailLink");
     const tertiaryDetailLink = document.getElementById("tertiaryDetailLink");
+    const dealToolLink = document.getElementById("dealToolLink");
+    const indexToolLink = document.getElementById("indexToolLink");
     const searchInput = document.getElementById("globalSearch");
     const searchButton = document.querySelector(".search button");
     const switchboardState = document.getElementById("switchboardState");
@@ -1502,6 +1589,8 @@
     const setFilter = document.getElementById("setFilter");
     const primaryScreener = document.getElementById("primaryScreener");
     const tabs = Array.from(document.querySelectorAll(".tab[data-view]"));
+    const chartEl = document.getElementById("detailChart");
+    const chartWindowButtons = Array.from(document.querySelectorAll("[data-chart-days]"));
 
     function categoryId() {
       return MARKET_CATEGORY[activeMarket] || 3;
@@ -1680,6 +1769,10 @@
       return `<div class="${baseClass} has-image"><img src="${imageUrl}" alt="${escapedAlt}" loading="lazy" decoding="async"></div>`;
     }
 
+    function rowKey(row) {
+      return `${row?.productId || row?.groupId || row?.productName || "row"}||${row?.subTypeName || ""}`;
+    }
+
     function filterRows(rows) {
       const groupId = selectedGroupId();
       if (!groupId || activeView === "group_products") return rows;
@@ -1709,10 +1802,42 @@
       tableHead.innerHTML = `<tr>${currentColumns().map((column) => `<th>${labels[column] || column}</th>`).join("")}</tr>`;
     }
 
+    function renderSparklineSvg(values, width = 132, height = 26) {
+      if (!values || values.length < 2) {
+        return `<div class="sparkline-empty">No trend</div>`;
+      }
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const span = max - min || 1;
+      const points = values.map((value, index) => {
+        const x = (index / Math.max(values.length - 1, 1)) * width;
+        const y = height - (((value - min) / span) * (height - 8) + 4);
+        return `${x.toFixed(2)},${y.toFixed(2)}`;
+      }).join(" ");
+      const area = `0,${height} ${points} ${width},${height}`;
+      return `
+        <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" aria-hidden="true">
+          <polygon points="${area}" fill="rgba(70,184,255,0.16)"></polygon>
+          <polyline points="${points}" fill="none" stroke="#46b8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+        </svg>
+      `;
+    }
+
+    function setChartWindowState() {
+      chartWindowButtons.forEach((button) => {
+        button.classList.toggle("active", Number(button.dataset.chartDays) === currentChartDays);
+      });
+    }
+
+    function setChartLoading(message = "Loading live chart...") {
+      if (!chartEl) return;
+      chartEl.innerHTML = `<div class="chart-empty">${message}</div>`;
+    }
+
     function displayCell(column, row) {
       if (column === "productName") {
         const metaBits = [row.number ? `#${row.number}` : "", row.rarity || row.subTypeName || ""].filter(Boolean).join(" · ");
-        return `<div class="product-cell">${renderThumbMarkup(row, row.productName)}<div><strong>${row.productName}</strong><span>${row.groupName}${metaBits ? ` · ${metaBits}` : ""}</span></div></div>`;
+        return `<div class="product-cell">${renderThumbMarkup(row, row.productName)}<div class="product-copy"><div><strong>${row.productName}</strong><span>${row.groupName}${metaBits ? ` · ${metaBits}` : ""}</span></div><div class="product-sparkline" data-row-sparkline="${rowKey(row)}"><div class="sparkline-empty">Loading trend</div></div></div></div>`;
       }
       if (["p_now", "p_prior", "latest_price", "prior_high_window"].includes(column)) {
         return money(row[column]);
@@ -1743,6 +1868,47 @@
           rowEl.classList.add("active");
           selectedRow = activeRows.find((entry) => entry.key === rowEl.dataset.key) || activeRows[0] || null;
           updateDetail();
+        });
+      });
+
+      hydrateRowSparklines().catch(() => {});
+    }
+
+    async function hydrateRowSparklines() {
+      const days = 30;
+      const pendingRows = activeRows.filter((row) => row.productId && !sparklineCache[`${rowKey(row)}|${days}`]);
+      for (let index = 0; index < pendingRows.length; index += 50) {
+        const chunk = pendingRows.slice(index, index + 50);
+        if (!chunk.length) continue;
+        try {
+          const response = await fetch(`/sparkline_batch?category_id=${encodeURIComponent(categoryId())}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              days,
+              items: chunk.map((row) => ({
+                productId: row.productId,
+                subTypeName: row.subTypeName || ""
+              }))
+            })
+          });
+          if (!response.ok) throw new Error("Sparkline request failed");
+          const payload = await response.json();
+          const items = payload.items || {};
+          Object.entries(items).forEach(([key, values]) => {
+            sparklineCache[`${key}|${days}`] = Array.isArray(values) ? values : [];
+          });
+        } catch (_) {
+          chunk.forEach((row) => {
+            sparklineCache[`${rowKey(row)}|${days}`] = [];
+          });
+        }
+      }
+
+      activeRows.forEach((row) => {
+        const values = sparklineCache[`${rowKey(row)}|${days}`] || [];
+        rowsEl.querySelectorAll(`[data-row-sparkline="${CSS.escape(rowKey(row))}"]`).forEach((el) => {
+          el.innerHTML = renderSparklineSvg(values);
         });
       });
     }
@@ -1792,6 +1958,89 @@
       }
     }
 
+    function renderSeriesChart(seriesPayload) {
+      if (!chartEl) return;
+      const rows = Array.isArray(seriesPayload?.rows) ? seriesPayload.rows : [];
+      if (rows.length < 2) {
+        chartEl.innerHTML = `<div class="chart-empty">Not enough history to draw a chart.</div>`;
+        return;
+      }
+
+      const width = 390;
+      const height = 190;
+      const chartTop = 12;
+      const chartBottom = 162;
+      const leftPad = 4;
+      const rightPad = 4;
+      const priceValues = rows.map((row) => Number(row[1])).filter((value) => Number.isFinite(value));
+      const sma7Values = rows.map((row) => Number(row[2])).filter((value) => Number.isFinite(value));
+      const sma30Values = rows.map((row) => Number(row[3])).filter((value) => Number.isFinite(value));
+      const allValues = [...priceValues, ...sma7Values, ...sma30Values].filter((value) => Number.isFinite(value));
+      if (!allValues.length) {
+        chartEl.innerHTML = `<div class="chart-empty">No price points returned for this chart window.</div>`;
+        return;
+      }
+
+      const min = Math.min(...allValues);
+      const max = Math.max(...allValues);
+      const span = max - min || 1;
+      const pointFor = (value, index) => {
+        if (!Number.isFinite(Number(value))) return null;
+        const x = leftPad + (index / Math.max(rows.length - 1, 1)) * (width - leftPad - rightPad);
+        const y = chartBottom - (((Number(value) - min) / span) * (chartBottom - chartTop));
+        return `${x.toFixed(2)},${y.toFixed(2)}`;
+      };
+      const pricePoints = rows.map((row, index) => pointFor(row[1], index)).filter(Boolean);
+      const sma7Points = rows.map((row, index) => pointFor(row[2], index)).filter(Boolean);
+      const sma30Points = rows.map((row, index) => pointFor(row[3], index)).filter(Boolean);
+      const area = [`${leftPad},${chartBottom}`, ...pricePoints, `${width - rightPad},${chartBottom}`].join(" ");
+      const firstPrice = priceValues[0];
+      const lastPrice = priceValues[priceValues.length - 1];
+      const labelY = 182;
+      const windowChange = Number.isFinite(firstPrice) && Number.isFinite(lastPrice) && firstPrice !== 0
+        ? (((lastPrice / firstPrice) - 1) * 100)
+        : null;
+      const windowLabel = Number.isFinite(windowChange) ? formatPercent(windowChange) : "n/a";
+      const windowColor = Number.isFinite(windowChange) ? (windowChange >= 0 ? "#41d38a" : "#ff6b6b") : "#94a7c8";
+
+      chartEl.innerHTML = `
+        <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Live price trend">
+          <polygon points="${area}" fill="rgba(70,184,255,0.12)"></polygon>
+          <polyline points="${pricePoints.join(" ")}" fill="none" stroke="#46b8ff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+          <polyline points="${sma7Points.join(" ")}" fill="none" stroke="#41d38a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+          <polyline points="${sma30Points.join(" ")}" fill="none" stroke="#ffd166" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="7 6"></polyline>
+          <text x="4" y="${labelY}" fill="#94a7c8" font-size="11">${money(firstPrice)}</text>
+          <text x="${width - 4}" y="${labelY}" fill="#eef5ff" font-size="11" text-anchor="end">${money(lastPrice)}</text>
+          <text x="${width - 4}" y="14" fill="${windowColor}" font-size="11" text-anchor="end">${windowLabel}</text>
+        </svg>
+      `;
+    }
+
+    async function loadSelectedSeries(row) {
+      if (!row?.productId || activeProduct === "graded") {
+        setChartLoading(activeProduct === "graded" ? "Graded charting is still staged for a later live pass." : "Select a live product to see its chart.");
+        return;
+      }
+
+      const token = ++chartRequestToken;
+      const cacheKey = `${categoryId()}|${row.productId}|${row.subTypeName || ""}|${currentChartDays}`;
+      if (seriesCache[cacheKey]) {
+        renderSeriesChart(seriesCache[cacheKey]);
+        return;
+      }
+
+      setChartLoading("Loading live chart...");
+      try {
+        const payload = await getJson(`/series?productId=${encodeURIComponent(row.productId)}&subTypeName=${encodeURIComponent(row.subTypeName || "")}&days=${encodeURIComponent(currentChartDays)}`, categoryId());
+        if (token !== chartRequestToken) return;
+        seriesCache[cacheKey] = payload;
+        renderSeriesChart(payload);
+      } catch (_) {
+        if (token !== chartRequestToken) return;
+        setChartLoading("Unable to load live chart for this product.");
+      }
+    }
+
     function detailMarketValue(row) {
       return Number(row?.latest_price ?? row?.p_now ?? 0);
     }
@@ -1815,6 +2064,19 @@
       tertiaryDetailLink.innerHTML = activeView === "group_products"
         ? "<span>Open set explorer</span><span>/set-explorer</span>"
         : "<span>Browse related sets</span><span>/dashboard?tab=group_products</span>";
+
+      if (dealToolLink) {
+        dealToolLink.href = activeProduct === "sealed" ? "/sealed-deals" : detailPath;
+        dealToolLink.innerHTML = activeProduct === "sealed"
+          ? "<span>Open sealed deal tool</span><span>/sealed-deals</span>"
+          : "<span>Open focused live view</span><span>Use row context on /dashboard</span>";
+      }
+      if (indexToolLink) {
+        indexToolLink.href = activeMarket === "JP" ? "/index-overview-jp-pokemon100" : "/index-overview";
+        indexToolLink.innerHTML = activeMarket === "JP"
+          ? "<span>Open JP index research</span><span>/index-overview-jp-pokemon100</span>"
+          : "<span>Open index research</span><span>/index-overview</span>";
+      }
     }
 
     function setEmptyDetail(message) {
@@ -1832,9 +2094,10 @@
       document.getElementById("targetSell").textContent = "n/a";
       document.getElementById("riskNote").textContent = "Needs follow-up";
       document.getElementById("detailInsight").textContent = message;
-      sellerInput.value = "";
+      document.getElementById("toolShortcutTitle").textContent = "Research Shortcuts";
+      document.getElementById("toolShortcutCopy").textContent = message;
+      setChartLoading(message);
       updateLiveLinks();
-      updateDeal();
     }
 
     function updateDetail() {
@@ -1863,8 +2126,10 @@
       document.getElementById("targetSell").textContent = Number.isFinite(marketValue) ? money(marketValue * 1.12) : "n/a";
       document.getElementById("riskNote").textContent = activeView === "good_buys" ? "Momentum still soft" : activeView === "breakouts" ? "Needs follow-through" : activeView === "group_products" ? "Set context only" : "Validate liquidity";
       document.getElementById("chartTitle").textContent = `${LIVE_TABS[activeView].label} Snapshot`;
-      document.getElementById("calculatorTitle").textContent = activeProduct === "sealed" ? "Landed Cost Calculator" : "Deal Calculator";
-      document.getElementById("sellerLabel").textContent = activeProduct === "sealed" ? "Landed / Seller Price" : "Seller Price";
+      document.getElementById("toolShortcutTitle").textContent = activeProduct === "sealed" ? "Sealed Utilities" : "Research Shortcuts";
+      document.getElementById("toolShortcutCopy").textContent = activeProduct === "sealed"
+        ? "Use the dedicated sealed utility page when you want transaction math. Keep this desktop page focused on finding the right products first."
+        : "Deal checking is better as a separate utility than as a permanent desktop panel. This page should stay centered on discovery and evaluation.";
       document.getElementById("breakdownTitle").textContent = `${LIVE_TABS[activeView].label} Breakdown`;
       document.getElementById("metricOneLabel").textContent = activeView === "good_buys" ? "Vs SMA30" : "Primary Signal";
       document.getElementById("metricTwoLabel").textContent = activeView === "browse_species" || activeView === "group_products" ? "Market Price" : "Recent Move";
@@ -1881,44 +2146,8 @@
           ? "Live Browse Set result. This is useful for scanning one set cleanly, but the chart and deeper indicator stack still need a later pass."
           : `${LIVE_TABS[activeView].label} is now live on this lab page. Use the center table for discovery first, then use this rail for a quick pricing and context check.`;
 
-      sellerInput.value = Number.isFinite(marketValue) && marketValue > 0 ? Math.round(marketValue * 0.88) : "";
       updateLiveLinks();
-      updateDeal();
-    }
-
-    function updateDeal() {
-      const marketValue = detailMarketValue(selectedRow);
-      const seller = Number(sellerInput.value || 0);
-      const result = document.getElementById("dealResult");
-
-      if (!Number.isFinite(marketValue) || marketValue <= 0 || !seller) {
-        result.style.background = "rgba(255, 209, 102, 0.10)";
-        result.style.borderColor = "rgba(255, 209, 102, 0.28)";
-        result.innerHTML = "<strong>ENTER PRICE</strong><span>Add a price to calculate discount versus the live market value shown in the selected row.</span>";
-        return;
-      }
-
-      const diff = marketValue - seller;
-      const pct = (diff / marketValue) * 100;
-      const noun = activeProduct === "sealed" ? "landed cost" : "seller price";
-
-      if (pct >= 20) {
-        result.style.background = "rgba(65, 211, 138, 0.10)";
-        result.style.borderColor = "rgba(65, 211, 138, 0.28)";
-        result.innerHTML = `<strong>STRONG BUY</strong><span>${money(diff)} under market, ${pct.toFixed(1)}% discount. Excellent ${noun} if condition and fees still work.</span>`;
-      } else if (pct >= 10) {
-        result.style.background = "rgba(65, 211, 138, 0.10)";
-        result.style.borderColor = "rgba(65, 211, 138, 0.28)";
-        result.innerHTML = `<strong>GOOD DEAL</strong><span>${money(diff)} under market, ${pct.toFixed(1)}% discount. Worth a closer look.</span>`;
-      } else if (pct >= -5) {
-        result.style.background = "rgba(255, 209, 102, 0.10)";
-        result.style.borderColor = "rgba(255, 209, 102, 0.28)";
-        result.innerHTML = `<strong>FAIR / WATCH</strong><span>${Math.abs(pct).toFixed(1)}% from market. Probably needs a better offer to become compelling.</span>`;
-      } else {
-        result.style.background = "rgba(255, 107, 107, 0.10)";
-        result.style.borderColor = "rgba(255, 107, 107, 0.28)";
-        result.innerHTML = `<strong>PASS</strong><span>${money(Math.abs(diff))} over market. Hard to justify unless there is a special reason to pay up.</span>`;
-      }
+      loadSelectedSeries(row);
     }
 
     function syncTabs() {
@@ -2059,6 +2288,16 @@
       await loadLiveData();
     });
 
+    chartWindowButtons.forEach((button) => {
+      button.addEventListener("click", async () => {
+        const days = Number(button.dataset.chartDays);
+        if (!Number.isFinite(days) || days === currentChartDays) return;
+        currentChartDays = days;
+        setChartWindowState();
+        await loadSelectedSeries(selectedRow);
+      });
+    });
+
     searchButton.addEventListener("click", runSearch);
     searchInput.addEventListener("keydown", async (event) => {
       if (event.key === "Enter") {
@@ -2066,12 +2305,12 @@
         await runSearch();
       }
     });
-    sellerInput.addEventListener("input", updateDeal);
 
     (async () => {
       syncTabs();
       syncMarketButtons();
       syncProductButtons();
+      setChartWindowState();
       await populateSetOptions(false);
       await loadLiveData();
     })();

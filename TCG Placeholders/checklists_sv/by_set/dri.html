@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DRI - Destined Rivals Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;DRI&quot;}'>
+    <header>
+      <div>
+        <h1>DRI - Destined Rivals</h1>
+        <p class="meta">60 checklist rows - 2025-05-30</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/dri.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Stamped Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri031_team_rocket_s_moltres_ex_expansion_logo_stamp_us_uk" aria-label="DRI031 Team Rocket&#x27;s Moltres ex Expansion Logo Stamp"></td>
+        <td class="number">DRI031</td>
+        <td class="name">Team Rocket&#x27;s Moltres ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Team Rocket&#x27;s Moltres ex Ultra-Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri034_ethan_s_typhlosion_cosmos_holo_expansion_logo_stamp_us_uk" aria-label="DRI034 Ethan&#x27;s Typhlosion Cosmos Holo Expansion Logo Stamp"></td>
+        <td class="number">DRI034</td>
+        <td class="name">Ethan&#x27;s Typhlosion</td>
+        <td class="variant">Cosmos Holo Expansion Logo Stamp</td>
+        <td class="sources">Destined Rivals - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri049_misty_s_gyarados_cosmos_holo_expansion_logo_stamp_us_uk" aria-label="DRI049 Misty&#x27;s Gyarados Cosmos Holo Expansion Logo Stamp"></td>
+        <td class="number">DRI049</td>
+        <td class="name">Misty&#x27;s Gyarados</td>
+        <td class="variant">Cosmos Holo Expansion Logo Stamp</td>
+        <td class="sources">Destined Rivals - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri051_team_rocket_s_articuno_best_buy_stamp_us" aria-label="DRI051 Team Rocket&#x27;s Articuno Best Buy Stamp"></td>
+        <td class="number">DRI051</td>
+        <td class="name">Team Rocket&#x27;s Articuno</td>
+        <td class="variant">Best Buy Stamp</td>
+        <td class="sources">Destined Rivals - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri070_team_rocket_s_zapdos_eb_games_stamp_australia_new_zealand" aria-label="DRI070 Team Rocket&#x27;s Zapdos EB Games Stamp"></td>
+        <td class="number">DRI070</td>
+        <td class="name">Team Rocket&#x27;s Zapdos</td>
+        <td class="variant">EB Games Stamp</td>
+        <td class="sources">Destined Rivals - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri070_team_rocket_s_zapdos_gamestop_stamp_us_canada" aria-label="DRI070 Team Rocket&#x27;s Zapdos GameStop Stamp"></td>
+        <td class="number">DRI070</td>
+        <td class="name">Team Rocket&#x27;s Zapdos</td>
+        <td class="variant">GameStop Stamp</td>
+        <td class="sources">Destined Rivals - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri087_team_rocket_s_mimikyu_cosmos_holo_expansion_logo_stamp_us_uk" aria-label="DRI087 Team Rocket&#x27;s Mimikyu Cosmos Holo Expansion Logo Stamp"></td>
+        <td class="number">DRI087</td>
+        <td class="name">Team Rocket&#x27;s Mimikyu</td>
+        <td class="variant">Cosmos Holo Expansion Logo Stamp</td>
+        <td class="sources">Destined Rivals - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri096_team_rocket_s_tyranitar_cosmos_holo_expansion_logo_stamp_us_uk" aria-label="DRI096 Team Rocket&#x27;s Tyranitar Cosmos Holo Expansion Logo Stamp"></td>
+        <td class="number">DRI096</td>
+        <td class="name">Team Rocket&#x27;s Tyranitar</td>
+        <td class="variant">Cosmos Holo Expansion Logo Stamp</td>
+        <td class="sources">Destined Rivals - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri208_team_rocket_s_moltres_ex_expansion_logo_stamp_us_uk" aria-label="DRI208 Team Rocket&#x27;s Moltres ex Expansion Logo Stamp"></td>
+        <td class="number">DRI208</td>
+        <td class="name">Team Rocket&#x27;s Moltres ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Team Rocket&#x27;s Moltres ex Ultra-Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri229_team_rocket_s_moltres_ex_expansion_logo_stamp_us_uk" aria-label="DRI229 Team Rocket&#x27;s Moltres ex Expansion Logo Stamp"></td>
+        <td class="number">DRI229</td>
+        <td class="name">Team Rocket&#x27;s Moltres ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Team Rocket&#x27;s Moltres ex Ultra-Premium Collection</td>
+      </tr><tr class="category-row"><th colspan="5">Staff Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri034_ethan_s_typhlosion_staff_stamp_us_uk" aria-label="DRI034 Ethan&#x27;s Typhlosion Staff Stamp"></td>
+        <td class="number">DRI034</td>
+        <td class="name">Ethan&#x27;s Typhlosion</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Destined Rivals - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri049_misty_s_gyarados_staff_stamp_us_uk" aria-label="DRI049 Misty&#x27;s Gyarados Staff Stamp"></td>
+        <td class="number">DRI049</td>
+        <td class="name">Misty&#x27;s Gyarados</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Destined Rivals - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri087_team_rocket_s_mimikyu_staff_stamp_us_uk" aria-label="DRI087 Team Rocket&#x27;s Mimikyu Staff Stamp"></td>
+        <td class="number">DRI087</td>
+        <td class="name">Team Rocket&#x27;s Mimikyu</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Destined Rivals - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri096_team_rocket_s_tyranitar_staff_stamp_us_uk" aria-label="DRI096 Team Rocket&#x27;s Tyranitar Staff Stamp"></td>
+        <td class="number">DRI096</td>
+        <td class="name">Team Rocket&#x27;s Tyranitar</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Destined Rivals - Build &amp; Battle Box</td>
+      </tr><tr class="category-row"><th colspan="5">Promo Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp196_charizard_ex_black_star_promo_us_uk" aria-label="SVP196 Charizard ex Black Star Promo"></td>
+        <td class="number">SVP196</td>
+        <td class="name">Charizard ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Destined Rivals - Charizard ex Special Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp199_zarude_cosmos_holo_us_uk" aria-label="SVP199 Zarude Cosmos Holo"></td>
+        <td class="number">SVP199</td>
+        <td class="name">Zarude</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Destined Rivals - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp200_eevee_cosmos_holo_us_uk" aria-label="SVP200 Eevee Cosmos Holo"></td>
+        <td class="number">SVP200</td>
+        <td class="name">Eevee</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Destined Rivals - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp201_zebstrika_cosmos_holo_us_uk" aria-label="SVP201 Zebstrika Cosmos Holo"></td>
+        <td class="number">SVP201</td>
+        <td class="name">Zebstrika</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Destined Rivals - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp202_kangaskhan_cosmos_holo_us_uk" aria-label="SVP202 Kangaskhan Cosmos Holo"></td>
+        <td class="number">SVP202</td>
+        <td class="name">Kangaskhan</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Destined Rivals - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp203_team_rocket_s_wobbuffet_black_star_promo_us_uk" aria-label="SVP203 Team Rocket&#x27;s Wobbuffet Black Star Promo"></td>
+        <td class="number">SVP203</td>
+        <td class="name">Team Rocket&#x27;s Wobbuffet</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Destined Rivals - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp203_team_rocket_s_wobbuffet_pokemon_center_stamp_us_uk" aria-label="SVP203 Team Rocket&#x27;s Wobbuffet Pokemon Center Stamp"></td>
+        <td class="number">SVP203</td>
+        <td class="name">Team Rocket&#x27;s Wobbuffet</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Destined Rivals - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp204_cynthia_s_garchomp_ex_black_star_promo_us_uk" aria-label="SVP204 Cynthia&#x27;s Garchomp ex Black Star Promo"></td>
+        <td class="number">SVP204</td>
+        <td class="name">Cynthia&#x27;s Garchomp ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Destined Rivals - Cynthia&#x27;s Garchomp ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp205_team_rocket_s_mewtwo_ex_black_star_promo_us_uk" aria-label="SVP205 Team Rocket&#x27;s Mewtwo ex Black Star Promo"></td>
+        <td class="number">SVP205</td>
+        <td class="name">Team Rocket&#x27;s Mewtwo ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Destined Rivals - Team Rocket&#x27;s Mewtwo ex Box</td>
+      </tr><tr class="category-row"><th colspan="5">MCAP Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri018_hydrapple_pixel_cosmos_holo_us_uk" aria-label="DRI018 Hydrapple Pixel Cosmos Holo"></td>
+        <td class="number">DRI018</td>
+        <td class="name">Hydrapple</td>
+        <td class="variant">Pixel Cosmos Holo</td>
+        <td class="sources">Phantasmal Flames - Phantasmal Flames Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri034_ethan_s_typhlosion_non_holo_us_uk" aria-label="DRI034 Ethan&#x27;s Typhlosion Non Holo"></td>
+        <td class="number">DRI034</td>
+        <td class="name">Ethan&#x27;s Typhlosion</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Destined Rivals - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri042_blaziken_pixel_cosmos_holo_us_uk" aria-label="DRI042 Blaziken Pixel Cosmos Holo"></td>
+        <td class="number">DRI042</td>
+        <td class="name">Blaziken</td>
+        <td class="variant">Pixel Cosmos Holo</td>
+        <td class="sources">Phantasmal Flames - Phantasmal Flames Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri049_misty_s_gyarados_non_holo_us_uk" aria-label="DRI049 Misty&#x27;s Gyarados Non Holo"></td>
+        <td class="number">DRI049</td>
+        <td class="name">Misty&#x27;s Gyarados</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Destined Rivals - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri051_team_rocket_s_articuno_cosmos_holo_us_uk" aria-label="DRI051 Team Rocket&#x27;s Articuno Cosmos Holo"></td>
+        <td class="number">DRI051</td>
+        <td class="name">Team Rocket&#x27;s Articuno</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Black Bolt &amp; White Flare - Enhanced 2-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri070_team_rocket_s_zapdos_cosmos_holo_us_uk" aria-label="DRI070 Team Rocket&#x27;s Zapdos Cosmos Holo"></td>
+        <td class="number">DRI070</td>
+        <td class="name">Team Rocket&#x27;s Zapdos</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Black Bolt &amp; White Flare - Enhanced 2-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri087_team_rocket_s_mimikyu_non_holo_us_uk" aria-label="DRI087 Team Rocket&#x27;s Mimikyu Non Holo"></td>
+        <td class="number">DRI087</td>
+        <td class="name">Team Rocket&#x27;s Mimikyu</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Destined Rivals - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri096_team_rocket_s_tyranitar_cosmos_holo_us_uk" aria-label="DRI096 Team Rocket&#x27;s Tyranitar Cosmos Holo"></td>
+        <td class="number">DRI096</td>
+        <td class="name">Team Rocket&#x27;s Tyranitar</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Black Bolt &amp; White Flare - Enhanced 2-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri096_team_rocket_s_tyranitar_non_holo_us_uk" aria-label="DRI096 Team Rocket&#x27;s Tyranitar Non Holo"></td>
+        <td class="number">DRI096</td>
+        <td class="name">Team Rocket&#x27;s Tyranitar</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Destined Rivals - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri102_cynthia_s_gible_cosmos_holo_us_uk" aria-label="DRI102 Cynthia&#x27;s Gible Cosmos Holo"></td>
+        <td class="number">DRI102</td>
+        <td class="name">Cynthia&#x27;s Gible</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Destined Rivals - Cynthia&#x27;s Garchomp ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri103_cynthia_s_gabite_cosmos_holo_us_uk" aria-label="DRI103 Cynthia&#x27;s Gabite Cosmos Holo"></td>
+        <td class="number">DRI103</td>
+        <td class="name">Cynthia&#x27;s Gabite</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Destined Rivals - Cynthia&#x27;s Garchomp ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri149_team_rocket_s_meowth_cosmos_holo_us_uk" aria-label="DRI149 Team Rocket&#x27;s Meowth Cosmos Holo"></td>
+        <td class="number">DRI149</td>
+        <td class="name">Team Rocket&#x27;s Meowth</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Destined Rivals - Team Rocket&#x27;s Mewtwo ex Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri174_team_rocket_s_giovanni_cosmos_holo_us_uk" aria-label="DRI174 Team Rocket&#x27;s Giovanni Cosmos Holo"></td>
+        <td class="number">DRI174</td>
+        <td class="name">Team Rocket&#x27;s Giovanni</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Destined Rivals - Team Rocket&#x27;s Mewtwo ex Box</td>
+      </tr><tr class="category-row"><th colspan="5">Prize Pack Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri003_yanmega_ex_play_pokemon_stamp_us_uk" aria-label="DRI003 Yanmega ex Play Pokemon Stamp"></td>
+        <td class="number">DRI003</td>
+        <td class="name">Yanmega ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri008_cynthia_s_roserade_play_pokemon_stamp_us_uk" aria-label="DRI008 Cynthia&#x27;s Roserade Play Pokemon Stamp"></td>
+        <td class="number">DRI008</td>
+        <td class="name">Cynthia&#x27;s Roserade</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri010_shaymin_play_pokemon_stamp_us_uk" aria-label="DRI010 Shaymin Play Pokemon Stamp"></td>
+        <td class="number">DRI010</td>
+        <td class="name">Shaymin</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri020_team_rocket_s_spidops_play_pokemon_stamp_us_uk" aria-label="DRI020 Team Rocket&#x27;s Spidops Play Pokemon Stamp"></td>
+        <td class="number">DRI020</td>
+        <td class="name">Team Rocket&#x27;s Spidops</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri033_ethan_s_quilava_play_pokemon_stamp_us_uk" aria-label="DRI033 Ethan&#x27;s Quilava Play Pokemon Stamp"></td>
+        <td class="number">DRI033</td>
+        <td class="name">Ethan&#x27;s Quilava</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri034_ethan_s_typhlosion_play_pokemon_stamp_us_uk" aria-label="DRI034 Ethan&#x27;s Typhlosion Play Pokemon Stamp"></td>
+        <td class="number">DRI034</td>
+        <td class="name">Ethan&#x27;s Typhlosion</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri036_ethan_s_magcargo_play_pokemon_stamp_us_uk" aria-label="DRI036 Ethan&#x27;s Magcargo Play Pokemon Stamp"></td>
+        <td class="number">DRI036</td>
+        <td class="name">Ethan&#x27;s Magcargo</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri039_ethan_s_ho_oh_ex_play_pokemon_stamp_us_uk" aria-label="DRI039 Ethan&#x27;s Ho-Oh ex Play Pokemon Stamp"></td>
+        <td class="number">DRI039</td>
+        <td class="name">Ethan&#x27;s Ho-Oh ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri081_team_rocket_s_mewtwo_ex_play_pokemon_stamp_us_uk" aria-label="DRI081 Team Rocket&#x27;s Mewtwo ex Play Pokemon Stamp"></td>
+        <td class="number">DRI081</td>
+        <td class="name">Team Rocket&#x27;s Mewtwo ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri103_cynthia_s_gabite_play_pokemon_stamp_us_uk" aria-label="DRI103 Cynthia&#x27;s Gabite Play Pokemon Stamp"></td>
+        <td class="number">DRI103</td>
+        <td class="name">Cynthia&#x27;s Gabite</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri104_cynthia_s_garchomp_ex_play_pokemon_stamp_us_uk" aria-label="DRI104 Cynthia&#x27;s Garchomp ex Play Pokemon Stamp"></td>
+        <td class="number">DRI104</td>
+        <td class="name">Cynthia&#x27;s Garchomp ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri119_team_rocket_s_nidoking_ex_play_pokemon_stamp_us_uk" aria-label="DRI119 Team Rocket&#x27;s Nidoking ex Play Pokemon Stamp"></td>
+        <td class="number">DRI119</td>
+        <td class="name">Team Rocket&#x27;s Nidoking ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri122_team_rocket_s_crobat_ex_play_pokemon_stamp_us_uk" aria-label="DRI122 Team Rocket&#x27;s Crobat ex Play Pokemon Stamp"></td>
+        <td class="number">DRI122</td>
+        <td class="name">Team Rocket&#x27;s Crobat ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri139_arven_s_mabosstiff_ex_play_pokemon_stamp_us_uk" aria-label="DRI139 Arven&#x27;s Mabosstiff ex Play Pokemon Stamp"></td>
+        <td class="number">DRI139</td>
+        <td class="name">Arven&#x27;s Mabosstiff ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri162_cynthia_s_power_weight_play_pokemon_stamp_us_uk" aria-label="DRI162 Cynthia&#x27;s Power Weight Play Pokemon Stamp"></td>
+        <td class="number">DRI162</td>
+        <td class="name">Cynthia&#x27;s Power Weight</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri165_ethan_s_adventure_play_pokemon_stamp_us_uk" aria-label="DRI165 Ethan&#x27;s Adventure Play Pokemon Stamp"></td>
+        <td class="number">DRI165</td>
+        <td class="name">Ethan&#x27;s Adventure</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri170_team_rocket_s_archer_play_pokemon_stamp_us_uk" aria-label="DRI170 Team Rocket&#x27;s Archer Play Pokemon Stamp"></td>
+        <td class="number">DRI170</td>
+        <td class="name">Team Rocket&#x27;s Archer</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri171_team_rocket_s_ariana_play_pokemon_stamp_us_uk" aria-label="DRI171 Team Rocket&#x27;s Ariana Play Pokemon Stamp"></td>
+        <td class="number">DRI171</td>
+        <td class="name">Team Rocket&#x27;s Ariana</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri173_team_rocket_s_factory_play_pokemon_stamp_us_uk" aria-label="DRI173 Team Rocket&#x27;s Factory Play Pokemon Stamp"></td>
+        <td class="number">DRI173</td>
+        <td class="name">Team Rocket&#x27;s Factory</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri174_team_rocket_s_giovanni_play_pokemon_stamp_us_uk" aria-label="DRI174 Team Rocket&#x27;s Giovanni Play Pokemon Stamp"></td>
+        <td class="number">DRI174</td>
+        <td class="name">Team Rocket&#x27;s Giovanni</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri176_team_rocket_s_petrel_play_pokemon_stamp_us_uk" aria-label="DRI176 Team Rocket&#x27;s Petrel Play Pokemon Stamp"></td>
+        <td class="number">DRI176</td>
+        <td class="name">Team Rocket&#x27;s Petrel</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri177_team_rocket_s_proton_play_pokemon_stamp_us_uk" aria-label="DRI177 Team Rocket&#x27;s Proton Play Pokemon Stamp"></td>
+        <td class="number">DRI177</td>
+        <td class="name">Team Rocket&#x27;s Proton</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri178_team_rocket_s_transceiver_play_pokemon_stamp_us_uk" aria-label="DRI178 Team Rocket&#x27;s Transceiver Play Pokemon Stamp"></td>
+        <td class="number">DRI178</td>
+        <td class="name">Team Rocket&#x27;s Transceiver</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="dri182_team_rocket_s_energy_play_pokemon_stamp_us_uk" aria-label="DRI182 Team Rocket&#x27;s Energy Play Pokemon Stamp"></td>
+        <td class="number">DRI182</td>
+        <td class="name">Team Rocket&#x27;s Energy</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

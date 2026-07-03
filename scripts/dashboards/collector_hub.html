@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Poke6s Collector Hub</title>
+  <link rel="icon" type="image/png" href="/images/Favidon.png">
+  <style>
+    :root {
+      --bg: #08111d;
+      --bg-2: #0d1830;
+      --panel: rgba(15, 25, 44, 0.9);
+      --panel-2: rgba(19, 33, 57, 0.96);
+      --panel-3: rgba(11, 20, 35, 0.88);
+      --ink: #eef5ff;
+      --muted: #94a7c8;
+      --line: rgba(136, 162, 205, 0.2);
+      --line-strong: rgba(136, 162, 205, 0.34);
+      --accent: #46b8ff;
+      --accent-2: #4fe2ae;
+      --accent-3: #ffd166;
+      --shadow: 0 28px 70px rgba(1, 8, 22, 0.42);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 14% 0%, rgba(70, 184, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 86% 0%, rgba(79, 226, 174, 0.12), transparent 22%),
+        linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    button,
+    .route-chip,
+    .action-link,
+    .filter-chip,
+    .resource-card {
+      transition:
+        transform 140ms ease,
+        border-color 140ms ease,
+        background-color 140ms ease,
+        box-shadow 140ms ease;
+    }
+
+    button:hover,
+    .route-chip:hover,
+    .action-link:hover,
+    .filter-chip:hover,
+    .resource-card:hover {
+      transform: translateY(-1px);
+    }
+
+    button:focus-visible,
+    a:focus-visible {
+      outline: 2px solid rgba(70, 184, 255, 0.8);
+      outline-offset: 3px;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .topbar,
+    .hero,
+    .layout > section,
+    .layout > aside {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(12, 21, 37, 0.92), rgba(9, 17, 31, 0.96));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 16px 18px;
+    }
+
+    .brand {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .brand-topline {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .badge.primary {
+      color: #d4efff;
+      background: rgba(70, 184, 255, 0.12);
+      border-color: rgba(70, 184, 255, 0.28);
+    }
+
+    .badge.success {
+      color: #d9fff1;
+      background: rgba(79, 226, 174, 0.12);
+      border-color: rgba(79, 226, 174, 0.28);
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 28px;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .route-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .route-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(19, 33, 57, 0.76);
+      color: #d3def3;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .route-chip small {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .action-link,
+    .ghost-button,
+    .filter-chip {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel-2);
+      color: var(--ink);
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .action-link.primary {
+      border: 0;
+      color: #062238;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.9fr);
+      gap: 18px;
+      padding: 22px;
+      align-items: stretch;
+    }
+
+    .hero-copy {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .hero-copy h1 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+      max-width: 12ch;
+    }
+
+    .hero-copy p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 62ch;
+    }
+
+    .hero-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .hero-card {
+      display: grid;
+      gap: 16px;
+      padding: 18px;
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      background:
+        linear-gradient(135deg, rgba(70, 184, 255, 0.12), rgba(79, 226, 174, 0.08)),
+        rgba(10, 18, 32, 0.92);
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(8, 15, 29, 0.7);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 24px;
+      letter-spacing: -0.04em;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .resource-panel,
+    .preview-panel {
+      padding: 18px;
+      min-width: 0;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .panel-head h2,
+    .panel-head h3 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: -0.03em;
+    }
+
+    .panel-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .filter-chip.is-active {
+      border-color: rgba(70, 184, 255, 0.5);
+      background: rgba(70, 184, 255, 0.18);
+    }
+
+    .resource-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .resource-card {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(11, 20, 35, 0.82);
+      cursor: pointer;
+    }
+
+    .resource-card.is-active {
+      border-color: rgba(70, 184, 255, 0.5);
+      box-shadow: inset 0 0 0 1px rgba(70, 184, 255, 0.18);
+      background:
+        linear-gradient(135deg, rgba(70, 184, 255, 0.12), rgba(79, 226, 174, 0.06)),
+        rgba(11, 20, 35, 0.9);
+    }
+
+    .resource-topline,
+    .resource-tags,
+    .resource-stats,
+    .resource-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .resource-topline span,
+    .resource-stat,
+    .mini-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 9px;
+      border: 1px solid var(--line);
+      background: rgba(19, 33, 57, 0.62);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #d6e5ff;
+    }
+
+    .resource-card h3 {
+      margin: 0;
+      font-size: 21px;
+      letter-spacing: -0.03em;
+    }
+
+    .resource-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .resource-actions a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(17, 29, 49, 0.9);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .resource-actions a.primary {
+      border: 0;
+      color: #062238;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    }
+
+    .preview-meta {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .preview-meta h3 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: -0.03em;
+    }
+
+    .preview-meta p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .preview-frame {
+      width: 100%;
+      min-height: 720px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: white;
+    }
+
+    .empty-state {
+      padding: 28px;
+      border: 1px dashed var(--line);
+      border-radius: 18px;
+      color: var(--muted);
+      text-align: center;
+      background: rgba(11, 20, 35, 0.62);
+    }
+
+    @media (max-width: 1120px) {
+      .topbar,
+      .hero,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .app {
+        padding: 12px;
+      }
+
+      .topbar,
+      .hero,
+      .resource-panel,
+      .preview-panel {
+        padding: 16px;
+      }
+
+      .hero-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-frame {
+        min-height: 480px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-topline">
+          <span class="badge primary">Collector Tools</span>
+          <span class="badge success" id="projectStatus">Loading</span>
+        </div>
+        <strong>Master Set Hub</strong>
+        <span>Integrated checklist and placeholder resources from the imported collector workflow, now wrapped in the same dark Poke6s shell as the rest of the site.</span>
+      </div>
+      <nav class="route-strip" aria-label="Primary routes">
+        <a class="route-chip" href="/dashboard"><span>Live Dashboard</span><small>/dashboard</small></a>
+        <a class="route-chip" href="/dashboard-lab"><span>Desktop Lab</span><small>/dashboard-lab</small></a>
+        <a class="route-chip" href="/set-explorer"><span>Set Explorer</span><small>/set-explorer</small></a>
+        <a class="route-chip" href="/sealed-deals"><span>Sealed Deals</span><small>/sealed-deals</small></a>
+      </nav>
+      <div class="actions">
+        <a class="action-link" href="/collector-assets/checklists-sv/index.html">Open SV Checklists</a>
+        <a class="action-link primary" href="/collector-assets/print-combined/index.html">Open Print Hub</a>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="hero-pills">
+          <span class="badge primary">Imported Side Project</span>
+          <span class="badge">Checklist Sites</span>
+          <span class="badge">Placeholder Printouts</span>
+          <span class="badge">Reference Notes</span>
+        </div>
+        <h1>Collector outputs, now inside the website.</h1>
+        <p>This page keeps the good part of the desktop side project intact while giving it a proper home in the main app. You can jump into checklists, print dashboards, and reference docs without losing the same overall visual language as the dashboard surfaces.</p>
+      </div>
+      <div class="hero-card">
+        <div class="hero-stats">
+          <div class="stat">
+            <strong id="resourceCount">0</strong>
+            <span>published resource lanes</span>
+          </div>
+          <div class="stat">
+            <strong id="sectionCount">0</strong>
+            <span>collector sections</span>
+          </div>
+          <div class="stat">
+            <strong id="checklistCount">0</strong>
+            <span>interactive checklist hubs</span>
+          </div>
+          <div class="stat">
+            <strong id="printCount">0</strong>
+            <span>print dashboard hubs</span>
+          </div>
+        </div>
+        <div>
+          <div class="mini-pill" id="updatedAt">Manifest pending</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <section class="resource-panel">
+        <div class="panel-head">
+          <div>
+            <h2>Collector Routes</h2>
+            <p>Choose a resource lane, then preview or open the full page in a new tab.</p>
+          </div>
+        </div>
+        <div class="filter-row" id="filterRow"></div>
+        <div class="resource-grid" id="resourceGrid">
+          <div class="empty-state">Loading collector resources...</div>
+        </div>
+      </section>
+
+      <aside class="preview-panel">
+        <div class="panel-head">
+          <div>
+            <h3>Live Preview</h3>
+            <p>Same-origin preview of the generated file so the imported project can stay usable immediately.</p>
+          </div>
+        </div>
+        <div class="preview-meta">
+          <h3 id="previewTitle">Select a resource</h3>
+          <p id="previewSummary">The selected checklist or print hub will appear below.</p>
+          <div class="resource-actions" id="previewActions"></div>
+        </div>
+        <iframe class="preview-frame" id="previewFrame" title="Collector preview"></iframe>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const filterRow = document.getElementById("filterRow");
+    const resourceGrid = document.getElementById("resourceGrid");
+    const previewTitle = document.getElementById("previewTitle");
+    const previewSummary = document.getElementById("previewSummary");
+    const previewActions = document.getElementById("previewActions");
+    const previewFrame = document.getElementById("previewFrame");
+    const projectStatus = document.getElementById("projectStatus");
+    const resourceCount = document.getElementById("resourceCount");
+    const sectionCount = document.getElementById("sectionCount");
+    const checklistCount = document.getElementById("checklistCount");
+    const printCount = document.getElementById("printCount");
+    const updatedAt = document.getElementById("updatedAt");
+
+    let allItems = [];
+    let activeSection = "All";
+    let activeItemId = "";
+
+    function sectionName(item) {
+      return item.section || "Other";
+    }
+
+    function setPreview(item) {
+      activeItemId = item.id;
+      previewTitle.textContent = item.title;
+      previewSummary.textContent = item.summary;
+      previewFrame.src = item.preview_href || item.href;
+      previewActions.innerHTML = `
+        <a class="primary" href="${item.href}" target="_blank" rel="noreferrer">Open Full Page</a>
+        <a href="${item.preview_href || item.href}" target="_blank" rel="noreferrer">Open Preview Source</a>
+      `;
+      renderGrid();
+    }
+
+    function renderFilters() {
+      const sections = ["All", ...new Set(allItems.map(sectionName))];
+      filterRow.innerHTML = sections.map((section) => `
+        <button class="filter-chip ${section === activeSection ? "is-active" : ""}" type="button" data-section="${section}">
+          ${section}
+        </button>
+      `).join("");
+      filterRow.querySelectorAll("[data-section]").forEach((button) => {
+        button.addEventListener("click", () => {
+          activeSection = button.dataset.section;
+          renderFilters();
+          renderGrid();
+        });
+      });
+    }
+
+    function filteredItems() {
+      if (activeSection === "All") return allItems;
+      return allItems.filter((item) => sectionName(item) === activeSection);
+    }
+
+    function renderGrid() {
+      const items = filteredItems();
+      if (!items.length) {
+        resourceGrid.innerHTML = '<div class="empty-state">No resources matched this section.</div>';
+        return;
+      }
+      resourceGrid.innerHTML = items.map((item) => `
+        <article class="resource-card ${item.id === activeItemId ? "is-active" : ""}" data-item-id="${item.id}">
+          <div class="resource-topline">
+            <span>${item.section}</span>
+          </div>
+          <div>
+            <h3>${item.title}</h3>
+          </div>
+          <p>${item.summary}</p>
+          <div class="resource-stats">
+            ${(item.stats || []).map((stat) => `<span class="resource-stat">${stat}</span>`).join("")}
+          </div>
+          <div class="resource-tags">
+            ${(item.tags || []).map((tag) => `<span class="mini-pill">${tag}</span>`).join("")}
+          </div>
+          <div class="resource-actions">
+            <a class="primary" href="${item.href}" target="_blank" rel="noreferrer">Open</a>
+            <a href="${item.preview_href || item.href}" target="_blank" rel="noreferrer">Preview Source</a>
+          </div>
+        </article>
+      `).join("");
+      resourceGrid.querySelectorAll("[data-item-id]").forEach((card) => {
+        card.addEventListener("click", (event) => {
+          if (event.target.closest("a")) return;
+          const item = allItems.find((candidate) => candidate.id === card.dataset.itemId);
+          if (item) setPreview(item);
+        });
+      });
+    }
+
+    function updateHero(manifest) {
+      const sections = new Set(allItems.map(sectionName));
+      const checklistItems = allItems.filter((item) => item.section === "Checklist Sites");
+      const printItems = allItems.filter((item) => item.section === "Print Dashboards");
+      projectStatus.textContent = manifest.project_root_exists ? "Ready" : "Missing Files";
+      resourceCount.textContent = String(allItems.length);
+      sectionCount.textContent = String(sections.size);
+      checklistCount.textContent = String(checklistItems.length);
+      printCount.textContent = String(printItems.length);
+      if (manifest.updated_at) {
+        updatedAt.textContent = `Manifest updated ${new Date(manifest.updated_at).toLocaleString()}`;
+      }
+    }
+
+    async function boot() {
+      try {
+        const response = await fetch("/collector-manifest");
+        if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+        const manifest = await response.json();
+        allItems = manifest.items || [];
+        if (!allItems.length) {
+          resourceGrid.innerHTML = '<div class="empty-state">Collector files were not found yet.</div>';
+          projectStatus.textContent = "Unavailable";
+          return;
+        }
+        updateHero(manifest);
+        renderFilters();
+        const preferred = allItems.find((item) => item.id === "sv-checklists") || allItems[0];
+        setPreview(preferred);
+      } catch (error) {
+        console.error(error);
+        projectStatus.textContent = "Error";
+        resourceGrid.innerHTML = '<div class="empty-state">Unable to load collector resources right now.</div>';
+        previewSummary.textContent = "The collector manifest endpoint did not respond.";
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>

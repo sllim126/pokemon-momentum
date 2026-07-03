@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SCR - Stellar Crown Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;SCR&quot;}'>
+    <header>
+      <div>
+        <h1>SCR - Stellar Crown</h1>
+        <p class="meta">45 checklist rows - 2024-09-13</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/scr.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Stamped Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr001_venusaur_ex_expansion_logo_stamp_us_uk" aria-label="SCR001 Venusaur ex Expansion Logo Stamp"></td>
+        <td class="number">SCR001</td>
+        <td class="name">Venusaur ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Venusaur ex &amp; Blastoise ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr030_blastoise_ex_expansion_logo_stamp_us_uk" aria-label="SCR030 Blastoise ex Expansion Logo Stamp"></td>
+        <td class="number">SCR030</td>
+        <td class="name">Blastoise ex</td>
+        <td class="variant">Expansion Logo Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Venusaur ex &amp; Blastoise ex Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr107_archaludon_eb_games_stamp_australia_new_zealand" aria-label="SCR107 Archaludon EB Games Stamp"></td>
+        <td class="number">SCR107</td>
+        <td class="name">Archaludon</td>
+        <td class="variant">EB Games Stamp</td>
+        <td class="sources">Stellar Crown - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr107_archaludon_gamestop_stamp_us_canada" aria-label="SCR107 Archaludon GameStop Stamp"></td>
+        <td class="number">SCR107</td>
+        <td class="name">Archaludon</td>
+        <td class="variant">GameStop Stamp</td>
+        <td class="sources">Stellar Crown - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr149_crabominable_snowflake_stamp_us_uk" aria-label="SCR149 Crabominable Snowflake Stamp"></td>
+        <td class="number">SCR149</td>
+        <td class="name">Crabominable</td>
+        <td class="variant">Snowflake Stamp</td>
+        <td class="sources">Black Bolt &amp; White Flare - Holiday Calendar 2025</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp133_ledian_black_star_promo_us_uk" aria-label="SVP133 Ledian Black Star Promo"></td>
+        <td class="number">SVP133</td>
+        <td class="name">Ledian</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Stellar Crown - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp134_crabominable_black_star_promo_us_uk" aria-label="SVP134 Crabominable Black Star Promo"></td>
+        <td class="number">SVP134</td>
+        <td class="name">Crabominable</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Stellar Crown - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp135_drifblim_black_star_promo_us_uk" aria-label="SVP135 Drifblim Black Star Promo"></td>
+        <td class="number">SVP135</td>
+        <td class="name">Drifblim</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Stellar Crown - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp136_bouffalant_black_star_promo_us_uk" aria-label="SVP136 Bouffalant Black Star Promo"></td>
+        <td class="number">SVP136</td>
+        <td class="name">Bouffalant</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Stellar Crown - Build &amp; Battle Box</td>
+      </tr><tr class="category-row"><th colspan="5">Staff Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp133_ledian_staff_stamp_us_uk" aria-label="SVP133 Ledian Staff Stamp"></td>
+        <td class="number">SVP133</td>
+        <td class="name">Ledian</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Stellar Crown - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp134_crabominable_staff_stamp_us_uk" aria-label="SVP134 Crabominable Staff Stamp"></td>
+        <td class="number">SVP134</td>
+        <td class="name">Crabominable</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Stellar Crown - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp135_drifblim_staff_stamp_us_uk" aria-label="SVP135 Drifblim Staff Stamp"></td>
+        <td class="number">SVP135</td>
+        <td class="name">Drifblim</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Stellar Crown - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp136_bouffalant_staff_stamp_us_uk" aria-label="SVP136 Bouffalant Staff Stamp"></td>
+        <td class="number">SVP136</td>
+        <td class="name">Bouffalant</td>
+        <td class="variant">Staff Stamp</td>
+        <td class="sources">Stellar Crown - Build &amp; Battle Box</td>
+      </tr><tr class="category-row"><th colspan="5">Promo Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp137_horsea_cosmos_holo_us_uk" aria-label="SVP137 Horsea Cosmos Holo"></td>
+        <td class="number">SVP137</td>
+        <td class="name">Horsea</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Stellar Crown - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp138_porygon2_cosmos_holo_us_uk" aria-label="SVP138 Porygon2 Cosmos Holo"></td>
+        <td class="number">SVP138</td>
+        <td class="name">Porygon2</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Stellar Crown - Single Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp139_latias_cosmos_holo_us_uk" aria-label="SVP139 Latias Cosmos Holo"></td>
+        <td class="number">SVP139</td>
+        <td class="name">Latias</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Stellar Crown - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp140_tinkaton_pixel_cosmos_us_uk" aria-label="SVP140 Tinkaton Pixel Cosmos"></td>
+        <td class="number">SVP140</td>
+        <td class="name">Tinkaton</td>
+        <td class="variant">Pixel Cosmos</td>
+        <td class="sources">Stellar Crown - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp140_tinkaton_smooth_cosmos_us_uk" aria-label="SVP140 Tinkaton Smooth Cosmos"></td>
+        <td class="number">SVP140</td>
+        <td class="name">Tinkaton</td>
+        <td class="variant">Smooth Cosmos</td>
+        <td class="sources">Stellar Crown - 3-Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp141_noctowl_black_star_promo_us_uk" aria-label="SVP141 Noctowl Black Star Promo"></td>
+        <td class="number">SVP141</td>
+        <td class="name">Noctowl</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Stellar Crown - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp141_noctowl_pokemon_center_stamp_us_uk" aria-label="SVP141 Noctowl Pokemon Center Stamp"></td>
+        <td class="number">SVP141</td>
+        <td class="name">Noctowl</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Stellar Crown - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp144_gouging_fire_ex_black_star_promo_us_uk" aria-label="SVP144 Gouging Fire ex Black Star Promo"></td>
+        <td class="number">SVP144</td>
+        <td class="name">Gouging Fire ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Stellar Crown - Paradox Destinies Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp145_raging_bolt_ex_black_star_promo_us_uk" aria-label="SVP145 Raging Bolt ex Black Star Promo"></td>
+        <td class="number">SVP145</td>
+        <td class="name">Raging Bolt ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Stellar Crown - Paradox Destinies Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp146_iron_crown_ex_black_star_promo_us_uk" aria-label="SVP146 Iron Crown ex Black Star Promo"></td>
+        <td class="number">SVP146</td>
+        <td class="name">Iron Crown ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Stellar Crown - Paradox Destinies Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp147_iron_boulder_ex_black_star_promo_us_uk" aria-label="SVP147 Iron Boulder ex Black Star Promo"></td>
+        <td class="number">SVP147</td>
+        <td class="name">Iron Boulder ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Stellar Crown - Paradox Destinies Tin</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp160_squawkabilly_ex_black_star_promo_us_uk" aria-label="SVP160 Squawkabilly ex Black Star Promo"></td>
+        <td class="number">SVP160</td>
+        <td class="name">Squawkabilly ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Stellar Crown - Trainer&#x27;s Toolkit 2024</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp161_charizard_ex_black_star_promo_us_uk" aria-label="SVP161 Charizard ex Black Star Promo"></td>
+        <td class="number">SVP161</td>
+        <td class="name">Charizard ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Stellar Crown - Charizard ex Super-Premium Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp162_houndstone_ex_black_star_promo_us_uk" aria-label="SVP162 Houndstone ex Black Star Promo"></td>
+        <td class="number">SVP162</td>
+        <td class="name">Houndstone ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Stellar Crown - Houndstone ex Box</td>
+      </tr><tr class="category-row"><th colspan="5">MCAP Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr003_ledian_non_holo_us_uk" aria-label="SCR003 Ledian Non Holo"></td>
+        <td class="number">SCR003</td>
+        <td class="name">Ledian</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Stellar Crown - Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr074_rhyhorn_non_holo_us_uk" aria-label="SCR074 Rhyhorn Non Holo"></td>
+        <td class="number">SCR074</td>
+        <td class="name">Rhyhorn</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Journey Together - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr076_rhyperior_cosmos_holo_us_uk" aria-label="SCR076 Rhyperior Cosmos Holo"></td>
+        <td class="number">SCR076</td>
+        <td class="name">Rhyperior</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Journey Together - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr101_klinklang_cosmos_holo_us_uk" aria-label="SCR101 Klinklang Cosmos Holo"></td>
+        <td class="number">SCR101</td>
+        <td class="name">Klinklang</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Journey Together - Premium Checklane Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr104_melmetal_cosmos_holo_us_uk" aria-label="SCR104 Melmetal Cosmos Holo"></td>
+        <td class="number">SCR104</td>
+        <td class="name">Melmetal</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Journey Together - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr107_archaludon_cosmos_holo_us_uk" aria-label="SCR107 Archaludon Cosmos Holo"></td>
+        <td class="number">SCR107</td>
+        <td class="name">Archaludon</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Surging Sparks - Archaludon Two Pack Blister; Journey Together - Stage 1 Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr119_bouffalant_non_holo_us_uk" aria-label="SCR119 Bouffalant Non Holo"></td>
+        <td class="number">SCR119</td>
+        <td class="name">Bouffalant</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Stellar Crown - Build &amp; Battle Box</td>
+      </tr><tr class="category-row"><th colspan="5">Prize Pack Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr050_joltik_play_pokemon_stamp_us_uk" aria-label="SCR050 Joltik Play Pokemon Stamp"></td>
+        <td class="number">SCR050</td>
+        <td class="name">Joltik</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr107_archaludon_play_pokemon_stamp_us_uk" aria-label="SCR107 Archaludon Play Pokemon Stamp"></td>
+        <td class="number">SCR107</td>
+        <td class="name">Archaludon</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven; Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr115_noctowl_play_pokemon_stamp_us_uk" aria-label="SCR115 Noctowl Play Pokemon Stamp"></td>
+        <td class="number">SCR115</td>
+        <td class="name">Noctowl</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr118_fan_rotom_play_pokemon_stamp_us_uk" aria-label="SCR118 Fan Rotom Play Pokemon Stamp"></td>
+        <td class="number">SCR118</td>
+        <td class="name">Fan Rotom</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr119_bouffalant_play_pokemon_stamp_us_uk" aria-label="SCR119 Bouffalant Play Pokemon Stamp"></td>
+        <td class="number">SCR119</td>
+        <td class="name">Bouffalant</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr128_terapagos_ex_play_pokemon_stamp_us_uk" aria-label="SCR128 Terapagos ex Play Pokemon Stamp"></td>
+        <td class="number">SCR128</td>
+        <td class="name">Terapagos ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr131_area_zero_underdepths_play_pokemon_stamp_us_uk" aria-label="SCR131 Area Zero Underdepths Play Pokemon Stamp"></td>
+        <td class="number">SCR131</td>
+        <td class="name">Area Zero Underdepths</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr132_briar_play_pokemon_stamp_us_uk" aria-label="SCR132 Briar Play Pokemon Stamp"></td>
+        <td class="number">SCR132</td>
+        <td class="name">Briar</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr133_crispin_play_pokemon_stamp_us_uk" aria-label="SCR133 Crispin Play Pokemon Stamp"></td>
+        <td class="number">SCR133</td>
+        <td class="name">Crispin</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr135_glass_trumpet_play_pokemon_stamp_us_uk" aria-label="SCR135 Glass Trumpet Play Pokemon Stamp"></td>
+        <td class="number">SCR135</td>
+        <td class="name">Glass Trumpet</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="scr142_sparkling_crystal_play_pokemon_stamp_us_uk" aria-label="SCR142 Sparkling Crystal Play Pokemon Stamp"></td>
+        <td class="number">SCR142</td>
+        <td class="name">Sparkling Crystal</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

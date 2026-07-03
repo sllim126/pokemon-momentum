@@ -122,6 +122,23 @@ High Priority
 Active Queue
 ------------
 
+- TCG placeholder workflow intake:
+  - Treat `TCG Placeholders/placeholders.csv` as the current Scarlet & Violet source of truth and `TCG Placeholders/mega_placeholders.csv` as the Mega-era source, matching the workflow notes in `TCG Placeholders/README.md`.
+  - Keep `TCG Placeholders/Placeholders.xlsx` as historical reference only unless we intentionally switch the source back to workbook-first editing.
+  - Use these validation/build commands before changing or publishing placeholder outputs:
+    - `python3 "TCG Placeholders/tools/build_placeholders.py" --input "TCG Placeholders/placeholders.csv" --output-dir /tmp/tcg_placeholders_check`
+    - `python3 "TCG Placeholders/tools/build_checklists.py" --input "TCG Placeholders/placeholders.csv" --input "TCG Placeholders/mega_placeholders.csv" --input "TCG Placeholders/prize_pack_series7.csv" --input "TCG Placeholders/prize_pack_series8.csv" --output-dir /tmp/tcg_checklists_check --set-catalog "TCG Placeholders/data/set_release_dates.csv" --overrides "TCG Placeholders/data/checklist_overrides.csv" --additions "TCG Placeholders/data/checklist_additions.csv"`
+  - Current local review result on 2026-07-02:
+    - placeholder builder ran cleanly on `placeholders.csv` with 781 rows and no validation issues
+    - checklist builder ran cleanly across placeholder + mega + Prize Pack 7/8 sources and produced 816 checklist rows across 18 set pages
+  - Data gaps already identified by the imported review reports:
+    - `TCG Placeholders/checklists_sv/svp_compare_report.md` calls out missing standard-size SVP rows like `SVP175`, `SVP176`, `SVP213`, `SVP214`, and `SVP215`
+    - `TCG Placeholders/checklists_sv/mep_compare_report.md` calls out missing MEP staff variants plus future Pitch Black prerelease rows such as `MEP082`-`MEP085`
+  - Decide repo hygiene before committing this folder:
+    - whether generated outputs under `TCG Placeholders/output*` and `TCG Placeholders/checklists_*` should be committed or treated as build artifacts
+    - whether nested metadata folders like `TCG Placeholders/.git`, `TCG Placeholders/.agents`, and `TCG Placeholders/tools/__pycache__` should be removed from the working tree or ignored
+  - If we keep this workflow, add a first-class repo script or Make target later so placeholder/checklist regeneration does not live only inside the imported folder README.
+
 - Expand Set Explorer rarity / variant filters beyond the current first pass.
 - Fix any remaining generation grouping mistakes when a set clearly lands in the wrong era bucket.
 - Extend tracking into:

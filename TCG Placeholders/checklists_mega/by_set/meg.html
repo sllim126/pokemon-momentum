@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MEG - Mega Evolution Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;MEG&quot;}'>
+    <header>
+      <div>
+        <h1>MEG - Mega Evolution</h1>
+        <p class="meta">50 checklist rows - 2025-09-26</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/meg.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Stamped Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg064_xerneas_mega_evolution_stamp_us_australia_new_zealand" aria-label="MEG064 Xerneas Mega Evolution Stamp"></td>
+        <td class="number">MEG064</td>
+        <td class="name">Xerneas</td>
+        <td class="variant">Mega Evolution Stamp</td>
+        <td class="sources">Mega Evolution - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg133_bulbasaur_mega_evolution_stamp_us_uk" aria-label="MEG133 Bulbasaur Mega Evolution Stamp"></td>
+        <td class="number">MEG133</td>
+        <td class="name">Bulbasaur</td>
+        <td class="variant">Mega Evolution Stamp</td>
+        <td class="sources">Mega Evolution - Mega Evolution Booster Display Boxes</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="yveltal_eb_games_stamp_canada_australia_new_zealand" aria-label="Yveltal EB Games Stamp"></td>
+        <td class="number"></td>
+        <td class="name">Yveltal</td>
+        <td class="variant">EB Games Stamp</td>
+        <td class="sources">Mega Evolution - Retailer Gift With Purchase</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="yveltal_gamestop_stamp_us" aria-label="Yveltal GameStop Stamp"></td>
+        <td class="number"></td>
+        <td class="name">Yveltal</td>
+        <td class="variant">GameStop Stamp</td>
+        <td class="sources">Mega Evolution - Retailer Gift With Purchase</td>
+      </tr><tr class="category-row"><th colspan="5">Promo Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp219_black_belt_s_training_black_star_promo_us_uk" aria-label="SVP219 Black Belt&#x27;s Training Black Star Promo"></td>
+        <td class="number">SVP219</td>
+        <td class="name">Black Belt&#x27;s Training</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Trainer&#x27;s Toolkit 2025</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp220_black_belt_s_training_black_star_promo_us_uk" aria-label="SVP220 Black Belt&#x27;s Training Black Star Promo"></td>
+        <td class="number">SVP220</td>
+        <td class="name">Black Belt&#x27;s Training</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Trainer&#x27;s Toolkit 2025</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp221_professor_s_research_professor_birch_black_star_promo_us_uk" aria-label="SVP221 Professor&#x27;s Research [Professor Birch] Black Star Promo"></td>
+        <td class="number">SVP221</td>
+        <td class="name">Professor&#x27;s Research [Professor Birch]</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Trainer&#x27;s Toolkit 2025</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp222_professor_s_research_professor_kukui_black_star_promo_us_uk" aria-label="SVP222 Professor&#x27;s Research [Professor Kukui] Black Star Promo"></td>
+        <td class="number">SVP222</td>
+        <td class="name">Professor&#x27;s Research [Professor Kukui]</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Trainer&#x27;s Toolkit 2025</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp223_professor_s_research_professor_magnolia_black_star_promo_us_uk" aria-label="SVP223 Professor&#x27;s Research [Professor Magnolia] Black Star Promo"></td>
+        <td class="number">SVP223</td>
+        <td class="name">Professor&#x27;s Research [Professor Magnolia]</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Mega Evolution - Trainer&#x27;s Toolkit 2025</td>
+      </tr><tr class="category-row"><th colspan="5">MCAP Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg010_meganium_non_holo_us_uk" aria-label="MEG010 Meganium Non Holo"></td>
+        <td class="number">MEG010</td>
+        <td class="name">Meganium</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg010_meganium_pixel_cosmos_holo_us_uk" aria-label="MEG010 Meganium Pixel Cosmos Holo"></td>
+        <td class="number">MEG010</td>
+        <td class="name">Meganium</td>
+        <td class="variant">Pixel Cosmos Holo</td>
+        <td class="sources">Perfect Order - Perfect Order Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg028_cinderace_pixel_cosmos_holo_us_uk" aria-label="MEG028 Cinderace Pixel Cosmos Holo"></td>
+        <td class="number">MEG028</td>
+        <td class="name">Cinderace</td>
+        <td class="variant">Pixel Cosmos Holo</td>
+        <td class="sources">Perfect Order - Perfect Order Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg038_clawitzer_pixel_cosmos_holo_us_uk" aria-label="MEG038 Clawitzer Pixel Cosmos Holo"></td>
+        <td class="number">MEG038</td>
+        <td class="name">Clawitzer</td>
+        <td class="variant">Pixel Cosmos Holo</td>
+        <td class="sources">Perfect Order - Perfect Order Blisters</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg048_raikou_pixel_cosmos_holo_us_uk" aria-label="MEG048 Raikou Pixel Cosmos Holo"></td>
+        <td class="number">MEG048</td>
+        <td class="name">Raikou</td>
+        <td class="variant">Pixel Cosmos Holo</td>
+        <td class="sources">Mega Evolution - Raikou Two Pack Blister</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg058_ralts_cosmos_holo_us_uk" aria-label="MEG058 Ralts Cosmos Holo"></td>
+        <td class="number">MEG058</td>
+        <td class="name">Ralts</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg059_kirlia_cosmos_holo_us_uk" aria-label="MEG059 Kirlia Cosmos Holo"></td>
+        <td class="number">MEG059</td>
+        <td class="name">Kirlia</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg064_xerneas_non_holo_us_uk" aria-label="MEG064 Xerneas Non Holo"></td>
+        <td class="number">MEG064</td>
+        <td class="name">Xerneas</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg074_hariyama_non_holo_us_uk" aria-label="MEG074 Hariyama Non Holo"></td>
+        <td class="number">MEG074</td>
+        <td class="name">Hariyama</td>
+        <td class="variant">Non Holo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Build &amp; Battle Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg076_riolu_cosmos_holo_us_uk" aria-label="MEG076 Riolu Cosmos Holo"></td>
+        <td class="number">MEG076</td>
+        <td class="name">Riolu</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Mega Evolution - Mega Evolution Collector Chest</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg093_steelix_pixel_cosmos_holo_us_uk" aria-label="MEG093 Steelix Pixel Cosmos Holo"></td>
+        <td class="number">MEG093</td>
+        <td class="name">Steelix</td>
+        <td class="variant">Pixel Cosmos Holo</td>
+        <td class="sources">Perfect Order - Perfect Order Blisters</td>
+      </tr><tr class="category-row"><th colspan="5">Prize Pack Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg003_mega_venusaur_ex_play_pokemon_stamp_us_uk" aria-label="MEG003 Mega Venusaur ex Play Pokemon Stamp"></td>
+        <td class="number">MEG003</td>
+        <td class="name">Mega Venusaur ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg022_mega_camerupt_ex_play_pokemon_stamp_us_uk" aria-label="MEG022 Mega Camerupt ex Play Pokemon Stamp"></td>
+        <td class="number">MEG022</td>
+        <td class="name">Mega Camerupt ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg028_cinderace_play_pokemon_stamp_us_uk" aria-label="MEG028 Cinderace Play Pokemon Stamp"></td>
+        <td class="number">MEG028</td>
+        <td class="name">Cinderace</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg036_mega_abomasnow_ex_play_pokemon_stamp_us_uk" aria-label="MEG036 Mega Abomasnow ex Play Pokemon Stamp"></td>
+        <td class="number">MEG036</td>
+        <td class="name">Mega Abomasnow ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg050_mega_manectric_ex_play_pokemon_stamp_us_uk" aria-label="MEG050 Mega Manectric ex Play Pokemon Stamp"></td>
+        <td class="number">MEG050</td>
+        <td class="name">Mega Manectric ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg060_mega_gardevoir_ex_play_pokemon_stamp_us_uk" aria-label="MEG060 Mega Gardevoir ex Play Pokemon Stamp"></td>
+        <td class="number">MEG060</td>
+        <td class="name">Mega Gardevoir ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg073_hariyama_play_pokemon_stamp_us_uk" aria-label="MEG073 Hariyama Play Pokemon Stamp"></td>
+        <td class="number">MEG073</td>
+        <td class="name">Hariyama</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg074_lunatone_play_pokemon_stamp_us_uk" aria-label="MEG074 Lunatone Play Pokemon Stamp"></td>
+        <td class="number">MEG074</td>
+        <td class="name">Lunatone</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg075_solrock_play_pokemon_stamp_us_uk" aria-label="MEG075 Solrock Play Pokemon Stamp"></td>
+        <td class="number">MEG075</td>
+        <td class="name">Solrock</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg077_mega_lucario_ex_play_pokemon_stamp_us_uk" aria-label="MEG077 Mega Lucario ex Play Pokemon Stamp"></td>
+        <td class="number">MEG077</td>
+        <td class="name">Mega Lucario ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg086_mega_absol_ex_play_pokemon_stamp_us_uk" aria-label="MEG086 Mega Absol ex Play Pokemon Stamp"></td>
+        <td class="number">MEG086</td>
+        <td class="name">Mega Absol ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg094_mega_mawile_ex_play_pokemon_stamp_us_uk" aria-label="MEG094 Mega Mawile ex Play Pokemon Stamp"></td>
+        <td class="number">MEG094</td>
+        <td class="name">Mega Mawile ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg100_mega_latias_ex_play_pokemon_stamp_us_uk" aria-label="MEG100 Mega Latias ex Play Pokemon Stamp"></td>
+        <td class="number">MEG100</td>
+        <td class="name">Mega Latias ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg101_latios_play_pokemon_stamp_us_uk" aria-label="MEG101 Latios Play Pokemon Stamp"></td>
+        <td class="number">MEG101</td>
+        <td class="name">Latios</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg104_mega_kangaskhan_ex_play_pokemon_stamp_us_uk" aria-label="MEG104 Mega Kangaskhan ex Play Pokemon Stamp"></td>
+        <td class="number">MEG104</td>
+        <td class="name">Mega Kangaskhan ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg114_boss_s_orders_play_pokemon_stamp_us_uk" aria-label="MEG114 Boss&#x27;s Orders Play Pokemon Stamp"></td>
+        <td class="number">MEG114</td>
+        <td class="name">Boss&#x27;s Orders</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg116_fighting_gong_play_pokemon_stamp_us_uk" aria-label="MEG116 Fighting Gong Play Pokemon Stamp"></td>
+        <td class="number">MEG116</td>
+        <td class="name">Fighting Gong</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg117_forest_of_vitality_play_pokemon_stamp_us_uk" aria-label="MEG117 Forest of Vitality Play Pokemon Stamp"></td>
+        <td class="number">MEG117</td>
+        <td class="name">Forest of Vitality</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg118_iron_defender_play_pokemon_stamp_us_uk" aria-label="MEG118 Iron Defender Play Pokemon Stamp"></td>
+        <td class="number">MEG118</td>
+        <td class="name">Iron Defender</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg119_lillie_s_determination_play_pokemon_stamp_us_uk" aria-label="MEG119 Lillie&#x27;s Determination Play Pokemon Stamp"></td>
+        <td class="number">MEG119</td>
+        <td class="name">Lillie&#x27;s Determination</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg121_mega_signal_play_pokemon_stamp_us_uk" aria-label="MEG121 Mega Signal Play Pokemon Stamp"></td>
+        <td class="number">MEG121</td>
+        <td class="name">Mega Signal</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg122_mystery_garden_play_pokemon_stamp_us_uk" aria-label="MEG122 Mystery Garden Play Pokemon Stamp"></td>
+        <td class="number">MEG122</td>
+        <td class="name">Mystery Garden</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg124_premium_power_pro_play_pokemon_stamp_us_uk" aria-label="MEG124 Premium Power Pro Play Pokemon Stamp"></td>
+        <td class="number">MEG124</td>
+        <td class="name">Premium Power Pro</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg127_risky_ruins_play_pokemon_stamp_us_uk" aria-label="MEG127 Risky Ruins Play Pokemon Stamp"></td>
+        <td class="number">MEG127</td>
+        <td class="name">Risky Ruins</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg128_strange_timepiece_play_pokemon_stamp_us_uk" aria-label="MEG128 Strange Timepiece Play Pokemon Stamp"></td>
+        <td class="number">MEG128</td>
+        <td class="name">Strange Timepiece</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg129_surfing_beach_play_pokemon_stamp_us_uk" aria-label="MEG129 Surfing Beach Play Pokemon Stamp"></td>
+        <td class="number">MEG129</td>
+        <td class="name">Surfing Beach</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg132_wally_s_compassion_play_pokemon_stamp_us_uk" aria-label="MEG132 Wally&#x27;s Compassion Play Pokemon Stamp"></td>
+        <td class="number">MEG132</td>
+        <td class="name">Wally&#x27;s Compassion</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Eight - Play Pokemon Prize Pack Series Eight</td>
+      </tr><tr class="category-row"><th colspan="5">League and Championship Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg131_ultra_ball_pokemon_europe_international_championships_stamp_europe" aria-label="MEG131 Ultra Ball Pokemon Europe International Championships Stamp"></td>
+        <td class="number">MEG131</td>
+        <td class="name">Ultra Ball</td>
+        <td class="variant">Pokemon Europe International Championships Stamp</td>
+        <td class="sources">Mega Evolution - 2026 Pokemon Europe International Championships merchandise</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg131_ultra_ball_pokemon_latin_america_international_championships_stamp_brazilian_portuguese" aria-label="MEG131 Ultra Ball Pokemon Latin America International Championships Stamp"></td>
+        <td class="number">MEG131</td>
+        <td class="name">Ultra Ball</td>
+        <td class="variant">Pokemon Latin America International Championships Stamp</td>
+        <td class="sources">Mega Evolution - 2026 Pokemon Latin America International Championships merchandise</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="meg131_ultra_ball_pokemon_north_america_international_championships_stamp_us" aria-label="MEG131 Ultra Ball Pokemon North America International Championships Stamp"></td>
+        <td class="number">MEG131</td>
+        <td class="name">Ultra Ball</td>
+        <td class="variant">Pokemon North America International Championships Stamp</td>
+        <td class="sources">Mega Evolution - 2026 Pokemon North America International Championships merchandise</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

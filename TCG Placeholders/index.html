@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pokemon TCG Master Set Resources</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f5f7fa;
+      color: #141414;
+      font-family: Arial, sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 34px 20px 52px;
+    }
+    header {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 26px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      letter-spacing: 0;
+    }
+    .intro {
+      max-width: 780px;
+      margin: 0;
+      color: #555;
+      line-height: 1.45;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .panel {
+      display: grid;
+      gap: 10px;
+      min-height: 170px;
+      padding: 16px;
+      border: 1px solid #d9dee7;
+      border-radius: 6px;
+      background: white;
+    }
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+    p {
+      margin: 0;
+      color: #555;
+      line-height: 1.4;
+    }
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-self: end;
+    }
+    a.button {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 0 11px;
+      border: 1px solid #cbd2dc;
+      border-radius: 5px;
+      background: #fff;
+      color: #111;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    a.primary {
+      background: #285f4d;
+      border-color: #285f4d;
+      color: white;
+    }
+    section {
+      margin-top: 28px;
+    }
+    .link-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .set-link {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 10px;
+      border: 1px solid #d9dee7;
+      border-radius: 5px;
+      background: white;
+      color: #111;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .set-link span:last-child {
+      color: #666;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .note {
+      margin-top: 18px;
+      padding: 12px 14px;
+      border: 1px solid #d9dee7;
+      border-radius: 6px;
+      background: #fff;
+      color: #555;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Pokemon TCG Master Set Resources</h1>
+      <p class="intro">Printable checklists, placeholder cards, and review tools for tracking master set and grandmaster collection layers.</p>
+    </header>
+
+    <div class="grid">
+      <article class="panel">
+        <h2>Scarlet & Violet Checklists</h2>
+        <p>Interactive and printable checklist pages grouped by set, including SVP promos and Prize Pack cards.</p>
+        <div class="links">
+          <a class="button primary" href="checklists_sv/index.html">Open SV Checklists</a>
+          <a class="button" href="checklists_sv/scarlet_violet_checklist_all.csv">CSV</a>
+        </div>
+      </article>
+      <article class="panel">
+        <h2>Mega Evolution Checklists</h2>
+        <p>Interactive and printable checklist pages for Mega-era sets, including MEP promos and Prize Pack Series 8.</p>
+        <div class="links">
+          <a class="button primary" href="checklists_mega/index.html">Open Mega Checklists</a>
+          <a class="button" href="checklists_mega/mega_evolution_checklist_all.csv">CSV</a>
+        </div>
+      </article>
+      <article class="panel">
+        <h2>Printable Placeholder Cards</h2>
+        <p>2.5in by 3.5in placeholder cards for binder slots, grouped by release block or printed card code.</p>
+        <div class="links">
+          <a class="button primary" href="output_combined/index.html">Combined Printouts</a>
+          <a class="button" href="output_mega/index.html">Mega Printouts</a>
+        </div>
+      </article>
+      <article class="panel">
+        <h2>Admin Review</h2>
+        <p>Correction and missing-card tools for maintaining the generated data. Keep this private if you only want public readers to see checklists.</p>
+        <div class="links">
+          <a class="button" href="checklists_sv/review.html">SV Review</a>
+          <a class="button" href="checklists_mega/review.html">Mega Review</a>
+        </div>
+      </article>
+    </div>
+
+    <section>
+      <h2>Popular Checklist Pages</h2>
+      <div class="link-grid">
+        <a class="set-link" href="checklists_sv/by_set/jtg.html"><span>Journey Together</span><span>JTG</span></a>
+        <a class="set-link" href="checklists_sv/by_set/dri.html"><span>Destined Rivals</span><span>DRI</span></a>
+        <a class="set-link" href="checklists_sv/by_set/pre.html"><span>Prismatic Evolutions</span><span>PRE</span></a>
+        <a class="set-link" href="checklists_sv/by_set/svp.html"><span>SV Promos</span><span>SVP</span></a>
+        <a class="set-link" href="checklists_mega/by_set/meg.html"><span>Mega Evolution</span><span>MEG</span></a>
+        <a class="set-link" href="checklists_mega/by_set/mep.html"><span>Mega Promos</span><span>MEP</span></a>
+      </div>
+    </section>
+
+    <section>
+      <h2>Popular Placeholder Printouts</h2>
+      <div class="link-grid">
+        <a class="set-link" href="output_combined/by_card_code/jtg.html"><span>Journey Together</span><span>JTG</span></a>
+        <a class="set-link" href="output_combined/by_card_code/pre.html"><span>Prismatic Evolutions</span><span>PRE</span></a>
+        <a class="set-link" href="output_combined/by_card_code/svp.html"><span>SV Promos</span><span>SVP</span></a>
+        <a class="set-link" href="output_mega/by_card_code/meg.html"><span>Mega Evolution</span><span>MEG</span></a>
+        <a class="set-link" href="output_mega/by_card_code/mep.html"><span>Mega Promos</span><span>MEP</span></a>
+        <a class="set-link" href="output_combined/placeholders.printable_unique.csv"><span>Printable CSV</span><span>All</span></a>
+      </div>
+    </section>
+
+    <section>
+      <h2>Research Notes</h2>
+      <div class="link-grid">
+        <a class="set-link" href="checklists_sv/svp_compare_report.md"><span>SVP Compare Report</span><span>MD</span></a>
+        <a class="set-link" href="checklists_sv/mep_compare_report.md"><span>MEP Compare Report</span><span>MD</span></a>
+        <a class="set-link" href="docs/set_release_dates.md"><span>Set Release Dates</span><span>MD</span></a>
+      </div>
+    </section>
+
+    <p class="note">Suggested public website setup: publish this page, `checklists_sv/`, `checklists_mega/`, `output_combined/`, `output_mega/`, and `docs/`. Keep `data/` and `tools/` private unless you want visitors to see the source workflow.</p>
+  </main>
+</body>
+</html>

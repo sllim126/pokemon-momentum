@@ -53,6 +53,41 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Set Explorer", response.text)
 
+    def test_budget_builder_page_serves_html(self):
+        response = self.client.get("/budget-builder")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/html", response.headers["content-type"])
+        self.assertIn("Budget Builder", response.text)
+
+    def test_collector_hub_page_serves_html(self):
+        response = self.client.get("/collector-hub")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/html", response.headers["content-type"])
+        self.assertIn("Master Set Hub", response.text)
+
+    def test_collector_manifest_lists_resources(self):
+        response = self.client.get("/collector-manifest")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["project_root_exists"])
+        self.assertGreaterEqual(len(payload["items"]), 4)
+        self.assertTrue(any(item["id"] == "sv-checklists" for item in payload["items"]))
+        self.assertTrue(any(item["id"] == "combined-placeholders" for item in payload["items"]))
+
+    def test_collector_asset_route_serves_known_html_file(self):
+        response = self.client.get("/collector-assets/checklists-sv/index.html")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/html", response.headers["content-type"])
+
+    def test_collector_asset_route_blocks_path_escape(self):
+        response = self.client.get("/collector-assets/checklists-sv/%2E%2E/%2E%2E/README.md")
+
+        self.assertEqual(response.status_code, 404)
+
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
     def test_pricing_upload_page_serves_html(self, _get_session_user_mock):
         response = self.client.get("/pricing-upload", cookies={"pm_tracking_token": "token"})
@@ -115,6 +150,189 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(payload["category_id"], 85)
         self.assertEqual(payload["category"], "Pokemon Japanese")
         q_mock.assert_called_once()
+
+    @patch.object(api, "screener_snapshot_from", return_value="pokemon_screener_snapshot")
+    @patch.object(api, "category_config", return_value=api.category_config(3))
+    @patch.object(
+        api,
+        "q",
+        return_value=(
+            [
+                "latest_date",
+                "groupId",
+                "groupName",
+                "productId",
+                "productName",
+                "imageUrl",
+                "rarity",
+                "number",
+                "productClass",
+                "productKind",
+                "subTypeName",
+                "latest_price",
+                "roc_7d_pct",
+                "roc_30d_pct",
+                "roc_90d_pct",
+                "price_vs_sma30_pct",
+                "price_vs_sma90_pct",
+                "acceleration_7d_vs_30d",
+                "trend_score",
+                "recent_observations_7d",
+                "recent_distinct_prices_7d",
+                "recent_distinct_prices_30d",
+                "last_change_date",
+                "good_buys_default_flag",
+                "early_uptrends_default_flag",
+                "under_the_radar_default_flag",
+                "breakout_90d_flag",
+            ],
+            [
+                ("2026-05-27", 101, "Surging Sparks", 1, "Card Alpha", "https://img/1.png", "Illustration Rare", "101/191", "card", "card", "Holofoil", 42.0, 5.4, 7.5, 12.0, 4.0, 5.0, 2.4, 41.0, 8, 4, 11, "2026-05-27", 0, 1, 1, 0),
+                ("2026-05-27", 102, "Twilight Masquerade", 2, "Card Beta", "https://img/2.png", "Special Illustration Rare", "205/167", "card", "card", "Holofoil", 58.0, 6.1, 10.0, 18.0, 6.0, 7.0, 3.1, 47.0, 8, 5, 12, "2026-05-27", 1, 1, 0, 1),
+                ("2026-05-27", 101, "Surging Sparks", 3, "Card Gamma", "https://img/3.png", "Ultra Rare", "188/191", "card", "card", "Holofoil", 35.0, 4.8, 6.2, 9.0, 2.0, 4.0, 2.2, 32.0, 8, 4, 8, "2026-05-27", 1, 0, 1, 0),
+                ("2026-05-27", 103, "Journey Together", 4, "Card Delta", "https://img/4.png", "Illustration Rare", "121/159", "card", "card", "Holofoil", 27.0, 3.9, 5.4, 8.0, 3.0, 3.0, 1.8, 22.0, 8, 4, 7, "2026-05-27", 0, 0, 1, 0),
+            ],
+        ),
+    )
+    def test_budget_builder_returns_spread_out_recommendations(self, _q_mock, _category_config_mock, _snapshot_mock):
+        payload = api.budget_builder_recommendations(
+            budget=150,
+            min_price=5,
+            limit=4,
+            max_per_set=1,
+            rarities="illustration_rare,special_illustration_rare,ultra_rare",
+            category_id=3,
+        )
+
+        self.assertEqual(payload["budget"], 150.0)
+        self.assertEqual(payload["count"], 3)
+        self.assertEqual(payload["set_count"], 3)
+        self.assertLessEqual(payload["spent"], 150.0)
+        self.assertEqual([item["groupId"] for item in payload["items"]], [101, 102, 103])
+        self.assertIn("under the radar", payload["items"][0]["reasons"])
+
+    @patch.object(api, "screener_snapshot_from", return_value="pokemon_screener_snapshot")
+    @patch.object(api, "category_config", return_value=api.category_config(3))
+    @patch.object(
+        api,
+        "q",
+        return_value=(
+            [
+                "latest_date",
+                "groupId",
+                "groupName",
+                "productId",
+                "productName",
+                "imageUrl",
+                "rarity",
+                "number",
+                "productClass",
+                "productKind",
+                "subTypeName",
+                "latest_price",
+                "roc_7d_pct",
+                "roc_30d_pct",
+                "roc_90d_pct",
+                "price_vs_sma30_pct",
+                "price_vs_sma90_pct",
+                "acceleration_7d_vs_30d",
+                "trend_score",
+                "recent_observations_7d",
+                "recent_distinct_prices_7d",
+                "recent_distinct_prices_30d",
+                "last_change_date",
+                "good_buys_default_flag",
+                "early_uptrends_default_flag",
+                "under_the_radar_default_flag",
+                "breakout_90d_flag",
+            ],
+            [
+                ("2026-05-27", 101, "Surging Sparks", 1, "Card Alpha", "https://img/1.png", "Illustration Rare", "101/191", "card", "card", "Holofoil", 42.0, 5.4, 7.5, 12.0, 4.0, 5.0, 2.4, 41.0, 8, 4, 11, "2026-05-27", 0, 1, 1, 0),
+                ("2026-05-27", 102, "Twilight Masquerade", 2, "Card Beta", "https://img/2.png", "Special Illustration Rare", "205/167", "card", "card", "Holofoil", 58.0, 6.1, 10.0, 18.0, 6.0, 7.0, 3.1, 47.0, 8, 5, 12, "2026-05-27", 1, 1, 0, 1),
+                ("2026-05-27", 103, "Journey Together", 4, "Card Delta", "https://img/4.png", "Illustration Rare", "121/159", "card", "card", "Holofoil", 27.0, 3.9, 5.4, 8.0, 3.0, 3.0, 1.8, 22.0, 8, 4, 7, "2026-05-27", 0, 0, 1, 0),
+            ],
+        ),
+    )
+    def test_budget_builder_can_exclude_owned_card(self, _q_mock, _category_config_mock, _snapshot_mock):
+        payload = api.budget_builder_recommendations(
+            budget=150,
+            min_price=5,
+            limit=4,
+            max_per_set=2,
+            rarities="illustration_rare,special_illustration_rare",
+            exclude_keys="1||Holofoil",
+            category_id=3,
+        )
+
+        self.assertEqual([item["productId"] for item in payload["items"]], [2, 4])
+        self.assertEqual(payload["exclude_keys"], ["1||Holofoil"])
+
+    @patch.object(api, "screener_snapshot_from", return_value="pokemon_screener_snapshot")
+    @patch.object(api, "category_config", return_value=api.category_config(3))
+    @patch.object(
+        api,
+        "q",
+        return_value=(
+            [
+                "latest_date",
+                "groupId",
+                "groupName",
+                "productId",
+                "productName",
+                "imageUrl",
+                "rarity",
+                "number",
+                "productClass",
+                "productKind",
+                "subTypeName",
+                "latest_price",
+                "roc_7d_pct",
+                "roc_30d_pct",
+                "roc_90d_pct",
+                "price_vs_sma30_pct",
+                "price_vs_sma90_pct",
+                "acceleration_7d_vs_30d",
+                "trend_score",
+                "recent_observations_7d",
+                "recent_distinct_prices_7d",
+                "recent_distinct_prices_30d",
+                "last_change_date",
+                "good_buys_default_flag",
+                "early_uptrends_default_flag",
+                "under_the_radar_default_flag",
+                "breakout_90d_flag",
+            ],
+            [
+                ("2026-05-27", 101, "Surging Sparks", 1, "Pikachu", "https://img/1.png", "Illustration Rare", "101/191", "card", "card", "Holofoil", 42.0, 8.4, 9.5, 12.0, 4.0, 5.0, 2.4, 41.0, 8, 4, 11, "2026-05-27", 0, 1, 1, 0),
+                ("2026-05-27", 102, "Journey Together", 2, "Pikachu", "https://img/2.png", "Illustration Rare", "121/159", "card", "card", "Reverse Holofoil", 39.0, 8.1, 9.1, 11.0, 4.0, 5.0, 2.3, 40.0, 8, 4, 10, "2026-05-27", 0, 1, 1, 0),
+                ("2026-05-27", 103, "Twilight Masquerade", 3, "Raichu", "https://img/3.png", "Illustration Rare", "77/167", "card", "card", "Holofoil", 31.0, 7.2, 8.4, 10.0, 4.0, 5.0, 2.0, 36.0, 8, 4, 9, "2026-05-27", 0, 1, 1, 0),
+            ],
+        ),
+    )
+    def test_budget_builder_duplicate_toggle_can_allow_repeat_names(self, _q_mock, _category_config_mock, _snapshot_mock):
+        without_duplicates = api.budget_builder_recommendations(
+            budget=150,
+            min_price=5,
+            limit=3,
+            max_per_set=2,
+            rarities="illustration_rare",
+            allow_duplicates=False,
+            category_id=3,
+        )
+        with_duplicates = api.budget_builder_recommendations(
+            budget=150,
+            min_price=5,
+            limit=3,
+            max_per_set=2,
+            rarities="illustration_rare",
+            allow_duplicates=True,
+            category_id=3,
+        )
+
+        self.assertEqual([item["productId"] for item in without_duplicates["items"]], [1, 3])
+        self.assertEqual([item["productId"] for item in with_duplicates["items"]], [1, 2, 3])
+        self.assertFalse(without_duplicates["allow_duplicates"])
+        self.assertTrue(with_duplicates["allow_duplicates"])
 
     def test_search_short_queries_return_empty_payload(self):
         response = self.client.get("/search", params={"query": "a"})

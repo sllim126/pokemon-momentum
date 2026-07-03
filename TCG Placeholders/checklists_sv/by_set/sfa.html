@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SFA - Shrouded Fable Checklist</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #151515;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 18px 44px;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    h1 {
+      margin: 0 0 5px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .meta {
+      margin: 0;
+      color: #555;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    a.button,
+    button {
+      min-height: 36px;
+      padding: 0 12px;
+      border: 1px solid #cfd5df;
+      border-radius: 6px;
+      background: white;
+      color: #111;
+      font: inherit;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .progress {
+      height: 12px;
+      margin-bottom: 16px;
+      border: 1px solid #cfd5df;
+      border-radius: 999px;
+      overflow: hidden;
+      background: white;
+    }
+    .bar {
+      height: 100%;
+      width: 0;
+      background: #33745b;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #d9dee7;
+    }
+    th,
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid #e4e8ef;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #eef1f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .category-row th {
+      padding: 11px 10px;
+      background: #dfe5ed;
+      color: #111;
+      font-size: 13px;
+    }
+    .owned {
+      width: 44px;
+      text-align: center;
+    }
+    .number {
+      width: 100px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .name {
+      width: 230px;
+      font-weight: 700;
+    }
+    .variant {
+      width: 210px;
+    }
+    .sources {
+      color: #444;
+      font-size: 13px;
+    }
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+    }
+    tr.is-owned td {
+      background: #f2f7f4;
+    }
+    @media print {
+      body {
+        background: white;
+        font-size: 11px;
+      }
+      main {
+        max-width: none;
+        padding: 0;
+      }
+      .actions,
+      .progress {
+        display: none;
+      }
+      table {
+        border-color: #999;
+      }
+      th,
+      td {
+        padding: 5px 6px;
+        border-color: #bbb;
+      }
+      input[type="checkbox"] {
+        appearance: none;
+        width: 12px;
+        height: 12px;
+        border: 1px solid #111;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main data-page='{&quot;code&quot;: &quot;SFA&quot;}'>
+    <header>
+      <div>
+        <h1>SFA - Shrouded Fable</h1>
+        <p class="meta">15 checklist rows - 2024-08-02</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="../index.html">Index</a>
+        <a class="button" href="../csv/sfa.csv">CSV</a>
+        <button type="button" id="print-button">Print</button>
+        <button type="button" id="clear-button">Clear</button>
+      </div>
+    </header>
+    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+    <table>
+      <thead>
+        <tr>
+          <th class="owned">Have</th>
+          <th class="number">Number</th>
+          <th class="name">Card</th>
+          <th class="variant">Variant</th>
+          <th class="sources">Sources</th>
+        </tr>
+      </thead>
+      <tbody>
+      <tr class="category-row"><th colspan="5">Promo Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp129_pecharunt_black_star_promo_us_uk" aria-label="SVP129 Pecharunt Black Star Promo"></td>
+        <td class="number">SVP129</td>
+        <td class="name">Pecharunt</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Shrouded Fable - Elite Trainer Box</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp129_pecharunt_pokemon_center_stamp_us_uk" aria-label="SVP129 Pecharunt Pokemon Center Stamp"></td>
+        <td class="number">SVP129</td>
+        <td class="name">Pecharunt</td>
+        <td class="variant">Pokemon Center Stamp</td>
+        <td class="sources">Shrouded Fable - Pokemon Center ETB</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp130_kingambit_black_star_promo_us_uk" aria-label="SVP130 Kingambit Black Star Promo"></td>
+        <td class="number">SVP130</td>
+        <td class="name">Kingambit</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Shrouded Fable - Kingambit Illustration Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp131_kingdra_ex_black_star_promo_us_uk" aria-label="SVP131 Kingdra ex Black Star Promo"></td>
+        <td class="number">SVP131</td>
+        <td class="name">Kingdra ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Shrouded Fable - Kingdra ex Special Illustration Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp132_greninja_ex_black_star_promo_us_uk" aria-label="SVP132 Greninja ex Black Star Promo"></td>
+        <td class="number">SVP132</td>
+        <td class="name">Greninja ex</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Shrouded Fable - Greninja ex Special Illustration Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="svp149_pecharunt_black_star_promo_us_uk" aria-label="SVP149 Pecharunt Black Star Promo"></td>
+        <td class="number">SVP149</td>
+        <td class="name">Pecharunt</td>
+        <td class="variant">Black Star Promo</td>
+        <td class="sources">Shrouded Fable - Three-Booster Pack and Promo Card Blister</td>
+      </tr><tr class="category-row"><th colspan="5">MCAP Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="sfa010_horsea_cosmos_holo_us_uk" aria-label="SFA010 Horsea Cosmos Holo"></td>
+        <td class="number">SFA010</td>
+        <td class="name">Horsea</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Shrouded Fable - Kingdra ex Special Illustration Collection</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="sfa011_seadra_cosmos_holo_us_uk" aria-label="SFA011 Seadra Cosmos Holo"></td>
+        <td class="number">SFA011</td>
+        <td class="name">Seadra</td>
+        <td class="variant">Cosmos Holo</td>
+        <td class="sources">Shrouded Fable - Kingdra ex Special Illustration Collection</td>
+      </tr><tr class="category-row"><th colspan="5">Prize Pack Cards</th></tr><tr>
+        <td class="owned"><input type="checkbox" data-key="sfa002_galvantula_play_pokemon_stamp_us_uk" aria-label="SFA002 Galvantula Play Pokemon Stamp"></td>
+        <td class="number">SFA002</td>
+        <td class="name">Galvantula</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="sfa019_dusclops_play_pokemon_stamp_us_uk" aria-label="SFA019 Dusclops Play Pokemon Stamp"></td>
+        <td class="number">SFA019</td>
+        <td class="name">Dusclops</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="sfa020_dusknoir_play_pokemon_stamp_us_uk" aria-label="SFA020 Dusknoir Play Pokemon Stamp"></td>
+        <td class="number">SFA020</td>
+        <td class="name">Dusknoir</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="sfa038_fezandipiti_ex_play_pokemon_stamp_us_uk" aria-label="SFA038 Fezandipiti ex Play Pokemon Stamp"></td>
+        <td class="number">SFA038</td>
+        <td class="name">Fezandipiti ex</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="sfa057_colress_s_tenacity_play_pokemon_stamp_us_uk" aria-label="SFA057 Colress&#x27;s Tenacity Play Pokemon Stamp"></td>
+        <td class="number">SFA057</td>
+        <td class="name">Colress&#x27;s Tenacity</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="sfa061_night_stretcher_play_pokemon_stamp_us_uk" aria-label="SFA061 Night Stretcher Play Pokemon Stamp"></td>
+        <td class="number">SFA061</td>
+        <td class="name">Night Stretcher</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr><tr>
+        <td class="owned"><input type="checkbox" data-key="sfa063_powerglass_play_pokemon_stamp_us_uk" aria-label="SFA063 Powerglass Play Pokemon Stamp"></td>
+        <td class="number">SFA063</td>
+        <td class="name">Powerglass</td>
+        <td class="variant">Play Pokemon Stamp</td>
+        <td class="sources">Play Pokemon Prize Pack Series Seven - Play Pokemon Prize Pack Series Seven</td>
+      </tr>
+      </tbody>
+    </table>
+  </main>
+  <script>
+    const page = JSON.parse(document.querySelector("main").dataset.page);
+    const boxes = [...document.querySelectorAll("input[type=checkbox]")];
+    const keyPrefix = `tcg-checklist:${page.code}:`;
+    const bar = document.getElementById("bar");
+
+    function storageKey(box) {
+      return keyPrefix + box.dataset.key;
+    }
+
+    function updateProgress() {
+      const owned = boxes.filter((box) => box.checked).length;
+      const pct = boxes.length ? (owned / boxes.length) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+
+    boxes.forEach((box) => {
+      box.checked = localStorage.getItem(storageKey(box)) === "1";
+      box.closest("tr").classList.toggle("is-owned", box.checked);
+      box.addEventListener("change", () => {
+        if (box.checked) {
+          localStorage.setItem(storageKey(box), "1");
+        } else {
+          localStorage.removeItem(storageKey(box));
+        }
+        box.closest("tr").classList.toggle("is-owned", box.checked);
+        updateProgress();
+      });
+    });
+
+    document.getElementById("print-button").addEventListener("click", () => window.print());
+    document.getElementById("clear-button").addEventListener("click", () => {
+      boxes.forEach((box) => {
+        box.checked = false;
+        box.closest("tr").classList.remove("is-owned");
+        localStorage.removeItem(storageKey(box));
+      });
+      updateProgress();
+    });
+    updateProgress();
+  </script>
+</body>
+</html>

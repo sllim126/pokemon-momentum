@@ -13,3 +13,5 @@ matplotlib
 plotly
 python-dotenv
 python-multipart
+fastapi
+uvicorn

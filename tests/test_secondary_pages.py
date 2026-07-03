@@ -6,6 +6,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 DESKTOP_LAB_HTML = REPO_ROOT / "scripts" / "dashboards" / "dashboard_lab.html"
 SEALED_DEALS_HTML = REPO_ROOT / "scripts" / "dashboards" / "sealed_deals.html"
 SET_EXPLORER_HTML = REPO_ROOT / "scripts" / "dashboards" / "set_explorer.html"
+BUDGET_BUILDER_HTML = REPO_ROOT / "scripts" / "dashboards" / "budget_builder.html"
+COLLECTOR_HUB_HTML = REPO_ROOT / "scripts" / "dashboards" / "collector_hub.html"
 INDEX_OVERVIEW_HUB_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overview_hub.html"
 INDEX_OVERVIEW_SV100_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overview.html"
 INDEX_OVERVIEW_MEGA100_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overview_mega100.html"
@@ -29,6 +31,8 @@ class SecondaryPageContractTests(unittest.TestCase):
         cls.desktop_lab_html = DESKTOP_LAB_HTML.read_text(encoding="utf-8")
         cls.sealed_deals_html = SEALED_DEALS_HTML.read_text(encoding="utf-8")
         cls.set_explorer_html = SET_EXPLORER_HTML.read_text(encoding="utf-8")
+        cls.budget_builder_html = BUDGET_BUILDER_HTML.read_text(encoding="utf-8")
+        cls.collector_hub_html = COLLECTOR_HUB_HTML.read_text(encoding="utf-8")
         cls.index_overview_hub_html = INDEX_OVERVIEW_HUB_HTML.read_text(encoding="utf-8")
         cls.index_overview_sv100_html = INDEX_OVERVIEW_SV100_HTML.read_text(encoding="utf-8")
         cls.index_overview_mega100_html = INDEX_OVERVIEW_MEGA100_HTML.read_text(encoding="utf-8")
@@ -68,6 +72,29 @@ class SecondaryPageContractTests(unittest.TestCase):
         self.assertIn("details.filter-menu", self.set_explorer_html)
         self.assertIn("top_hit_price", self.set_explorer_html)
         self.assertIn("total_set_cost", self.set_explorer_html)
+
+    def test_budget_builder_page_has_budget_controls_and_api_fetch(self):
+        self.assertIn("Poke6s Budget Builder", self.budget_builder_html)
+        self.assertIn("budgetSlider", self.budget_builder_html)
+        self.assertIn("budgetInput", self.budget_builder_html)
+        self.assertIn("rarityGrid", self.budget_builder_html)
+        self.assertIn("/budget_builder", self.budget_builder_html)
+        self.assertIn("Use IR+", self.budget_builder_html)
+        self.assertIn("I already have this card, find a replacement", self.budget_builder_html)
+        self.assertIn("ownedStrip", self.budget_builder_html)
+        self.assertIn("refreshResultsBtn", self.budget_builder_html)
+        self.assertIn("Refresh Results", self.budget_builder_html)
+        self.assertIn("allowDuplicatesToggle", self.budget_builder_html)
+        self.assertIn("Duplicates are acceptable", self.budget_builder_html)
+
+    def test_collector_hub_page_has_manifest_and_core_routes(self):
+        self.assertIn("Poke6s Collector Hub", self.collector_hub_html)
+        self.assertIn("Master Set Hub", self.collector_hub_html)
+        self.assertIn("/collector-manifest", self.collector_hub_html)
+        self.assertIn("/collector-assets/checklists-sv/index.html", self.collector_hub_html)
+        self.assertIn("/collector-assets/print-combined/index.html", self.collector_hub_html)
+        self.assertIn("/dashboard-lab", self.collector_hub_html)
+        self.assertIn("/set-explorer", self.collector_hub_html)
 
     def test_index_overview_hub_page_lists_indexes(self):
         self.assertIn("Index Overview", self.index_overview_hub_html)
