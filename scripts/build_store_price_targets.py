@@ -20,6 +20,7 @@ EN_SIGNAL_CSV = REPO_ROOT / "data" / "extracted" / "pokemon_product_signal_snaps
 RULES_CSV = REPO_ROOT / "data" / "store_price_rules.csv"
 OUTPUT_CSV = REPO_ROOT / "data" / "market_prices_latest.csv"
 SUPPLIER_QUOTES_CSV = REPO_ROOT / "data" / "supplier_quotes.csv"
+CREATED_SINGLE_LISTINGS_CSV = REPO_ROOT / "output" / "squarespace_created_single_listings.csv"
 
 DEFAULT_JPY_PER_USD = Decimal(os.getenv("SUPPLIER_FLOOR_JPY_PER_USD", "145"))
 DEFAULT_IMPORT_DUTY_PCT = Decimal(os.getenv("SUPPLIER_FLOOR_IMPORT_DUTY_PCT", "10"))
@@ -93,6 +94,23 @@ def normalize_name(value: str) -> str:
     value = value.replace("&", "and")
     value = re.sub(r"[^a-z0-9]+", " ", value)
     return " ".join(value.split())
+
+
+def normalize_subtype(value: str) -> str:
+    return " ".join(str(value or "").strip().split())
+
+
+def subtype_key(value: str) -> str:
+    return normalize_subtype(value).casefold()
+
+
+def build_variant_sku(product_id: str, subtype: str) -> str:
+    normalized_subtype = normalize_subtype(subtype)
+    if not normalized_subtype or normalized_subtype.casefold() == "normal":
+        return product_id
+    slug = re.sub(r"[^a-z0-9]+", "-", normalized_subtype.lower()).strip("-")
+    slug = re.sub(r"-{2,}", "-", slug)
+    return f"{product_id}-{slug}"
 
 
 def round_price(value: Decimal, cents: int = 2) -> Decimal:
@@ -329,6 +347,17 @@ def load_signal_rows(path: Path) -> tuple[dict[str, dict[str, str]], dict[str, d
     return by_id, by_name
 
 
+def load_signal_rows_by_variant(path: Path) -> dict[tuple[str, str], dict[str, str]]:
+    by_variant: dict[tuple[str, str], dict[str, str]] = {}
+    with path.open(newline="") as handle:
+        for row in csv.DictReader(handle):
+            product_id = (row.get("productId") or "").strip()
+            if not product_id:
+                continue
+            by_variant[(product_id, subtype_key(row.get("subTypeName") or ""))] = row
+    return by_variant
+
+
 def load_store_rows(path: Path) -> dict[str, dict[str, str]]:
     """Load Squarespace export rows keyed by SKU.
 
@@ -346,6 +375,89 @@ def load_store_rows(path: Path) -> dict[str, dict[str, str]]:
             if sku:
                 rows[sku] = row
     return rows
+
+
+def load_created_single_rows(path: Path) -> list[dict[str, str]]:
+    if not path.exists():
+        return []
+    with path.open(newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def merge_store_rows(
+    export_csv: Path,
+    created_csv: Path = CREATED_SINGLE_LISTINGS_CSV,
+) -> dict[str, dict[str, str]]:
+    rows = load_store_rows(export_csv)
+    for row in load_created_single_rows(created_csv):
+        sku = (row.get("sku") or "").strip()
+        if not sku or sku in rows:
+            continue
+        rows[sku] = {
+            "SKU": sku,
+            "Title": row.get("title") or "",
+        }
+    return rows
+
+
+def build_created_single_target_rows(
+    *,
+    store_rows: dict[str, dict[str, str]],
+    en_by_variant: dict[tuple[str, str], dict[str, str]],
+    jp_by_variant: dict[tuple[str, str], dict[str, str]],
+    created_csv: Path = CREATED_SINGLE_LISTINGS_CSV,
+) -> tuple[list[dict[str, str]], list[str]]:
+    output_rows: list[dict[str, str]] = []
+    unmatched: list[str] = []
+    if not created_csv.exists():
+        return output_rows, unmatched
+
+    signal_maps = {
+        "english": (en_by_variant, "en"),
+        "japanese": (jp_by_variant, "jp"),
+    }
+    seen_skus: set[str] = set()
+    for row in load_created_single_rows(created_csv):
+        sku = (row.get("sku") or "").strip()
+        if not sku or sku in seen_skus:
+            continue
+        seen_skus.add(sku)
+
+        product_id = (row.get("canonical_product_id") or "").strip()
+        subtype = normalize_subtype(row.get("subtype") or "")
+        language = (row.get("language") or "").strip().lower()
+        signal_map, market_source = signal_maps.get(language, ({}, ""))
+        market_row = signal_map.get((product_id, subtype_key(subtype)))
+        if market_row is None and not subtype:
+            market_row = signal_map.get((product_id, ""))
+        if market_row is None:
+            unmatched.append(f"{sku}: missing variant market row for {product_id} / {subtype or 'Normal'}")
+            continue
+        if sku not in store_rows:
+            unmatched.append(f"{sku}: missing from Squarespace export or created listing ledger")
+            continue
+
+        market_price = parse_decimal(market_row.get("latest_price") or "")
+        if market_price is None:
+            unmatched.append(f"{sku}: missing latest_price in market data")
+            continue
+
+        output_rows.append(
+            {
+                "sku": sku,
+                "market_price": str(round_price(market_price, 2)),
+                "target_price": str(round_price(market_price, 2)),
+                "title": store_rows[sku].get("Title") or row.get("title") or "",
+                "market_title": market_row.get("productName") or "",
+                "pricing_mode": "market",
+                "market_source": market_source,
+                "profit_floor_price": "",
+                "supplier_cost_jpy": "",
+                "target_source": "market",
+            }
+        )
+
+    return output_rows, unmatched
 
 
 def build_target_rows(
@@ -372,9 +484,11 @@ def build_target_rows(
     - if a supplier quote exists and the computed profit floor is higher, override with that floor
     - rows marked `pricing_mode=manual` are intentionally omitted
     """
-    store_rows = load_store_rows(export_csv)
+    store_rows = merge_store_rows(export_csv, CREATED_SINGLE_LISTINGS_CSV)
     jp_by_id, jp_by_name = load_signal_rows(JP_SIGNAL_CSV)
     en_by_id, en_by_name = load_signal_rows(EN_SIGNAL_CSV)
+    jp_by_variant = load_signal_rows_by_variant(JP_SIGNAL_CSV)
+    en_by_variant = load_signal_rows_by_variant(EN_SIGNAL_CSV)
     latest_supplier_quotes = load_latest_supplier_quotes(SUPPLIER_QUOTES_CSV)
     signal_maps = {
         "jp": (jp_by_id, jp_by_name),
@@ -461,6 +575,19 @@ def build_target_rows(
                     ),
                 }
             )
+
+    created_rows, created_unmatched = build_created_single_target_rows(
+        store_rows=store_rows,
+        en_by_variant=en_by_variant,
+        jp_by_variant=jp_by_variant,
+        created_csv=CREATED_SINGLE_LISTINGS_CSV,
+    )
+    existing_skus = {row["sku"] for row in output_rows}
+    for row in created_rows:
+        if row["sku"] not in existing_skus:
+            output_rows.append(row)
+            existing_skus.add(row["sku"])
+    unmatched.extend(created_unmatched)
 
     return output_rows, unmatched
 

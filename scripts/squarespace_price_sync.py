@@ -86,6 +86,28 @@ def load_squarespace_export(path: str) -> Dict[str, VariantMapping]:
     return mapping
 
 
+def load_created_listing_mapping(path: str) -> Dict[str, VariantMapping]:
+    mapping: Dict[str, VariantMapping] = {}
+    created_path = Path(path)
+    if not created_path.exists():
+        return mapping
+    with created_path.open(newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            sku = (row.get("sku") or "").strip()
+            if not sku:
+                continue
+            mapping[sku] = VariantMapping(
+                sku=sku,
+                product_id=(row.get("product_id") or "").strip(),
+                variant_id=(row.get("variant_id") or "").strip(),
+                title=(row.get("title") or "").strip(),
+                current_price=None,
+                current_sale_price=None,
+            )
+    return mapping
+
+
 def load_market_prices(path: str) -> Dict[str, MarketRow]:
     prices: Dict[str, MarketRow] = {}
     with open(path, newline="") as f:
@@ -297,6 +319,14 @@ def main() -> int:
         ),
         help="Write SKU -> product/variant mapping",
     )
+    parser.add_argument(
+        "--created-listings-csv",
+        default=os.getenv(
+            "SQUARESPACE_CREATED_LISTINGS_CSV",
+            "/opt/pokemon-momentum/output/squarespace_created_single_listings.csv",
+        ),
+        help="Optional created-listings ledger with direct product/variant IDs",
+    )
     parser.add_argument("--base-url", default="https://api.squarespace.com")
     args = parser.parse_args()
 
@@ -314,14 +344,17 @@ def main() -> int:
         return 2
 
     export_map = load_squarespace_export(args.squarespace_export)
+    created_map = load_created_listing_mapping(args.created_listings_csv)
+    combined_map = dict(created_map)
+    combined_map.update(export_map)
     Path(args.mapping_csv).parent.mkdir(parents=True, exist_ok=True)
-    write_mapping_csv(args.mapping_csv, export_map.values())
+    write_mapping_csv(args.mapping_csv, combined_map.values())
 
     market_prices = load_market_prices(args.market_csv)
 
     updates: List[Tuple[VariantMapping, Decimal]] = []
     for sku, market_row in market_prices.items():
-        mapping = export_map.get(sku)
+        mapping = combined_map.get(sku)
         if not mapping:
             continue
         if market_row.target_price is not None:
@@ -338,7 +371,7 @@ def main() -> int:
         if should_update(mapping.current_price, new_price, args.min_abs_change, args.min_pct_change):
             updates.append((mapping, new_price))
 
-    print(f"Matched SKUs: {len([s for s in market_prices if s in export_map])}")
+    print(f"Matched SKUs: {len([s for s in market_prices if s in combined_map])}")
     print(f"Proposed updates: {len(updates)}")
     print(f"Effective markup pct: {effective_markup_pct}")
 
