@@ -1,12 +1,124 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
 from scripts import build_squarespace_single_listing_drafts
+from scripts import card_image_cache
 from scripts import create_squarespace_single_listings
+from scripts import scrydex_images
 
 
 class SquarespaceSingleListingWorkflowTests(unittest.TestCase):
+    def test_build_scrydex_card_image_url_handles_prefixed_and_numeric_numbers(self):
+        self.assertEqual(
+            scrydex_images.build_scrydex_card_image_url(
+                "SWSH11: Lost Origin Trainer Gallery",
+                "TG05/TG30",
+            ),
+            "https://images.scrydex.com/pokemon/swsh11tg-TG05/medium",
+        )
+        self.assertEqual(
+            scrydex_images.build_scrydex_card_image_url(
+                "EX Delta Species",
+                "063/113",
+            ),
+            "https://images.scrydex.com/pokemon/ex11-63/medium",
+        )
+
+    def test_resolve_image_cache_metadata_uses_language_and_sku(self):
+        with TemporaryDirectory() as tmpdir:
+            metadata = create_squarespace_single_listings.resolve_image_cache_metadata(
+                {
+                    "sku": "84840-reverse-holofoil",
+                    "language": "english",
+                    "image_url": "https://tcgplayer-cdn.tcgplayer.com/product/84840_200w.jpg",
+                },
+                Path(tmpdir),
+            )
+
+        self.assertTrue(metadata["image_cache_path"].endswith("english/84840-reverse-holofoil.jpg"))
+        self.assertEqual(
+            metadata["image_public_url"],
+            "/images/cards/english/84840-reverse-holofoil.jpg",
+        )
+
+    @patch("scripts.card_image_cache.requests.get")
+    def test_cache_card_image_downloads_expected_file(self, mock_get):
+        class FakeResponse:
+            headers = {"Content-Type": "image/png"}
+
+            def raise_for_status(self):
+                return None
+
+            def iter_content(self, chunk_size=8192):
+                yield b"png-bytes"
+
+        mock_get.return_value = FakeResponse()
+
+        with TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir) / "english" / "84840.jpg"
+            resolved_path, downloaded = card_image_cache.cache_card_image(
+                image_url="https://example.com/card.png",
+                image_path=target,
+                timeout=5,
+            )
+
+            self.assertTrue(downloaded)
+            self.assertEqual(resolved_path.suffix, ".png")
+            self.assertEqual(resolved_path.read_bytes(), b"png-bytes")
+            self.assertFalse(target.exists())
+
+    def test_square_pad_image_adds_horizontal_canvas_without_cropping(self):
+        from PIL import Image
+
+        with TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / "card.png"
+            Image.new("RGBA", (20, 40), (255, 0, 0, 255)).save(path)
+            changed = card_image_cache.square_pad_image(path)
+            with Image.open(path) as padded:
+                self.assertTrue(changed)
+                self.assertEqual(padded.size, (40, 40))
+                self.assertEqual(padded.getpixel((20, 20)), (255, 0, 0, 255))
+
+    def test_cache_card_image_square_pads_existing_file(self):
+        from PIL import Image
+
+        with TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir) / "english" / "84840.png"
+            target.parent.mkdir(parents=True, exist_ok=True)
+            Image.new("RGBA", (30, 50), (0, 0, 255, 255)).save(target)
+
+            resolved_path, downloaded = card_image_cache.cache_card_image(
+                image_url="https://example.com/card.png",
+                image_path=target,
+                timeout=5,
+                square_pad=True,
+            )
+            with Image.open(resolved_path) as padded:
+                self.assertFalse(downloaded)
+                self.assertEqual(padded.size, (50, 50))
+
+    def test_cache_script_uses_scrydex_source_url(self):
+        row = {
+            "set_name": "SWSH: Crown Zenith: Galarian Gallery",
+            "card_number": "GG50/GG70",
+        }
+        self.assertEqual(
+            create_squarespace_single_listings.resolve_image_cache_metadata(
+                {
+                    "sku": "478077-holofoil",
+                    "language": "english",
+                    "image_url": scrydex_images.build_scrydex_card_image_url(
+                        row["set_name"],
+                        row["card_number"],
+                    ),
+                },
+                Path("/tmp/card-cache"),
+            )["image_cache_path"],
+            "/tmp/card-cache/english/478077-holofoil.jpg",
+        )
+
     def test_build_drafts_enriches_ready_japanese_single(self):
         with TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
@@ -73,6 +185,7 @@ class SquarespaceSingleListingWorkflowTests(unittest.TestCase):
         self.assertEqual(row["target_price"], "37.97")
         self.assertEqual(row["price_source"], "market_prices_latest.target_price")
         self.assertIn("Roaring Moon ex", row["final_title"])
+        self.assertIn("Japanese", row["final_title"])
         self.assertIn("/singles/japanese", row["categories"])
         self.assertIn("/singles/rarity/special-art-rare", row["categories"])
         self.assertEqual(row["visibility"], "hidden")
@@ -140,7 +253,7 @@ class SquarespaceSingleListingWorkflowTests(unittest.TestCase):
     def test_build_product_payload_creates_hidden_physical_product(self):
         row = {
             "sku": "602682",
-            "final_title": "Roaring Moon ex - 218/187 - SV8a: Terastal Festival ex (SV8a) Japanese",
+            "final_title": "Roaring Moon ex - 218/187 - SV8a: Terastal Festival ex (SV8a) - Japanese",
             "description_html": "<p>Example</p>",
             "tags": "Singles, Singles Intake",
             "url_slug": "roaring-moon-ex-218-187-sv8a-terastal-festival-ex-sv8a-japanese-602682",
@@ -212,6 +325,7 @@ class SquarespaceSingleListingWorkflowTests(unittest.TestCase):
         self.assertEqual(drafts[0]["draft_status"], "ready")
         self.assertEqual(drafts[0]["subtype"], "Normal")
         self.assertIn("inferred subtype from sku: Normal", drafts[0]["warnings"])
+        self.assertIn("English", drafts[0]["final_title"])
 
 
 if __name__ == "__main__":

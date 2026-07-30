@@ -16,6 +16,7 @@ class BuildStorePriceTargetsTests(unittest.TestCase):
             en_signal_csv = root / "en_signal.csv"
             rules_csv = root / "rules.csv"
             supplier_quotes_csv = root / "supplier_quotes.csv"
+            created_csv = root / "created.csv"
 
             export_csv.write_text(
                 "SKU,Title\n"
@@ -38,11 +39,17 @@ class BuildStorePriceTargetsTests(unittest.TestCase):
                 "20260501T000000Z,2026-05-01,Test Supplier,Sheet,screenshot,Terastal Festival,JP-TF-BB,17000,test.png,\n",
                 encoding="utf-8",
             )
+            created_csv.write_text(
+                "created_at,sku,product_id,variant_id,canonical_product_id,subtype,title,target_price,quantity,language,condition,url_slug,squarespace_url,store_page_id,visibility,tags,categories,image_url,notes\n",
+                encoding="utf-8",
+            )
 
             with patch.object(build_store_price_targets, "JP_SIGNAL_CSV", jp_signal_csv), patch.object(
                 build_store_price_targets, "EN_SIGNAL_CSV", en_signal_csv
             ), patch.object(build_store_price_targets, "RULES_CSV", rules_csv), patch.object(
                 build_store_price_targets, "SUPPLIER_QUOTES_CSV", supplier_quotes_csv
+            ), patch.object(
+                build_store_price_targets, "CREATED_SINGLE_LISTINGS_CSV", created_csv
             ):
                 rows, unmatched = build_store_price_targets.build_target_rows(
                     export_csv=export_csv,
@@ -65,6 +72,7 @@ class BuildStorePriceTargetsTests(unittest.TestCase):
             en_signal_csv = root / "en_signal.csv"
             rules_csv = root / "rules.csv"
             supplier_quotes_csv = root / "supplier_quotes.csv"
+            created_csv = root / "created.csv"
 
             export_csv.write_text(
                 "SKU,Title\n"
@@ -87,11 +95,17 @@ class BuildStorePriceTargetsTests(unittest.TestCase):
                 "20260515T000000Z,2026-05-15,Test Supplier,Sheet,screenshot,Terastal Festival,JP-TF-BB,17000,test.png,\n",
                 encoding="utf-8",
             )
+            created_csv.write_text(
+                "created_at,sku,product_id,variant_id,canonical_product_id,subtype,title,target_price,quantity,language,condition,url_slug,squarespace_url,store_page_id,visibility,tags,categories,image_url,notes\n",
+                encoding="utf-8",
+            )
 
             with patch.object(build_store_price_targets, "JP_SIGNAL_CSV", jp_signal_csv), patch.object(
                 build_store_price_targets, "EN_SIGNAL_CSV", en_signal_csv
             ), patch.object(build_store_price_targets, "RULES_CSV", rules_csv), patch.object(
                 build_store_price_targets, "SUPPLIER_QUOTES_CSV", supplier_quotes_csv
+            ), patch.object(
+                build_store_price_targets, "CREATED_SINGLE_LISTINGS_CSV", created_csv
             ):
                 rows, unmatched = build_store_price_targets.build_target_rows(
                     export_csv=export_csv,

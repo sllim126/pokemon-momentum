@@ -3,6 +3,16 @@ Pokemon Momentum TODO
 
 Active work only. Archived completed items live in `docs/todo_archive.txt`.
 
+Recently Completed
+------------------
+
+- Squarespace singles listing image workflow completed on 2026-07-30:
+  - added a local `/images/cards/...` cache for single-card artwork
+  - added Scrydex-derived card image support with local fallback-friendly caching
+  - added square-padding so cached card images can upload to Squarespace as 1:1 thumbnails without cropping the card top/bottom in previews
+  - uploaded the first 12 hidden Squarespace single listings with locally cached, square-padded card images
+  - kept local metadata and draft CSVs as the source of truth while Squarespace remains the publishing target
+
 High Priority
 -------------
 
@@ -122,6 +132,47 @@ High Priority
 Active Queue
 ------------
 
+- PSA cert enrichment integration:
+  - Add site-facing uses of the current backend PSA cert lookup without making PSA the source of truth for card data.
+  - Safe first-pass uses:
+    - show PSA cert verification details on product/detail views when a cert number is provided
+    - surface normalized PSA fields such as cert number, grade, year, brand/set text, subject, and status as contextual enrichment
+    - link/attribute PSA anywhere PSA-sourced fields are shown
+    - prefer cached PSA results and avoid repeated live lookups during normal browsing
+  - Keep within current PSA limits:
+    - no client-side PSA API calls
+    - no bulk PSA browsing/database cloning/export tooling
+    - no population-report mirroring or PSA-first product experience
+  - Follow-up questions for implementation:
+    - where cert numbers should enter the product flow: manual lookup, tracked item notes, admin-only enrichment, or future item metadata
+    - whether PSA details belong on the mobile decision-card detail panel, a desktop drilldown module, a dedicated cert lookup page, or some combination
+    - whether manual refresh should stay admin-only when cache is stale or suspected wrong
+  - If PSA adds new allowed endpoints later, extend the current server-side client rather than rebuilding the integration from scratch.
+
+- Provider discovery sprint for Scrydex and PriceCharting:
+  - Treat this as a one-month data evaluation pass, not a production-provider migration.
+  - Keep TCGPlayer CSV as the current foundation and evaluate new providers as enrichment only.
+  - Avoid frontend coupling to provider schemas; normalize provider data into Momentum-owned tables or reports first.
+  - First providers to evaluate:
+    - Scrydex for Pokemon-focused raw pricing, graded pricing, price history, pop reports, EN/JP coverage, and webhook support
+    - PriceCharting for comparison on current values, graded coverage, CSV exports, and possible sales coverage if subscription access allows it
+  - First implementation pass:
+    - add env/config support for `SCRYDEX_API_KEY`, `SCRYDEX_TEAM_ID`, and `PRICECHARTING_TOKEN`
+    - build safe credential/health-check scripts without logging secrets
+    - save sample provider responses under `data/provider_samples/`
+    - compare a small fixed set of cards across Momentum, TCGPlayer, Scrydex, and PriceCharting
+    - export mapping/comparison results to `data/provider_comparison.csv`
+  - Evaluate these questions before any public product work:
+    - provider card matching quality
+    - graded pricing quality
+    - historical pricing availability
+    - pop report usefulness
+    - Japanese/promo/reverse-holo coverage
+    - cacheability, operational cost, and cancellation pain
+  - Likely first provider to test: Scrydex.
+  - Keep one architecture caution in mind:
+    - the notes use a future `backend/app/providers/...` shape, but the current repo is still centered on `scripts/dashboards/api.py` plus helper modules, so any first pass should follow the current project layout unless we intentionally do a broader backend refactor
+
 - TCG placeholder workflow intake:
   - Treat `TCG Placeholders/placeholders.csv` as the current Scarlet & Violet source of truth and `TCG Placeholders/mega_placeholders.csv` as the Mega-era source, matching the workflow notes in `TCG Placeholders/README.md`.
   - Keep `TCG Placeholders/Placeholders.xlsx` as historical reference only unless we intentionally switch the source back to workbook-first editing.
@@ -150,6 +201,10 @@ Active Queue
   - webhook notifications
   - bug report forwarding
 - Review first-load performance again after real usage and confirm the server-computed screener path actually solved the slow default loads.
+- Placeholder/checklist UX refinement follow-up:
+  - current collector-shell rebuild is a strong first pass, but review the placeholder library, print hubs, checklist pages, and review workspace again in a future session
+  - decide whether the long-term direction should stay generator-owned HTML, app-wrapped static assets, or a fuller app-rendered collector experience
+  - refine information hierarchy, wording, and action flow after real usage now that the bright-white utility pages have been replaced
 
 Deferred / Not Now
 ------------------

@@ -358,8 +358,9 @@ def build_title(
         set_label = f"{set_label} ({set_code})"
     if set_label and set_label.lower() not in title.lower():
         title = f"{title} - {set_label}"
-    if language == "japanese" and "japanese" not in title.lower():
-        title = f"{title} Japanese"
+    language_label = language.title() if language else ""
+    if language_label and language_label.lower() not in title.lower():
+        title = f"{title} - {language_label}"
     return title
 
 
