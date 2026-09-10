@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
 import hmac
+import json
 import secrets
 import sqlite3
 from pathlib import Path
@@ -90,6 +91,21 @@ def ensure_tracking_schema() -> None:
                 details TEXT NOT NULL,
                 status TEXT NOT NULL DEFAULT 'new',
                 context_json TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS psa_certifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                cert_number TEXT NOT NULL UNIQUE,
+                is_valid_request INTEGER NOT NULL,
+                server_message TEXT,
+                raw_response_json TEXT NOT NULL,
+                normalized_card_name TEXT,
+                normalized_set_name TEXT,
+                normalized_grade TEXT,
+                lookup_status TEXT NOT NULL,
+                last_checked_at TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
             );
             """
         )
@@ -534,3 +550,116 @@ def list_bug_reports(limit: int = 200) -> list[dict]:
         return [dict(row) for row in rows]
     finally:
         con.close()
+
+
+def get_psa_certification(cert_number: str) -> dict | None:
+    ensure_tracking_schema()
+    con = get_con()
+    try:
+        row = con.execute(
+            """
+            SELECT
+                id,
+                cert_number,
+                is_valid_request,
+                server_message,
+                raw_response_json,
+                normalized_card_name,
+                normalized_set_name,
+                normalized_grade,
+                lookup_status,
+                last_checked_at,
+                created_at,
+                updated_at
+            FROM psa_certifications
+            WHERE cert_number = ?
+            """,
+            [str(cert_number).strip()],
+        ).fetchone()
+        if row is None:
+            return None
+        raw_payload = row["raw_response_json"] or "{}"
+        try:
+            parsed_payload = json.loads(raw_payload)
+        except json.JSONDecodeError:
+            parsed_payload = {}
+        return {
+            "id": int(row["id"]),
+            "cert_number": row["cert_number"],
+            "is_valid_request": bool(row["is_valid_request"]),
+            "server_message": row["server_message"],
+            "raw_response_json": parsed_payload,
+            "normalized_card_name": row["normalized_card_name"],
+            "normalized_set_name": row["normalized_set_name"],
+            "normalized_grade": row["normalized_grade"],
+            "lookup_status": row["lookup_status"],
+            "last_checked_at": row["last_checked_at"],
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
+        }
+    finally:
+        con.close()
+
+
+def upsert_psa_certification(
+    cert_number: str,
+    *,
+    is_valid_request: bool,
+    server_message: str | None,
+    raw_response_json: dict,
+    normalized_card_name: str | None,
+    normalized_set_name: str | None,
+    normalized_grade: str | None,
+    lookup_status: str,
+    last_checked_at: str | None = None,
+) -> dict:
+    ensure_tracking_schema()
+    now = utc_now_iso()
+    checked_at = last_checked_at or now
+    con = get_con()
+    try:
+        con.execute(
+            """
+            INSERT INTO psa_certifications (
+                cert_number,
+                is_valid_request,
+                server_message,
+                raw_response_json,
+                normalized_card_name,
+                normalized_set_name,
+                normalized_grade,
+                lookup_status,
+                last_checked_at,
+                created_at,
+                updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(cert_number)
+            DO UPDATE SET
+                is_valid_request = excluded.is_valid_request,
+                server_message = excluded.server_message,
+                raw_response_json = excluded.raw_response_json,
+                normalized_card_name = excluded.normalized_card_name,
+                normalized_set_name = excluded.normalized_set_name,
+                normalized_grade = excluded.normalized_grade,
+                lookup_status = excluded.lookup_status,
+                last_checked_at = excluded.last_checked_at,
+                updated_at = excluded.updated_at
+            """,
+            [
+                str(cert_number).strip(),
+                1 if is_valid_request else 0,
+                server_message,
+                json.dumps(raw_response_json or {}, sort_keys=True),
+                normalized_card_name,
+                normalized_set_name,
+                normalized_grade,
+                lookup_status,
+                checked_at,
+                now,
+                now,
+            ],
+        )
+        con.commit()
+    finally:
+        con.close()
+    return get_psa_certification(cert_number) or {}

@@ -8,29 +8,96 @@
     * {
       box-sizing: border-box;
     }
+    :root {
+      --bg: #08111d;
+      --bg-2: #0d1830;
+      --panel: rgba(15, 25, 44, 0.9);
+      --panel-2: rgba(19, 33, 57, 0.96);
+      --panel-3: rgba(11, 20, 35, 0.88);
+      --ink: #eef5ff;
+      --muted: #94a7c8;
+      --line: rgba(136, 162, 205, 0.2);
+      --line-strong: rgba(136, 162, 205, 0.34);
+      --accent: #46b8ff;
+      --accent-2: #4fe2ae;
+      --accent-3: #ffd166;
+      --danger: #ff8b8b;
+      --shadow: 0 28px 70px rgba(1, 8, 22, 0.42);
+      --radius: 24px;
+    }
     body {
       margin: 0;
-      background: #f5f6f8;
-      color: #151515;
-      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 14% 0%, rgba(70, 184, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 86% 0%, rgba(79, 226, 174, 0.12), transparent 22%),
+        linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
       font-size: 14px;
     }
     main {
-      max-width: 1320px;
+      max-width: 1360px;
       margin: 0 auto;
-      padding: 22px 18px 42px;
+      padding: 18px 18px 42px;
     }
-    header {
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
+    .topbar,
+    .hero,
+    section,
+    aside {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(12, 21, 37, 0.92), rgba(9, 17, 31, 0.96));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) auto;
       gap: 16px;
+      align-items: center;
+      padding: 16px 18px;
       margin-bottom: 16px;
     }
+    .badge-row,
+    .top-actions,
+    .filters,
+    .form-grid,
+    .button-row,
+    .hero-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: end;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .badge.primary {
+      color: #d4efff;
+      background: rgba(70, 184, 255, 0.12);
+      border-color: rgba(70, 184, 255, 0.28);
+    }
+    .badge.success {
+      color: #d9fff1;
+      background: rgba(79, 226, 174, 0.12);
+      border-color: rgba(79, 226, 174, 0.28);
+    }
     h1 {
-      margin: 0 0 5px;
-      font-size: 26px;
-      letter-spacing: 0;
+      margin: 0;
+      font-size: clamp(32px, 5vw, 48px);
+      line-height: 0.96;
+      letter-spacing: -0.05em;
     }
     h2 {
       margin: 0 0 10px;
@@ -39,34 +106,23 @@
     }
     .meta {
       margin: 0;
-      color: #555;
-    }
-    .top-actions,
-    .filters,
-    .form-grid,
-    .button-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: end;
+      color: var(--muted);
+      line-height: 1.55;
     }
     .layout {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 390px;
-      gap: 14px;
+      gap: 16px;
       align-items: start;
     }
     section,
     aside {
-      background: white;
-      border: 1px solid #d9dee7;
-      border-radius: 6px;
-      padding: 14px;
+      padding: 18px;
     }
     label {
       display: grid;
       gap: 4px;
-      color: #444;
+      color: var(--muted);
       font-size: 12px;
       font-weight: 700;
     }
@@ -76,10 +132,10 @@
     button,
     a.button {
       min-height: 34px;
-      border: 1px solid #cbd2dc;
-      border-radius: 5px;
-      background: white;
-      color: #111;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: rgba(19, 33, 57, 0.92);
+      color: var(--ink);
       font: inherit;
     }
     input,
@@ -97,18 +153,23 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 0 11px;
-      font-weight: 700;
+      padding: 0 12px;
+      font-weight: 800;
       text-decoration: none;
       cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    }
+    button:hover,
+    a.button:hover {
+      transform: translateY(-1px);
     }
     button.primary {
-      background: #285f4d;
-      border-color: #285f4d;
-      color: white;
+      border: 0;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #062238;
     }
     button.danger {
-      color: #8a1f1f;
+      color: var(--danger);
     }
     .filters {
       margin-bottom: 10px;
@@ -116,30 +177,33 @@
     .table-wrap {
       max-height: 68vh;
       overflow: auto;
-      border: 1px solid #e1e5ec;
+      border: 1px solid var(--line);
+      border-radius: 18px;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      background: white;
+      background: rgba(19, 33, 57, 0.62);
     }
     th,
     td {
       padding: 7px 8px;
-      border-bottom: 1px solid #e4e8ef;
+      border-bottom: 1px solid rgba(136, 162, 205, 0.14);
       text-align: left;
       vertical-align: top;
     }
     th {
       position: sticky;
       top: 0;
-      background: #eef1f5;
+      background: rgba(8, 17, 29, 0.96);
+      color: #b5c7e4;
       z-index: 1;
       font-size: 12px;
       text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
     tr.is-selected td {
-      background: #edf6f1;
+      background: rgba(79, 226, 174, 0.12);
     }
     td.small {
       width: 76px;
@@ -164,7 +228,7 @@
     }
     .count {
       margin: 8px 0 0;
-      color: #555;
+      color: var(--muted);
       font-size: 12px;
     }
     .list {
@@ -174,17 +238,65 @@
       overflow: auto;
       margin-top: 8px;
       padding-right: 3px;
-      color: #333;
+      color: var(--ink);
       font-size: 12px;
     }
     .list-item {
       padding: 7px;
-      border: 1px solid #e1e5ec;
-      border-radius: 5px;
-      background: #fafbfc;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(19, 33, 57, 0.76);
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+      gap: 18px;
+      padding: 22px;
+      margin-bottom: 16px;
+    }
+    .hero-copy {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+    .hero-card {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      background:
+        linear-gradient(135deg, rgba(70, 184, 255, 0.12), rgba(79, 226, 174, 0.08)),
+        rgba(10, 18, 32, 0.92);
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .stat {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(19, 33, 57, 0.72);
+    }
+    .stat strong {
+      display: block;
+      font-size: 24px;
+      letter-spacing: -0.05em;
+    }
+    .stat span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
     }
     @media (max-width: 980px) {
+      .topbar,
+      .hero,
       .layout {
+        grid-template-columns: 1fr;
+      }
+      .stat-grid {
         grid-template-columns: 1fr;
       }
       .table-wrap {
@@ -195,16 +307,34 @@
 </head>
 <body>
   <main>
-    <header>
-      <div>
-        <h1>Checklist Review</h1>
-        <p class="meta">Filter cards, create corrections, add missing rows, then download CSVs for the generator.</p>
+    <header class="topbar">
+      <div class="badge-row">
+        <span class="badge primary">Checklist Review</span>
+        <span class="badge success">Static Audit Tool</span>
       </div>
       <div class="top-actions">
+        <a class="button" href="/placeholders">Placeholder Library</a>
         <a class="button" href="index.html">Checklist Index</a>
         <a class="button" href="review_queue.csv">Review Queue CSV</a>
       </div>
     </header>
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="hero-pills">
+          <span class="badge">Corrections</span>
+          <span class="badge">Missing Cards</span>
+          <span class="badge">CSV Export</span>
+        </div>
+        <h1>Checklist Review</h1>
+        <p class="meta">Filter generated rows, prepare corrections, add missing cards, then download clean CSVs for the generator. This keeps the review process portable without needing server writes.</p>
+      </div>
+      <div class="hero-card">
+        <div class="stat-grid">
+          <div class="stat"><strong>1000</strong><span>queue rows</span></div>
+          <div class="stat"><strong>18</strong><span>destination set pages</span></div>
+        </div>
+      </div>
+    </section>
     <div class="layout">
       <section>
         <div class="filters">

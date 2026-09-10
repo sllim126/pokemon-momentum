@@ -4,8 +4,12 @@ import unittest
 from unittest.mock import patch
 
 from scripts import build_squarespace_single_listing_drafts
+from scripts import build_squarespace_sealed_listing_drafts
+from scripts import build_store_price_targets
 from scripts import card_image_cache
+from scripts import convert_collection_csv_to_single_listing_intake
 from scripts import create_squarespace_single_listings
+from scripts import create_squarespace_sealed_listings
 from scripts import scrydex_images
 
 
@@ -80,6 +84,7 @@ class SquarespaceSingleListingWorkflowTests(unittest.TestCase):
                 self.assertTrue(changed)
                 self.assertEqual(padded.size, (40, 40))
                 self.assertEqual(padded.getpixel((20, 20)), (255, 0, 0, 255))
+                self.assertEqual(padded.getpixel((2, 20)), (255, 255, 255, 255))
 
     def test_cache_card_image_square_pads_existing_file(self):
         from PIL import Image
@@ -250,6 +255,108 @@ class SquarespaceSingleListingWorkflowTests(unittest.TestCase):
         self.assertEqual(drafts[0]["draft_status"], "error")
         self.assertIn("already exists", drafts[0]["errors"])
 
+    def test_build_sealed_drafts_averages_multi_product_ids(self):
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            intake_csv = root / "sealed_intake.csv"
+            signal_csv = root / "signal.csv"
+            export_csv = root / "export.csv"
+            created_csv = root / "created.csv"
+
+            intake_csv.write_text(
+                "sku,product_name,language,product_type,quantity,price_override,title_override,tcgplayer_product_id,notes,lookup_status\n"
+                "ENG-G25-TIN,Poke Ball Tin G25,english,tin,4,,,688965|688968,random design,ready_for_pricing_mapping\n",
+                encoding="utf-8",
+            )
+            signal_csv.write_text(
+                "productId,groupName,productName,imageUrl,latest_price,productKind\n"
+                "688965,Miscellaneous Cards & Products,Pokemon - Poke Ball Tin - Ultra Ball (Q4 2025),https://example.com/ultra.jpg,27.12,sealed\n"
+                "688968,Miscellaneous Cards & Products,Pokemon - Poke Ball Tin - Repeat Ball (Q4 2025),https://example.com/repeat.jpg,22.78,sealed\n",
+                encoding="utf-8",
+            )
+            export_csv.write_text("Product ID [Non Editable],Variant ID [Non Editable],SKU\n", encoding="utf-8")
+            created_csv.write_text("sku,product_id,variant_id\n", encoding="utf-8")
+
+            drafts = build_squarespace_sealed_listing_drafts.build_drafts(
+                intake_csv=intake_csv,
+                signal_csv=signal_csv,
+                squarespace_export=export_csv,
+                created_csv=created_csv,
+            )
+
+        self.assertEqual(len(drafts), 1)
+        row = drafts[0]
+        self.assertEqual(row["draft_status"], "ready")
+        self.assertEqual(row["target_price"], "24.95")
+        self.assertEqual(row["price_source"], "product_signal_snapshot.average_latest_price")
+        self.assertIn("market title differs from intake title", row["warnings"])
+        self.assertEqual(row["visibility"], "hidden")
+        self.assertEqual(row["stock_quantity"], "4")
+
+    def test_build_sealed_payload_creates_hidden_physical_product(self):
+        row = {
+            "sku": "ENG-PO-ETB",
+            "final_title": "Perfect Order Elite Trainer Box - English",
+            "description_html": "<p>Example</p>",
+            "tags": "Sealed, English, Elite Trainer Box",
+            "url_slug": "perfect-order-elite-trainer-box-english-eng-po-etb",
+            "target_price": "72.13",
+            "stock_quantity": "3",
+        }
+        payload = create_squarespace_sealed_listings.build_product_payload(row, store_page_id="store-page-1")
+        self.assertEqual(payload["type"], "PHYSICAL")
+        self.assertFalse(payload["isVisible"])
+        self.assertEqual(payload["storePageId"], "store-page-1")
+        self.assertEqual(payload["variants"][0]["sku"], "ENG-PO-ETB")
+        self.assertEqual(payload["variants"][0]["pricing"]["basePrice"]["value"], "72.13")
+        self.assertEqual(payload["variants"][0]["stock"]["quantity"], 3)
+
+    def test_build_target_rows_supports_multi_product_id_rules(self):
+        with TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            export_csv = root / "export.csv"
+            jp_signal_csv = root / "jp_signal.csv"
+            en_signal_csv = root / "en_signal.csv"
+            rules_csv = root / "rules.csv"
+            supplier_quotes_csv = root / "supplier_quotes.csv"
+            created_csv = root / "created.csv"
+
+            export_csv.write_text(
+                "SKU,Title\n"
+                "ENG-G25-TIN,Poke Ball Tin G25 - English\n",
+                encoding="utf-8",
+            )
+            jp_signal_csv.write_text(
+                "productId,productName,latest_price\n",
+                encoding="utf-8",
+            )
+            en_signal_csv.write_text(
+                "productId,productName,latest_price\n"
+                "688965,Pokemon - Poke Ball Tin - Ultra Ball (Q4 2025),27.12\n"
+                "688968,Pokemon - Poke Ball Tin - Repeat Ball (Q4 2025),22.78\n",
+                encoding="utf-8",
+            )
+            rules_csv.write_text(
+                "sku,market_source,lookup_type,lookup_value,pricing_mode,min_price,note\n"
+                "ENG-G25-TIN,en,product_id,688965|688968,market_minus_5_pct_99,,Created by sealed Squarespace listing workflow\n",
+                encoding="utf-8",
+            )
+            supplier_quotes_csv.write_text("sku,cost_jpy\n", encoding="utf-8")
+            created_csv.write_text("sku,product_id,variant_id\n", encoding="utf-8")
+
+            with patch.object(build_store_price_targets, "JP_SIGNAL_CSV", jp_signal_csv), \
+                 patch.object(build_store_price_targets, "EN_SIGNAL_CSV", en_signal_csv), \
+                 patch.object(build_store_price_targets, "RULES_CSV", rules_csv), \
+                 patch.object(build_store_price_targets, "SUPPLIER_QUOTES_CSV", supplier_quotes_csv), \
+                 patch.object(build_store_price_targets, "CREATED_SINGLE_LISTINGS_CSV", created_csv):
+                output_rows, unmatched = build_store_price_targets.build_target_rows(export_csv=export_csv)
+
+        self.assertEqual(unmatched, [])
+        self.assertEqual(len(output_rows), 1)
+        self.assertEqual(output_rows[0]["sku"], "ENG-G25-TIN")
+        self.assertEqual(output_rows[0]["market_price"], "24.95")
+        self.assertEqual(output_rows[0]["market_title"], "Pokemon - Poke Ball Tin - Ultra Ball (Q4 2025)")
+
     def test_build_product_payload_creates_hidden_physical_product(self):
         row = {
             "sku": "602682",
@@ -272,6 +379,37 @@ class SquarespaceSingleListingWorkflowTests(unittest.TestCase):
         self.assertEqual(payload["variants"][0]["sku"], "602682")
         self.assertEqual(payload["variants"][0]["stock"]["quantity"], 2)
         self.assertEqual(payload["variants"][0]["pricing"]["basePrice"]["currency"], "USD")
+
+    def test_build_followup_rows_defaults_manual_cleanup_statuses(self):
+        rows = create_squarespace_single_listings.build_followup_rows(
+            [
+                {
+                    "created_at": "2026-08-01T00:00:00Z",
+                    "sku": "602682",
+                    "title": "Roaring Moon ex",
+                    "squarespace_url": "https://poke6s.com/shop/p/roaring-moon",
+                    "product_id": "prod-1",
+                    "variant_id": "var-1",
+                    "target_price": "37.97",
+                    "quantity": "2",
+                    "language": "japanese",
+                    "condition": "Near Mint",
+                    "visibility": "hidden",
+                    "categories": "/singles/japanese, /singles/rarity/special-art-rare",
+                    "tags": "Singles, Singles Intake",
+                }
+            ]
+        )
+
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
+        self.assertEqual(row["sku"], "602682")
+        self.assertEqual(row["image_review_status"], "pending")
+        self.assertEqual(row["tax_code_status"], "pending")
+        self.assertEqual(row["categories_status"], "pending")
+        self.assertEqual(row["fulfillment_status"], "pending")
+        self.assertIn("/singles/japanese", row["categories_suggested"])
+        self.assertIn("Singles", row["tags_suggested"])
 
     def test_build_drafts_defaults_blank_subtype_to_normal_variant(self):
         with TemporaryDirectory() as tmpdir:
@@ -326,6 +464,111 @@ class SquarespaceSingleListingWorkflowTests(unittest.TestCase):
         self.assertEqual(drafts[0]["subtype"], "Normal")
         self.assertIn("inferred subtype from sku: Normal", drafts[0]["warnings"])
         self.assertIn("English", drafts[0]["final_title"])
+
+    def test_convert_collection_rows_maps_and_aggregates_duplicates(self):
+        datasets = {
+            "english": convert_collection_csv_to_single_listing_intake.DatasetPaths(
+                language="english",
+                signal_csv=Path("/tmp/english-signal.csv"),
+                groups_csv=Path("/tmp/english-groups.csv"),
+            )
+        }
+        source_rows = [
+            {
+                "Position": "1",
+                "Name": "Darkrai VSTAR",
+                "Set Name": "Crown Zenith Galarian Gallery",
+                "Card Number": "GG50/GG70",
+                "Variant": "Holofoil",
+                "Language": "English",
+                "Notes": "binder",
+            },
+            {
+                "Position": "2",
+                "Name": "Darkrai VSTAR",
+                "Set Name": "Crown Zenith Galarian Gallery",
+                "Card Number": "GG50/GG70",
+                "Variant": "Holofoil",
+                "Language": "English",
+                "Notes": "binder",
+            },
+            {
+                "Position": "3",
+                "Name": "Ditto",
+                "Set Name": "Delta Species",
+                "Card Number": "063/113",
+                "Variant": "Reverse Holofoil",
+                "Language": "English",
+                "Notes": "reverse",
+            },
+        ]
+
+        with patch.object(
+            convert_collection_csv_to_single_listing_intake,
+            "load_signal_rows",
+            side_effect=[
+                [
+                    {
+                        "productId": "478077",
+                        "productName": "Darkrai VSTAR",
+                        "groupName": "SWSH: Crown Zenith: Galarian Gallery",
+                        "number": "GG50/GG70",
+                        "subTypeName": "Holofoil",
+                    },
+                    {
+                        "productId": "84840",
+                        "productName": "Ditto - 63/113 (Pikachu)",
+                        "groupName": "EX Delta Species",
+                        "number": "63/113",
+                        "subTypeName": "Reverse Holofoil",
+                    },
+                ]
+            ],
+        ):
+            intake_rows, errors = convert_collection_csv_to_single_listing_intake.convert_collection_rows(
+                source_rows,
+                datasets=datasets,
+            )
+
+        self.assertEqual(errors, [])
+        self.assertEqual(len(intake_rows), 2)
+        self.assertEqual(intake_rows[0]["sku"], "478077-holofoil")
+        self.assertEqual(intake_rows[0]["quantity"], "2")
+        self.assertEqual(intake_rows[0]["notes"], "binder")
+        self.assertEqual(intake_rows[1]["sku"], "84840-reverse-holofoil")
+        self.assertEqual(intake_rows[1]["product_id"], "84840")
+        self.assertEqual(intake_rows[1]["subtype"], "Reverse Holofoil")
+
+    def test_convert_collection_rows_returns_clear_error_for_unmatched_card(self):
+        datasets = {
+            "english": convert_collection_csv_to_single_listing_intake.DatasetPaths(
+                language="english",
+                signal_csv=Path("/tmp/english-signal.csv"),
+                groups_csv=Path("/tmp/english-groups.csv"),
+            )
+        }
+        with patch.object(
+            convert_collection_csv_to_single_listing_intake,
+            "load_signal_rows",
+            return_value=[],
+        ):
+            intake_rows, errors = convert_collection_csv_to_single_listing_intake.convert_collection_rows(
+                [
+                    {
+                        "Position": "1",
+                        "Name": "Missing Card",
+                        "Set Name": "Unknown Set",
+                        "Card Number": "1/1",
+                        "Variant": "Normal",
+                        "Language": "English",
+                    }
+                ],
+                datasets=datasets,
+            )
+
+        self.assertEqual(intake_rows, [])
+        self.assertEqual(len(errors), 1)
+        self.assertIn("no dataset match", errors[0])
 
 
 if __name__ == "__main__":

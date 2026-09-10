@@ -1,8 +1,29 @@
 # TCG Placeholder Builder
 
+This folder contains a standalone collector workflow for two related jobs:
+
+1. generating printable placeholder cards for binder gaps
+2. generating hostable checklist pages for set tracking
+
+If someone is new to this subsystem, start with
+`docs/tcg_placeholders_guide.md` in the repo root. That guide explains the full
+pipeline, why it exists, what each script is expected to output, and how the
+main website publishes the generated assets.
+
 This folder treats `placeholders.csv` as the source of truth. The helper script
 does not edit the source file; it reads the CSV, validates expected fields, and
 writes generated files to `output/`.
+
+## What Lives Here
+
+- source CSVs that humans edit
+- build scripts that transform those rows into static outputs
+- generated print dashboards
+- generated checklist sites
+- review and correction files used to refine checklist grouping
+
+Nothing in `output*` or `checklists_*` is intended to be hand-edited directly.
+Those folders are expected outputs of the workflow.
 
 ## Current Source Shape
 
@@ -24,11 +45,20 @@ The source CSV has these columns:
 python tools/build_placeholders.py
 ```
 
+Expected result:
+
+- reads `placeholders.csv`
+- validates row shape and required fields
+- writes print-oriented outputs into `output/`
+
 To run against the old Excel workbook instead:
 
 ```powershell
 python tools/build_placeholders.py --input Placeholders.xlsx
 ```
+
+Use the workbook path only when intentionally testing the legacy spreadsheet
+source or recovering missing CSV data.
 
 Generated files:
 
@@ -39,6 +69,9 @@ Generated files:
 - `output/by_release_block/*.html` - print sheets grouped by the `Release Set` column.
 - `output/by_card_code/*.html` - print sheets grouped by card-number prefix such as `JTG`, `DRI`, or `MEG`.
 - `output/validation_report.md` - row count, columns, duplicates, and missing fields.
+
+These outputs are here so the placeholder workflow can be reviewed, printed,
+and hosted as static assets without depending on the full app stack.
 
 Reference files:
 
@@ -52,6 +85,9 @@ Reference files:
 - Regenerate `output/` whenever the CSV changes.
 - Review `validation_report.md` before printing.
 - Prefer adding fields as columns instead of mixing extra meaning into one cell.
+
+The important maintenance rule is: edit source files, then regenerate outputs.
+Do not “fix” generated HTML by hand unless you are debugging the builder itself.
 
 ## Current Print Logic
 
@@ -94,6 +130,13 @@ and Prize Pack rows grouped back into their original card set codes:
 python tools/build_placeholders.py --input placeholders.csv --extra-input mega_placeholders.csv --extra-input prize_pack_series7.csv --extra-input prize_pack_series8.csv --output-dir output_combined
 ```
 
+Expected result:
+
+- one browser-friendly combined print hub
+- one normalized CSV across all included sources
+- one deduplicated printable CSV
+- one JSON export for future tooling
+
 ## Scarlet & Violet Checklists
 
 The checklist builder creates static, hostable pages with browser-saved
@@ -107,12 +150,24 @@ grouped back into their printed card-number set code.
 python tools/build_checklists.py
 ```
 
+Expected result:
+
+- grouped set checklist pages under `checklists_sv/`
+- per-set CSV downloads
+- one combined era CSV
+- review files for audit and correction work
+
 To build the Mega Evolution checklist site, including `MEP` promos and Prize
 Pack Series 8 rows:
 
 ```powershell
 python tools/build_checklists.py --era "Mega Evolution" --input mega_placeholders.csv --input prize_pack_series8.csv --output-dir checklists_mega --overrides data\checklist_mega_overrides.csv --additions data\checklist_mega_additions.csv
 ```
+
+Expected result:
+
+- Mega-only checklist pages grouped the way collectors are likely to expect them
+- Mega review files separate from the SV checklist review process
 
 Generated files:
 
@@ -144,6 +199,10 @@ Use the generated review queue as the easiest audit worksheet:
 The review page is static and can be hosted with the rest of `checklists_sv/`.
 It does not write to the server directly; use its download buttons, then replace
 the matching CSV in `data/` and rerun `python tools/build_checklists.py`.
+
+This is intentional. The checklist review tool is meant to be safe to host as a
+static page, while the actual source of truth remains in CSV files that can be
+versioned and reviewed.
 
 To move an existing row, copy its `Card Name`, `Card Number`, `Variant`, and
 `Region` into `data/checklist_overrides.csv`, then fill one or more correction
@@ -188,3 +247,23 @@ Community shorthand currently maps to the app this way:
   variants, and similar packaged cards.
 - `Personal Extended Layer` - league/championship cards and Japanese counterpart
   promos that a collector wants tracked alongside the English set.
+
+## Website Publishing
+
+The main app exposes these generated outputs as static resources instead of
+recomputing them live.
+
+Relevant pages and routes live in:
+
+- `scripts/dashboards/api.py`
+- `scripts/dashboards/collector_hub.html`
+- `scripts/dashboards/placeholder_library.html`
+
+Current public-facing routes:
+
+- `/collector-hub`
+- `/placeholders`
+
+That wrapper layer exists so the imported collector workflow can be used inside
+the same site shell as the rest of Pokemon Momentum without turning it into a
+database-driven feature first.

@@ -41,6 +41,7 @@ DEFAULT_CREATED_CSV = OUTPUT_DIR / "squarespace_created_single_listings.csv"
 DEFAULT_LOG_JSONL = OUTPUT_DIR / "squarespace_single_listing_create_log.jsonl"
 DEFAULT_EXPORT_CSV = REPO_ROOT / "products_Apr-09_04-31-18PM.csv"
 DEFAULT_IMAGE_UPLOAD_LOG_CSV = OUTPUT_DIR / "squarespace_single_listing_image_uploads.csv"
+DEFAULT_FOLLOWUP_CSV = OUTPUT_DIR / "squarespace_single_listing_followup.csv"
 
 CREATED_FIELDS = [
     "created_at",
@@ -76,6 +77,28 @@ IMAGE_UPLOAD_LOG_FIELDS = [
     "status",
 ]
 
+FOLLOWUP_FIELDS = [
+    "created_at",
+    "sku",
+    "title",
+    "squarespace_url",
+    "product_id",
+    "variant_id",
+    "target_price",
+    "quantity",
+    "language",
+    "condition",
+    "visibility",
+    "image_review_status",
+    "tax_code_status",
+    "categories_status",
+    "fulfillment_status",
+    "categories_suggested",
+    "tags_suggested",
+    "manual_notes",
+    "reviewed_at",
+]
+
 
 def load_local_dotenv(env_path: Path) -> None:
     if not env_path.exists():
@@ -97,6 +120,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--log-jsonl", default=str(DEFAULT_LOG_JSONL))
     parser.add_argument("--squarespace-export", default=str(DEFAULT_EXPORT_CSV))
     parser.add_argument("--image-upload-log-csv", default=str(DEFAULT_IMAGE_UPLOAD_LOG_CSV))
+    parser.add_argument("--followup-csv", default=str(DEFAULT_FOLLOWUP_CSV))
     parser.add_argument("--store-page-id", default=os.getenv("SQUARESPACE_STORE_PAGE_ID"))
     parser.add_argument("--base-url", default="https://api.squarespace.com")
     parser.add_argument(
@@ -483,6 +507,37 @@ def eligible_rows(rows: List[dict[str, str]], sku_filters: set[str], limit: int)
     return filtered
 
 
+def build_followup_rows(rows: Iterable[dict[str, str]]) -> List[dict[str, str]]:
+    followup_rows: List[dict[str, str]] = []
+    for row in rows:
+        followup_rows.append(
+            {
+                "created_at": str(row.get("created_at") or ""),
+                "sku": str(row.get("sku") or ""),
+                "title": str(row.get("title") or ""),
+                "squarespace_url": str(row.get("squarespace_url") or ""),
+                "product_id": str(row.get("product_id") or ""),
+                "variant_id": str(row.get("variant_id") or ""),
+                "target_price": str(row.get("target_price") or ""),
+                "quantity": str(row.get("quantity") or ""),
+                "language": str(row.get("language") or ""),
+                "condition": str(row.get("condition") or ""),
+                "visibility": str(row.get("visibility") or ""),
+                # Images can exist but still benefit from an operator spot-check
+                # after creation, especially for odd promo and variant prints.
+                "image_review_status": "pending",
+                "tax_code_status": "pending",
+                "categories_status": "pending",
+                "fulfillment_status": "pending",
+                "categories_suggested": str(row.get("categories") or ""),
+                "tags_suggested": str(row.get("tags") or ""),
+                "manual_notes": "",
+                "reviewed_at": "",
+            }
+        )
+    return followup_rows
+
+
 def wait_for_image_ready(
     *,
     base_url: str,
@@ -854,7 +909,11 @@ def main() -> int:
 
     if created_records:
         append_created_rows(Path(args.created_csv), created_records)
+        followup_rows = build_followup_rows(created_records)
+        append_csv_rows(Path(args.followup_csv), FOLLOWUP_FIELDS, followup_rows)
     print(f"Created records written: {len(created_records)}")
+    if created_records:
+        print(f"Follow-up records written: {len(created_records)}")
     return 0
 
 

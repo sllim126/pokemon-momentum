@@ -664,7 +664,7 @@
           <button class="btn range-btn active" data-range="all">All</button>
           <button class="btn mode-btn soft-active" data-mode="index">Index Level</button>
           <button class="btn mode-btn" data-mode="aggregate">Aggregate Value</button>
-          <button class="btn soft-active" id="releaseLinesToggleBtn" type="button">Set Releases</button>
+          <button class="btn soft-active" id="releaseLinesToggleBtn" type="button" hidden aria-hidden="true">Set Releases</button>
         </div>
       </div>
 
@@ -1175,7 +1175,12 @@
       document.getElementById("holdingsAverage").textContent = `$${formatNumber(data.summary?.average_card_price || 0, 2)}`;
       renderIncludedSets(data.included_sets || []);
       renderHoldings(data.holdings || []);
-      setChartStatus(`Live index data loaded (${data.summary?.as_of || "latest"}). Release markers currently use first market-observed date.`, false);
+      setChartStatus(
+        releaseMarkersEnabled
+          ? `Live index data loaded (${data.summary?.as_of || "latest"}). Release markers currently use first market-observed date.`
+          : `Live index data loaded (${data.summary?.as_of || "latest"}).`,
+        false
+      );
       renderChart();
     }
 

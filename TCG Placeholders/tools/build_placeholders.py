@@ -43,6 +43,17 @@ REQUIRED_COLUMNS = ["Card Name", "Product", "Variant"]
 
 @dataclass
 class WorkbookRows:
+    """Normalized source payload shared by CSV and XLSX readers.
+
+    The rest of the builder only wants to know:
+    - which source produced the rows
+    - which headers are available
+    - the row dictionaries themselves
+
+    Keeping both CSV and workbook readers on this same contract makes the later
+    validation and rendering code much easier to reason about.
+    """
+
     source_name: str
     headers: List[str]
     rows: List[Dict[str, str]]
@@ -116,6 +127,19 @@ def date_to_iso(raw: str) -> str:
 
 
 def read_first_sheet(path: Path, header_row: int = 2) -> WorkbookRows:
+    """Read the legacy workbook format and normalize it into row dictionaries.
+
+    Expected output:
+    - one `WorkbookRows` instance
+    - `Source Row` metadata preserved so validation messages can point back to
+      the original spreadsheet row
+
+    Why this function exists:
+    - the CSV workflow is now preferred, but there is still historical value in
+      being able to ingest the old workbook without needing Excel-specific
+      dependencies.
+    """
+
     with zipfile.ZipFile(path) as archive:
         shared_strings = read_shared_strings(archive)
         sheets = read_workbook_sheet_paths(archive)
@@ -163,6 +187,8 @@ def read_first_sheet(path: Path, header_row: int = 2) -> WorkbookRows:
 
 
 def read_csv_source(path: Path) -> WorkbookRows:
+    """Read the preferred editable CSV source into normalized row dictionaries."""
+
     with path.open(newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
         headers = list(reader.fieldnames or [])
@@ -196,6 +222,18 @@ def read_source(path: Path, header_row: int = 2) -> WorkbookRows:
 
 
 def combine_sources(sources: Sequence[WorkbookRows]) -> WorkbookRows:
+    """Merge multiple source files into one logical dataset.
+
+    Expected output:
+    - one combined header list containing the union of seen columns
+    - `Source Row` values rewritten with the source name prefix so a downstream
+      review queue can still tell where each row originated
+
+    Why this exists:
+    - combined print hubs intentionally blend SV, Mega, and Prize Pack rows into
+      one output set while preserving traceability back to the original file.
+    """
+
     if not sources:
         raise ValueError("No sources to combine.")
 
@@ -221,6 +259,13 @@ def combine_sources(sources: Sequence[WorkbookRows]) -> WorkbookRows:
 
 
 def validate(data: WorkbookRows) -> List[str]:
+    """Run lightweight workflow safety checks before generating print outputs.
+
+    This is intentionally not a full schema engine. The goal is practical:
+    catch the kinds of mistakes that would create confusing print sheets or
+    checklist rows, then surface them in a human-readable validation report.
+    """
+
     issues: List[str] = []
     missing_columns = [col for col in DEFAULT_COLUMNS if col not in data.headers]
     if missing_columns:
@@ -428,6 +473,18 @@ def card_number_sort_key(row: Dict[str, object]) -> Tuple[str, int, str, int, st
 def unique_print_rows(
     rows: Sequence[Dict[str, str]], sort_mode: str = "collection"
 ) -> List[Dict[str, object]]:
+    """Collapse raw source rows into one printable card per card identity.
+
+    Expected output:
+    - one merged record per `Card Name` + `Card Number` + `Variant` identity
+    - rolled-up source/product context preserved in `Sources`, `Source Rows`,
+      and `Notes`
+
+    Why this exists:
+    - many products can point at the same underlying card, but a placeholder
+      print sheet should usually show that card only once.
+    """
+
     grouped: Dict[Tuple[str, str, str], Dict[str, object]] = {}
     for row in rows:
         if is_standard_variant(row):
@@ -521,6 +578,8 @@ def card_set_code(card_number: str) -> str:
 def grouped_rows(
     rows: Sequence[Dict[str, str]], field: str
 ) -> List[Tuple[str, List[Dict[str, str]]]]:
+    """Group raw rows by one source field for release-block print pages."""
+
     groups: Dict[str, List[Dict[str, str]]] = {}
     for row in rows:
         value = row.get(field, "").strip()
@@ -533,6 +592,8 @@ def grouped_rows(
 def grouped_rows_by_card_code(
     rows: Sequence[Dict[str, str]]
 ) -> List[Tuple[str, List[Dict[str, str]]]]:
+    """Group raw rows by card-number set code for binder-oriented print pages."""
+
     groups: Dict[str, List[Dict[str, str]]] = {}
     for row in rows:
         code = card_set_code(row.get("Card Number", ""))
@@ -576,6 +637,13 @@ def line_classes(kind: str, line: str) -> str:
 def render_print_html(
     rows: Sequence[Dict[str, str]], title: str, sort_mode: str = "collection"
 ) -> str:
+    """Render one self-contained browser-printable placeholder sheet.
+
+    Expected output:
+    - standard letter-sized HTML with 2.5in x 3.5in card placeholders
+    - card text optimized for physical binder use, not raw data density
+    """
+
     print_rows = unique_print_rows(rows, sort_mode=sort_mode)
     cards = []
     for row in print_rows:
@@ -698,11 +766,13 @@ def render_index_html(
     release_pages: Sequence[Tuple[str, str, int]],
     card_code_pages: Sequence[Tuple[str, str, int]],
 ) -> str:
+    """Render the static landing page for a generated print output folder."""
+
     def render_links(items: Sequence[Tuple[str, str, int]]) -> str:
         links = []
         for label, href, count in items:
             links.append(
-                '<a class="link" href="{}"><span>{}</span><strong>{}</strong></a>'.format(
+                '<a class="link" href="{}"><span>{}</span><strong>{} cards</strong></a>'.format(
                     html.escape(href),
                     html.escape(label),
                     count,
@@ -714,102 +784,286 @@ def render_index_html(
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{html.escape(source_name)} Print Index</title>
   <style>
     * {{
       box-sizing: border-box;
     }}
+    :root {{
+      --bg: #08111d;
+      --bg-2: #0d1830;
+      --panel: rgba(15, 25, 44, 0.9);
+      --panel-2: rgba(19, 33, 57, 0.96);
+      --ink: #eef5ff;
+      --muted: #94a7c8;
+      --line: rgba(136, 162, 205, 0.2);
+      --line-strong: rgba(136, 162, 205, 0.32);
+      --accent: #46b8ff;
+      --accent-2: #4fe2ae;
+      --accent-3: #ffd166;
+      --shadow: 0 28px 70px rgba(1, 8, 22, 0.42);
+      --radius: 24px;
+    }}
     body {{
       margin: 0;
-      background: #f6f7f9;
-      color: #171717;
-      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 14% 0%, rgba(70, 184, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 86% 0%, rgba(79, 226, 174, 0.12), transparent 22%),
+        linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
     }}
     main {{
-      max-width: 1100px;
+      max-width: 1240px;
       margin: 0 auto;
-      padding: 32px 20px 48px;
+      padding: 18px 18px 44px;
     }}
-    h1 {{
-      margin: 0 0 8px;
-      font-size: 28px;
-      letter-spacing: 0;
+    a {{
+      color: inherit;
+      text-decoration: none;
     }}
-    .meta {{
-      margin: 0 0 24px;
-      color: #555;
-      font-size: 14px;
+    .topbar,
+    .hero,
+    section {{
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(12, 21, 37, 0.92), rgba(9, 17, 31, 0.96));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
     }}
-    .actions {{
+    .topbar {{
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+    }}
+    .brand {{
+      display: grid;
+      gap: 8px;
+    }}
+    .badge-row,
+    .actions,
+    .hero-pills {{
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-bottom: 28px;
+      align-items: center;
+    }}
+    .badge {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }}
+    .badge.primary {{
+      color: #d4efff;
+      background: rgba(70, 184, 255, 0.12);
+      border-color: rgba(70, 184, 255, 0.28);
+    }}
+    .badge.success {{
+      color: #d9fff1;
+      background: rgba(79, 226, 174, 0.12);
+      border-color: rgba(79, 226, 174, 0.28);
+    }}
+    h1 {{
+      margin: 0;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+      max-width: 12ch;
+    }}
+    .brand p,
+    .hero-copy p,
+    .meta {{
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
     }}
     .button {{
       display: inline-flex;
       align-items: center;
-      min-height: 40px;
+      justify-content: center;
+      min-height: 42px;
       padding: 0 14px;
-      border: 1px solid #cfd5df;
-      border-radius: 6px;
-      background: white;
-      color: #111;
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: var(--panel-2);
+      color: var(--ink);
       text-decoration: none;
-      font-weight: 700;
-      font-size: 14px;
+      font-weight: 800;
+      font-size: 13px;
+      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    }}
+    .button.primary {{
+      border: 0;
+      color: #062238;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    }}
+    .button:hover,
+    .link:hover {{
+      transform: translateY(-1px);
+    }}
+    .hero {{
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+      gap: 18px;
+      padding: 22px;
+      margin-bottom: 16px;
+    }}
+    .hero-copy {{
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }}
+    .hero-card {{
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      background:
+        linear-gradient(135deg, rgba(70, 184, 255, 0.12), rgba(79, 226, 174, 0.08)),
+        rgba(10, 18, 32, 0.92);
+    }}
+    .stat-grid {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }}
+    .stat {{
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(19, 33, 57, 0.72);
+    }}
+    .stat strong {{
+      display: block;
+      font-size: 26px;
+      letter-spacing: -0.05em;
+    }}
+    .stat span {{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
     }}
     section {{
-      margin-top: 30px;
+      padding: 18px;
+      margin-top: 16px;
+    }}
+    .section-head {{
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 12px;
     }}
     h2 {{
-      margin: 0 0 12px;
+      margin: 0;
       font-size: 18px;
     }}
     .grid {{
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 10px;
     }}
     .link {{
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      min-height: 44px;
-      padding: 10px 12px;
-      border: 1px solid #d9dee7;
-      border-radius: 6px;
-      background: white;
-      color: #111;
+      display: grid;
+      gap: 8px;
+      min-height: 92px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(19, 33, 57, 0.76);
+      color: var(--ink);
       text-decoration: none;
       font-size: 14px;
       font-weight: 700;
+      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    }}
+    .link span {{
+      font-size: 16px;
     }}
     .link strong {{
-      color: #555;
+      color: var(--accent-2);
       font-size: 12px;
       white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }}
+    @media (max-width: 960px) {{
+      .topbar,
+      .hero {{
+        grid-template-columns: 1fr;
+      }}
+      .stat-grid {{
+        grid-template-columns: 1fr;
+      }}
     }}
   </style>
 </head>
 <body>
   <main>
-    <h1>{html.escape(source_name)} Print Index</h1>
-    <p class="meta">{row_count} source rows, {printable_count} unique printable placeholders.</p>
-    <div class="actions">
-      <a class="button" href="placeholders_print.html">Print Everything</a>
-      <a class="button" href="validation_report.md">Validation Report</a>
-      <a class="button" href="placeholders.printable_unique.csv">Printable CSV</a>
-    </div>
+    <header class="topbar">
+      <div class="brand">
+        <div class="badge-row">
+          <span class="badge primary">Placeholder Print Hub</span>
+          <span class="badge success">Static Output</span>
+        </div>
+        <p>Printable placeholder cards for binder gaps, grouped the two ways collectors usually browse them.</p>
+      </div>
+      <div class="actions">
+        <a class="button" href="/placeholders">Back to Library</a>
+        <a class="button primary" href="placeholders_print.html">Print Everything</a>
+      </div>
+    </header>
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="hero-pills">
+          <span class="badge">Release Blocks</span>
+          <span class="badge">Card Set Codes</span>
+          <span class="badge">Print Ready</span>
+        </div>
+        <h1>{html.escape(source_name)} Print Index</h1>
+        <p class="meta">Use this hub when you want a browser-friendly way to open grouped placeholder sheets without digging through raw output files.</p>
+      </div>
+      <div class="hero-card">
+        <div class="stat-grid">
+          <div class="stat"><strong>{row_count}</strong><span>source rows processed</span></div>
+          <div class="stat"><strong>{printable_count}</strong><span>unique printable placeholders</span></div>
+          <div class="stat"><strong>{len(release_pages)}</strong><span>release block views</span></div>
+          <div class="stat"><strong>{len(card_code_pages)}</strong><span>card set code views</span></div>
+        </div>
+        <div class="actions">
+          <a class="button" href="validation_report.md">Validation Report</a>
+          <a class="button" href="placeholders.printable_unique.csv">Printable CSV</a>
+        </div>
+      </div>
+    </section>
     <section>
-      <h2>By Release Block</h2>
+      <div class="section-head">
+        <h2>By Release Block</h2>
+        <p class="meta">Best when you want placeholders organized the same way the source products or promo releases were grouped.</p>
+      </div>
       <div class="grid">
         {render_links(release_pages)}
       </div>
     </section>
     <section>
-      <h2>By Card Set Code</h2>
+      <div class="section-head">
+        <h2>By Card Set Code</h2>
+        <p class="meta">Best for binder work when you care more about the printed set code than the release product.</p>
+      </div>
       <div class="grid">
         {render_links(card_code_pages)}
       </div>
@@ -823,6 +1077,14 @@ def render_index_html(
 def write_grouped_print_pages(
     output_dir: Path, rows: Sequence[Dict[str, str]], source_stem: str
 ) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int]]]:
+    """Write grouped print pages and return metadata for the index page.
+
+    Expected output:
+    - `by_release_block/*.html`
+    - `by_card_code/*.html`
+    - index metadata for linking those pages
+    """
+
     release_dir = output_dir / "by_release_block"
     code_dir = output_dir / "by_card_code"
     release_dir.mkdir(parents=True, exist_ok=True)
@@ -854,6 +1116,8 @@ def write_grouped_print_pages(
 
 
 def write_report(path: Path, data: WorkbookRows, issues: Sequence[str]) -> None:
+    """Write the human-readable validation report shipped with each build."""
+
     lines = [
         "# Placeholder Build Report",
         "",
@@ -872,6 +1136,8 @@ def write_report(path: Path, data: WorkbookRows, issues: Sequence[str]) -> None:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    """Build the full placeholder print package from one or more sources."""
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--input",

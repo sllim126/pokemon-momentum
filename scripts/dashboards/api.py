@@ -16,10 +16,29 @@ import requests
 from fastapi import Cookie, FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from scripts.build_squarespace_single_listing_drafts import (
+    DEFAULT_CREATED_CSV as SINGLE_LISTINGS_CREATED_CSV,
+    DEFAULT_EXPORT_CSV as SINGLE_LISTINGS_EXPORT_CSV,
+    DEFAULT_INTAKE_CSV as SINGLE_LISTINGS_INTAKE_CSV,
+    DEFAULT_MARKET_CSV as SINGLE_LISTINGS_MARKET_CSV,
+    DEFAULT_OUTPUT_CSV as SINGLE_LISTINGS_DRAFT_CSV,
+    DRAFT_FIELDS as SINGLE_LISTINGS_DRAFT_FIELDS,
+    INTAKE_FIELDS as SINGLE_LISTINGS_INTAKE_FIELDS,
+    build_drafts as build_single_listing_drafts,
+    write_csv as write_single_listing_csv,
+)
 from scripts.build_store_price_targets import build_target_rows
+from scripts.convert_collection_csv_to_single_listing_intake import (
+    SOURCE_REQUIRED_FIELDS as SINGLE_LISTINGS_SOURCE_FIELDS,
+    convert_collection_rows as convert_single_listing_source_rows,
+)
+from scripts.create_squarespace_single_listings import (
+    DEFAULT_FOLLOWUP_CSV as SINGLE_LISTINGS_FOLLOWUP_CSV,
+)
 
 from scripts.dashboards.query_support import (
     DB_PATH,
+    EXTRACTED_DIR,
     PRODUCT_CLASS_SQL,
     PRODUCT_KIND_SQL,
     build_generation_case,
@@ -56,6 +75,8 @@ from scripts.dashboards.tracking_store import (
     merge_tags,
     save_saved_view,
     set_tag,
+    get_psa_certification,
+    upsert_psa_certification,
     verify_user,
 )
 
@@ -64,6 +85,7 @@ REPO_ROOT = SCRIPT_DIR.parent.parent
 DASHBOARD_HTML = SCRIPT_DIR / "dashboard.html"
 ALT_DASHBOARD_HTML = SCRIPT_DIR / "dashboard_lab.html"
 COLLECTOR_HUB_HTML = SCRIPT_DIR / "collector_hub.html"
+PLACEHOLDER_LIBRARY_HTML = SCRIPT_DIR / "placeholder_library.html"
 SET_EXPLORER_HTML = SCRIPT_DIR / "set_explorer.html"
 BUDGET_BUILDER_HTML = SCRIPT_DIR / "budget_builder.html"
 SEALED_DEALS_HTML = SCRIPT_DIR / "sealed_deals.html"
@@ -72,6 +94,7 @@ EOD_DASHBOARD_HTML = SCRIPT_DIR / "eod_dashboard.html"
 EMBED_DASHBOARD_HTML = SCRIPT_DIR / "embed_dashboard.html"
 BUG_REPORTS_HTML = SCRIPT_DIR / "bug_reports.html"
 PRICING_UPLOAD_HTML = SCRIPT_DIR / "pricing_upload.html"
+SINGLE_LISTINGS_UPLOAD_HTML = SCRIPT_DIR / "single_listings_upload.html"
 SUPPLIER_PRICING_HTML = SCRIPT_DIR / "supplier_pricing.html"
 SUPPLIER_PROFITABILITY_HTML = SCRIPT_DIR / "supplier_profitability.html"
 MOBILE_DASHBOARD_HTML = SCRIPT_DIR / "mobile_dashboard.html"
@@ -92,6 +115,10 @@ INDEX_OVERVIEW_POKEMON100_HTML = SCRIPT_DIR / "index_overview_pokemon100.html"
 INDEX_OVERVIEW_JP_POKEMON100_HTML = SCRIPT_DIR / "index_overview_jp_pokemon100.html"
 INDEX_OVERVIEW_JP_SV100_HTML = SCRIPT_DIR / "index_overview_jp_sv100.html"
 DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
+# The placeholder/checklist workflow is intentionally published as static files.
+# These constants define which parts of the imported collector project are safe
+# to expose through the main app without turning it into a database-backed
+# feature first.
 TCG_PLACEHOLDERS_DIR = REPO_ROOT / "TCG Placeholders"
 COLLECTOR_PUBLIC_BUCKETS = {
     "checklists-sv": TCG_PLACEHOLDERS_DIR / "checklists_sv",
@@ -100,6 +127,20 @@ COLLECTOR_PUBLIC_BUCKETS = {
     "print-mega": TCG_PLACEHOLDERS_DIR / "output_mega",
     "print-combined": TCG_PLACEHOLDERS_DIR / "output_combined",
     "docs": TCG_PLACEHOLDERS_DIR / "docs",
+}
+PLACEHOLDER_DOWNLOAD_FILES = {
+    "sv-source-csv": TCG_PLACEHOLDERS_DIR / "placeholders.csv",
+    "mega-source-csv": TCG_PLACEHOLDERS_DIR / "mega_placeholders.csv",
+    "prize-pack-series7-csv": TCG_PLACEHOLDERS_DIR / "prize_pack_series7.csv",
+    "prize-pack-series8-csv": TCG_PLACEHOLDERS_DIR / "prize_pack_series8.csv",
+    "combined-normalized-csv": TCG_PLACEHOLDERS_DIR / "output_combined" / "placeholders.normalized.csv",
+    "combined-printable-csv": TCG_PLACEHOLDERS_DIR / "output_combined" / "placeholders.printable_unique.csv",
+    "combined-json": TCG_PLACEHOLDERS_DIR / "output_combined" / "placeholders.json",
+    "combined-validation-report": TCG_PLACEHOLDERS_DIR / "output_combined" / "validation_report.md",
+    "sv-checklist-csv": TCG_PLACEHOLDERS_DIR / "checklists_sv" / "scarlet_violet_checklist_all.csv",
+    "sv-review-queue": TCG_PLACEHOLDERS_DIR / "checklists_sv" / "review_queue.csv",
+    "mega-checklist-csv": TCG_PLACEHOLDERS_DIR / "checklists_mega" / "mega_evolution_checklist_all.csv",
+    "mega-review-queue": TCG_PLACEHOLDERS_DIR / "checklists_mega" / "review_queue.csv",
 }
 IMAGE_DIR_CANDIDATES = [
     SCRIPT_DIR.parents[2] / "images",
@@ -128,6 +169,8 @@ ADMIN_USERNAMES = {
     if username.strip()
 }
 GOOGLE_CLIENT_ID = os.getenv("POKEMON_MOMENTUM_GOOGLE_CLIENT_ID", "").strip()
+PSA_API_BASE_URL = "https://api.psacard.com/publicapi"
+PSA_CERT_CACHE_TTL_DAYS = 30
 
 SV100_GROUP_IDS = [
     24325,  # SV: Black Bolt
@@ -151,6 +194,7 @@ SV100_BASE_LEVEL = 1000.0
 MEGA100_BASE_LEVEL = 1000.0
 INDEX_OVERVIEW_CACHE_TTL_SECONDS = 15 * 60
 _INDEX_OVERVIEW_CACHE: dict[tuple[int, str], tuple[datetime, dict]] = {}
+INDEX_OVERVIEW_SNAPSHOT_SUFFIX = "index_overview_snapshot.json"
 DEFAULT_BUDGET_RARITY_FILTERS = [
     "illustration_rare",
     "special_illustration_rare",
@@ -170,7 +214,55 @@ BUDGET_RARITY_FILTER_OPTIONS = [
 ]
 
 
+def index_overview_keys_for_category(category_id: int) -> list[str]:
+    """Return the index keys that are valid for one dashboard category."""
+
+    requested_category = int(category_id)
+    keys: list[str] = []
+    for index_key, definition in INDEX_DEFINITIONS.items():
+        expected_category = definition.get("category_id")
+        if expected_category is None and requested_category != 3:
+            continue
+        if expected_category is not None and int(expected_category) != requested_category:
+            continue
+        keys.append(index_key)
+    return keys
+
+
+def index_overview_snapshot_path(category_id: int, index_key: str) -> Path:
+    """Return the persisted JSON snapshot path for one index payload."""
+
+    category = category_config(int(category_id))
+    safe_index_key = str(index_key or "").strip().lower()
+    return EXTRACTED_DIR / f"{category.slug}_{safe_index_key}_{INDEX_OVERVIEW_SNAPSHOT_SUFFIX}"
+
+
+def load_index_overview_snapshot(category_id: int, index_key: str) -> dict | None:
+    """Load one persisted index-overview payload from disk if it exists."""
+
+    path = index_overview_snapshot_path(category_id, index_key)
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def save_index_overview_snapshot(category_id: int, index_key: str, payload: dict) -> Path:
+    """Persist one index-overview payload to disk for fast future reads."""
+
+    path = index_overview_snapshot_path(category_id, index_key)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    tmp_path.write_text(json.dumps(payload, ensure_ascii=True, allow_nan=False), encoding="utf-8")
+    tmp_path.replace(path)
+    return path
+
+
 def _collector_bucket_root(bucket: str) -> Path:
+    """Resolve one public collector bucket to its filesystem root."""
+
     try:
         return COLLECTOR_PUBLIC_BUCKETS[bucket]
     except KeyError as exc:
@@ -178,6 +270,19 @@ def _collector_bucket_root(bucket: str) -> Path:
 
 
 def collector_asset_path(bucket: str, asset_path: str) -> Path:
+    """Return a safe static collector asset path.
+
+    Expected behavior:
+    - only allow access inside a whitelisted bucket root
+    - reject path traversal
+    - reject missing files
+
+    Why this exists:
+    - the collector workflow is published as static generated artifacts, but we
+      still need a controlled gateway instead of exposing the entire imported
+      folder tree directly.
+    """
+
     root = _collector_bucket_root(bucket).resolve()
     target = (root / asset_path).resolve()
     if not str(target).startswith(str(root)):
@@ -188,16 +293,30 @@ def collector_asset_path(bucket: str, asset_path: str) -> Path:
 
 
 def collector_asset_url(bucket: str, asset_path: str) -> str:
+    """Build a site-relative URL for a whitelisted collector asset."""
+
     return f"/collector-assets/{bucket}/{asset_path}"
 
 
 def collector_file_count(root: Path, pattern: str) -> int:
+    """Count generated files for hub stats and human-readable summaries."""
+
     if not root.exists():
         return 0
     return sum(1 for _ in root.glob(pattern))
 
 
 def collector_manifest() -> dict:
+    """Describe the published collector resources shown in the collector hub.
+
+    Expected output:
+    - curated resource list with labels, summaries, tags, and lightweight stats
+
+    Why this exists:
+    - the collector hub is a wrapper around pre-generated static assets, so the
+      frontend needs one normalized manifest instead of hard-coding every page.
+    """
+
     sv_checklist_root = COLLECTOR_PUBLIC_BUCKETS["checklists-sv"]
     mega_checklist_root = COLLECTOR_PUBLIC_BUCKETS["checklists-mega"]
     sv_print_root = COLLECTOR_PUBLIC_BUCKETS["print-sv"]
@@ -288,6 +407,188 @@ def collector_manifest() -> dict:
     return {
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "project_root_exists": TCG_PLACEHOLDERS_DIR.exists(),
+        "items": items,
+    }
+
+
+def placeholder_download_path(asset_id: str) -> Path:
+    """Resolve one whitelisted placeholder download to a real file."""
+
+    try:
+        target = PLACEHOLDER_DOWNLOAD_FILES[asset_id].resolve()
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Unknown placeholder download.") from exc
+    if not target.is_file():
+        raise HTTPException(status_code=404, detail="Placeholder download not found.")
+    return target
+
+
+def _placeholder_size_label(target: Path) -> str:
+    size_bytes = target.stat().st_size
+    if size_bytes >= 1024 * 1024:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
+    if size_bytes >= 1024:
+        return f"{size_bytes / 1024:.0f} KB"
+    return f"{size_bytes} B"
+
+
+def placeholder_download_manifest() -> dict:
+    """Describe the focused placeholder downloads page.
+
+    This manifest is narrower than `collector_manifest()`: it is intended to
+    answer "what can I download or open right now?" for the placeholder
+    workflow, rather than exposing every collector-oriented lane equally.
+    """
+
+    items = [
+        {
+            "id": "combined-print-hub",
+            "section": "Open In Browser",
+            "title": "Combined Placeholder Print Hub",
+            "summary": "Open the combined printable dashboard with release-block and card-code grouping.",
+            "href": collector_asset_url("print-combined", "index.html"),
+            "kind": "page",
+            "tags": ["Combined", "Print", "Browser"],
+        },
+        {
+            "id": "sv-checklists-hub",
+            "section": "Open In Browser",
+            "title": "Scarlet & Violet Checklist Hub",
+            "summary": "Interactive checklist pages with browser-saved checkboxes and set-level CSV exports.",
+            "href": collector_asset_url("checklists-sv", "index.html"),
+            "kind": "page",
+            "tags": ["SV", "Checklist", "Browser"],
+        },
+        {
+            "id": "mega-checklists-hub",
+            "section": "Open In Browser",
+            "title": "Mega Evolution Checklist Hub",
+            "summary": "Mega-era checklist pages with promo and Prize Pack carryover coverage.",
+            "href": collector_asset_url("checklists-mega", "index.html"),
+            "kind": "page",
+            "tags": ["Mega", "Checklist", "Browser"],
+        },
+        {
+            "id": "sv-source-csv",
+            "section": "Source CSVs",
+            "title": "Scarlet & Violet Source CSV",
+            "summary": "Current hand-edited SV source of truth for placeholder generation.",
+            "href": "/placeholder-downloads/sv-source-csv",
+            "kind": "download",
+            "tags": ["SV", "Source", "CSV"],
+        },
+        {
+            "id": "mega-source-csv",
+            "section": "Source CSVs",
+            "title": "Mega Source CSV",
+            "summary": "Mega-era carryover source used for print and checklist generation.",
+            "href": "/placeholder-downloads/mega-source-csv",
+            "kind": "download",
+            "tags": ["Mega", "Source", "CSV"],
+        },
+        {
+            "id": "prize-pack-series7-csv",
+            "section": "Source CSVs",
+            "title": "Prize Pack Series 7 Source CSV",
+            "summary": "Standalone Prize Pack Series 7 source rows used in the combined workflow.",
+            "href": "/placeholder-downloads/prize-pack-series7-csv",
+            "kind": "download",
+            "tags": ["Prize Pack", "Source", "CSV"],
+        },
+        {
+            "id": "prize-pack-series8-csv",
+            "section": "Source CSVs",
+            "title": "Prize Pack Series 8 Source CSV",
+            "summary": "Standalone Prize Pack Series 8 source rows used in the combined workflow.",
+            "href": "/placeholder-downloads/prize-pack-series8-csv",
+            "kind": "download",
+            "tags": ["Prize Pack", "Source", "CSV"],
+        },
+        {
+            "id": "combined-normalized-csv",
+            "section": "Generated Downloads",
+            "title": "Combined Normalized CSV",
+            "summary": "Exact generated row export for spreadsheet review across the combined workflow.",
+            "href": "/placeholder-downloads/combined-normalized-csv",
+            "kind": "download",
+            "tags": ["Combined", "Generated", "CSV"],
+        },
+        {
+            "id": "combined-printable-csv",
+            "section": "Generated Downloads",
+            "title": "Combined Printable Unique CSV",
+            "summary": "Deduplicated printable card list for binder placeholder production.",
+            "href": "/placeholder-downloads/combined-printable-csv",
+            "kind": "download",
+            "tags": ["Combined", "Generated", "CSV"],
+        },
+        {
+            "id": "combined-json",
+            "section": "Generated Downloads",
+            "title": "Combined JSON Export",
+            "summary": "Structured placeholder data for scripts, tooling, or future app wiring.",
+            "href": "/placeholder-downloads/combined-json",
+            "kind": "download",
+            "tags": ["Combined", "Generated", "JSON"],
+        },
+        {
+            "id": "combined-validation-report",
+            "section": "Generated Downloads",
+            "title": "Combined Validation Report",
+            "summary": "Markdown audit report covering row counts, duplicates, and missing fields.",
+            "href": "/placeholder-downloads/combined-validation-report",
+            "kind": "download",
+            "tags": ["Combined", "Validation", "Markdown"],
+        },
+        {
+            "id": "sv-checklist-csv",
+            "section": "Checklist Downloads",
+            "title": "Scarlet & Violet Checklist CSV",
+            "summary": "All current SV checklist rows in one downloadable CSV.",
+            "href": "/placeholder-downloads/sv-checklist-csv",
+            "kind": "download",
+            "tags": ["SV", "Checklist", "CSV"],
+        },
+        {
+            "id": "sv-review-queue",
+            "section": "Checklist Downloads",
+            "title": "Scarlet & Violet Review Queue",
+            "summary": "Audit worksheet for checklist corrections, missing rows, and reassignment review.",
+            "href": "/placeholder-downloads/sv-review-queue",
+            "kind": "download",
+            "tags": ["SV", "Checklist", "Review"],
+        },
+        {
+            "id": "mega-checklist-csv",
+            "section": "Checklist Downloads",
+            "title": "Mega Evolution Checklist CSV",
+            "summary": "All current Mega checklist rows in one downloadable CSV.",
+            "href": "/placeholder-downloads/mega-checklist-csv",
+            "kind": "download",
+            "tags": ["Mega", "Checklist", "CSV"],
+        },
+        {
+            "id": "mega-review-queue",
+            "section": "Checklist Downloads",
+            "title": "Mega Evolution Review Queue",
+            "summary": "Review worksheet for Mega checklist corrections and missing rows.",
+            "href": "/placeholder-downloads/mega-review-queue",
+            "kind": "download",
+            "tags": ["Mega", "Checklist", "Review"],
+        },
+    ]
+    for item in items:
+        if item["kind"] != "download":
+            continue
+        target = placeholder_download_path(item["id"])
+        item["filename"] = target.name
+        item["size_label"] = _placeholder_size_label(target)
+    return {
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "project_root_exists": TCG_PLACEHOLDERS_DIR.exists(),
+        "source_count": 4,
+        "download_count": sum(1 for item in items if item["kind"] == "download"),
+        "browser_count": sum(1 for item in items if item["kind"] == "page"),
         "items": items,
     }
 # Index definition contract:
@@ -451,6 +752,179 @@ def is_mobile_request(request: Request) -> bool:
     return any(marker in user_agent for marker in mobile_markers)
 
 
+def psa_access_token() -> str:
+    return os.getenv("POKEMON_MOMENTUM_PSA_ACCESS_TOKEN", "").strip()
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _parse_iso8601(value: str | None) -> datetime | None:
+    text = str(value or "").strip()
+    if not text:
+        return None
+    try:
+        return datetime.fromisoformat(text)
+    except ValueError:
+        return None
+
+
+def validate_psa_cert_number(cert_number: str) -> str:
+    normalized = str(cert_number or "").strip()
+    if not normalized.isdigit() or len(normalized) < 4 or len(normalized) > 20:
+        raise HTTPException(status_code=400, detail="PSA cert number must be 4-20 digits.")
+    return normalized
+
+
+def psa_cache_ttl() -> timedelta:
+    raw_value = str(os.getenv("POKEMON_MOMENTUM_PSA_CACHE_TTL_DAYS", PSA_CERT_CACHE_TTL_DAYS)).strip()
+    try:
+        ttl_days = int(raw_value)
+    except ValueError:
+        ttl_days = PSA_CERT_CACHE_TTL_DAYS
+    return timedelta(days=max(ttl_days, 1))
+
+
+def psa_cache_is_fresh(row: dict | None, *, now: datetime | None = None) -> bool:
+    if not row:
+        return False
+    checked_at = _parse_iso8601(row.get("last_checked_at"))
+    if checked_at is None:
+        return False
+    current = now or _utcnow()
+    if checked_at.tzinfo is None:
+        checked_at = checked_at.replace(tzinfo=timezone.utc)
+    return current - checked_at < psa_cache_ttl()
+
+
+def _psa_payload_value(payload: dict, *keys: str) -> str | None:
+    for key in keys:
+        value = payload.get(key)
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return None
+
+
+def _psa_nested_dict(payload: dict, key: str) -> dict:
+    value = payload.get(key)
+    return value if isinstance(value, dict) else {}
+
+
+def normalize_psa_lookup(cert_number: str, payload: dict) -> dict:
+    server_message = str(payload.get("ServerMessage") or "").strip()
+    message_lower = server_message.lower()
+    psa_cert = _psa_nested_dict(payload, "PSACert")
+    dna_cert = _psa_nested_dict(payload, "DNACert")
+    flattened = {**payload, **psa_cert}
+    card_name = _psa_payload_value(flattened, "Subject", "CardName", "Card", "Name", "ItemDescription")
+    set_name = _psa_payload_value(flattened, "SetName", "Brand", "Set")
+    grade = _psa_payload_value(flattened, "Grade", "CardGrade", "NumericGrade")
+    year = _psa_payload_value(flattened, "Year")
+    brand = _psa_payload_value(flattened, "Brand")
+    subject = _psa_payload_value(flattened, "Subject")
+    card_number = _psa_payload_value(flattened, "CardNumber", "Number")
+    variety = _psa_payload_value(flattened, "Variety")
+    grade_description = _psa_payload_value(flattened, "GradeDescription")
+    item_status = _psa_payload_value(flattened, "ItemStatus")
+    certification_type = _psa_payload_value(payload, "CertificationType")
+    has_cert_data = bool(psa_cert or dna_cert or any([card_name, set_name, grade, year, brand]))
+    is_valid_request = bool(payload.get("IsValidRequest")) if "IsValidRequest" in payload else has_cert_data
+
+    if not is_valid_request:
+        lookup_status = "invalid_cert"
+    elif "no data" in message_lower:
+        lookup_status = "not_found"
+    elif server_message.lower() == "request successful" or has_cert_data:
+        lookup_status = "success"
+    else:
+        lookup_status = "unknown"
+
+    card = None
+    if lookup_status == "success":
+        card = {
+            "cert_number": cert_number,
+            "card_name": card_name,
+            "set_name": set_name,
+            "grade": grade,
+            "year": year,
+            "brand": brand,
+            "subject": subject,
+            "card_number": card_number,
+            "variety": variety,
+            "grade_description": grade_description,
+            "item_status": item_status,
+            "certification_type": certification_type,
+        }
+
+    return {
+        "cert_number": cert_number,
+        "lookup_status": lookup_status,
+        "is_valid_request": is_valid_request,
+        "server_message": server_message,
+        "card": card,
+        "normalized_card_name": card_name,
+        "normalized_set_name": set_name,
+        "normalized_grade": grade,
+        "raw": payload,
+    }
+
+
+def psa_lookup_response(row: dict, *, source: str) -> dict:
+    normalized = normalize_psa_lookup(str(row.get("cert_number") or ""), row.get("raw_response_json") or {})
+    return {
+        "cert_number": normalized["cert_number"],
+        "lookup_status": row.get("lookup_status") or normalized["lookup_status"],
+        "is_valid_request": bool(row.get("is_valid_request")),
+        "server_message": row.get("server_message") or normalized["server_message"],
+        "card": normalized["card"],
+        "raw": row.get("raw_response_json") or {},
+        "source": source,
+        "cached": source == "cache",
+        "last_checked_at": row.get("last_checked_at"),
+    }
+
+
+def fetch_psa_cert_from_upstream(cert_number: str) -> dict:
+    token = psa_access_token()
+    if not token:
+        raise HTTPException(status_code=503, detail="PSA integration is not configured.")
+
+    url = f"{PSA_API_BASE_URL}/cert/GetByCertNumber/{cert_number}"
+    try:
+        response = requests.get(
+            url,
+            headers={
+                "Authorization": f"bearer {token}",
+                "Content-Type": "application/json",
+            },
+            timeout=12,
+        )
+    except requests.RequestException as exc:
+        raise HTTPException(status_code=502, detail=f"PSA lookup failed: {exc}") from exc
+
+    if response.status_code >= 500:
+        raise HTTPException(status_code=502, detail="PSA lookup failed upstream.")
+    if response.status_code >= 400:
+        raise HTTPException(status_code=502, detail=f"PSA lookup returned unexpected status {response.status_code}.")
+    if response.status_code == 204:
+        return {
+            "IsValidRequest": False,
+            "ServerMessage": "No data found",
+        }
+
+    try:
+        payload = response.json() if response.content else {}
+    except ValueError as exc:
+        raise HTTPException(status_code=502, detail="PSA lookup returned invalid JSON.") from exc
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=502, detail="PSA lookup returned an unexpected payload.")
+    return payload
+
+
 def dashboard_response_for_request(request: Request) -> FileResponse:
     if is_mobile_request(request):
         return FileResponse(MOBILE_DASHBOARD_HTML)
@@ -483,9 +957,25 @@ def collector_hub():
     return FileResponse(COLLECTOR_HUB_HTML)
 
 
+@app.get("/placeholders")
+def placeholder_library():
+    return FileResponse(PLACEHOLDER_LIBRARY_HTML)
+
+
 @app.get("/collector-manifest")
 def collector_manifest_route():
     return collector_manifest()
+
+
+@app.get("/placeholder-downloads-manifest")
+def placeholder_download_manifest_route():
+    return placeholder_download_manifest()
+
+
+@app.get("/placeholder-downloads/{asset_id}")
+def placeholder_download(asset_id: str):
+    target = placeholder_download_path(asset_id)
+    return FileResponse(target, filename=target.name)
 
 
 @app.get("/collector-assets/{bucket}/{asset_path:path}")
@@ -507,7 +997,7 @@ def budget_builder_page():
 
 @app.get("/sealed-deals")
 def sealed_deals_page():
-    """Serve a standalone sealed-product value tracker page (not linked from the main dashboard)."""
+    """Serve the standalone sealed-product value tracker linked from site navigation."""
     return FileResponse(SEALED_DEALS_HTML)
 
 
@@ -518,6 +1008,7 @@ def account_settings():
 
 @app.get("/dashboard-dev")
 def dashboard_dev():
+    """Serve the desktop dashboard directly for compatibility and operator checks."""
     return FileResponse(DASHBOARD_HTML)
 
 
@@ -543,6 +1034,15 @@ def bug_reports_page(authorization: str | None = Header(default=None), tracking_
 def pricing_upload_page(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
     require_admin_user(authorization=authorization, tracking_token=tracking_token)
     return FileResponse(PRICING_UPLOAD_HTML)
+
+
+@app.get("/single-listings-upload")
+def single_listings_upload_page(
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    return FileResponse(SINGLE_LISTINGS_UPLOAD_HTML)
 
 
 @app.get("/supplier-pricing")
@@ -699,6 +1199,29 @@ def health(category_id: int = 3):
     r["category_id"] = category.category_id
     r["category"] = category.label
     return r
+
+
+@app.get("/api/psa/cert/{cert_number}")
+def psa_cert_lookup(cert_number: str, refresh: bool = False):
+    normalized_cert = validate_psa_cert_number(cert_number)
+    cached_row = get_psa_certification(normalized_cert)
+    if cached_row is not None and not refresh and psa_cache_is_fresh(cached_row):
+        return psa_lookup_response(cached_row, source="cache")
+
+    payload = fetch_psa_cert_from_upstream(normalized_cert)
+    normalized = normalize_psa_lookup(normalized_cert, payload)
+    stored_row = upsert_psa_certification(
+        normalized_cert,
+        is_valid_request=normalized["is_valid_request"],
+        server_message=normalized["server_message"] or None,
+        raw_response_json=payload,
+        normalized_card_name=normalized["normalized_card_name"],
+        normalized_set_name=normalized["normalized_set_name"],
+        normalized_grade=normalized["normalized_grade"],
+        lookup_status=normalized["lookup_status"],
+        last_checked_at=_utcnow().replace(microsecond=0).isoformat(),
+    )
+    return psa_lookup_response(stored_row, source="psa")
 
 
 @app.get("/eod/market_details")
@@ -1379,7 +1902,13 @@ def index_overview_data(category_id: int = 3, index: str = "sv100", refresh: boo
         age = (now - cached_at).total_seconds()
         if age <= INDEX_OVERVIEW_CACHE_TTL_SECONDS:
             return payload
+    if not refresh:
+        snapshot_payload = load_index_overview_snapshot(requested_category, index_key)
+        if snapshot_payload is not None:
+            _INDEX_OVERVIEW_CACHE[cache_key] = (now, snapshot_payload)
+            return snapshot_payload
     payload = _build_index_overview_payload(category_id=requested_category, index_key=index_key)
+    save_index_overview_snapshot(requested_category, index_key, payload)
     _INDEX_OVERVIEW_CACHE[cache_key] = (now, payload)
     return payload
 
@@ -2983,6 +3512,206 @@ def supplier_profitability_fx(
         raise HTTPException(status_code=502, detail=f"Unable to refresh JPY/USD rate: {exc}") from exc
 
 
+def _validate_csv_columns(header_line: str, required_fields: list[str], detail: str) -> None:
+    present_fields = {field.strip() for field in header_line.split(",") if field.strip()}
+    missing = [field for field in required_fields if field not in present_fields]
+    if missing:
+        raise HTTPException(status_code=400, detail=f"{detail} Missing columns: {', '.join(missing)}")
+
+
+def _summarize_listing_drafts(rows: list[dict[str, str]]) -> dict[str, object]:
+    ready_rows = [row for row in rows if str(row.get("draft_status") or "").strip().lower() == "ready"]
+    error_rows = [row for row in rows if str(row.get("draft_status") or "").strip().lower() == "error"]
+    approved_rows = [
+        row for row in rows if str(row.get("review_status") or "").strip().lower() == "approved"
+    ]
+    preview = [
+        {
+            "sku": row.get("sku", ""),
+            "final_title": row.get("final_title", ""),
+            "target_price": row.get("target_price", ""),
+            "set_name": row.get("set_name", ""),
+            "rarity": row.get("rarity", ""),
+            "warnings": row.get("warnings", ""),
+            "errors": row.get("errors", ""),
+        }
+        for row in rows[:12]
+    ]
+    return {
+        "draft_rows": len(rows),
+        "ready_rows": len(ready_rows),
+        "error_rows": len(error_rows),
+        "approved_rows": len(approved_rows),
+        "preview": preview,
+        "error_details": [row.get("errors", "") for row in error_rows[:12] if row.get("errors")],
+    }
+
+
+@app.get("/single-listings/intake-download")
+def single_listings_intake_download(
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    return FileResponse(SINGLE_LISTINGS_INTAKE_CSV, filename=SINGLE_LISTINGS_INTAKE_CSV.name)
+
+
+@app.get("/single-listings/draft-download")
+def single_listings_draft_download(
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    if not SINGLE_LISTINGS_DRAFT_CSV.exists():
+        raise HTTPException(status_code=404, detail="Draft CSV has not been generated yet.")
+    return FileResponse(SINGLE_LISTINGS_DRAFT_CSV, filename=SINGLE_LISTINGS_DRAFT_CSV.name)
+
+
+@app.get("/single-listings/followup-download")
+def single_listings_followup_download(
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    if not SINGLE_LISTINGS_FOLLOWUP_CSV.exists():
+        raise HTTPException(status_code=404, detail="Follow-up CSV has not been generated yet.")
+    return FileResponse(SINGLE_LISTINGS_FOLLOWUP_CSV, filename=SINGLE_LISTINGS_FOLLOWUP_CSV.name)
+
+
+@app.post("/single-listings/intake-upload")
+async def single_listings_intake_upload(
+    file: UploadFile = File(...),
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    admin_user = require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    filename = str(file.filename or "").strip()
+    if not filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Please upload a singles intake CSV.")
+
+    payload = await file.read()
+    if not payload:
+        raise HTTPException(status_code=400, detail="Uploaded file was empty.")
+
+    header_line = payload.splitlines()[0].decode("utf-8", errors="ignore") if payload.splitlines() else ""
+    _validate_csv_columns(
+        header_line,
+        SINGLE_LISTINGS_INTAKE_FIELDS,
+        "CSV does not look like a singles intake file.",
+    )
+
+    SINGLE_LISTINGS_INTAKE_CSV.write_bytes(payload)
+    drafts = build_single_listing_drafts(
+        intake_csv=SINGLE_LISTINGS_INTAKE_CSV,
+        market_csv=SINGLE_LISTINGS_MARKET_CSV,
+        squarespace_export=SINGLE_LISTINGS_EXPORT_CSV,
+        created_csv=SINGLE_LISTINGS_CREATED_CSV,
+    )
+    write_single_listing_csv(SINGLE_LISTINGS_DRAFT_CSV, SINGLE_LISTINGS_DRAFT_FIELDS, drafts)
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return {
+        "ok": True,
+        "saved_to": str(SINGLE_LISTINGS_INTAKE_CSV),
+        "draft_saved_to": str(SINGLE_LISTINGS_DRAFT_CSV),
+        "uploaded_by": admin_user.username,
+        "uploaded_at": timestamp,
+        **_summarize_listing_drafts(drafts),
+    }
+
+
+@app.post("/single-listings/source-upload")
+async def single_listings_source_upload(
+    file: UploadFile = File(...),
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    admin_user = require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    filename = str(file.filename or "").strip()
+    if not filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Please upload a collection-builder CSV.")
+
+    payload = await file.read()
+    if not payload:
+        raise HTTPException(status_code=400, detail="Uploaded file was empty.")
+
+    header_line = payload.splitlines()[0].decode("utf-8", errors="ignore") if payload.splitlines() else ""
+    _validate_csv_columns(
+        header_line,
+        SINGLE_LISTINGS_SOURCE_FIELDS,
+        "CSV does not look like a collection-builder export.",
+    )
+
+    source_rows = list(
+        csv.DictReader(payload.decode("utf-8-sig", errors="ignore").splitlines())
+    )
+    intake_rows, conversion_errors = convert_single_listing_source_rows(source_rows)
+    if conversion_errors:
+        raise HTTPException(
+            status_code=400,
+            detail=" | ".join(conversion_errors[:8]),
+        )
+
+    write_single_listing_csv(SINGLE_LISTINGS_INTAKE_CSV, SINGLE_LISTINGS_INTAKE_FIELDS, intake_rows)
+    drafts = build_single_listing_drafts(
+        intake_csv=SINGLE_LISTINGS_INTAKE_CSV,
+        market_csv=SINGLE_LISTINGS_MARKET_CSV,
+        squarespace_export=SINGLE_LISTINGS_EXPORT_CSV,
+        created_csv=SINGLE_LISTINGS_CREATED_CSV,
+    )
+    write_single_listing_csv(SINGLE_LISTINGS_DRAFT_CSV, SINGLE_LISTINGS_DRAFT_FIELDS, drafts)
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return {
+        "ok": True,
+        "saved_to": str(SINGLE_LISTINGS_INTAKE_CSV),
+        "draft_saved_to": str(SINGLE_LISTINGS_DRAFT_CSV),
+        "source_rows": len(source_rows),
+        "intake_rows": len(intake_rows),
+        "uploaded_by": admin_user.username,
+        "uploaded_at": timestamp,
+        **_summarize_listing_drafts(drafts),
+    }
+
+
+@app.post("/single-listings/draft-upload")
+async def single_listings_draft_upload(
+    file: UploadFile = File(...),
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    admin_user = require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    filename = str(file.filename or "").strip()
+    if not filename.lower().endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Please upload a reviewed draft CSV.")
+
+    payload = await file.read()
+    if not payload:
+        raise HTTPException(status_code=400, detail="Uploaded file was empty.")
+
+    header_line = payload.splitlines()[0].decode("utf-8", errors="ignore") if payload.splitlines() else ""
+    required_fields = ["sku", "draft_status", "review_status", "final_title", "target_price"]
+    _validate_csv_columns(
+        header_line,
+        required_fields,
+        "CSV does not look like a reviewed singles draft file.",
+    )
+
+    SINGLE_LISTINGS_DRAFT_CSV.write_bytes(payload)
+    draft_rows = []
+    with SINGLE_LISTINGS_DRAFT_CSV.open(newline="", encoding="utf-8") as handle:
+        draft_rows = list(csv.DictReader(handle))
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return {
+        "ok": True,
+        "saved_to": str(SINGLE_LISTINGS_DRAFT_CSV),
+        "uploaded_by": admin_user.username,
+        "uploaded_at": timestamp,
+        **_summarize_listing_drafts(draft_rows),
+    }
+
+
 @app.post("/pricing-upload/compare")
 async def pricing_upload_compare(
     file: UploadFile = File(...),
@@ -4528,6 +5257,7 @@ def product_signals(limit: int = 500, min_price: float = 0.0, category_id: int =
 def budget_builder_recommendations(
     budget: float = 150.0,
     min_price: float = 5.0,
+    max_price: float | None = None,
     limit: int = 12,
     max_per_set: int = 2,
     rarities: str | None = None,
@@ -4537,7 +5267,9 @@ def budget_builder_recommendations(
 ):
     budget = max(5.0, min(float(budget), 5000.0))
     min_price = max(0.5, min(float(min_price), budget))
-    limit = max(1, min(int(limit), 24))
+    if max_price is not None:
+        max_price = max(min_price, min(float(max_price), budget))
+    limit = 500 if int(limit) <= 0 else max(1, min(int(limit), 500))
     max_per_set = max(1, min(int(max_per_set), 4))
     category = category_config(category_id)
     rarity_filters = _budget_filter_keys(rarities)
@@ -4593,7 +5325,7 @@ def budget_builder_recommendations(
       AND s.latest_date = (SELECT MAX(latest_date) FROM {source})
       AND COALESCE(s.productKind, '') = 'card'
       AND COALESCE(s.latest_price, 0) >= {min_price}
-      AND COALESCE(s.latest_price, 0) <= {budget}
+      AND COALESCE(s.latest_price, 0) <= {max_price if max_price is not None else budget}
       AND COALESCE(s.recent_observations_7d, 0) >= 4
       AND COALESCE(s.recent_distinct_prices_30d, 0) >= 3
       AND {rarity_clause}
@@ -4666,6 +5398,8 @@ def budget_builder_recommendations(
     remaining = round(max(budget - spent, 0.0), 2)
     return {
         "budget": budget,
+        "min_price": min_price,
+        "max_price": max_price,
         "spent": spent,
         "remaining": remaining,
         "count": len(items),

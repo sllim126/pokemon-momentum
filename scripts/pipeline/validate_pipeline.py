@@ -20,6 +20,39 @@ EXTRACTED_DIR = ROOT / "data" / "extracted"
 PROCESSED_DIR = ROOT / "data" / "processed"
 PARQUET_ROOT = ROOT / "data" / "parquet"
 DB_PATH = PROCESSED_DIR / "prices_db.duckdb"
+INDEX_OVERVIEW_SNAPSHOT_SUFFIX = "index_overview_snapshot.json"
+
+
+def index_overview_keys_for_category(category_id: int) -> list[str]:
+    """Mirror the API routing contract for persisted index-overview snapshots."""
+
+    requested_category = int(category_id)
+    if requested_category == 3:
+        return [
+            "pokemon100",
+            "sv100",
+            "mega100",
+            "swsh100",
+            "sm100",
+            "xy100",
+            "bw100",
+            "dp100",
+            "ex100",
+            "wotc100",
+            "neo100",
+            "ecard100",
+        ]
+    if requested_category == 85:
+        return ["jp_pokemon100", "jp_sv100"]
+    return []
+
+
+def index_overview_snapshot_files(category_id: int) -> tuple[Path, ...]:
+    category = get_category_config(category_id)
+    return tuple(
+        EXTRACTED_DIR / f"{category.slug}_{index_key}_{INDEX_OVERVIEW_SNAPSHOT_SUFFIX}"
+        for index_key in index_overview_keys_for_category(category_id)
+    )
 
 
 @dataclass(frozen=True)
@@ -168,6 +201,12 @@ def build_steps(category_id: int, workers: int, full_metadata_refresh: bool) -> 
             command=["python", "scripts/indicators/build_series_snapshot.py", "--category-id", str(category_id)],
             file_outputs=(EXTRACTED_DIR / category.series_snapshot_csv,),
             table_outputs=(category.series_snapshot_table,),
+        ),
+        StepSpec(
+            # Expected result: index overview pages can load prebuilt JSON payloads without rescanning raw history on first request.
+            name="Build index overview snapshots",
+            command=["python", "scripts/indicators/build_index_overview_snapshot.py", "--category-id", str(category_id)],
+            file_outputs=index_overview_snapshot_files(category_id),
         ),
         StepSpec(
             # Expected result: parquet partitions exist and include the most recent processed date.

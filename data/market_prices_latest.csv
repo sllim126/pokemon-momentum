@@ -1,72 +1,151 @@
 sku,market_price,target_price,profit_floor_price,supplier_cost_jpy,target_source,title,market_title,pricing_mode,market_source
-567364,0.31,0.31,,,market,Meowscarada ex - 014/190 - SV4a: Shiny Treasure ex (SV4a) Japanese,Meowscarada ex - 014/190,market,jp
-567477,0.44,0.44,,,market,Gardevoir ex - 082/190 - SV4a: Shiny Treasure ex (SV4a) Japanese,Gardevoir ex - 082/190,market,jp
-567555,0.23,0.23,,,market,Squawkabilly ex - 154/190 - SV4a: Shiny Treasure ex (SV4a) Japanese,Squawkabilly ex - 154/190,market,jp
-602682,39.07,39.07,,,market,Pokemon Card Roaring Moon ex SAR 218/187 sv8a Terastal Festival ex Japanese,Roaring Moon ex - 218/187,market,jp
-610541,0.33,0.33,,,market,Cottonee (Poke Ball Pattern) - SV: Prismatic Evolutions (PRE) - 007/131,Cottonee (Poke Ball Pattern),market,en
-610604,0.28,0.28,,,market,Amarys (Poke Ball Pattern) - SV: Prismatic Evolutions (PRE) - 093/131,Amarys - 093/131 (Poke Ball Pattern),market,en
-636501,4.28,4.28,,,market,Pawniard - 147/086 - SV11B: Black Bolt (SV11B) Japanese,Pawniard - 147/086,market,jp
-637220,0.33,0.33,,,market,Krookodile - 062/086 (Poke Ball Pattern) - SV11B: Black Bolt (SV11B) Japanese,Krookodile - 062/086 (Poke Ball Pattern),market,jp
-637278,3.29,3.29,,,market,Archen - 047/086 (Master Ball Pattern) - SV11W: White Flare (SV11W)  Japanese,Archen - 047/086 (Master Ball Pattern),market,jp
-637314,0.49,0.49,,,market,Shelmet - 008/086 (Poke Ball Pattern) - SV11W: White Flare (SV11W) - Japanese,Shelmet - 008/086 (Poke Ball Pattern),market,jp
-637332,0.36,0.36,,,market,Blitzle - 028/086 (Poke Ball Pattern) - SV11W: White Flare (SV11W) Japanese,Blitzle - 028/086 (Poke Ball Pattern),market,jp
-637340,0.28,0.28,,,market,Yamask - 036/086 (Poke Ball Pattern) - SV11W: White Flare (SV11W) Japanese,Yamask - 036/086 (Poke Ball Pattern),market,jp
-637647,0.39,0.39,,,market,Prism Energy (Poke Ball Pattern) - SV11B: Black Bolt (SV11B) Japanese,Prism Energy (Poke Ball Pattern),market,jp
-665881,6.26,6.26,,,market,N's Zekrom - 210/193 - M2a: High Class Pack: MEGA Dream ex (M2a) Japanese,N's Zekrom - 210/193,market,jp
-EN-AH-ETB,173.70,164.99,,,market,Pokemon Ascended Heroes Elite Trainer Box - English,Ascended Heroes Elite Trainer Box,market_minus_5_pct_99,en
-EN-PF-SB,12.56,10.99,,,market,Phantasmal Flames Sleeved Booster - English,Phantasmal Flames Sleeved Booster Pack,market_minus_5_pct_99,en
-ENG-ARCHex-MCAP,35.11,32.99,,,market,Pokemon Archaludon ex Box - English,Archaludon ex Box,market_minus_5_pct_99_with_floor,en
-ENG-BB-BB,80.59,75.99,,,market,Pokemon Black Bolt Booster Bundle - English,Black Bolt Booster Bundle,market_minus_5_pct_99,en
-ENG-BLKYUec-MCAP,38.85,35.99,,,market,Pokemon Black Kyurem ex - English,Black Kyurem ex Box,market_minus_5_pct_99_with_floor,en
-ENG-DR-ART,41.61,38.99,,,market,Destined Rivals Booster Pack Art Set (4-Pack Set) - English,Destined Rivals Booster Pack Art Bundle [Set of 4],market_minus_5_pct_99,en
-ENG-DR-BUNDLE,84.62,79.99,,,market,Destined Rivals Booster Bundle - English,Destined Rivals Booster Bundle,market_minus_5_pct_99,en
-ENG-DR-PACK,12.51,10.99,,,market,Destined Rivals Sleeved Booster Pack - English,Destined Rivals Sleeved Booster Pack,market_minus_5_pct_99,en
-ENG-HOUNDex-MCAP,39.42,36.99,,,market,Pokemon Houndstone ex Box - English,Houndstone ex Box,market_minus_5_pct_99_with_floor,en
-ENG-JT-PACK,8.73,7.99,,,market,Journey Together Sleeved Booster Pack - English,Journey Together Sleeved Booster Pack,market_minus_5_pct_99,en
-ENG-MEGA-PACK,9.25,7.99,,,market,Mega Evolution Sleeved Booster Pack - English,Mega Evolution Sleeved Booster Pack,market_minus_5_pct_99,en
-ENG-MEGLATex-MCAP,40.64,37.99,,,market,Pokemon Mega Latias ex Box - English,Mega Latias ex Box,market_minus_5_pct_99_with_floor,en
-ENG-MELex-MCAP,36.10,33.99,,,market,Pokemon Melmetal ex Box - English,Melmetal ex Box,market_minus_5_pct_99_with_floor,en
-ENG-PF-ART,56.14,52.99,,,market,Phantasmal Flames Sleeved Booster Pack Art Set (4-Pack Complete Artwork Set) – English,Phantasmal Flames Sleeved Booster Pack Art Bundle [Set of 4],market_minus_5_pct_99,en
-ENG-PF-BB,87.78,82.99,,,market,Pokemon Phantasmal Flames Booster Bundle - English,Phantasmal Flames Booster Bundle,market_minus_5_pct_99,en
-ENG-PO-ART4,27.75,25.99,,,market,Perfect Order Sleeved Booster Pack Art Bundle [Set of 4] - ME03: Perfect Order (ME03),Perfect Order Sleeved Booster Pack Art Bundle [Set of 4],market_minus_5_pct_99,en
-ENG-RESHex-MCAP,35.97,33.99,,,market,Pokemon Reshiram ex Box - English,Reshiram ex Box,market_minus_5_pct_99_with_floor,en
-ENG-SILTEM-BP,16.65,14.99,,,market,Silver Tempest Sleeved Booster Pack - (SWSH12) - English,Silver Tempest Sleeved Booster Pack,market_minus_5_pct_99,en
-ENG-SS-BB,65.28,61.99,,,market,Pokemon Surging Sparks Booster Bundle - English,Surging Sparks Booster Bundle (LGS),market_minus_5_pct_99,en
-ENG-SS-Costco,186.35,176.99,,,market,Costco Pokémon Surging Sparks 2-Pack Trainer Box & Booster Bundle - English,Costco Pokemon Surging Sparks 2-Pack Trainer Box and Booster Bundle,market_minus_5_pct_99,en
-ENG-SS-ETB,134.67,126.99,,,market,Pokemon Surging Sparks Elite Trainer Box - English,Surging Sparks Elite Trainer Box,market_minus_5_pct_99,en
-ENG-TM-ETB,108.35,101.99,,,market,Pokemon Twilight Masquerade Elite Trainer Box - English,Twilight Masquerade Elite Trainer Box,market_minus_5_pct_99,en
-ENG-WF-BB,75.40,70.99,,,market,Pokemon White Flare Booster Bundle - English,White Flare Booster Bundle,market_minus_5_pct_99,en
-JP-151-BOX,337.82,422.28,,65200,jp_market_plus_25_stale_quote,Pokemon 151 Booster Box - Japanese,Pokemon Card 151 Booster Box,market_minus_5_pct_99,jp
-JP-AE-BB,98.92,92.99,,,market,Pokemon Abyss Eye M5 Booster Box - Japanese,Abyss Eye Booster Box,market_minus_5_pct_99,jp
-JP-AR-BOX,85.82,107.28,,11200,jp_market_plus_25_stale_quote,Pokemon Ancient Roar Booster Box - Japanese,Ancient Roar Booster Box,market_minus_5_pct_99,jp
-JP-BB-BOX,143.82,179.78,,28700,jp_market_plus_25_stale_quote,Pokemon Black Bolt Booster Box - Japanese,Black Bolt Booster Box,market_minus_5_pct_99,jp
-JP-BBD-BOX,142.19,177.74,,27000,jp_market_plus_25_stale_quote,Pokemon Black Bolt Deluxe Booster Box Japanese,Black Bolt Deluxe Booster Box,market_minus_5_pct_99,jp
-JP-BP-BOX,92.50,115.63,,11200,jp_market_plus_25_stale_quote,Pokemon Battle Partners Booster Box - Japanese,Battle Partners Booster Box,market_minus_5_pct_99,jp
-JP-CH-BOX,117.37,146.71,,16200,jp_market_plus_25_stale_quote,Pokemon Crimson Haze Booster Box - Japanese,Crimson Haze Booster Box,market_minus_5_pct_99,jp
-JP-CJ-BOX,87.24,109.05,,11200,jp_market_plus_25_stale_quote,Pokemon Cyber Judge Booster Box - Japanese,Cyber Judge Booster Box,market_minus_5_pct_99,jp
-JP-FF-BOX,79.62,99.53,,10800,jp_market_plus_25_stale_quote,Pokemon Future Flash Booster Box - Japanese,Future Flash Booster Box,market_minus_5_pct_99,jp
-JP-HWA-BOX,125.20,156.50,,23500,jp_market_plus_25_stale_quote,Pokemon Heat Wave Arena Booster Box - Japanese,Heat Wave Arena Booster Box,market_minus_5_pct_99,jp
-JP-INFX-BOX,128.72,160.90,,29800,jp_market_plus_25_stale_quote,Pokemon Inferno X Booster Box - Japanese,Inferno X Booster Box,market_minus_5_pct_99,jp
-JP-MB-BOX,110.28,137.85,,14400,jp_market_plus_25_stale_quote,Pokemon Mega Brave Booster Box - Japanese,Mega Brave Booster Box,market_minus_5_pct_99,jp
-JP-MD-BOX,106.29,132.86,,17700,jp_market_plus_25_stale_quote,Pokemon Mega Dream Ex Booster Box - Japanese,Mega Dream ex Booster Box,market_minus_5_pct_99,jp
-JP-MS-BOX,98.19,122.74,,12400,jp_market_plus_25_stale_quote,Pokemon Mega Symphonia Booster Box - Japanese,Mega Symphonia Booster Box,market_minus_5_pct_99,jp
-JP-NW-BOX,91.84,114.80,,11200,jp_market_plus_25_stale_quote,Pokemon Night Wanderer Booster Box - Japanese,Night Wanderer Booster Box,market_minus_5_pct_99,jp
-JP-PD-BOX,111.10,138.88,,21100,jp_market_plus_25_stale_quote,Pokemon Paradise Dragona Booster Box - Japanese,Paradise Dragona Booster Box,market_minus_5_pct_99,jp
-JP-RBF-BOX,142.39,134.99,,,market,Pokemon Ruler of the Black Flame Booster Box - Japanese,Ruler of the Black Flame Booster Box,market_minus_5_pct_99,jp
-JP-RS-BOX,110.45,138.06,,14500,jp_market_plus_25_stale_quote,Pokemon Raging Surf Booster Box - Japanese,Raging Surf Booster Box,market_minus_5_pct_99,jp
-JP-S-BOX,97.16,91.99,,,market,Pokemon Scarlet ex Booster Box - Japanese,Scarlet ex Booster Box,market_minus_5_pct_99,jp
-JP-SEB-BOX,143.13,178.91,,41500,jp_market_plus_25_stale_quote,Pokemon Super Electric Breaker Booster Box - Japanese,Super Electric Breaker Booster Box,market_minus_5_pct_99,jp
-JP-SH-BOX,94.34,117.93,,11500,jp_market_plus_25_stale_quote,Pokemon Snow Hazard Booster Box - Japanese,Snow Hazard Booster Box,market_minus_5_pct_99,jp
-JP-SHINY-BOX,123.53,154.41,,20400,jp_market_plus_25_stale_quote,Pokemon Shiny Treasures EX Box Japanese,Shiny Treasure ex High Class Booster Box,market_minus_5_pct_99,jp
-JP-SM-BOX,94.21,117.76,,11200,jp_market_plus_25_stale_quote,Pokemon Stellar Miracle Booster Box - Japanese,Stellar Miracle Booster Box,market_minus_5_pct_99,jp
-JP-TB-BOX,136.17,170.21,,18700,jp_market_plus_25_stale_quote,Pokemon Triple Beat Booster Box - Japanese,Triple Beat Booster Box,market_minus_5_pct_99,jp
-JP-TF-BB,135.99,169.99,,23700,jp_market_plus_25_stale_quote,Pokemon Terastal Festival Booster Box - Japanese,Terastal Fest ex Booster Box,market_minus_5_pct_99,jp
-JP-TM-BOX,99.40,124.25,,14200,jp_market_plus_25_stale_quote,Pokemon Transformation Mask Booster Box - Japanese,Transformation Mask Booster Box,market_minus_5_pct_99,jp
-JP-TR-BB,182.56,228.20,,32200,jp_market_plus_25_stale_quote,Pokemon Glory of Team Rocket Booster Box - Japanese,Glory of Team Rocket Booster Box,market_minus_5_pct_99,jp
-JP-V-BOX,90.11,112.64,,11300,jp_market_plus_25_stale_quote,Pokemon Violet ex Booster Box - Japanese,Violet ex Booster Box,market_minus_5_pct_99,jp
-JP-VSTAR-BOX,237.69,297.11,,34000,jp_market_plus_25_stale_quote,Pokemon VSTAR Universe Booster Box - Japanese,VSTAR Universe Booster Box,market_minus_5_pct_99,jp
-JP-WF-BOX,128.69,160.86,,25200,jp_market_plus_25_stale_quote,Pokemon White Flare Booster Box - Japanese,White Flare Booster Box,market_minus_5_pct_99,jp
-JP-WFD-BOX,117.19,146.49,,22100,jp_market_plus_25_stale_quote,Pokemon White Flare Deluxe Booster Box Japanese,White Flare Deluxe Booster Box,market_minus_5_pct_99,jp
-JP-WIFO-BOX,103.62,129.53,,13700,jp_market_plus_25_stale_quote,Pokemon Wild Force Booster Box - Japanese,Wild Force Booster Box,market_minus_5_pct_99,jp
-MYZ-JP-BB,78.43,98.04,,9400,jp_market_plus_25_stale_quote,Pokemon Mega Nihil Zero Booster Box - Japanese,Nihil Zero Booster Box,market_minus_5_pct_99,jp
-NS-JPN-BB,90.11,112.64,,12500,jp_market_plus_25_stale_quote,Pokemon Ninja Spinner Booster Box - Japanese,Ninja Spinner Booster Box,market_minus_5_pct_99,jp
+107021-unlimited,21.21,21.21,,,market,Charmeleon (Unlimited) - 024/102 - Base Set (Shadowless) (BSS) - English,Charmeleon,market,en
+113761-holofoil,18.31,18.31,,,market,Swirlix (Holofoil) - RC19/RC32 - Generations: Radiant Collection,Swirlix,market,en
+117847-holofoil,4.56,4.56,,,market,Diancie EX (Holofoil) - 72/124 - XY - Fates Collide (FCO) - English,Diancie EX,market,en
+118859-holofoil,11.54,11.54,,,market,Mawile EX (Holofoil) - XY103 - XY Promos - English,Mawile EX,market,en
+121952-holofoil,15.50,15.50,,,market,Xerneas EX - XY149 (Shiny) (Holofoil) - XY Promos - English,Xerneas EX - XY149 (Shiny),market,en
+127130-holofoil,30.32,30.32,,,market,Darkrai - XY194 (Holofoil) - XY Promos - English,Darkrai - XY194,market,en
+130947-holofoil,1.91,1.91,,,market,Vikavolt GX (Holofoil) - 45/145 - SM - Guardians Rising (SM02) - English,Vikavolt GX,market,en
+131727-holofoil,2.71,2.71,,,market,Tapu Bulu GX - SM32 (Holofoil) - SM Promos (SMP) - English,Tapu Bulu GX - SM32,market,en
+178978,7.10,7.10,,,market,Smeargle - 157/214 - SM - Lost Thunder (SM8) - English,Smeargle,market,en
+183797-reverse-holofoil,18.12,18.12,,,market,Psyduck (Reverse Holofoil) - 26/181 - SM - Team Up (SM9) - English,Psyduck,market,en
+188320-holofoil,17.85,17.85,,,market,Bulbasaur - SM198 (In-Store Event Promo) (Holofoil) - SM Promos (SMP) - English,Bulbasaur - SM198 (In-Store Event Promo),market,en
+201216,2.83,2.83,,,market,Psyduck - 40/236 - SM - Cosmic Eclipse (SM12) - English,Psyduck,market,en
+201216-reverse-holofoil,24.71,24.71,,,market,Psyduck (Reverse Holofoil) - 40/236 - SM - Cosmic Eclipse (SM12) - English,Psyduck,market,en
+206824-holofoil,20.78,20.78,,,market,Bulbasaur - SM198 (Detective Pikachu Stamped) (Holofoil) - SM Promos (SMP) - English,Bulbasaur - SM198 (Detective Pikachu Stamped),market,en
+226594-holofoil,24.93,24.93,,,market,Rayquaza (Holofoil) - 138/185 - SWSH04: Vivid Voltage,Rayquaza,market,en
+232413-holofoil,5.57,5.57,,,market,Dedenne (Holofoil) - SV051/SV122 - Shining Fates: Shiny Vault (SHFSV) - English,Dedenne,market,en
+234205-holofoil,0.90,0.90,,,market,Tapu Koko V (Holofoil) - 050/163 - SWSH05: Battle Styles - English,Tapu Koko V,market,en
+241722-reverse-holofoil,1.64,1.64,,,market,Gardevoir (Reverse Holofoil) - 061/198 - SWSH06: Chilling Reign - English,Gardevoir,market,en
+250342-holofoil,5.51,5.51,,,market,Tapu Lele GX (Holofoil) - 60/145 - Celebrations: Classic Collection (CCC) - English,Tapu Lele GX,market,en
+264283-holofoil,4.93,4.93,,,market,Eevee - SWSH190 (Holofoil) - SWSH: Sword & Shield Promo Cards (SWSD) - English,Eevee - SWSH190,market,en
+284258-holofoil,42.82,42.82,,,market,Pikachu (Holofoil) - TG05/TG30 - SWSH11: Lost Origin Trainer Gallery (SWSH11: TG),Pikachu,market,en
+451725-holofoil,1.22,1.22,,,market,Mawile VSTAR (Holofoil) - 071/195 - SWSH12: Silver Tempest - English,Mawile VSTAR,market,en
+477053-holofoil,1.03,1.03,,,market,Kyogre V (Holofoil) - 037/159 - SWSH: Crown Zenith (CRZ) - English,Kyogre V,market,en
+477059-holofoil,49.92,49.92,,,market,Deoxys VSTAR (Holofoil) - GG46/GG70 - SWSH: Crown Zenith: Galarian Gallery (CRZ:GG),Deoxys VSTAR,market,en
+478031-holofoil,2.26,2.26,,,market,Comfey (Holofoil) - GG14/GG70 - SWSH: Crown Zenith: Galarian Gallery (CRZ:GG) - English,Comfey,market,en
+478077-holofoil,96.88,96.88,,,market,Darkrai VSTAR (Holofoil) - GG50/GG70 - SWSH: Crown Zenith: Galarian Gallery (CRZ:GG),Darkrai VSTAR,market,en
+478115-holofoil,3.50,3.50,,,market,Fire Energy (Texture Full Art) (Holofoil) - 153/159 - SWSH: Crown Zenith (CRZ) - English,Fire Energy (Texture Full Art),market,en
+486612-holofoil,0.73,0.73,,,market,Magnezone ex - 065/198 (Holofoil) - SV01: Scarlet & Violet Base Set (SVI) - English,Magnezone ex - 065/198,market,en
+487435-holofoil,1.42,1.42,,,market,Mimikyu ex - 004 (Holofoil) - SV: Scarlet & Violet Promo Cards (SVP) - English,Mimikyu ex - 004,market,en
+487951-holofoil,0.82,0.82,,,market,Gardevoir ex - 086/198 (Holofoil) - SV01: Scarlet & Violet Base Set (SVI) - English,Gardevoir ex - 086/198,market,en
+516561-reverse-holofoil,22.58,22.58,,,market,Iono - 185/193 (Regional Championships) (Reverse Holofoil) - League & Championship Cards (PR) - English,Iono - 185/193 (Regional Championships),market,en
+517028-holofoil,14.08,14.08,,,market,Mr. Mime - 179/165 (Holofoil) - SV: Scarlet & Violet 151 (MEW) - English,Mr. Mime - 179/165,market,en
+523916-holofoil,2.05,2.05,,,market,Larry - 235/182 (Holofoil) - SV04: Paradox Rift - English,Larry - 235/182,market,en
+523925-holofoil,4.30,4.30,,,market,Tulip - 244/182 (Holofoil) - SV04: Paradox Rift - English,Tulip - 244/182,market,en
+526634-holofoil,0.32,0.32,,,market,Pineco - 061 (Holofoil) - SV: Scarlet & Violet Promo Cards (SVP) - English,Pineco - 061,market,en
+527879-holofoil,0.82,0.82,,,market,Iron Valiant ex - 068 (Holofoil) - SV: Scarlet & Violet Promo Cards (SVP) - English,Iron Valiant ex - 068,market,en
+527992-holofoil,16.46,16.46,,,market,Gyarados (Holofoil) - 007/034 - Trading Card Game Classic - English,Gyarados,market,en
+534681-holofoil,3.97,3.97,,,market,Klefki (Holofoil) - 159/091 - SV: Paldean Fates (PAF) - English,Klefki,market,en
+550233-holofoil,1.49,1.49,,,market,Sinistcha ex - 189/167 (Holofoil) - SV06: Twilight Masquerade (TWM) - English,Sinistcha ex - 189/167,market,en
+567364,0.30,0.30,,,market,Meowscarada ex - 014/190 - SV4a: Shiny Treasure ex (SV4a) Japanese,Meowscarada ex - 014/190,market,jp
+567470-holofoil,2.56,2.56,,,market,Lacey - 166/142 (Holofoil) - SV07: Stellar Crown (SCR) - English,Lacey - 166/142,market,en
+567477,0.35,0.35,,,market,Gardevoir ex - 082/190 - SV4a: Shiny Treasure ex (SV4a) Japanese,Gardevoir ex - 082/190,market,jp
+567555,0.25,0.25,,,market,Squawkabilly ex - 154/190 - SV4a: Shiny Treasure ex (SV4a) Japanese,Squawkabilly ex - 154/190,market,jp
+589944-holofoil,8.69,8.69,,,market,Feebas - 198/191 (Holofoil) - SV08: Surging Sparks (SSP) - English,Feebas - 198/191,market,en
+602682,34.57,34.57,,,market,Pokemon Card Roaring Moon ex SAR 218/187 sv8a Terastal Festival ex Japanese,Roaring Moon ex - 218/187,market,jp
+610540-holofoil,1.98,1.98,,,market,Leafeon (Poke Ball Pattern) (Holofoil) - 005/131 - SV: Prismatic Evolutions (PRE) - English,Leafeon (Poke Ball Pattern),market,en
+610541,0.34,0.34,,,market,Cottonee (Poke Ball Pattern) - SV: Prismatic Evolutions (PRE) - 007/131,Cottonee (Poke Ball Pattern),market,en
+610541-holofoil,0.34,0.34,,,market,Cottonee (Poke Ball Pattern) (Holofoil) - 007/131 - SV: Prismatic Evolutions (PRE) - English,Cottonee (Poke Ball Pattern),market,en
+610566-holofoil,0.62,0.62,,,market,Munkidori (Poke Ball Pattern) (Holofoil) - 044/131 - SV: Prismatic Evolutions (PRE) - English,Munkidori (Poke Ball Pattern),market,en
+610577-holofoil,0.33,0.33,,,market,Okidogi (Poke Ball Pattern) (Holofoil) - 057/131 - SV: Prismatic Evolutions (PRE) - English,Okidogi (Poke Ball Pattern),market,en
+610587-holofoil,0.26,0.26,,,market,Archaludon (Poke Ball Pattern) (Holofoil) - 070/131 - SV: Prismatic Evolutions (PRE) - English,Archaludon (Poke Ball Pattern),market,en
+610597-holofoil,0.34,0.34,,,market,Lopunny (Poke Ball Pattern) (Holofoil) - 084/131 - SV: Prismatic Evolutions (PRE) - English,Lopunny (Poke Ball Pattern),market,en
+610600-holofoil,0.36,0.36,,,market,Shaymin (Poke Ball Pattern) (Holofoil) - 087/131 - SV: Prismatic Evolutions (PRE) - English,Shaymin (Poke Ball Pattern),market,en
+610604,0.32,0.32,,,market,Amarys (Poke Ball Pattern) - SV: Prismatic Evolutions (PRE) - 093/131,Amarys - 093/131 (Poke Ball Pattern),market,en
+610604-holofoil,0.32,0.32,,,market,Amarys - 093/131 (Poke Ball Pattern) (Holofoil) - SV: Prismatic Evolutions (PRE) - English,Amarys - 093/131 (Poke Ball Pattern),market,en
+610617-holofoil,0.35,0.35,,,market,Earthen Vessel (Poke Ball Pattern) (Holofoil) - 106/131 - SV: Prismatic Evolutions (PRE) - English,Earthen Vessel (Poke Ball Pattern),market,en
+610621-holofoil,0.27,0.27,,,market,Glass Trumpet (Poke Ball Pattern) (Holofoil) - 110/131 - SV: Prismatic Evolutions (PRE) - English,Glass Trumpet (Poke Ball Pattern),market,en
+610622-holofoil,0.33,0.33,,,market,Haban Berry (Poke Ball Pattern) (Holofoil) - 111/131 - SV: Prismatic Evolutions (PRE) - English,Haban Berry (Poke Ball Pattern),market,en
+619584-holofoil,0.71,0.71,,,market,Xerneas ex - 179 (Holofoil) - SV: Scarlet & Violet Promo Cards (SVP) - English,Xerneas ex - 179,market,en
+623502-holofoil,0.92,0.92,,,market,Alcremie ex (Holofoil) - 075/159 - SV09: Journey Together (JTG) - English,Alcremie ex,market,en
+623603-holofoil,1.57,1.57,,,market,Hop's Zacian ex - 176/159 (Holofoil) - SV09: Journey Together (JTG) - English,Hop's Zacian ex - 176/159,market,en
+630823-holofoil,0.82,0.82,,,market,Marnie's Grimmsnarl ex (Holofoil) - 136/182 - SV10: Destined Rivals (DRI) - English,Marnie's Grimmsnarl ex,market,en
+630824-holofoil,0.98,0.98,,,market,Steven's Metagross ex (Holofoil) - 145/182 - SV10: Destined Rivals (DRI) - English,Steven's Metagross ex,market,en
+635456-holofoil,54.39,54.39,,,market,Marnie’s Morpeko (Holofoil) - 206 - SV: Scarlet & Violet Promo Cards (SVP),Marnie's Morpeko,market,en
+636501,4.93,4.93,,,market,Pawniard - 147/086 - SV11B: Black Bolt (SV11B) Japanese,Pawniard - 147/086,market,jp
+637220,0.34,0.34,,,market,Krookodile - 062/086 (Poke Ball Pattern) - SV11B: Black Bolt (SV11B) Japanese,Krookodile - 062/086 (Poke Ball Pattern),market,jp
+637278,2.70,2.70,,,market,Archen - 047/086 (Master Ball Pattern) - SV11W: White Flare (SV11W)  Japanese,Archen - 047/086 (Master Ball Pattern),market,jp
+637314,0.44,0.44,,,market,Shelmet - 008/086 (Poke Ball Pattern) - SV11W: White Flare (SV11W) - Japanese,Shelmet - 008/086 (Poke Ball Pattern),market,jp
+637332,0.33,0.33,,,market,Blitzle - 028/086 (Poke Ball Pattern) - SV11W: White Flare (SV11W) Japanese,Blitzle - 028/086 (Poke Ball Pattern),market,jp
+637340,0.34,0.34,,,market,Yamask - 036/086 (Poke Ball Pattern) - SV11W: White Flare (SV11W) Japanese,Yamask - 036/086 (Poke Ball Pattern),market,jp
+637647,0.28,0.28,,,market,Prism Energy (Poke Ball Pattern) - SV11B: Black Bolt (SV11B) Japanese,Prism Energy (Poke Ball Pattern),market,jp
+654703-holofoil,18.41,18.41,,,market,Bulbasaur - 133/132 (Mega Evolution Stamped) (Holofoil) - Miscellaneous Cards & Products (MCAP) - English,Bulbasaur - 133/132 (Mega Evolution Stamped),market,en
+660379-holofoil,0.69,0.69,,,market,Mega Diancie ex (Holofoil) - 041/094 - ME02: Phantasmal Flames (PFL) - English,Mega Diancie ex,market,en
+662186-holofoil,0.61,0.61,,,market,Mega Heracross ex - 004/094 (Holofoil) - ME02: Phantasmal Flames (PFL) - English,Mega Heracross ex - 004/094,market,en
+665881,5.86,5.86,,,market,N's Zekrom - 210/193 - M2a: High Class Pack: MEGA Dream ex (M2a) Japanese,N's Zekrom - 210/193,market,jp
+684329-holofoil,0.63,0.63,,,market,Lapras ex (Holofoil) - 022/088 - ME03: Perfect Order (POR) - English,Lapras ex,market,en
+684336-holofoil,0.70,0.70,,,market,Mega Zygarde ex - 047/088 (Holofoil) - ME03: Perfect Order (POR) - English,Mega Zygarde ex - 047/088,market,en
+684365-holofoil,1.87,1.87,,,market,Spewpa - 089/088 (Holofoil) - ME03: Perfect Order (POR) - English,Spewpa - 089/088,market,en
+684371-holofoil,1.59,1.59,,,market,Decidueye ex - 100/088 (Holofoil) - ME03: Perfect Order (POR) - English,Decidueye ex - 100/088,market,en
+684376-holofoil,0.56,0.56,,,market,Salazzle ex - 016/088 (Holofoil) - ME03: Perfect Order (POR) - English,Salazzle ex - 016/088,market,en
+686275-holofoil,0.29,0.29,,,market,Makuhita - 068 (Holofoil) - ME: Mega Evolution Promo (MEP) - English,Makuhita - 068,market,en
+84236-reverse-holofoil,60.00,60.00,,,market,Charmeleon (Delta Species) (Reverse Holofoil) - 30/100 - EX Crystal Guardians (CG),Charmeleon (Delta Species),market,en
+84702-holofoil,38.02,38.02,,,market,Darkrai - DP52 (Holofoil) - Diamond and Pearl Promos - English,Darkrai - DP52,market,en
+84833,128.52,128.52,,,market,Ditto (Bulbasaur) - 36/113 - EX Delta Species (DS),Ditto (Bulbasaur),market,en
+84840,78.91,78.91,,,market,Ditto - 63/113 (Pikachu) - 063/113 - EX Delta Species (DS),Ditto - 63/113 (Pikachu),market,en
+84840-reverse-holofoil,249.00,249.00,,,market,Ditto - 63/113 (Pikachu) (Reverse Holofoil) - 063/113 - EX Delta Species (DS),Ditto - 63/113 (Pikachu),market,en
+85297-unlimited,17.84,17.84,,,market,Erika's Ivysaur (Unlimited) - 041/132 - Gym Challenge (G2) - English,Erika's Ivysaur,market,en
+85630-holofoil,81.71,81.71,,,market,Garchomp C LV.X - DP46 (Holofoil) - Diamond and Pearl Promos - English,Garchomp C LV.X - DP46,market,en
+86029,9.81,9.81,,,market,Haunter (41) - 41/99 - Arceus - English,Haunter (41),market,en
+87397,158.77,158.77,,,market,Mew (47) - 47/53 - WoTC Promo,Mew (47),market,en
+87858,23.56,23.56,,,market,Omanyte - 60/92 - EX Legend Maker (LM) - English,Omanyte,market,en
+88269-unlimited-holofoil,34.71,34.71,,,market,Poliwrath (9) (Unlimited Holofoil) - 09/75 - Neo Discovery (N2),Poliwrath (9),market,en
+90436,24.89,24.89,,,market,Vulpix - 136/165 - Expedition - English,Vulpix,market,en
+EN-AH-ETB,166.47,157.99,,,market,Pokemon Ascended Heroes Elite Trainer Box - English,Ascended Heroes Elite Trainer Box,market_minus_5_pct_99,en
+EN-PF-SB,14.38,12.99,,,market,Phantasmal Flames Sleeved Booster - English,Phantasmal Flames Sleeved Booster Pack,market_minus_5_pct_99,en
+ENG-ARCHex-MCAP,38.10,35.99,,,market,Pokemon Archaludon ex Box - English,Archaludon ex Box,market_minus_5_pct_99_with_floor,en
+ENG-BB-BB,99.97,93.99,,,market,Pokemon Black Bolt Booster Bundle - English,Black Bolt Booster Bundle,market_minus_5_pct_99,en
+ENG-BLKYUec-MCAP,40.67,37.99,,,market,Pokemon Black Kyurem ex - English,Black Kyurem ex Box,market_minus_5_pct_99_with_floor,en
+ENG-DR-ART,39.00,36.99,,,market,Destined Rivals Booster Pack Art Set (4-Pack Set) - English,Destined Rivals Booster Pack Art Bundle [Set of 4],market_minus_5_pct_99,en
+ENG-DR-BUNDLE,67.19,62.99,,,market,Destined Rivals Booster Bundle - English,Destined Rivals Booster Bundle,market_minus_5_pct_99,en
+ENG-DR-PACK,11.10,9.99,,,market,Destined Rivals Sleeved Booster Pack - English,Destined Rivals Sleeved Booster Pack,market_minus_5_pct_99,en
+ENG-HOUNDex-MCAP,41.51,38.99,,,market,Pokemon Houndstone ex Box - English,Houndstone ex Box,market_minus_5_pct_99_with_floor,en
+ENG-JT-PACK,9.30,7.99,,,market,Journey Together Sleeved Booster Pack - English,Journey Together Sleeved Booster Pack,market_minus_5_pct_99,en
+ENG-MEGA-PACK,9.38,7.99,,,market,Mega Evolution Sleeved Booster Pack - English,Mega Evolution Sleeved Booster Pack,market_minus_5_pct_99,en
+ENG-MEGLATex-MCAP,41.69,38.99,,,market,Pokemon Mega Latias ex Box - English,Mega Latias ex Box,market_minus_5_pct_99_with_floor,en
+ENG-MELex-MCAP,38.02,35.99,,,market,Pokemon Melmetal ex Box - English,Melmetal ex Box,market_minus_5_pct_99_with_floor,en
+ENG-PF-ART,54.31,50.99,,,market,Phantasmal Flames Sleeved Booster Pack Art Set (4-Pack Complete Artwork Set) – English,Phantasmal Flames Sleeved Booster Pack Art Bundle [Set of 4],market_minus_5_pct_99,en
+ENG-PF-BB,82.49,77.99,,,market,Pokemon Phantasmal Flames Booster Bundle - English,Phantasmal Flames Booster Bundle,market_minus_5_pct_99,en
+ENG-PO-ART4,29.94,27.99,,,market,Perfect Order Sleeved Booster Pack Art Bundle [Set of 4] - ME03: Perfect Order (ME03),Perfect Order Sleeved Booster Pack Art Bundle [Set of 4],market_minus_5_pct_99,en
+ENG-RESHex-MCAP,41.12,38.99,,,market,Pokemon Reshiram ex Box - English,Reshiram ex Box,market_minus_5_pct_99_with_floor,en
+ENG-SILTEM-BP,17.64,15.99,,,market,Silver Tempest Sleeved Booster Pack - (SWSH12) - English,Silver Tempest Sleeved Booster Pack,market_minus_5_pct_99,en
+ENG-SS-BB,63.76,59.99,,,market,Pokemon Surging Sparks Booster Bundle - English,Surging Sparks Booster Bundle (LGS),market_minus_5_pct_99,en
+ENG-SS-Costco,178.31,168.99,,,market,Costco Pokémon Surging Sparks 2-Pack Trainer Box & Booster Bundle - English,Costco Pokemon Surging Sparks 2-Pack Trainer Box and Booster Bundle,market_minus_5_pct_99,en
+ENG-SS-ETB,121.12,114.99,,,market,Pokemon Surging Sparks Elite Trainer Box - English,Surging Sparks Elite Trainer Box,market_minus_5_pct_99,en
+ENG-TM-ETB,105.38,99.99,,,market,Pokemon Twilight Masquerade Elite Trainer Box - English,Twilight Masquerade Elite Trainer Box,market_minus_5_pct_99,en
+ENG-WF-BB,87.52,82.99,,,market,Pokemon White Flare Booster Bundle - English,White Flare Booster Bundle,market_minus_5_pct_99,en
+JP-151-BOX,295.62,369.53,,65200,jp_market_plus_25_stale_quote,Pokemon 151 Booster Box - Japanese,Pokemon Card 151 Booster Box,market_minus_5_pct_99,jp
+JP-AE-BB,81.75,76.99,,,market,Pokemon Abyss Eye M5 Booster Box - Japanese,Abyss Eye Booster Box,market_minus_5_pct_99,jp
+JP-AR-BOX,96.64,120.80,,11200,jp_market_plus_25_stale_quote,Pokemon Ancient Roar Booster Box - Japanese,Ancient Roar Booster Box,market_minus_5_pct_99,jp
+JP-BB-BOX,160.91,201.14,,28700,jp_market_plus_25_stale_quote,Pokemon Black Bolt Booster Box - Japanese,Black Bolt Booster Box,market_minus_5_pct_99,jp
+JP-BBD-BOX,192.50,240.63,,27000,jp_market_plus_25_stale_quote,Pokemon Black Bolt Deluxe Booster Box Japanese,Black Bolt Deluxe Booster Box,market_minus_5_pct_99,jp
+JP-BP-BOX,84.84,106.05,,11200,jp_market_plus_25_stale_quote,Pokemon Battle Partners Booster Box - Japanese,Battle Partners Booster Box,market_minus_5_pct_99,jp
+JP-CH-BOX,122.26,152.83,,16200,jp_market_plus_25_stale_quote,Pokemon Crimson Haze Booster Box - Japanese,Crimson Haze Booster Box,market_minus_5_pct_99,jp
+JP-CJ-BOX,87.07,108.84,,11200,jp_market_plus_25_stale_quote,Pokemon Cyber Judge Booster Box - Japanese,Cyber Judge Booster Box,market_minus_5_pct_99,jp
+JP-FF-BOX,86.86,108.58,,10800,jp_market_plus_25_stale_quote,Pokemon Future Flash Booster Box - Japanese,Future Flash Booster Box,market_minus_5_pct_99,jp
+JP-HWA-BOX,128.81,161.01,,23500,jp_market_plus_25_stale_quote,Pokemon Heat Wave Arena Booster Box - Japanese,Heat Wave Arena Booster Box,market_minus_5_pct_99,jp
+JP-INFX-BOX,118.66,148.33,,29800,jp_market_plus_25_stale_quote,Pokemon Inferno X Booster Box - Japanese,Inferno X Booster Box,market_minus_5_pct_99,jp
+JP-MB-BOX,102.95,128.69,,14400,jp_market_plus_25_stale_quote,Pokemon Mega Brave Booster Box - Japanese,Mega Brave Booster Box,market_minus_5_pct_99,jp
+JP-MD-BOX,114.80,143.50,,17700,jp_market_plus_25_stale_quote,Pokemon Mega Dream Ex Booster Box - Japanese,Mega Dream ex Booster Box,market_minus_5_pct_99,jp
+JP-MS-BOX,90.32,112.90,,12400,jp_market_plus_25_stale_quote,Pokemon Mega Symphonia Booster Box - Japanese,Mega Symphonia Booster Box,market_minus_5_pct_99,jp
+JP-NW-BOX,88.24,110.30,,11200,jp_market_plus_25_stale_quote,Pokemon Night Wanderer Booster Box - Japanese,Night Wanderer Booster Box,market_minus_5_pct_99,jp
+JP-PD-BOX,118.16,147.70,,21100,jp_market_plus_25_stale_quote,Pokemon Paradise Dragona Booster Box - Japanese,Paradise Dragona Booster Box,market_minus_5_pct_99,jp
+JP-RBF-BOX,153.14,144.99,,,market,Pokemon Ruler of the Black Flame Booster Box - Japanese,Ruler of the Black Flame Booster Box,market_minus_5_pct_99,jp
+JP-RS-BOX,112.14,140.18,,14500,jp_market_plus_25_stale_quote,Pokemon Raging Surf Booster Box - Japanese,Raging Surf Booster Box,market_minus_5_pct_99,jp
+JP-S-BOX,95.51,89.99,,,market,Pokemon Scarlet ex Booster Box - Japanese,Scarlet ex Booster Box,market_minus_5_pct_99,jp
+JP-SEB-BOX,139.21,174.01,,41500,jp_market_plus_25_stale_quote,Pokemon Super Electric Breaker Booster Box - Japanese,Super Electric Breaker Booster Box,market_minus_5_pct_99,jp
+JP-SH-BOX,103.26,129.08,,11500,jp_market_plus_25_stale_quote,Pokemon Snow Hazard Booster Box - Japanese,Snow Hazard Booster Box,market_minus_5_pct_99,jp
+JP-SHINY-BOX,136.57,170.71,,20400,jp_market_plus_25_stale_quote,Pokemon Shiny Treasures EX Box Japanese,Shiny Treasure ex High Class Booster Box,market_minus_5_pct_99,jp
+JP-SM-BOX,83.87,104.84,,11200,jp_market_plus_25_stale_quote,Pokemon Stellar Miracle Booster Box - Japanese,Stellar Miracle Booster Box,market_minus_5_pct_99,jp
+JP-TB-BOX,152.49,190.61,,18700,jp_market_plus_25_stale_quote,Pokemon Triple Beat Booster Box - Japanese,Triple Beat Booster Box,market_minus_5_pct_99,jp
+JP-TF-BB,121.78,152.23,,23700,jp_market_plus_25_stale_quote,Pokemon Terastal Festival Booster Box - Japanese,Terastal Fest ex Booster Box,market_minus_5_pct_99,jp
+JP-TM-BOX,97.34,121.68,,14200,jp_market_plus_25_stale_quote,Pokemon Transformation Mask Booster Box - Japanese,Transformation Mask Booster Box,market_minus_5_pct_99,jp
+JP-TR-BB,167.53,209.41,,32200,jp_market_plus_25_stale_quote,Pokemon Glory of Team Rocket Booster Box - Japanese,Glory of Team Rocket Booster Box,market_minus_5_pct_99,jp
+JP-V-BOX,88.79,110.99,,11300,jp_market_plus_25_stale_quote,Pokemon Violet ex Booster Box - Japanese,Violet ex Booster Box,market_minus_5_pct_99,jp
+JP-VSTAR-BOX,217.61,272.01,,34000,jp_market_plus_25_stale_quote,Pokemon VSTAR Universe Booster Box - Japanese,VSTAR Universe Booster Box,market_minus_5_pct_99,jp
+JP-WF-BOX,149.75,187.19,,25200,jp_market_plus_25_stale_quote,Pokemon White Flare Booster Box - Japanese,White Flare Booster Box,market_minus_5_pct_99,jp
+JP-WFD-BOX,129.01,161.26,,22100,jp_market_plus_25_stale_quote,Pokemon White Flare Deluxe Booster Box Japanese,White Flare Deluxe Booster Box,market_minus_5_pct_99,jp
+JP-WIFO-BOX,101.68,127.10,,13700,jp_market_plus_25_stale_quote,Pokemon Wild Force Booster Box - Japanese,Wild Force Booster Box,market_minus_5_pct_99,jp
+MYZ-JP-BB,77.87,97.34,,9400,jp_market_plus_25_stale_quote,Pokemon Mega Nihil Zero Booster Box - Japanese,Nihil Zero Booster Box,market_minus_5_pct_99,jp
+NS-JPN-BB,82.68,103.35,,12500,jp_market_plus_25_stale_quote,Pokemon Ninja Spinner Booster Box - Japanese,Ninja Spinner Booster Box,market_minus_5_pct_99,jp

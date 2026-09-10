@@ -1,7 +1,8 @@
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
 
@@ -67,6 +68,13 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Master Set Hub", response.text)
 
+    def test_placeholder_library_page_serves_html(self):
+        response = self.client.get("/placeholders")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/html", response.headers["content-type"])
+        self.assertIn("Placeholder Library", response.text)
+
     def test_collector_manifest_lists_resources(self):
         response = self.client.get("/collector-manifest")
 
@@ -76,6 +84,16 @@ class ApiRouteTests(unittest.TestCase):
         self.assertGreaterEqual(len(payload["items"]), 4)
         self.assertTrue(any(item["id"] == "sv-checklists" for item in payload["items"]))
         self.assertTrue(any(item["id"] == "combined-placeholders" for item in payload["items"]))
+
+    def test_placeholder_download_manifest_lists_downloads(self):
+        response = self.client.get("/placeholder-downloads-manifest")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["project_root_exists"])
+        self.assertGreaterEqual(payload["download_count"], 8)
+        self.assertTrue(any(item["id"] == "sv-source-csv" for item in payload["items"]))
+        self.assertTrue(any(item["id"] == "combined-json" for item in payload["items"]))
 
     def test_collector_asset_route_serves_known_html_file(self):
         response = self.client.get("/collector-assets/checklists-sv/index.html")
@@ -88,6 +106,18 @@ class ApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_placeholder_download_route_serves_known_csv(self):
+        response = self.client.get("/placeholder-downloads/sv-source-csv")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/csv", response.headers["content-type"])
+        self.assertIn("attachment;", response.headers["content-disposition"])
+
+    def test_placeholder_download_route_blocks_unknown_asset(self):
+        response = self.client.get("/placeholder-downloads/not-real")
+
+        self.assertEqual(response.status_code, 404)
+
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
     def test_pricing_upload_page_serves_html(self, _get_session_user_mock):
         response = self.client.get("/pricing-upload", cookies={"pm_tracking_token": "token"})
@@ -95,6 +125,26 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Pricing Upload", response.text)
+
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    def test_single_listings_upload_page_serves_html(self, _get_session_user_mock):
+        response = self.client.get("/single-listings-upload", cookies={"pm_tracking_token": "token"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/html", response.headers["content-type"])
+        self.assertIn("Singles Listing Upload", response.text)
+        self.assertIn("Download Post-Create Follow-Up CSV", response.text)
+
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    def test_single_listings_followup_download_returns_file(self, _get_session_user_mock):
+        with TemporaryDirectory() as tmpdir:
+            followup_csv = Path(tmpdir) / "followup.csv"
+            followup_csv.write_text("sku,title\n123,Test Card\n", encoding="utf-8")
+            with patch.object(api, "SINGLE_LISTINGS_FOLLOWUP_CSV", followup_csv):
+                response = self.client.get("/single-listings/followup-download", cookies={"pm_tracking_token": "token"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("attachment;", response.headers["content-disposition"])
 
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
     def test_supplier_profitability_page_serves_html(self, _get_session_user_mock):
@@ -137,6 +187,99 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(payload["items"][0]["category_id"], 3)
         self.assertEqual(payload["items"][1]["category_id"], 85)
 
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    @patch.object(api, "build_single_listing_drafts", return_value=[{"draft_status": "ready", "review_status": "", "sku": "123", "final_title": "Test Card", "target_price": "1.23", "set_name": "Test Set", "rarity": "Rare", "warnings": "", "errors": ""}])
+    @patch.object(api, "write_single_listing_csv")
+    def test_single_listings_intake_upload_saves_and_builds_drafts(
+        self,
+        write_single_listing_csv_mock,
+        build_single_listing_drafts_mock,
+        _get_session_user_mock,
+    ):
+        with TemporaryDirectory() as tmpdir:
+            intake_csv = Path(tmpdir) / "new_singles_intake.csv"
+            draft_csv = Path(tmpdir) / "drafts.csv"
+            with patch.object(api, "SINGLE_LISTINGS_INTAKE_CSV", intake_csv), patch.object(
+                api, "SINGLE_LISTINGS_DRAFT_CSV", draft_csv
+            ):
+                response = self.client.post(
+                    "/single-listings/intake-upload",
+                    cookies={"pm_tracking_token": "token"},
+                    files={
+                        "file": (
+                            "intake.csv",
+                            b"sku,product_id,subtype,language,condition,quantity,price_override,title_override,notes\n123,123,Normal,japanese,Near Mint,1,,,\n",
+                            "text/csv",
+                        )
+                    },
+                )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["draft_rows"], 1)
+        self.assertEqual(payload["ready_rows"], 1)
+        build_single_listing_drafts_mock.assert_called_once()
+        write_single_listing_csv_mock.assert_called_once()
+
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    @patch.object(api, "build_single_listing_drafts", return_value=[{"draft_status": "ready", "review_status": "", "sku": "478077-holofoil", "final_title": "Darkrai VSTAR", "target_price": "24.99", "set_name": "Crown Zenith", "rarity": "Ultra Rare", "warnings": "", "errors": ""}])
+    @patch.object(api, "convert_single_listing_source_rows", return_value=([{"sku": "478077-holofoil", "product_id": "478077", "subtype": "Holofoil", "language": "english", "condition": "Near Mint", "quantity": "2", "price_override": "", "title_override": "", "notes": ""}], []))
+    @patch.object(api, "write_single_listing_csv")
+    def test_single_listings_source_upload_converts_and_builds_drafts(
+        self,
+        write_single_listing_csv_mock,
+        convert_single_listing_source_rows_mock,
+        build_single_listing_drafts_mock,
+        _get_session_user_mock,
+    ):
+        with TemporaryDirectory() as tmpdir:
+            intake_csv = Path(tmpdir) / "new_singles_intake.csv"
+            draft_csv = Path(tmpdir) / "drafts.csv"
+            with patch.object(api, "SINGLE_LISTINGS_INTAKE_CSV", intake_csv), patch.object(
+                api, "SINGLE_LISTINGS_DRAFT_CSV", draft_csv
+            ):
+                response = self.client.post(
+                    "/single-listings/source-upload",
+                    cookies={"pm_tracking_token": "token"},
+                    files={
+                        "file": (
+                            "builder.csv",
+                            b"Position,Name,Set Name,Card Number,Variant,Language,Notes\n1,Darkrai VSTAR,Crown Zenith Galarian Gallery,GG50/GG70,Holofoil,English,\n2,Darkrai VSTAR,Crown Zenith Galarian Gallery,GG50/GG70,Holofoil,English,\n",
+                            "text/csv",
+                        )
+                    },
+                )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["source_rows"], 2)
+        self.assertEqual(payload["intake_rows"], 1)
+        convert_single_listing_source_rows_mock.assert_called_once()
+        build_single_listing_drafts_mock.assert_called_once()
+        self.assertEqual(write_single_listing_csv_mock.call_count, 2)
+
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    def test_single_listings_draft_upload_rejects_missing_columns(self, _get_session_user_mock):
+        with TemporaryDirectory() as tmpdir:
+            draft_csv = Path(tmpdir) / "drafts.csv"
+            with patch.object(api, "SINGLE_LISTINGS_DRAFT_CSV", draft_csv):
+                response = self.client.post(
+                    "/single-listings/draft-upload",
+                    cookies={"pm_tracking_token": "token"},
+                    files={
+                        "file": (
+                            "draft.csv",
+                            b"sku,final_title\n123,Test Card\n",
+                            "text/csv",
+                        )
+                    },
+                )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("reviewed singles draft file", response.text)
+
     @patch.object(api, "prices_from", return_value="read_parquet('/tmp/mock.parquet')")
     @patch.object(api, "q", return_value=(["rows", "latest"], [(321, "2026-03-30")]))
     def test_health_route_reports_snapshot_details(self, q_mock, _prices_from_mock):
@@ -150,6 +293,137 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(payload["category_id"], 85)
         self.assertEqual(payload["category"], "Pokemon Japanese")
         q_mock.assert_called_once()
+
+    @patch.object(api.requests, "get")
+    def test_psa_cert_lookup_rejects_invalid_cert_format(self, requests_get_mock):
+        response = self.client.get("/api/psa/cert/not-a-cert")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("4-20 digits", response.text)
+        requests_get_mock.assert_not_called()
+
+    @patch.object(
+        api,
+        "get_psa_certification",
+        return_value={
+            "cert_number": "12345678",
+            "is_valid_request": True,
+            "server_message": "Request successful",
+            "raw_response_json": {
+                "IsValidRequest": True,
+                "ServerMessage": "Request successful",
+                "Subject": "Pikachu",
+                "Brand": "Base Set",
+                "Grade": "10",
+            },
+            "lookup_status": "success",
+            "last_checked_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        },
+    )
+    @patch.object(api.requests, "get")
+    def test_psa_cert_lookup_uses_fresh_cache(self, requests_get_mock, _cached_row_mock):
+        response = self.client.get("/api/psa/cert/12345678")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["cached"])
+        self.assertEqual(payload["source"], "cache")
+        self.assertEqual(payload["lookup_status"], "success")
+        self.assertEqual(payload["card"]["card_name"], "Pikachu")
+        requests_get_mock.assert_not_called()
+
+    @patch.dict("os.environ", {"POKEMON_MOMENTUM_PSA_ACCESS_TOKEN": "test-token"})
+    @patch.object(api, "upsert_psa_certification")
+    @patch.object(api, "get_psa_certification", return_value=None)
+    @patch.object(api.requests, "get")
+    def test_psa_cert_lookup_returns_not_found_payload(self, requests_get_mock, _cache_get_mock, upsert_mock):
+        upstream_response = Mock(status_code=200)
+        upstream_response.content = b'{"IsValidRequest": true, "ServerMessage": "No data found"}'
+        upstream_response.json.return_value = {
+            "IsValidRequest": True,
+            "ServerMessage": "No data found",
+        }
+        requests_get_mock.return_value = upstream_response
+        upsert_mock.return_value = {
+            "cert_number": "12345678",
+            "is_valid_request": True,
+            "server_message": "No data found",
+            "raw_response_json": {
+                "IsValidRequest": True,
+                "ServerMessage": "No data found",
+            },
+            "lookup_status": "not_found",
+            "last_checked_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        }
+
+        response = self.client.get("/api/psa/cert/12345678")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertFalse(payload["cached"])
+        self.assertEqual(payload["source"], "psa")
+        self.assertEqual(payload["lookup_status"], "not_found")
+        self.assertIsNone(payload["card"])
+        self.assertEqual(payload["server_message"], "No data found")
+        self.assertEqual(requests_get_mock.call_args.kwargs["headers"]["Authorization"], "bearer test-token")
+        self.assertEqual(upsert_mock.call_args.kwargs["lookup_status"], "not_found")
+
+    @patch.dict("os.environ", {"POKEMON_MOMENTUM_PSA_ACCESS_TOKEN": "test-token"})
+    @patch.object(api, "upsert_psa_certification")
+    @patch.object(api, "get_psa_certification", return_value=None)
+    @patch.object(api.requests, "get")
+    def test_psa_cert_lookup_returns_normalized_success(self, requests_get_mock, _cache_get_mock, upsert_mock):
+        upstream_response = Mock(status_code=200)
+        upstream_response.content = b'{"PSACert":{"CertNumber":"87654321"}}'
+        upstream_response.json.return_value = {
+            "PSACert": {
+                "CertNumber": "87654321",
+                "Year": "1999",
+                "Brand": "Pokemon",
+                "Category": "TCG Cards",
+                "CardNumber": "4/102",
+                "Subject": "Charizard",
+                "Variety": "Holo",
+                "GradeDescription": "Mint",
+                "CardGrade": "9",
+                "ItemStatus": "OK",
+            }
+        }
+        requests_get_mock.return_value = upstream_response
+        upsert_mock.return_value = {
+            "cert_number": "87654321",
+            "is_valid_request": True,
+            "server_message": "",
+            "raw_response_json": upstream_response.json.return_value,
+            "lookup_status": "success",
+            "last_checked_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        }
+
+        response = self.client.get("/api/psa/cert/87654321")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["lookup_status"], "success")
+        self.assertEqual(payload["card"]["card_name"], "Charizard")
+        self.assertEqual(payload["card"]["set_name"], "Pokemon")
+        self.assertEqual(payload["card"]["grade"], "9")
+        self.assertEqual(payload["card"]["year"], "1999")
+        self.assertEqual(payload["card"]["card_number"], "4/102")
+        self.assertEqual(payload["card"]["variety"], "Holo")
+        self.assertEqual(payload["card"]["grade_description"], "Mint")
+        self.assertEqual(payload["card"]["item_status"], "OK")
+
+    @patch.dict("os.environ", {"POKEMON_MOMENTUM_PSA_ACCESS_TOKEN": "test-token"})
+    @patch.object(api, "get_psa_certification", return_value=None)
+    @patch.object(api.requests, "get")
+    def test_psa_cert_lookup_surfaces_upstream_error(self, requests_get_mock, _cache_get_mock):
+        upstream_response = Mock(status_code=500, content=b"")
+        requests_get_mock.return_value = upstream_response
+
+        response = self.client.get("/api/psa/cert/12345678")
+
+        self.assertEqual(response.status_code, 502)
+        self.assertIn("PSA lookup failed upstream", response.text)
 
     @patch.object(api, "screener_snapshot_from", return_value="pokemon_screener_snapshot")
     @patch.object(api, "category_config", return_value=api.category_config(3))
@@ -210,6 +484,23 @@ class ApiRouteTests(unittest.TestCase):
         self.assertLessEqual(payload["spent"], 150.0)
         self.assertEqual([item["groupId"] for item in payload["items"]], [101, 102, 103])
         self.assertIn("under the radar", payload["items"][0]["reasons"])
+
+    @patch.object(api, "_select_budget_candidates", return_value=[])
+    @patch.object(api, "screener_snapshot_from", return_value="pokemon_screener_snapshot")
+    @patch.object(api, "q", return_value=([], []))
+    def test_budget_builder_supports_max_price_and_no_limit(self, q_mock, _snapshot_mock, select_mock):
+        payload = api.budget_builder_recommendations(
+            budget=1500,
+            min_price=5,
+            max_price=50,
+            limit=0,
+            category_id=85,
+        )
+
+        sql = q_mock.call_args.args[0]
+        self.assertIn("COALESCE(s.latest_price, 0) <= 50.0", sql)
+        self.assertEqual(select_mock.call_args.kwargs["limit"], 500)
+        self.assertEqual(payload["max_price"], 50.0)
 
     @patch.object(api, "screener_snapshot_from", return_value="pokemon_screener_snapshot")
     @patch.object(api, "category_config", return_value=api.category_config(3))

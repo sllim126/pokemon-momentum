@@ -5,29 +5,57 @@ Pokemon Momentum is a market research and screening project for Pokemon TCG data
 It combines:
 - a daily TCGCSV-backed pipeline
 - DuckDB and Parquet storage
-- a main research dashboard
-- a lighter set explorer
-- a sealed-products deal page
+- separate desktop and mobile research dashboards
+- set, sealed-product, and budget research tools
+- a family of English and Japanese market indexes
+- collector placeholder/checklist resources
 - Google-based synced tracking auth
-- lightweight tracking tags for sourcing and review
+- Squarespace pricing and listing operations
 
 The goal is simple: make it easier to spot what is moving, what may be starting to move, and which sets or products deserve attention.
 
 
-## Main Pages
+## Public Pages
 
+- `/`
+  - user-agent-aware entry point: desktop terminal on larger screens and the mobile decision dashboard on phones/tablets
 - `/dashboard`
-  - the main research dashboard
+  - alias of `/`, with the same responsive routing
+- `/mobile`
+  - direct access to the mobile decision dashboard
+- `/dashboard-lab`
+  - desktop command-center design/workflow reference
+- `/collector-hub`
+  - entry point for collector checklists, print tools, review queues, and downloads
+- `/placeholders`
+  - curated placeholder/checklist download library
 - `/dashboard-dev`
-  - the same dashboard with extra operator help text
-- `/embed`
-  - a lighter embedded/public-style view
+  - desktop dashboard alias retained for development compatibility
 - `/set-explorer`
-  - a simpler set-browsing page for cost and concentration questions
+  - set-cost, concentration, depth, generation, and rarity/variant browsing
+- `/budget-builder`
+  - budget-based card recommendation and diversification tool
 - `/sealed-deals`
   - a sealed-product screening page focused on pack-value and product-level deal math
 - `/account-settings`
   - lightweight synced tracking account management
+- `/index-overview`
+  - hub for the English/Japanese and era-specific market indexes
+- `/index-overview-{index}`
+  - individual index pages; see `docs/project_status.md` for the current route list
+
+
+## Protected Operator Pages
+
+These routes require an authenticated admin tracking account:
+
+- `/eod-dashboard`
+- `/embed`
+- `/bug-reports`
+- `/pricing-upload`
+- `/single-listings-upload`
+- `/supplier-pricing`
+- `/supplier-profitability`
 
 
 ## What The Project Does
@@ -44,6 +72,9 @@ The goal is simple: make it easier to spot what is moving, what may be starting 
 - supports set-level history through `/group_series`
 - supports set-cost and concentration browsing through `/set_baskets`
 - supports sealed deal screening through `/sealed_deals`
+- supports budget-based recommendations through `/budget_builder`
+- publishes prebuilt market-index snapshots through `/index-overview-data`
+- publishes collector/checklist resources through controlled manifest and asset routes
 - supports lightweight synced tags such as:
   - `Favorite`
   - `Watchlist`
@@ -51,6 +82,8 @@ The goal is simple: make it easier to spot what is moving, what may be starting 
   - `Buy List`
 - supports Google sign-in for synced tracking accounts
 - routes dashboard TCGplayer outbound links through the configured affiliate link
+- resolves in-stock Squarespace listings for dashboard storefront links
+- supports operator workflows for pricing, supplier economics, and new singles listings
 
 
 ## Storage
@@ -95,6 +128,11 @@ Google sign-in:
 - set `POKEMON_MOMENTUM_GOOGLE_CLIENT_ID` in `.env`
 - the dashboard account menu will render the Google sign-in button when configured
 
+PSA cert lookup:
+
+- set `POKEMON_MOMENTUM_PSA_ACCESS_TOKEN` in `.env` for server-side PSA cert verification
+- optional: set `POKEMON_MOMENTUM_PSA_CACHE_TTL_DAYS` to override the default 30-day cache window
+
 
 ## Daily Pipeline
 
@@ -118,7 +156,12 @@ The current daily flow is:
 5. rebuild joined/named exports
 6. build product signal snapshot
 7. build group signal snapshot
-8. export parquet history
+8. build screener, sparkline, series, health, and index-overview snapshots
+9. export parquet history
+
+The host automation runs the flow for both English (`category_id=3`) and Japanese
+(`category_id=85`) market data. See `docs/data_flow.txt` for the detailed source and
+fallback rules.
 
 
 ## Testing
@@ -193,6 +236,7 @@ The dashboards then read:
 
 Detailed docs live here:
 
+- [docs/project_status.md](/opt/pokemon-momentum/docs/project_status.md)
 - [docs/dashboard_how_to.txt](/opt/pokemon-momentum/docs/dashboard_how_to.txt)
 - [docs/data_flow.txt](/opt/pokemon-momentum/docs/data_flow.txt)
 - [docs/operator_runbook.txt](/opt/pokemon-momentum/docs/operator_runbook.txt)
@@ -202,4 +246,7 @@ Detailed docs live here:
 ## Notes
 
 - This project has moved beyond the old `top200` prototype workflow.
-- Generated outputs are rebuildable artifacts.
+- The application currently spans market research, collector tools, and protected
+  Squarespace/store operations; `docs/project_status.md` is the concise project map.
+- Many generated outputs are rebuildable artifacts, but the repository policy for
+  committing placeholder/checklist outputs still needs to be finalized before cleanup.

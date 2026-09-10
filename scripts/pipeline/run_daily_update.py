@@ -191,6 +191,11 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     f"Build {category.label} series snapshot",
                     ["python", "scripts/indicators/build_series_snapshot.py", "--category-id", str(args.category_id)],
                 ),
+                (
+                    # Expected result: index overview pages can read prebuilt JSON payloads instead of recomputing on first load.
+                    f"Build {category.label} index overview snapshots",
+                    ["python", "scripts/indicators/build_index_overview_snapshot.py", "--category-id", str(args.category_id)],
+                ),
             ]
         )
 

@@ -69,8 +69,6 @@ def build_card_image_public_url(*, image_path: Path, image_root: Path = DEFAULT_
 
 
 def _sample_corner_background(image: Image.Image) -> tuple[int, int, int, int]:
-    # Use the average corner color so square padding blends into the card edge
-    # instead of introducing a harsh solid bar.
     rgba = image.convert("RGBA")
     width, height = rgba.size
     points = [
@@ -84,7 +82,7 @@ def _sample_corner_background(image: Image.Image) -> tuple[int, int, int, int]:
     return tuple(int(sum(pixel[idx] for pixel in samples) / count) for idx in range(4))
 
 
-def square_pad_image(image_path: Path, background: str = "edge") -> bool:
+def square_pad_image(image_path: Path, background: str = "white") -> bool:
     with Image.open(image_path) as image:
         rgba = image.convert("RGBA")
         width, height = rgba.size
@@ -94,11 +92,14 @@ def square_pad_image(image_path: Path, background: str = "edge") -> bool:
         square_size = max(width, height)
         if background == "transparent":
             fill = (0, 0, 0, 0)
-        else:
+        elif background == "edge":
             fill = _sample_corner_background(rgba)
+        else:
+            fill = (255, 255, 255, 255)
 
         # Center the full card on a square canvas so storefront thumbnails can
         # show the whole card without cropping the top and bottom edges.
+        # Default to white fill so every listing preview has a consistent frame.
         canvas = Image.new("RGBA", (square_size, square_size), fill)
         offset = ((square_size - width) // 2, (square_size - height) // 2)
         canvas.paste(rgba, offset, rgba)

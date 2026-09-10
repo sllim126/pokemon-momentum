@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Singles Listing Upload</title>
+  <style>
+    :root {
+      --bg: #0f1730;
+      --panel: #1a2745;
+      --panel-2: #12203a;
+      --line: rgba(94, 135, 198, 0.28);
+      --text: #e7eefc;
+      --muted: #9db0d8;
+      --accent: #45c0ff;
+      --good: #7fe3a1;
+      --warn: #f4c37b;
+      --bad: #ff8d8d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(69, 192, 255, 0.15), transparent 30%),
+        linear-gradient(180deg, #101938 0%, var(--bg) 100%);
+    }
+    .shell {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .hero, .panel {
+      background: linear-gradient(180deg, rgba(34, 49, 83, 0.96), rgba(18, 32, 58, 0.96));
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
+    }
+    .hero {
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+    .panel {
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+    .eyebrow {
+      color: #8ea6d7;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 38px;
+    }
+    .sub {
+      color: var(--muted);
+      max-width: 860px;
+      line-height: 1.55;
+    }
+    .steps {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+      color: #d6e2fb;
+    }
+    .actions, .download-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 14px;
+    }
+    .followup-actions {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(102, 145, 214, 0.16);
+    }
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px dashed rgba(104, 149, 219, 0.42);
+      background: rgba(13, 22, 41, 0.66);
+      color: var(--text);
+    }
+    button, a.button {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 11px 18px;
+      cursor: pointer;
+      color: var(--text);
+      background: rgba(22, 39, 71, 0.96);
+      text-decoration: none;
+      font: inherit;
+    }
+    button.primary {
+      background: linear-gradient(135deg, rgba(52, 168, 255, 0.95), rgba(36, 118, 246, 0.92));
+      border-color: rgba(120, 190, 255, 0.45);
+    }
+    .status {
+      color: var(--muted);
+      font-size: 14px;
+      min-height: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .stat {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(102, 145, 214, 0.16);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .stat-label {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 30px;
+      font-weight: 600;
+    }
+    .list, .table-wrap {
+      margin-top: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px solid rgba(102, 145, 214, 0.16);
+    }
+    .section-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .empty {
+      color: var(--muted);
+      padding: 8px 0;
+    }
+    .good { color: var(--good); }
+    .warn { color: var(--warn); }
+    .bad { color: var(--bad); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(102, 145, 214, 0.12);
+      vertical-align: top;
+    }
+    th {
+      color: #95addb;
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    @media (max-width: 920px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .section-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .shell { padding: 14px; }
+      h1 { font-size: 31px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <div class="eyebrow">Internal Ops</div>
+      <h1>Singles Listing Upload</h1>
+      <div class="sub">Use this page to test the new singles listing workflow without hopping through the repo manually. You can start from the manual intake template or from a collection-builder export, rebuild drafts from local card data, download the draft for spreadsheet review, then upload the reviewed draft back into the canonical file that the create script will consume.</div>
+      <div class="steps">
+        <div>1. Optional: upload a collection-builder CSV to auto-generate the singles intake file.</div>
+        <div>2. Or download the intake template and fill in the singles manually.</div>
+        <div>3. Upload the intake CSV to rebuild the enriched draft output from local data.</div>
+        <div>4. Download the draft CSV, mark rows as approved, then upload the reviewed draft back here.</div>
+      </div>
+      <div class="actions">
+        <a class="button" href="/dashboard">Back to Dashboard</a>
+        <a class="button" href="/pricing-upload">Squarespace Export Upload</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="eyebrow">Downloads</div>
+      <div class="download-row">
+        <a class="button" href="/single-listings/intake-download">Download Intake Template</a>
+        <a class="button" href="/single-listings/draft-download">Download Current Draft CSV</a>
+        <a class="button" href="/single-listings/followup-download">Download Post-Create Follow-Up CSV</a>
+      </div>
+    </section>
+
+    <div class="section-grid">
+      <section class="panel">
+        <div class="eyebrow">Step 0</div>
+        <h2>Upload Collection Builder CSV</h2>
+        <div class="sub">This converts a collection-builder export into <code>data/new_singles_intake.csv</code>, aggregates duplicate card rows into quantity, and rebuilds the draft file immediately.</div>
+        <form id="sourceForm">
+          <input id="sourceFile" name="file" type="file" accept=".csv,text/csv" required>
+          <div class="actions">
+            <button class="primary" type="submit">Convert Builder CSV And Build Drafts</button>
+          </div>
+        </form>
+        <div class="status" id="sourceStatus">Waiting for a collection-builder CSV.</div>
+        <div class="actions followup-actions" id="sourceFollowup" hidden>
+          <a class="button" href="/single-listings/draft-download">Download Draft CSV For Review</a>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="eyebrow">Step 1</div>
+        <h2>Upload Intake CSV</h2>
+        <div class="sub">This saves the intake to <code>data/new_singles_intake.csv</code> and rebuilds the draft file immediately.</div>
+        <form id="intakeForm">
+          <input id="intakeFile" name="file" type="file" accept=".csv,text/csv" required>
+          <div class="actions">
+            <button class="primary" type="submit">Upload Intake And Build Drafts</button>
+          </div>
+        </form>
+        <div class="status" id="intakeStatus">Waiting for a singles intake CSV.</div>
+        <div class="actions followup-actions" id="intakeFollowup" hidden>
+          <a class="button" href="/single-listings/draft-download">Download Draft CSV For Review</a>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="eyebrow">Step 2</div>
+        <h2>Upload Reviewed Draft CSV</h2>
+        <div class="sub">This replaces the canonical draft file after spreadsheet review so the create script can use the approved rows.</div>
+        <form id="draftForm">
+          <input id="draftFile" name="file" type="file" accept=".csv,text/csv" required>
+          <div class="actions">
+            <button class="primary" type="submit">Upload Reviewed Draft</button>
+          </div>
+        </form>
+        <div class="status" id="draftStatus">Waiting for a reviewed draft CSV.</div>
+      </section>
+    </div>
+
+    <section class="panel">
+      <div class="eyebrow">Summary</div>
+      <div class="grid" id="summaryGrid">
+        <div class="stat"><div class="stat-label">Draft Rows</div><div class="stat-value">0</div></div>
+        <div class="stat"><div class="stat-label">Ready Rows</div><div class="stat-value">0</div></div>
+        <div class="stat"><div class="stat-label">Error Rows</div><div class="stat-value">0</div></div>
+        <div class="stat"><div class="stat-label">Approved Rows</div><div class="stat-value">0</div></div>
+      </div>
+      <div class="list">
+        <div class="eyebrow">Saved Files</div>
+        <div class="empty" id="savedFiles">Upload a file to see where it was saved.</div>
+        <div class="actions followup-actions" id="summaryFollowup" hidden>
+          <a class="button" href="/single-listings/draft-download">Download Draft CSV For Review</a>
+          <a class="button" href="/single-listings/followup-download">Download Post-Create Follow-Up CSV</a>
+        </div>
+      </div>
+      <div class="list">
+        <div class="eyebrow">Draft Errors</div>
+        <div class="empty" id="errorList">No upload yet.</div>
+      </div>
+      <div class="table-wrap">
+        <div class="eyebrow">Draft Preview</div>
+        <div class="empty" id="previewEmpty">Upload an intake CSV to preview enriched listing rows.</div>
+        <table id="previewTable" hidden>
+          <thead>
+            <tr>
+              <th>SKU</th>
+              <th>Title</th>
+              <th>Target</th>
+              <th>Set</th>
+              <th>Rarity</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const sourceForm = document.getElementById("sourceForm");
+    const intakeForm = document.getElementById("intakeForm");
+    const draftForm = document.getElementById("draftForm");
+    const sourceFile = document.getElementById("sourceFile");
+    const intakeFile = document.getElementById("intakeFile");
+    const draftFile = document.getElementById("draftFile");
+    const sourceStatus = document.getElementById("sourceStatus");
+    const intakeStatus = document.getElementById("intakeStatus");
+    const draftStatus = document.getElementById("draftStatus");
+    const sourceFollowup = document.getElementById("sourceFollowup");
+    const intakeFollowup = document.getElementById("intakeFollowup");
+    const summaryFollowup = document.getElementById("summaryFollowup");
+    const summaryGrid = document.getElementById("summaryGrid");
+    const savedFiles = document.getElementById("savedFiles");
+    const errorList = document.getElementById("errorList");
+    const previewEmpty = document.getElementById("previewEmpty");
+    const previewTable = document.getElementById("previewTable");
+    const previewBody = document.getElementById("previewBody");
+
+    function setStats(payload) {
+      const values = [
+        payload.draft_rows || 0,
+        payload.ready_rows || 0,
+        payload.error_rows || 0,
+        payload.approved_rows || 0,
+      ];
+      summaryGrid.querySelectorAll(".stat-value").forEach((node, index) => {
+        node.textContent = values[index];
+      });
+    }
+
+    function renderErrorList(items) {
+      if (!items || !items.length) {
+        errorList.innerHTML = `<div class="empty">No draft errors in the latest upload.</div>`;
+        return;
+      }
+      errorList.innerHTML = `<ul>${items.map((item) => `<li>${item}</li>`).join("")}</ul>`;
+    }
+
+    function renderPreview(items) {
+      if (!items || !items.length) {
+        previewTable.hidden = true;
+        previewEmpty.hidden = false;
+        previewEmpty.textContent = "No draft rows available yet.";
+        previewBody.innerHTML = "";
+        return;
+      }
+      previewEmpty.hidden = true;
+      previewTable.hidden = false;
+      previewBody.innerHTML = items.map((item) => {
+        const statusClass = item.errors ? "bad" : (item.warnings ? "warn" : "good");
+        const statusText = item.errors || item.warnings || "Ready";
+        return `
+          <tr>
+            <td>${item.sku || ""}</td>
+            <td>${item.final_title || ""}</td>
+            <td>${item.target_price || ""}</td>
+            <td>${item.set_name || ""}</td>
+            <td>${item.rarity || ""}</td>
+            <td><span class="${statusClass}">${statusText}</span></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderSummary(payload, mode) {
+      setStats(payload);
+      const lines = [];
+      if (payload.saved_to) {
+        lines.push(`<div><strong>Saved to:</strong> ${payload.saved_to}</div>`);
+      }
+      if (payload.draft_saved_to) {
+        lines.push(`<div><strong>Draft saved to:</strong> ${payload.draft_saved_to}</div>`);
+      }
+      if (payload.uploaded_by) {
+        lines.push(`<div><strong>Uploaded by:</strong> ${payload.uploaded_by}</div>`);
+      }
+      if (payload.uploaded_at) {
+        lines.push(`<div><strong>Uploaded at:</strong> ${payload.uploaded_at}</div>`);
+      }
+      if (payload.source_rows) {
+        lines.push(`<div><strong>Source rows:</strong> ${payload.source_rows}</div>`);
+      }
+      if (payload.intake_rows) {
+        lines.push(`<div><strong>Intake rows:</strong> ${payload.intake_rows}</div>`);
+      }
+      savedFiles.innerHTML = lines.length ? lines.join("") : `<div class="empty">No saved files yet.</div>`;
+      renderErrorList(payload.error_details || []);
+      renderPreview(payload.preview || []);
+      if (mode === "source" || mode === "intake") {
+        draftStatus.innerHTML = `<span class="good">Draft CSV is ready for review and re-upload.</span>`;
+        summaryFollowup.hidden = false;
+        sourceFollowup.hidden = mode !== "source";
+        intakeFollowup.hidden = mode !== "intake";
+      }
+    }
+
+    async function submitCsv(form, fileInput, endpoint, statusNode, mode) {
+      if (!fileInput.files.length) {
+        statusNode.textContent = "Pick a CSV first.";
+        return;
+      }
+      statusNode.textContent = "Uploading...";
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          body: formData,
+          credentials: "same-origin",
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          statusNode.textContent = payload.detail || "Upload failed.";
+          return;
+        }
+        statusNode.innerHTML = `<span class="good">Upload completed successfully.</span>`;
+        renderSummary(payload, mode);
+      } catch (error) {
+        statusNode.textContent = `Upload failed: ${error}`;
+      }
+    }
+
+    sourceForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await submitCsv(sourceForm, sourceFile, "/single-listings/source-upload", sourceStatus, "source");
+    });
+
+    intakeForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await submitCsv(intakeForm, intakeFile, "/single-listings/intake-upload", intakeStatus, "intake");
+    });
+
+    draftForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await submitCsv(draftForm, draftFile, "/single-listings/draft-upload", draftStatus, "draft");
+    });
+  </script>
+</body>
+</html>

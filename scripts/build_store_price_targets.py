@@ -113,12 +113,27 @@ def build_variant_sku(product_id: str, subtype: str) -> str:
     return f"{product_id}-{slug}"
 
 
+def split_lookup_values(value: str) -> list[str]:
+    return [token.strip() for token in re.split(r"[|,]", str(value or "")) if token.strip()]
+
+
 def round_price(value: Decimal, cents: int = 2) -> Decimal:
     """Round a Decimal money value to the requested number of cents."""
     if cents <= 0:
         return value.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
     quant = Decimal("1").scaleb(-cents)
     return value.quantize(quant, rounding=ROUND_HALF_UP)
+
+
+def average_market_price(rows: list[dict[str, str]]) -> Decimal | None:
+    prices: list[Decimal] = []
+    for row in rows:
+        price = parse_decimal(row.get("latest_price") or "")
+        if price is not None:
+            prices.append(price)
+    if not prices:
+        return None
+    return sum(prices, Decimal("0")) / Decimal(len(prices))
 
 
 def round_down_to_ending(value: Decimal, ending: Decimal) -> Decimal:
@@ -519,12 +534,22 @@ def build_target_rows(
             min_price = parse_decimal(rule.get("min_price") or "")
             by_id, by_name = signal_maps[source]
 
-            market_row = by_id.get(lookup_value) if lookup_type == "product_id" else by_name.get(normalize_name(lookup_value))
-            if market_row is None:
+            market_rows: list[dict[str, str]] = []
+            if lookup_type == "product_id":
+                for candidate_lookup in split_lookup_values(lookup_value):
+                    market_row = by_id.get(candidate_lookup)
+                    if market_row is not None:
+                        market_rows.append(market_row)
+            else:
+                market_row = by_name.get(normalize_name(lookup_value))
+                if market_row is not None:
+                    market_rows.append(market_row)
+
+            if not market_rows:
                 unmatched.append(f"{sku}: no market match for {lookup_value}")
                 continue
 
-            market_price = parse_decimal(market_row.get("latest_price") or "")
+            market_price = average_market_price(market_rows)
             if market_price is None:
                 unmatched.append(f"{sku}: missing latest_price in market data")
                 continue
@@ -562,7 +587,7 @@ def build_target_rows(
                     "market_price": str(round_price(market_price, 2)),
                     "target_price": str(final_target_price),
                     "title": store_row.get("Title") or "",
-                    "market_title": market_row.get("productName") or "",
+                    "market_title": market_rows[0].get("productName") or "",
                     "pricing_mode": pricing_mode,
                     "market_source": source,
                     "profit_floor_price": profit_floor_price,

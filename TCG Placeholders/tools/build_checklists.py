@@ -37,6 +37,16 @@ OVERRIDE_COLUMNS = [
 
 
 def read_set_catalog(path: Path, era: str) -> Dict[str, Dict[str, str]]:
+    """Load the set catalog for one checklist era.
+
+    Expected output:
+    - map of set code -> display metadata used by checklist pages
+
+    Why this exists:
+    - checklist grouping is a product decision, not just a card-number parse, so
+      the builder needs an explicit catalog of allowed set destinations.
+    """
+
     catalog: Dict[str, Dict[str, str]] = {}
     with path.open(newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
@@ -61,6 +71,8 @@ def read_set_catalog(path: Path, era: str) -> Dict[str, Dict[str, str]]:
 
 
 def source_rows(paths: Sequence[Path], header_row: int) -> WorkbookRows:
+    """Read and combine the checklist source files into one normalized dataset."""
+
     sources = [read_source(path, header_row=header_row) for path in paths if path.exists()]
     return combine_sources(sources) if len(sources) > 1 else sources[0]
 
@@ -75,6 +87,8 @@ def override_key(row: Dict[str, object]) -> Tuple[str, str, str, str]:
 
 
 def read_overrides(path: Path) -> Dict[Tuple[str, str, str, str], Dict[str, str]]:
+    """Load hand-authored checklist corrections keyed to a printable card row."""
+
     if not path.exists():
         return {}
 
@@ -97,6 +111,12 @@ def apply_overrides(
     rows: Sequence[Dict[str, str]],
     overrides: Dict[Tuple[str, str, str, str], Dict[str, str]],
 ) -> List[Dict[str, str]]:
+    """Apply human corrections without modifying the original source rows.
+
+    This keeps the workflow safe: generated checklist placement can evolve via
+    reviewed override files instead of fragile manual HTML edits.
+    """
+
     updated_rows: List[Dict[str, str]] = []
     for row in rows:
         updated = dict(row)
@@ -119,6 +139,17 @@ def apply_overrides(
 def write_review_queue(
     path: Path, rows: Sequence[Dict[str, str]], catalog: Dict[str, Dict[str, str]]
 ) -> List[Dict[str, object]]:
+    """Write the audit worksheet used to review generated checklist placement.
+
+    Expected output:
+    - one CSV row per printable checklist candidate
+    - generated set placement shown beside printed card-code context
+
+    Why this exists:
+    - checklist quality depends on human review for promos, product variants,
+      prerelease rows, and other special-case collector cards.
+    """
+
     fieldnames = [
         "Generated Set Code",
         "Printed Set Code",
@@ -161,6 +192,17 @@ def catalog_set_codes(catalog: Dict[str, Dict[str, str]]) -> Dict[str, str]:
 
 
 def checklist_set_code(row: Dict[str, str], catalog: Dict[str, Dict[str, str]]) -> str:
+    """Decide which checklist page a row belongs to.
+
+    This is one of the most important product-rule functions in the workflow.
+    It intentionally blends:
+    - explicit override decisions
+    - release-block intent
+    - printed card-number set code
+
+    The goal is to place cards where a collector is most likely to expect them.
+    """
+
     override = row.get("Override Set Code", "").strip().upper()
     if override:
         return override
@@ -190,6 +232,8 @@ def is_in_scope(row: Dict[str, str], catalog: Dict[str, Dict[str, str]]) -> bool
 def rows_by_code(
     rows: Sequence[Dict[str, str]], catalog: Dict[str, Dict[str, str]]
 ) -> Dict[str, List[Dict[str, str]]]:
+    """Group in-scope checklist rows by final destination set code."""
+
     allowed = set(catalog)
     grouped: Dict[str, List[Dict[str, str]]] = {code: [] for code in allowed}
     for row in rows:
@@ -224,6 +268,8 @@ def sorted_checklist_rows(rows: Sequence[Dict[str, str]]) -> List[Dict[str, obje
 def write_checklist_csv(
     path: Path, rows: Sequence[Dict[str, object]], include_set_fields: bool = False
 ) -> None:
+    """Write a downloadable checklist CSV for one set or one full era."""
+
     fieldnames = [
         "Owned",
         *([] if not include_set_fields else ["Set Code", "Set"]),
@@ -268,6 +314,14 @@ def render_set_page(
     rows: Sequence[Dict[str, object]],
     csv_href: str,
 ) -> str:
+    """Render one hostable checklist page with localStorage-backed progress.
+
+    Expected output:
+    - a standalone HTML checklist page
+    - browser-saved ownership state
+    - printable table and downloadable CSV companion
+    """
+
     rows_html = []
     current_category = ""
     for row in rows:
@@ -320,89 +374,208 @@ def render_set_page(
     * {{
       box-sizing: border-box;
     }}
+    :root {{
+      --bg: #08111d;
+      --bg-2: #0d1830;
+      --panel: rgba(15, 25, 44, 0.9);
+      --panel-2: rgba(19, 33, 57, 0.96);
+      --panel-3: rgba(11, 20, 35, 0.88);
+      --ink: #eef5ff;
+      --muted: #94a7c8;
+      --line: rgba(136, 162, 205, 0.2);
+      --line-strong: rgba(136, 162, 205, 0.34);
+      --accent: #46b8ff;
+      --accent-2: #4fe2ae;
+      --accent-3: #ffd166;
+      --shadow: 0 28px 70px rgba(1, 8, 22, 0.42);
+      --radius: 24px;
+    }}
     body {{
       margin: 0;
-      background: #f7f8fa;
-      color: #151515;
-      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 14% 0%, rgba(70, 184, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 86% 0%, rgba(79, 226, 174, 0.12), transparent 22%),
+        linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
       font-size: 14px;
     }}
     main {{
-      max-width: 1180px;
+      max-width: 1240px;
       margin: 0 auto;
-      padding: 24px 18px 44px;
+      padding: 18px 18px 44px;
     }}
-    header {{
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
+    .topbar,
+    .hero,
+    .table-shell {{
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(12, 21, 37, 0.92), rgba(9, 17, 31, 0.96));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }}
+    .topbar {{
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) auto;
       gap: 16px;
-      margin-bottom: 18px;
+      align-items: center;
+      padding: 16px 18px;
+      margin-bottom: 16px;
     }}
-    h1 {{
-      margin: 0 0 5px;
-      font-size: 26px;
-      letter-spacing: 0;
-    }}
-    .meta {{
-      margin: 0;
-      color: #555;
-    }}
-    .actions {{
+    .badge-row,
+    .actions,
+    .hero-pills {{
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      justify-content: flex-end;
+      gap: 10px;
+      align-items: center;
+    }}
+    .badge {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }}
+    .badge.primary {{
+      color: #d4efff;
+      background: rgba(70, 184, 255, 0.12);
+      border-color: rgba(70, 184, 255, 0.28);
+    }}
+    .badge.success {{
+      color: #d9fff1;
+      background: rgba(79, 226, 174, 0.12);
+      border-color: rgba(79, 226, 174, 0.28);
+    }}
+    h1 {{
+      margin: 0;
+      font-size: clamp(32px, 5vw, 48px);
+      line-height: 0.96;
+      letter-spacing: -0.05em;
+      max-width: 12ch;
+    }}
+    .meta,
+    .hero-copy p {{
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
     }}
     a.button,
     button {{
-      min-height: 36px;
-      padding: 0 12px;
-      border: 1px solid #cfd5df;
-      border-radius: 6px;
-      background: white;
-      color: #111;
+      min-height: 40px;
+      padding: 0 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: var(--panel-2);
+      color: var(--ink);
       font: inherit;
-      font-weight: 700;
+      font-weight: 800;
       text-decoration: none;
       cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    }}
+    a.button:hover,
+    button:hover {{
+      transform: translateY(-1px);
+    }}
+    button#accent,
+    .button.primary {{
+      border: 0;
+      color: #062238;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    }}
+    .hero {{
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+      gap: 18px;
+      padding: 22px;
+      margin-bottom: 16px;
+    }}
+    .hero-copy {{
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }}
+    .hero-card {{
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      background:
+        linear-gradient(135deg, rgba(70, 184, 255, 0.12), rgba(79, 226, 174, 0.08)),
+        rgba(10, 18, 32, 0.92);
+    }}
+    .stat-grid {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }}
+    .stat {{
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(19, 33, 57, 0.72);
+    }}
+    .stat strong {{
+      display: block;
+      font-size: 24px;
+      letter-spacing: -0.05em;
+    }}
+    .stat span {{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
     }}
     .progress {{
       height: 12px;
       margin-bottom: 16px;
-      border: 1px solid #cfd5df;
+      border: 1px solid var(--line);
       border-radius: 999px;
       overflow: hidden;
-      background: white;
+      background: rgba(19, 33, 57, 0.76);
     }}
     .bar {{
       height: 100%;
       width: 0;
-      background: #33745b;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    }}
+    .table-shell {{
+      padding: 18px;
     }}
     table {{
       width: 100%;
       border-collapse: collapse;
-      background: white;
-      border: 1px solid #d9dee7;
+      background: rgba(19, 33, 57, 0.62);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
     }}
     th,
     td {{
       padding: 9px 10px;
-      border-bottom: 1px solid #e4e8ef;
+      border-bottom: 1px solid rgba(136, 162, 205, 0.14);
       vertical-align: top;
       text-align: left;
     }}
     th {{
-      background: #eef1f5;
+      background: rgba(8, 17, 29, 0.96);
+      color: #b5c7e4;
       font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: 0;
+      letter-spacing: 0.08em;
     }}
     .category-row th {{
       padding: 11px 10px;
-      background: #dfe5ed;
-      color: #111;
+      background: rgba(70, 184, 255, 0.14);
+      color: #d7ecff;
       font-size: 13px;
     }}
     .owned {{
@@ -422,31 +595,50 @@ def render_set_page(
       width: 210px;
     }}
     .sources {{
-      color: #444;
+      color: var(--muted);
       font-size: 13px;
     }}
     input[type="checkbox"] {{
       width: 18px;
       height: 18px;
+      accent-color: #4fe2ae;
     }}
     tr.is-owned td {{
-      background: #f2f7f4;
+      background: rgba(79, 226, 174, 0.12);
+    }}
+    @media (max-width: 980px) {{
+      .topbar,
+      .hero {{
+        grid-template-columns: 1fr;
+      }}
+      .stat-grid {{
+        grid-template-columns: 1fr;
+      }}
     }}
     @media print {{
       body {{
         background: white;
+        color: #111;
         font-size: 11px;
       }}
       main {{
         max-width: none;
         padding: 0;
       }}
-      .actions,
+      .topbar,
+      .hero,
       .progress {{
         display: none;
       }}
+      .table-shell {{
+        border: 0;
+        box-shadow: none;
+        background: white;
+        padding: 0;
+      }}
       table {{
         border-color: #999;
+        background: white;
       }}
       th,
       td {{
@@ -464,33 +656,62 @@ def render_set_page(
 </head>
 <body>
   <main data-page='{html.escape(payload)}'>
-    <header>
-      <div>
-        <h1>{html.escape(title)}</h1>
-        <p class="meta">{len(rows)} checklist rows{html.escape(f" - {release_date}" if release_date else "")}</p>
+    <header class="topbar">
+      <div class="badge-row">
+        <span class="badge primary">Checklist Page</span>
+        <span class="badge success">Browser Saved</span>
       </div>
       <div class="actions">
+        <a class="button" href="/placeholders">Placeholder Library</a>
         <a class="button" href="../index.html">Index</a>
-        <a class="button" href="{html.escape(csv_href)}">CSV</a>
-        <button type="button" id="print-button">Print</button>
-        <button type="button" id="clear-button">Clear</button>
+        <a class="button primary" href="{html.escape(csv_href)}">CSV</a>
       </div>
     </header>
-    <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
-    <table>
-      <thead>
-        <tr>
-          <th class="owned">Have</th>
-          <th class="number">Number</th>
-          <th class="name">Card</th>
-          <th class="variant">Variant</th>
-          <th class="sources">Sources</th>
-        </tr>
-      </thead>
-      <tbody>
-      {"".join(rows_html)}
-      </tbody>
-    </table>
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="hero-pills">
+          <span class="badge">{html.escape(code)}</span>
+          <span class="badge">Set Tracking</span>
+          <span class="badge">Printable</span>
+        </div>
+        <h1>{html.escape(title)}</h1>
+        <p class="meta">Use this page to track owned cards in your browser, print a clean checklist, or download the CSV if you want to work outside the site.</p>
+      </div>
+      <div class="hero-card">
+        <div class="stat-grid">
+          <div class="stat"><strong>{len(rows)}</strong><span>checklist rows</span></div>
+          <div class="stat"><strong>{html.escape(release_date) if release_date else "N/A"}</strong><span>release date</span></div>
+        </div>
+        <div class="actions">
+          <button type="button" id="print-button">Print</button>
+          <button type="button" id="clear-button">Clear</button>
+        </div>
+      </div>
+    </section>
+    <section class="table-shell">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:end;margin-bottom:12px;flex-wrap:wrap;">
+        <p class="meta">{len(rows)} checklist rows{html.escape(f" - {release_date}" if release_date else "")}</p>
+        <div class="actions">
+          <a class="button" href="../index.html">Back to Set Index</a>
+          <a class="button" href="{html.escape(csv_href)}">Download CSV</a>
+        </div>
+      </div>
+      <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
+      <table>
+        <thead>
+          <tr>
+            <th class="owned">Have</th>
+            <th class="number">Number</th>
+            <th class="name">Card</th>
+            <th class="variant">Variant</th>
+            <th class="sources">Sources</th>
+          </tr>
+        </thead>
+        <tbody>
+        {"".join(rows_html)}
+        </tbody>
+      </table>
+    </section>
   </main>
   <script>
     const page = JSON.parse(document.querySelector("main").dataset.page);
@@ -541,6 +762,8 @@ def render_set_page(
 def render_index(
     pages: Sequence[Tuple[str, str, str, int, str]], era: str
 ) -> str:
+    """Render the checklist landing page for one era."""
+
     page_links = []
     for code, set_name, release_date, count, href in pages:
         page_links.append(
@@ -567,64 +790,248 @@ def render_index(
     * {{
       box-sizing: border-box;
     }}
+    :root {{
+      --bg: #08111d;
+      --bg-2: #0d1830;
+      --panel: rgba(15, 25, 44, 0.9);
+      --panel-2: rgba(19, 33, 57, 0.96);
+      --ink: #eef5ff;
+      --muted: #94a7c8;
+      --line: rgba(136, 162, 205, 0.2);
+      --line-strong: rgba(136, 162, 205, 0.34);
+      --accent: #46b8ff;
+      --accent-2: #4fe2ae;
+      --shadow: 0 28px 70px rgba(1, 8, 22, 0.42);
+      --radius: 24px;
+    }}
     body {{
       margin: 0;
-      background: #f7f8fa;
-      color: #151515;
-      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 14% 0%, rgba(70, 184, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 86% 0%, rgba(79, 226, 174, 0.12), transparent 22%),
+        linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
     }}
     main {{
-      max-width: 1100px;
+      max-width: 1240px;
       margin: 0 auto;
-      padding: 32px 20px 48px;
+      padding: 18px 18px 48px;
+    }}
+    a {{
+      color: inherit;
+      text-decoration: none;
+    }}
+    .topbar,
+    .hero,
+    section {{
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(12, 21, 37, 0.92), rgba(9, 17, 31, 0.96));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }}
+    .topbar {{
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) auto;
+      gap: 16px;
+      align-items: center;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+    }}
+    .badge-row,
+    .actions,
+    .hero-pills {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }}
+    .badge {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }}
+    .badge.primary {{
+      color: #d4efff;
+      background: rgba(70, 184, 255, 0.12);
+      border-color: rgba(70, 184, 255, 0.28);
+    }}
+    .badge.success {{
+      color: #d9fff1;
+      background: rgba(79, 226, 174, 0.12);
+      border-color: rgba(79, 226, 174, 0.28);
     }}
     h1 {{
-      margin: 0 0 8px;
-      font-size: 28px;
-      letter-spacing: 0;
+      margin: 0;
+      font-size: clamp(32px, 5vw, 52px);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+      max-width: 12ch;
     }}
     .meta {{
-      margin: 0 0 24px;
-      color: #555;
-      font-size: 14px;
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }}
+    .button {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      background: var(--panel-2);
+      color: var(--ink);
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 13px;
+      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    }}
+    .button.primary {{
+      border: 0;
+      color: #062238;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    }}
+    .button:hover,
+    .set-link:hover {{
+      transform: translateY(-1px);
+    }}
+    .hero {{
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+      gap: 18px;
+      padding: 22px;
+      margin-bottom: 16px;
+    }}
+    .hero-copy {{
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }}
+    .hero-card {{
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      background:
+        linear-gradient(135deg, rgba(70, 184, 255, 0.12), rgba(79, 226, 174, 0.08)),
+        rgba(10, 18, 32, 0.92);
+    }}
+    .stat-grid {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }}
+    .stat {{
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(19, 33, 57, 0.72);
+    }}
+    .stat strong {{
+      display: block;
+      font-size: 24px;
+      letter-spacing: -0.05em;
+    }}
+    .stat span {{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
     }}
     .grid {{
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 10px;
+      gap: 12px;
     }}
     .set-link {{
       display: grid;
-      gap: 4px;
-      min-height: 86px;
-      padding: 13px 14px;
-      border: 1px solid #d9dee7;
-      border-radius: 6px;
-      background: white;
-      color: #111;
+      gap: 6px;
+      min-height: 104px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(19, 33, 57, 0.76);
+      color: var(--ink);
       text-decoration: none;
+      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
     }}
     .set-link strong {{
       font-size: 18px;
+      color: var(--accent-2);
     }}
     .set-link span {{
       font-weight: 700;
     }}
     .set-link em {{
-      color: #555;
+      color: var(--muted);
       font-size: 12px;
       font-style: normal;
+    }}
+    section {{
+      padding: 18px;
+    }}
+    @media (max-width: 960px) {{
+      .topbar,
+      .hero {{
+        grid-template-columns: 1fr;
+      }}
+      .stat-grid {{
+        grid-template-columns: 1fr;
+      }}
     }}
   </style>
 </head>
 <body>
   <main>
-    <h1>{html.escape(era)} Master Set Checklists</h1>
-    <p class="meta">Generated from the current placeholder, promo, and prize pack source files.</p>
-    <p><a class="set-link" href="review.html"><strong>Review</strong><span>Corrections and missing cards</span><em>Export override CSVs</em></a></p>
-    <div class="grid">
-      {"".join(page_links)}
-    </div>
+    <header class="topbar">
+      <div class="badge-row">
+        <span class="badge primary">Checklist Hub</span>
+        <span class="badge success">Static Collector Tool</span>
+      </div>
+      <div class="actions">
+        <a class="button" href="/placeholders">Placeholder Library</a>
+        <a class="button primary" href="review.html">Open Review Tool</a>
+      </div>
+    </header>
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="hero-pills">
+          <span class="badge">Set Tracking</span>
+          <span class="badge">Browser Saved</span>
+          <span class="badge">CSV Ready</span>
+        </div>
+        <h1>{html.escape(era)} Master Set Checklists</h1>
+        <p class="meta">Generated from the current placeholder, promo, and prize pack source files. Choose a set page to track ownership in-browser or open the review tool if the grouping needs corrections.</p>
+      </div>
+      <div class="hero-card">
+        <div class="stat-grid">
+          <div class="stat"><strong>{len(pages)}</strong><span>set pages</span></div>
+          <div class="stat"><strong>1</strong><span>review workspace</span></div>
+        </div>
+        <div class="actions">
+          <a class="button" href="review_queue.csv">Review Queue CSV</a>
+          <a class="button" href="review.html">Review in Browser</a>
+        </div>
+      </div>
+    </section>
+    <section>
+      <div class="grid">
+        <a class="set-link" href="review.html"><strong>Review</strong><span>Corrections and missing cards</span><em>Prepare override and addition CSVs</em></a>
+        {"".join(page_links)}
+      </div>
+    </section>
   </main>
 </body>
 </html>
@@ -644,6 +1051,15 @@ def render_review_app(
     additions: Sequence[Dict[str, str]],
     pages: Sequence[Tuple[str, str, str, int, str]],
 ) -> str:
+    """Render the static browser review tool for checklist corrections.
+
+    Why this exists:
+    - the project needs a portable review surface that can be hosted anywhere
+      without server writes
+    - reviewers still need a practical way to prepare override/addition CSVs
+      after inspecting generated rows
+    """
+
     set_options = [
         {"code": code, "name": name, "href": href}
         for code, name, _release_date, _count, href in pages
@@ -674,29 +1090,96 @@ def render_review_app(
     * {{
       box-sizing: border-box;
     }}
+    :root {{
+      --bg: #08111d;
+      --bg-2: #0d1830;
+      --panel: rgba(15, 25, 44, 0.9);
+      --panel-2: rgba(19, 33, 57, 0.96);
+      --panel-3: rgba(11, 20, 35, 0.88);
+      --ink: #eef5ff;
+      --muted: #94a7c8;
+      --line: rgba(136, 162, 205, 0.2);
+      --line-strong: rgba(136, 162, 205, 0.34);
+      --accent: #46b8ff;
+      --accent-2: #4fe2ae;
+      --accent-3: #ffd166;
+      --danger: #ff8b8b;
+      --shadow: 0 28px 70px rgba(1, 8, 22, 0.42);
+      --radius: 24px;
+    }}
     body {{
       margin: 0;
-      background: #f5f6f8;
-      color: #151515;
-      font-family: Arial, sans-serif;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 14% 0%, rgba(70, 184, 255, 0.16), transparent 24%),
+        radial-gradient(circle at 86% 0%, rgba(79, 226, 174, 0.12), transparent 22%),
+        linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
       font-size: 14px;
     }}
     main {{
-      max-width: 1320px;
+      max-width: 1360px;
       margin: 0 auto;
-      padding: 22px 18px 42px;
+      padding: 18px 18px 42px;
     }}
-    header {{
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
+    .topbar,
+    .hero,
+    section,
+    aside {{
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(12, 21, 37, 0.92), rgba(9, 17, 31, 0.96));
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }}
+    .topbar {{
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) auto;
       gap: 16px;
+      align-items: center;
+      padding: 16px 18px;
       margin-bottom: 16px;
     }}
+    .badge-row,
+    .top-actions,
+    .filters,
+    .form-grid,
+    .button-row,
+    .hero-pills {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: end;
+    }}
+    .badge {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }}
+    .badge.primary {{
+      color: #d4efff;
+      background: rgba(70, 184, 255, 0.12);
+      border-color: rgba(70, 184, 255, 0.28);
+    }}
+    .badge.success {{
+      color: #d9fff1;
+      background: rgba(79, 226, 174, 0.12);
+      border-color: rgba(79, 226, 174, 0.28);
+    }}
     h1 {{
-      margin: 0 0 5px;
-      font-size: 26px;
-      letter-spacing: 0;
+      margin: 0;
+      font-size: clamp(32px, 5vw, 48px);
+      line-height: 0.96;
+      letter-spacing: -0.05em;
     }}
     h2 {{
       margin: 0 0 10px;
@@ -705,34 +1188,23 @@ def render_review_app(
     }}
     .meta {{
       margin: 0;
-      color: #555;
-    }}
-    .top-actions,
-    .filters,
-    .form-grid,
-    .button-row {{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: end;
+      color: var(--muted);
+      line-height: 1.55;
     }}
     .layout {{
       display: grid;
       grid-template-columns: minmax(0, 1fr) 390px;
-      gap: 14px;
+      gap: 16px;
       align-items: start;
     }}
     section,
     aside {{
-      background: white;
-      border: 1px solid #d9dee7;
-      border-radius: 6px;
-      padding: 14px;
+      padding: 18px;
     }}
     label {{
       display: grid;
       gap: 4px;
-      color: #444;
+      color: var(--muted);
       font-size: 12px;
       font-weight: 700;
     }}
@@ -742,10 +1214,10 @@ def render_review_app(
     button,
     a.button {{
       min-height: 34px;
-      border: 1px solid #cbd2dc;
-      border-radius: 5px;
-      background: white;
-      color: #111;
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      background: rgba(19, 33, 57, 0.92);
+      color: var(--ink);
       font: inherit;
     }}
     input,
@@ -763,18 +1235,23 @@ def render_review_app(
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 0 11px;
-      font-weight: 700;
+      padding: 0 12px;
+      font-weight: 800;
       text-decoration: none;
       cursor: pointer;
+      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    }}
+    button:hover,
+    a.button:hover {{
+      transform: translateY(-1px);
     }}
     button.primary {{
-      background: #285f4d;
-      border-color: #285f4d;
-      color: white;
+      border: 0;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #062238;
     }}
     button.danger {{
-      color: #8a1f1f;
+      color: var(--danger);
     }}
     .filters {{
       margin-bottom: 10px;
@@ -782,30 +1259,33 @@ def render_review_app(
     .table-wrap {{
       max-height: 68vh;
       overflow: auto;
-      border: 1px solid #e1e5ec;
+      border: 1px solid var(--line);
+      border-radius: 18px;
     }}
     table {{
       width: 100%;
       border-collapse: collapse;
-      background: white;
+      background: rgba(19, 33, 57, 0.62);
     }}
     th,
     td {{
       padding: 7px 8px;
-      border-bottom: 1px solid #e4e8ef;
+      border-bottom: 1px solid rgba(136, 162, 205, 0.14);
       text-align: left;
       vertical-align: top;
     }}
     th {{
       position: sticky;
       top: 0;
-      background: #eef1f5;
+      background: rgba(8, 17, 29, 0.96);
+      color: #b5c7e4;
       z-index: 1;
       font-size: 12px;
       text-transform: uppercase;
+      letter-spacing: 0.08em;
     }}
     tr.is-selected td {{
-      background: #edf6f1;
+      background: rgba(79, 226, 174, 0.12);
     }}
     td.small {{
       width: 76px;
@@ -830,7 +1310,7 @@ def render_review_app(
     }}
     .count {{
       margin: 8px 0 0;
-      color: #555;
+      color: var(--muted);
       font-size: 12px;
     }}
     .list {{
@@ -840,17 +1320,65 @@ def render_review_app(
       overflow: auto;
       margin-top: 8px;
       padding-right: 3px;
-      color: #333;
+      color: var(--ink);
       font-size: 12px;
     }}
     .list-item {{
       padding: 7px;
-      border: 1px solid #e1e5ec;
-      border-radius: 5px;
-      background: #fafbfc;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(19, 33, 57, 0.76);
+    }}
+    .hero {{
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+      gap: 18px;
+      padding: 22px;
+      margin-bottom: 16px;
+    }}
+    .hero-copy {{
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }}
+    .hero-card {{
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      background:
+        linear-gradient(135deg, rgba(70, 184, 255, 0.12), rgba(79, 226, 174, 0.08)),
+        rgba(10, 18, 32, 0.92);
+    }}
+    .stat-grid {{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }}
+    .stat {{
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(19, 33, 57, 0.72);
+    }}
+    .stat strong {{
+      display: block;
+      font-size: 24px;
+      letter-spacing: -0.05em;
+    }}
+    .stat span {{
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
     }}
     @media (max-width: 980px) {{
+      .topbar,
+      .hero,
       .layout {{
+        grid-template-columns: 1fr;
+      }}
+      .stat-grid {{
         grid-template-columns: 1fr;
       }}
       .table-wrap {{
@@ -861,16 +1389,34 @@ def render_review_app(
 </head>
 <body>
   <main>
-    <header>
-      <div>
-        <h1>Checklist Review</h1>
-        <p class="meta">Filter cards, create corrections, add missing rows, then download CSVs for the generator.</p>
+    <header class="topbar">
+      <div class="badge-row">
+        <span class="badge primary">Checklist Review</span>
+        <span class="badge success">Static Audit Tool</span>
       </div>
       <div class="top-actions">
+        <a class="button" href="/placeholders">Placeholder Library</a>
         <a class="button" href="index.html">Checklist Index</a>
         <a class="button" href="review_queue.csv">Review Queue CSV</a>
       </div>
     </header>
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="hero-pills">
+          <span class="badge">Corrections</span>
+          <span class="badge">Missing Cards</span>
+          <span class="badge">CSV Export</span>
+        </div>
+        <h1>Checklist Review</h1>
+        <p class="meta">Filter generated rows, prepare corrections, add missing cards, then download clean CSVs for the generator. This keeps the review process portable without needing server writes.</p>
+      </div>
+      <div class="hero-card">
+        <div class="stat-grid">
+          <div class="stat"><strong>{len(queue_rows)}</strong><span>queue rows</span></div>
+          <div class="stat"><strong>{len(pages)}</strong><span>destination set pages</span></div>
+        </div>
+      </div>
+    </section>
     <div class="layout">
       <section>
         <div class="filters">
@@ -1161,6 +1707,8 @@ def render_review_app(
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    """Build the full checklist site, downloads, and review tooling for one era."""
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--input",

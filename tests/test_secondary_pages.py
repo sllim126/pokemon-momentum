@@ -8,6 +8,7 @@ SEALED_DEALS_HTML = REPO_ROOT / "scripts" / "dashboards" / "sealed_deals.html"
 SET_EXPLORER_HTML = REPO_ROOT / "scripts" / "dashboards" / "set_explorer.html"
 BUDGET_BUILDER_HTML = REPO_ROOT / "scripts" / "dashboards" / "budget_builder.html"
 COLLECTOR_HUB_HTML = REPO_ROOT / "scripts" / "dashboards" / "collector_hub.html"
+PLACEHOLDER_LIBRARY_HTML = REPO_ROOT / "scripts" / "dashboards" / "placeholder_library.html"
 INDEX_OVERVIEW_HUB_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overview_hub.html"
 INDEX_OVERVIEW_SV100_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overview.html"
 INDEX_OVERVIEW_MEGA100_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overview_mega100.html"
@@ -33,6 +34,7 @@ class SecondaryPageContractTests(unittest.TestCase):
         cls.set_explorer_html = SET_EXPLORER_HTML.read_text(encoding="utf-8")
         cls.budget_builder_html = BUDGET_BUILDER_HTML.read_text(encoding="utf-8")
         cls.collector_hub_html = COLLECTOR_HUB_HTML.read_text(encoding="utf-8")
+        cls.placeholder_library_html = PLACEHOLDER_LIBRARY_HTML.read_text(encoding="utf-8")
         cls.index_overview_hub_html = INDEX_OVERVIEW_HUB_HTML.read_text(encoding="utf-8")
         cls.index_overview_sv100_html = INDEX_OVERVIEW_SV100_HTML.read_text(encoding="utf-8")
         cls.index_overview_mega100_html = INDEX_OVERVIEW_MEGA100_HTML.read_text(encoding="utf-8")
@@ -77,6 +79,9 @@ class SecondaryPageContractTests(unittest.TestCase):
         self.assertIn("Poke6s Budget Builder", self.budget_builder_html)
         self.assertIn("budgetSlider", self.budget_builder_html)
         self.assertIn("budgetInput", self.budget_builder_html)
+        self.assertIn("maxPriceInput", self.budget_builder_html)
+        self.assertIn("Maximum Card Price", self.budget_builder_html)
+        self.assertIn('<option value="0">No limit</option>', self.budget_builder_html)
         self.assertIn("rarityGrid", self.budget_builder_html)
         self.assertIn("/budget_builder", self.budget_builder_html)
         self.assertIn("Use IR+", self.budget_builder_html)
@@ -91,10 +96,19 @@ class SecondaryPageContractTests(unittest.TestCase):
         self.assertIn("Poke6s Collector Hub", self.collector_hub_html)
         self.assertIn("Master Set Hub", self.collector_hub_html)
         self.assertIn("/collector-manifest", self.collector_hub_html)
+        self.assertIn("/placeholders", self.collector_hub_html)
         self.assertIn("/collector-assets/checklists-sv/index.html", self.collector_hub_html)
         self.assertIn("/collector-assets/print-combined/index.html", self.collector_hub_html)
         self.assertIn("/dashboard-lab", self.collector_hub_html)
         self.assertIn("/set-explorer", self.collector_hub_html)
+
+    def test_placeholder_library_page_has_manifest_and_download_routes(self):
+        self.assertIn("Poke6s Placeholder Library", self.placeholder_library_html)
+        self.assertIn("Placeholder Library", self.placeholder_library_html)
+        self.assertIn("/placeholder-downloads-manifest", self.placeholder_library_html)
+        self.assertIn("/placeholder-downloads/sv-source-csv", self.placeholder_library_html)
+        self.assertIn("/collector-assets/print-combined/index.html", self.placeholder_library_html)
+        self.assertIn("/collector-assets/checklists-sv/index.html", self.placeholder_library_html)
 
     def test_index_overview_hub_page_lists_indexes(self):
         self.assertIn("Index Overview", self.index_overview_hub_html)
@@ -102,7 +116,8 @@ class SecondaryPageContractTests(unittest.TestCase):
         self.assertIn("Mega Evolution 100", self.index_overview_hub_html)
         self.assertIn("Original WOTC 100", self.index_overview_hub_html)
         self.assertIn("Sword &amp; Shield 100", self.index_overview_hub_html)
-        self.assertIn("Pokemon Top 100", self.index_overview_hub_html)
+        self.assertIn("Pokemon Top 151", self.index_overview_hub_html)
+        self.assertIn("JP Pokemon Top 151", self.index_overview_hub_html)
         self.assertIn("/index-overview-pokemon100", self.index_overview_hub_html)
         self.assertIn("/index-overview-wotc100", self.index_overview_hub_html)
         self.assertIn("/index-overview-neo100", self.index_overview_hub_html)

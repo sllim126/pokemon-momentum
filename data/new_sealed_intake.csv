@@ -1,0 +1,26 @@
+sku,product_name,language,product_type,quantity,price_override,title_override,tcgplayer_product_id,notes,lookup_status
+ENG-G25-TIN,Poke Ball Tin G25,english,tin,4,,,688965|688966|688967|688968,random design; buyer receives one random ball design from current G25 assortment (Surging Sparks / Journey Together / Destined Rivals),ready_for_pricing_mapping
+ENG-UHHP-COLL,Unova Heavy Hitters Premium Collection,english,premium_collection,2,,,668632,sealed product; keep separate from promo-card singles workflow,ready_for_pricing_mapping
+ENG-PO-PC-ETB,Perfect Order Pokemon Center Elite Trainer Box,english,pokemon_center_etb,3,,,672404,Pokemon Center exclusive ETB,ready_for_pricing_mapping
+ENG-AH-BUNDLE,Ascended Heroes Booster Bundle,english,booster_bundle,2,,,668541,,ready_for_pricing_mapping
+ENG-AH-ERIKA-2PK,Ascended Heroes Erika 2-Pack Blister,english,two_pack_blister,1,,,666906,,ready_for_pricing_mapping
+ENG-AH-LARRY-2PK,Ascended Heroes Larry 2-Pack Blister,english,two_pack_blister,1,,,666907,,ready_for_pricing_mapping
+ENG-151-ALAKAZAMex-BOX,Pokemon 151 Alakazam ex Collection Box,english,collection_box,1,,,502006,SV 151 collection box,ready_for_pricing_mapping
+ENG-PO-ETB,Perfect Order Elite Trainer Box,english,etb,3,,,672401,,ready_for_pricing_mapping
+ENG-CR-ETB,Chaos Rising Elite Trainer Box,english,etb,6,,,684450,,ready_for_pricing_mapping
+ENG-CR-PC-ETB,Chaos Rising Pokemon Center Elite Trainer Box,english,pokemon_center_etb,2,,,684452,Pokemon Center exclusive ETB,ready_for_pricing_mapping
+ENG-PB-PC-ETB,Pitch Black Pokemon Center Elite Trainer Box,english,pokemon_center_etb,2,,,692949,Pokemon Center exclusive ETB,ready_for_pricing_mapping
+ENG-GRENINJAex-PC,Greninja ex Premium Collection,english,premium_collection,2,,,690660,,ready_for_pricing_mapping
+ENG-PB-BUNDLE,Pitch Black Booster Bundle,english,booster_bundle,2,,,692942,,ready_for_pricing_mapping
+ENG-CR-BUNDLE,Chaos Rising Booster Bundle,english,booster_bundle,1,,,684456,,ready_for_pricing_mapping
+ENG-PO-BUNDLE,Perfect Order Booster Bundle,english,booster_bundle,1,,,672396,,ready_for_pricing_mapping
+ENG-PO-BOX,Perfect Order Booster Box,english,booster_box,2,,,672394,,ready_for_pricing_mapping
+ENG-CR-BOX,Chaos Rising Booster Box,english,booster_box,1,,,684444,,ready_for_pricing_mapping
+ENG-PB-BOX,Pitch Black Booster Box,english,booster_box,1,,,692939,,ready_for_pricing_mapping
+ENG-PE-COSTCO,Prismatic Evolutions ETB and Booster Bundle Combo - Costco,english,bundle_combo,2,,,636740,prefer TCGplayer combo product if available,ready_for_pricing_mapping
+ENG-CZ-MORPEKO-PC,Crown Zenith Morpeko Premium Collection,english,premium_collection,1,,,475644,TCGplayer title maps to Morpeko V-UNION Playmat Premium Collection,ready_for_pricing_mapping
+ENG-MCHARIZARDex-PC,Mega Charizard ex Premium Collection,english,premium_collection,1,,,654213,,ready_for_pricing_mapping
+ENG-DARKRAI-TRIPLE-TIN,Darkrai Triple Hitter Tin,english,tin,1,,,591146,TCGplayer title uses Triple Whammy Tin naming,ready_for_pricing_mapping
+ENG-TYRANITAR-V-TIN,Tyranitar V Tin,english,tin,1,,,236377,TCGplayer title uses V Strikers Tin [Tyranitar V],ready_for_pricing_mapping
+ENG-H24-TIN,Poke Ball Tin H24,english,tin,1,,,587367,specific ball design may vary unless manually distinguished later; current H24 assortment note: 2x Scarlet and Violet and 1x Obsidian Flames,ready_for_pricing_mapping
+ENG-KO-TYRANITAR-VIVILLON,Knock Out Collection Tyranitar and Vivillon,english,collection_box,1,,,186984,naming may need normalization depending on TCGplayer title,ready_for_pricing_mapping

@@ -762,13 +762,8 @@
               <input id="minPriceInput" type="number" min="0.5" max="200" step="0.5" value="5">
             </label>
             <label>
-              Max Cards Per Set
-              <select id="maxPerSetSelect">
-                <option value="1">1 per set</option>
-                <option value="2" selected>2 per set</option>
-                <option value="3">3 per set</option>
-                <option value="4">4 per set</option>
-              </select>
+              Maximum Card Price
+              <input id="maxPriceInput" type="number" min="0.5" max="5000" step="0.5" placeholder="No maximum">
             </label>
           </div>
 
@@ -781,9 +776,18 @@
                 <option value="10">10 cards</option>
                 <option value="12" selected>12 cards</option>
                 <option value="16">16 cards</option>
+                <option value="0">No limit</option>
               </select>
             </label>
-            <div></div>
+            <label>
+              Max Cards Per Set
+              <select id="maxPerSetSelect">
+                <option value="1">1 per set</option>
+                <option value="2" selected>2 per set</option>
+                <option value="3">3 per set</option>
+                <option value="4">4 per set</option>
+              </select>
+            </label>
           </div>
 
           <div class="toggle-card">
@@ -894,6 +898,7 @@
       const state = {
         budget: 150,
         minPrice: 5,
+        maxPrice: null,
         categoryId: 3,
         limit: 12,
         maxPerSet: 2,
@@ -911,6 +916,7 @@
       const heroSetCount = document.getElementById("heroSetCount");
       const categorySelect = document.getElementById("categorySelect");
       const minPriceInput = document.getElementById("minPriceInput");
+      const maxPriceInput = document.getElementById("maxPriceInput");
       const limitSelect = document.getElementById("limitSelect");
       const maxPerSetSelect = document.getElementById("maxPerSetSelect");
       const allowDuplicatesToggle = document.getElementById("allowDuplicatesToggle");
@@ -1087,6 +1093,9 @@
         const url = new URL("/budget_builder", apiBase);
         url.searchParams.set("budget", String(state.budget));
         url.searchParams.set("min_price", String(state.minPrice));
+        if (state.maxPrice !== null) {
+          url.searchParams.set("max_price", String(state.maxPrice));
+        }
         url.searchParams.set("category_id", String(state.categoryId));
         url.searchParams.set("limit", String(state.limit));
         url.searchParams.set("max_per_set", String(state.maxPerSet));
@@ -1167,11 +1176,22 @@
 
       minPriceInput.addEventListener("change", () => {
         state.minPrice = Math.max(0.5, Number(minPriceInput.value || 5));
+        if (state.maxPrice !== null && state.maxPrice < state.minPrice) {
+          state.maxPrice = state.minPrice;
+          maxPriceInput.value = String(state.maxPrice);
+        }
+        scheduleFetch();
+      });
+
+      maxPriceInput.addEventListener("change", () => {
+        const value = maxPriceInput.value.trim();
+        state.maxPrice = value ? Math.max(state.minPrice, Number(value)) : null;
+        maxPriceInput.value = state.maxPrice === null ? "" : String(state.maxPrice);
         scheduleFetch();
       });
 
       limitSelect.addEventListener("change", () => {
-        state.limit = Number(limitSelect.value || 12);
+        state.limit = Number(limitSelect.value);
         scheduleFetch();
       });
 
