@@ -24,6 +24,7 @@ PRODUCT_KIND_SQL = get_product_kind_sql("p")
 # This table is expected to grow as real-world metadata edge cases are found,
 # especially for JP Mega-era releases that use multiple parallel prefixes.
 GENERATION_OVERRIDES = {
+    1522: "XY",      # Kalos Starter Set is the XY-series introduction despite its 2013 date.
     17688: "SWSH",   # Crown Zenith
     17689: "SWSH",   # Crown Zenith: Galarian Gallery
     1384: "DP/HGSS", # Supreme Victors

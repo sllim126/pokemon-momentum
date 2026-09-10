@@ -29,13 +29,13 @@ latest data dated 2026-09-09. The daily pipeline and Squarespace price audit wer
 | `/dashboard-lab` | Desktop command-center reference | Working reference |
 | `/mobile-rebuild` | Earlier mobile concept retained for comparison | Legacy reference |
 | `/set-explorer` | Set cost, concentration, and depth | Live; mobile refinement pending |
-| `/budget-builder` | Budget-based recommendation builder | Active; duplicate-name regression under review |
+| `/budget-builder` | Budget-based recommendation builder | Live; duplicate-name cap covered by regression tests |
 | `/sealed-deals` | Sealed price-per-pack/value screening | Live; mobile refinement pending |
 | `/account-settings` | Synced tracking account management | Live |
 | `/collector-hub` | Collector workflow navigation | Live |
 | `/placeholders` | Placeholder/checklist downloads | Live |
 | `/index-overview` | Market-index hub | Live |
-| `/index-overview-*` | English/Japanese and era index detail pages | Live |
+| `/index-overview-*` | English/Japanese and era index detail pages | Live; all routes use one configured detail template |
 
 Current index detail routes are:
 
@@ -95,22 +95,22 @@ The detailed active queue and design decisions live in `docs/todo.txt`.
 
 ## Known engineering follow-up
 
-- Restore a fully green test run by resolving the Budget Builder duplicate-name behavior.
-- Split the large `scripts/dashboards/api.py` module by route/service domain.
+- Continue splitting the large `scripts/dashboards/api.py` module by route/service domain;
+  index definitions now live in `scripts/dashboards/index_config.py`.
 - Replace remaining full-catalog browser loads with paged server-side search.
-- Profile the slow `under_the_radar` and `breakouts` queries.
-- Consolidate duplicated index HTML behind shared templates/configuration.
+- Continue profiling `breakouts`; the default `under_the_radar` path now uses the
+  precomputed screener snapshot and is substantially faster.
 - Extract shared frontend shell, API, chart, formatting, and tracking code.
 - Pin runtime dependencies and separate development-only packages.
-- Decide which generated collector artifacts belong in Git.
+- Perform and record phone/tablet/laptop visual QA for the consolidated pages.
 
 ## Before resuming feature work
 
-1. Review and checkpoint all intentional modified/untracked source and data files.
-2. Separate generated artifacts from hand-authored changes in the commit plan.
-3. Fix or explicitly document the Budget Builder regression.
-4. Run `make test` and the pipeline validator.
-5. Tag or otherwise record the resulting known-good checkpoint.
+1. Finish the API-domain and shared-frontend extraction without changing route behavior.
+2. Profile and improve the remaining slow live-query paths.
+3. Complete phone/tablet/laptop visual QA.
+4. Run the full test and pipeline validators after each refactor checkpoint.
+5. Only then resume alerts, PSA UI, or additional data-provider features.
 
 Do not treat `output/`, database files, raw downloads, or other ignored runtime data as a
 substitute for source control. Conversely, do not delete local runtime/generated files until
@@ -131,3 +131,21 @@ The repository currently uses three artifact classes:
 
 Cached files under `images/cards/` are deployable binary assets used by Squarespace and
 storefront workflows. Keep their commits separate from application logic when practical.
+
+## Index audit status
+
+The 2026-09-10 audit rebuilt and validated every configured snapshot against market data
+dated 2026-09-09. Both global indexes contain exactly 151 holdings; every era index contains
+exactly 100. The validator checks contiguous ranks, duplicate product/variant keys, included
+set membership, excluded groups, metadata placeholders, summary counts, and freshness.
+
+Generation indexes cover expansion cards and recognized special subsets. Known
+preconstructed/reprint buckets—Trainer Kits, Battle Academy products, World Championship
+Decks, Deck Exclusives, Jumbo Cards, and EX Battle Stadium—are explicitly excluded in the
+central index configuration. Kalos Starter Set is explicitly assigned to XY rather than Black
+& White. Japanese SV currently includes its named era starter decks and deck-build boxes;
+generic Battle Academy, energy, and box-collection buckets remain visible for a future scope
+decision rather than being silently removed.
+
+Run `python scripts/validate_index_overviews.py` after rebuilding snapshots. Its generated
+operator report is written to ignored runtime output at `output/index_overview_validation.md`.

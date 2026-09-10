@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Poke6s Market | Pokemon Top 151</title>
+  <title>Poke6s Market Index</title>
   <link rel="icon" type="image/png" href="/images/Favidon.png">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
   <style>
@@ -606,9 +606,9 @@
   <main class="shell">
     <section class="panel overview">
       <h1 id="indexPageTitle">Poke6s Market Indexes</h1>
-      <p class="index-name" id="indexName">Pokemon Top 151</p>
+      <p class="index-name" id="indexName">Loading index…</p>
       <div class="overview-meta">
-        <span>✚ Top 151 cards by market price</span>
+        <span id="constituentSummary">✚ Ranked cards by market price</span>
         <span>◷ Updated daily</span>
         <span><a href="/dashboard">Dashboard ↗</a></span>
         <span><a href="/set-explorer">Set Explorer ↗</a></span>
@@ -623,7 +623,7 @@
       <div class="overview-fold-body">
         <article class="method-card">
           <h2>How This Index Works</h2>
-          <p>This benchmark tracks the 151 highest-priced Pokemon cards by market value from all active English Pokemon sets. We use a divisor-adjusted method to keep the series continuous when constituents rotate. Each daily run:</p>
+          <p id="methodSummary">This benchmark ranks eligible cards by market value. We use a divisor-adjusted method to keep the series continuous when constituents rotate. Each daily run:</p>
           <ul class="method-list">
             <li>Collect all eligible cards from the included sets below</li>
             <li>Sort cards by latest market price (highest to lowest)</li>
@@ -646,7 +646,7 @@
 
         <section class="sets sets-inline">
           <h2>Included Sets</h2>
-          <p>This index tracks cards from the following active English Pokemon TCG sets:</p>
+          <p>The eligible set universe for this index is loaded from its audited server definition:</p>
           <div class="set-grid" id="includedSetGrid"></div>
         </section>
       </div>
@@ -654,7 +654,7 @@
 
     <section class="panel index-panel">
       <div class="index-head">
-        <h2 id="indexPanelTitle">Pokemon Top 151</h2>
+        <h2 id="indexPanelTitle">Loading index…</h2>
         <div class="toolbar">
           <button class="btn range-btn" data-range="30">1M</button>
           <button class="btn range-btn" data-range="90">3M</button>
@@ -886,7 +886,24 @@
       document.getElementById("headlineAllTime").textContent = `${formatSigned(allTime.abs, mode === "aggregate")} (${formatSignedPct(allTime.pct)})`;
     }
 
-    let holdingsLimit = 151;
+    const indexRouteConfig = {
+      "/index-overview-pokemon100": { index: "pokemon100", categoryId: 3 },
+      "/index-overview-sv100": { index: "sv100", categoryId: 3 },
+      "/index-overview-mega100": { index: "mega100", categoryId: 3 },
+      "/index-overview-wotc100": { index: "wotc100", categoryId: 3 },
+      "/index-overview-neo100": { index: "neo100", categoryId: 3 },
+      "/index-overview-ecard100": { index: "ecard100", categoryId: 3 },
+      "/index-overview-ex100": { index: "ex100", categoryId: 3 },
+      "/index-overview-dp100": { index: "dp100", categoryId: 3 },
+      "/index-overview-bw100": { index: "bw100", categoryId: 3 },
+      "/index-overview-xy100": { index: "xy100", categoryId: 3 },
+      "/index-overview-sm100": { index: "sm100", categoryId: 3 },
+      "/index-overview-swsh100": { index: "swsh100", categoryId: 3 },
+      "/index-overview-jp-pokemon100": { index: "jp_pokemon100", categoryId: 85 },
+      "/index-overview-jp-sv100": { index: "jp_sv100", categoryId: 85 }
+    };
+    const activeIndex = indexRouteConfig[window.location.pathname] || indexRouteConfig["/index-overview-pokemon100"];
+    let holdingsLimit = 100;
 
     // Render ranked holdings as linked tiles with card art and pricing.
     function renderHoldings(holdings) {
@@ -949,7 +966,7 @@
 
     function buildBrowseSetCardUrl(item) {
       const params = new URLSearchParams();
-      params.set("category_id", "3");
+      params.set("category_id", String(activeIndex.categoryId));
       params.set("days", "365");
       params.set("tab", "group_products");
       params.set("segment", "cards");
@@ -965,7 +982,7 @@
 
     function buildSetStrengthSetUrl(setItem) {
       const params = new URLSearchParams();
-      params.set("category_id", "3");
+      params.set("category_id", String(activeIndex.categoryId));
       params.set("days", "365");
       params.set("tab", "group_signals");
       params.set("segment", "cards");
@@ -1133,16 +1150,24 @@
 
     // Fetches the backend index payload and hydrates all UI sections.
     async function loadIndexOverviewData() {
-      const response = await fetch("/index-overview-data?index=pokemon100");
+      const params = new URLSearchParams({
+        index: activeIndex.index,
+        category_id: String(activeIndex.categoryId)
+      });
+      const response = await fetch(`/index-overview-data?${params.toString()}`);
       if (!response.ok) {
         throw new Error(`index-overview-data failed (${response.status})`);
       }
       const data = await response.json();
-      holdingsLimit = Number(data.constituent_limit || 151);
-      document.title = `Poke6s Market | ${data.index_name || "Pokemon Top 151"}`;
+      holdingsLimit = Number(data.constituent_limit || 100);
+      document.title = `Poke6s Market | ${data.index_name || "Market Index"}`;
       if (indexPageTitle) indexPageTitle.textContent = "Poke6s Market Indexes";
-      if (indexName) indexName.textContent = data.index_name || "Pokemon Top 151";
-      if (indexPanelTitle) indexPanelTitle.textContent = data.index_name || "Pokemon Top 151";
+      if (indexName) indexName.textContent = data.index_name || "Market Index";
+      if (indexPanelTitle) indexPanelTitle.textContent = data.index_name || "Market Index";
+      const constituentSummary = document.getElementById("constituentSummary");
+      if (constituentSummary) constituentSummary.textContent = `✚ Top ${holdingsLimit} cards by market price`;
+      const methodSummary = document.getElementById("methodSummary");
+      if (methodSummary) methodSummary.textContent = `${data.description}. We use a divisor-adjusted method to keep the series continuous when constituents rotate. Each daily run:`;
       const holdingsTitle = document.getElementById("holdingsTitle");
       if (holdingsTitle) holdingsTitle.textContent = `Top ${holdingsLimit} Holdings`;
       payloadSummary = data.summary || null;
@@ -1158,7 +1183,9 @@
           short: setRow.abbreviation || "SET",
           long: setRow.name || ""
         }));
-      releaseEvents = [];
+      if (!data.release_markers_enabled) {
+        releaseEvents = [];
+      }
 
       const asOf = data.summary?.as_of || "--";
       document.getElementById("holdingsAsOf").textContent = `As of: ${asOf}`;

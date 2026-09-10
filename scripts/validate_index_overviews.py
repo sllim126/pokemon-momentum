@@ -11,7 +11,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.dashboards.api import INDEX_DEFINITIONS, category_config, index_overview_snapshot_path
+from scripts.dashboards.api import category_config, index_overview_snapshot_path
+from scripts.dashboards.index_config import INDEX_DEFINITIONS
 
 
 DEFAULT_REPORT = REPO_ROOT / "output" / "index_overview_validation.md"

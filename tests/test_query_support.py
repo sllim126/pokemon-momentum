@@ -267,6 +267,7 @@ class QuerySupportTests(unittest.TestCase):
     def test_build_generation_case_prioritizes_mega_before_sv(self):
         sql = query_support.build_generation_case()
 
+        self.assertIn("1522 THEN 'XY'", sql)
         self.assertIn("24459 THEN 'MEG'", sql)
         self.assertIn("24499 THEN 'MEG'", sql)
         self.assertIn("M1L:%", sql)

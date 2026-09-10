@@ -58,6 +58,7 @@ from scripts.dashboards.query_support import (
     sparkline_snapshot_from,
     to_jsonable,
 )
+from scripts.dashboards.index_config import INDEX_DEFINITIONS, index_keys_for_category
 from scripts.dashboards.tracking_store import (
     create_session,
     create_bug_report,
@@ -99,21 +100,8 @@ SUPPLIER_PRICING_HTML = SCRIPT_DIR / "supplier_pricing.html"
 SUPPLIER_PROFITABILITY_HTML = SCRIPT_DIR / "supplier_profitability.html"
 MOBILE_DASHBOARD_HTML = SCRIPT_DIR / "mobile_dashboard.html"
 MOBILE_REBUILD_HTML = SCRIPT_DIR / "mobile_rebuild_mockup.html"
-INDEX_OVERVIEW_SV100_HTML = SCRIPT_DIR / "index_overview.html"
 INDEX_OVERVIEW_HUB_HTML = SCRIPT_DIR / "index_overview_hub.html"
-INDEX_OVERVIEW_MEGA100_HTML = SCRIPT_DIR / "index_overview_mega100.html"
-INDEX_OVERVIEW_WOTC100_HTML = SCRIPT_DIR / "index_overview_wotc100.html"
-INDEX_OVERVIEW_NEO100_HTML = SCRIPT_DIR / "index_overview_neo100.html"
-INDEX_OVERVIEW_ECARD100_HTML = SCRIPT_DIR / "index_overview_ecard100.html"
-INDEX_OVERVIEW_EX100_HTML = SCRIPT_DIR / "index_overview_ex100.html"
-INDEX_OVERVIEW_DP100_HTML = SCRIPT_DIR / "index_overview_dp100.html"
-INDEX_OVERVIEW_BW100_HTML = SCRIPT_DIR / "index_overview_bw100.html"
-INDEX_OVERVIEW_XY100_HTML = SCRIPT_DIR / "index_overview_xy100.html"
-INDEX_OVERVIEW_SM100_HTML = SCRIPT_DIR / "index_overview_sm100.html"
-INDEX_OVERVIEW_SWSH100_HTML = SCRIPT_DIR / "index_overview_swsh100.html"
-INDEX_OVERVIEW_POKEMON100_HTML = SCRIPT_DIR / "index_overview_pokemon100.html"
-INDEX_OVERVIEW_JP_POKEMON100_HTML = SCRIPT_DIR / "index_overview_jp_pokemon100.html"
-INDEX_OVERVIEW_JP_SV100_HTML = SCRIPT_DIR / "index_overview_jp_sv100.html"
+INDEX_OVERVIEW_DETAIL_HTML = SCRIPT_DIR / "index_overview_detail.html"
 DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
 # The placeholder/checklist workflow is intentionally published as static files.
 # These constants define which parts of the imported collector project are safe
@@ -172,26 +160,6 @@ GOOGLE_CLIENT_ID = os.getenv("POKEMON_MOMENTUM_GOOGLE_CLIENT_ID", "").strip()
 PSA_API_BASE_URL = "https://api.psacard.com/publicapi"
 PSA_CERT_CACHE_TTL_DAYS = 30
 
-SV100_GROUP_IDS = [
-    24325,  # SV: Black Bolt
-    24326,  # SV: White Flare
-    24269,  # SV10: Destined Rivals
-    24073,  # SV09: Journey Together
-    23821,  # SV: Prismatic Evolutions
-    23651,  # SV08: Surging Sparks
-    23537,  # SV07: Stellar Crown
-    23529,  # SV: Shrouded Fable
-    23473,  # SV06: Twilight Masquerade
-    23381,  # SV05: Temporal Forces
-    23353,  # SV: Paldean Fates
-    23286,  # SV04: Paradox Rift
-    23237,  # SV: Scarlet & Violet 151
-    23228,  # SV03: Obsidian Flames
-    23120,  # SV02: Paldea Evolved
-    22873,  # SV01: Scarlet & Violet Base Set
-]
-SV100_BASE_LEVEL = 1000.0
-MEGA100_BASE_LEVEL = 1000.0
 INDEX_OVERVIEW_CACHE_TTL_SECONDS = 15 * 60
 _INDEX_OVERVIEW_CACHE: dict[tuple[int, str], tuple[datetime, dict]] = {}
 INDEX_OVERVIEW_SNAPSHOT_SUFFIX = "index_overview_snapshot.json"
@@ -216,17 +184,7 @@ BUDGET_RARITY_FILTER_OPTIONS = [
 
 def index_overview_keys_for_category(category_id: int) -> list[str]:
     """Return the index keys that are valid for one dashboard category."""
-
-    requested_category = int(category_id)
-    keys: list[str] = []
-    for index_key, definition in INDEX_DEFINITIONS.items():
-        expected_category = definition.get("category_id")
-        if expected_category is None and requested_category != 3:
-            continue
-        if expected_category is not None and int(expected_category) != requested_category:
-            continue
-        keys.append(index_key)
-    return keys
+    return index_keys_for_category(category_id)
 
 
 def index_overview_snapshot_path(category_id: int, index_key: str) -> Path:
@@ -591,143 +549,6 @@ def placeholder_download_manifest() -> dict:
         "browser_count": sum(1 for item in items if item["kind"] == "page"),
         "items": items,
     }
-# Index definition contract:
-# - index_name: UI display title.
-# - description: subtitle/summary text returned in API payload.
-# - base_level: normalization anchor (1000 => "index points" baseline).
-# - group_ids: explicit set universe (preferred for legacy eras with custom boundaries).
-# - generation: dynamic set universe resolved via build_generation_case().
-# - all_active_groups: special all-English Pokemon index mode using all active groups.
-# - constituent_limit: number of ranked card constituents to keep for each day.
-# - release_markers_enabled: tells frontend whether to show Set Releases toggle/markers.
-INDEX_DEFINITIONS = {
-    "pokemon100": {
-        "index_name": "Pokemon Top 151",
-        "description": "Top 151 cards by market price (all English sets)",
-        "base_level": 1000.0,
-        "all_active_groups": True,
-        "constituent_limit": 151,
-        "release_markers_enabled": False,
-    },
-    "sv100": {
-        "index_name": "Scarlet & Violet 100",
-        "description": "Top 100 cards by market price",
-        "base_level": SV100_BASE_LEVEL,
-        "group_ids": SV100_GROUP_IDS,
-        "release_markers_enabled": True,
-    },
-    "mega100": {
-        "index_name": "Mega Evolution 100",
-        "description": "Top 100 cards by market price",
-        "base_level": MEGA100_BASE_LEVEL,
-        "generation": "MEG",
-        "release_markers_enabled": True,
-    },
-    "swsh100": {
-        "index_name": "Sword & Shield 100",
-        "description": "Top 100 cards by market price",
-        "base_level": 1000.0,
-        "generation": "SWSH",
-        "release_markers_enabled": False,
-    },
-    "sm100": {
-        "index_name": "Sun & Moon 100",
-        "description": "Top 100 cards by market price",
-        "base_level": 1000.0,
-        "generation": "SM",
-        "exclude_group_ids": [2282],  # World Championship Decks contain reprints, not SM set cards.
-        "release_markers_enabled": False,
-    },
-    "xy100": {
-        "index_name": "XY 100",
-        "description": "Top 100 cards by market price",
-        "base_level": 1000.0,
-        "generation": "XY",
-        # Cross-era/catch-all product buckets are not XY set universes even
-        # when their metadata date falls inside the XY era.
-        "exclude_group_ids": [1528, 1539, 1840],
-        "release_markers_enabled": False,
-    },
-    "bw100": {
-        "index_name": "Black & White 100",
-        "description": "Top 100 cards by market price",
-        "base_level": 1000.0,
-        "generation": "BW",
-        "release_markers_enabled": False,
-    },
-    "dp100": {
-        "index_name": "Diamond & Pearl / Platinum / HGSS 100",
-        "description": "Top 100 cards by market price across the DP, Platinum, and HGSS eras",
-        "base_level": 1000.0,
-        "generation": "DP/HGSS",
-        "release_markers_enabled": False,
-    },
-    "ex100": {
-        "index_name": "EX 100",
-        "description": "Top 100 cards by market price",
-        "base_level": 1000.0,
-        "generation": "EX",
-        "release_markers_enabled": False,
-    },
-    "wotc100": {
-        "index_name": "Original WOTC 100",
-        "description": "Top 100 cards by market price",
-        "base_level": 1000.0,
-        "group_ids": [
-            604,   # Base Set
-            1663,  # Base Set (Shadowless)
-            635,   # Jungle
-            630,   # Fossil
-            605,   # Base Set 2
-            1373,  # Team Rocket
-            1441,  # Gym Heroes
-            1440,  # Gym Challenge
-        ],
-        "release_markers_enabled": False,
-    },
-    "neo100": {
-        "index_name": "Neo 100",
-        "description": "Top 100 cards by market price",
-        "base_level": 1000.0,
-        "group_ids": [
-            1396,  # Neo Genesis
-            1434,  # Neo Discovery
-            1389,  # Neo Revelation
-            1444,  # Neo Destiny
-        ],
-        "release_markers_enabled": False,
-    },
-    "ecard100": {
-        "index_name": "e-Card 100",
-        "description": "Top 100 cards by market price",
-        "base_level": 1000.0,
-        "group_ids": [
-            1375,  # Expedition
-            1397,  # Aquapolis
-            1372,  # Skyridge
-        ],
-        "release_markers_enabled": False,
-    },
-    "jp_pokemon100": {
-        "index_name": "JP Pokemon Top 151",
-        "description": "Top 151 cards by market price (all active Japanese sets)",
-        "base_level": 1000.0,
-        "all_active_groups": True,
-        "constituent_limit": 151,
-        "release_markers_enabled": False,
-        "category_id": 85,
-    },
-    "jp_sv100": {
-        "index_name": "JP Scarlet & Violet 100",
-        "description": "Top 100 cards by market price",
-        "base_level": 1000.0,
-        "generation": "SV",
-        "release_markers_enabled": True,
-        "category_id": 85,
-    },
-}
-
-
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -1076,73 +897,73 @@ def index_overview_page():
 @app.get("/index-overview-sv100")
 def index_overview_sv100_page():
     """Serve the desktop index-overview detail page for Scarlet & Violet 100."""
-    return FileResponse(INDEX_OVERVIEW_SV100_HTML)
+    return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
 @app.get("/index-overview-mega100")
 def index_overview_mega100_page():
     """Serve the desktop index-overview concept page for Mega Evolution 100."""
-    return FileResponse(INDEX_OVERVIEW_MEGA100_HTML)
+    return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
 @app.get("/index-overview-wotc100")
 def index_overview_wotc100_page():
-    return FileResponse(INDEX_OVERVIEW_WOTC100_HTML)
+    return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
 @app.get("/index-overview-neo100")
 def index_overview_neo100_page():
-    return FileResponse(INDEX_OVERVIEW_NEO100_HTML)
+    return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
 @app.get("/index-overview-ecard100")
 def index_overview_ecard100_page():
-    return FileResponse(INDEX_OVERVIEW_ECARD100_HTML)
+    return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
 @app.get("/index-overview-ex100")
 def index_overview_ex100_page():
-    return FileResponse(INDEX_OVERVIEW_EX100_HTML)
+    return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
 @app.get("/index-overview-dp100")
 def index_overview_dp100_page():
-    return FileResponse(INDEX_OVERVIEW_DP100_HTML)
+    return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
 @app.get("/index-overview-bw100")
 def index_overview_bw100_page():
-    return FileResponse(INDEX_OVERVIEW_BW100_HTML)
+    return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
 @app.get("/index-overview-xy100")
 def index_overview_xy100_page():
-    return FileResponse(INDEX_OVERVIEW_XY100_HTML)
+    return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
 @app.get("/index-overview-sm100")
 def index_overview_sm100_page():
-    return FileResponse(INDEX_OVERVIEW_SM100_HTML)
+    return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
 @app.get("/index-overview-swsh100")
 def index_overview_swsh100_page():
-    return FileResponse(INDEX_OVERVIEW_SWSH100_HTML)
+    return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
 @app.get("/index-overview-pokemon100")
 def index_overview_pokemon100_page():
-    return FileResponse(INDEX_OVERVIEW_POKEMON100_HTML)
+    return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
 @app.get("/index-overview-jp-pokemon100")
 def index_overview_jp_pokemon100_page():
-    return FileResponse(INDEX_OVERVIEW_JP_POKEMON100_HTML)
+    return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
 @app.get("/index-overview-jp-sv100")
 def index_overview_jp_sv100_page():
-    return FileResponse(INDEX_OVERVIEW_JP_SV100_HTML)
+    return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
 @app.get("/dashboard-common.js")
@@ -1534,6 +1355,7 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
         raise HTTPException(status_code=404, detail=f"No groups found for index key: {index_key}")
     group_ids_sql = ", ".join(str(int(group_id)) for group_id in group_ids)
     constituent_limit = max(1, int(definition.get("constituent_limit") or 100))
+    base_level = float(definition.get("base_level") or 1000.0)
     price_source = prices_from(category_id)
     metadata_cte = build_metadata_cte(category_id, include_classification=True, cte_name="metadata")
 
@@ -1636,8 +1458,8 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
     # - First day is normalized to base level (typically 1000 pts).
     # - On reconstitution events (>10% constituent turnover), divisor is adjusted
     #   so the index level remains continuous and avoids artificial jumps.
-    divisor = (daily[0]["aggregate_value"] / SV100_BASE_LEVEL) if daily[0]["aggregate_value"] else 1.0
-    previous_index_level = SV100_BASE_LEVEL
+    divisor = (daily[0]["aggregate_value"] / base_level) if daily[0]["aggregate_value"] else 1.0
+    previous_index_level = base_level
     previous_members: set[tuple[int, str]] | None = None
     series: list[dict] = []
     reconstitution_events: list[dict] = []
@@ -1849,7 +1671,7 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
     day1_abs, day1_pct = _format_days_delta(series, "index_level", 1)
     day7_abs, day7_pct = _format_days_delta(series, "index_level", 7)
     day30_abs, day30_pct = _format_days_delta(series, "index_level", 30)
-    first_index = float(series[0]["index_level"]) if series else SV100_BASE_LEVEL
+    first_index = float(series[0]["index_level"]) if series else base_level
     first_aggregate = float(series[0]["aggregate_value"]) if series else latest_aggregate
     all_time_index_abs = latest_index - first_index
     all_time_index_pct = (all_time_index_abs / first_index * 100.0) if first_index else None
