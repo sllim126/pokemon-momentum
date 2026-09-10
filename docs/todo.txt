@@ -1,7 +1,50 @@
 Pokemon Momentum TODO
 =====================
 
-Active work only. Archived completed items live in `docs/todo_archive.txt`.
+This is the authoritative running monitor for current projects, decisions, and future
+improvements. Update it whenever work starts, changes direction, ships, or is deferred.
+Archived completed items live in `docs/todo_archive.txt`.
+
+Current Development Program (2026-09-10)
+-----------------------------------------
+
+- Keep the current production experiences unchanged while the replacement is developed:
+  - production desktop: `/` and `/dashboard`
+  - production mobile: `/mobile` and mobile-user-agent handling on `/`
+  - development desktop baseline: `/dashboard-lab`
+  - development mobile baseline: `/mobile-rebuild`
+- Build both development experiences around five task areas:
+  - `Buy`: quick Card Check, seller-price evaluation, sealed checks, and Budget Builder
+  - `Discover`: Good Buys, Early Movers, Quiet Risers, Breakouts, and Pullbacks
+  - `Research`: card, set, species, sealed, and market-index analysis
+  - `Track`: favorites, watchlist, owned items, buy targets, and saved views
+  - `Learn`: Market Pulse, data-driven hobby facts, methodology, and collector resources
+- Development experience rules:
+  - phone defaults to Card Check and answers buy/wait/risk before showing deep metrics
+  - desktop defaults to a market/research workspace with ranked opportunities and drilldown
+  - use progressive disclosure: Decision first, Evidence second, Deep Research on demand
+  - every recommendation needs a plain-language reason and data-confidence label
+  - use shared names, result cards, navigation, and actions across the two experiences
+  - do not replace production routes until responsive QA and route/data contracts pass
+- Current implementation status:
+  - [first pass ready for review] reshape `/dashboard-lab` around the five task areas
+  - [first pass ready for review] rebuild `/mobile-rebuild` from the current live mobile
+    implementation, preserving live API data, card `imageUrl` rendering, search, charts,
+    tracking, and account behavior while adding Card Check and the five task areas
+  - [in progress] replace the preliminary price-edge-only Strong Buy / Good Buy / Fair Price /
+    Wait / High Risk labels with a shared, tested model that includes trend, volatility,
+    activity, and data confidence
+  - [fixed, awaiting visual review] restore market-index startup when a browser has an
+    older cached `dashboard-common.js`; verified every index returns its configured top
+    100 or 151 holdings and every current holding includes `imageUrl`
+  - [planned] add Market Pulse facts backed by current snapshots rather than editorial filler
+  - [planned] complete 390/768/1024/1440 px browser and real-device QA
+  - [planned] review the development experience before promoting any route
+- Backend cleanup follows the development-shell pass:
+  - [in progress, uncommitted] extract PSA lookup logic from `api.py` into `psa_service.py`
+  - [planned] split tracking/auth, supplier/store, collector assets, and market screeners into
+    domain modules with unchanged endpoint contracts
+  - [planned] keep `api.py` primarily responsible for app setup and route registration
 
 Recently Completed
 ------------------

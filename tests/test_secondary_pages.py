@@ -4,6 +4,7 @@ import unittest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DESKTOP_LAB_HTML = REPO_ROOT / "scripts" / "dashboards" / "dashboard_lab.html"
+MOBILE_DEVELOPMENT_HTML = REPO_ROOT / "scripts" / "dashboards" / "mobile_rebuild_mockup.html"
 SEALED_DEALS_HTML = REPO_ROOT / "scripts" / "dashboards" / "sealed_deals.html"
 SET_EXPLORER_HTML = REPO_ROOT / "scripts" / "dashboards" / "set_explorer.html"
 BUDGET_BUILDER_HTML = REPO_ROOT / "scripts" / "dashboards" / "budget_builder.html"
@@ -17,6 +18,7 @@ class SecondaryPageContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.desktop_lab_html = DESKTOP_LAB_HTML.read_text(encoding="utf-8")
+        cls.mobile_development_html = MOBILE_DEVELOPMENT_HTML.read_text(encoding="utf-8")
         cls.sealed_deals_html = SEALED_DEALS_HTML.read_text(encoding="utf-8")
         cls.set_explorer_html = SET_EXPLORER_HTML.read_text(encoding="utf-8")
         cls.budget_builder_html = BUDGET_BUILDER_HTML.read_text(encoding="utf-8")
@@ -34,6 +36,23 @@ class SecondaryPageContractTests(unittest.TestCase):
         self.assertIn("/dashboard?tab=group_products", self.desktop_lab_html)
         self.assertIn("/dashboard?tab=browse_species", self.desktop_lab_html)
         self.assertIn("/dashboard?tab=under_the_radar", self.desktop_lab_html)
+        for workspace in ("buy", "discover", "research", "track", "learn"):
+            self.assertIn(f'data-workspace="{workspace}"', self.desktop_lab_html)
+        self.assertIn("const WORKSPACES", self.desktop_lab_html)
+
+    def test_mobile_development_page_exposes_five_task_areas_and_ratings(self):
+        html = self.mobile_development_html
+        self.assertIn("Poke6s Market Development Mobile", html)
+        for workspace in ("buy", "discover", "research", "track", "learn"):
+            self.assertIn(f'data-mobile-workspace="{workspace}"', html)
+        for rating in ("Strong Buy", "Good Buy", "Fair Price", "Wait", "High Risk"):
+            self.assertIn(f'verdict: "{rating}"', html)
+        self.assertIn('id="cardCheck"', html)
+        self.assertIn("Price edge is only the first input", html)
+        self.assertIn('imageUrl: String(cell(row, columns, "imageUrl", "") || "")', html)
+        self.assertIn("item.imageUrl ? `<img", html)
+        self.assertIn("async function loadLiveMarketData()", html)
+        self.assertIn("/top_movers?", html)
 
     def test_sealed_deals_page_has_core_filters_and_table(self):
         self.assertIn("Poke6s Sealed Deals", self.sealed_deals_html)
@@ -114,8 +133,10 @@ class SecondaryPageContractTests(unittest.TestCase):
         self.assertIn("holdingsTitle", html)
         self.assertIn("activeIndex.categoryId", html)
         self.assertIn("activeIndex.index", html)
-        self.assertIn('/dashboard-common.js', html)
-        self.assertIn("window.DashboardCommon.escapeHtml", html)
+        self.assertIn('/dashboard-common.js?v=', html)
+        self.assertIn("window.DashboardCommon?.escapeHtml ||", html)
+        self.assertIn("item.imageUrl", html)
+        self.assertIn('<img src="${escapeHtml(item.imageUrl)}"', html)
         self.assertEqual(html.count('id="includedSetGrid"'), 1)
         self.assertIn('id="constituentMethod"', html)
         self.assertIn('id="aggregateBasketSize"', html)

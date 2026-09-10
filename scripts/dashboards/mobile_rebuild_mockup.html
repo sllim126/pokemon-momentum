@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Pokemon Momentum Mobile Rebuild</title>
+  <title>Poke6s Market Development Mobile</title>
   <link rel="icon" type="image/png" href="/images/Favidon.png">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root {
       --bg: #11192f;
@@ -88,7 +89,9 @@
       min-height: 100dvh;
       padding: var(--safe-top) 14px calc(82px + var(--safe-bottom));
       display: grid;
+      grid-auto-rows: max-content;
       gap: 10px;
+      align-content: start;
       margin: 0 auto;
     }
 
@@ -332,6 +335,57 @@
       max-width: none;
     }
 
+    .user-profile-panel {
+      display: grid;
+      gap: 10px;
+      padding-top: 2px;
+    }
+
+    .user-profile-title {
+      margin: 0;
+      color: var(--ink);
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+    }
+
+    .user-profile-actions {
+      display: grid;
+      gap: 4px;
+    }
+
+    .user-profile-copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+      max-width: 28ch;
+    }
+
+    .user-link[hidden] {
+      display: none;
+    }
+
+    .google-signin-mount {
+      min-height: 44px;
+    }
+
+    .google-signin-mount[hidden] {
+      display: none;
+    }
+
+    .mobile-auth-status {
+      margin: 2px 0 0;
+      min-height: 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .mobile-auth-status.warn {
+      color: #ffd69d;
+    }
+
     .user-section {
       padding: 16px 20px;
       border-top: 1px solid var(--line);
@@ -492,38 +546,28 @@
       text-transform: uppercase;
     }
 
+    .account-btn.signed-out small {
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+    }
+
     .account-icon {
-      position: relative;
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       width: 28px;
       height: 28px;
-      border: 2px solid var(--ink);
-      border-radius: 999px;
       color: var(--ink);
       flex: 0 0 auto;
     }
 
-    .account-icon::before,
-    .account-icon::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--ink);
-    }
-
-    .account-icon::before {
-      top: 6px;
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-    }
-
-    .account-icon::after {
-      bottom: 5px;
-      width: 15px;
-      height: 8px;
-      border-radius: 10px 10px 5px 5px;
+    .account-icon svg {
+      width: 28px;
+      height: 28px;
+      display: block;
+      stroke: currentColor;
     }
 
     .cart-btn {
@@ -535,8 +579,8 @@
 
     .cart-count {
       position: absolute;
-      top: -2px;
-      right: -4px;
+      top: 2px;
+      right: 3px;
       min-width: 18px;
       min-height: 18px;
       border-radius: 999px;
@@ -618,6 +662,89 @@
       color: #8ea1c4;
     }
 
+    .scope-rail {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      align-items: start;
+      align-self: start;
+      margin-top: -2px;
+    }
+
+    .scope-group {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px;
+      padding: 4px;
+      height: 52px;
+      min-height: 52px;
+      max-height: 52px;
+      border: 1px solid rgba(94, 116, 148, 0.28);
+      border-radius: 999px;
+      background: rgba(10, 18, 34, 0.72);
+    }
+
+    .scope-btn {
+      appearance: none;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      min-height: 44px;
+      height: 44px;
+      max-height: 44px;
+      padding: 0 8px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .scope-btn.active {
+      border-color: rgba(34, 176, 255, 0.36);
+      background: rgba(34, 176, 255, 0.16);
+      color: #d8f2ff;
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.1);
+    }
+
+    .scope-btn[data-rail-language="JP"].active {
+      border-color: rgba(37, 208, 165, 0.36);
+      background: rgba(37, 208, 165, 0.13);
+      color: #d8fff6;
+    }
+
+    .development-task-nav {
+      display: flex;
+      gap: 8px;
+      margin: -2px -14px 0;
+      padding: 2px 14px 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .development-task-nav::-webkit-scrollbar { display: none; }
+
+    .development-task-btn {
+      flex: 0 0 auto;
+      min-height: 42px;
+      padding: 0 17px;
+      border: 1px solid var(--line-2);
+      border-radius: 999px;
+      background: rgba(10, 18, 34, 0.76);
+      color: var(--muted);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .development-task-btn.active {
+      border-color: rgba(34, 176, 255, 0.5);
+      background: rgba(34, 176, 255, 0.18);
+      color: #e9f8ff;
+    }
+
 
     .chip,
     .tab,
@@ -674,6 +801,8 @@
 
 
     .feed,
+    .alerts-page,
+    .support-page,
     .detail {
       border: 0;
       border-radius: 0;
@@ -687,6 +816,324 @@
       display: grid;
       gap: 12px;
       align-content: start;
+    }
+
+    .feed[hidden] {
+      display: none;
+    }
+
+    .alerts-page,
+    .support-page {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .alerts-page[hidden],
+    .support-page[hidden] {
+      display: none;
+    }
+
+    .alerts-hero {
+      padding: 14px;
+      border: 1px solid rgba(140, 163, 199, 0.18);
+      border-radius: 18px;
+      background: rgba(10, 18, 34, 0.32);
+    }
+
+    .alerts-hero h2 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .alerts-hero p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .alerts-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid rgba(94, 116, 148, 0.28);
+      border-radius: 999px;
+      background: rgba(10, 18, 34, 0.72);
+    }
+
+    .alerts-tab {
+      appearance: none;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      min-height: 44px;
+      padding: 0 6px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .alerts-tab.active {
+      border-color: rgba(34, 176, 255, 0.36);
+      background: rgba(34, 176, 255, 0.16);
+      color: #d8f2ff;
+    }
+
+    .alerts-body {
+      display: grid;
+      gap: 10px;
+    }
+
+    .alert-card {
+      border: 1px solid rgba(140, 163, 199, 0.18);
+      border-radius: 18px;
+      background: rgba(10, 18, 34, 0.28);
+      padding: 13px;
+    }
+
+    .alert-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .alert-card h3 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 16px;
+      line-height: 1.15;
+    }
+
+    .alert-card p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .alert-pill {
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(37, 208, 165, 0.28);
+      background: rgba(37, 208, 165, 0.1);
+      color: #bbfff0;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .target-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .target-field label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .target-field input {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid rgba(140, 163, 199, 0.22);
+      border-radius: 12px;
+      background: rgba(7, 13, 24, 0.82);
+      color: var(--ink);
+      font: inherit;
+      font-size: 15px;
+      font-weight: 800;
+      padding: 0 11px;
+    }
+
+    .support-textarea {
+      width: 100%;
+      min-height: 108px;
+      resize: vertical;
+      border: 1px solid rgba(140, 163, 199, 0.22);
+      border-radius: 12px;
+      background: rgba(7, 13, 24, 0.82);
+      color: var(--ink);
+      font: inherit;
+      font-size: 15px;
+      line-height: 1.35;
+      padding: 11px;
+    }
+
+    .support-form {
+      display: grid;
+      gap: 10px;
+    }
+
+    .support-status {
+      min-height: 18px;
+      color: #bbfff0;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .support-status.warn {
+      color: #ffd69d;
+    }
+
+    .support-guide-list {
+      display: grid;
+      gap: 9px;
+      margin-top: 10px;
+    }
+
+    .support-guide-item {
+      padding: 10px;
+      border: 1px solid rgba(140, 163, 199, 0.14);
+      border-radius: 14px;
+      background: rgba(7, 13, 24, 0.38);
+    }
+
+    .support-guide-item strong {
+      display: block;
+      color: var(--ink);
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .support-guide-item span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .target-save-btn,
+    .alert-toggle {
+      appearance: none;
+      width: 100%;
+      min-height: 46px;
+      margin-top: 9px;
+      border: 1px solid rgba(34, 176, 255, 0.34);
+      border-radius: 13px;
+      background: rgba(34, 176, 255, 0.12);
+      color: #bde8ff;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .alert-toggle.enabled {
+      border-color: rgba(37, 208, 165, 0.42);
+      background: rgba(37, 208, 165, 0.14);
+      color: #c9fff3;
+    }
+
+    .alert-event {
+      display: grid;
+      gap: 4px;
+      padding: 11px 0;
+      border-bottom: 1px solid rgba(140, 163, 199, 0.14);
+    }
+
+    .alert-event:last-child {
+      border-bottom: 0;
+    }
+
+    .alert-event strong {
+      color: var(--ink);
+      font-size: 14px;
+    }
+
+    .alert-event span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .alert-empty {
+      display: grid;
+      gap: 11px;
+      padding: 16px;
+      border: 1px solid rgba(34, 176, 255, 0.2);
+      border-radius: 18px;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(34, 176, 255, 0.16), transparent 34%),
+        rgba(10, 18, 34, 0.34);
+    }
+
+    .alert-empty strong {
+      color: var(--ink);
+      font-size: 18px;
+      line-height: 1.1;
+    }
+
+    .alert-empty span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .alert-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .alert-action-btn {
+      appearance: none;
+      min-height: 46px;
+      border: 1px solid rgba(34, 176, 255, 0.34);
+      border-radius: 13px;
+      background: rgba(34, 176, 255, 0.12);
+      color: #bde8ff;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .alert-preview-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .alert-preview {
+      display: flex;
+      gap: 9px;
+      align-items: flex-start;
+      padding: 10px;
+      border: 1px solid rgba(140, 163, 199, 0.14);
+      border-radius: 14px;
+      background: rgba(7, 13, 24, 0.46);
+    }
+
+    .alert-preview b {
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.2;
+    }
+
+    .alert-preview small {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.3;
     }
 
     .feed-head {
@@ -852,6 +1299,10 @@
     .deal-check.warn {
       --deal-color: var(--warn);
       --deal-glow: rgba(255, 138, 91, 0.14);
+    }
+
+    .deal-check[hidden] {
+      display: none;
     }
 
     .deal-head {
@@ -1157,6 +1608,10 @@
       box-shadow: none;
       backdrop-filter: none;
       z-index: 20;
+    }
+
+    .bottom-bar[hidden] {
+      display: none;
     }
 
     .bottom-bar button {
@@ -1522,9 +1977,32 @@
       background: transparent;
     }
 
+    .results.search-scroll {
+      max-height: min(62vh, 620px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      border: 1px solid rgba(140, 163, 199, 0.16);
+      border-radius: 18px;
+      background: rgba(7, 13, 24, 0.24);
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .results.search-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .results.search-scroll .market-table-head {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: rgba(13, 24, 41, 0.96);
+      backdrop-filter: blur(12px);
+    }
+
     .market-table-head {
       display: grid;
-      grid-template-columns: minmax(108px, 1fr) 54px 72px 64px;
+      grid-template-columns: 38px minmax(90px, 1fr) 54px 72px 64px;
       gap: 8px;
       align-items: center;
       padding: 9px 10px;
@@ -1544,10 +2022,10 @@
       color: var(--ink);
       width: 100%;
       text-align: left;
-      min-height: 58px;
+      min-height: 70px;
       padding: 12px 10px;
       display: grid;
-      grid-template-columns: minmax(108px, 1fr) 54px 72px 64px;
+      grid-template-columns: 38px minmax(90px, 1fr) 54px 72px 64px;
       gap: 8px;
       align-items: center;
       cursor: pointer;
@@ -1564,6 +2042,30 @@
 
     .symbol-cell {
       min-width: 0;
+    }
+
+    .row-thumb {
+      width: 38px;
+      aspect-ratio: 5 / 7;
+      border: 1px solid rgba(230, 239, 255, 0.16);
+      border-radius: 7px;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.12), transparent 28%),
+        rgba(10, 16, 31, 0.88);
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 8px;
+      text-align: center;
+    }
+
+    .row-thumb img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      background: rgba(7, 12, 23, 0.56);
     }
 
     .symbol-main {
@@ -1620,6 +2122,113 @@
       line-height: 0.95;
       letter-spacing: -0.02em;
       font-variant-numeric: tabular-nums;
+    }
+
+    .search-result-row {
+      appearance: none;
+      width: 100%;
+      min-height: 102px;
+      border: 0;
+      border-bottom: 1px solid rgba(121, 146, 182, 0.2);
+      background: transparent;
+      color: var(--ink);
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 10px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .search-result-row:last-child {
+      border-bottom: 0;
+    }
+
+    .search-result-row.active {
+      background: rgba(34, 176, 255, 0.12);
+      box-shadow: inset 0 0 0 1px rgba(34, 176, 255, 0.2);
+    }
+
+    .search-result-image {
+      width: 58px;
+      aspect-ratio: 5 / 7;
+      border: 1px solid rgba(230, 239, 255, 0.18);
+      border-radius: 9px;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.14), transparent 28%),
+        rgba(10, 16, 31, 0.88);
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 9px;
+      text-align: center;
+    }
+
+    .search-result-image img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      background: rgba(7, 12, 23, 0.56);
+    }
+
+    .search-result-copy {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .search-result-title {
+      color: #9dd7ff;
+      font-size: clamp(17px, 4.6vw, 24px);
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .search-result-set,
+    .search-result-meta {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.25;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .search-result-side {
+      display: grid;
+      gap: 7px;
+      justify-items: end;
+      text-align: right;
+    }
+
+    .search-result-price {
+      color: var(--ink);
+      font-size: clamp(18px, 4.8vw, 25px);
+      line-height: 1;
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .search-result-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      border: 1px solid rgba(37, 208, 165, 0.26);
+      border-radius: 999px;
+      background: rgba(37, 208, 165, 0.1);
+      color: #bbfff0;
+      font-size: 10px;
+      font-weight: 900;
+      white-space: nowrap;
     }
 
     .good { color: var(--good); }
@@ -1747,14 +2356,14 @@
         <h4>Trending</h4>
         <button type="button" class="drawer-see-all" data-drawer-toggle="trending" aria-expanded="false">See all</button>
       </div>
-      <a class="drawer-link" href="/dashboard?tab=top_movers" data-drawer-action="movers"><span>Top Movers</span></a>
-      <a class="drawer-link" href="/dashboard?tab=early_uptrends"><span>Early Movers</span></a>
-      <a class="drawer-link" href="/dashboard?tab=good_buys"><span>Pullbacks</span></a>
+      <a class="drawer-link" href="/dashboard?tab=top_movers" data-drawer-tab="top_movers"><span>Top Movers</span></a>
+      <a class="drawer-link" href="/dashboard?tab=early_uptrends" data-drawer-tab="early_uptrends"><span>Early Movers</span></a>
+      <a class="drawer-link" href="/dashboard?tab=good_buys" data-drawer-tab="good_buys"><span>Pullbacks</span></a>
       <div class="drawer-extra" data-drawer-group="trending" hidden>
-        <a class="drawer-link" href="/dashboard?tab=under_the_radar"><span>Under the Radar</span></a>
-        <a class="drawer-link" href="/dashboard?tab=confirmed_uptrends"><span>Confirmed Movers</span></a>
-        <a class="drawer-link" href="/dashboard?tab=sma30_holds"><span>Consistent Movers</span></a>
-        <a class="drawer-link" href="/dashboard?tab=breakouts"><span>Breakouts</span></a>
+        <a class="drawer-link" href="/dashboard?tab=under_the_radar" data-drawer-tab="under_the_radar"><span>Under the Radar</span></a>
+        <a class="drawer-link" href="/dashboard?tab=confirmed_uptrends" data-drawer-tab="confirmed_uptrends"><span>Confirmed Movers</span></a>
+        <a class="drawer-link" href="/dashboard?tab=sma30_holds" data-drawer-tab="sma30_holds"><span>Consistent Movers</span></a>
+        <a class="drawer-link" href="/dashboard?tab=breakouts" data-drawer-tab="breakouts"><span>Breakouts</span></a>
       </div>
     </section>
     <section class="drawer-section">
@@ -1778,10 +2387,8 @@
       </div>
       <a class="drawer-link" href="/set-explorer"><span>Set Explorer</span></a>
       <a class="drawer-link" href="/sealed-deals"><span>Sealed Deals</span></a>
-      <a class="drawer-link" href="/index-overview"><span>Index Overview</span></a>
       <div class="drawer-extra" data-drawer-group="market-pages" hidden>
         <a class="drawer-link" href="/dashboard"><span>Dashboard</span></a>
-        <a class="drawer-link" href="/mobile-rebuild"><span>Mobile Rebuild Mockup</span></a>
       </div>
     </section>
     <section class="drawer-section">
@@ -1789,7 +2396,7 @@
         <h4>English Indices</h4>
         <button type="button" class="drawer-see-all" data-drawer-toggle="english-indices" aria-expanded="false">See all</button>
       </div>
-      <a class="drawer-link" href="/index-overview-pokemon100"><span>Pokemon 100</span></a>
+      <a class="drawer-link" href="/index-overview-pokemon100"><span>Pokemon 151</span></a>
       <a class="drawer-link" href="/index-overview-sv100"><span>Scarlet &amp; Violet 100</span></a>
       <a class="drawer-link" href="/index-overview-mega100"><span>Mega Evolution 100</span></a>
       <div class="drawer-extra" data-drawer-group="english-indices" hidden>
@@ -1819,8 +2426,17 @@
           <span>☰</span>
         </button>
       </div>
-      <div class="user-greeting"><small>Hello,</small> Adam</div>
-      <p class="user-note user-status">Signed in and syncing saved research.</p>
+      <div class="user-greeting" id="userGreeting"><small>Hello,</small> Adam</div>
+      <div class="user-profile-panel" aria-label="Profile actions">
+        <h4 class="user-profile-title" id="userProfileTitle">Profile</h4>
+        <p class="user-profile-copy" id="userProfileCopy" hidden>Sign in on desktop to sync saved cards and lists across devices.</p>
+        <div class="user-profile-actions">
+          <div class="google-signin-mount" id="mobileGoogleSignInMount" hidden></div>
+          <p class="mobile-auth-status" id="mobileAuthStatus"></p>
+          <a class="user-link" href="/account-settings" id="accountSettingsLink" hidden>Account Settings</a>
+          <a class="user-link" href="#sign-out" id="mobileSignOutLink" data-account-action="sign-out" hidden>Sign Out</a>
+        </div>
+      </div>
     </div>
 
     <section class="user-section">
@@ -1828,34 +2444,22 @@
         <h4>Saved Research</h4>
       </div>
       <div class="user-links">
-        <a class="user-link" href="#">Tracked Items</a>
-        <a class="user-link" href="#">Favorites</a>
-        <a class="user-link" href="#">Watchlist</a>
-        <a class="user-link" href="#">Research Notes</a>
-        <a class="user-link" href="#">Buy List</a>
+        <a class="user-link" href="#tracked-items" data-tracked-filter="all">Tracked Items</a>
+        <a class="user-link" href="#tracked-items" data-tracked-filter="favorite">Favorites</a>
+        <a class="user-link" href="#tracked-items" data-tracked-filter="watchlist">Watchlist</a>
+        <a class="user-link" href="#tracked-items" data-tracked-filter="research">Needs Review</a>
+        <a class="user-link" href="#tracked-items" data-tracked-filter="owned">Buy List</a>
       </div>
     </section>
 
-    <section class="user-section">
+    <section class="user-section" hidden>
       <div class="user-section-head">
         <h4>Alerts &amp; Targets</h4>
       </div>
       <div class="user-links">
-        <a class="user-link" href="#">Price Targets</a>
-        <a class="user-link" href="#">Momentum Alerts</a>
-        <a class="user-link" href="#">Recent Alerts</a>
-      </div>
-    </section>
-
-    <section class="user-section">
-      <div class="user-section-head">
-        <h4>Account</h4>
-      </div>
-      <div class="user-links">
-        <a class="user-link" href="/account-settings">Account Settings</a>
-        <a class="user-link" href="#">Sync Status</a>
-        <a class="user-link" href="#">Switch Account</a>
-        <a class="user-link" href="#">Sign Out</a>
+        <a class="user-link" href="#alerts-targets" data-alert-view="targets">Price Targets</a>
+        <a class="user-link" href="#alerts-targets" data-alert-view="momentum">Momentum Alerts</a>
+        <a class="user-link" href="#alerts-targets" data-alert-view="recent">Recent Alerts</a>
       </div>
     </section>
 
@@ -1864,9 +2468,9 @@
         <h4>Support</h4>
       </div>
       <div class="user-links">
-        <a class="user-link" href="#">Feedback &amp; Support</a>
-        <a class="user-link" href="#">Report a Bug</a>
-        <a class="user-link" href="#">View Guide</a>
+        <a class="user-link" href="#support" data-support-view="feedback">Feedback &amp; Support</a>
+        <a class="user-link" href="#support" data-support-view="bug">Report a Bug</a>
+        <a class="user-link" href="#support" data-support-view="guide">View Guide</a>
       </div>
     </section>
   </aside>
@@ -1879,12 +2483,17 @@
           <span class="brand-wordmark">Poke6s</span>
         </div>
         <button type="button" class="account-btn" id="accountToggleBtn" aria-label="Open account" aria-expanded="false">
-          <small>Adam</small>
-          <span class="account-icon" aria-hidden="true"></span>
+          <small id="accountNameLabel">Adam</small>
+          <span class="account-icon" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none" focusable="false">
+              <circle cx="16" cy="10.5" r="5.2" stroke-width="2.4"></circle>
+              <path d="M6.5 27c1.3-6.1 5-9.2 9.5-9.2s8.2 3.1 9.5 9.2" stroke-width="2.4" stroke-linecap="round"></path>
+            </svg>
+          </span>
         </button>
-        <a class="cart-btn" id="favoritesBtn" href="/favorites" aria-label="Open favorites list">
+        <a class="cart-btn" id="favoritesBtn" href="#tracked-items" aria-label="Open tracked items">
           ♡
-          <span class="cart-count">0</span>
+          <span class="cart-count" id="favoritesCount">0</span>
         </a>
       </div>
       <label class="search search-inline" aria-label="Search products">
@@ -1892,9 +2501,26 @@
         <button type="button" class="search-go" aria-label="Run search">🔍</button>
       </label>
     </header>
+    <nav class="scope-rail" id="scopeRail" aria-label="Market and product scope">
+      <div class="scope-group" aria-label="Language market">
+        <button type="button" class="scope-btn active" data-rail-language="EN">English</button>
+        <button type="button" class="scope-btn" data-rail-language="JP">Japanese</button>
+      </div>
+      <div class="scope-group" aria-label="Product type">
+        <button type="button" class="scope-btn active" data-rail-kind="singles">Singles</button>
+        <button type="button" class="scope-btn" data-rail-kind="sealed">Sealed</button>
+      </div>
+    </nav>
+    <nav class="development-task-nav" aria-label="Development workspaces">
+      <button type="button" class="development-task-btn active" data-mobile-workspace="buy">Buy</button>
+      <button type="button" class="development-task-btn" data-mobile-workspace="discover">Discover</button>
+      <button type="button" class="development-task-btn" data-mobile-workspace="research">Research</button>
+      <button type="button" class="development-task-btn" data-mobile-workspace="track">Track</button>
+      <button type="button" class="development-task-btn" data-mobile-workspace="learn">Learn</button>
+    </nav>
     <section class="layout">
-      <main class="feed">
-        <section class="decision-card" aria-label="Selected product decision">
+      <main class="feed" id="feedView">
+        <section class="decision-card" id="cardCheck" aria-label="Selected product decision">
           <div class="decision-top">
             <div class="decision-image" id="decisionImage" aria-hidden="true"></div>
             <div class="decision-copy">
@@ -1976,8 +2602,32 @@
         <div class="results" id="results"></div>
         <div class="empty" id="emptyState" hidden>No products matched this filter.</div>
       </main>
+      <section class="alerts-page" id="alertsPage" hidden aria-labelledby="alertsTitle">
+        <div class="alerts-hero">
+          <h2 id="alertsTitle">Alerts &amp; Targets</h2>
+          <p>Use this as the action layer for tracked items: target buy/sell prices, momentum signals, and recent alert-style events.</p>
+        </div>
+        <div class="alerts-tabs" role="tablist" aria-label="Alerts and targets">
+          <button type="button" class="alerts-tab active" data-alert-tab="targets">Targets</button>
+          <button type="button" class="alerts-tab" data-alert-tab="momentum">Momentum</button>
+          <button type="button" class="alerts-tab" data-alert-tab="recent">Recent</button>
+        </div>
+        <div class="alerts-body" id="alertsBody"></div>
+      </section>
+      <section class="support-page" id="supportPage" hidden aria-labelledby="supportTitle">
+        <div class="alerts-hero">
+          <h2 id="supportTitle">Feedback &amp; Support</h2>
+          <p>Send feedback, report bugs, or reopen the quick guide for the mobile dashboard.</p>
+        </div>
+        <div class="alerts-tabs" role="tablist" aria-label="Support options">
+          <button type="button" class="alerts-tab active" data-support-tab="feedback">Feedback</button>
+          <button type="button" class="alerts-tab" data-support-tab="bug">Bug</button>
+          <button type="button" class="alerts-tab" data-support-tab="guide">Guide</button>
+        </div>
+        <div class="alerts-body" id="supportBody"></div>
+      </section>
     </section>
-    <nav class="bottom-bar" aria-label="Selected card actions">
+    <nav class="bottom-bar" id="bottomBar" aria-label="Selected card actions">
       <button type="button" id="saveActionBtn">Save</button>
       <button type="button" class="primary" id="fullDataBtn">Full Data</button>
     </nav>
@@ -2001,7 +2651,7 @@
           <span class="save-mark">Saved</span>
         </button>
         <button type="button" class="save-option" data-save-tag="research">
-          <span><strong>Research</strong><span>Needs more checking, notes, or comps.</span></span>
+          <span><strong>Needs Review</strong><span>Needs more checking, notes, or comps.</span></span>
           <span class="save-mark">Saved</span>
         </button>
         <button type="button" class="save-option" data-save-tag="owned">
@@ -2114,6 +2764,13 @@
     };
 
     const searchInput = document.getElementById("searchInput");
+    const searchGoBtn = document.querySelector(".search-go");
+    const feedView = document.getElementById("feedView");
+    const alertsPage = document.getElementById("alertsPage");
+    const alertsBody = document.getElementById("alertsBody");
+    const supportPage = document.getElementById("supportPage");
+    const supportBody = document.getElementById("supportBody");
+    const bottomBar = document.getElementById("bottomBar");
     const resultsEl = document.getElementById("results");
     const resultCount = document.getElementById("resultCount");
     const emptyState = document.getElementById("emptyState");
@@ -2137,12 +2794,22 @@
     const dealMaxBtn = document.getElementById("dealMaxBtn");
     const dealGuidance = document.getElementById("dealGuidance");
     const dealConfidence = document.getElementById("dealConfidence");
+    const mobileTaskButtons = Array.from(document.querySelectorAll("[data-mobile-workspace]"));
+    const cardCheck = document.getElementById("cardCheck");
 
     const marketTabs = document.getElementById("marketTabs");
     const scopeRail = document.getElementById("scopeRail");
     const feedSectionTitle = document.getElementById("feedSectionTitle");
     const menuToggleBtn = document.getElementById("menuToggleBtn");
     const accountToggleBtn = document.getElementById("accountToggleBtn");
+    const accountNameLabel = document.getElementById("accountNameLabel");
+    const userGreeting = document.getElementById("userGreeting");
+    const userProfileTitle = document.getElementById("userProfileTitle");
+    const userProfileCopy = document.getElementById("userProfileCopy");
+    const accountSettingsLink = document.getElementById("accountSettingsLink");
+    const mobileGoogleSignInMount = document.getElementById("mobileGoogleSignInMount");
+    const mobileAuthStatus = document.getElementById("mobileAuthStatus");
+    const mobileSignOutLink = document.getElementById("mobileSignOutLink");
     const drawerBackdrop = document.getElementById("drawerBackdrop");
     const hamburgerDrawer = document.getElementById("hamburgerDrawer");
     const drawerCloseBtn = document.getElementById("drawerCloseBtn");
@@ -2169,6 +2836,7 @@
     const fullDataInsight = document.getElementById("fullDataInsight");
     const fullDataTcgLink = document.getElementById("fullDataTcgLink");
     const fullDataStoreLink = document.getElementById("fullDataStoreLink");
+    const favoritesCount = document.getElementById("favoritesCount");
 
     let activeFilter = "all";
     let activeSort = "score";
@@ -2178,11 +2846,189 @@
     let activeKey = null;
     let activeMode = "default";
     let activeItem = null;
+    let activeChartDays = 30;
+    let activeDetailPanel = "stats";
+    const rowSparklineCache = new Map();
     const trackingTokenKey = "pokemon-momentum-tracking-token";
     const localTagsStorageKey = "pokemon-momentum-tags";
+    const priceTargetsStorageKey = "pokemon-momentum-price-targets";
+    const alertRulesStorageKey = "pokemon-momentum-alert-rules";
     const localTags = new Map();
+    let priceTargets = {};
+    let alertRules = {};
+    let activeTrackedTag = "all";
+    let trackedItems = [];
+    let trackedItemsLoading = false;
+    let activeAlertView = "targets";
+    let activeSupportView = "feedback";
+    let trackingAuthConfig = { google_enabled: false, google_client_id: "" };
+    let googleSignInInitialized = false;
+    let activeFeedKey = "top_movers";
+    let mobileFeedLoading = false;
+    let mobileSearchLoading = false;
+    let mobileSearchRequestId = 0;
+    let mobileSearchTimer = null;
+    let mobileSearchResults = [];
+    const mobileFeedCache = new Map();
+    const MOBILE_FEEDS = {
+      top_movers: {
+        title: "Top Movers",
+        endpoint: "/top_movers",
+        params: {
+          days: "30",
+          limit: "120",
+          min_prior: "5",
+          min_signal_days: "4",
+          min_recent_observations: "5",
+          min_recent_distinct_prices: "4",
+          recent_change_within_days: "3",
+        },
+      },
+      early_uptrends: {
+        title: "Early Movers",
+        endpoint: "/early_uptrends",
+        params: {
+          days_required: "3",
+          limit: "120",
+          min_price: "5",
+          max_price_vs_sma30_pct: "8",
+          min_recent_distinct_prices: "10",
+        },
+      },
+      good_buys: {
+        title: "Pullbacks",
+        endpoint: "/good_buys",
+        params: { limit: "120" },
+      },
+      under_the_radar: {
+        title: "Under the Radar",
+        endpoint: "/under_the_radar",
+        params: {
+          days_required: "3",
+          limit: "120",
+          min_price: "5",
+          max_price_vs_sma30_pct: "5",
+          min_recent_distinct_prices_30d: "10",
+        },
+      },
+      confirmed_uptrends: {
+        title: "Confirmed Movers",
+        endpoint: "/confirmed_uptrends",
+        params: {
+          days_required: "5",
+          limit: "120",
+          min_price: "5",
+        },
+      },
+      sma30_holds: {
+        title: "Consistent Movers",
+        endpoint: "/sma30_holds",
+        params: {
+          days_required: "30",
+          limit: "120",
+          min_price: "5",
+          min_recent_distinct_prices_30d: "10",
+        },
+      },
+      breakouts: {
+        title: "Breakouts",
+        endpoint: "/breakouts",
+        params: {
+          days: "90",
+          limit: "120",
+          min_price: "5",
+          min_recent_distinct_prices_30d: "10",
+        },
+      },
+    };
+
+    function trackedKeyForProduct(productId, subTypeName = "") {
+      return `${productId}||${subTypeName || ""}`;
+    }
+
+    function feedCacheKey(feedKey, market, kind) {
+      return `${feedKey}::${market}::${kind}`;
+    }
+
+    function readInitialMobileState() {
+      const params = new URLSearchParams(window.location.search);
+      const tabFeed = params.get("feed") || params.get("tab") || "";
+      return {
+        market: params.get("market") === "JP" ? "JP" : "EN",
+        kind: params.get("kind") === "sealed" ? "sealed" : "singles",
+        mode: params.get("mode") || (MOBILE_FEEDS[tabFeed] && tabFeed !== "top_movers" ? "feed" : "default"),
+        feed: MOBILE_FEEDS[tabFeed] ? tabFeed : "top_movers",
+        trackedTag: params.get("tracked_tag") || "all",
+        alertView: params.get("alert_view") || "targets",
+        supportView: params.get("support_view") || "feedback",
+        productId: Number(params.get("product_id") || 0),
+        subTypeName: params.get("subtype") || "",
+        query: params.get("q") || "",
+      };
+    }
+
+    const initialMobileState = readInitialMobileState();
+
+    function normalizeSubType(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function persistMobileState(item = activeItem) {
+      if (!window.history?.replaceState) return;
+      const url = new URL(window.location.href);
+      ["mode", "feed", "market", "kind", "tracked_tag", "alert_view", "support_view", "product_id", "subtype", "q", "tab"].forEach((key) => {
+        url.searchParams.delete(key);
+      });
+      url.searchParams.set("market", activeMarket);
+      url.searchParams.set("kind", activeKind);
+      if (activeMode && activeMode !== "default") {
+        url.searchParams.set("mode", activeMode);
+      }
+      if (activeMode === "feed" && activeFeedKey) {
+        url.searchParams.set("feed", activeFeedKey);
+      }
+      if (activeMode === "tracked" && activeTrackedTag !== "all") {
+        url.searchParams.set("tracked_tag", activeTrackedTag);
+      }
+      if (activeMode === "alerts") {
+        url.searchParams.set("alert_view", activeAlertView);
+      }
+      if (activeMode === "support") {
+        url.searchParams.set("support_view", activeSupportView);
+      }
+      const query = searchInput?.value?.trim();
+      if (query) {
+        url.searchParams.set("q", query);
+      }
+      if (item?.productId) {
+        url.searchParams.set("product_id", String(item.productId));
+        if (item.subTypeName) {
+          url.searchParams.set("subtype", item.subTypeName);
+        }
+      }
+      window.history.replaceState({}, "", url);
+    }
+
+    function findStateItem(items, state) {
+      if (!state?.productId) return null;
+      const targetSubtype = normalizeSubType(state.subTypeName);
+      return (items || []).find((item) => {
+        if (Number(item.productId || 0) !== Number(state.productId)) return false;
+        if (!targetSubtype) return true;
+        return normalizeSubType(item.subTypeName) === targetSubtype;
+      }) || null;
+    }
 
     function activeItems() {
+      if (activeMode === "tracked") {
+        return trackedItems;
+      }
+      if (activeMode === "feed") {
+        return mobileFeedCache.get(feedCacheKey(activeFeedKey, activeMarket, activeKind)) || [];
+      }
+      if (activeMode === "search") {
+        return mobileSearchResults;
+      }
       if (activeMode === "price-drop-watch") {
         return PRICE_DROP_WATCH[activeMarket]?.[activeKind] || [];
       }
@@ -2190,6 +3036,27 @@
     }
 
     function applyScopeLabels() {
+      if (activeMode === "tracked") {
+        if (feedSectionTitle) {
+          feedSectionTitle.textContent = activeTrackedTag === "all"
+            ? "Tracked Items"
+            : formatTrackedTagLabel(activeTrackedTag);
+        }
+        return;
+      }
+      if (activeMode === "feed") {
+        if (feedSectionTitle) {
+          feedSectionTitle.textContent = MOBILE_FEEDS[activeFeedKey]?.title || "Market Feed";
+        }
+        return;
+      }
+      if (activeMode === "search") {
+        if (feedSectionTitle) {
+          const query = searchInput?.value?.trim();
+          feedSectionTitle.textContent = query ? `Search: ${query}` : "Search Results";
+        }
+        return;
+      }
       if (activeMode === "deal-check") {
         if (feedSectionTitle) {
           feedSectionTitle.textContent = "Search Results";
@@ -2219,11 +3086,20 @@
       })}`;
     }
 
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll("\"", "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
     function formatTrackedTagLabel(tag) {
       if (tag === "owned") return "Buy List";
       if (tag === "favorite") return "Favorite";
       if (tag === "watchlist") return "Watchlist";
-      if (tag === "research") return "Research";
+      if (tag === "research") return "Needs Review";
       return String(tag || "");
     }
 
@@ -2231,10 +3107,217 @@
       return localStorage.getItem(trackingTokenKey) || "";
     }
 
+    function setTrackingCookie(token) {
+      const value = String(token || "").trim();
+      if (!value) return;
+      document.cookie = `pm_tracking_token=${encodeURIComponent(value)}; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+    }
+
+    function clearTrackingCookie() {
+      document.cookie = "pm_tracking_token=; Path=/; Max-Age=0; SameSite=Lax";
+    }
+
+    function setMobileAuthStatus(message = "", isWarn = false) {
+      if (!mobileAuthStatus) return;
+      mobileAuthStatus.textContent = message;
+      mobileAuthStatus.classList.toggle("warn", Boolean(isWarn));
+    }
+
+    function buildLocalTrackingItems() {
+      const items = [];
+      for (const [key, tags] of localTags.entries()) {
+        const [productIdRaw, subTypeName = ""] = String(key || "").split("||");
+        const productId = Number(productIdRaw);
+        if (!Number.isFinite(productId) || productId <= 0 || !tags?.size) continue;
+        for (const tag of tags) {
+          items.push({
+            category_id: categoryIdForMarket(activeMarket),
+            product_id: productId,
+            sub_type_name: subTypeName,
+            tag,
+          });
+        }
+      }
+      return items;
+    }
+
+    function updateAccountLabels() {
+      const signedIn = Boolean(getTrackingToken());
+      if (accountNameLabel) {
+        accountNameLabel.textContent = signedIn ? "Adam" : "Sign in";
+      }
+      if (accountToggleBtn) {
+        accountToggleBtn.classList.toggle("signed-out", !signedIn);
+      }
+      if (userGreeting) {
+        userGreeting.innerHTML = signedIn
+          ? "<small>Hello,</small> Adam"
+          : "<small>Hello</small>";
+      }
+      if (userProfileTitle) {
+        userProfileTitle.textContent = signedIn ? "Profile" : "Sign in to save";
+      }
+      if (userProfileCopy) {
+        userProfileCopy.hidden = signedIn;
+      }
+      if (accountSettingsLink) {
+        accountSettingsLink.hidden = !signedIn;
+      }
+      if (mobileGoogleSignInMount) {
+        mobileGoogleSignInMount.hidden = signedIn;
+      }
+      if (mobileSignOutLink) {
+        mobileSignOutLink.hidden = !signedIn;
+      }
+      if (signedIn) {
+        setMobileAuthStatus("");
+      }
+    }
+
+    async function loadTrackingAuthConfig() {
+      try {
+        const response = await fetch("/tracking/auth_config", { headers: { "accept": "application/json" } });
+        if (!response.ok) throw new Error(`Auth config ${response.status}`);
+        trackingAuthConfig = await response.json();
+      } catch (_) {
+        trackingAuthConfig = { google_enabled: false, google_client_id: "" };
+      }
+    }
+
+    async function beginGoogleTrackingAuth(credential) {
+      if (!credential) {
+        setMobileAuthStatus("Google sign-in did not return a credential.", true);
+        return;
+      }
+      setMobileAuthStatus("Signing in with Google...");
+      try {
+        const response = await fetch("/tracking/google_session", {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ credential }),
+        });
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => ({}));
+          throw new Error(errorPayload.detail || `Sign-in failed (${response.status})`);
+        }
+        const payload = await response.json();
+        const token = String(payload.token || "");
+        if (!token) throw new Error("Sign-in did not return a tracking token.");
+        localStorage.setItem(trackingTokenKey, token);
+        setTrackingCookie(token);
+        const localItems = buildLocalTrackingItems();
+        if (localItems.length) {
+          await fetch("/tracking/tags/merge", {
+            method: "POST",
+            headers: {
+              "accept": "application/json",
+              "content-type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ items: localItems }),
+          });
+        }
+        await loadRemoteTrackingTags();
+        updateAccountLabels();
+        setMobileAuthStatus("Signed in. Saved lists can now sync.");
+      } catch (error) {
+        setMobileAuthStatus(`Could not sign in: ${error.message}`, true);
+      }
+    }
+
+    function initializeMobileGoogleSignIn() {
+      if (!mobileGoogleSignInMount) return;
+      if (getTrackingToken()) {
+        mobileGoogleSignInMount.hidden = true;
+        return;
+      }
+      if (!trackingAuthConfig.google_enabled) {
+        setMobileAuthStatus("Google sign-in is not configured yet.", true);
+        mobileGoogleSignInMount.hidden = true;
+        return;
+      }
+      if (!window.google?.accounts?.id) {
+        setMobileAuthStatus("Loading Google sign-in...");
+        window.setTimeout(initializeMobileGoogleSignIn, 250);
+        return;
+      }
+      if (googleSignInInitialized) return;
+      mobileGoogleSignInMount.innerHTML = "";
+      mobileGoogleSignInMount.hidden = false;
+      window.google.accounts.id.initialize({
+        client_id: trackingAuthConfig.google_client_id,
+        callback: async (response) => {
+          await beginGoogleTrackingAuth(response?.credential || "");
+        },
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+      window.google.accounts.id.renderButton(mobileGoogleSignInMount, {
+        theme: "outline",
+        size: "large",
+        text: "signin_with",
+        shape: "pill",
+        width: mobileGoogleSignInMount.clientWidth || 260,
+      });
+      setMobileAuthStatus("Use Google to sync saved lists across devices.");
+      googleSignInInitialized = true;
+    }
+
+    function completeLocalSignOut() {
+      localStorage.removeItem(trackingTokenKey);
+      clearTrackingCookie();
+      localTags.clear();
+      trackedItems = [];
+      googleSignInInitialized = false;
+      if (mobileGoogleSignInMount) {
+        mobileGoogleSignInMount.innerHTML = "";
+      }
+      saveStoredTags();
+      updateTrackedCountBadge();
+      updateAccountLabels();
+      setUserDrawerOpen(false);
+    }
+
+    function signOutTracking() {
+      const trackingToken = getTrackingToken();
+      completeLocalSignOut();
+      if (trackingToken) {
+        fetch("/tracking/session", {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${trackingToken}` },
+          keepalive: true,
+        }).catch(() => {
+          // Local sign-out already completed.
+        });
+      }
+      window.setTimeout(() => {
+        window.location.assign("/dashboard");
+      }, 80);
+    }
+
+    function updateTrackedCountBadge() {
+      if (!favoritesCount) return;
+      let count = 0;
+      for (const tags of localTags.values()) {
+        if (tags?.size) count += 1;
+      }
+      favoritesCount.textContent = count > 99 ? "99+" : String(count);
+      favoritesCount.setAttribute("aria-label", `${count} tracked item${count === 1 ? "" : "s"}`);
+      if (favoritesBtn) {
+        favoritesBtn.setAttribute("aria-label", `Open tracked items. ${count} item${count === 1 ? "" : "s"} tracked.`);
+      }
+    }
+
     function loadStoredTags() {
       try {
         const raw = localStorage.getItem(localTagsStorageKey);
-        if (!raw) return;
+        if (!raw) {
+          updateTrackedCountBadge();
+          return;
+        }
         Object.entries(JSON.parse(raw)).forEach(([key, tags]) => {
           if (Array.isArray(tags)) {
             localTags.set(key, new Set(tags));
@@ -2243,6 +3326,7 @@
       } catch (err) {
         localTags.clear();
       }
+      updateTrackedCountBadge();
     }
 
     function saveStoredTags() {
@@ -2251,6 +3335,155 @@
         obj[key] = Array.from(tags);
       }
       localStorage.setItem(localTagsStorageKey, JSON.stringify(obj));
+      updateTrackedCountBadge();
+    }
+
+    function loadAlertStorage() {
+      try {
+        priceTargets = JSON.parse(localStorage.getItem(priceTargetsStorageKey) || "{}") || {};
+      } catch (_) {
+        priceTargets = {};
+      }
+      try {
+        alertRules = JSON.parse(localStorage.getItem(alertRulesStorageKey) || "{}") || {};
+      } catch (_) {
+        alertRules = {};
+      }
+    }
+
+    function savePriceTargets() {
+      localStorage.setItem(priceTargetsStorageKey, JSON.stringify(priceTargets));
+    }
+
+    function saveAlertRules() {
+      localStorage.setItem(alertRulesStorageKey, JSON.stringify(alertRules));
+    }
+
+    function targetStorageKey(item) {
+      if (!item?.productId) return "";
+      return `${item.categoryId || categoryIdForMarket(activeMarket)}||${item.productId}||${item.subTypeName || ""}`;
+    }
+
+    async function loadRemoteTrackingTags() {
+      const trackingToken = getTrackingToken();
+      if (!trackingToken) {
+        updateTrackedCountBadge();
+        return;
+      }
+      try {
+        const response = await fetch("/tracking/tags", {
+          headers: {
+            "accept": "application/json",
+            Authorization: `Bearer ${trackingToken}`,
+          },
+        });
+        if (!response.ok) throw new Error("Unable to load remote tags");
+        const payload = await response.json();
+        (payload.items || []).forEach((item) => {
+          const key = trackedKeyForProduct(item.product_id, item.sub_type_name);
+          if (!localTags.has(key)) {
+            localTags.set(key, new Set());
+          }
+          localTags.get(key).add(item.tag);
+        });
+        saveStoredTags();
+      } catch (_) {
+        updateTrackedCountBadge();
+      }
+    }
+
+    function normalizeTrackedTag(tag) {
+      return ["all", "favorite", "watchlist", "research", "owned"].includes(tag) ? tag : "all";
+    }
+
+    function buildTrackingResolveItems(tagFilter = activeTrackedTag) {
+      const normalizedTag = normalizeTrackedTag(tagFilter);
+      const items = [];
+      for (const [key, tags] of localTags.entries()) {
+        if (!tags?.size) continue;
+        const [productIdRaw, subTypeName = ""] = String(key || "").split("||");
+        const productId = Number(productIdRaw);
+        if (!Number.isFinite(productId) || productId <= 0) continue;
+        for (const tag of tags) {
+          if (normalizedTag !== "all" && tag !== normalizedTag) continue;
+          items.push({
+            category_id: activeMarket === "JP" ? 85 : 3,
+            product_id: productId,
+            sub_type_name: subTypeName,
+            tag,
+          });
+        }
+      }
+      return items;
+    }
+
+    function trackedRowToItem(row, columns) {
+      const productId = cell(row, columns, "productId", "");
+      const subTypeName = String(cell(row, columns, "subTypeName", "") || "");
+      const productName = String(cell(row, columns, "productName", "") || "Tracked Product");
+      const groupName = String(cell(row, columns, "groupName", "") || "Unknown Set");
+      const number = String(cell(row, columns, "number", "") || "");
+      const rarity = String(cell(row, columns, "rarity", "") || "");
+      const productKind = String(cell(row, columns, "productKind", "") || "card").toLowerCase();
+      const latestPrice = Number(cell(row, columns, "latest_price", 0) || 0);
+      const descriptor = [rarity, number, subTypeName].filter(Boolean).join(" · ");
+      return {
+        key: `${activeMarket}-${productId}-${subTypeName || "raw"}-tracked`,
+        productId: Number(productId),
+        subTypeName,
+        categoryId: activeMarket === "JP" ? 85 : 3,
+        symbol: productName,
+        name: descriptor || subTypeName || productKind,
+        set: groupName,
+        imageUrl: String(cell(row, columns, "imageUrl", "") || ""),
+        price: latestPrice,
+        change30d: 0,
+        score: 0,
+        volatility: "Tracked",
+        trend: syntheticTrend(latestPrice, 0),
+        kind: productKind === "sealed" ? "sealed" : "singles",
+        signalDays: 0,
+        recentObservations: 0,
+        recentDistinctPrices: 0,
+        lastChangeDate: String(cell(row, columns, "latest_date", "") || ""),
+        tags: String(cell(row, columns, "tags", "") || ""),
+        seriesCache: {},
+      };
+    }
+
+    async function loadTrackedItems(tagFilter = activeTrackedTag) {
+      const normalizedTag = normalizeTrackedTag(tagFilter);
+      const items = buildTrackingResolveItems(normalizedTag);
+      if (!items.length) {
+        trackedItems = [];
+        return trackedItems;
+      }
+      trackedItemsLoading = true;
+      try {
+        const response = await fetch("/tracking/items/resolve", {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            category_id: activeMarket === "JP" ? 85 : 3,
+            segment: activeKind === "sealed" ? "sealed" : "cards",
+            tracked_tag: normalizedTag,
+            tracked_sort: "tags",
+            items,
+          }),
+        });
+        if (!response.ok) throw new Error("Unable to load tracked items");
+        const payload = await response.json();
+        const columns = payload.columns || [];
+        trackedItems = (payload.rows || []).map((row) => trackedRowToItem(row, columns));
+      } catch (_) {
+        trackedItems = [];
+      } finally {
+        trackedItemsLoading = false;
+      }
+      return trackedItems;
     }
 
     function setSaveStatus(message, isWarn = false) {
@@ -2261,7 +3494,10 @@
 
     function updateSaveOptions() {
       if (!saveOptions) return;
-      const savedTags = activeItem ? localTags.get(activeItem.key) : null;
+      const savedKey = activeItem?.productId
+        ? trackedKeyForProduct(activeItem.productId, activeItem.subTypeName)
+        : activeItem?.key;
+      const savedTags = savedKey ? localTags.get(savedKey) : null;
       saveOptions.querySelectorAll("[data-save-tag]").forEach((button) => {
         const tag = button.dataset.saveTag || "";
         button.classList.toggle("saved", Boolean(savedTags?.has(tag)));
@@ -2318,10 +3554,13 @@
         setSaveStatus("Select a product first, then choose a save list.", true);
         return;
       }
-      if (!localTags.has(activeItem.key)) {
-        localTags.set(activeItem.key, new Set());
+      const storageKey = activeItem.productId
+        ? trackedKeyForProduct(activeItem.productId, activeItem.subTypeName)
+        : activeItem.key;
+      if (!localTags.has(storageKey)) {
+        localTags.set(storageKey, new Set());
       }
-      localTags.get(activeItem.key).add(tag);
+      localTags.get(storageKey).add(tag);
       saveStoredTags();
       updateSaveOptions();
       const label = formatTrackedTagLabel(tag);
@@ -2403,6 +3642,338 @@
       });
     }
 
+    function setPrimaryView() {
+      const showingAlerts = activeMode === "alerts";
+      const showingSupport = activeMode === "support";
+      if (feedView) feedView.hidden = showingAlerts || showingSupport;
+      if (alertsPage) alertsPage.hidden = !showingAlerts;
+      if (supportPage) supportPage.hidden = !showingSupport;
+      if (bottomBar) bottomBar.hidden = showingAlerts || showingSupport;
+    }
+
+    function scrollToMobileTop() {
+      const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      requestAnimationFrame(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: reducedMotion ? "auto" : "smooth",
+        });
+      });
+    }
+
+    function alertViewTitle(view) {
+      if (view === "momentum") return "Momentum Alerts";
+      if (view === "recent") return "Recent Alerts";
+      return "Price Targets";
+    }
+
+    function renderAlertsTabs() {
+      document.querySelectorAll("[data-alert-tab]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.alertTab === activeAlertView);
+      });
+    }
+
+    function renderPriceTargets() {
+      if (!alertsBody) return;
+      if (trackedItemsLoading) {
+        alertsBody.innerHTML = "<div class=\"alert-card\"><h3>Loading tracked items...</h3><p>Targets are built from the items you already saved.</p></div>";
+        return;
+      }
+      if (!trackedItems.length) {
+        alertsBody.innerHTML = "<div class=\"alert-card\"><h3>No tracked items yet</h3><p>Save cards or sealed products first, then add target buy and sell prices here.</p></div>";
+        return;
+      }
+      alertsBody.innerHTML = trackedItems.map((item) => {
+        const key = targetStorageKey(item);
+        const target = priceTargets[key] || {};
+        const suggestedBuy = item.price ? (item.price * 0.88).toFixed(2) : "";
+        const suggestedSell = item.price ? (item.price * 1.15).toFixed(2) : "";
+        return `
+          <article class="alert-card" data-target-key="${escapeHtml(key)}">
+            <div class="alert-card-head">
+              <div>
+                <h3>${escapeHtml(item.symbol || item.name)}</h3>
+                <p>${escapeHtml(item.set)} · ${formatMoney(item.price)} current market</p>
+              </div>
+              <span class="alert-pill">${escapeHtml(item.tags || "Tracked")}</span>
+            </div>
+            <div class="target-grid">
+              <div class="target-field">
+                <label>Buy Below</label>
+                <input data-target-field="buy" type="number" inputmode="decimal" step="0.01" placeholder="${suggestedBuy}" value="${escapeHtml(target.buy || "")}">
+              </div>
+              <div class="target-field">
+                <label>Sell Above</label>
+                <input data-target-field="sell" type="number" inputmode="decimal" step="0.01" placeholder="${suggestedSell}" value="${escapeHtml(target.sell || "")}">
+              </div>
+            </div>
+            <button type="button" class="target-save-btn" data-save-target="${escapeHtml(key)}">Save Targets</button>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderMomentumAlerts() {
+      if (!alertsBody) return;
+      const rules = [
+        ["breakout", "Breakout Watch", "Alert when a tracked item appears in Breakouts or pushes above a recent high."],
+        ["pullback", "Buyable Pullback", "Alert when a tracked item cools down enough to enter a better buy zone."],
+        ["momentum", "Momentum Shift", "Alert when 30d movement materially improves or weakens."],
+        ["stale", "Stale Tracking", "Alert when a tracked item has not changed recently and may need review."],
+      ];
+      alertsBody.innerHTML = rules.map(([key, title, copy]) => {
+        const enabled = Boolean(alertRules[key]);
+        return `
+          <article class="alert-card">
+            <div class="alert-card-head">
+              <div>
+                <h3>${title}</h3>
+                <p>${copy}</p>
+              </div>
+              <span class="alert-pill">${enabled ? "On" : "Off"}</span>
+            </div>
+            <button type="button" class="alert-toggle${enabled ? " enabled" : ""}" data-alert-rule="${key}">
+              ${enabled ? "Disable" : "Enable"} ${title}
+            </button>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderRecentAlerts() {
+      if (!alertsBody) return;
+      const savedTargets = Object.entries(priceTargets).filter(([, value]) => value?.buy || value?.sell);
+      const events = [];
+      trackedItems.slice(0, 5).forEach((item) => {
+        if (item.change30d >= 15) {
+          events.push([
+            `${item.symbol || item.name} has strong momentum`,
+            `${formatPct(item.change30d)} over 30 days. Review before chasing the move.`,
+          ]);
+        } else if (item.change30d < 0) {
+          events.push([
+            `${item.symbol || item.name} is cooling`,
+            `${formatPct(item.change30d)} over 30 days. This may be worth checking against your buy target.`,
+          ]);
+        }
+      });
+      if (savedTargets.length) {
+        events.unshift([
+          `${savedTargets.length} target${savedTargets.length === 1 ? "" : "s"} saved`,
+          "Saved target prices are local-first for now. Delivery notifications can come later.",
+        ]);
+      }
+      const emptyRecent = `
+        <div class="alert-empty">
+          <strong>No alerts yet</strong>
+          <span>Recent will become your inbox for target hits and momentum changes. Set a target or enable a rule to start generating activity.</span>
+          <div class="alert-actions">
+            <button type="button" class="alert-action-btn" data-alert-tab="targets">Set Targets</button>
+            <button type="button" class="alert-action-btn" data-alert-tab="momentum">Enable Rules</button>
+          </div>
+        </div>
+        <article class="alert-card">
+          <div class="alert-card-head">
+            <div>
+              <h3>What will show here</h3>
+              <p>These are examples of the alert types this page is being shaped around.</p>
+            </div>
+          </div>
+          <div class="alert-preview-list">
+            <div class="alert-preview"><b>Target hit</b><small>A tracked item drops below your buy-below price.</small></div>
+            <div class="alert-preview"><b>Momentum shift</b><small>A saved card enters Breakouts, Pullbacks, or starts cooling.</small></div>
+            <div class="alert-preview"><b>Review reminder</b><small>A watchlist item goes stale and may need cleanup.</small></div>
+          </div>
+        </article>
+      `;
+      alertsBody.innerHTML = `
+        <article class="alert-card">
+          <div class="alert-card-head">
+            <div>
+              <h3>Recent Alert Activity</h3>
+              <p>In-site alerts first. Push, email, or Discord can come after the rules prove useful.</p>
+            </div>
+            <span class="alert-pill">${events.length}</span>
+          </div>
+          ${events.length ? events.map(([title, copy]) => `
+            <div class="alert-event"><strong>${escapeHtml(title)}</strong><span>${escapeHtml(copy)}</span></div>
+          `).join("") : emptyRecent}
+        </article>
+      `;
+    }
+
+    function renderAlertsView() {
+      setPrimaryView();
+      renderAlertsTabs();
+      if (activeAlertView === "momentum") {
+        renderMomentumAlerts();
+      } else if (activeAlertView === "recent") {
+        renderRecentAlerts();
+      } else {
+        renderPriceTargets();
+      }
+    }
+
+    function normalizeSupportView(view) {
+      return ["feedback", "bug", "guide"].includes(view) ? view : "feedback";
+    }
+
+    function renderSupportTabs() {
+      document.querySelectorAll("[data-support-tab]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.supportTab === activeSupportView);
+      });
+    }
+
+    function supportContextPayload() {
+      return {
+        page_path: window.location.pathname,
+        page_url: window.location.href,
+        category_id: activeItem?.categoryId || categoryIdForMarket(activeMarket),
+        tab: activeMode,
+        segment: `${activeMarket} ${activeKind === "sealed" ? "Sealed" : "Singles"}`,
+        chart_mode: activeDetailPanel || "",
+        product_key: activeItem?.productId ? trackedKeyForProduct(activeItem.productId, activeItem.subTypeName) : "",
+        group_id: activeItem?.groupId || "",
+        search_query: searchInput?.value?.trim() || "",
+        reporter_username: accountNameLabel?.textContent || "",
+        user_agent: navigator.userAgent || "",
+      };
+    }
+
+    function supportFormTemplate(type) {
+      const isBug = type === "bug";
+      return `
+        <article class="alert-card">
+          <div class="alert-card-head">
+            <div>
+              <h3>${isBug ? "Report a Bug" : "Send Feedback"}</h3>
+              <p>${isBug ? "Tell us what broke, what you tapped, and what happened instead." : "Share what felt confusing, missing, too slow, or surprisingly useful."}</p>
+            </div>
+            <span class="alert-pill">${isBug ? "Bug" : "Feedback"}</span>
+          </div>
+          <div class="support-form" data-support-form="${type}">
+            <div class="target-field">
+              <label>Short Title</label>
+              <input data-support-title type="text" value="${isBug ? "Mobile bug report" : "Mobile feedback"}" placeholder="Short summary">
+            </div>
+            <div class="target-field">
+              <label>${isBug ? "What Happened" : "Feedback"}</label>
+              <textarea class="support-textarea" data-support-details placeholder="${isBug ? "What did you do, and what happened instead?" : "What should we improve, add, remove, or make clearer?"}"></textarea>
+            </div>
+            <div class="target-field">
+              <label>${isBug ? "Expected Result" : "Idea / Preferred Result"}</label>
+              <textarea class="support-textarea" data-support-expected placeholder="${isBug ? "Optional: what should have happened?" : "Optional: what would make this feel better?"}"></textarea>
+            </div>
+            <button type="button" class="target-save-btn" data-support-submit="${type}">${isBug ? "Submit Bug Report" : "Send Feedback"}</button>
+            <div class="support-status" data-support-status>${isBug ? "Bug reports are saved internally so they can be reviewed later." : "Feedback is saved in the same internal review queue as bug reports."}</div>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderSupportGuide() {
+      if (!supportBody) return;
+      supportBody.innerHTML = `
+        <article class="alert-card">
+          <div class="alert-card-head">
+            <div>
+              <h3>Mobile Quick Guide</h3>
+              <p>This is the first-pass guide for how the mobile dashboard is meant to be used at a card table.</p>
+            </div>
+            <span class="alert-pill">Guide</span>
+          </div>
+          <div class="support-guide-list">
+            <div class="support-guide-item">
+              <strong>Search first</strong>
+              <span>Use the top search to narrow the loaded mobile feed by card name, set, number, rarity, or product type.</span>
+            </div>
+            <div class="support-guide-item">
+              <strong>Switch scope quickly</strong>
+              <span>Use English/Japanese and Singles/Sealed before browsing so the results match what you are buying.</span>
+            </div>
+            <div class="support-guide-item">
+              <strong>Check the deal</strong>
+              <span>Enter the seller price on the home decision card to see the edge versus market and a suggested offer.</span>
+            </div>
+            <div class="support-guide-item">
+              <strong>Save with intent</strong>
+              <span>Use Favorite, Watchlist, Needs Review, or Buy List so tracked items come back grouped by why you saved them.</span>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderSupportView() {
+      setPrimaryView();
+      renderSupportTabs();
+      if (!supportBody) return;
+      if (activeSupportView === "guide") {
+        renderSupportGuide();
+      } else {
+        supportBody.innerHTML = supportFormTemplate(activeSupportView);
+      }
+    }
+
+    async function submitSupportReport(type) {
+      const form = supportBody?.querySelector(`[data-support-form="${type}"]`);
+      if (!form) return;
+      const titleInput = form.querySelector("[data-support-title]");
+      const detailsInput = form.querySelector("[data-support-details]");
+      const expectedInput = form.querySelector("[data-support-expected]");
+      const status = form.querySelector("[data-support-status]");
+      const submit = form.querySelector("[data-support-submit]");
+      const title = String(titleInput?.value || "").trim();
+      const details = String(detailsInput?.value || "").trim();
+      const expected = String(expectedInput?.value || "").trim();
+
+      const setStatus = (message, warn = false) => {
+        if (!status) return;
+        status.textContent = message;
+        status.classList.toggle("warn", Boolean(warn));
+      };
+
+      if (title.length < 3) {
+        setStatus("Add a short title so this is easier to review later.", true);
+        titleInput?.focus();
+        return;
+      }
+      if (details.length < 10) {
+        setStatus("Add a little more detail so this is useful when reviewing it later.", true);
+        detailsInput?.focus();
+        return;
+      }
+
+      if (submit) submit.disabled = true;
+      setStatus(type === "bug" ? "Submitting bug report..." : "Sending feedback...");
+      try {
+        const response = await fetch("/bug_reports", {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            ...supportContextPayload(),
+            title,
+            details: `${type === "bug" ? "[Mobile Bug]" : "[Mobile Feedback]"} ${details}`,
+            expected,
+          }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.detail || "Could not save this report.");
+        }
+        setStatus(`${type === "bug" ? "Bug report" : "Feedback"} #${payload.id || ""} saved.`);
+        if (detailsInput) detailsInput.value = "";
+        if (expectedInput) expectedInput.value = "";
+      } catch (error) {
+        setStatus(error.message || "Could not save this yet.", true);
+      } finally {
+        if (submit) submit.disabled = false;
+      }
+    }
+
     async function loadFullDataStoreLink(item) {
       fullDataStoreLink.hidden = true;
       fullDataStoreLink.href = "#";
@@ -2465,6 +4036,276 @@
       return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     }
 
+    function columnIndex(columns, name) {
+      return Array.isArray(columns) ? columns.indexOf(name) : -1;
+    }
+
+    function cell(row, columns, name, fallback = null) {
+      const index = columnIndex(columns, name);
+      return index >= 0 ? row[index] : fallback;
+    }
+
+    function syntheticTrend(price, change30d) {
+      const current = Number(price || 0);
+      const change = Number(change30d || 0);
+      if (!current) return [0, 0, 0, 0, 0, 0, 0, 0, 0];
+      const start = change <= -99 ? current : current / (1 + change / 100);
+      return Array.from({ length: 9 }, (_, index) => {
+        const progress = index / 8;
+        return start + (current - start) * progress;
+      });
+    }
+
+    function volatilityLabel(change7d, change30d) {
+      const size = Math.max(Math.abs(Number(change7d || 0)), Math.abs(Number(change30d || 0)));
+      if (size >= 18) return "High";
+      if (size >= 7) return "Medium";
+      return "Low";
+    }
+
+    function effectiveMobileKind(productKind, productName) {
+      const kind = String(productKind || "").trim().toLowerCase();
+      if (kind === "excluded") return "excluded";
+      if (kind === "card") return "singles";
+      return "sealed";
+    }
+
+    function liveRowToItem(row, columns, market, categoryId) {
+      const productId = cell(row, columns, "productId", "");
+      const subTypeName = String(cell(row, columns, "subTypeName", "") || "");
+      const productName = String(cell(row, columns, "productName", "") || "Unknown Product");
+      const groupName = String(cell(row, columns, "groupName", "") || "Unknown Set");
+      const number = String(cell(row, columns, "number", "") || "");
+      const rarity = String(cell(row, columns, "rarity", "") || "");
+      const productKind = String(cell(row, columns, "productKind", "") || "card").toLowerCase();
+      const latestPrice = Number(cell(row, columns, "latest_price", 0) || 0);
+      const currentPrice = Number(cell(row, columns, "p_now", latestPrice) || latestPrice || 0);
+      const priorPrice = Number(cell(row, columns, "p_prior", 0) || 0);
+      const change7d = Number(cell(row, columns, "roc_7d_pct", 0) || 0);
+      const change30d = Number(
+        cell(row, columns, "roc_30d_pct",
+          cell(row, columns, "roc_pct",
+            cell(row, columns, "breakout_pct",
+              cell(row, columns, "pct_vs_sma30",
+                cell(row, columns, "price_vs_sma30_pct", 0)
+              )
+            )
+          )
+        ) || 0
+      );
+      const score = Math.round(Number(
+        cell(row, columns, "trend_score",
+          cell(row, columns, "momentum_score",
+            Math.max(0, change30d)
+          )
+        ) || 0
+      ));
+      const descriptor = [rarity, number, subTypeName].filter(Boolean).join(" · ");
+      return {
+        key: `${market}-${productId}-${subTypeName || "raw"}`,
+        productId: Number(productId),
+        subTypeName,
+        categoryId,
+        symbol: productName,
+        name: descriptor || subTypeName || productKind,
+        set: groupName,
+        imageUrl: String(cell(row, columns, "imageUrl", "") || ""),
+        price: currentPrice,
+        change30d,
+        score: score || Math.round(Math.max(0, change30d)),
+        volatility: volatilityLabel(change7d, change30d),
+        trend: priorPrice > 0 ? syntheticTrend(currentPrice, change30d) : syntheticTrend(currentPrice, change30d),
+        kind: effectiveMobileKind(productKind, productName),
+        signalDays: Number(cell(row, columns, "signal_days", cell(row, columns, "hold_days", cell(row, columns, "bullish_streak", cell(row, columns, "early_streak", cell(row, columns, "days", 0))))) || 0),
+        recentObservations: Number(cell(row, columns, "recent_observations", cell(row, columns, "recent_observations_30d", cell(row, columns, "observations", 0))) || 0),
+        recentDistinctPrices: Number(cell(row, columns, "recent_distinct_prices", cell(row, columns, "recent_distinct_prices_30d", cell(row, columns, "distinct_prices", 0))) || 0),
+        lastChangeDate: String(cell(row, columns, "last_change_date", "") || ""),
+        seriesCache: {},
+      };
+    }
+
+    function searchResultToItem(result, market, categoryId) {
+      const productId = Number(result.productId || 0);
+      const subTypeName = String(result.subTypeName || "");
+      const productName = String(result.productName || result.title || "Unknown Product");
+      const groupName = String(result.groupName || "Unknown Set");
+      const number = String(result.number || "");
+      const rarity = String(result.rarity || "");
+      const productKind = String(result.productKind || "card").toLowerCase();
+      const price = Number(result.latest_price || 0);
+      const descriptor = [rarity, number, subTypeName].filter(Boolean).join(" · ");
+      return {
+        key: `${market}-search-${productId}-${subTypeName || "raw"}`,
+        productId,
+        subTypeName,
+        categoryId,
+        symbol: productName,
+        name: descriptor || subTypeName || productKind,
+        set: groupName,
+        imageUrl: String(result.imageUrl || ""),
+        price,
+        change30d: 0,
+        score: Math.round(Number(result.score || 0)),
+        volatility: "Unknown",
+        trend: syntheticTrend(price, 0),
+        kind: effectiveMobileKind(productKind, productName),
+        signalDays: 0,
+        recentObservations: 0,
+        recentDistinctPrices: 0,
+        lastChangeDate: String(result.latest_date || ""),
+        seriesCache: {},
+      };
+    }
+
+    function categoryIdForMarket(market) {
+      return market === "JP" ? 85 : 3;
+    }
+
+    function productKindForScope(kind) {
+      return kind === "sealed" ? "sealed" : "card";
+    }
+
+    async function loadMobileFeed(feedKey, market = activeMarket, kind = activeKind) {
+      const config = MOBILE_FEEDS[feedKey];
+      if (!config) return [];
+      const cacheKey = feedCacheKey(feedKey, market, kind);
+      if (mobileFeedCache.has(cacheKey)) {
+        return mobileFeedCache.get(cacheKey);
+      }
+      const categoryId = categoryIdForMarket(market);
+      const params = new URLSearchParams({
+        ...config.params,
+        category_id: String(categoryId),
+        product_kind: productKindForScope(kind),
+      });
+      const response = await fetch(`${config.endpoint}?${params.toString()}`, {
+        headers: { "accept": "application/json" },
+      });
+      if (!response.ok) throw new Error(`Failed to load ${config.title}`);
+      const payload = await response.json();
+      const columns = payload.columns || [];
+      const rows = payload.rows || [];
+      const items = rows
+        .map((row) => liveRowToItem(row, columns, market, categoryId))
+        .filter((item) => item.price > 0);
+      mobileFeedCache.set(cacheKey, items);
+      return items;
+    }
+
+    async function openMobileSearch(query = searchInput?.value || "") {
+      const term = String(query || "").trim();
+      if (term.length < 2) {
+        mobileSearchResults = [];
+        mobileSearchLoading = false;
+        if (activeMode === "search") {
+          activeFeedKey = "top_movers";
+          activeIntent = "movers";
+          setMode("default");
+          persistMobileState(null);
+        } else {
+          renderCards(activeItems());
+        }
+        return;
+      }
+
+      const requestId = ++mobileSearchRequestId;
+      const categoryId = categoryIdForMarket(activeMarket);
+      activeMode = "search";
+      activeFilter = "all";
+      activeSort = "score";
+      activeKey = null;
+      mobileSearchLoading = true;
+      mobileSearchResults = [];
+      applyScopeLabels();
+      syncHeaderControls();
+      setPrimaryView();
+      renderCards([]);
+      persistMobileState(null);
+
+      try {
+        const params = new URLSearchParams({
+          query: term,
+          limit: "80",
+          category_id: String(categoryId),
+        });
+        const response = await fetch(`/search?${params.toString()}`, {
+          headers: { "accept": "application/json" },
+        });
+        if (!response.ok) throw new Error("Search failed");
+        const payload = await response.json();
+        if (requestId !== mobileSearchRequestId) return;
+        const expectedKind = activeKind === "sealed" ? "sealed" : "singles";
+        mobileSearchResults = (payload.items || [])
+          .filter((item) => item.kind !== "set")
+          .map((item) => searchResultToItem(item, activeMarket, categoryId))
+          .filter((item) => item.productId && item.price > 0 && item.kind === expectedKind);
+      } catch (error) {
+        console.warn(error);
+        if (requestId === mobileSearchRequestId) {
+          mobileSearchResults = [];
+        }
+      } finally {
+        if (requestId !== mobileSearchRequestId) return;
+        mobileSearchLoading = false;
+        applyScopeLabels();
+        renderCards(activeItems());
+        persistMobileState(null);
+      }
+    }
+
+    function scheduleMobileSearch() {
+      if (mobileSearchTimer) {
+        clearTimeout(mobileSearchTimer);
+      }
+      mobileSearchTimer = setTimeout(() => {
+        openMobileSearch(searchInput?.value || "");
+      }, 250);
+    }
+
+    async function loadLiveMarketData() {
+      const configs = [
+        ["EN", 3, "singles", "card"],
+        ["EN", 3, "sealed", "sealed"],
+        ["JP", 85, "singles", "card"],
+        ["JP", 85, "sealed", "sealed"],
+      ];
+      const responses = await Promise.allSettled(
+        configs.map(async ([market, categoryId, kind, productKind]) => {
+          const params = new URLSearchParams({
+            days: "30",
+            limit: "120",
+            min_prior: "5",
+            min_signal_days: "4",
+            min_recent_observations: "5",
+            min_recent_distinct_prices: "4",
+            recent_change_within_days: "3",
+            product_kind: productKind,
+            category_id: String(categoryId),
+          });
+          const response = await fetch(`/top_movers?${params.toString()}`, {
+            headers: { "accept": "application/json" },
+          });
+          if (!response.ok) throw new Error(`Failed to load ${market} ${kind} top movers`);
+          const payload = await response.json();
+          return [market, kind, categoryId, payload];
+        })
+      );
+
+      responses.forEach((result) => {
+        if (result.status !== "fulfilled") return;
+        const [market, kind, categoryId, payload] = result.value;
+        const columns = payload.columns || [];
+        const rows = payload.rows || [];
+        const liveItems = rows
+          .map((row) => liveRowToItem(row, columns, market, categoryId))
+          .filter((item) => item.price > 0);
+        if (liveItems.length) {
+          SAMPLE_DATA[market][kind] = liveItems;
+          mobileFeedCache.set(feedCacheKey("top_movers", market, kind), liveItems);
+        }
+      });
+    }
+
     function shortChartDate(value) {
       if (!value) return "";
       const date = new Date(`${value}T00:00:00Z`);
@@ -2472,7 +4313,7 @@
       return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     }
 
-    function fallbackDateLabels(days = 30) {
+    function fallbackDateLabels(days) {
       const end = new Date();
       const start = new Date(end);
       start.setDate(end.getDate() - Number(days || 30));
@@ -2482,7 +4323,7 @@
       };
     }
 
-    function sparkline(values, stroke = "#25d0a5", width = 320, height = 104, dates = null, days = 30) {
+    function sparkline(values, stroke = "#25d0a5", width = 320, height = 104, dates = null, days = activeChartDays) {
       const cleanValues = values.filter((value) => Number.isFinite(Number(value))).map(Number);
       if (!cleanValues.length) return "";
       const min = Math.min(...cleanValues);
@@ -2548,34 +4389,141 @@
       return `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Trend line"><polyline points="${points}" fill="none" stroke="${stroke}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg>`;
     }
 
+    function sparklineKey(item, days = 30) {
+      return `${item.categoryId || activeMarket}:${item.productId || item.key}:${item.subTypeName || ""}:${days}`;
+    }
+
+    async function hydrateRowSparklines(items, days = 30) {
+      const rows = items.filter((item) => item.productId && item.categoryId);
+      const byCategory = new Map();
+      rows.forEach((item) => {
+        const cacheKey = sparklineKey(item, days);
+        if (rowSparklineCache.has(cacheKey)) return;
+        const categoryItems = byCategory.get(item.categoryId) || [];
+        categoryItems.push(item);
+        byCategory.set(item.categoryId, categoryItems);
+      });
+
+      const requests = [];
+      byCategory.forEach((categoryItems, categoryId) => {
+        for (let index = 0; index < categoryItems.length; index += 50) {
+          requests.push({ categoryId, items: categoryItems.slice(index, index + 50) });
+        }
+      });
+
+      await Promise.allSettled(requests.map(async ({ categoryId, items: batchItems }) => {
+        const response = await fetch(`/sparkline_batch?category_id=${categoryId}`, {
+          method: "POST",
+          headers: {
+            "accept": "application/json",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            days,
+            items: batchItems.map((item) => ({
+              productId: item.productId,
+              subTypeName: item.subTypeName || "",
+            })),
+          }),
+        });
+        if (!response.ok) throw new Error("Failed to load row sparklines");
+        const payload = await response.json();
+        const seriesMap = payload.items || {};
+        batchItems.forEach((item) => {
+          const values = seriesMap[`${item.productId}||${item.subTypeName || ""}`] || [];
+          rowSparklineCache.set(sparklineKey(item, days), values);
+        });
+      }));
+
+      rows.forEach((item) => {
+        const values = rowSparklineCache.get(sparklineKey(item, days)) || [];
+        if (!values.length) return;
+        resultsEl.querySelectorAll(`[data-row-sparkline="${CSS.escape(item.key)}"]`).forEach((node) => {
+          node.innerHTML = trendLine(values, item.change30d >= 0 ? "#25d0a5" : "#ff8a5b", 120, 24);
+        });
+      });
+    }
+
+    function seriesDataFromPayload(payload) {
+      const columns = payload.columns || [];
+      const priceIndex = columnIndex(columns, "price");
+      const dateIndex = columnIndex(columns, "date");
+      if (priceIndex < 0) return { values: [], dates: [] };
+      const values = [];
+      const dates = [];
+      (payload.rows || []).forEach((row) => {
+        const value = Number(row[priceIndex] || 0);
+        if (!Number.isFinite(value) || value <= 0) return;
+        values.push(value);
+        dates.push(dateIndex >= 0 ? row[dateIndex] : "");
+      });
+      return { values, dates };
+    }
+
+    async function loadSeriesForItem(item, days = activeChartDays) {
+      if (!item || !item.productId || !item.categoryId) {
+        return { values: item?.trend || [], dates: [] };
+      }
+      item.seriesCache = item.seriesCache || {};
+      if (item.seriesCache[days]) return item.seriesCache[days];
+      const params = new URLSearchParams({
+        productId: String(item.productId),
+        subTypeName: item.subTypeName || "",
+        days: String(days),
+        category_id: String(item.categoryId),
+      });
+      const response = await fetch(`/series?${params.toString()}`, {
+        headers: { "accept": "application/json" },
+      });
+      if (!response.ok) throw new Error("Failed to load product series");
+      const seriesData = seriesDataFromPayload(await response.json());
+      item.seriesCache[days] = seriesData.values.length ? seriesData : { values: item.trend, dates: [] };
+      return item.seriesCache[days];
+    }
+
+    async function renderMiniGraph(item = activeItem, days = activeChartDays) {
+      if (!item) return;
+      decisionChart.innerHTML = "<div class=\"confidence-line\">Loading chart...</div>";
+      try {
+        const seriesData = await loadSeriesForItem(item, days);
+        decisionChart.innerHTML = sparkline(seriesData.values, item.change30d >= 0 ? "#25d0a5" : "#ff8a5b", 320, 104, seriesData.dates, days);
+      } catch (_) {
+        decisionChart.innerHTML = sparkline(item.trend, item.change30d >= 0 ? "#25d0a5" : "#ff8a5b", 320, 104, null, days);
+      }
+    }
+
     function buildInsight(item) {
       const move = formatPct(item.change30d);
       const signalDays = Number(item.signalDays || 0);
+      const observations = Number(item.recentObservations || 0);
       const distinctPrices = Number(item.recentDistinctPrices || 0);
+      const lastChange = formatLastChange(item.lastChangeDate);
       const evidence = signalDays && distinctPrices
         ? `${signalDays} signal days and ${distinctPrices} recent distinct prices`
         : "limited confirmation data";
       if (item.change30d >= 50) {
-        return `${move} in 30 days. This is a very fast mover with ${evidence}. Verify the ask carefully so you are not buying into the spike.`;
+        return `${move} in 30 days. This is a very fast mover with ${evidence}. Treat it as momentum, but verify the seller price carefully so you are not buying into the spike. Last change: ${lastChange}.`;
       }
       if (item.change30d >= 15) {
-        return `${move} in 30 days with ${evidence}. A buy is most attractive when the ask is below the suggested offer.`;
+        return `${move} in 30 days with ${evidence}. This has real upward movement; a buy is most attractive when the ask is below the suggested offer. Last change: ${lastChange}.`;
       }
       if (item.change30d < 0) {
-        return `${move} in 30 days. Momentum is cooling, so only chase it if the discount is meaningful.`;
+        return `${move} in 30 days. Momentum is cooling, so only chase it if the discount is meaningful and liquidity still looks healthy. Recent observations: ${observations || "-"}.`;
       }
-      return `${move} in 30 days. This looks steadier than explosive, so the deal check matters more than momentum.`;
+      return `${move} in 30 days. This looks steadier than explosive, so the deal check matters more than momentum. Recent observations: ${observations || "-"}.`;
     }
 
     function applyFilters(items) {
       const q = searchInput.value.trim().toLowerCase();
-      let next = items.filter((item) => {
-        return (
-          item.name.toLowerCase().includes(q)
-          || item.set.toLowerCase().includes(q)
-          || (item.symbol || "").toLowerCase().includes(q)
-        );
-      });
+      let next = activeMode === "search"
+        ? [...items]
+        : items.filter((item) => {
+            return (
+              item.name.toLowerCase().includes(q)
+              || item.set.toLowerCase().includes(q)
+              || (item.symbol || "").toLowerCase().includes(q)
+            );
+          });
 
       if (activeFilter === "sv151") next = next.filter((item) => item.set === "151");
       if (activeFilter === "jp151") next = next.filter((item) => item.set.toLowerCase().includes("151"));
@@ -2585,7 +4533,7 @@
       if (activeFilter === "gainers") next = next.filter((item) => item.change30d > 0);
       if (activeFilter === "decliners") next = next.filter((item) => item.change30d < 0);
 
-      if (activeMode !== "price-drop-watch") {
+      if (activeMode !== "price-drop-watch" && activeMode !== "tracked" && activeMode !== "feed") {
         if (activeIntent === "buys") next = next.filter((item) => item.score >= 85 && item.change30d > 0 && item.price <= 180);
         if (activeIntent === "early") next = next.filter((item) => item.change30d > 0 && item.change30d <= 10);
         if (activeIntent === "set") next = next.filter((item) => activeKind === "singles"
@@ -2604,44 +4552,106 @@
     function renderCards(items) {
       const visible = applyFilters(items);
       resultsEl.innerHTML = "";
+      resultsEl.classList.toggle("search-scroll", activeMode === "search" && visible.length > 3);
       resultCount.textContent = `${visible.length} results`;
+      if (activeMode === "tracked" && trackedItemsLoading) {
+        resultCount.textContent = "Loading";
+      }
+      if (activeMode === "feed" && mobileFeedLoading) {
+        resultCount.textContent = "Loading";
+      }
+      if (activeMode === "search" && mobileSearchLoading) {
+        resultCount.textContent = "Searching";
+      }
       emptyState.hidden = visible.length !== 0;
       resultsEl.hidden = visible.length === 0;
       if (!visible.length) {
         activeItem = null;
         clearDealCheck();
+        if (activeMode === "tracked") {
+          emptyState.hidden = false;
+          const tagLabel = activeTrackedTag === "all" ? "tracked items" : `${formatTrackedTagLabel(activeTrackedTag).toLowerCase()} items`;
+          emptyState.textContent = trackedItemsLoading
+            ? `Loading ${tagLabel}...`
+            : `No ${tagLabel} for this market and product type yet.`;
+        } else if (activeMode === "search") {
+          const query = searchInput?.value?.trim();
+          emptyState.textContent = mobileSearchLoading
+            ? `Searching for ${query || "products"}...`
+            : `No ${activeMarket} ${activeKind === "sealed" ? "sealed products" : "singles"} matched "${query}".`;
+        } else {
+          emptyState.textContent = activeMode === "feed" && mobileFeedLoading
+            ? `Loading ${MOBILE_FEEDS[activeFeedKey]?.title || "feed"}...`
+            : "No products matched this filter.";
+        }
       }
 
       if (visible.length) {
-        const head = document.createElement("div");
-        head.className = "market-table-head";
-        head.innerHTML = `
-          <span>Card</span>
-          <span>Trend</span>
-          <span style="text-align:right;">Price</span>
-          <span style="text-align:right;">Change %</span>
-        `;
-        resultsEl.appendChild(head);
+        if (activeMode === "search") {
+          const head = document.createElement("div");
+          head.className = "market-table-head";
+          head.style.gridTemplateColumns = "58px minmax(0, 1fr) auto";
+          head.innerHTML = `
+            <span>Image</span>
+            <span>Card</span>
+            <span style="text-align:right;">Market</span>
+          `;
+          resultsEl.appendChild(head);
+        } else {
+          const head = document.createElement("div");
+          head.className = "market-table-head";
+          head.innerHTML = `
+            <span></span>
+            <span>Card</span>
+            <span>Trend</span>
+            <span style="text-align:right;">Price</span>
+            <span style="text-align:right;">${activeMode === "tracked" ? "Tags" : "Change %"}</span>
+          `;
+          resultsEl.appendChild(head);
+        }
       }
 
       visible.forEach((item) => {
         const row = document.createElement("button");
         row.type = "button";
-        row.className = `market-row${item.key === activeKey ? " active" : ""}`;
+        row.className = `${activeMode === "search" ? "search-result-row" : "market-row"}${item.key === activeKey ? " active" : ""}`;
         const trendClass = item.change30d >= 0 ? "good" : "warn";
-        row.innerHTML = `
-          <div class="symbol-cell">
-            <span class="symbol-main">${item.symbol || item.name}</span>
-            <span class="symbol-sub">${item.name}</span>
-          </div>
-          <div class="mini-spark" data-row-sparkline="${item.key}">${trendLine(item.trend, item.change30d >= 0 ? "#25d0a5" : "#ff8a5b", 120, 24)}</div>
-          <div class="price-cell">$${item.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-          <div class="change-cell ${trendClass}">${formatPct(item.change30d)}</div>
-        `;
+        const rightLabel = activeMode === "tracked" ? (item.tags || "Saved") : formatPct(item.change30d);
+        if (activeMode === "search") {
+          const meta = [item.name, activeMarket, activeKind === "sealed" ? "Sealed" : "Singles"].filter(Boolean).join(" · ");
+          row.innerHTML = `
+            <div class="search-result-image">
+              ${item.imageUrl ? `<img src="${escapeHtml(item.imageUrl)}" alt="">` : "<span>No image</span>"}
+            </div>
+            <div class="search-result-copy">
+              <span class="search-result-title">${escapeHtml(item.symbol || item.name)}</span>
+              <span class="search-result-set">${escapeHtml(item.set)}</span>
+              <span class="search-result-meta">${escapeHtml(meta)}</span>
+            </div>
+            <div class="search-result-side">
+              <span class="search-result-price">${formatMoney(item.price)}</span>
+              <span class="search-result-pill">${escapeHtml(item.subTypeName || (activeKind === "sealed" ? "Sealed" : "Raw"))}</span>
+            </div>
+          `;
+        } else {
+          row.innerHTML = `
+            <div class="row-thumb">
+              ${item.imageUrl ? `<img src="${escapeHtml(item.imageUrl)}" alt="">` : "<span>No image</span>"}
+            </div>
+            <div class="symbol-cell">
+              <span class="symbol-main">${escapeHtml(item.symbol || item.name)}</span>
+              <span class="symbol-sub">${escapeHtml(item.name)}</span>
+            </div>
+            <div class="mini-spark" data-row-sparkline="${escapeHtml(item.key)}">${trendLine(item.trend, item.change30d >= 0 ? "#25d0a5" : "#ff8a5b", 120, 24)}</div>
+            <div class="price-cell">${formatMoney(item.price)}</div>
+            <div class="change-cell ${trendClass}">${escapeHtml(rightLabel)}</div>
+          `;
+        }
         row.addEventListener("click", () => {
           activeKey = item.key;
           renderCards(activeItems());
-          renderDetail(item);
+          persistMobileState(item);
+          scrollToMobileTop();
         });
         resultsEl.appendChild(row);
       });
@@ -2655,6 +4665,7 @@
           renderDetail(selected);
         }
       }
+      hydrateRowSparklines(visible, 30);
     }
 
     function renderDetail(item) {
@@ -2671,7 +4682,10 @@
       quick30d.textContent = formatCount(item.signalDays);
       quick90d.textContent = formatCount(item.recentDistinctPrices);
       quickVolatility.textContent = formatLastChange(item.lastChangeDate);
-      decisionChart.innerHTML = sparkline(item.trend, item.change30d >= 0 ? "#25d0a5" : "#ff8a5b", 320, 104, null, 30);
+      decisionChart.innerHTML = sparkline(item.trend, item.change30d >= 0 ? "#25d0a5" : "#ff8a5b", 320, 104, null, activeChartDays);
+      if (activeDetailPanel === "graph") {
+        renderMiniGraph(item, activeChartDays);
+      }
       decisionInsight.textContent = buildInsight(item);
       renderDealCheck(item);
     }
@@ -2696,10 +4710,13 @@
         return { verdict: "Waiting", className: "", edgePct: 0 };
       }
       const edgePct = ((marketPrice - askPrice) / marketPrice) * 100;
+      // Development five-level language. Price edge is only the first input; the
+      // shared model will also include trend, volatility, activity, and confidence.
       if (edgePct >= 20) return { verdict: "Strong Buy", className: "good", edgePct };
-      if (edgePct >= 10) return { verdict: "Good Deal", className: "good", edgePct };
-      if (edgePct >= -5) return { verdict: "Fair / Watch", className: "fair", edgePct };
-      return { verdict: "Pass", className: "warn", edgePct };
+      if (edgePct >= 10) return { verdict: "Good Buy", className: "good", edgePct };
+      if (edgePct >= -5) return { verdict: "Fair Price", className: "fair", edgePct };
+      if (edgePct >= -15) return { verdict: "Wait", className: "warn", edgePct };
+      return { verdict: "High Risk", className: "warn", edgePct };
     }
 
     function updateDealVerdict() {
@@ -2724,6 +4741,8 @@
 
     function renderDealCheck(item) {
       if (!item) return;
+      dealCheck.hidden = activeMode === "tracked";
+      if (dealCheck.hidden) return;
       dealItemLabel.textContent = `${item.symbol || item.name} · ${item.set}`;
       dealMarketPrice.textContent = formatMoney(item.price);
       dealAskInput.value = (item.price * 0.83).toFixed(2);
@@ -2741,6 +4760,7 @@
       dealVerdictBadge.textContent = "Waiting";
       dealVerdictBadge.className = "deal-badge";
       dealGuidance.textContent = "Enter a seller price to calculate discount versus market.";
+      dealCheck.hidden = activeMode === "tracked";
     }
 
     function setActiveButton(container, selector, value, dataKey) {
@@ -2787,6 +4807,15 @@
       }
     }
 
+    function drawerTabForLink(link) {
+      if (link.dataset.drawerTab) return link.dataset.drawerTab;
+      try {
+        return new URL(link.href, window.location.origin).searchParams.get("tab") || "";
+      } catch (error) {
+        return "";
+      }
+    }
+
     function syncHeaderControls() {
       if (scopeRail) {
         scopeRail.querySelectorAll("[data-rail-language]").forEach((btn) => {
@@ -2817,6 +4846,21 @@
         activeFilter = "decliners";
         activeSort = "score";
         activeIntent = "movers";
+      } else if (activeMode === "tracked") {
+        activeFilter = "all";
+        activeSort = "score";
+      } else if (activeMode === "feed") {
+        activeFilter = "all";
+        activeSort = "score";
+      } else if (activeMode === "search") {
+        activeFilter = "all";
+        activeSort = "score";
+      } else if (activeMode === "alerts") {
+        activeFilter = "all";
+        activeSort = "score";
+      } else if (activeMode === "support") {
+        activeFilter = "all";
+        activeSort = "score";
       } else {
         activeFilter = "all";
         activeSort = "score";
@@ -2824,9 +4868,48 @@
       activeKey = null;
       applyScopeLabels();
       syncHeaderControls();
+      setPrimaryView();
+      if (activeMode === "alerts") {
+        renderAlertsView();
+        return;
+      }
+      if (activeMode === "support") {
+        renderSupportView();
+        return;
+      }
       renderCards(activeItems());
       if (activeMode === "deal-check" && dealAskInput) {
         setTimeout(() => dealAskInput.focus(), 0);
+      }
+    }
+
+    async function openMobileFeed(feedKey) {
+      if (feedKey === "top_movers") {
+        activeFeedKey = "top_movers";
+        activeIntent = "movers";
+        setMode("default");
+        persistMobileState(null);
+        return;
+      }
+      if (!MOBILE_FEEDS[feedKey]) return;
+      activeFeedKey = feedKey;
+      activeMode = "feed";
+      activeFilter = "all";
+      activeSort = "score";
+      activeKey = null;
+      mobileFeedLoading = true;
+      applyScopeLabels();
+      syncHeaderControls();
+      setPrimaryView();
+      renderCards([]);
+      try {
+        await loadMobileFeed(feedKey);
+      } catch (error) {
+        console.warn(error);
+      } finally {
+        mobileFeedLoading = false;
+        renderCards(activeItems());
+        persistMobileState(null);
       }
     }
 
@@ -2845,6 +4928,85 @@
       setMode("default");
     }
 
+    async function openTrackedItems(tagFilter = "all") {
+      activeTrackedTag = normalizeTrackedTag(tagFilter);
+      activeMode = "tracked";
+      activeFilter = "all";
+      activeSort = "score";
+      activeKey = null;
+      applyScopeLabels();
+      syncHeaderControls();
+      setPrimaryView();
+      trackedItemsLoading = true;
+      renderCards([]);
+      await loadTrackedItems(activeTrackedTag);
+      renderCards(activeItems());
+      persistMobileState(null);
+    }
+
+    async function openAlertsView(view = "targets") {
+      activeAlertView = ["targets", "momentum", "recent"].includes(view) ? view : "targets";
+      activeMode = "alerts";
+      activeKey = null;
+      syncHeaderControls();
+      setPrimaryView();
+      renderAlertsView();
+      if (!trackedItems.length) {
+        trackedItemsLoading = true;
+        renderAlertsView();
+        await loadTrackedItems("all");
+        trackedItemsLoading = false;
+      }
+      renderAlertsView();
+      persistMobileState(null);
+    }
+
+    function openSupportView(view = "feedback") {
+      activeSupportView = normalizeSupportView(view);
+      activeMode = "support";
+      activeKey = null;
+      syncHeaderControls();
+      setPrimaryView();
+      renderSupportView();
+      persistMobileState(null);
+    }
+
+    async function restoreInitialMobileState() {
+      activeMarket = initialMobileState.market;
+      activeKind = initialMobileState.kind;
+      if (searchInput) {
+        searchInput.value = initialMobileState.query;
+      }
+
+      if (initialMobileState.mode === "tracked") {
+        await openTrackedItems(initialMobileState.trackedTag);
+      } else if (initialMobileState.mode === "alerts") {
+        await openAlertsView(initialMobileState.alertView);
+      } else if (initialMobileState.mode === "support") {
+        openSupportView(initialMobileState.supportView);
+      } else if (initialMobileState.query) {
+        await openMobileSearch(initialMobileState.query);
+      } else if (initialMobileState.mode === "feed" && MOBILE_FEEDS[initialMobileState.feed]) {
+        await openMobileFeed(initialMobileState.feed);
+      } else if (initialMobileState.mode === "price-drop-watch") {
+        setMode("price-drop-watch");
+      } else if (initialMobileState.mode === "deal-check") {
+        setMode("deal-check");
+      } else {
+        activeFeedKey = "top_movers";
+        activeIntent = "movers";
+        setMode("default");
+      }
+
+      const restoredItem = findStateItem(activeItems(), initialMobileState);
+      if (restoredItem) {
+        activeKey = restoredItem.key;
+        renderCards(activeItems());
+        renderDetail(restoredItem);
+        persistMobileState(restoredItem);
+      }
+    }
+
     if (marketTabs) {
       marketTabs.addEventListener("click", (event) => {
         const btn = event.target.closest("[data-market-tab]");
@@ -2852,22 +5014,105 @@
         applyMarketTab(btn.dataset.marketTab || "overview");
       });
     }
+    favoritesBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      openTrackedItems();
+    });
 
     if (scopeRail) {
       scopeRail.addEventListener("click", (event) => {
         const languageBtn = event.target.closest("[data-rail-language]");
         if (languageBtn) {
           activeMarket = languageBtn.dataset.railLanguage || "EN";
+          if (activeMode === "tracked") {
+            openTrackedItems(activeTrackedTag);
+            return;
+          }
+          if (activeMode === "feed") {
+            openMobileFeed(activeFeedKey);
+            return;
+          }
+          if (activeMode === "search") {
+            openMobileSearch(searchInput?.value || "");
+            return;
+          }
+          if (activeMode === "alerts") {
+            trackedItems = [];
+            openAlertsView(activeAlertView);
+            return;
+          }
+          if (activeMode === "support") {
+            openSupportView(activeSupportView);
+            return;
+          }
           setMode(activeMode);
           return;
         }
         const kindBtn = event.target.closest("[data-rail-kind]");
         if (kindBtn) {
           activeKind = kindBtn.dataset.railKind || "singles";
+          if (activeMode === "tracked") {
+            openTrackedItems(activeTrackedTag);
+            return;
+          }
+          if (activeMode === "feed") {
+            openMobileFeed(activeFeedKey);
+            return;
+          }
+          if (activeMode === "search") {
+            openMobileSearch(searchInput?.value || "");
+            return;
+          }
+          if (activeMode === "alerts") {
+            trackedItems = [];
+            openAlertsView(activeAlertView);
+            return;
+          }
+          if (activeMode === "support") {
+            openSupportView(activeSupportView);
+            return;
+          }
           setMode(activeMode);
         }
       });
     }
+
+    async function activateMobileWorkspace(workspace) {
+      mobileTaskButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.mobileWorkspace === workspace);
+      });
+      if (workspace === "buy") {
+        setMode("default");
+        cardCheck?.scrollIntoView({ behavior: "smooth", block: "start" });
+        searchInput?.focus({ preventScroll: true });
+        return;
+      }
+      if (workspace === "discover") {
+        await openMobileFeed("top_movers");
+        resultsEl?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      if (workspace === "research") {
+        if (activeItem) {
+          await openFullDataModal();
+        } else {
+          setMode("default");
+          cardCheck?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        return;
+      }
+      if (workspace === "track") {
+        await openTrackedItems("all");
+        return;
+      }
+      setDrawerOpen(true);
+    }
+
+    mobileTaskButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        activateMobileWorkspace(button.dataset.mobileWorkspace || "buy").catch(console.warn);
+      });
+    });
 
     menuToggleBtn.addEventListener("click", () => {
       const currentlyOpen = hamburgerDrawer.classList.contains("open");
@@ -2923,16 +5168,30 @@
     hamburgerDrawer.querySelectorAll(".drawer-link").forEach((link) => {
       link.addEventListener("click", (event) => {
         const action = link.dataset.drawerAction || "";
+        const tabKey = drawerTabForLink(link);
+        if (MOBILE_FEEDS[tabKey]) {
+          event.preventDefault();
+          openMobileFeed(tabKey);
+          setDrawerOpen(false);
+          return;
+        }
         if (action === "price-drop-watch") {
           event.preventDefault();
           setMode("price-drop-watch");
         } else if (action === "deal-check") {
           event.preventDefault();
           setMode("deal-check");
-        } else if (action === "movers" || action === "search" || action === "tracked") {
+        } else if (action === "movers" || action === "tracked") {
           event.preventDefault();
           activeIntent = "movers";
           setMode("default");
+        } else if (action === "search") {
+          event.preventDefault();
+          activeIntent = "movers";
+          setMode("default");
+          if (searchInput) {
+            setTimeout(() => searchInput.focus(), 0);
+          }
         } else if (action === "home") {
           event.preventDefault();
           activeIntent = "movers";
@@ -2944,8 +5203,81 @@
       });
     });
     userDrawer.querySelectorAll(".user-link").forEach((link) => {
-      link.addEventListener("click", () => setUserDrawerOpen(false));
+      link.addEventListener("click", (event) => {
+        const trackedFilter = link.dataset.trackedFilter;
+        if (trackedFilter) {
+          event.preventDefault();
+          setUserDrawerOpen(false);
+          openTrackedItems(trackedFilter);
+          return;
+        }
+        const alertView = link.dataset.alertView;
+        if (alertView) {
+          event.preventDefault();
+          setUserDrawerOpen(false);
+          openAlertsView(alertView);
+          return;
+        }
+        const supportView = link.dataset.supportView;
+        if (supportView) {
+          event.preventDefault();
+          setUserDrawerOpen(false);
+          openSupportView(supportView);
+          return;
+        }
+        const accountAction = link.dataset.accountAction;
+        if (accountAction === "sign-out") {
+          event.preventDefault();
+          signOutTracking();
+          return;
+        }
+        setUserDrawerOpen(false);
+      });
     });
+
+    document.querySelectorAll("[data-alert-tab]").forEach((button) => {
+      button.addEventListener("click", () => openAlertsView(button.dataset.alertTab || "targets"));
+    });
+
+    document.querySelectorAll("[data-support-tab]").forEach((button) => {
+      button.addEventListener("click", () => openSupportView(button.dataset.supportTab || "feedback"));
+    });
+
+    if (alertsBody) {
+      alertsBody.addEventListener("click", (event) => {
+        const tabButton = event.target.closest("[data-alert-tab]");
+        if (tabButton) {
+          openAlertsView(tabButton.dataset.alertTab || "targets");
+          return;
+        }
+        const saveButton = event.target.closest("[data-save-target]");
+        if (saveButton) {
+          const key = saveButton.dataset.saveTarget || "";
+          const card = saveButton.closest("[data-target-key]");
+          const buy = card?.querySelector("[data-target-field='buy']")?.value || "";
+          const sell = card?.querySelector("[data-target-field='sell']")?.value || "";
+          priceTargets[key] = { buy, sell, updatedAt: new Date().toISOString() };
+          savePriceTargets();
+          saveButton.textContent = "Saved";
+          return;
+        }
+        const ruleButton = event.target.closest("[data-alert-rule]");
+        if (ruleButton) {
+          const rule = ruleButton.dataset.alertRule || "";
+          alertRules[rule] = !alertRules[rule];
+          saveAlertRules();
+          renderMomentumAlerts();
+        }
+      });
+    }
+
+    if (supportBody) {
+      supportBody.addEventListener("click", (event) => {
+        const submit = event.target.closest("[data-support-submit]");
+        if (!submit) return;
+        submitSupportReport(submit.dataset.supportSubmit || activeSupportView);
+      });
+    }
 
 
     document.addEventListener("keydown", (event) => {
@@ -2963,16 +5295,35 @@
       }
     });
 
-    searchInput.addEventListener("input", () => renderCards(activeItems()));
+    searchInput.addEventListener("input", () => scheduleMobileSearch());
+    searchInput.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      openMobileSearch(searchInput.value);
+      searchInput.blur();
+    });
+    searchGoBtn?.addEventListener("click", () => openMobileSearch(searchInput?.value || ""));
     document.querySelectorAll("[data-detail-panel]").forEach((button) => {
       button.addEventListener("click", () => {
-        const activePanel = button.dataset.detailPanel || "stats";
+        activeDetailPanel = button.dataset.detailPanel || "stats";
         document.querySelectorAll("[data-detail-panel]").forEach((node) => {
           node.classList.toggle("active", node === button);
         });
         document.querySelectorAll("[data-detail-content]").forEach((panel) => {
-          panel.classList.toggle("active", panel.dataset.detailContent === activePanel);
+          panel.classList.toggle("active", panel.dataset.detailContent === activeDetailPanel);
         });
+        if (activeDetailPanel === "graph") {
+          renderMiniGraph(activeItem, activeChartDays);
+        }
+      });
+    });
+    document.querySelectorAll("[data-chart-days]").forEach((button) => {
+      button.addEventListener("click", () => {
+        activeChartDays = Number(button.dataset.chartDays || 30);
+        document.querySelectorAll("[data-chart-days]").forEach((node) => {
+          node.classList.toggle("active", node === button);
+        });
+        renderMiniGraph(activeItem, activeChartDays);
       });
     });
     dealAskInput.addEventListener("input", () => updateDealVerdict());
@@ -2982,7 +5333,23 @@
       updateDealVerdict();
     });
     loadStoredTags();
+    loadAlertStorage();
+    updateAccountLabels();
+    loadTrackingAuthConfig()
+      .then(() => initializeMobileGoogleSignIn());
+    loadRemoteTrackingTags()
+      .then(() => updateAccountLabels());
+    activeMarket = initialMobileState.market;
+    activeKind = initialMobileState.kind;
+    if (searchInput) {
+      searchInput.value = initialMobileState.query;
+    }
     setMode("default");
+    loadLiveMarketData()
+      .then(() => restoreInitialMobileState())
+      .catch(() => {
+        restoreInitialMobileState();
+      });
   </script>
 </body>
 </html>

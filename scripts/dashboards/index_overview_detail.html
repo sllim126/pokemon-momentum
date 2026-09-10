@@ -6,7 +6,7 @@
   <title>Poke6s Market Index</title>
   <link rel="icon" type="image/png" href="/images/Favidon.png">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-  <script src="/dashboard-common.js"></script>
+  <script src="/dashboard-common.js?v=20260910-index"></script>
   <style>
     :root {
       --bg: #070b1a;
@@ -832,7 +832,15 @@
       return `${sign}${formatNumber(Math.abs(value), 2)}%`;
     }
 
-    const escapeHtml = window.DashboardCommon.escapeHtml;
+    // Keep index rendering independent from the browser's cached version of the
+    // shared dashboard bundle. Older cached bundles predate escapeHtml and used
+    // to stop this page before market data or holding images could render.
+    const escapeHtml = window.DashboardCommon?.escapeHtml || ((value) => String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;"));
 
     // Normalize card numbers for duplicate-title detection (e.g. 48/108 vs 048/108).
     function buildNumberVariants(num) {

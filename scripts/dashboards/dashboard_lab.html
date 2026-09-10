@@ -82,7 +82,7 @@
     .app {
       min-height: 100vh;
       display: grid;
-      grid-template-rows: auto auto 1fr;
+      grid-template-rows: auto auto auto 1fr;
       gap: 16px;
       padding: 18px;
     }
@@ -227,6 +227,48 @@
       flex-wrap: wrap;
       justify-content: flex-end;
     }
+
+    .task-nav {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .task-nav button {
+      min-height: 64px;
+      padding: 11px 14px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(13, 22, 39, 0.9);
+      color: var(--ink);
+      text-align: left;
+      cursor: pointer;
+      display: grid;
+      gap: 4px;
+    }
+
+    .task-nav button strong { font-size: 15px; }
+    .task-nav button span { color: var(--muted); font-size: 11px; line-height: 1.3; }
+    .task-nav button.active {
+      border-color: rgba(70, 184, 255, 0.58);
+      background: linear-gradient(135deg, rgba(70, 184, 255, 0.2), rgba(79, 226, 174, 0.1));
+    }
+
+    .workspace-brief {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(10, 18, 32, 0.82);
+    }
+
+    .workspace-brief div { display: grid; gap: 3px; }
+    .workspace-brief strong { font-size: 15px; }
+    .workspace-brief span { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .workspace-links { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 
     .switchboard {
       display: grid;
@@ -1127,6 +1169,11 @@
         padding: 14px;
       }
 
+      .task-nav {
+        grid-template-columns: repeat(5, minmax(130px, 1fr));
+        overflow-x: auto;
+      }
+
       .switchboard-controls {
         grid-template-columns: 1fr;
       }
@@ -1159,8 +1206,8 @@
     <header class="topbar">
       <div class="brand">
         <div class="brand-topline">
-          <span class="lab-badge">Desktop Lab</span>
-          <span class="badge">Stage One Draft</span>
+          <span class="lab-badge">Development</span>
+          <span class="badge">Five-workspace baseline</span>
         </div>
         <a href="/dashboard" aria-label="Open live dashboard">
           <strong>Market Command Center</strong>
@@ -1188,6 +1235,23 @@
         <a class="btn primary" href="/dashboard">Open Live Dashboard</a>
       </div>
     </header>
+
+    <nav class="task-nav" id="taskNav" aria-label="Development workspaces">
+      <button type="button" data-workspace="buy"><strong>Buy</strong><span>Price checks and buying decisions</span></button>
+      <button type="button" class="active" data-workspace="discover"><strong>Discover</strong><span>Ranked opportunities and movement</span></button>
+      <button type="button" data-workspace="research"><strong>Research</strong><span>Cards, sets, species, and indexes</span></button>
+      <button type="button" data-workspace="track"><strong>Track</strong><span>Watchlists, targets, and saved work</span></button>
+      <button type="button" data-workspace="learn"><strong>Learn</strong><span>Market pulse and methodology</span></button>
+    </nav>
+
+    <section class="workspace-brief" aria-live="polite">
+      <div><strong id="workspaceTitle">Discover opportunities</strong><span id="workspaceDescription">Scan ranked market signals, then select an item for evidence and deeper research.</span></div>
+      <div class="workspace-links" id="workspaceLinks">
+        <a class="route-chip" href="/dashboard?tab=top_movers">Top Movers</a>
+        <a class="route-chip" href="/dashboard?tab=good_buys">Good Buys</a>
+        <a class="route-chip" href="/dashboard?tab=breakouts">Breakouts</a>
+      </div>
+    </section>
 
     <section class="switchboard" aria-label="Primary market and product switching">
       <div class="switchboard-copy">
@@ -1589,6 +1653,10 @@
     const setFilter = document.getElementById("setFilter");
     const primaryScreener = document.getElementById("primaryScreener");
     const tabs = Array.from(document.querySelectorAll(".tab[data-view]"));
+    const workspaceButtons = Array.from(document.querySelectorAll("[data-workspace]"));
+    const workspaceTitle = document.getElementById("workspaceTitle");
+    const workspaceDescription = document.getElementById("workspaceDescription");
+    const workspaceLinks = document.getElementById("workspaceLinks");
     const chartEl = document.getElementById("detailChart");
     const chartWindowButtons = Array.from(document.querySelectorAll("[data-chart-days]"));
 
@@ -2176,6 +2244,50 @@
       await loadLiveData();
     }
 
+    const WORKSPACES = {
+      buy: {
+        title: "Make a buying decision",
+        description: "Check a known card or sealed product, compare the seller ask with market, and explain buy, fair, wait, or risk.",
+        view: "good_buys",
+        links: [["Budget Builder", "/budget-builder"], ["Sealed Check", "/sealed-deals"], ["Card Search", "/dashboard"]]
+      },
+      discover: {
+        title: "Discover opportunities",
+        description: "Scan ranked market signals, then select an item for evidence and deeper research.",
+        view: "top_movers",
+        links: [["Top Movers", "/dashboard?tab=top_movers"], ["Good Buys", "/dashboard?tab=good_buys"], ["Breakouts", "/dashboard?tab=breakouts"]]
+      },
+      research: {
+        title: "Research the market",
+        description: "Move from one card into set, species, sealed, and index context without losing your current question.",
+        view: "group_products",
+        links: [["Set Explorer", "/set-explorer"], ["Market Indexes", "/index-overview"], ["Browse Species", "/dashboard?tab=browse_species"]]
+      },
+      track: {
+        title: "Track decisions over time",
+        description: "Review favorites, watchlists, owned items, buy targets, and saved research in one personal workspace.",
+        view: "under_the_radar",
+        links: [["Tracked Items", "/dashboard?tab=tracked"], ["Account", "/account-settings"], ["Quiet Risers", "/dashboard?tab=under_the_radar"]]
+      },
+      learn: {
+        title: "Understand what changed",
+        description: "Use market indexes, methodology, and collector resources as the foundation for a future data-backed Market Pulse.",
+        view: "breakouts",
+        links: [["Market Indexes", "/index-overview"], ["Collector Hub", "/collector-hub"], ["Set Strength", "/dashboard?tab=group_signals"]]
+      }
+    };
+
+    async function setWorkspace(key) {
+      const workspace = WORKSPACES[key] || WORKSPACES.discover;
+      workspaceButtons.forEach((button) => button.classList.toggle("active", button.dataset.workspace === key));
+      workspaceTitle.textContent = workspace.title;
+      workspaceDescription.textContent = workspace.description;
+      workspaceLinks.innerHTML = workspace.links
+        .map(([label, href]) => `<a class="route-chip" href="${href}">${label}</a>`)
+        .join("");
+      await setActiveView(workspace.view);
+    }
+
     async function runSearch() {
       const query = String(searchInput.value || "").trim();
       if (!query) {
@@ -2274,6 +2386,10 @@
       tab.addEventListener("click", async () => {
         await setActiveView(tab.dataset.view);
       });
+    });
+
+    workspaceButtons.forEach((button) => {
+      button.addEventListener("click", async () => setWorkspace(button.dataset.workspace));
     });
 
     primaryScreener.addEventListener("change", async () => {
