@@ -1,0 +1,7 @@
+# Generated collector sites are published artifacts. Keep them versioned for the
+# current deployment model, but collapse them in GitHub diffs and language stats.
+"TCG Placeholders/output*/**" linguist-generated=true
+"TCG Placeholders/checklists_*/**" linguist-generated=true
+
+# Cached storefront/card artwork is binary deployment content.
+images/cards/** binary

@@ -369,6 +369,12 @@ def build_generation_case(
     name = f"upper(COALESCE({name_column}, ''))"
     abbr = f"upper(COALESCE({abbreviation_column}, ''))"
     published_on = f"CAST({published_on_column} AS DATE)"
+    # TCGCSV sometimes fills an unknown release date with the metadata refresh
+    # timestamp. Real release dates in the current feeds are normalized to
+    # midnight; only those values are safe as an era-classification fallback.
+    has_release_date = (
+        f"strftime(CAST({published_on_column} AS TIMESTAMP), '%H:%M:%S') = '00:00:00'"
+    )
     override_clauses = "\n".join(
         f"  WHEN {group_id} = {group_id_value} THEN '{generation}'"
         for group_id_value, generation in sorted(GENERATION_OVERRIDES.items())
@@ -404,43 +410,50 @@ CASE
     OR {name} LIKE 'M3A:%'
     OR {name} LIKE 'M4:%'
     OR {name} LIKE 'M4A:%'
+    OR {name} LIKE 'M5:%'
+    OR {name} LIKE 'M5A:%'
+    OR {name} LIKE 'M6:%'
+    OR {name} LIKE 'M6A:%'
     OR {name} LIKE 'MBD:%'
     OR {name} LIKE 'MBG:%'
+    OR {name} LIKE 'MEM:%'
+    OR {name} LIKE 'MEZ:%'
+    OR {name} LIKE 'MF:%'
     OR {name} LIKE 'MP1:%'
     OR {name} LIKE '%START DECK 100 BATTLE COLLECTION%'
     OR {name} LIKE 'MEE:%'
     OR {abbr} = 'ME'
     OR {abbr} LIKE 'ME0%'
     OR {abbr} LIKE 'MEE%'
-    OR {abbr} IN ('M1', 'M1A', 'M1L', 'M1S', 'M2', 'M2A', 'M3', 'M3A', 'M4', 'M4A', 'MBD', 'MBG', 'MP1')
+    OR {abbr} IN ('M1', 'M1A', 'M1L', 'M1S', 'M2', 'M2A', 'M3', 'M3A', 'M4', 'M4A', 'M5', 'M5A', 'M6', 'M6A', 'MBD', 'MBG', 'MEM', 'MEZ', 'MF', 'MP1')
     THEN 'MEG'
   WHEN {name} LIKE 'SV:%'
     OR {name} LIKE 'SV %'
     OR {name} LIKE 'SCARLET & VIOLET%'
-    OR {published_on} >= DATE '2023-03-31'
+    OR ({has_release_date} AND {published_on} >= DATE '2023-03-31')
     THEN 'SV'
   WHEN {name} LIKE 'SWSH:%'
     OR {name} LIKE 'SWSH %'
     OR {name} LIKE 'SWORD & SHIELD%'
     OR {abbr} LIKE 'SWSH%'
-    OR {published_on} >= DATE '2020-02-07'
+    OR ({has_release_date} AND {published_on} >= DATE '2020-02-07')
     THEN 'SWSH'
   WHEN {name} LIKE 'SM:%'
     OR {name} LIKE 'SM %'
     OR {name} LIKE 'SUN & MOON%'
     OR {abbr} LIKE 'SM%'
-    OR {published_on} >= DATE '2017-02-03'
+    OR ({has_release_date} AND {published_on} >= DATE '2017-02-03')
     THEN 'SM'
   WHEN {name} LIKE 'XY:%'
     OR {name} LIKE 'XY %'
     OR {abbr} LIKE 'XY%'
-    OR {published_on} >= DATE '2014-02-05'
+    OR ({has_release_date} AND {published_on} >= DATE '2014-02-05')
     THEN 'XY'
   WHEN {name} LIKE 'BW:%'
     OR {name} LIKE 'BW %'
     OR {name} LIKE 'BLACK & WHITE%'
     OR {abbr} LIKE 'BW%'
-    OR {published_on} >= DATE '2011-04-25'
+    OR ({has_release_date} AND {published_on} >= DATE '2011-04-25')
     THEN 'BW'
   WHEN {name} LIKE 'POP SERIES%'
     OR {abbr} = 'POP'
@@ -464,13 +477,13 @@ CASE
       'DRAGON FRONTIERS',
       'POWER KEEPERS'
     )
-    OR {published_on} >= DATE '2003-07-18' AND {published_on} < DATE '2007-05-23'
+    OR ({has_release_date} AND {published_on} >= DATE '2003-07-18' AND {published_on} < DATE '2007-05-23')
     THEN 'EX'
   WHEN {name} LIKE 'DP%'
     OR {name} LIKE 'HGSS%'
     OR {abbr} LIKE 'DP%'
     OR {abbr} LIKE 'HGSS%'
-    OR {published_on} >= DATE '2007-01-01'
+    OR ({has_release_date} AND {published_on} >= DATE '2007-01-01')
     THEN 'DP/HGSS'
   ELSE 'Legacy'
 END

@@ -1233,26 +1233,16 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("rl.latest_price_1d > rl.latest_price_2d", sql)
         self.assertIn("rl.latest_price_2d > rl.latest_price_3d", sql)
 
-    def test_under_the_radar_prefers_quiet_bases_with_fresh_lift(self):
+    def test_under_the_radar_uses_precomputed_default_ranking(self):
         with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(
             api, "screener_snapshot_from", return_value="screener_snapshot"
         ), patch.object(api, "category_config", return_value=api.category_config(3)):
             api.under_the_radar(category_id=3)
 
         sql = q_mock.call_args[0][0]
-        self.assertIn("COALESCE(s.hold_days, 0) <= 7", sql)
-        self.assertIn("s.cross_date >= s.latest_date - INTERVAL 14 DAY", sql)
-        self.assertIn("COALESCE(s.roc_7d_pct, 0) >= 2.0", sql)
-        self.assertIn("COALESCE(s.roc_7d_pct, 0) <= 8.0", sql)
-        self.assertIn("COALESCE(s.roc_30d_pct, 0) <= 8.0", sql)
-        self.assertIn("COALESCE(s.roc_90d_pct, 0) <= 15.0", sql)
-        self.assertIn("COALESCE(s.acceleration_7d_vs_30d, 0) >= 2.0", sql)
-        self.assertIn("COALESCE(s.recent_observations_7d, 0) >= 4", sql)
-        self.assertIn("COALESCE(rac.above30_crosses_180d, 0) <= 5", sql)
-        self.assertIn("ORDER BY", sql)
-        self.assertIn("s.roc_30d_pct ASC", sql)
-        self.assertIn("s.roc_90d_pct ASC", sql)
-        self.assertIn("pct_vs_sma30 ASC", sql)
+        self.assertIn("under_the_radar_default_flag = 1", sql)
+        self.assertIn("ORDER BY under_the_radar_default_rank", sql)
+        self.assertNotIn("recent_prices AS", sql)
 
     def test_under_the_radar_live_query_uses_recent_lift_checks(self):
         with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(

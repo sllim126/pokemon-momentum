@@ -635,6 +635,7 @@ INDEX_DEFINITIONS = {
         "description": "Top 100 cards by market price",
         "base_level": 1000.0,
         "generation": "SM",
+        "exclude_group_ids": [2282],  # World Championship Decks contain reprints, not SM set cards.
         "release_markers_enabled": False,
     },
     "xy100": {
@@ -642,6 +643,9 @@ INDEX_DEFINITIONS = {
         "description": "Top 100 cards by market price",
         "base_level": 1000.0,
         "generation": "XY",
+        # Cross-era/catch-all product buckets are not XY set universes even
+        # when their metadata date falls inside the XY era.
+        "exclude_group_ids": [1528, 1539, 1840],
         "release_markers_enabled": False,
     },
     "bw100": {
@@ -652,8 +656,8 @@ INDEX_DEFINITIONS = {
         "release_markers_enabled": False,
     },
     "dp100": {
-        "index_name": "Diamond & Pearl 100",
-        "description": "Top 100 cards by market price",
+        "index_name": "Diamond & Pearl / Platinum / HGSS 100",
+        "description": "Top 100 cards by market price across the DP, Platinum, and HGSS eras",
         "base_level": 1000.0,
         "generation": "DP/HGSS",
         "release_markers_enabled": False,
@@ -1404,9 +1408,9 @@ def _select_budget_candidates(
     selected: list[dict] = []
     remaining = budget
     passes = [
-        {"max_ratio": 0.45, "respect_name_cap": True},
-        {"max_ratio": 0.65, "respect_name_cap": True},
-        {"max_ratio": 1.00, "respect_name_cap": False},
+        {"max_ratio": 0.45},
+        {"max_ratio": 0.65},
+        {"max_ratio": 1.00},
     ]
 
     for pass_config in passes:
@@ -1425,7 +1429,7 @@ def _select_budget_candidates(
                 continue
             if group_counts.get(group_id, 0) >= max_per_set:
                 continue
-            if not allow_duplicates and pass_config["respect_name_cap"] and name_counts.get(name_root, 0) >= 1:
+            if not allow_duplicates and name_counts.get(name_root, 0) >= 1:
                 continue
 
             selected.append(candidate)
@@ -1507,7 +1511,10 @@ def _resolve_index_group_ids(index_key: str, category_id: int) -> list[int]:
     ORDER BY g.groupId
     """
     cols, rows = q(sql)
-    return [int(row[0]) for row in rows]
+    excluded_group_ids = {
+        int(group_id) for group_id in definition.get("exclude_group_ids", [])
+    }
+    return [int(row[0]) for row in rows if int(row[0]) not in excluded_group_ids]
 
 
 def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100") -> dict:
@@ -4396,8 +4403,9 @@ def universe(limit: int = 5000, category_id: int = 3, product_id: int | None = N
 
 
 @app.get("/product_picker")
-def product_picker(limit: int = 50000, offset: int = 0, category_id: int = 3):
-    limit = max(1, min(limit, 50000))
+def product_picker(limit: int = 250, offset: int = 0, category_id: int = 3):
+    """Return one catalog page; full-catalog lookup belongs on `/search`."""
+    limit = max(1, min(limit, 5000))
     offset = max(0, offset)
     category = category_config(category_id)
     product_signal_source = product_signal_from(category.category_id)
@@ -4465,16 +4473,21 @@ def groups(limit: int = 1000, offset: int = 0, category_id: int = 3):
     limit = max(1, min(limit, 5000))
     offset = max(0, offset)
     category = category_config(category_id)
-    price_source = prices_from(category.category_id)
+    product_signal_source = product_signal_from(category.category_id)
 
     sql = f"""
     WITH active_groups AS (
       SELECT
         groupId,
         COUNT(DISTINCT productId) AS productCount,
-        MAX(date) AS latestDate
-      FROM {price_source}
+        MAX(latest_date) AS latestDate
+      FROM {product_signal_source}
       WHERE categoryId = {category.category_id}
+        AND latest_date = (
+          SELECT MAX(latest_date)
+          FROM {product_signal_source}
+          WHERE categoryId = {category.category_id}
+        )
       GROUP BY groupId
     )
     SELECT
@@ -6785,7 +6798,13 @@ def breakouts(
     if product_kind in {"card", "sealed"}:
         product_kind_filter = f"AND m.productKind = '{product_kind}'"
     sql = f"""
-    WITH base AS (
+    WITH data_date AS (
+        SELECT MAX(date) AS latest_date
+        FROM {price_source}
+        WHERE categoryId = {category.category_id}
+          AND marketPrice IS NOT NULL
+    ),
+    base AS (
         SELECT
             productId,
             groupId,
@@ -6796,6 +6815,7 @@ def breakouts(
         WHERE categoryId = {category.category_id}
           AND marketPrice IS NOT NULL
           AND marketPrice >= {min_price}
+          AND date >= (SELECT latest_date FROM data_date) - INTERVAL {days} DAY
     ),
     latest AS (
         SELECT
@@ -7064,11 +7084,66 @@ def under_the_radar(
     except HTTPException:
         use_snapshot = False
         source = product_signal_from(category.category_id)
-    price_source = prices_from(category.category_id)
     product_kind_filter = ""
     if product_kind in {"card", "sealed"}:
         product_kind_filter = f"AND productKind = '{product_kind}'"
-    if use_snapshot:
+    default_snapshot_query = use_snapshot and (
+        days_required == 3
+        and abs(min_price - 5.0) < 1e-9
+        and abs(max_price_vs_sma30_pct - 5.0) < 1e-9
+        and abs(min_7d_pct - 2.0) < 1e-9
+        and abs(max_7d_pct - 8.0) < 1e-9
+        and abs(max_30d_pct - 8.0) < 1e-9
+        and abs(max_90d_pct - 15.0) < 1e-9
+        and abs(min_acceleration_7d_vs_30d - 2.0) < 1e-9
+        and min_recent_distinct_prices_30d == 10
+        and min_recent_observations == 4
+        and recent_change_within_days == 5
+        and max_hold_days == 7
+        and recent_cross_within_days == 14
+        and max_above30_crosses_180d == 5
+    )
+    if default_snapshot_query:
+        sql = f"""
+    SELECT
+        productId,
+        groupId,
+        subTypeName,
+        groupName,
+        productName,
+        imageUrl,
+        rarity,
+        number,
+        early_streak,
+        cross_date,
+        hold_days,
+        recent_observations_7d AS recent_observations,
+        recent_distinct_prices_7d,
+        recent_distinct_prices_30d,
+        last_change_date,
+        latest_price,
+        roc_7d_pct,
+        roc_30d_pct,
+        roc_90d_pct,
+        acceleration_7d_vs_30d,
+        latest_sma3,
+        latest_sma7,
+        latest_sma30,
+        latest_price_1d,
+        latest_price_2d,
+        latest_price_3d,
+        NULL AS above30_crosses_180d,
+        price_vs_sma30_pct AS pct_vs_sma30
+    FROM {source}
+    WHERE categoryId = {category.category_id}
+      AND latest_date = (SELECT MAX(latest_date) FROM {source})
+      AND under_the_radar_default_flag = 1
+      {product_kind_filter}
+    ORDER BY under_the_radar_default_rank
+    LIMIT {limit}
+    """
+    elif use_snapshot:
+        price_source = prices_from(category.category_id)
         sql = f"""
     WITH recent_prices AS (
       SELECT
@@ -7183,6 +7258,7 @@ def under_the_radar(
     LIMIT {limit}
     """
     else:
+        price_source = prices_from(category.category_id)
         sql = f"""
     WITH recent_prices AS (
       SELECT

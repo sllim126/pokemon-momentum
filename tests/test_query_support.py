@@ -273,4 +273,15 @@ class QuerySupportTests(unittest.TestCase):
         self.assertIn("M1S:%", sql)
         self.assertIn("START DECK 100 BATTLE COLLECTION", sql)
         self.assertLess(sql.index("THEN 'MEG'"), sql.index("THEN 'SV'"))
+
+    def test_build_generation_case_does_not_use_refresh_timestamps_as_release_dates(self):
+        sql = query_support.build_generation_case()
+
+        self.assertIn("strftime(CAST(g.publishedOn AS TIMESTAMP), '%H:%M:%S') = '00:00:00'", sql)
+
+    def test_build_generation_case_recognizes_later_mega_prefixes(self):
+        sql = query_support.build_generation_case()
+
+        for prefix in ("M5:%", "M6:%", "MEM:%", "MEZ:%", "MF:%"):
+            self.assertIn(prefix, sql)
         self.assertIn("ELSE 'Legacy'", sql)

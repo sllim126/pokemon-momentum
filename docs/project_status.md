@@ -115,3 +115,19 @@ The detailed active queue and design decisions live in `docs/todo.txt`.
 Do not treat `output/`, database files, raw downloads, or other ignored runtime data as a
 substitute for source control. Conversely, do not delete local runtime/generated files until
 their rebuild and backup path has been confirmed.
+
+## Repository artifact policy
+
+The repository currently uses three artifact classes:
+
+1. Hand-authored and reviewed source: application code, tests, documentation, configuration,
+   source CSVs, overrides, and additions. These belong in normal source-review commits.
+2. Published generated collector assets: `TCG Placeholders/output*/` and
+   `TCG Placeholders/checklists_*/`. The live Collector Hub serves these files directly, so
+   they remain versioned until deployment builds them independently. They are marked as
+   generated in `.gitattributes` and should be committed separately from builder changes.
+3. Local runtime artifacts: `output/`, `data/raw/`, `data/extracted/`, `data/processed/`,
+   `logs/`, and `.locks/`. These remain ignored and must not be committed.
+
+Cached files under `images/cards/` are deployable binary assets used by Squarespace and
+storefront workflows. Keep their commits separate from application logic when practical.
