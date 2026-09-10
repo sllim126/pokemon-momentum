@@ -114,6 +114,13 @@ class SecondaryPageContractTests(unittest.TestCase):
         self.assertIn("holdingsTitle", html)
         self.assertIn("activeIndex.categoryId", html)
         self.assertIn("activeIndex.index", html)
+        self.assertIn('/dashboard-common.js', html)
+        self.assertIn("window.DashboardCommon.escapeHtml", html)
+        self.assertEqual(html.count('id="includedSetGrid"'), 1)
+        self.assertIn('id="constituentMethod"', html)
+        self.assertIn('id="aggregateBasketSize"', html)
+        self.assertNotIn("fallbackSeries", html)
+        self.assertIn("No fallback values are shown", html)
         for route in (
             "pokemon100", "sv100", "mega100", "wotc100", "neo100", "ecard100",
             "ex100", "dp100", "bw100", "xy100", "sm100", "swsh100",

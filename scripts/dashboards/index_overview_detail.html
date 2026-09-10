@@ -6,6 +6,7 @@
   <title>Poke6s Market Index</title>
   <link rel="icon" type="image/png" href="/images/Favidon.png">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <script src="/dashboard-common.js"></script>
   <style>
     :root {
       --bg: #070b1a;
@@ -299,6 +300,7 @@
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
+      min-height: 44px;
     }
 
     .btn.active {
@@ -600,6 +602,27 @@
         justify-content: flex-start;
       }
     }
+
+    @media (max-width: 600px) {
+      .overview,
+      .sets,
+      .index-panel,
+      .holdings {
+        padding: 16px 14px;
+      }
+
+      details.overview-fold > summary,
+      .overview-fold-body {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .overview h1 { font-size: 34px; }
+      .index-name { font-size: 21px; }
+      .chart-wrap { padding: 8px; }
+      .holdings-stat .value { font-size: 34px; }
+      .card-tile { grid-template-columns: 96px minmax(0, 1fr); }
+    }
   </style>
 </head>
 <body>
@@ -627,7 +650,7 @@
           <ul class="method-list">
             <li>Collect all eligible cards from the included sets below</li>
             <li>Sort cards by latest market price (highest to lowest)</li>
-            <li>Keep the top 151 constituents for that day</li>
+            <li id="constituentMethod">Keep the configured top constituents for that day</li>
             <li>Compute two outputs: Index Level (normalized points) and Aggregate Value (raw dollar total)</li>
             <li>Measure membership turnover and, when turnover exceeds 10%, apply a divisor rebalance</li>
             <li>Preserve continuity across reconstitution events (for example new sets or major meta shifts)</li>
@@ -636,7 +659,7 @@
           <section class="callout info">
             <h3>Performance Views:</h3>
             <p><strong>Index Level</strong> (default) - A normalized series that starts at 1000 points. Use this view to compare relative performance over time without overreacting to constituent swaps.</p>
-            <p><strong>Aggregate Value</strong> - The raw dollar sum of the current top-151 basket. This is the direct market-value view and will usually react more sharply when composition changes.</p>
+            <p><strong>Aggregate Value</strong> - The raw dollar sum of the current <span id="aggregateBasketSize">configured</span> basket. This is the direct market-value view and will usually react more sharply when composition changes.</p>
           </section>
 
           <section class="callout good">
@@ -670,22 +693,22 @@
       <div class="index-summary-cards">
         <article class="summary-card">
           <div class="label">1 Day Change</div>
-          <div class="value" id="day1Value">+4.91 pts</div>
-          <div class="delta" id="day1Delta">+0.31%</div>
+          <div class="value" id="day1Value">--</div>
+          <div class="delta" id="day1Delta">--</div>
         </article>
         <article class="summary-card">
           <div class="label">7 Day Change</div>
-          <div class="value" id="day7Value">+41.83 pts</div>
-          <div class="delta" id="day7Delta">+2.69%</div>
+          <div class="value" id="day7Value">--</div>
+          <div class="delta" id="day7Delta">--</div>
         </article>
         <article class="summary-card">
           <div class="label">30 Day Change</div>
-          <div class="value" id="day30Value">+178.56 pts</div>
-          <div class="delta" id="day30Delta">+12.57%</div>
+          <div class="value" id="day30Value">--</div>
+          <div class="delta" id="day30Delta">--</div>
         </article>
         <article class="summary-card">
           <div class="label">Current Level</div>
-          <div class="value" id="currentValue">1,599.30 pts</div>
+          <div class="value" id="currentValue">--</div>
           <div class="delta" id="currentDelta">--</div>
         </article>
       </div>
@@ -693,11 +716,11 @@
       <div class="headline">
         <div class="headline-item">
           <div class="headline-label">Current Level</div>
-          <div class="headline-value" id="headlineCurrent">1,599.30 pts</div>
+          <div class="headline-value" id="headlineCurrent">--</div>
         </div>
         <div class="headline-item">
           <div class="headline-label">All Time</div>
-          <div class="headline-value good" id="headlineAllTime">+599.30 pts (+59.93%)</div>
+          <div class="headline-value good" id="headlineAllTime">--</div>
         </div>
       </div>
 
@@ -733,31 +756,6 @@
   </main>
 
   <script>
-    const fallbackSeries = [
-      { date: "2024-03-01", index: 1000.0, aggregate: 9500.0 },
-      { date: "2024-06-01", index: 1185.0, aggregate: 11257.5 },
-      { date: "2024-09-01", index: 1155.0, aggregate: 10972.5 },
-      { date: "2024-12-01", index: 1682.0, aggregate: 15979.0 },
-      { date: "2025-03-01", index: 1739.0, aggregate: 16520.5 },
-      { date: "2025-06-01", index: 1360.0, aggregate: 12920.0 },
-      { date: "2025-09-01", index: 1309.0, aggregate: 12435.5 },
-      { date: "2025-12-01", index: 1302.0, aggregate: 12369.0 },
-      { date: "2026-02-01", index: 1202.0, aggregate: 11419.0 },
-      { date: "2026-04-01", index: 1599.3, aggregate: 15193.35 }
-    ];
-
-    const fallbackReleases = [
-      { date: "2024-03-01", short: "TEF", long: "Temporal Forces" },
-      { date: "2024-06-01", short: "TWM", long: "Twilight Masquerade" },
-      { date: "2024-08-01", short: "SFA", long: "Shrouded Fable" },
-      { date: "2024-09-01", short: "SCR", long: "Stellar Crown" },
-      { date: "2024-11-01", short: "SSP", long: "Surging Sparks" },
-      { date: "2025-01-01", short: "PRE", long: "Prismatic Evolutions" },
-      { date: "2025-03-01", short: "JTG", long: "Journey Together" },
-      { date: "2025-05-01", short: "DRI", long: "Destined Rivals" },
-      { date: "2025-07-01", short: "WHT", long: "White Flare" }
-    ];
-
     let fullSeries = [];
     let releaseEvents = [];
     let payloadSummary = null;
@@ -834,14 +832,7 @@
       return `${sign}${formatNumber(Math.abs(value), 2)}%`;
     }
 
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-    }
+    const escapeHtml = window.DashboardCommon.escapeHtml;
 
     // Normalize card numbers for duplicate-title detection (e.g. 48/108 vs 048/108).
     function buildNumberVariants(num) {
@@ -1168,6 +1159,10 @@
       if (constituentSummary) constituentSummary.textContent = `✚ Top ${holdingsLimit} cards by market price`;
       const methodSummary = document.getElementById("methodSummary");
       if (methodSummary) methodSummary.textContent = `${data.description}. We use a divisor-adjusted method to keep the series continuous when constituents rotate. Each daily run:`;
+      const constituentMethod = document.getElementById("constituentMethod");
+      if (constituentMethod) constituentMethod.textContent = `Keep the top ${holdingsLimit} constituents for that day`;
+      const aggregateBasketSize = document.getElementById("aggregateBasketSize");
+      if (aggregateBasketSize) aggregateBasketSize.textContent = `top-${holdingsLimit}`;
       const holdingsTitle = document.getElementById("holdingsTitle");
       if (holdingsTitle) holdingsTitle.textContent = `Top ${holdingsLimit} Holdings`;
       payloadSummary = data.summary || null;
@@ -1200,25 +1195,7 @@
 
     loadIndexOverviewData().catch((err) => {
       console.error(err);
-      fullSeries = fallbackSeries.slice();
-      releaseEvents = fallbackReleases.slice();
-      payloadSummary = {
-        current_level: fallbackSeries[fallbackSeries.length - 1].index,
-        current_aggregate: fallbackSeries[fallbackSeries.length - 1].aggregate,
-        day1_change: { abs: null, pct: null },
-        day7_change: { abs: null, pct: null },
-        day30_change: { abs: null, pct: null },
-        all_time_index_change: {
-          abs: fallbackSeries[fallbackSeries.length - 1].index - fallbackSeries[0].index,
-          pct: ((fallbackSeries[fallbackSeries.length - 1].index - fallbackSeries[0].index) / fallbackSeries[0].index) * 100
-        },
-        all_time_aggregate_change: {
-          abs: fallbackSeries[fallbackSeries.length - 1].aggregate - fallbackSeries[0].aggregate,
-          pct: ((fallbackSeries[fallbackSeries.length - 1].aggregate - fallbackSeries[0].aggregate) / fallbackSeries[0].aggregate) * 100
-        }
-      };
-      setChartStatus("Live data failed to load. Showing fallback chart. Check /index-overview-data and restart the API if needed.", true);
-      renderChart();
+      setChartStatus("Index data is temporarily unavailable. No fallback values are shown because stale market data could be misleading.", true);
     });
   </script>
 </body>

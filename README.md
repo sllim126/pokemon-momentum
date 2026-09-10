@@ -239,7 +239,9 @@ Detailed docs live here:
 - [docs/project_status.md](/opt/pokemon-momentum/docs/project_status.md)
 - [docs/dashboard_how_to.txt](/opt/pokemon-momentum/docs/dashboard_how_to.txt)
 - [docs/data_flow.txt](/opt/pokemon-momentum/docs/data_flow.txt)
+- [docs/index_overview_maintenance.md](/opt/pokemon-momentum/docs/index_overview_maintenance.md)
 - [docs/operator_runbook.txt](/opt/pokemon-momentum/docs/operator_runbook.txt)
+- [docs/responsive_qa.md](/opt/pokemon-momentum/docs/responsive_qa.md)
 - [docs/todo.txt](/opt/pokemon-momentum/docs/todo.txt)
 
 
@@ -248,5 +250,5 @@ Detailed docs live here:
 - This project has moved beyond the old `top200` prototype workflow.
 - The application currently spans market research, collector tools, and protected
   Squarespace/store operations; `docs/project_status.md` is the concise project map.
-- Many generated outputs are rebuildable artifacts, but the repository policy for
-  committing placeholder/checklist outputs still needs to be finalized before cleanup.
+- Generated-artifact handling is defined in `docs/project_status.md`; runtime outputs stay
+  ignored while published Collector Hub assets remain versioned until deployment builds them.

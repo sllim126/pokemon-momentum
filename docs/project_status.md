@@ -104,6 +104,9 @@ The detailed active queue and design decisions live in `docs/todo.txt`.
 - Pin runtime dependencies and separate development-only packages.
 - Perform and record phone/tablet/laptop visual QA for the consolidated pages.
 
+The current source-level responsive audit and outstanding real-browser checklist are recorded
+in `docs/responsive_qa.md`.
+
 ## Before resuming feature work
 
 1. Finish the API-domain and shared-frontend extraction without changing route behavior.
