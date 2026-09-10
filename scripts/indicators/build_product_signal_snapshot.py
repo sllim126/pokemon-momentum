@@ -104,7 +104,12 @@ with_ma AS (
             PARTITION BY groupId, productId, subTypeName
             ORDER BY date
             ROWS BETWEEN 89 PRECEDING AND CURRENT ROW
-        ) AS high_90d
+        ) AS high_90d,
+        MAX(price) OVER (
+            PARTITION BY groupId, productId, subTypeName
+            ORDER BY date
+            ROWS BETWEEN 90 PRECEDING AND 1 PRECEDING
+        ) AS prior_high_90d
     FROM base
 ),
 recent_changes AS (
@@ -200,6 +205,9 @@ screen_recent_activity AS (
         COUNT(*) FILTER (
             WHERE date >= (SELECT latest_date FROM latest_date) - INTERVAL 7 DAY
         ) AS recent_observations_7d,
+        COUNT(*) FILTER (
+            WHERE date >= (SELECT latest_date FROM latest_date) - INTERVAL 30 DAY
+        ) AS recent_observations_30d,
         COUNT(DISTINCT price) FILTER (
             WHERE date >= (SELECT latest_date FROM latest_date) - INTERVAL 7 DAY
         ) AS recent_distinct_prices_7d,
@@ -227,6 +235,7 @@ flagged AS (
         sma_30,
         sma_90,
         high_90d,
+        prior_high_90d,
         CASE
             WHEN sma_30 IS NOT NULL AND price > sma_30 THEN 1
             ELSE 0
@@ -410,12 +419,14 @@ enriched AS (
         ss.early_streak,
         ss.cross_date,
         sra.recent_observations_7d,
+        sra.recent_observations_30d,
         sra.recent_distinct_prices_7d,
         sra.recent_distinct_prices_30d,
         sra.last_change_date,
         l.sma_30,
         l.sma_90,
         l.high_90d,
+        l.prior_high_90d,
         tma.top_mover_signal_days,
         tma.top_mover_observed_changes,
         tmrv.top_mover_recent_observations,
@@ -505,6 +516,7 @@ SELECT
     top_mover_recent_points,
     top_mover_last_change_date,
     recent_observations_7d,
+    recent_observations_30d,
     recent_distinct_prices_7d,
     recent_distinct_prices_30d,
     last_change_date,
@@ -522,6 +534,7 @@ SELECT
     CASE WHEN sma_90 IS NULL OR sma_90 = 0 THEN NULL
          ELSE ((latest_price / sma_90) - 1) * 100 END AS price_vs_sma90_pct,
     high_90d,
+    prior_high_90d,
     CASE WHEN latest_price >= high_90d AND high_90d IS NOT NULL THEN 1 ELSE 0 END AS breakout_90d_flag,
     (
         COALESCE(

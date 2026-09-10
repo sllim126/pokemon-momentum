@@ -2075,7 +2075,7 @@ _JPY_PER_USD_FX_CACHE: dict[str, object] = {
 }
 
 
-def _safe_float(value) -> float | None:
+def _optional_float(value) -> float | None:
     try:
         parsed = float(value)
     except (TypeError, ValueError):
@@ -2966,7 +2966,7 @@ def _latest_jpy_per_usd_rate() -> dict:
     but it is materially better than a stale hardcoded assumption.
     """
     now = datetime.now(timezone.utc)
-    cached_value = _safe_float(_JPY_PER_USD_FX_CACHE.get("value"))
+    cached_value = _optional_float(_JPY_PER_USD_FX_CACHE.get("value"))
     fetched_at = _JPY_PER_USD_FX_CACHE.get("fetched_at")
     if (
         cached_value is not None
@@ -2998,7 +2998,7 @@ def _latest_jpy_per_usd_rate() -> dict:
             ),
             None,
         )
-        jpy_per_usd = _safe_float(jpy_row.get("rate") if jpy_row else None)
+        jpy_per_usd = _optional_float(jpy_row.get("rate") if jpy_row else None)
         if jpy_per_usd is None or jpy_per_usd <= 0:
             raise ValueError("FX response did not include a valid USD/JPY rate")
 
@@ -3150,18 +3150,18 @@ def supplier_profitability_data(
     store_mapping = load_current_store_mapping()
     market_targets = load_latest_market_targets()
 
-    jpy_per_usd = _safe_float(assumptions.get("jpy_per_usd")) or 159.0
-    import_duty_pct = _safe_float(assumptions.get("import_duty_pct")) or 0.0
+    jpy_per_usd = _optional_float(assumptions.get("jpy_per_usd")) or 159.0
+    import_duty_pct = _optional_float(assumptions.get("import_duty_pct")) or 0.0
     inbound_shipping_mode = str(assumptions.get("inbound_shipping_mode") or "manual").strip().lower()
-    inbound_shipping_usd = _safe_float(assumptions.get("inbound_shipping_usd")) or 0.0
-    order_shipping_jpy = _safe_float(assumptions.get("order_shipping_jpy")) or 0.0
-    order_box_count = _safe_float(assumptions.get("order_box_count")) or 0.0
-    handling_cost_usd = _safe_float(assumptions.get("handling_cost_usd")) or 0.0
-    outbound_shipping_usd = _safe_float(assumptions.get("outbound_shipping_usd")) or 7.25
-    shipping_credit_usd = _safe_float(assumptions.get("shipping_credit_usd")) or 0.0
-    disbursement_fee_usd = _safe_float(assumptions.get("disbursement_fee_usd")) or 15.0
-    income_tax_pct = _safe_float(assumptions.get("income_tax_pct")) or 0.0
-    target_margin_pct = _safe_float(assumptions.get("target_margin_pct")) or 0.0
+    inbound_shipping_usd = _optional_float(assumptions.get("inbound_shipping_usd")) or 0.0
+    order_shipping_jpy = _optional_float(assumptions.get("order_shipping_jpy")) or 0.0
+    order_box_count = _optional_float(assumptions.get("order_box_count")) or 0.0
+    handling_cost_usd = _optional_float(assumptions.get("handling_cost_usd")) or 0.0
+    outbound_shipping_usd = _optional_float(assumptions.get("outbound_shipping_usd")) or 7.25
+    shipping_credit_usd = _optional_float(assumptions.get("shipping_credit_usd")) or 0.0
+    disbursement_fee_usd = _optional_float(assumptions.get("disbursement_fee_usd")) or 15.0
+    income_tax_pct = _optional_float(assumptions.get("income_tax_pct")) or 0.0
+    target_margin_pct = _optional_float(assumptions.get("target_margin_pct")) or 0.0
     channel_defaults = {
         "site": {"name": "Own Site", "reference_source": "store", "platform_fee_pct": 0.0, "payment_fee_pct": 2.9, "payment_fee_fixed": 0.30},
         "ebay": {"name": "eBay", "reference_source": "target", "platform_fee_pct": 13.25, "payment_fee_pct": 0.0, "payment_fee_fixed": 0.30},
@@ -3175,9 +3175,9 @@ def supplier_profitability_data(
         channel_configs[key] = {
             "name": str(payload_row.get("name") or defaults["name"]),
             "reference_source": str(payload_row.get("reference_source") or defaults["reference_source"]),
-            "platform_fee_pct": _safe_float(payload_row.get("platform_fee_pct")),
-            "payment_fee_pct": _safe_float(payload_row.get("payment_fee_pct")),
-            "payment_fee_fixed": _safe_float(payload_row.get("payment_fee_fixed")),
+            "platform_fee_pct": _optional_float(payload_row.get("platform_fee_pct")),
+            "payment_fee_pct": _optional_float(payload_row.get("payment_fee_pct")),
+            "payment_fee_fixed": _optional_float(payload_row.get("payment_fee_fixed")),
         }
         if channel_configs[key]["platform_fee_pct"] is None:
             channel_configs[key]["platform_fee_pct"] = defaults["platform_fee_pct"]
@@ -3191,7 +3191,7 @@ def supplier_profitability_data(
         sku = str(quote.get("sku") or "").strip()
         if not sku:
             continue
-        cost_jpy = _safe_float(quote.get("cost_jpy"))
+        cost_jpy = _optional_float(quote.get("cost_jpy"))
         if cost_jpy is None or cost_jpy <= 0 or jpy_per_usd <= 0:
             continue
         store_row = store_mapping.get(sku, {})
@@ -3210,9 +3210,9 @@ def supplier_profitability_data(
             effective_inbound_shipping_usd = estimated_inbound_shipping_usd
         landed_cost_usd = supplier_cost_usd + import_cost_usd + effective_inbound_shipping_usd + handling_cost_usd + disbursement_fee_usd
         fixed_costs = landed_cost_usd + outbound_shipping_usd - shipping_credit_usd
-        store_price = _safe_float(store_row.get("current_price"))
-        market_price = _safe_float(market_row.get("market_price"))
-        target_price = _safe_float(market_row.get("target_price"))
+        store_price = _optional_float(store_row.get("current_price"))
+        market_price = _optional_float(market_row.get("market_price"))
+        target_price = _optional_float(market_row.get("target_price"))
         channels = {
             key: _channel_profitability(
                 name=config["name"],
@@ -6033,7 +6033,7 @@ def sealed_deals(
         if _looks_like_individual_card(name, row.get("rarity"), row.get("number")):
             continue
 
-        latest_price = _safe_float(row.get("latest_price"))
+        latest_price = _optional_float(row.get("latest_price"))
         if latest_price is None:
             continue
         product_class = str(row.get("productClass") or "")
@@ -6073,7 +6073,7 @@ def sealed_deals(
                 deal_score = None
         else:
             msrp_total_override = (
-                _safe_float(pack_count_override.get("msrp_total"))
+                _optional_float(pack_count_override.get("msrp_total"))
                 if pack_count_override and pack_count_override.get("msrp_total") is not None
                 else None
             )
@@ -6614,11 +6614,62 @@ def breakouts(
     category = category_config(category_id)
     price_source = prices_from(category.category_id)
     signal_source = product_signal_from(category.category_id)
+    days = max(2, min(days, 365))
+    limit = max(1, min(limit, 1000))
+    recent_change_within_days = max(1, min(recent_change_within_days, 30))
+    min_recent_distinct_prices_30d = max(2, min(min_recent_distinct_prices_30d, 30))
     metadata_cte = build_metadata_cte(category.category_id, include_classification=True, cte_name="metadata")
     max_hold_days = max(1, min(max_hold_days, 30))
     product_kind_filter = ""
     if product_kind in {"card", "sealed"}:
         product_kind_filter = f"AND m.productKind = '{product_kind}'"
+    uses_default_snapshot = (
+        days == 90
+        and min_price == 5.0
+        and min_breakout_pct == 1.0
+        and recent_change_within_days == 5
+        and min_recent_distinct_prices_30d == 10
+        and max_hold_days == 7
+    )
+    if uses_default_snapshot:
+        snapshot_kind_filter = ""
+        if product_kind in {"card", "sealed"}:
+            snapshot_kind_filter = f"AND productKind = '{product_kind}'"
+        sql = f"""
+        SELECT
+            productId,
+            groupId,
+            subTypeName,
+            groupName,
+            productName,
+            imageUrl,
+            rarity,
+            number,
+            productClass,
+            productKind,
+            latest_price,
+            prior_high_90d AS prior_high_window,
+            ((latest_price / NULLIF(prior_high_90d, 0)) - 1) * 100.0 AS breakout_pct,
+            hold_days,
+            last_change_date,
+            recent_observations_30d,
+            recent_distinct_prices_30d
+        FROM {signal_source}
+        WHERE categoryId = {category.category_id}
+          AND latest_date = (SELECT MAX(latest_date) FROM {signal_source})
+          AND latest_price >= {min_price}
+          AND prior_high_90d IS NOT NULL
+          AND latest_price > prior_high_90d
+          AND ((latest_price / NULLIF(prior_high_90d, 0)) - 1) * 100.0 >= {min_breakout_pct}
+          AND last_change_date >= latest_date - INTERVAL {recent_change_within_days} DAY
+          AND recent_distinct_prices_30d >= {min_recent_distinct_prices_30d}
+          AND COALESCE(hold_days, 0) <= {max_hold_days}
+          {snapshot_kind_filter}
+        ORDER BY breakout_pct DESC, latest_price DESC
+        LIMIT {limit}
+        """
+        cols, rows = q(sql)
+        return {"columns": cols, "rows": rows}
     sql = f"""
     WITH data_date AS (
         SELECT MAX(date) AS latest_date

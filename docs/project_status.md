@@ -98,14 +98,18 @@ The detailed active queue and design decisions live in `docs/todo.txt`.
 - Continue splitting the large `scripts/dashboards/api.py` module by route/service domain;
   index definitions now live in `scripts/dashboards/index_config.py`.
 - Replace remaining full-catalog browser loads with paged server-side search.
-- Continue profiling `breakouts`; the default `under_the_radar` path now uses the
-  precomputed screener snapshot and is substantially faster.
+- Continue profiling custom-window `breakouts`; the normal 90-day dashboard request now
+  uses the product-signal snapshot. Warm local measurements improved from about 2.0 seconds
+  to about 0.5 seconds. The default `under_the_radar` path is about 0.16–0.20 seconds.
 - Extract shared frontend shell, API, chart, formatting, and tracking code.
 - Pin runtime dependencies and separate development-only packages.
 - Perform and record phone/tablet/laptop visual QA for the consolidated pages.
 
 The current source-level responsive audit and outstanding real-browser checklist are recorded
 in `docs/responsive_qa.md`.
+
+The default Product Picker response is capped at 250 rows (roughly 14 KB instead of the old
+44,000-row/3 MB response). Custom picker pagination remains available up to the server cap.
 
 ## Before resuming feature work
 

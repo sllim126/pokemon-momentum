@@ -10,6 +10,12 @@ from scripts.dashboards import api
 
 
 class ApiRouteTests(unittest.TestCase):
+    def test_float_parsers_keep_numeric_and_nullable_contracts_separate(self):
+        self.assertEqual(api._safe_float(None), 0.0)
+        self.assertEqual(api._safe_float("bad", 2.5), 2.5)
+        self.assertIsNone(api._optional_float(None))
+        self.assertEqual(api._optional_float("3.25"), 3.25)
+
     @classmethod
     def setUpClass(cls):
         cls.client = TestClient(api.app)
@@ -1174,10 +1180,11 @@ class ApiRouteTests(unittest.TestCase):
             api.breakouts(product_kind="card", category_id=85)
 
         sql = q_mock.call_args[0][0]
-        self.assertIn("AND m.productKind = 'card'", sql)
+        self.assertIn("AND productKind = 'card'", sql)
         self.assertIn("recent_distinct_prices_30d", sql)
-        self.assertIn("COALESCE(ls.hold_days, 0) <= 7", sql)
+        self.assertIn("COALESCE(hold_days, 0) <= 7", sql)
         self.assertIn("FROM product_signal_snapshot", sql)
+        self.assertNotIn("base AS", sql)
 
     def test_breakouts_excludes_established_sma30_holds(self):
         with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(
@@ -1190,7 +1197,19 @@ class ApiRouteTests(unittest.TestCase):
             api.breakouts(category_id=85, max_hold_days=7)
 
         sql = q_mock.call_args[0][0]
-        self.assertIn("COALESCE(ls.hold_days, 0) <= 7", sql)
+        self.assertIn("COALESCE(hold_days, 0) <= 7", sql)
+        self.assertIn("prior_high_90d", sql)
+
+    def test_breakouts_custom_window_keeps_live_history_query(self):
+        with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(
+            api, "prices_from", return_value="prices_source"
+        ), patch.object(api, "product_signal_from", return_value="product_signal_snapshot"), patch.object(
+            api, "build_metadata_cte", return_value="metadata AS (SELECT 1)"
+        ):
+            api.breakouts(category_id=3, days=60)
+
+        sql = q_mock.call_args[0][0]
+        self.assertIn("base AS", sql)
         self.assertIn("LEFT JOIN latest_signal ls", sql)
 
     def test_early_uptrends_prefers_quiet_names_just_starting_to_lift(self):
