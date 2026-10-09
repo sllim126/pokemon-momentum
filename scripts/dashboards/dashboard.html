@@ -3403,12 +3403,6 @@
         <div class="rail-ticker-wrap">
           <div class="mover-list" id="moverList"></div>
         </div>
-        <div class="rail-controls">
-          <div class="segment-bar" id="railSegments">
-            <button type="button" data-segment="cards" class="active">Cards</button>
-            <button type="button" data-segment="sealed">Sealed</button>
-          </div>
-        </div>
       </div>
     </aside>
 
@@ -4679,7 +4673,13 @@
     }
 
     function maybeOpenGuideOnFirstVisit() {
-      if (localStorage.getItem(guideSeenStorageKey) === "1") return;
+      // On phones the guide covers the whole screen; it stays available from the menu.
+      if (window.matchMedia("(max-width: 900px)").matches) return;
+      try {
+        if (localStorage.getItem(guideSeenStorageKey) === "1") return;
+      } catch (_err) {
+        return;
+      }
       window.setTimeout(() => {
         setGuideStep(0);
         setGuideModalOpen(true);

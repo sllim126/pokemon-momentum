@@ -54,8 +54,13 @@ class DashboardFrontendContractTests(unittest.TestCase):
         self.assertIn('species_query', self.html)
 
     def test_mobile_and_header_segment_controls_exist(self):
-        self.assertGreaterEqual(self.html.count('data-segment="cards"'), 3)
-        self.assertGreaterEqual(self.html.count('data-segment="sealed"'), 3)
+        # One Cards/Sealed switch beside the results and one in the phone layout;
+        # the duplicate rail switch was removed because all three shared one setting.
+        self.assertIn('id="signalSegments"', self.html)
+        self.assertIn('id="mobileHomeSegments"', self.html)
+        self.assertNotIn('id="railSegments"', self.html)
+        self.assertEqual(self.html.count('data-segment="cards"'), 2)
+        self.assertEqual(self.html.count('data-segment="sealed"'), 2)
 
     def test_browse_set_and_browse_species_help_text_is_present(self):
         self.assertIn("Browse Set shows tracked products in the selected set.", self.html)

@@ -2490,8 +2490,8 @@
                 <div class="decision-heading">
                   <h3 class="decision-title" id="decisionTitle">Select a card</h3>
                   <div class="decision-market">
-                    <div class="market-price" id="dealMarketPrice">$0.00</div>
-                    <div class="market-trend" id="decisionTrend">+0.0% (30d)</div>
+                    <div class="market-price" id="dealMarketPrice"></div>
+                    <div class="market-trend" id="decisionTrend"></div>
                   </div>
                 </div>
                 <p class="decision-meta" id="decisionMeta">Search or tap a result to load the decision screen.</p>
@@ -2525,7 +2525,7 @@
               </div>
             </div>
             <p class="suggestion-line" id="dealGuidance">Enter a seller price to calculate discount versus market.</p>
-            <p class="confidence-line" id="dealConfidence">Confidence: High based on sample liquidity.</p>
+            <p class="confidence-line" id="dealConfidence"></p>
           </section>
 
           <div class="detail-tabs" role="tablist" aria-label="Card details">
@@ -4435,23 +4435,6 @@
             );
           });
 
-      if (activeFilter === "sv151") next = next.filter((item) => item.set === "151");
-      if (activeFilter === "jp151") next = next.filter((item) => item.set.toLowerCase().includes("151"));
-      if (activeFilter === "altarts") next = next.filter((item) => item.name.toLowerCase().includes("alt"));
-      if (activeFilter === "boosterbox") next = next.filter((item) => item.name.toLowerCase().includes("booster box"));
-      if (activeFilter === "etb") next = next.filter((item) => item.name.toLowerCase().includes("etb") || item.name.toLowerCase().includes("special"));
-      if (activeFilter === "gainers") next = next.filter((item) => item.change30d > 0);
-      if (activeFilter === "decliners") next = next.filter((item) => item.change30d < 0);
-
-      if (activeMode !== "price-drop-watch" && activeMode !== "tracked" && activeMode !== "feed") {
-        if (activeIntent === "buys") next = next.filter((item) => item.score >= 85 && item.change30d > 0 && item.price <= 180);
-        if (activeIntent === "early") next = next.filter((item) => item.change30d > 0 && item.change30d <= 10);
-        if (activeIntent === "set") next = next.filter((item) => activeKind === "singles"
-          ? (item.set.includes("151") || item.set.includes("Paldean"))
-          : (item.name.toLowerCase().includes("box") || item.name.toLowerCase().includes("etb"))
-        );
-      }
-
       const sorted = [...next];
       if (activeSort === "price") sorted.sort((a, b) => b.price - a.price);
       if (activeSort === "momentum") sorted.sort((a, b) => b.change30d - a.change30d);
@@ -4659,8 +4642,12 @@
 
     function clearDealCheck() {
       decisionImage.innerHTML = "";
-      dealItemLabel.textContent = "No matching card. Adjust search or filters.";
-      dealMarketPrice.textContent = "$0.00";
+      dealItemLabel.textContent = "No card selected.";
+      decisionTitle.textContent = "Select a card";
+      decisionMeta.textContent = "Search or tap a result to load the decision screen.";
+      decisionTrend.textContent = "";
+      dealMarketPrice.textContent = "";
+      dealConfidence.textContent = "";
       dealEdgePct.textContent = "0.0%";
       dealEdgePct.className = "deal-value";
       dealSuggestion.textContent = "$0.00";
@@ -4668,7 +4655,8 @@
       dealVerdictBadge.textContent = "Waiting";
       dealVerdictBadge.className = "deal-badge";
       dealGuidance.textContent = "Enter a seller price to calculate discount versus market.";
-      dealCheck.hidden = activeMode === "tracked";
+      // Nothing to judge without a card; renderDealCheck shows the panel again.
+      dealCheck.hidden = true;
     }
 
     function setActiveButton(container, selector, value, dataKey) {
