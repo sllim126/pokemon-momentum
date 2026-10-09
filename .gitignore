@@ -215,6 +215,7 @@ data/parquet/*
 data/raw/*
 data/extracted/*
 data/processed/*
+data/staging/*
 .locks/
 output/
 

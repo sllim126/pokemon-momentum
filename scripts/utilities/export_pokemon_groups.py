@@ -1,7 +1,6 @@
 import csv
 import argparse
 import sys
-import requests
 import duckdb
 from pathlib import Path
 
@@ -14,7 +13,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.common.category_config import get_category_config
-from scripts.utilities.tcgcsv_client import build_tcgcsv_session
+from scripts.utilities.tcgcsv_client import build_tcgcsv_session, tcgcsv_get_json
 
 
 def parse_args() -> argparse.Namespace:
@@ -29,12 +28,10 @@ def main() -> int:
     out_csv = f"{DATA_DIR}/{category.groups_csv}"
     table_name = category.groups_table
 
-    url = f"https://tcgcsv.com/tcgplayer/{category.category_id}/groups"
-    session = build_tcgcsv_session()
-    r = session.get(url, timeout=60)
-    r.raise_for_status()
-
-    groups = r.json()["results"]
+    payload = tcgcsv_get_json(build_tcgcsv_session(), f"/tcgplayer/{category.category_id}/groups")
+    if not payload or not payload.get("results"):
+        raise RuntimeError(f"No groups returned for category {category.category_id}: {payload}")
+    groups = payload["results"]
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
     with open(out_csv, "w", newline="", encoding="utf-8") as f:

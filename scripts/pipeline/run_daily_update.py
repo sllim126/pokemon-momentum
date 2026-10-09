@@ -126,8 +126,14 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     category = get_category_config(args.category_id)
 
     if not args.skip_download:
-        # Expected result: new daily archives are downloaded/extracted when they exist upstream.
-        steps.append(("Download and extract new archives", ["python", "scripts/download/Download_new_day.py"]))
+        # Expected result: today's TCGCSV prices land in the extracted layout for this category.
+        # (TCGCSV retired its daily archive in 2026-09; Download_new_day.py no longer has data.)
+        steps.append(
+            (
+                "Download latest TCGCSV prices",
+                ["python", "scripts/download/fetch_tcgcsv_prices.py", "--category-id", str(args.category_id)],
+            )
+        )
 
     # Expected result: pokemon_prices contains all missing dates for the selected category.
     steps.append(("Load new price data into DuckDB", build_price_load_command(args)))

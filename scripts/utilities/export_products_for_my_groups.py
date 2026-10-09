@@ -1,24 +1,25 @@
 import argparse
 import csv
+import json
 import sys
-import time
 from pathlib import Path
 
 import duckdb
-import requests
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.common.category_config import get_category_config
-from scripts.utilities.tcgcsv_client import build_tcgcsv_session
+from scripts.utilities.tcgcsv_client import (
+    TcgcsvBlockedError,
+    build_tcgcsv_session,
+    tcgcsv_get_json,
+)
 
 DATA_DIR = "/app/data/extracted"
 PROCESSED_DIR = Path("/app/data/processed")
 DB_PATH = PROCESSED_DIR / "prices_db.duckdb"
-REQUEST_TIMEOUT = (10, 45)
-MAX_RETRIES = 3
 HEADERS = ["groupId", "productId", "name", "cleanName", "imageUrl", "rarity", "number"]
 SESSION = build_tcgcsv_session()
 
@@ -132,21 +133,44 @@ def groups_with_placeholder_rows(existing_rows: dict[tuple[int, int], tuple]) ->
     return groups
 
 
+def products_path(category_id: int, group_id: int) -> str:
+    return f"/tcgplayer/{category_id}/{group_id}/products"
+
+
 def fetch_products_for_group(category_id: int, group_id: int) -> list[dict]:
-    """Fetch one group's product catalog from tcgcsv with retries and timeouts."""
-    url = f"https://tcgcsv.com/tcgplayer/{category_id}/{group_id}/products"
-    last_error = None
-    for attempt in range(1, MAX_RETRIES + 1):
-        try:
-            r = SESSION.get(url, timeout=REQUEST_TIMEOUT)
-            r.raise_for_status()
-            return r.json().get("results", [])
-        except Exception as exc:
-            last_error = exc
-            print(f"  attempt {attempt}/{MAX_RETRIES} failed for groupId {group_id}: {exc}")
-            if attempt < MAX_RETRIES:
-                time.sleep(min(5 * attempt, 15))
-    raise RuntimeError(f"Failed to fetch products for groupId {group_id}") from last_error
+    """Fetch one group's product catalog from tcgcsv (paced, retried, stops on 403/429)."""
+    payload = tcgcsv_get_json(SESSION, products_path(category_id, group_id))
+    return [] if payload is None else payload.get("results", [])
+
+
+def fetch_manifest() -> dict[str, str] | None:
+    """Return TCGCSV's path -> content-hash manifest, or None if it can't be read.
+
+    Only TcgcsvBlockedError propagates: being blocked should stop the run.
+    """
+    try:
+        manifest = tcgcsv_get_json(SESSION, "/tcgplayer/manifest.txt")
+    except TcgcsvBlockedError:
+        raise
+    except Exception as exc:
+        print(f"Warning: could not read TCGCSV manifest ({exc}); falling back to missing/placeholder groups only.")
+        return None
+    return manifest if isinstance(manifest, dict) else None
+
+
+def load_fetched_hashes(path: Path) -> dict[int, str]:
+    """Manifest hash of each group's products file as of our last successful fetch."""
+    if not path.exists():
+        return {}
+    try:
+        return {int(group_id): str(digest) for group_id, digest in json.loads(path.read_text()).items()}
+    except (ValueError, OSError) as exc:
+        print(f"Warning: ignoring unreadable {path}: {exc}")
+        return {}
+
+
+def save_fetched_hashes(path: Path, hashes: dict[int, str]) -> None:
+    path.write_text(json.dumps({str(group_id): digest for group_id, digest in sorted(hashes.items())}, indent=0))
 
 
 def normalize_product_row(group_id: int, product: dict) -> tuple:
@@ -211,6 +235,7 @@ def main() -> int:
     args = parse_args()
     category = get_category_config(args.category_id)
     out_csv = f"{DATA_DIR}/{category.products_csv}"
+    hashes_path = Path(DATA_DIR) / f"{category.slug}_products_manifest_hashes.json"
     table_name = category.products_table
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -220,32 +245,58 @@ def main() -> int:
     existing_rows = {} if args.full_refresh else load_existing_rows(out_csv, active_group_ids)
 
     # Expected result of the planning stage: we know which groups already have cached
-    # metadata and which ones still need to be fetched from tcgcsv.
+    # metadata and which ones still need to be fetched from tcgcsv. With the manifest,
+    # a cached group is only refetched when TCGCSV says its products file changed.
     placeholder_groups = groups_with_placeholder_rows(existing_rows)
-    groups_to_fetch = group_ids if args.full_refresh else [
-        gid for gid in group_ids
-        if gid not in existing_group_ids(existing_rows) or gid in placeholder_groups
-    ]
+    cached_groups = existing_group_ids(existing_rows)
+    try:
+        manifest = fetch_manifest()
+    except TcgcsvBlockedError as exc:
+        print(f"ERROR: {exc}")
+        return 3
+    fetched_hashes = load_fetched_hashes(hashes_path)
+
+    def current_hash(gid: int) -> str | None:
+        return manifest.get(products_path(category.category_id, gid)) if manifest is not None else None
+
+    if args.full_refresh:
+        groups_to_fetch = group_ids
+    elif manifest is None:
+        groups_to_fetch = [gid for gid in group_ids if gid not in cached_groups or gid in placeholder_groups]
+    else:
+        groups_to_fetch = [
+            gid for gid in group_ids
+            if gid not in cached_groups or current_hash(gid) != fetched_hashes.get(gid)
+        ]
 
     print("Unique groups in your price history:", len(group_ids))
-    print("Existing metadata groups:", len(existing_group_ids(existing_rows)))
+    print("Existing metadata groups:", len(cached_groups))
     print("Groups with placeholder rows:", len(placeholder_groups))
     print("Groups queued for fetch:", len(groups_to_fetch))
-    print("Mode:", "full-refresh" if args.full_refresh else "incremental")
+    print("Mode:", "full-refresh" if args.full_refresh else "incremental", "| manifest:", "yes" if manifest else "no")
 
     rows_by_key = dict(existing_rows)
     placeholder_rows = 0
 
     # Each fetched group should replace stale rows for that group and contribute a clean
     # metadata snapshot for downstream joins, dashboards, and signal builders.
+    blocked: TcgcsvBlockedError | None = None
+    failed_groups: list[int] = []
     for i, gid in enumerate(groups_to_fetch, start=1):
         print(f"[{i}/{len(groups_to_fetch)}] Downloading products for groupId {gid} ...")
         try:
             products = fetch_products_for_group(category.category_id, gid)
+        except TcgcsvBlockedError as exc:
+            blocked = exc
+            break
         except Exception as exc:
-            print(f"  skipping groupId {gid} after repeated failures: {exc}")
-            products = []
+            # Keep the cached rows for this group rather than replacing them with placeholders.
+            print(f"  keeping cached metadata for groupId {gid} after repeated failures: {exc}")
+            failed_groups.append(gid)
+            continue
 
+        if manifest is not None and current_hash(gid) is not None:
+            fetched_hashes[gid] = current_hash(gid)
         for key in [key for key in rows_by_key if key[0] == gid]:
             del rows_by_key[key]
 
@@ -279,12 +330,19 @@ def main() -> int:
     # Final expected result: one complete per-category product catalog in CSV and DuckDB.
     rows = sorted(rows_by_key.values(), key=lambda row: (row[0], row[1]))
     write_outputs(rows, out_csv, table_name)
+    save_fetched_hashes(hashes_path, fetched_hashes)
 
     print("Category:", category.label, f"({category.category_id})")
     print("Wrote:", out_csv)
     print("DuckDB table:", table_name)
     print("Database:", DB_PATH)
     print("Placeholder metadata rows:", placeholder_rows)
+    if failed_groups:
+        print("Groups that failed and kept cached metadata:", failed_groups)
+    if blocked is not None:
+        print(f"ERROR: {blocked}")
+        print("Saved the groups fetched before the block; the rest keep cached metadata.")
+        return 3
     return 0
 
 

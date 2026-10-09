@@ -23,19 +23,35 @@ fi
 
 cd "$ROOT"
 
-echo "[$STAMP] Starting Pokemon Momentum daily update"
+# Remember where this run's log output starts so the Discord summary only reads this run.
+LOG_OFFSET="$(stat -c %s "$LOG_DIR/daily_update.log" 2>/dev/null || echo 0)"
+NOTIFY_TITLE="${NOTIFY_TITLE:-Nightly market update}"
+
+notify() {
+  # Expected result: a pass/fail summary lands in Discord; never fails the job itself.
+  python3 "$ROOT/scripts/pipeline/notify_discord.py" \
+    --exit-code "$1" \
+    --log-offset "$LOG_OFFSET" \
+    --started-at "$STAMP" \
+    --title "$NOTIFY_TITLE" >> "$LOG_DIR/daily_update.log" 2>&1 || true
+}
+
+echo "[$STAMP] Starting Pokemon Momentum daily update" | tee -a "$LOG_DIR/daily_update.log"
 
 if ! docker-compose ps "$SERVICE_NAME" >/dev/null 2>&1; then
-  echo "[$STAMP] docker-compose service lookup failed"
+  echo "[$STAMP] ERROR: docker-compose service lookup failed" | tee -a "$LOG_DIR/daily_update.log"
+  notify 1
   exit 1
 fi
 
 cleanup() {
+  local status=$?
   local end_stamp
   end_stamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   # Expected result: the app service comes back even if the pipeline fails mid-run.
   echo "[$end_stamp] Restarting $SERVICE_NAME service"
   docker-compose up -d "$SERVICE_NAME" >> "$LOG_DIR/daily_update.log" 2>&1 || true
+  notify "$status"
 }
 
 trap cleanup EXIT

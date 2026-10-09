@@ -529,8 +529,18 @@ What “healthy” looks like by layer
 
 Download/extract layer:
 
-- raw archives exist in `/app/data/raw`
-- extracted day folders exist in `/app/data/extracted`
+- TCGCSV retired its daily `.ppmd.7z` price archive in 2026-09. Prices are now fetched per
+  group by `scripts/download/fetch_tcgcsv_prices.py`, dated from `last-updated.txt`, and
+  written into the same extracted layout: `/app/data/extracted/prices-DATE.ppmd/DATE/<cat>/<group>/prices`
+- `/app/data/raw` only holds the historical archives (through 2026-09-15)
+- all TCGCSV calls go through `scripts/utilities/tcgcsv_client.py`: one request at a time,
+  >=100 ms apart, User-Agent `Poke6sMarket/1.0.0`
+- exit code 3 from the fetch or product-metadata step means TCGCSV answered 403/429 (blocked or
+  throttled). Do not rerun in a loop; check https://tcgcsv.com/docs#usage-guidelines and the
+  TCGCSV Discord before trying again
+- a missed day cannot be re-fetched later (TCGCSV only serves current prices)
+- product metadata only refetches groups whose manifest hash changed; the hashes are kept in
+  `/app/data/extracted/<slug>_products_manifest_hashes.json` (delete it to force a full fetch)
 
 DuckDB layer:
 
