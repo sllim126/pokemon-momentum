@@ -124,7 +124,7 @@ class ApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 404)
 
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_pricing_upload_page_serves_html(self, _get_session_user_mock):
         response = self.client.get("/pricing-upload", cookies={"pm_tracking_token": "token"})
 
@@ -132,7 +132,7 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Pricing Upload", response.text)
 
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_single_listings_upload_page_serves_html(self, _get_session_user_mock):
         response = self.client.get("/single-listings-upload", cookies={"pm_tracking_token": "token"})
 
@@ -141,7 +141,7 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("Singles Listing Upload", response.text)
         self.assertIn("Download Post-Create Follow-Up CSV", response.text)
 
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_single_listings_followup_download_returns_file(self, _get_session_user_mock):
         with TemporaryDirectory() as tmpdir:
             followup_csv = Path(tmpdir) / "followup.csv"
@@ -152,7 +152,7 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("attachment;", response.headers["content-disposition"])
 
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_supplier_profitability_page_serves_html(self, _get_session_user_mock):
         response = self.client.get("/supplier-profitability", cookies={"pm_tracking_token": "token"})
 
@@ -160,7 +160,7 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Supplier Profitability", response.text)
 
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_bug_reports_page_serves_html(self, _get_session_user_mock):
         response = self.client.get("/bug-reports", cookies={"pm_tracking_token": "token"})
 
@@ -193,7 +193,7 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(payload["items"][0]["category_id"], 3)
         self.assertEqual(payload["items"][1]["category_id"], 85)
 
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     @patch.object(api, "build_single_listing_drafts", return_value=[{"draft_status": "ready", "review_status": "", "sku": "123", "final_title": "Test Card", "target_price": "1.23", "set_name": "Test Set", "rarity": "Rare", "warnings": "", "errors": ""}])
     @patch.object(api, "write_single_listing_csv")
     def test_single_listings_intake_upload_saves_and_builds_drafts(
@@ -228,7 +228,7 @@ class ApiRouteTests(unittest.TestCase):
         build_single_listing_drafts_mock.assert_called_once()
         write_single_listing_csv_mock.assert_called_once()
 
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     @patch.object(api, "build_single_listing_drafts", return_value=[{"draft_status": "ready", "review_status": "", "sku": "478077-holofoil", "final_title": "Darkrai VSTAR", "target_price": "24.99", "set_name": "Crown Zenith", "rarity": "Ultra Rare", "warnings": "", "errors": ""}])
     @patch.object(api, "convert_single_listing_source_rows", return_value=([{"sku": "478077-holofoil", "product_id": "478077", "subtype": "Holofoil", "language": "english", "condition": "Near Mint", "quantity": "2", "price_override": "", "title_override": "", "notes": ""}], []))
     @patch.object(api, "write_single_listing_csv")
@@ -266,7 +266,7 @@ class ApiRouteTests(unittest.TestCase):
         build_single_listing_drafts_mock.assert_called_once()
         self.assertEqual(write_single_listing_csv_mock.call_count, 2)
 
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_single_listings_draft_upload_rejects_missing_columns(self, _get_session_user_mock):
         with TemporaryDirectory() as tmpdir:
             draft_csv = Path(tmpdir) / "drafts.csv"
@@ -755,7 +755,7 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("Details must be at least 10 characters", response.text)
 
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_pricing_upload_compare_saves_csv_and_returns_summary(self, _get_session_user_mock):
         source_csv = (
             b"Product ID [Non Editable],SKU,Title,Price,Sale Price\n"
@@ -794,7 +794,7 @@ class ApiRouteTests(unittest.TestCase):
                 self.assertGreater(payload["covered_rows"], 0)
                 self.assertTrue(payload["preview"])
 
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_pricing_upload_compare_rejects_non_squarespace_csv(self, _get_session_user_mock):
         response = self.client.post(
             "/pricing-upload/compare",
@@ -808,7 +808,7 @@ class ApiRouteTests(unittest.TestCase):
     @patch.object(api, "load_latest_market_targets", return_value={"JP-TEST-BOX": {"market_price": "120.00", "target_price": "125.00", "title": "Test Set Box"}})
     @patch.object(api, "load_current_store_mapping", return_value={"JP-TEST-BOX": {"current_price": "129.99", "title": "Test Set Box"}})
     @patch.object(api, "load_latest_supplier_quotes", return_value=([{"sku": "JP-TEST-BOX", "cost_jpy": "6500", "quote_date": "2026-04-27", "supplier_name": "Test Supplier", "item_name_raw": "Test Set Box"}], []))
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_supplier_profitability_data_returns_channel_breakdown(
         self,
         _get_session_user_mock,
@@ -854,7 +854,7 @@ class ApiRouteTests(unittest.TestCase):
 
     @patch.object(api, "list_bug_reports", return_value=[{"id": 1, "title": "Example"}])
     def test_bug_report_list_route_returns_items(self, list_bug_reports_mock):
-        with patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})()):
+        with patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})()):
             response = self.client.get("/bug_reports?limit=50", cookies={"pm_tracking_token": "token"})
 
         self.assertEqual(response.status_code, 200)
@@ -867,13 +867,32 @@ class ApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126", "user_id": 1})())
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_tracking_session_status_returns_admin_flag(self, _get_session_user_mock):
         response = self.client.get("/tracking/session", headers={"Authorization": "Bearer token"})
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["user"]["username"], "sllim126")
+        self.assertEqual(response.json()["user"]["username"], "sllim126@gmail.com")
         self.assertTrue(response.json()["user"]["is_admin"])
+
+    def test_admin_requires_exact_admin_email(self):
+        self.assertTrue(api.is_admin_username("SLLIM126@gmail.com "))
+        for lookalike in ("sllim126", "sllim126@evil.example", "sllim126@gmail.com.evil.example", ""):
+            self.assertFalse(api.is_admin_username(lookalike), lookalike)
+
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@evil.example", "user_id": 3})())
+    def test_admin_pages_reject_lookalike_usernames(self, _get_session_user_mock):
+        response = self.client.get("/supplier-pricing", cookies={"pm_tracking_token": "token"})
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_pin_sign_in_is_retired(self):
+        response = self.client.post(
+            "/tracking/session",
+            json={"username": "sllim126@evil.example", "pin": "1234", "action": "create"},
+        )
+
+        self.assertEqual(response.status_code, 410)
 
     @patch.object(api, "GOOGLE_CLIENT_ID", "google-client-id")
     def test_tracking_auth_config_exposes_google_client_state(self):

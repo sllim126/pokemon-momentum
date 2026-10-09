@@ -71,7 +71,6 @@ from scripts.dashboards.tracking_store import (
     create_session,
     create_bug_report,
     create_google_user,
-    create_user,
     delete_saved_view,
     delete_user,
     delete_session,
@@ -86,7 +85,6 @@ from scripts.dashboards.tracking_store import (
     set_tag,
     get_psa_certification,
     upsert_psa_certification,
-    verify_user,
 )
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -159,9 +157,11 @@ for ms_scripts_root in MS_SCRIPTS_ROOT_CANDIDATES:
 from processor.utilities.pokemon_eodhistoricaldata_api import EodApi as PokemonEodApi
 
 EOD_API = PokemonEodApi("POKEMON")
+# Admins are matched by exact, Google-verified email. Usernames that merely start
+# with an admin's name (e.g. "sllim126@anything") are not admins.
 ADMIN_USERNAMES = {
     username.strip().lower()
-    for username in os.getenv("POKEMON_MOMENTUM_ADMIN_USERS", "sllim126").split(",")
+    for username in os.getenv("POKEMON_MOMENTUM_ADMIN_USERS", "sllim126@gmail.com").split(",")
     if username.strip()
 }
 GOOGLE_CLIENT_ID = os.getenv("POKEMON_MOMENTUM_GOOGLE_CLIENT_ID", "").strip()
@@ -2205,13 +2205,7 @@ def require_tracking_user(authorization: str | None):
 
 
 def is_admin_username(username: str | None) -> bool:
-    normalized = str(username or "").strip().lower()
-    if normalized in ADMIN_USERNAMES:
-        return True
-    if "@" in normalized:
-        local_part = normalized.split("@", 1)[0]
-        return local_part in ADMIN_USERNAMES
-    return False
+    return str(username or "").strip().lower() in ADMIN_USERNAMES
 
 
 def admin_user_payload(session_user) -> dict:
@@ -3540,46 +3534,15 @@ def verify_google_identity_token(credential: str) -> dict:
 
 @app.post("/tracking/session")
 def tracking_session(payload: dict):
-    """Legacy username + PIN sign-in kept for existing local tracking accounts."""
-    username = str(payload.get("username", "")).strip()
-    pin = str(payload.get("pin", "")).strip()
-    action = str(payload.get("action", "auto")).strip().lower()
-    create_if_missing = bool(payload.get("create_if_missing", action in {"auto", "create"}))
-    if len(username) < 3:
-        raise HTTPException(status_code=400, detail="Username must be at least 3 characters")
-    if len(pin) < 4:
-        raise HTTPException(status_code=400, detail="PIN must be at least 4 characters")
+    """Retired username + PIN sign-in.
 
-    existing = get_user_by_username(username)
-    generic_auth_error = "That username or PIN is incorrect."
-    if action == "create" and existing is not None:
-        raise HTTPException(
-            status_code=409,
-            detail=f"{generic_auth_error} Sign in with the existing account or choose a different username.",
-        )
-    if action == "sign_in" and existing is None:
-        raise HTTPException(status_code=401, detail=generic_auth_error)
-
-    user = verify_user(username, pin)
-    if user is None:
-        if existing is not None:
-            raise HTTPException(status_code=401, detail=generic_auth_error)
-        if not create_if_missing:
-            raise HTTPException(status_code=401, detail=generic_auth_error)
-        user_id = create_user(username, pin)
-        username_out = username.strip().lower()
-    else:
-        user_id = int(user["id"])
-        username_out = user["username"]
-
-    token = create_session(user_id)
-    return {
-        "token": token,
-        "user": {
-            "username": username_out,
-            "is_admin": is_admin_username(username_out),
-        },
-    }
+    It let anyone create an account under any unused name and had no rate limit on
+    4-digit PINs; every page now uses Google sign-in. Existing sessions keep working.
+    """
+    raise HTTPException(
+        status_code=410,
+        detail="Username + PIN sign-in has been retired. Please sign in with Google.",
+    )
 
 
 @app.get("/tracking/auth_config")
