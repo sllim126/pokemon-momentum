@@ -16,6 +16,8 @@ ROOT = Path("/app")
 METADATA_FALLBACK_STEPS = {
     "Refresh group metadata",
     "Refresh product metadata",
+    # Graded prices are supplementary; a PriceCharting outage must not stop the price update.
+    "Download PriceCharting graded prices",
 }
 
 
@@ -204,6 +206,11 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 ),
             ]
         )
+
+    if args.category_id == 3 and not args.skip_download:
+        # Expected result: today's PriceCharting snapshot (English and Japanese) is added to the
+        # graded-price history. Runs once, in the English pass, after signals are rebuilt.
+        steps.append(("Download PriceCharting graded prices", ["python", "scripts/download/fetch_pricecharting.py"]))
 
     if not args.skip_parquet:
         # Expected result: parquet history includes the latest processed dates for downstream reads.

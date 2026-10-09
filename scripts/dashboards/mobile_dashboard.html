@@ -1322,6 +1322,14 @@
     .hold-reasons { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.45; }
     .hold-reasons li + li { margin-top: 4px; }
 
+    .graded-box { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(140, 163, 199, 0.18); }
+    .graded-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+    .graded-cell { display: grid; gap: 2px; padding: 8px; border-radius: 10px; background: rgba(8, 15, 29, 0.55); border: 1px solid rgba(140, 163, 199, 0.16); }
+    .graded-cell span { font-size: 11px; color: var(--muted); }
+    .graded-cell strong { font-size: 15px; color: #eaf1ff; overflow-wrap: anywhere; }
+    .graded-note { margin: 8px 0 4px; font-size: 13px; color: var(--muted); }
+    .graded-source { font-size: 12px; color: #8cc8ff; text-decoration: underline; }
+
     .deal-badge.fair {
       color: #ffe3b6;
       background: rgba(239, 182, 94, 0.16);
@@ -2542,6 +2550,12 @@
               <p class="hold-headline" id="holdHeadline"></p>
               <ul class="hold-reasons" id="holdReasons"></ul>
             </div>
+            <div class="graded-box" id="gradedBox" hidden>
+              <span class="deal-label graded-title">Graded Prices</span>
+              <div class="graded-grid" id="gradedGrid"></div>
+              <p class="graded-note" id="gradedNote"></p>
+              <a class="graded-source" id="gradedSource" href="https://www.pricecharting.com/" target="_blank" rel="noopener noreferrer">Prices from PriceCharting ↗</a>
+            </div>
           </section>
 
           <div class="detail-tabs" role="tablist" aria-label="Card details">
@@ -2731,6 +2745,58 @@
       unlikely: ["Not a flip", "warn"],
       not_enough_history: ["Too little data", ""],
     };
+    const gradedBox = document.getElementById("gradedBox");
+    const gradedGrid = document.getElementById("gradedGrid");
+    const gradedNote = document.getElementById("gradedNote");
+    const gradedSource = document.getElementById("gradedSource");
+
+    const GRADED_LABELS = [["ungraded", "Ungraded"], ["grade9", "PSA 9"], ["psa10", "PSA 10"], ["cgc10", "CGC 10"]];
+    let gradedRequestSeq = 0;
+
+    function gradedMoney(value) {
+      return Number.isFinite(value) && value > 0 ? `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "-";
+    }
+
+    // PriceCharting data is shown with permission on the condition that every price
+    // links back to its PriceCharting product page; keep the source link visible.
+    async function loadGradedPrices(productId, subTypeName, marketPrice) {
+      const seq = ++gradedRequestSeq;
+      gradedBox.hidden = true;
+      if (!productId) return;
+      try {
+        const params = new URLSearchParams({ productId: String(productId), subTypeName: subTypeName || "" });
+        const response = await fetch(`/graded_prices?${params.toString()}`);
+        if (!response.ok) throw new Error(String(response.status));
+        const data = await response.json();
+        if (seq !== gradedRequestSeq || !data.available) return;
+        gradedGrid.replaceChildren(...GRADED_LABELS.map(([key, label]) => {
+          const cell = document.createElement("div");
+          cell.className = "graded-cell";
+          const name = document.createElement("span");
+          name.textContent = label;
+          const value = document.createElement("strong");
+          value.textContent = gradedMoney(data.prices[key]);
+          cell.append(name, value);
+          return cell;
+        }));
+        const notes = [];
+        const psa10 = data.prices.psa10;
+        if (psa10 && marketPrice > 0) notes.push(`PSA 10 is ${(psa10 / marketPrice).toFixed(1)}x the raw market price.`);
+        if (data.sales_volume) notes.push(`${data.sales_volume.toLocaleString()} sales a year.`);
+        gradedNote.textContent = notes.join(" ");
+        gradedSource.href = data.url;
+        gradedSource.textContent = `Prices from PriceCharting (${data.snapshot_date}) ↗`;
+        gradedBox.hidden = false;
+      } catch (_err) {
+        if (seq === gradedRequestSeq) gradedBox.hidden = true;
+      }
+    }
+
+    function hideGradedPrices() {
+      gradedRequestSeq += 1;
+      if (gradedBox) gradedBox.hidden = true;
+    }
+
     let holdTimer = null;
     let holdRequestSeq = 0;
     // The deal checker pre-fills an ask below market; the hold check only uses a
@@ -4712,6 +4778,7 @@
       dealAskEdited = false;
       updateDealVerdict();
       scheduleHoldCheck();
+      loadGradedPrices(item.productId, item.subTypeName, item.price);
     }
 
     function clearDealCheck() {
@@ -4733,6 +4800,7 @@
       dealCheck.hidden = true;
       holdRequestSeq += 1;
       holdCheck.hidden = true;
+      hideGradedPrices();
     }
 
     function setActiveButton(container, selector, value, dataKey) {

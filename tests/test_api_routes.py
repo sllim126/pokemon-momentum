@@ -64,6 +64,29 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(body["buy_price"], 20.0)
         self.assertEqual(q_mock.call_args[0][1], [3, 1, "Normal"])
 
+    @patch.object(api, "db_has_table", return_value=False)
+    def test_graded_prices_unavailable_before_first_snapshot(self, _has_table):
+        response = self.client.get("/graded_prices?productId=1&subTypeName=Normal")
+
+        self.assertEqual(response.json(), {"available": False})
+
+    @patch.object(api, "db_has_table", return_value=True)
+    @patch.object(api, "q")
+    def test_graded_prices_returns_latest_with_pricecharting_link(self, q_mock, _has_table):
+        cols = ["snapshot_date", "pc_id", "set_name", "product_name", "ungraded", "grade9", "grade9_5", "psa10", "cgc10", "bgs10", "sgc10", "sales_volume"]
+        q_mock.return_value = (cols, [
+            ("2026-10-08", 42, "Pokemon Base Set", "Charizard #4", 300.0, 900.0, None, 9000.0, 1200.0, None, None, 50),
+            ("2026-10-09", 42, "Pokemon Base Set", "Charizard #4", 310.0, 950.0, None, 9100.0, 1250.0, None, None, 51),
+        ])
+
+        body = self.client.get("/graded_prices?productId=1&subTypeName=Unlimited Holofoil").json()
+
+        self.assertTrue(body["available"])
+        self.assertEqual(body["url"], "https://www.pricecharting.com/game/42")
+        self.assertEqual(body["snapshot_date"], "2026-10-09")
+        self.assertEqual(body["prices"]["psa10"], 9100.0)
+        self.assertEqual(len(body["history"]), 2)
+
     def test_hold_check_route_rejects_unknown_channel(self):
         response = self.client.get("/hold_check?productId=1&subTypeName=Normal&channel=etsy")
 

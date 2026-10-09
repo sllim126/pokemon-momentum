@@ -216,6 +216,7 @@ data/raw/*
 data/extracted/*
 data/processed/*
 data/staging/*
+data/pricecharting/
 .locks/
 output/
 

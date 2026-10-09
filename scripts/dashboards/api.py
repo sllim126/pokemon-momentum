@@ -42,6 +42,7 @@ from scripts.dashboards.query_support import (
     PRODUCT_CLASS_SQL,
     PRODUCT_KIND_SQL,
     build_generation_case,
+    db_has_table,
     build_metadata_cte,
     build_premium_rarity_filter,
     build_set_basket_filter,
@@ -60,6 +61,7 @@ from scripts.dashboards.query_support import (
 )
 from scripts.dashboards.index_config import INDEX_DEFINITIONS, index_keys_for_category
 from scripts.common.selling_costs import CHANNELS, DEFAULT_CHANNEL
+from scripts.common.pricecharting import PRODUCT_URL as PRICECHARTING_PRODUCT_URL
 from scripts.dashboards.hold_check import hold_check
 from scripts.dashboards.psa_service import (
     fetch_psa_cert_from_upstream,
@@ -6167,6 +6169,44 @@ def hold_check_route(
     if not rows:
         raise HTTPException(status_code=404, detail="No price history for that productId/subTypeName")
     return hold_check(rows, buy_price, selected, horizon_days)
+
+
+@app.get("/graded_prices")
+def graded_prices(productId: int, subTypeName: str):
+    """Latest PriceCharting graded prices for one printing, with the history collected so far.
+
+    Shown with permission on the condition that each price links back to its
+    PriceCharting product page (`url`).
+    """
+    if not db_has_table("pricecharting_prices"):
+        return {"available": False}
+    cols, rows = q(
+        """
+        SELECT snapshot_date, pc_id, set_name, product_name, ungraded, grade9, grade9_5, psa10,
+               cgc10, bgs10, sgc10, sales_volume
+        FROM pricecharting_prices
+        WHERE productId = ? AND subTypeName = ?
+        ORDER BY snapshot_date
+        """,
+        [productId, subTypeName],
+    )
+    if not rows:
+        return {"available": False}
+    latest = dict(zip(cols, rows[-1]))
+    return {
+        "available": True,
+        "source": "PriceCharting",
+        "url": PRICECHARTING_PRODUCT_URL.format(id=latest["pc_id"]),
+        "snapshot_date": str(latest["snapshot_date"]),
+        "product_name": latest["product_name"],
+        "set_name": latest["set_name"],
+        "prices": {key: latest[key] for key in ("ungraded", "grade9", "grade9_5", "psa10", "cgc10", "bgs10", "sgc10")},
+        "sales_volume": latest["sales_volume"],
+        "history": [
+            {"date": str(row[0]), "ungraded": row[4], "grade9": row[5], "psa10": row[7]}
+            for row in rows
+        ],
+    }
 
 
 @app.post("/sparkline_batch")

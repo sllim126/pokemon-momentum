@@ -541,6 +541,13 @@ Download/extract layer:
 - a missed day cannot be re-fetched later (TCGCSV only serves current prices)
 - product metadata only refetches groups whose manifest hash changed; the hashes are kept in
   `/app/data/extracted/<slug>_products_manifest_hashes.json` (delete it to force a full fetch)
+- PriceCharting graded prices (licensed for display with a link back to each PriceCharting
+  product page; permission from Brady Haugh, 2026-10-09): `scripts/download/fetch_pricecharting.py`
+  runs once a night in the English pass, keeps the raw CSV in `/app/data/pricecharting/raw/` and
+  matched rows in the DuckDB table `pricecharting_prices`. PriceCharting has no history API, so
+  this table is the only graded history. If the subscription ends, delete both:
+  `rm -r /app/data/pricecharting` and `DROP TABLE pricecharting_prices`
+- the token is PRICECHARTING_API_TOKEN in `.env`; never log the download URL (it contains it)
 
 DuckDB layer:
 
