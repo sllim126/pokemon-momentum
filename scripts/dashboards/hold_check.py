@@ -87,7 +87,14 @@ def _track_record(points: list[tuple[date, float]], horizon: int, channel: Chann
     }
 
 
-def hold_check(history, buy_price: float | None, channel: Channel, horizon: int = 90) -> dict:
+def _span(horizon: int) -> tuple[str, str]:
+    """Readable hold length: ('6 months', '6-month') for whole months, else days."""
+    if horizon >= 60 and horizon % 30 == 0:
+        return f"{horizon // 30} months", f"{horizon // 30}-month"
+    return f"{horizon} days", f"{horizon}-day"
+
+
+def hold_check(history, buy_price: float | None, channel: Channel, horizon: int = 180) -> dict:
     """`history` is an iterable of (date, market_price) rows, any order."""
     points = sorted(
         (_as_date(d), float(p)) for d, p in history if p is not None and float(p) > 0
@@ -95,6 +102,7 @@ def hold_check(history, buy_price: float | None, channel: Channel, horizon: int 
     if not points:
         return {"verdict": "no_data", "headline": "No price history for this item."}
     latest_date, latest_price = points[-1]
+    span, span_adj = _span(horizon)
     buy = float(buy_price) if buy_price and buy_price > 0 else latest_price
     be = break_even_price(buy, channel)
     cutoff = latest_date - timedelta(days=horizon - 1)
@@ -109,29 +117,29 @@ def hold_check(history, buy_price: float | None, channel: Channel, horizon: int 
     if trend is None or record["windows"] < MIN_HISTORY_WINDOWS:
         verdict, headline = "not_enough_history", "Not enough recent price history to judge a hold."
     elif projected >= be and cleared >= LIKELY_TRACK_RECORD_PCT:
-        verdict, headline = "likely", f"Likely profitable in {horizon} days if the trend holds."
+        verdict, headline = "likely", f"Likely profitable in {span} if the trend holds."
     elif projected >= be or (cleared >= POSSIBLE_TRACK_RECORD_PCT and trend["pct_per_30d"] >= FLAT_TREND_PCT):
         # A good track record only counts while the card isn't currently falling.
-        verdict, headline = "possible", f"Possible in {horizon} days, but risky."
+        verdict, headline = "possible", f"Possible in {span}, but risky."
     else:
-        verdict, headline = "unlikely", f"Not a {horizon}-day flip. Only worth it as a longer hold."
+        verdict, headline = "unlikely", f"Not a {span_adj} flip. Only worth it as a longer hold."
 
     reasons = [f"Needs ${be:,.2f} (+{(be / buy - 1) * 100:.0f}%) to break even after {channel.label} fees and shipping."]
     if trend:
         above_trend_pct = (latest_price / trend["fit_now"] - 1) * 100
         if above_trend_pct >= SPIKE_ABOVE_TREND_PCT:
             reasons.append(
-                f"Today's price is {above_trend_pct:.0f}% above its {horizon}-day trend line; "
+                f"Today's price is {above_trend_pct:.0f}% above its {span_adj} trend line; "
                 "sharp spikes often fall back."
             )
         direction = "up" if trend["pct_per_30d"] >= 0 else "down"
         reasons.append(
-            f"Last {horizon} days trend {direction} {abs(trend['pct_per_30d']):.1f}% a month; "
+            f"Last {span} trend {direction} {abs(trend['pct_per_30d']):.1f}% a month; "
             f"if that continues it reaches about ${projected:,.2f}."
         )
     if cleared is not None:
         reasons.append(
-            f"In {record['windows']} past {horizon}-day stretches, buying at "
+            f"In {record['windows']} past {span_adj} stretches, buying at "
             f"{'market' if abs(buy - latest_price) < 0.005 else f'{buy / latest_price * 100:.0f}% of market'} cleared break-even "
             f"{cleared:.0f}% of the time (median change {record['median_return_pct']:+.0f}%)."
         )

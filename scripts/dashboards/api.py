@@ -6155,7 +6155,7 @@ def hold_check_route(
     subTypeName: str,
     buy_price: float | None = None,
     channel: str = DEFAULT_CHANNEL,
-    horizon_days: int = 90,
+    horizon_days: int = 180,
     category_id: int = 3,
 ):
     """Can buying at `buy_price` (default: market) today sell at a profit after `horizon_days`?"""

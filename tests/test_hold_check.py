@@ -69,7 +69,7 @@ class HoldCheckTests(unittest.TestCase):
 
         self.assertGreater(result["projected_price"], result["market_price"])
         self.assertGreater(result["above_trend_pct"], 20)
-        self.assertTrue(any("above its 90-day trend line" in reason for reason in result["reasons"]))
+        self.assertTrue(any("above its 6-month trend line" in reason for reason in result["reasons"]))
 
     def test_empty_history(self):
         self.assertEqual(hold_check([], None, TCGPLAYER)["verdict"], "no_data")

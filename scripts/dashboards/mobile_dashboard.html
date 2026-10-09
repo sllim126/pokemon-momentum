@@ -2544,7 +2544,7 @@
             <p class="confidence-line" id="dealConfidence"></p>
             <div class="hold-check" id="holdCheck" hidden>
               <div class="hold-head">
-                <span class="deal-label" id="holdLabel">90-Day Hold</span>
+                <span class="deal-label" id="holdLabel">6-Month Hold</span>
                 <span class="deal-badge" id="holdBadge"></span>
               </div>
               <p class="hold-headline" id="holdHeadline"></p>
@@ -2828,7 +2828,7 @@
         const result = await response.json();
         if (seq !== holdRequestSeq) return;
         const [badgeText, badgeClass] = HOLD_BADGES[result.verdict] || ["", ""];
-        holdLabel.textContent = `90-Day Hold at ${formatMoney(result.buy_price)}${dealAskEdited && ask > 0 ? "" : " (market)"}`;
+        holdLabel.textContent = `6-Month Hold at ${formatMoney(result.buy_price)}${dealAskEdited && ask > 0 ? "" : " (market)"}`;
         holdBadge.textContent = badgeText;
         holdBadge.className = `deal-badge${badgeClass ? ` ${badgeClass}` : ""}`;
         holdHeadline.textContent = result.headline || "";
