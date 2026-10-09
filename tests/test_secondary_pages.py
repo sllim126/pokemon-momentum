@@ -92,8 +92,10 @@ class SecondaryPageContractTests(unittest.TestCase):
         self.assertIn("/placeholders", self.collector_hub_html)
         self.assertIn("/collector-assets/checklists-sv/index.html", self.collector_hub_html)
         self.assertIn("/collector-assets/print-combined/index.html", self.collector_hub_html)
-        self.assertIn("/dashboard-lab", self.collector_hub_html)
-        self.assertIn("/set-explorer", self.collector_hub_html)
+        # Site-wide navigation comes from the shared shell, not a per-page route strip,
+        # and development pages are not linked publicly.
+        self.assertIn("/site-shell.js", self.collector_hub_html)
+        self.assertNotIn("/dashboard-lab", self.collector_hub_html)
 
     def test_placeholder_library_page_has_manifest_and_download_routes(self):
         self.assertIn("Poke6s Placeholder Library", self.placeholder_library_html)

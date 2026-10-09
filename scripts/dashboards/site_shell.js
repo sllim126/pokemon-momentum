@@ -4,6 +4,9 @@
  *
  *   <script src="/site-shell.js" defer></script>
  *
+ * Pages that already have their own logo and account menu (the dashboards) use
+ * data-shell="nav" on that tag to get only the area navigation row.
+ *
  * The header is inserted at the top of <body> (or into <div id="site-shell"> when a
  * page provides one). The same AREAS config renders the area landing pages, so the
  * navigation and the hubs can never disagree.
@@ -71,6 +74,18 @@
     },
   ];
 
+  const SCRIPT_MODE = (document.currentScript && document.currentScript.dataset.shell) || "full";
+
+  // Dashboard tabs and mobile modes map onto areas so the nav highlights the right one.
+  const RESEARCH_TABS = new Set(["group_products", "browse_species", "group_signals", "time_to_buy"]);
+
+  function dashboardArea() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("mode") === "tracked" || params.get("tab") === "tracked_items") return "track";
+    if (RESEARCH_TABS.has(params.get("tab") || "")) return "research";
+    return "discover";
+  }
+
   // Which area a page belongs to, for highlighting the nav.
   const PATH_AREAS = [
     [/^\/(buy|sealed-deals|budget-builder)\b/, "buy"],
@@ -81,12 +96,13 @@
   ];
 
   const CSS = `
-    .ps-shell { position: sticky; top: 0; z-index: 1000; font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    .ps-shell { position: relative; z-index: 1000; font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
       background: rgba(8, 17, 29, 0.94); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(136, 162, 205, 0.2); }
     .ps-shell-inner { max-width: 1440px; margin: 0 auto; padding: 8px 16px; display: flex; align-items: center; gap: 16px; }
     .ps-brand { display: flex; align-items: center; gap: 8px; color: #eaf1ff; text-decoration: none; font-weight: 700; letter-spacing: 0.02em; }
     .ps-brand img { height: 28px; width: auto; display: block; }
-    .ps-nav { display: flex; gap: 4px; flex: 1; overflow-x: auto; scrollbar-width: none; }
+    .ps-shell, .ps-shell-inner { max-width: 100%; min-width: 0; box-sizing: border-box; }
+    .ps-nav { display: flex; gap: 4px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
     .ps-nav::-webkit-scrollbar { display: none; }
     .ps-nav a, .ps-side a { color: #b8c7e3; text-decoration: none; font-size: 14px; font-weight: 600; padding: 8px 12px; border-radius: 8px; white-space: nowrap; }
     .ps-nav a:hover, .ps-side a:hover { color: #fff; background: rgba(136, 162, 205, 0.14); }
@@ -94,11 +110,16 @@
     .ps-side { display: flex; gap: 4px; margin-left: auto; }
     .ps-side a.ps-admin { color: #ffcf7a; }
     .ps-side a.ps-admin[hidden] { display: none; }
+    .ps-shell.ps-nav-only .ps-shell-inner { padding: 6px 16px; }
+    .ps-shell.ps-nav-only .ps-nav a { font-size: 13px; padding: 6px 12px; }
     @media (max-width: 640px) {
       .ps-shell-inner { flex-wrap: wrap; gap: 4px 8px; padding: 8px 12px; }
       .ps-brand span { display: none; }
       .ps-nav { order: 3; flex-basis: 100%; }
       .ps-nav a, .ps-side a { padding: 8px 10px; font-size: 13px; }
+      .ps-shell.ps-nav-only .ps-shell-inner { padding: 6px 6px; }
+      .ps-shell.ps-nav-only .ps-nav { gap: 2px; justify-content: space-between; }
+      .ps-shell.ps-nav-only .ps-nav a { padding: 6px 8px; }
     }
   `;
 
@@ -106,6 +127,7 @@
     const forced = document.body && document.body.dataset.area;
     if (forced) return forced;
     const path = window.location.pathname;
+    if (/^\/(dashboard|mobile)?$/.test(path) || path === "/dashboard-dev") return dashboardArea();
     const match = PATH_AREAS.find(([pattern]) => pattern.test(path));
     return match ? match[1] : "";
   }
@@ -132,14 +154,18 @@
     const area = currentArea();
     const header = document.createElement("header");
     header.className = "ps-shell";
+    const navLinks = AREAS.map((a) => `<a href="/${a.key}"${a.key === area ? ' aria-current="page"' : ""}>${a.label}</a>`).join("");
+    if (SCRIPT_MODE === "nav") {
+      header.classList.add("ps-nav-only");
+      header.innerHTML = `<div class="ps-shell-inner"><nav class="ps-nav" aria-label="Main">${navLinks}</nav></div>`;
+      return header;
+    }
     header.innerHTML = `
       <div class="ps-shell-inner">
         <a class="ps-brand" href="/" aria-label="Poke6s home">
           <img src="/images/Logo.png" alt="Poke6s" /><span>Market</span>
         </a>
-        <nav class="ps-nav" aria-label="Main">
-          ${AREAS.map((a) => `<a href="/${a.key}"${a.key === area ? ' aria-current="page"' : ""}>${a.label}</a>`).join("")}
-        </nav>
+        <nav class="ps-nav" aria-label="Main">${navLinks}</nav>
         <div class="ps-side">
           <a class="ps-admin" href="/admin" hidden>Admin</a>
           <a href="/account-settings">Account</a>
