@@ -163,7 +163,7 @@
     header.innerHTML = `
       <div class="ps-shell-inner">
         <a class="ps-brand" href="/" aria-label="Poke6s home">
-          <img src="/images/Logo.png" alt="Poke6s" /><span>Market</span>
+          <img src="/images/Favidon.png" alt="" /><span>Poke6s Market</span>
         </a>
         <nav class="ps-nav" aria-label="Main">${navLinks}</nav>
         <div class="ps-side">

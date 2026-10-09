@@ -1,0 +1,1118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Poke6s Market</title>
+  <link rel="icon" type="image/png" href="/images/Favidon.png" />
+  <style>
+    :root {
+      --bg: #08111d;
+      --panel: #0e1828;
+      --panel-2: #132036;
+      --panel-3: #0a1322;
+      --line: rgba(136, 162, 205, 0.16);
+      --line-strong: rgba(136, 162, 205, 0.3);
+      --text: #eaf1ff;
+      --muted: #93a6c8;
+      --faint: #6f82a6;
+      --accent: #4da3ff;
+      --accent-soft: rgba(77, 163, 255, 0.16);
+      --good: #3ddc97;
+      --good-soft: rgba(61, 220, 151, 0.14);
+      --bad: #ff7d7d;
+      --bad-soft: rgba(255, 125, 125, 0.14);
+      --warn: #f5b94a;
+      --warn-soft: rgba(245, 185, 74, 0.14);
+      --radius: 14px;
+      --font: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      color: var(--text);
+      font: 14px/1.45 var(--font);
+      overflow: hidden;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    a { color: inherit; }
+    .muted { color: var(--muted); }
+    .num { font-variant-numeric: tabular-nums; }
+    .up { color: var(--good); }
+    .down { color: var(--bad); }
+
+    /* ---------- toolbar ---------- */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-3);
+    }
+    .search { position: relative; flex: 0 1 560px; }
+    .search input {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      border-radius: 10px;
+      border: 1px solid var(--line-strong);
+      background: var(--panel);
+      outline: none;
+    }
+    .search input:focus { border-color: var(--accent); }
+    .search-icon { position: absolute; left: 12px; top: 50%; width: 16px; height: 16px; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+    .search kbd {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      font-size: 11px; color: var(--faint); border: 1px solid var(--line-strong); border-radius: 5px; padding: 1px 6px;
+    }
+    .search-results {
+      position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 20;
+      max-height: 60vh; overflow-y: auto;
+      background: var(--panel-2); border: 1px solid var(--line-strong); border-radius: 12px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+    .search-results[hidden] { display: none; }
+    .search-item {
+      display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; align-items: center;
+      width: 100%; padding: 8px 12px; border: 0; background: none; text-align: left; cursor: pointer;
+    }
+    .search-item:hover, .search-item.active { background: var(--accent-soft); }
+    .search-item img, .search-item .ph { width: 36px; height: 50px; object-fit: contain; border-radius: 4px; background: var(--panel-3); }
+    .search-item strong { display: block; font-weight: 600; }
+    .search-item small { color: var(--muted); }
+    .search-empty { padding: 14px; color: var(--muted); }
+
+    .segment { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); }
+    .segment button {
+      border: 0; background: none; padding: 6px 14px; border-radius: 8px; cursor: pointer; color: var(--muted); font-weight: 600;
+    }
+    .segment button[aria-pressed="true"] { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 0 0 1px rgba(77, 163, 255, 0.45); }
+    .freshness { margin-left: auto; font-size: 12px; color: var(--faint); white-space: nowrap; }
+
+    /* ---------- layout ---------- */
+    .layout {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 236px minmax(0, 1fr) minmax(440px, 520px);
+      gap: 16px;
+      padding: 16px 20px 20px;
+    }
+    .panel {
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .panel-scroll { flex: 1; min-height: 0; overflow-y: auto; }
+
+    /* ---------- tools ---------- */
+    .tools { padding: 14px 10px; overflow-y: auto; }
+    .tools h2 { margin: 14px 10px 6px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+    .tools h2:first-child { margin-top: 2px; }
+    .tool {
+      display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      width: 100%; padding: 8px 10px; border: 0; border-radius: 9px; background: none;
+      text-align: left; cursor: pointer; color: var(--muted); text-decoration: none; font-weight: 500;
+    }
+    .tool:hover { background: rgba(136, 162, 205, 0.08); color: var(--text); }
+    .tool[aria-current="true"] { background: var(--accent-soft); color: var(--text); font-weight: 600; }
+    .tool .count { font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+    .tool .count.zero { opacity: 0.6; }
+    .tool .ext { font-size: 11px; color: var(--faint); }
+
+    /* ---------- results ---------- */
+    .results-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+    .results-title { display: flex; align-items: baseline; gap: 10px; }
+    .results-title h1 { margin: 0; font-size: 20px; }
+    .results-title .count { color: var(--muted); }
+    .results-desc { margin: 4px 0 12px; color: var(--muted); }
+    .results-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .results-controls input, .results-controls select {
+      padding: 7px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--panel-3); outline: none;
+    }
+    .results-controls input[type="search"] { flex: 1 1 200px; min-width: 160px; }
+    .results-controls input[type="number"] { width: 110px; }
+    .results-controls input:focus, .results-controls select:focus { border-color: var(--accent); }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      position: sticky; top: 0; z-index: 1;
+      padding: 9px 12px; background: var(--panel); border-bottom: 1px solid var(--line);
+      font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); text-align: left;
+    }
+    th.right, td.right { text-align: right; }
+    tbody tr { cursor: pointer; border-bottom: 1px solid rgba(136, 162, 205, 0.07); }
+    tbody tr:hover { background: rgba(136, 162, 205, 0.06); }
+    tbody tr[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+    td { padding: 7px 12px; vertical-align: middle; }
+    .card-cell { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; min-width: 0; }
+    .thumb { width: 34px; height: 47px; object-fit: contain; border-radius: 4px; background: var(--panel-3); }
+    .card-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-meta { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .pill.up { background: var(--good-soft); }
+    .pill.down { background: var(--bad-soft); }
+    .spark { display: block; width: 96px; height: 28px; margin-left: auto; }
+    .empty { padding: 40px 24px; text-align: center; color: var(--muted); }
+    .empty h3 { margin: 0 0 6px; color: var(--text); font-size: 16px; }
+    .empty .suggest { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+    .empty .suggest button {
+      padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--panel-2); cursor: pointer;
+    }
+    .loading-bar { height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); background-size: 50% 100%; animation: slide 1s linear infinite; }
+    .loading-bar[hidden] { display: none; }
+    @keyframes slide { from { background-position: -50% 0; } to { background-position: 150% 0; } }
+
+    /* ---------- detail ---------- */
+    #detailBody { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    #detailBody[hidden], .detail-empty[hidden] { display: none; }
+    .detail-empty { margin: auto; padding: 30px; text-align: center; color: var(--muted); }
+    .detail-head { display: grid; grid-template-columns: 92px 1fr; gap: 16px; padding: 18px 18px 12px; }
+    .detail-head img { width: 92px; height: 128px; object-fit: contain; border-radius: 8px; background: var(--panel-3); }
+    .detail-head h2 { margin: 0 0 4px; font-size: 20px; line-height: 1.2; }
+    .detail-meta { color: var(--muted); font-size: 13px; }
+    .detail-price { margin-top: 10px; display: flex; align-items: baseline; gap: 10px; }
+    .detail-price strong { font-size: 28px; font-variant-numeric: tabular-nums; }
+    .chart-block { padding: 0 18px 8px; }
+    .chart-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .chart-bar .segment button { padding: 4px 10px; font-size: 12px; }
+    .chart-caption { font-size: 12px; color: var(--faint); }
+    .chart { position: relative; height: 190px; }
+    .chart svg { width: 100%; height: 100%; display: block; }
+    .chart .tip {
+      position: absolute; pointer-events: none; padding: 5px 8px; border-radius: 8px; font-size: 12px;
+      background: var(--panel-2); border: 1px solid var(--line-strong); white-space: nowrap; transform: translate(-50%, -110%);
+    }
+    .tabs { display: flex; gap: 4px; padding: 6px 18px 0; border-bottom: 1px solid var(--line); }
+    .tabs button {
+      border: 0; background: none; padding: 9px 12px; cursor: pointer; color: var(--muted); font-weight: 600;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+    .tab-body { padding: 14px 18px; }
+    .verdict-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .verdict { padding: 4px 11px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid var(--line-strong); }
+    .verdict.likely { color: var(--good); background: var(--good-soft); border-color: rgba(61, 220, 151, 0.4); }
+    .verdict.possible { color: var(--warn); background: var(--warn-soft); border-color: rgba(245, 185, 74, 0.4); }
+    .verdict.unlikely { color: var(--bad); background: var(--bad-soft); border-color: rgba(255, 125, 125, 0.4); }
+    .headline { margin: 10px 0 8px; font-weight: 700; font-size: 15px; }
+    .reasons { margin: 0; padding-left: 18px; color: var(--muted); }
+    .reasons li + li { margin-top: 5px; }
+    .buy-input { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .buy-input input { width: 120px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-3); outline: none; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .stat { padding: 10px 12px; border-radius: 10px; background: var(--panel-3); border: 1px solid var(--line); }
+    .stat span { display: block; font-size: 12px; color: var(--muted); }
+    .stat strong { font-size: 16px; font-variant-numeric: tabular-nums; }
+    .source[hidden] { display: none; }
+    .source { display: inline-block; margin-top: 10px; font-size: 12px; color: #8cc8ff; }
+    .actions { display: flex; gap: 8px; padding: 12px 18px 14px; border-top: 1px solid var(--line); margin-top: auto; position: relative; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; white-space: nowrap;
+      border: 1px solid var(--line-strong); background: var(--panel-2); cursor: pointer; text-decoration: none; font-weight: 600;
+    }
+    .btn:hover { border-color: var(--accent); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #04121f; }
+    .save-menu {
+      position: absolute; bottom: calc(100% - 6px); left: 18px; z-index: 5; min-width: 200px; padding: 6px;
+      background: var(--panel-2); border: 1px solid var(--line-strong); border-radius: 12px; box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+    .save-menu[hidden] { display: none; }
+    .save-menu button {
+      display: flex; justify-content: space-between; width: 100%; padding: 8px 10px; border: 0; border-radius: 8px; background: none; cursor: pointer; text-align: left;
+    }
+    .save-menu button:hover { background: var(--accent-soft); }
+    .save-menu .on { color: var(--good); font-weight: 700; }
+    .save-note { padding: 6px 10px 2px; font-size: 11px; color: var(--faint); }
+
+    @media (max-width: 1500px) {
+      .layout { grid-template-columns: 200px minmax(0, 1fr) minmax(400px, 440px); gap: 12px; padding: 12px 14px 14px; }
+      .spark { width: 72px; }
+      th.col-trend, td.col-trend { display: none; }
+      .actions { gap: 6px; padding: 10px 14px 12px; }
+      .actions .btn { padding: 6px 10px; font-size: 13px; }
+    }
+    @media (max-height: 820px) {
+      .detail-head img { width: 72px; height: 100px; }
+      .detail-head { grid-template-columns: 72px 1fr; padding: 14px 16px 8px; }
+      .chart { height: 150px; }
+    }
+  </style>
+</head>
+<body data-area="discover">
+  <div id="site-shell"></div>
+
+  <div class="toolbar">
+    <div class="search">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="searchInput" type="search" placeholder="Search any card, set, or number" autocomplete="off" aria-label="Search cards" />
+      <kbd>/</kbd>
+      <div class="search-results" id="searchResults" hidden></div>
+    </div>
+    <div class="segment" id="marketSwitch" role="group" aria-label="Market">
+      <button type="button" data-market="EN">English</button>
+      <button type="button" data-market="JP">Japanese</button>
+    </div>
+    <div class="segment" id="kindSwitch" role="group" aria-label="Product type">
+      <button type="button" data-kind="singles">Singles</button>
+      <button type="button" data-kind="sealed">Sealed</button>
+    </div>
+    <div class="freshness" id="freshness"></div>
+  </div>
+
+  <main class="layout">
+    <nav class="panel tools" id="toolsNav" aria-label="Lists and tools"></nav>
+
+    <section class="panel" aria-label="Results">
+      <div class="results-head">
+        <div class="results-title"><h1 id="listTitle">Top Movers</h1><span class="count" id="listCount"></span></div>
+        <p class="results-desc" id="listDesc"></p>
+        <div class="results-controls">
+          <input type="search" id="filterInput" placeholder="Filter this list by name or set" aria-label="Filter list" />
+          <input type="number" id="minPriceInput" min="0" step="1" placeholder="Min $" aria-label="Minimum price" />
+          <input type="number" id="maxPriceInput" min="0" step="1" placeholder="Max $" aria-label="Maximum price" />
+          <select id="sortSelect" aria-label="Sort">
+            <option value="signal">Sort: signal strength</option>
+            <option value="change">Sort: biggest change</option>
+            <option value="price_desc">Sort: price, high to low</option>
+            <option value="price_asc">Sort: price, low to high</option>
+          </select>
+        </div>
+      </div>
+      <div class="loading-bar" id="listLoading" hidden></div>
+      <div class="panel-scroll" id="resultsScroll">
+        <table>
+          <thead>
+            <tr><th>Card</th><th class="right">Price</th><th class="right" id="changeHeader">Change</th><th class="right col-trend">90-day trend</th></tr>
+          </thead>
+          <tbody id="resultsBody"></tbody>
+        </table>
+        <div class="empty" id="resultsEmpty" hidden></div>
+      </div>
+    </section>
+
+    <aside class="panel" id="detail" aria-label="Selected card">
+      <div class="detail-empty" id="detailEmpty">Pick a card from the list, or search for one, to see its price history, hold check, and graded prices.</div>
+      <div id="detailBody" hidden>
+        <div class="panel-scroll">
+          <div class="detail-head">
+            <img id="detailImage" alt="" />
+            <div>
+              <h2 id="detailName"></h2>
+              <div class="detail-meta" id="detailMeta"></div>
+              <div class="detail-price"><strong id="detailPrice"></strong><span id="detailChange"></span></div>
+            </div>
+          </div>
+          <div class="chart-block">
+            <div class="chart-bar">
+              <span class="chart-caption" id="chartCaption"></span>
+              <div class="segment" id="windowSwitch" role="group" aria-label="Chart window">
+                <button type="button" data-days="30">30D</button>
+                <button type="button" data-days="90">90D</button>
+                <button type="button" data-days="365">1Y</button>
+                <button type="button" data-days="5000">All</button>
+              </div>
+            </div>
+            <div class="chart" id="chart"></div>
+          </div>
+          <div class="tabs" role="tablist">
+            <button type="button" role="tab" data-tab="hold">90-Day Hold</button>
+            <button type="button" role="tab" data-tab="graded">Graded</button>
+            <button type="button" role="tab" data-tab="stats">Stats</button>
+          </div>
+          <div class="tab-body" id="tabHold" role="tabpanel">
+            <div class="verdict-row">
+              <label class="buy-input">Buy price <input id="buyInput" type="number" min="0" step="0.01" placeholder="Market" /></label>
+              <span class="verdict" id="holdVerdict"></span>
+            </div>
+            <p class="headline" id="holdHeadline"></p>
+            <ul class="reasons" id="holdReasons"></ul>
+          </div>
+          <div class="tab-body" id="tabGraded" role="tabpanel" hidden>
+            <div class="grid-2" id="gradedGrid"></div>
+            <p class="muted" id="gradedNote" style="margin:10px 0 0"></p>
+            <a class="source" id="gradedSource" href="https://www.pricecharting.com/" target="_blank" rel="noopener noreferrer">Prices from PriceCharting ↗</a>
+          </div>
+          <div class="tab-body" id="tabStats" role="tabpanel" hidden>
+            <div class="grid-2" id="statsGrid"></div>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" id="saveBtn" aria-haspopup="true">♡ Save</button>
+          <a class="btn primary" id="tcgLink" target="_blank" rel="noopener noreferrer">TCGplayer ↗</a>
+          <a class="btn" id="storeLink" target="_blank" rel="noopener noreferrer" hidden>Our store ↗</a>
+          <a class="btn" id="fullDataLink" style="margin-left:auto">Full data →</a>
+          <div class="save-menu" id="saveMenu" hidden></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="/site-shell.js"></script>
+  <script>
+  (function () {
+    "use strict";
+
+    // ---------- configuration ----------
+    const LISTS = [
+      { key: "top_movers", group: "Rising", label: "Top Movers", desc: "Biggest steady 30-day gains with real trading activity.", price: "p_now", change: "roc_pct", changeLabel: "30 days" },
+      { key: "confirmed_uptrends", group: "Rising", label: "Confirmed Movers", desc: "Uptrends confirmed by moving averages and a bullish streak.", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg" },
+      { key: "sma30_holds", group: "Rising", label: "Consistent Movers", desc: "Held above their 30-day average for 30 straight days.", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg" },
+      { key: "early_uptrends", group: "Starting to move", label: "Early Movers", desc: "Just starting to trend up, still close to their base.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
+      { key: "under_the_radar", group: "Starting to move", label: "Under the Radar", desc: "Quiet risers emerging from a flat base.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
+      { key: "breakouts", group: "Starting to move", label: "Breakouts", desc: "Breaking above their 90-day high with recent activity.", price: "latest_price", change: "breakout_pct", changeLabel: "above 90-day high" },
+      { key: "good_buys", group: "Dipped", label: "Pullbacks", desc: "Premium cards that have dipped and may be good entries.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
+    ];
+    const RESEARCH_LINKS = [
+      ["Browse a Set", "/dashboard?tab=group_products"],
+      ["Browse a Pokémon", "/dashboard?tab=browse_species"],
+      ["Set Strength", "/dashboard?tab=group_signals"],
+      ["Set Explorer", "/set-explorer"],
+      ["Market Indexes", "/index-overview"],
+    ];
+    const TRACK_LINKS = [
+      ["Buy List", "owned"],
+      ["Watchlist", "watchlist"],
+      ["Favorites", "favorite"],
+    ];
+    const SAVE_TAGS = [["favorite", "Favorite"], ["watchlist", "Watchlist"], ["research", "Needs Review"], ["owned", "Buy List"]];
+    const TCGPLAYER_AFFILIATE_BASE = "https://partner.tcgplayer.com/jR1OJb";
+    const TOKEN_KEY = "pokemon-momentum-tracking-token";
+    const LOCAL_TAGS_KEY = "pokemon-momentum-tags";
+
+    // ---------- state ----------
+    const params = new URLSearchParams(location.search);
+    const state = {
+      market: params.get("market") === "JP" ? "JP" : "EN",
+      kind: params.get("kind") === "sealed" ? "sealed" : "singles",
+      list: LISTS.some((l) => l.key === params.get("list")) ? params.get("list") : "top_movers",
+      productKey: params.get("product") || null,
+      days: 90,
+      tab: "hold",
+      rows: [],
+      selected: null,
+    };
+    const listCache = new Map();
+    // Only an explicit ?list= pins the list; otherwise an empty default falls through
+    // to the first list that has cards, so the home page never opens on a blank table.
+    let listPinned = params.has("list");
+    let fallbackNote = "";
+    let listRequestSeq = 0;
+    let detailRequestSeq = 0;
+
+    const $ = (id) => document.getElementById(id);
+    const categoryId = () => (state.market === "JP" ? 85 : 3);
+    const productKind = () => (state.kind === "sealed" ? "sealed" : "card");
+    const keyOf = (productId, subTypeName) => `${productId}||${subTypeName || ""}`;
+    const money = (value) => (Number.isFinite(value) && value > 0
+      ? `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—");
+    const pct = (value) => (Number.isFinite(value) ? `${value >= 0 ? "+" : ""}${value.toFixed(1)}%` : "—");
+    const el = (tag, attrs = {}, ...children) => {
+      const node = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs)) {
+        if (v === undefined || v === null || v === false) continue;
+        if (k === "class") node.className = v;
+        else if (k === "text") node.textContent = v;
+        else node.setAttribute(k, v === true ? "" : v);
+      }
+      node.append(...children.filter((c) => c !== null && c !== undefined));
+      return node;
+    };
+    async function getJson(path, options) {
+      const response = await fetch(path, options);
+      if (!response.ok) throw new Error(`${response.status} ${path}`);
+      return response.json();
+    }
+    function syncUrl() {
+      const url = new URL(location.href);
+      url.search = "";
+      if (state.market !== "EN") url.searchParams.set("market", state.market);
+      if (state.kind !== "singles") url.searchParams.set("kind", state.kind);
+      if (listPinned && state.list !== "top_movers") url.searchParams.set("list", state.list);
+      if (state.selected) url.searchParams.set("product", state.selected.key);
+      history.replaceState(null, "", url);
+    }
+    function rowObjects(payload) {
+      const cols = payload.columns || [];
+      return (payload.rows || []).map((row) => Object.fromEntries(cols.map((c, i) => [c, row[i]])));
+    }
+    function normalizeRow(raw, list) {
+      const price = Number(raw[list.price] ?? raw.latest_price ?? raw.p_now);
+      return {
+        key: keyOf(raw.productId, raw.subTypeName),
+        productId: raw.productId,
+        subTypeName: raw.subTypeName || "",
+        name: raw.productName || `Product ${raw.productId}`,
+        set: raw.groupName || "",
+        number: raw.number || "",
+        rarity: raw.rarity || "",
+        imageUrl: raw.imageUrl || "",
+        productKind: raw.productKind || (state.kind === "sealed" ? "sealed" : "card"),
+        price: Number.isFinite(price) ? price : null,
+        change: Number(raw[list.change]),
+        raw,
+      };
+    }
+
+    // ---------- toolbar ----------
+    function renderSwitches() {
+      document.querySelectorAll("#marketSwitch button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.market === state.market)));
+      document.querySelectorAll("#kindSwitch button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.kind === state.kind)));
+    }
+    $("marketSwitch").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-market]");
+      if (!button || button.dataset.market === state.market) return;
+      state.market = button.dataset.market;
+      afterScopeChange();
+    });
+    $("kindSwitch").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-kind]");
+      if (!button || button.dataset.kind === state.kind) return;
+      state.kind = button.dataset.kind;
+      afterScopeChange();
+    });
+    function afterScopeChange() {
+      renderSwitches();
+      if (fallbackNote) { listPinned = false; fallbackNote = ""; state.list = "top_movers"; }
+      state.productKey = null;
+      state.selected = null;
+      renderDetail();
+      loadFreshness();
+      loadCounts();
+      loadList();
+    }
+    async function loadFreshness() {
+      try {
+        const health = await getJson(`/health?category_id=${categoryId()}`);
+        const latest = new Date(`${health.latest}T00:00:00Z`);
+        $("freshness").textContent = `Prices as of ${latest.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}`;
+      } catch (_err) {
+        $("freshness").textContent = "";
+      }
+    }
+
+    // ---------- search ----------
+    let searchTimer = null;
+    let searchSeq = 0;
+    let searchItems = [];
+    let searchActive = -1;
+    const searchInput = $("searchInput");
+    const searchResults = $("searchResults");
+    searchInput.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(runSearch, 220);
+    });
+    searchInput.addEventListener("keydown", (event) => {
+      if (searchResults.hidden) return;
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        const step = event.key === "ArrowDown" ? 1 : -1;
+        searchActive = Math.max(0, Math.min(searchItems.length - 1, searchActive + step));
+        renderSearchActive();
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        if (searchItems[Math.max(0, searchActive)]) chooseSearchItem(searchItems[Math.max(0, searchActive)]);
+      } else if (event.key === "Escape") {
+        searchResults.hidden = true;
+      }
+    });
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest(".search")) searchResults.hidden = true;
+      if (!event.target.closest("#saveBtn") && !event.target.closest("#saveMenu")) $("saveMenu").hidden = true;
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "/" && document.activeElement?.tagName !== "INPUT") {
+        event.preventDefault();
+        searchInput.focus();
+      }
+    });
+    async function runSearch() {
+      const query = searchInput.value.trim();
+      const seq = ++searchSeq;
+      if (query.length < 2) {
+        searchResults.hidden = true;
+        return;
+      }
+      try {
+        const data = await getJson(`/search?${new URLSearchParams({ query, limit: "12", category_id: String(categoryId()) })}`);
+        if (seq !== searchSeq) return;
+        searchItems = (data.items || []).filter((item) => item.kind === "product" || item.kind === "set").slice(0, 12);
+        searchActive = searchItems.length ? 0 : -1;
+        searchResults.replaceChildren(...(searchItems.length ? searchItems.map((item, index) => {
+          const isSet = item.kind === "set";
+          const image = item.imageUrl ? el("img", { src: item.imageUrl, alt: "", loading: "lazy" }) : el("div", { class: "ph" });
+          const meta = isSet ? `Set · ${item.meta || ""}` : [item.groupName, item.number, item.subTypeName].filter(Boolean).join(" · ");
+          const button = el("button", { type: "button", class: "search-item", "data-index": String(index) },
+            image,
+            el("span", {}, el("strong", { text: item.title || item.productName || item.groupName }), el("small", { text: meta })),
+            el("span", { class: "num", text: isSet ? "Open set →" : money(Number(item.latest_price)) }));
+          button.addEventListener("click", () => chooseSearchItem(item));
+          return button;
+        }) : [el("div", { class: "search-empty", text: data.did_you_mean?.length ? `No exact match. Did you mean ${data.did_you_mean[0]}?` : "No matches." })]));
+        searchResults.hidden = false;
+        renderSearchActive();
+      } catch (_err) {
+        searchResults.hidden = true;
+      }
+    }
+    function renderSearchActive() {
+      searchResults.querySelectorAll(".search-item").forEach((node, index) => node.classList.toggle("active", index === searchActive));
+    }
+    function chooseSearchItem(item) {
+      searchResults.hidden = true;
+      if (item.kind === "set") {
+        location.href = `/dashboard?tab=group_products&group_id=${encodeURIComponent(item.groupId)}&category_id=${categoryId()}`;
+        return;
+      }
+      selectCard({
+        key: keyOf(item.productId, item.subTypeName),
+        productId: item.productId,
+        subTypeName: item.subTypeName || "",
+        name: item.productName || item.title,
+        set: item.groupName || "",
+        number: item.number || "",
+        rarity: item.rarity || "",
+        imageUrl: item.imageUrl || "",
+        productKind: item.productKind || "card",
+        price: Number(item.latest_price),
+        change: NaN,
+        raw: item,
+      });
+    }
+
+    // ---------- tools nav ----------
+    function renderTools(counts = {}) {
+      const nav = $("toolsNav");
+      const nodes = [];
+      let group = "";
+      for (const list of LISTS) {
+        if (list.group !== group) {
+          group = list.group;
+          nodes.push(el("h2", { text: group }));
+        }
+        const count = counts[list.key];
+        const countText = count === undefined ? "" : count >= 200 ? "200+" : String(count);
+        const button = el("button", { type: "button", class: "tool", "aria-current": String(list.key === state.list), title: list.desc },
+          el("span", { text: list.label }),
+          el("span", { class: `count${count === 0 ? " zero" : ""}`, text: countText }));
+        button.addEventListener("click", () => {
+          listPinned = true;
+          fallbackNote = "";
+          state.list = list.key;
+          state.productKey = null;
+          renderTools(counts);
+          loadList();
+        });
+        nodes.push(button);
+      }
+      nodes.push(el("h2", { text: "Research" }));
+      for (const [label, href] of RESEARCH_LINKS) {
+        nodes.push(el("a", { class: "tool", href: `${href}${href.includes("?") ? "&" : "?"}category_id=${categoryId()}` }, el("span", { text: label }), el("span", { class: "ext", text: "↗" })));
+      }
+      nodes.push(el("h2", { text: "Track" }));
+      for (const [label, tag] of TRACK_LINKS) {
+        nodes.push(el("a", { class: "tool", href: `/mobile?mode=tracked&tracked_tag=${tag}&market=${state.market}&kind=${state.kind}` }, el("span", { text: label }), el("span", { class: "ext", text: "↗" })));
+      }
+      nav.replaceChildren(...nodes);
+    }
+    const lastCounts = {};
+    async function loadCounts() {
+      const scope = `${state.market}:${state.kind}`;
+      await Promise.all(LISTS.map(async (list) => {
+        try {
+          const rows = await fetchList(list);
+          if (`${state.market}:${state.kind}` === scope) lastCounts[list.key] = rows.length;
+        } catch (_err) {
+          delete lastCounts[list.key];
+        }
+      }));
+      if (`${state.market}:${state.kind}` !== scope) return;
+      renderTools(lastCounts);
+      const firstWithCards = LISTS.find((l) => lastCounts[l.key] > 0);
+      if (!listPinned && lastCounts[state.list] === 0 && firstWithCards) {
+        fallbackNote = `${currentList().label} is empty right now, so this shows ${firstWithCards.label}.`;
+        state.list = firstWithCards.key;
+        renderTools(lastCounts);
+        loadList();
+      } else if (!state.rows.length) {
+        renderResults();
+      }
+    }
+    function fetchList(list) {
+      const cacheKey = `${list.key}:${state.market}:${state.kind}`;
+      if (!listCache.has(cacheKey)) {
+        const query = new URLSearchParams({ product_kind: productKind(), category_id: String(categoryId()) });
+        listCache.set(cacheKey, getJson(`/${list.key}?${query}`).then((payload) => rowObjects(payload).map((raw) => normalizeRow(raw, list))));
+        listCache.get(cacheKey).catch(() => listCache.delete(cacheKey));
+      }
+      return listCache.get(cacheKey);
+    }
+
+    // ---------- results ----------
+    const currentList = () => LISTS.find((l) => l.key === state.list);
+    async function loadList() {
+      const list = currentList();
+      const seq = ++listRequestSeq;
+      $("listTitle").textContent = list.label;
+      $("listDesc").textContent = fallbackNote ? `${list.desc} ${fallbackNote}` : list.desc;
+      $("changeHeader").textContent = list.changeLabel === "30 days" ? "30-day change" : `Change (${list.changeLabel})`;
+      $("listCount").textContent = "";
+      $("listLoading").hidden = false;
+      syncUrl();
+      try {
+        const rows = await fetchList(list);
+        if (seq !== listRequestSeq) return;
+        state.rows = rows;
+        // A freshly loaded list keeps the selected card only if it's in that list.
+        if (state.selected && !state.productKey && !rows.some((r) => r.key === state.selected.key)) state.selected = null;
+        renderResults();
+      } catch (_err) {
+        if (seq !== listRequestSeq) return;
+        state.rows = [];
+        renderResults("This list couldn't load. Try again in a moment.");
+      } finally {
+        if (seq === listRequestSeq) $("listLoading").hidden = true;
+      }
+    }
+    function visibleRows() {
+      const text = $("filterInput").value.trim().toLowerCase();
+      const min = Number.parseFloat($("minPriceInput").value);
+      const max = Number.parseFloat($("maxPriceInput").value);
+      let rows = state.rows.filter((row) => {
+        if (text && !`${row.name} ${row.set} ${row.number}`.toLowerCase().includes(text)) return false;
+        if (Number.isFinite(min) && !(row.price >= min)) return false;
+        if (Number.isFinite(max) && !(row.price <= max)) return false;
+        return true;
+      });
+      const sort = $("sortSelect").value;
+      if (sort === "change") rows = [...rows].sort((a, b) => (b.change || -Infinity) - (a.change || -Infinity));
+      if (sort === "price_desc") rows = [...rows].sort((a, b) => (b.price || 0) - (a.price || 0));
+      if (sort === "price_asc") rows = [...rows].sort((a, b) => (a.price || 0) - (b.price || 0));
+      return rows;
+    }
+    ["filterInput", "minPriceInput", "maxPriceInput"].forEach((id) => $(id).addEventListener("input", () => renderResults()));
+    $("sortSelect").addEventListener("change", () => renderResults());
+
+    function renderResults(errorText) {
+      const rows = visibleRows();
+      const body = $("resultsBody");
+      const empty = $("resultsEmpty");
+      $("listCount").textContent = state.rows.length ? `${rows.length.toLocaleString()}${rows.length !== state.rows.length ? ` of ${state.rows.length.toLocaleString()}` : ""} cards` : "";
+      body.replaceChildren(...rows.map((row) => {
+        const image = row.imageUrl ? el("img", { class: "thumb", src: row.imageUrl, alt: "", loading: "lazy" }) : el("div", { class: "thumb" });
+        const meta = [row.set, row.number, row.subTypeName].filter(Boolean).join(" · ");
+        const change = Number.isFinite(row.change) ? el("span", { class: `pill ${row.change >= 0 ? "up" : "down"}`, text: pct(row.change) }) : el("span", { class: "muted", text: "—" });
+        const tr = el("tr", { "data-key": row.key, "aria-selected": String(state.selected?.key === row.key) },
+          el("td", {}, el("div", { class: "card-cell" }, image, el("div", { style: "min-width:0" }, el("div", { class: "card-name", text: row.name, title: row.name }), el("div", { class: "card-meta", text: meta, title: meta })))),
+          el("td", { class: "right num", text: money(row.price) }),
+          el("td", { class: "right" }, change),
+          el("td", { class: "right col-trend" }, el("span", { class: "spark", "data-spark": row.key })));
+        tr.addEventListener("click", () => selectCard(row));
+        return tr;
+      }));
+      empty.hidden = rows.length > 0;
+      if (!rows.length) renderEmpty(errorText);
+      hydrateSparklines(rows.slice(0, 200));
+      if (state.productKey) {
+        // A card named in the URL wins: pick it from the list, or load it on its own.
+        const requested = state.productKey;
+        state.productKey = null;
+        const wanted = rows.find((r) => r.key === requested);
+        if (wanted) selectCard(wanted, { scroll: true });
+        else loadCardByKey(requested);
+      } else if (rows.length && !state.selected) {
+        selectCard(rows[0]);
+      }
+    }
+    function renderEmpty(errorText) {
+      const empty = $("resultsEmpty");
+      if (errorText) {
+        empty.replaceChildren(el("h3", { text: "Couldn't load" }), el("div", { text: errorText }));
+        return;
+      }
+      if (state.rows.length) {
+        empty.replaceChildren(el("h3", { text: "No cards match these filters" }), el("div", { text: "Clear the filter or widen the price range." }));
+        return;
+      }
+      const others = LISTS.filter((l) => l.key !== state.list && lastCounts[l.key] > 0);
+      const suggest = el("div", { class: "suggest" }, ...others.map((l) => {
+        const b = el("button", { type: "button", text: `${l.label} (${lastCounts[l.key] >= 200 ? "200+" : lastCounts[l.key]})` });
+        b.addEventListener("click", () => { listPinned = true; fallbackNote = ""; state.list = l.key; renderTools(lastCounts); loadList(); });
+        return b;
+      }));
+      empty.replaceChildren(
+        el("h3", { text: `Nothing in ${currentList().label} right now` }),
+        el("div", { text: "These lists need several recent days of price movement, and refill as new daily prices arrive." }),
+        others.length ? suggest : null);
+    }
+
+    // ---------- keyboard navigation in results ----------
+    document.addEventListener("keydown", (event) => {
+      if (!["ArrowDown", "ArrowUp"].includes(event.key) || document.activeElement?.tagName === "INPUT") return;
+      const rows = visibleRows();
+      if (!rows.length) return;
+      event.preventDefault();
+      const index = rows.findIndex((r) => r.key === state.selected?.key);
+      const next = rows[Math.max(0, Math.min(rows.length - 1, index + (event.key === "ArrowDown" ? 1 : -1)))];
+      selectCard(next, { scroll: true });
+    });
+
+    // ---------- sparklines ----------
+    const sparkCache = new Map();
+    async function hydrateSparklines(rows) {
+      const scope = categoryId();
+      const missing = rows.filter((r) => !sparkCache.has(`${scope}:${r.key}`));
+      for (let i = 0; i < missing.length; i += 50) {
+        const chunk = missing.slice(i, i + 50);
+        try {
+          const data = await getJson(`/sparkline_batch?category_id=${scope}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: chunk.map((r) => ({ productId: r.productId, subTypeName: r.subTypeName })), days: 90 }),
+          });
+          for (const [key, values] of Object.entries(data.items || {})) sparkCache.set(`${scope}:${key}`, values);
+        } catch (_err) {
+          break;
+        }
+      }
+      document.querySelectorAll("[data-spark]").forEach((node) => {
+        const values = sparkCache.get(`${scope}:${node.dataset.spark}`);
+        if (values && values.length > 1 && !node.firstChild) node.appendChild(sparkSvg(values));
+      });
+    }
+    function sparkSvg(values) {
+      const w = 96, h = 28;
+      const min = Math.min(...values), max = Math.max(...values);
+      const span = max - min || 1;
+      const points = values.map((v, i) => `${(i / (values.length - 1)) * w},${h - 2 - ((v - min) / span) * (h - 4)}`).join(" ");
+      const up = values[values.length - 1] >= values[0];
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+      svg.setAttribute("preserveAspectRatio", "none");
+      svg.setAttribute("class", "spark");
+      svg.innerHTML = `<polyline fill="none" stroke="${up ? "var(--good)" : "var(--bad)"}" stroke-width="1.6" vector-effect="non-scaling-stroke" points="${points}"/>`;
+      return svg;
+    }
+
+    // ---------- detail panel ----------
+    function selectCard(card, { scroll = false } = {}) {
+      state.selected = card;
+      document.querySelectorAll("#resultsBody tr").forEach((tr) => tr.setAttribute("aria-selected", String(tr.dataset.key === card.key)));
+      if (scroll) document.querySelector(`#resultsBody tr[data-key="${CSS.escape(card.key)}"]`)?.scrollIntoView({ block: "nearest" });
+      syncUrl();
+      renderDetail();
+    }
+    async function loadCardByKey(key) {
+      const [productId, subTypeName] = key.split("||");
+      try {
+        const data = await getJson(`/universe?${new URLSearchParams({ product_id: productId, sub_type_name: subTypeName || "", category_id: String(categoryId()) })}`);
+        const raw = rowObjects(data)[0];
+        if (raw) return selectCard({ ...normalizeRow({ ...raw, latest_price: raw.latest_price }, currentList()), change: NaN });
+      } catch (_err) { /* fall through to the list */ }
+      // Unknown or stale link: show the top card of the list instead of an empty panel.
+      if (!state.selected && state.rows.length) selectCard(state.rows[0]);
+    }
+    function renderDetail() {
+      const card = state.selected;
+      $("detailEmpty").hidden = Boolean(card);
+      $("detailBody").hidden = !card;
+      if (!card) return;
+      $("detailImage").src = card.imageUrl || "";
+      $("detailImage").alt = card.name;
+      $("detailImage").style.visibility = card.imageUrl ? "visible" : "hidden";
+      $("detailName").textContent = card.name;
+      $("detailMeta").textContent = [card.set, card.number && `#${card.number}`, card.subTypeName, card.rarity].filter(Boolean).join(" · ");
+      $("detailPrice").textContent = money(card.price);
+      $("detailChange").textContent = "";
+      $("buyInput").value = "";
+      $("tcgLink").href = tcgplayerUrl(card);
+      $("fullDataLink").href = `/dashboard?product=${encodeURIComponent(card.key)}&category_id=${categoryId()}&segment=${state.kind === "sealed" ? "sealed" : "cards"}`;
+      renderSaveMenu();
+      loadStoreLink(card);
+      const seq = ++detailRequestSeq;
+      loadChart(card, seq);
+      loadHold(card, seq);
+      loadGraded(card, seq);
+      showTab(state.tab);
+    }
+    function tcgplayerUrl(card) {
+      const target = new URL(`https://www.tcgplayer.com/product/${card.productId}`);
+      if (card.productKind !== "sealed") {
+        target.searchParams.set("Language", state.market === "JP" ? "Japanese" : "English");
+        const printing = { "reverse holofoil": "Reverse Holofoil", "1st edition": "1st Edition", "unlimited holofoil": "Unlimited Holofoil", "1st edition holofoil": "1st Edition Holofoil" }[card.subTypeName.toLowerCase()];
+        if (printing) target.searchParams.set("Printing", printing);
+      }
+      const affiliate = new URL(TCGPLAYER_AFFILIATE_BASE);
+      affiliate.searchParams.set("u", target.toString());
+      return affiliate.toString();
+    }
+    async function loadStoreLink(card) {
+      const link = $("storeLink");
+      link.hidden = true;
+      try {
+        const data = await getJson(`/store_link?product_id=${card.productId}&category_id=${categoryId()}`);
+        if (state.selected?.key === card.key && data.listed && data.url) {
+          link.href = data.url;
+          link.hidden = false;
+        }
+      } catch (_err) { /* no store listing */ }
+    }
+
+    // tabs
+    document.querySelector(".tabs").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-tab]");
+      if (button) showTab(button.dataset.tab);
+    });
+    function showTab(tab) {
+      state.tab = tab;
+      document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
+      $("tabHold").hidden = tab !== "hold";
+      $("tabGraded").hidden = tab !== "graded";
+      $("tabStats").hidden = tab !== "stats";
+    }
+
+    // chart
+    $("windowSwitch").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-days]");
+      if (!button || !state.selected) return;
+      state.days = Number(button.dataset.days);
+      loadChart(state.selected, detailRequestSeq);
+    });
+    async function loadChart(card, seq) {
+      document.querySelectorAll("#windowSwitch button").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.days) === state.days)));
+      const chart = $("chart");
+      try {
+        const data = await getJson(`/series?${new URLSearchParams({ productId: card.productId, subTypeName: card.subTypeName, days: String(state.days), category_id: String(categoryId()) })}`);
+        if (seq !== detailRequestSeq) return;
+        const points = (data.rows || []).map((r) => ({ date: String(r[0]).slice(0, 10), price: Number(r[1]), sma30: Number(r[3]) })).filter((p) => p.price > 0);
+        drawChart(chart, points);
+        renderStats(card, points);
+        if (points.length > 1) {
+          const first = points[0].price, last = points[points.length - 1].price;
+          if (!Number.isFinite(card.price) || card.price <= 0) $("detailPrice").textContent = money(last);
+          const change = (last / first - 1) * 100;
+          const label = state.days >= 5000 ? "all time" : state.days >= 365 ? "1 year" : `${state.days} days`;
+          $("detailChange").replaceChildren(el("span", { class: `pill ${change >= 0 ? "up" : "down"}`, text: `${pct(change)} ${label}` }));
+          $("chartCaption").textContent = `${points.length} days with prices, ${fmtDate(points[0].date)} – ${fmtDate(points[points.length - 1].date)}`;
+        } else {
+          $("chartCaption").textContent = "Not enough price history for a chart.";
+        }
+      } catch (_err) {
+        if (seq !== detailRequestSeq) return;
+        chart.replaceChildren(el("div", { class: "empty", text: "No price history for this card." }));
+        $("chartCaption").textContent = "";
+        renderStats(card, []);
+      }
+    }
+    const fmtDate = (iso) => new Date(`${iso}T00:00:00Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+    function drawChart(container, points) {
+      container.replaceChildren();
+      if (points.length < 2) return;
+      const width = container.clientWidth || 440, height = container.clientHeight || 190;
+      const pad = { l: 44, r: 8, t: 8, b: 20 };
+      const t0 = Date.parse(points[0].date), t1 = Date.parse(points[points.length - 1].date) || t0 + 1;
+      const prices = points.flatMap((p) => [p.price, p.sma30]).filter(Number.isFinite);
+      let lo = Math.min(...prices), hi = Math.max(...prices);
+      const margin = (hi - lo) * 0.08 || hi * 0.05 || 1;
+      lo = Math.max(0, lo - margin); hi += margin;
+      const x = (iso) => pad.l + ((Date.parse(iso) - t0) / (t1 - t0 || 1)) * (width - pad.l - pad.r);
+      const y = (v) => pad.t + (1 - (v - lo) / (hi - lo)) * (height - pad.t - pad.b);
+      const path = (key) => points.filter((p) => Number.isFinite(p[key])).map((p, i) => `${i ? "L" : "M"}${x(p.date).toFixed(1)},${y(p[key]).toFixed(1)}`).join("");
+      const ticks = [0, 1, 2, 3].map((i) => lo + ((hi - lo) * i) / 3);
+      const dateTicks = [points[0], points[Math.floor(points.length / 2)], points[points.length - 1]];
+      const area = `${path("price")}L${x(points[points.length - 1].date)},${height - pad.b}L${x(points[0].date)},${height - pad.b}Z`;
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.innerHTML = `
+        <defs><linearGradient id="fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#4da3ff" stop-opacity="0.28"/><stop offset="1" stop-color="#4da3ff" stop-opacity="0"/></linearGradient></defs>
+        ${ticks.map((v) => `<line x1="${pad.l}" x2="${width - pad.r}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(136,162,205,0.12)"/><text x="${pad.l - 6}" y="${y(v) + 4}" fill="#6f82a6" font-size="11" text-anchor="end">${v >= 100 ? Math.round(v) : v.toFixed(2)}</text>`).join("")}
+        ${dateTicks.map((p, i) => `<text x="${x(p.date)}" y="${height - 4}" fill="#6f82a6" font-size="11" text-anchor="${["start", "middle", "end"][i]}">${new Date(`${p.date}T00:00:00Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" })}</text>`).join("")}
+        <path d="${area}" fill="url(#fill)"/>
+        <path d="${path("sma30")}" fill="none" stroke="#93a6c8" stroke-width="1.2" stroke-dasharray="4 3"/>
+        <path d="${path("price")}" fill="none" stroke="#4da3ff" stroke-width="2"/>
+        <line id="cursor" y1="${pad.t}" y2="${height - pad.b}" stroke="rgba(234,241,255,0.35)" visibility="hidden"/>
+        <circle id="dot" r="4" fill="#4da3ff" stroke="#08111d" stroke-width="2" visibility="hidden"/>`;
+      const tip = el("div", { class: "tip", hidden: true });
+      container.append(svg, tip);
+      svg.addEventListener("mousemove", (event) => {
+        const box = svg.getBoundingClientRect();
+        const px = ((event.clientX - box.left) / box.width) * width;
+        let best = points[0];
+        for (const p of points) if (Math.abs(x(p.date) - px) < Math.abs(x(best.date) - px)) best = p;
+        const cx = x(best.date), cy = y(best.price);
+        svg.querySelector("#cursor").setAttribute("x1", cx); svg.querySelector("#cursor").setAttribute("x2", cx);
+        svg.querySelector("#cursor").setAttribute("visibility", "visible");
+        const dot = svg.querySelector("#dot"); dot.setAttribute("cx", cx); dot.setAttribute("cy", cy); dot.setAttribute("visibility", "visible");
+        tip.hidden = false;
+        tip.textContent = `${fmtDate(best.date)} · ${money(best.price)}`;
+        tip.style.left = `${(cx / width) * 100}%`;
+        tip.style.top = `${(cy / height) * 100}%`;
+      });
+      svg.addEventListener("mouseleave", () => {
+        tip.hidden = true;
+        svg.querySelector("#cursor").setAttribute("visibility", "hidden");
+        svg.querySelector("#dot").setAttribute("visibility", "hidden");
+      });
+    }
+    window.addEventListener("resize", () => { if (state.selected) loadChart(state.selected, detailRequestSeq); });
+
+    // stats
+    function renderStats(card, points) {
+      const prices = points.map((p) => p.price);
+      const last = points[points.length - 1];
+      const stats = [
+        ["Market price", money(card.price > 0 ? card.price : last?.price)],
+        ["30-day average", money(last?.sma30)],
+        ["Window low", money(prices.length ? Math.min(...prices) : NaN)],
+        ["Window high", money(prices.length ? Math.max(...prices) : NaN)],
+        ["Vs 30-day average", last && last.sma30 ? pct((last.price / last.sma30 - 1) * 100) : "—"],
+        ["Printing", card.subTypeName || "—"],
+        ["Rarity", card.rarity || "—"],
+        ["Card number", card.number || "—"],
+      ];
+      $("statsGrid").replaceChildren(...stats.map(([label, value]) => el("div", { class: "stat" }, el("span", { text: label }), el("strong", { text: value }))));
+    }
+
+    // hold check
+    const HOLD_LABELS = { likely: "Likely", possible: "Risky", unlikely: "Not a flip", not_enough_history: "Too little data", no_data: "No data" };
+    let buyTimer = null;
+    $("buyInput").addEventListener("input", () => {
+      clearTimeout(buyTimer);
+      buyTimer = setTimeout(() => state.selected && loadHold(state.selected, detailRequestSeq), 350);
+    });
+    async function loadHold(card, seq) {
+      const query = new URLSearchParams({ productId: card.productId, subTypeName: card.subTypeName, category_id: String(categoryId()) });
+      const buy = Number.parseFloat($("buyInput").value);
+      if (buy > 0) query.set("buy_price", String(buy));
+      try {
+        const result = await getJson(`/hold_check?${query}`);
+        if (seq !== detailRequestSeq) return;
+        $("holdVerdict").textContent = HOLD_LABELS[result.verdict] || "";
+        $("holdVerdict").className = `verdict ${result.verdict}`;
+        $("holdHeadline").textContent = result.headline || "";
+        $("holdReasons").replaceChildren(...(result.reasons || []).map((text) => el("li", { text })));
+      } catch (_err) {
+        if (seq !== detailRequestSeq) return;
+        $("holdVerdict").textContent = "";
+        $("holdVerdict").className = "verdict";
+        $("holdHeadline").textContent = "No hold check for this card.";
+        $("holdReasons").replaceChildren();
+      }
+    }
+
+    // graded prices (PriceCharting requires a link back on every price shown)
+    async function loadGraded(card, seq) {
+      $("gradedGrid").replaceChildren();
+      $("gradedNote").textContent = "Loading graded prices…";
+      $("gradedSource").hidden = true;
+      try {
+        const data = await getJson(`/graded_prices?${new URLSearchParams({ productId: card.productId, subTypeName: card.subTypeName })}`);
+        if (seq !== detailRequestSeq) return;
+        if (!data.available) {
+          $("gradedNote").textContent = "PriceCharting doesn't list graded prices for this printing.";
+          return;
+        }
+        const cells = [["Ungraded", data.prices.ungraded], ["PSA 9", data.prices.grade9], ["PSA 10", data.prices.psa10], ["CGC 10", data.prices.cgc10]];
+        $("gradedGrid").replaceChildren(...cells.map(([label, value]) => el("div", { class: "stat" }, el("span", { text: label }), el("strong", { text: money(value) }))));
+        const notes = [];
+        const market = card.price > 0 ? card.price : NaN;
+        if (data.prices.psa10 && market) notes.push(`PSA 10 is ${(data.prices.psa10 / market).toFixed(1)}× the raw market price.`);
+        if (data.sales_volume) notes.push(`${data.sales_volume.toLocaleString()} sales a year.`);
+        $("gradedNote").textContent = notes.join(" ");
+        $("gradedSource").href = data.url;
+        $("gradedSource").textContent = `Prices from PriceCharting (${data.snapshot_date}) ↗`;
+        $("gradedSource").hidden = false;
+      } catch (_err) {
+        if (seq === detailRequestSeq) $("gradedNote").textContent = "Graded prices aren't available right now.";
+      }
+    }
+
+    // save / tracking tags (shared with the dashboards: local storage, synced when signed in)
+    function trackingToken() {
+      try {
+        const stored = localStorage.getItem(TOKEN_KEY);
+        if (stored) return stored;
+      } catch (_err) { /* storage blocked */ }
+      const match = document.cookie.match(/(?:^|;\s*)pm_tracking_token=([^;]+)/);
+      return match ? decodeURIComponent(match[1]) : "";
+    }
+    function readLocalTags() {
+      try { return JSON.parse(localStorage.getItem(LOCAL_TAGS_KEY) || "{}") || {}; } catch (_err) { return {}; }
+    }
+    function writeLocalTags(tags) {
+      try { localStorage.setItem(LOCAL_TAGS_KEY, JSON.stringify(tags)); } catch (_err) { /* storage blocked */ }
+    }
+    let syncedTags = null;
+    async function loadSyncedTags() {
+      const token = trackingToken();
+      if (!token) return;
+      try {
+        const data = await getJson("/tracking/tags", { headers: { Authorization: `Bearer ${token}` } });
+        syncedTags = {};
+        for (const item of data.items || []) {
+          const key = keyOf(item.product_id, item.sub_type_name);
+          (syncedTags[key] ||= []).push(item.tag);
+        }
+        renderSaveMenu();
+      } catch (_err) { syncedTags = null; }
+    }
+    function tagsFor(key) {
+      return new Set((syncedTags || readLocalTags())[key] || []);
+    }
+    function renderSaveMenu() {
+      const card = state.selected;
+      if (!card) return;
+      const current = tagsFor(card.key);
+      $("saveBtn").textContent = current.size ? `♥ Saved (${current.size})` : "♡ Save";
+      $("saveMenu").replaceChildren(
+        ...SAVE_TAGS.map(([tag, label]) => {
+          const on = current.has(tag);
+          const button = el("button", { type: "button" }, el("span", { text: label }), el("span", { class: on ? "on" : "muted", text: on ? "Saved" : "Add" }));
+          button.addEventListener("click", () => toggleTag(card, tag, !on));
+          return button;
+        }),
+        el("div", { class: "save-note", text: syncedTags ? "Synced to your account." : "Saved in this browser. Sign in to sync." }));
+    }
+    $("saveBtn").addEventListener("click", () => { $("saveMenu").hidden = !$("saveMenu").hidden; });
+    async function toggleTag(card, tag, enabled) {
+      const token = trackingToken();
+      if (token && syncedTags) {
+        try {
+          await fetch("/tracking/tags", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ category_id: categoryId(), product_id: card.productId, sub_type_name: card.subTypeName, tag, enabled }),
+          });
+          const list = new Set(syncedTags[card.key] || []);
+          enabled ? list.add(tag) : list.delete(tag);
+          syncedTags[card.key] = [...list];
+        } catch (_err) { /* leave as-is */ }
+      } else {
+        const tags = readLocalTags();
+        const list = new Set(tags[card.key] || []);
+        enabled ? list.add(tag) : list.delete(tag);
+        if (list.size) tags[card.key] = [...list]; else delete tags[card.key];
+        writeLocalTags(tags);
+      }
+      renderSaveMenu();
+    }
+
+    // ---------- start ----------
+    renderSwitches();
+    renderTools();
+    loadFreshness();
+    loadSyncedTags();
+    loadCounts();
+    loadList();
+  })();
+  </script>
+</body>
+</html>
