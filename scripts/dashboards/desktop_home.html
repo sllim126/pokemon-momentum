@@ -87,6 +87,7 @@
     .search-empty { padding: 14px; color: var(--muted); }
 
     .segment { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); }
+    .segment[hidden] { display: none; }
     .segment button {
       border: 0; background: none; padding: 6px 14px; border-radius: 8px; cursor: pointer; color: var(--muted); font-weight: 600;
     }
@@ -255,6 +256,10 @@
     @media (max-width: 1500px) {
       .layout { grid-template-columns: 200px minmax(0, 1fr) minmax(400px, 440px); gap: 12px; padding: 12px 14px 14px; }
       .spark { width: 72px; }
+      .results-controls { gap: 8px; }
+      .results-controls input[type="search"] { flex-basis: 140px; min-width: 120px; }
+      .results-controls input[type="number"] { width: 80px; }
+      .results-controls select { max-width: 210px; }
       th.col-trend, td.col-trend { display: none; }
       .actions { gap: 6px; padding: 10px 14px 12px; }
       .actions .btn { padding: 6px 10px; font-size: 13px; }
@@ -270,6 +275,7 @@
   <script>
     if (/[?&]list=track_/.test(location.search)) document.body.dataset.area = "track";
     if (/[?&]list=(sets|set|species)(&|$)/.test(location.search)) document.body.dataset.area = "research";
+    if (/[?&]list=(sealed_deals|budget)(&|$)/.test(location.search)) document.body.dataset.area = "buy";
   </script>
   <div id="site-shell"></div>
 
@@ -304,6 +310,10 @@
           <input type="search" id="filterInput" placeholder="Filter this list by name or set" aria-label="Filter list" />
           <select id="setFilter" aria-label="Which cards" hidden></select>
           <select id="eraFilter" aria-label="Era" hidden></select>
+          <select id="typeFilter" aria-label="Product type" hidden></select>
+          <label class="buy-input" id="budgetBox" hidden>Budget $<input id="budgetInput" type="number" min="5" max="5000" step="5" value="150" /></label>
+          <label class="buy-input" id="budgetMaxBox" hidden>Max per card $<input id="budgetMaxInput" type="number" min="1" step="1" placeholder="Any" /></label>
+          <select id="budgetRarity" aria-label="Rarities" hidden></select>
           <input type="number" id="minPriceInput" min="0" step="1" placeholder="Min $" aria-label="Minimum price" />
           <input type="number" id="maxPriceInput" min="0" step="1" placeholder="Max $" aria-label="Maximum price" />
           <select id="sortSelect" aria-label="Sort">
@@ -320,7 +330,7 @@
         </table>
         <table id="cardsTable">
           <thead>
-            <tr><th>Card</th><th class="right">Price</th><th class="right" id="changeHeader">Change</th><th class="right col-target" id="targetHeader" hidden>Your target</th><th class="right col-trend">90-day trend</th></tr>
+            <tr><th>Card</th><th class="right">Price</th><th class="right" id="changeHeader">Change</th><th class="right col-target" id="targetHeader" hidden>Your target</th><th class="right col-target" id="extraHeader" hidden></th><th class="right col-trend">90-day trend</th></tr>
           </thead>
           <tbody id="resultsBody"></tbody>
         </table>
@@ -401,6 +411,8 @@
 
     // ---------- configuration ----------
     const LISTS = [
+      { key: "sealed_deals", group: "Buy", buy: true, kindless: true, label: "Sealed Deals", desc: "Booster boxes, ETBs, tins and bundles priced per pack against retail. Cheaper per pack is better.", price: "latest_price", change: "premium_pct", changeLabel: "vs retail", changeHeader: "Vs retail", lowerIsBetter: true, extra: "Per pack" },
+      { key: "budget", group: "Buy", buy: true, kindless: true, label: "Budget Builder", desc: "The strongest actively traded cards that fit your budget, spread across sets.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days", extra: "Of budget" },
       { key: "top_movers", group: "Rising", label: "Top Movers", desc: "Biggest steady 30-day gains with real trading activity.", price: "p_now", change: "roc_pct", changeLabel: "30 days" },
       { key: "confirmed_uptrends", group: "Rising", label: "Confirmed Movers", desc: "Uptrends confirmed by moving averages and a bullish streak.", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg" },
       { key: "sma30_holds", group: "Rising", label: "Consistent Movers", desc: "Held above their 30-day average for 30 straight days.", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg" },
@@ -418,12 +430,14 @@
       { key: "species", group: "Research", research: true, label: "Pokémon", desc: "Every printing of a Pokémon across all sets." },
     ].map((l) => (l.track || l.key === "set" || l.key === "species"
       ? { price: "latest_price", change: "", changeLabel: "90 days", sparkChange: true, ...l } : l));
-    const MARKET_LISTS = LISTS.filter((l) => !l.track && !l.research);
+    const MARKET_LISTS = LISTS.filter((l) => !l.track && !l.research && !l.buy);
     const SORTS = {
       market: [["signal", "signal strength"], ["change", "biggest change"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"]],
       track: [["signal", "saved order"], ["target", "closest to buy target"], ["change", "biggest change"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"]],
       set: [["signal", "card number"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
       species: [["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"], ["signal", "set"]],
+      sealed_deals: [["signal", "best deal"], ["per_pack", "price per pack"], ["price_asc", "price, low to high"], ["price_desc", "price, high to low"]],
+      budget: [["signal", "best pick"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
       sets: [["strength", "strength"], ["avg30", "30-day average"], ["avg90", "90-day average"], ["items", "most items"], ["name", "name"]],
     };
     const sortKind = (list) => (list.track ? "track" : SORTS[list.key] ? list.key : "market");
@@ -457,6 +471,11 @@
       availableFilters: [],
       species: params.get("q") || "",
       era: params.get("era") || "",
+      productType: params.get("type") || "",
+      budget: Math.max(5, Math.min(5000, Number(params.get("budget")) || 150)),
+      budgetMax: Number(params.get("max")) || null,
+      budgetRarity: params.get("rarity") || "",
+      budgetMeta: null,
       setRows: [],
       productKey: params.get("product") || null,
       days: 90,
@@ -508,6 +527,12 @@
       }
       if (state.list === "species" && state.species) url.searchParams.set("q", state.species);
       if (state.list === "sets" && state.era) url.searchParams.set("era", state.era);
+      if (state.list === "sealed_deals" && state.productType) url.searchParams.set("type", state.productType);
+      if (state.list === "budget") {
+        url.searchParams.set("budget", String(state.budget));
+        if (state.budgetMax) url.searchParams.set("max", String(state.budgetMax));
+        if (state.budgetRarity) url.searchParams.set("rarity", state.budgetRarity);
+      }
       if (state.selected) url.searchParams.set("product", state.selected.key);
       history.replaceState(null, "", url);
     }
@@ -690,7 +715,7 @@
       fallbackNote = "";
       state.list = key;
       state.productKey = null;
-      document.body.dataset.area = currentList().track ? "track" : currentList().research ? "research" : "discover";
+      document.body.dataset.area = currentList().track ? "track" : currentList().research ? "research" : currentList().buy ? "buy" : "discover";
       $("filterInput").value = "";
       renderTools(lastCounts);
       loadList();
@@ -705,7 +730,7 @@
     const lastCounts = {};
     async function loadCounts() {
       const scope = `${state.market}:${state.kind}`;
-      await Promise.all(LISTS.filter((l) => l.key !== "set" && l.key !== "species").map(async (list) => {
+      await Promise.all(LISTS.filter((l) => !["set", "species", "budget"].includes(l.key)).map(async (list) => {
         try {
           const rows = await fetchList(list);
           if (`${state.market}:${state.kind}` === scope) lastCounts[list.key] = rows.length;
@@ -731,6 +756,8 @@
       if (list.key === "sets") return fetchSets();
       if (list.key === "set") return fetchSetCards();
       if (list.key === "species") return fetchSpecies();
+      if (list.key === "sealed_deals") return fetchSealedDeals();
+      if (list.key === "budget") return fetchBudget();
       const cacheKey = `${list.key}:${state.market}:${state.kind}`;
       if (!listCache.has(cacheKey)) {
         const query = new URLSearchParams({ product_kind: productKind(), category_id: String(categoryId()) });
@@ -763,6 +790,22 @@
         if (!state.groupName && rows[0]) state.groupName = rows[0].set;
         return rows;
       });
+    }
+    function fetchSealedDeals() {
+      const list = LISTS.find((l) => l.key === "sealed_deals");
+      return cached(`sealed_deals:${state.market}`, () => getJson(`/sealed_deals?category_id=${categoryId()}`)
+        .then((payload) => (payload.items || []).map((raw) => normalizeRow({ productKind: "sealed", ...raw }, list))));
+    }
+    function fetchBudget() {
+      const list = LISTS.find((l) => l.key === "budget");
+      const query = new URLSearchParams({ budget: String(state.budget), limit: "0", category_id: String(categoryId()) });
+      if (state.budgetMax) query.set("max_price", String(state.budgetMax));
+      if (state.budgetRarity) query.set("rarities", state.budgetRarity);
+      return cached(`budget:${state.market}:${query}`, () => getJson(`/budget_builder?${query}`).then((payload) => {
+        const rows = (payload.items || []).map((raw) => normalizeRow({ productKind: "card", ...raw }, list));
+        rows.meta = payload;
+        return rows;
+      }));
     }
     function fetchSpecies() {
       const query = state.species.trim();
@@ -851,7 +894,7 @@
       $("listTitle").textContent = list.label;
       $("listDesc").textContent = fallbackNote ? `${list.desc} ${fallbackNote}` : list.desc;
       const days = /^(\d+) days$/.exec(list.changeLabel);
-      $("changeHeader").textContent = days ? `${days[1]}-day change` : `Change (${list.changeLabel})`;
+      $("changeHeader").textContent = list.changeHeader || (days ? `${days[1]}-day change` : `Change (${list.changeLabel})`);
       $("targetHeader").hidden = !list.track;
       setSortOptions(list);
       const isSets = list.key === "sets";
@@ -862,7 +905,12 @@
       if (list.key === "species") $("speciesInput").value = state.species;
       $("setFilter").hidden = list.key !== "set" || state.kind === "sealed";
       $("eraFilter").hidden = !isSets;
-      ["minPriceInput", "maxPriceInput"].forEach((id) => { $(id).hidden = isSets; });
+      $("typeFilter").hidden = list.key !== "sealed_deals";
+      ["budgetBox", "budgetMaxBox", "budgetRarity"].forEach((id) => { $(id).hidden = list.key !== "budget"; });
+      $("kindSwitch").hidden = Boolean(list.kindless);
+      $("extraHeader").hidden = !list.extra;
+      $("extraHeader").textContent = list.extra || "";
+      ["minPriceInput", "maxPriceInput"].forEach((id) => { $(id).hidden = isSets || list.key === "budget"; });
       $("filterInput").placeholder = isSets ? "Filter sets by name or era" : list.key === "set" ? "Filter this set by name or number" : "Filter this list by name or set";
       if (list.key === "set") describeSet();
       $("trackSummary").hidden = true;
@@ -875,10 +923,17 @@
         if (seq !== listRequestSeq) return;
         state.rows = rows;
         if (list.key === "set") renderSetFilter(rows.availableFilters || []);
+        if (list.key === "sealed_deals") renderTypeFilter(rows);
+        if (list.key === "budget") { state.budgetMeta = rows.meta; renderBudgetRarity(rows.meta?.available_rarity_filters || []); }
         // A freshly loaded list keeps the selected card only if it's in that list.
-        if (!keepSelection && state.selected && !state.productKey && !rows.some((r) => r.key === state.selected.key)) state.selected = null;
+        if (!keepSelection && state.selected && !state.productKey && !rows.some((r) => r.key === state.selected.key)) {
+          state.selected = null;
+          renderDetail();
+          syncUrl();
+        }
         renderResults();
         renderTrackSummary();
+        renderBudgetSummary();
       } catch (_err) {
         if (seq !== listRequestSeq) return;
         state.rows = [];
@@ -1017,7 +1072,9 @@
       const text = $("filterInput").value.trim().toLowerCase();
       const min = Number.parseFloat($("minPriceInput").value);
       const max = Number.parseFloat($("maxPriceInput").value);
+      const sealedType = state.list === "sealed_deals" ? state.productType : "";
       let rows = state.rows.filter((row) => {
+        if (sealedType && row.raw.productType !== sealedType) return false;
         if (text && !`${row.name} ${row.set} ${row.number}`.toLowerCase().includes(text)) return false;
         if (Number.isFinite(min) && !(row.price >= min)) return false;
         if (Number.isFinite(max) && !(row.price <= max)) return false;
@@ -1027,6 +1084,7 @@
       if (sort === "change") rows = [...rows].sort((a, b) => (b.change || -Infinity) - (a.change || -Infinity));
       if (sort === "price_desc") rows = [...rows].sort((a, b) => (b.price || 0) - (a.price || 0));
       if (sort === "price_asc") rows = [...rows].sort((a, b) => (a.price || 0) - (b.price || 0));
+      if (sort === "per_pack") rows = [...rows].sort((a, b) => (a.raw.price_per_pack ?? Infinity) - (b.raw.price_per_pack ?? Infinity));
       if (sort === "target") {
         const gap = (row) => { const { buy } = targetFor(row); return buy && row.price > 0 ? row.price / buy : Infinity; };
         rows = [...rows].sort((a, b) => gap(a) - gap(b));
@@ -1041,17 +1099,22 @@
       const body = $("resultsBody");
       const empty = $("resultsEmpty");
       const track = Boolean(currentList().track);
-      const noun = track ? "items" : state.kind === "sealed" ? "products" : "cards";
+      const noun = track ? "items" : state.list === "sealed_deals" || (state.kind === "sealed" && !currentList().kindless) ? "products" : "cards";
       $("listCount").textContent = state.rows.length ? `${rows.length.toLocaleString()}${rows.length !== state.rows.length ? ` of ${state.rows.length.toLocaleString()}` : ""} ${noun}` : "";
       body.replaceChildren(...rows.map((row) => {
         const image = row.imageUrl ? el("img", { class: "thumb", src: row.imageUrl, alt: "", loading: "lazy" }) : el("div", { class: "thumb" });
-        const meta = [row.set, row.number, row.subTypeName].filter(Boolean).join(" · ");
-        const change = changePill(row.change);
+        if (row.imageUrl) image.addEventListener("error", () => { image.style.visibility = "hidden"; }, { once: true });
+        const meta = (row.productKind === "sealed"
+          ? [row.set, row.raw.productType, row.subTypeName !== "Normal" && row.subTypeName]
+          : [row.set, row.number, row.subTypeName]).filter(Boolean).join(" · ");
+        const list = currentList();
+        const change = changePill(row.change, list.lowerIsBetter);
         const tr = el("tr", { "data-key": row.key, "aria-selected": String(state.selected?.key === row.key) },
           el("td", {}, el("div", { class: "card-cell" }, image, el("div", { style: "min-width:0" }, el("div", { class: "card-name", text: row.name, title: row.name }), el("div", { class: "card-meta", text: meta, title: meta })))),
           el("td", { class: "right num", text: money(row.price) }),
           el("td", { class: "right", "data-change": currentList().sparkChange ? row.key : null }, change),
           track ? el("td", { class: "right col-target" }, targetCell(row)) : null,
+          list.extra ? el("td", { class: "right col-target" }, extraCell(row, list)) : null,
           el("td", { class: "right col-trend" }, el("span", { class: "spark", "data-spark": row.key })));
         tr.addEventListener("click", () => selectCard(row));
         return tr;
@@ -1070,9 +1133,67 @@
         selectCard(rows[0]);
       }
     }
-    function changePill(value) {
-      return Number.isFinite(value) ? el("span", { class: `pill ${value >= 0 ? "up" : "down"}`, text: pct(value) }) : el("span", { class: "muted", text: "—" });
+    function changePill(value, lowerIsBetter = false) {
+      if (!Number.isFinite(value)) return el("span", { class: "muted", text: "—" });
+      const good = lowerIsBetter ? value <= 0 : value >= 0;
+      return el("span", { class: `pill ${good ? "up" : "down"}`, text: pct(value) });
     }
+    function extraCell(row, list) {
+      if (list.key === "sealed_deals") {
+        const r = row.raw;
+        return el("span", { class: "target-text", title: r.pack_mix || "", text: Number.isFinite(r.price_per_pack) ? `${money(r.price_per_pack)} × ${r.pack_count} packs` : "—" });
+      }
+      if (list.key === "budget") return el("span", { class: "target-text", text: Number.isFinite(row.raw.budget_share_pct) ? `${Math.round(row.raw.budget_share_pct)}%` : "—" });
+      return el("span", { text: "" });
+    }
+    function renderTypeFilter(rows) {
+      const counts = {};
+      for (const r of rows) if (r.raw.productType) counts[r.raw.productType] = (counts[r.raw.productType] || 0) + 1;
+      const types = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+      if (state.productType && !counts[state.productType]) state.productType = "";
+      $("typeFilter").replaceChildren(el("option", { value: "", text: "All product types" }),
+        ...types.map((t) => el("option", { value: t, text: `${t} (${counts[t]})` })));
+      $("typeFilter").value = state.productType;
+    }
+    $("typeFilter").addEventListener("change", () => {
+      state.productType = $("typeFilter").value;
+      syncUrl();
+      renderResults();
+    });
+    function renderBudgetRarity(options) {
+      const select = $("budgetRarity");
+      if (select.options.length) return;
+      select.replaceChildren(el("option", { value: "", text: "Hits: IR and up" }),
+        ...options.map((o) => el("option", { value: o.key, text: o.label })));
+      select.value = state.budgetRarity;
+    }
+    function renderBudgetSummary() {
+      const meta = state.budgetMeta;
+      if (state.list !== "budget" || !meta || !state.rows.length) return;
+      const chip = (strong, text) => el("span", {}, el("strong", { text: strong }), ` ${text}`);
+      const box = $("trackSummary");
+      box.hidden = false;
+      box.replaceChildren(
+        chip(money(meta.spent), `spent of ${money(meta.budget)}`),
+        chip(money(meta.remaining), "left"),
+        chip(String(meta.count), meta.count === 1 ? "card" : "cards"),
+        chip(String(meta.set_count), meta.set_count === 1 ? "set" : "sets"));
+    }
+    let budgetTimer = null;
+    function budgetChanged() {
+      clearTimeout(budgetTimer);
+      budgetTimer = setTimeout(() => {
+        state.budget = Math.max(5, Math.min(5000, Number($("budgetInput").value) || 150));
+        state.budgetMax = Number($("budgetMaxInput").value) || null;
+        state.budgetRarity = $("budgetRarity").value;
+        state.selected = null;
+        loadList();
+      }, 500);
+    }
+    ["budgetInput", "budgetMaxInput"].forEach((id) => $(id).addEventListener("input", budgetChanged));
+    $("budgetRarity").addEventListener("change", budgetChanged);
+    $("budgetInput").value = String(state.budget);
+    if (state.budgetMax) $("budgetMaxInput").value = String(state.budgetMax);
     function renderEmpty(errorText) {
       const empty = $("resultsEmpty");
       if (errorText) {
@@ -1093,6 +1214,15 @@
           el("h3", { text: state.species ? `No ${state.kind === "sealed" ? "sealed products" : "cards"} found for “${state.species}”` : "Look up a Pokémon" }),
           el("div", { text: state.species ? "Check the spelling, or try one of these." : "Type a name above to see every printing across all sets, or start with one of these." }),
           chips);
+        return;
+      }
+      if (state.list === "budget") {
+        empty.replaceChildren(el("h3", { text: `No picks fit ${money(state.budget)} right now` }),
+          el("div", { text: "Budget Builder only picks cards with at least 4 price changes in the last week, so it stays empty until about a week of fresh daily prices has arrived. Try again in a few days, or raise the budget." }));
+        return;
+      }
+      if (state.list === "sealed_deals") {
+        empty.replaceChildren(el("h3", { text: "No sealed deals match" }), el("div", { text: "Clear the filters or pick All product types." }));
         return;
       }
       if (state.list === "set") {
@@ -1211,7 +1341,7 @@
       $("detailChange").textContent = "";
       $("buyInput").value = "";
       $("tcgLink").href = tcgplayerUrl(card);
-      $("fullDataLink").href = `/dashboard?product=${encodeURIComponent(card.key)}&category_id=${categoryId()}&segment=${state.kind === "sealed" ? "sealed" : "cards"}`;
+      $("fullDataLink").href = `/dashboard?product=${encodeURIComponent(card.key)}&category_id=${categoryId()}&segment=${card.productKind === "sealed" ? "sealed" : "cards"}`;
       renderSaveMenu();
       loadStoreLink(card);
       const seq = ++detailRequestSeq;
