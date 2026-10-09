@@ -166,6 +166,14 @@
     th.col-target[hidden], td.col-target[hidden] { display: none; }
     .summary { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
     .summary[hidden] { display: none; }
+    .back { border: 0; background: none; padding: 0; margin-right: 4px; color: #8cc8ff; cursor: pointer; font-weight: 600; }
+    .back[hidden], .results-controls [hidden], table[hidden] { display: none; }
+    .set-cell { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; min-width: 0; }
+    .set-logo { width: 56px; height: 28px; object-fit: contain; }
+    .set-logo.ph { display: grid; place-items: center; border-radius: 6px; background: var(--panel-3); font-size: 10px; font-weight: 700; color: var(--faint); }
+    .bar { position: relative; width: 90px; height: 6px; margin-left: auto; border-radius: 3px; background: var(--panel-3); overflow: hidden; }
+    .bar i { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 3px; }
+    .bar-cell { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
     .summary span { padding: 4px 10px; border-radius: 999px; background: var(--panel-3); border: 1px solid var(--line); font-size: 12px; color: var(--muted); }
     .summary strong { color: var(--text); font-variant-numeric: tabular-nums; }
     .empty { padding: 40px 24px; text-align: center; color: var(--muted); }
@@ -259,7 +267,10 @@
   </style>
 </head>
 <body data-area="discover">
-  <script>if (/[?&]list=track_/.test(location.search)) document.body.dataset.area = "track";</script>
+  <script>
+    if (/[?&]list=track_/.test(location.search)) document.body.dataset.area = "track";
+    if (/[?&]list=(sets|set|species)(&|$)/.test(location.search)) document.body.dataset.area = "research";
+  </script>
   <div id="site-shell"></div>
 
   <div class="toolbar">
@@ -285,25 +296,29 @@
 
     <section class="panel" aria-label="Results">
       <div class="results-head">
-        <div class="results-title"><h1 id="listTitle">Top Movers</h1><span class="count" id="listCount"></span></div>
+        <div class="results-title"><button type="button" class="back" id="backToSets" hidden>← All sets</button><h1 id="listTitle">Top Movers</h1><span class="count" id="listCount"></span></div>
         <p class="results-desc" id="listDesc"></p>
         <div class="summary" id="trackSummary" hidden></div>
         <div class="results-controls">
+          <input type="search" id="speciesInput" placeholder="Type a Pokémon name, e.g. Umbreon" aria-label="Pokémon name" hidden />
           <input type="search" id="filterInput" placeholder="Filter this list by name or set" aria-label="Filter list" />
+          <select id="setFilter" aria-label="Which cards" hidden></select>
+          <select id="eraFilter" aria-label="Era" hidden></select>
           <input type="number" id="minPriceInput" min="0" step="1" placeholder="Min $" aria-label="Minimum price" />
           <input type="number" id="maxPriceInput" min="0" step="1" placeholder="Max $" aria-label="Maximum price" />
           <select id="sortSelect" aria-label="Sort">
-            <option value="signal">Sort: signal strength</option>
-            <option value="change">Sort: biggest change</option>
-            <option value="price_desc">Sort: price, high to low</option>
-            <option value="price_asc">Sort: price, low to high</option>
-            <option value="target" hidden>Sort: closest to buy target</option>
           </select>
         </div>
       </div>
       <div class="loading-bar" id="listLoading" hidden></div>
       <div class="panel-scroll" id="resultsScroll">
-        <table>
+        <table id="setsTable" hidden>
+          <thead>
+            <tr><th>Set</th><th class="right">Items</th><th class="right">30-day avg</th><th class="right">90-day avg</th><th class="right">Above 30-day avg</th><th class="right">Strength</th></tr>
+          </thead>
+          <tbody id="setsBody"></tbody>
+        </table>
+        <table id="cardsTable">
           <thead>
             <tr><th>Card</th><th class="right">Price</th><th class="right" id="changeHeader">Change</th><th class="right col-target" id="targetHeader" hidden>Your target</th><th class="right col-trend">90-day trend</th></tr>
           </thead>
@@ -398,12 +413,29 @@
       { key: "track_watchlist", group: "My lists", track: true, tag: "watchlist", label: "Watchlist", desc: "Items you're waiting on a price for." },
       { key: "track_favorite", group: "My lists", track: true, tag: "favorite", label: "Favorites", desc: "Cards you've starred." },
       { key: "track_research", group: "My lists", track: true, tag: "research", label: "Needs Review", desc: "Items you flagged to look into." },
-    ].map((l) => (l.track ? { price: "latest_price", change: "", changeLabel: "90 days", ...l } : l));
-    const MARKET_LISTS = LISTS.filter((l) => !l.track);
+      { key: "sets", group: "Research", research: true, label: "Sets", desc: "Every set ranked by how broadly its cards are rising. Pick one to see its cards." },
+      { key: "set", group: "Research", research: true, hidden: true, label: "Set", desc: "" },
+      { key: "species", group: "Research", research: true, label: "Pokémon", desc: "Every printing of a Pokémon across all sets." },
+    ].map((l) => (l.track || l.key === "set" || l.key === "species"
+      ? { price: "latest_price", change: "", changeLabel: "90 days", sparkChange: true, ...l } : l));
+    const MARKET_LISTS = LISTS.filter((l) => !l.track && !l.research);
+    const SORTS = {
+      market: [["signal", "signal strength"], ["change", "biggest change"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"]],
+      track: [["signal", "saved order"], ["target", "closest to buy target"], ["change", "biggest change"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"]],
+      set: [["signal", "card number"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
+      species: [["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"], ["signal", "set"]],
+      sets: [["strength", "strength"], ["avg30", "30-day average"], ["avg90", "90-day average"], ["items", "most items"], ["name", "name"]],
+    };
+    const sortKind = (list) => (list.track ? "track" : SORTS[list.key] ? list.key : "market");
+    const SET_FILTER_LABELS = {
+      all: "All cards", hits: "Hits only", ir_plus: "Illustration Rare and up", bulk: "Bulk", common: "Common", uncommon: "Uncommon",
+      rare: "Rare", holo_rare: "Holo Rare", double_rare: "Double Rare", illustration_rare: "Illustration Rare",
+      special_illustration_rare: "Special Illustration Rare", ultra_rare: "Ultra Rare", hyper_rare: "Hyper Rare", secret_rare: "Secret Rare",
+      promo: "Promo", stamped: "Stamped", reverse_holo: "Reverse Holo", pokeball_holo: "Poke Ball Holo", masterball_holo: "Master Ball Holo",
+      ball_pattern: "Ball Pattern", energy_symbol_pattern: "Energy Symbol Pattern",
+    };
+    const SPECIES_SUGGESTIONS = ["Charizard", "Pikachu", "Umbreon", "Gengar", "Mew", "Rayquaza", "Lugia", "Eevee"];
     const RESEARCH_LINKS = [
-      ["Browse a Set", "/dashboard?tab=group_products"],
-      ["Browse a Pokémon", "/dashboard?tab=browse_species"],
-      ["Set Strength", "/dashboard?tab=group_signals"],
       ["Set Explorer", "/set-explorer"],
       ["Market Indexes", "/index-overview"],
     ];
@@ -419,12 +451,20 @@
       market: params.get("market") === "JP" ? "JP" : "EN",
       kind: params.get("kind") === "sealed" ? "sealed" : "singles",
       list: LISTS.some((l) => l.key === params.get("list")) ? params.get("list") : "top_movers",
+      groupId: Number(params.get("set")) || null,
+      groupName: "",
+      setFilter: params.get("filter") || "all",
+      availableFilters: [],
+      species: params.get("q") || "",
+      era: params.get("era") || "",
+      setRows: [],
       productKey: params.get("product") || null,
       days: 90,
       tab: "hold",
       rows: [],
       selected: null,
     };
+    if (state.list === "set" && !state.groupId) state.list = "sets";
     const listCache = new Map();
     // Only an explicit ?list= pins the list; otherwise an empty default falls through
     // to the first list that has cards, so the home page never opens on a blank table.
@@ -462,6 +502,12 @@
       if (state.market !== "EN") url.searchParams.set("market", state.market);
       if (state.kind !== "singles") url.searchParams.set("kind", state.kind);
       if (listPinned && state.list !== "top_movers") url.searchParams.set("list", state.list);
+      if (state.list === "set") {
+        url.searchParams.set("set", String(state.groupId));
+        if (state.setFilter !== "all") url.searchParams.set("filter", state.setFilter);
+      }
+      if (state.list === "species" && state.species) url.searchParams.set("q", state.species);
+      if (state.list === "sets" && state.era) url.searchParams.set("era", state.era);
       if (state.selected) url.searchParams.set("product", state.selected.key);
       history.replaceState(null, "", url);
     }
@@ -496,6 +542,7 @@
       const button = event.target.closest("button[data-market]");
       if (!button || button.dataset.market === state.market) return;
       state.market = button.dataset.market;
+      if (state.list === "set") state.list = "sets";
       afterScopeChange();
     });
     $("kindSwitch").addEventListener("click", (event) => {
@@ -594,7 +641,7 @@
     function chooseSearchItem(item) {
       searchResults.hidden = true;
       if (item.kind === "set") {
-        location.href = `/dashboard?tab=group_products&group_id=${encodeURIComponent(item.groupId)}&category_id=${categoryId()}`;
+        openSet(item.groupId, item.title || item.groupName);
         return;
       }
       selectCard({
@@ -619,19 +666,20 @@
       const nodes = [];
       let group = "";
       for (const list of LISTS) {
+        if (list.hidden) continue;
         if (list.group !== group) {
           group = list.group;
           nodes.push(el("h2", { text: group }));
         }
         const count = counts[list.key];
-        const countText = count === undefined ? "" : count >= 200 && !list.track ? "200+" : String(count);
-        const button = el("button", { type: "button", class: "tool", "aria-current": String(list.key === state.list), title: list.desc },
+        const countText = count === undefined ? "" : count >= 200 && !list.track && !list.research ? "200+" : String(count);
+        const current = list.key === state.list || (list.key === "sets" && state.list === "set");
+        const button = el("button", { type: "button", class: "tool", "aria-current": String(current), title: list.desc },
           el("span", { text: list.label }),
           el("span", { class: `count${count === 0 ? " zero" : ""}`, text: countText }));
         button.addEventListener("click", () => openList(list.key));
         nodes.push(button);
       }
-      nodes.push(el("h2", { text: "Research" }));
       for (const [label, href] of RESEARCH_LINKS) {
         nodes.push(el("a", { class: "tool", href: `${href}${href.includes("?") ? "&" : "?"}category_id=${categoryId()}` }, el("span", { text: label }), el("span", { class: "ext", text: "↗" })));
       }
@@ -642,14 +690,22 @@
       fallbackNote = "";
       state.list = key;
       state.productKey = null;
-      document.body.dataset.area = currentList().track ? "track" : "discover";
+      document.body.dataset.area = currentList().track ? "track" : currentList().research ? "research" : "discover";
+      $("filterInput").value = "";
       renderTools(lastCounts);
       loadList();
     }
+    function openSet(groupId, name) {
+      state.groupId = Number(groupId);
+      state.groupName = name || "";
+      state.setFilter = "all";
+      openList("set");
+    }
+    $("backToSets").addEventListener("click", () => openList("sets"));
     const lastCounts = {};
     async function loadCounts() {
       const scope = `${state.market}:${state.kind}`;
-      await Promise.all(LISTS.map(async (list) => {
+      await Promise.all(LISTS.filter((l) => l.key !== "set" && l.key !== "species").map(async (list) => {
         try {
           const rows = await fetchList(list);
           if (`${state.market}:${state.kind}` === scope) lastCounts[list.key] = rows.length;
@@ -665,12 +721,16 @@
         state.list = firstWithCards.key;
         renderTools(lastCounts);
         loadList();
-      } else if (!state.rows.length) {
-        renderResults();
+      } else if (!state.rows.length && $("listLoading").hidden) {
+        // Redraw the empty state with the new counts, but not over a list still loading.
+        rerender();
       }
     }
     function fetchList(list) {
       if (list.track) return fetchTracked().then((rows) => (list.tag === "all" ? rows : rows.filter((r) => tagsFor(r.key).has(list.tag))));
+      if (list.key === "sets") return fetchSets();
+      if (list.key === "set") return fetchSetCards();
+      if (list.key === "species") return fetchSpecies();
       const cacheKey = `${list.key}:${state.market}:${state.kind}`;
       if (!listCache.has(cacheKey)) {
         const query = new URLSearchParams({ product_kind: productKind(), category_id: String(categoryId()) });
@@ -678,6 +738,40 @@
         listCache.get(cacheKey).catch(() => listCache.delete(cacheKey));
       }
       return listCache.get(cacheKey);
+    }
+
+    function cached(cacheKey, load) {
+      if (!listCache.has(cacheKey)) {
+        const request = load();
+        listCache.set(cacheKey, request);
+        request.catch(() => listCache.delete(cacheKey));
+      }
+      return listCache.get(cacheKey);
+    }
+    function fetchSets() {
+      return cached(`sets:${state.market}`, () => getJson(`/group_signals?limit=1000&category_id=${categoryId()}`).then(rowObjects));
+    }
+    function fetchSetCards() {
+      const filter = state.kind === "sealed" ? "all" : state.setFilter;
+      const list = LISTS.find((l) => l.key === "set");
+      return cached(`set:${state.market}:${state.kind}:${state.groupId}:${filter}`, async () => {
+        const query = new URLSearchParams({ groupId: String(state.groupId), product_kind: productKind(), category_id: String(categoryId()) });
+        if (filter !== "all") query.set("filters", filter);
+        const payload = await getJson(`/group_products?${query}`);
+        const rows = rowObjects(payload).map((raw) => normalizeRow(raw, list));
+        rows.availableFilters = payload.available_filters || [];
+        if (!state.groupName && rows[0]) state.groupName = rows[0].set;
+        return rows;
+      });
+    }
+    function fetchSpecies() {
+      const query = state.species.trim();
+      if (query.length < 2) return Promise.resolve([]);
+      const list = LISTS.find((l) => l.key === "species");
+      return cached(`species:${state.market}:${query.toLowerCase()}`, () =>
+        getJson(`/browse_species?${new URLSearchParams({ query, limit: "500", category_id: String(categoryId()) })}`)
+          .then((payload) => rowObjects(payload).map((raw) => normalizeRow(raw, list))))
+        .then((rows) => rows.filter((r) => (r.productKind === "sealed") === (state.kind === "sealed")));
     }
 
     // Saved items for this market and product type, resolved once and filtered per list.
@@ -759,18 +853,28 @@
       const days = /^(\d+) days$/.exec(list.changeLabel);
       $("changeHeader").textContent = days ? `${days[1]}-day change` : `Change (${list.changeLabel})`;
       $("targetHeader").hidden = !list.track;
-      const sortSelect = $("sortSelect");
-      sortSelect.querySelector('option[value="target"]').hidden = !list.track;
-      sortSelect.querySelector('option[value="signal"]').textContent = list.track ? "Sort: saved order" : "Sort: signal strength";
-      if (!list.track && sortSelect.value === "target") sortSelect.value = "signal";
+      setSortOptions(list);
+      const isSets = list.key === "sets";
+      $("setsTable").hidden = !isSets;
+      $("cardsTable").hidden = isSets;
+      $("backToSets").hidden = list.key !== "set";
+      $("speciesInput").hidden = list.key !== "species";
+      if (list.key === "species") $("speciesInput").value = state.species;
+      $("setFilter").hidden = list.key !== "set" || state.kind === "sealed";
+      $("eraFilter").hidden = !isSets;
+      ["minPriceInput", "maxPriceInput"].forEach((id) => { $(id).hidden = isSets; });
+      $("filterInput").placeholder = isSets ? "Filter sets by name or era" : list.key === "set" ? "Filter this set by name or number" : "Filter this list by name or set";
+      if (list.key === "set") describeSet();
       $("trackSummary").hidden = true;
       $("listCount").textContent = "";
       $("listLoading").hidden = false;
       syncUrl();
+      if (isSets) return loadSets(seq);
       try {
         const rows = await fetchList(list);
         if (seq !== listRequestSeq) return;
         state.rows = rows;
+        if (list.key === "set") renderSetFilter(rows.availableFilters || []);
         // A freshly loaded list keeps the selected card only if it's in that list.
         if (!keepSelection && state.selected && !state.productKey && !rows.some((r) => r.key === state.selected.key)) state.selected = null;
         renderResults();
@@ -783,6 +887,132 @@
         if (seq === listRequestSeq) $("listLoading").hidden = true;
       }
     }
+    function setSortOptions(list) {
+      const select = $("sortSelect");
+      const options = SORTS[sortKind(list)];
+      const keep = options.some(([value]) => value === select.value) && select.dataset.kind === sortKind(list);
+      const value = keep ? select.value : options[0][0];
+      select.replaceChildren(...options.map(([v, label]) => el("option", { value: v, text: `Sort: ${label}` })));
+      select.value = value;
+      select.dataset.kind = sortKind(list);
+    }
+    const rerender = () => (state.list === "sets" ? renderSets() : renderResults());
+
+    // ---------- sets ----------
+    let setLogoIds = null;
+    getJson("/set-logos.json").then((d) => { setLogoIds = new Set((d.groupIds || []).map(String)); if (state.list === "sets") renderSets(); }).catch(() => {});
+    async function loadSets(seq) {
+      state.rows = [];
+      $("resultsBody").replaceChildren();
+      try {
+        const rows = await fetchSets();
+        if (seq !== listRequestSeq) return;
+        state.setRows = rows;
+        renderEraFilter();
+        renderSets();
+      } catch (_err) {
+        if (seq !== listRequestSeq) return;
+        state.setRows = [];
+        renderSets("Sets couldn't load. Try again in a moment.");
+      } finally {
+        if (seq === listRequestSeq) $("listLoading").hidden = true;
+      }
+    }
+    function renderSets(errorText) {
+      const text = $("filterInput").value.trim().toLowerCase();
+      let rows = state.setRows.filter((r) => (!state.era || r.generation === state.era)
+        && (!text || `${r.groupName} ${r.generation || ""}`.toLowerCase().includes(text)));
+      const num = (v) => (Number.isFinite(Number(v)) && v !== null ? Number(v) : -Infinity);
+      const sort = $("sortSelect").value;
+      const field = { strength: "breadth_score", avg30: "avg_30d_pct", avg90: "avg_90d_pct", items: "item_count" }[sort];
+      rows = sort === "name" ? [...rows].sort((a, b) => String(a.groupName).localeCompare(String(b.groupName)))
+        : [...rows].sort((a, b) => num(b[field]) - num(a[field]));
+      $("listCount").textContent = state.setRows.length ? `${rows.length}${rows.length !== state.setRows.length ? ` of ${state.setRows.length}` : ""} sets` : "";
+      const topStrength = Math.max(1, ...state.setRows.map((r) => Number(r.breadth_score) || 0));
+      const bar = (value, label, scale = 100) => el("div", { class: "bar-cell" },
+        el("span", { class: "num", text: label }),
+        el("span", { class: "bar" }, el("i", { style: `width:${Math.max(0, Math.min(100, ((Number(value) || 0) / scale) * 100))}%` })));
+      $("setsBody").replaceChildren(...rows.map((r) => {
+        const hasLogo = setLogoIds?.has(String(r.groupId));
+        const logo = hasLogo ? el("img", { class: "set-logo", src: `/images/logos/${r.groupId}.png`, alt: "", loading: "lazy" })
+          : el("span", { class: "set-logo ph", text: r.generation || "" });
+        const tr = el("tr", {},
+          el("td", {}, el("div", { class: "set-cell" }, logo, el("div", { style: "min-width:0" },
+            el("div", { class: "card-name", text: r.groupName, title: r.groupName }),
+            el("div", { class: "card-meta", text: [r.generation, `${r.card_count || 0} cards`, r.sealed_count ? `${r.sealed_count} sealed` : ""].filter(Boolean).join(" · ") })))),
+          el("td", { class: "right num", text: String(r.item_count ?? "—") }),
+          el("td", { class: "right" }, changePill(Number(r.avg_30d_pct ?? NaN))),
+          el("td", { class: "right" }, changePill(Number(r.avg_90d_pct ?? NaN))),
+          el("td", { class: "right" }, bar(r.pct_above_sma30, Number.isFinite(Number(r.pct_above_sma30)) ? `${Math.round(r.pct_above_sma30)}%` : "—")),
+          el("td", { class: "right" }, bar(r.breadth_score, Number.isFinite(Number(r.breadth_score)) ? String(Math.round(r.breadth_score)) : "—", topStrength)));
+        tr.addEventListener("click", () => openSet(r.groupId, r.groupName));
+        return tr;
+      }));
+      const empty = $("resultsEmpty");
+      empty.hidden = rows.length > 0;
+      if (!rows.length) empty.replaceChildren(el("h3", { text: errorText ? "Couldn't load" : "No sets match" }), el("div", { text: errorText || "Clear the filter to see every set." }));
+    }
+    function renderEraFilter() {
+      const counts = {};
+      for (const r of state.setRows) if (r.generation) counts[r.generation] = (counts[r.generation] || 0) + 1;
+      const eras = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b));
+      if (state.era && !counts[state.era]) state.era = "";
+      $("eraFilter").replaceChildren(el("option", { value: "", text: "All eras" }),
+        ...eras.map((era) => el("option", { value: era, text: `${era} (${counts[era]})` })));
+      $("eraFilter").value = state.era;
+    }
+    $("eraFilter").addEventListener("change", () => {
+      state.era = $("eraFilter").value;
+      syncUrl();
+      renderSets();
+    });
+    async function describeSet() {
+      const groupId = state.groupId;
+      $("listTitle").textContent = state.groupName || "Set";
+      $("listDesc").textContent = "";
+      try {
+        const info = (await fetchSets()).find((r) => Number(r.groupId) === groupId);
+        if (state.list !== "set" || state.groupId !== groupId) return;
+        if (info) {
+          state.groupName = info.groupName;
+          $("listTitle").textContent = info.groupName;
+          const parts = [info.generation, `${info.item_count} items`];
+          if (Number.isFinite(Number(info.avg_30d_pct))) parts.push(`average 30-day change ${pct(Number(info.avg_30d_pct))}`);
+          if (Number.isFinite(Number(info.pct_above_sma30))) parts.push(`${Math.round(info.pct_above_sma30)}% above their 30-day average`);
+          $("listDesc").textContent = parts.filter(Boolean).join(" · ");
+        } else if (state.groupName) {
+          $("listTitle").textContent = state.groupName;
+        }
+      } catch (_err) { /* title stays as-is */ }
+    }
+    function renderSetFilter(available) {
+      const select = $("setFilter");
+      const ids = ["all", ...available.filter((id) => id !== "all" && SET_FILTER_LABELS[id])];
+      select.replaceChildren(...ids.map((id) => el("option", { value: id, text: SET_FILTER_LABELS[id] })));
+      select.value = ids.includes(state.setFilter) ? state.setFilter : "all";
+    }
+    $("setFilter").addEventListener("change", () => {
+      state.setFilter = $("setFilter").value;
+      state.selected = null;
+      loadList();
+    });
+
+    // ---------- pokémon lookup ----------
+    let speciesTimer = null;
+    function lookUpSpecies(name) {
+      clearTimeout(speciesTimer);
+      state.species = name.trim();
+      state.selected = null;
+      loadList();
+    }
+    $("speciesInput").addEventListener("input", () => {
+      clearTimeout(speciesTimer);
+      speciesTimer = setTimeout(() => lookUpSpecies($("speciesInput").value), 450);
+    });
+    $("speciesInput").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") lookUpSpecies($("speciesInput").value);
+    });
+
     function visibleRows() {
       const text = $("filterInput").value.trim().toLowerCase();
       const min = Number.parseFloat($("minPriceInput").value);
@@ -803,8 +1033,8 @@
       }
       return rows;
     }
-    ["filterInput", "minPriceInput", "maxPriceInput"].forEach((id) => $(id).addEventListener("input", () => renderResults()));
-    $("sortSelect").addEventListener("change", () => renderResults());
+    ["filterInput", "minPriceInput", "maxPriceInput"].forEach((id) => $(id).addEventListener("input", rerender));
+    $("sortSelect").addEventListener("change", rerender);
 
     function renderResults(errorText) {
       const rows = visibleRows();
@@ -820,7 +1050,7 @@
         const tr = el("tr", { "data-key": row.key, "aria-selected": String(state.selected?.key === row.key) },
           el("td", {}, el("div", { class: "card-cell" }, image, el("div", { style: "min-width:0" }, el("div", { class: "card-name", text: row.name, title: row.name }), el("div", { class: "card-meta", text: meta, title: meta })))),
           el("td", { class: "right num", text: money(row.price) }),
-          el("td", { class: "right", "data-change": track ? row.key : null }, change),
+          el("td", { class: "right", "data-change": currentList().sparkChange ? row.key : null }, change),
           track ? el("td", { class: "right col-target" }, targetCell(row)) : null,
           el("td", { class: "right col-trend" }, el("span", { class: "spark", "data-spark": row.key })));
         tr.addEventListener("click", () => selectCard(row));
@@ -851,6 +1081,23 @@
       }
       if (state.rows.length) {
         empty.replaceChildren(el("h3", { text: "No cards match these filters" }), el("div", { text: "Clear the filter or widen the price range." }));
+        return;
+      }
+      if (state.list === "species") {
+        const chips = el("div", { class: "suggest" }, ...SPECIES_SUGGESTIONS.map((name) => {
+          const b = el("button", { type: "button", text: name });
+          b.addEventListener("click", () => { $("speciesInput").value = name; lookUpSpecies(name); });
+          return b;
+        }));
+        empty.replaceChildren(
+          el("h3", { text: state.species ? `No ${state.kind === "sealed" ? "sealed products" : "cards"} found for “${state.species}”` : "Look up a Pokémon" }),
+          el("div", { text: state.species ? "Check the spelling, or try one of these." : "Type a name above to see every printing across all sets, or start with one of these." }),
+          chips);
+        return;
+      }
+      if (state.list === "set") {
+        empty.replaceChildren(el("h3", { text: "Nothing in this set for this view" }),
+          el("div", { text: state.kind === "sealed" ? "This set has no sealed products we track. Switch to Singles above." : "Try All cards in the filter above." }));
         return;
       }
       if (currentList().track) {
