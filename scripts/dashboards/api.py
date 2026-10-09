@@ -116,6 +116,7 @@ DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
 SITE_SHELL_JS = SCRIPT_DIR / "site_shell.js"
 AREA_HUB_HTML = SCRIPT_DIR / "area_hub.html"
 ADMIN_HUB_HTML = SCRIPT_DIR / "admin_hub.html"
+DESKTOP_HOME_HTML = SCRIPT_DIR / "desktop_home.html"
 # The placeholder/checklist workflow is intentionally published as static files.
 # These constants define which parts of the imported collector project are safe
 # to expose through the main app without turning it into a database-backed
@@ -827,6 +828,12 @@ def area_hub_page():
 
 for _area in ("buy", "discover", "research", "track", "learn"):
     app.get(f"/{_area}", name=f"area_{_area}")(area_hub_page)
+
+
+@app.get("/home-preview")
+def desktop_home_preview():
+    """New 1080p desktop home, previewed here before it replaces the desktop dashboard."""
+    return FileResponse(DESKTOP_HOME_HTML)
 
 
 @app.get("/admin")
@@ -6148,7 +6155,7 @@ def hold_check_route(
     subTypeName: str,
     buy_price: float | None = None,
     channel: str = DEFAULT_CHANNEL,
-    horizon_days: int = 90,
+    horizon_days: int = 180,
     category_id: int = 3,
 ):
     """Can buying at `buy_price` (default: market) today sell at a profit after `horizon_days`?"""
