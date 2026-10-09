@@ -115,12 +115,12 @@
     .panel-scroll { flex: 1; min-height: 0; overflow-y: auto; }
 
     /* ---------- tools ---------- */
-    .tools { padding: 14px 10px; overflow-y: auto; }
-    .tools h2 { margin: 14px 10px 6px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+    .tools { padding: 12px 10px; overflow-y: auto; }
+    .tools h2 { margin: 12px 10px 4px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
     .tools h2:first-child { margin-top: 2px; }
     .tool {
       display: flex; justify-content: space-between; align-items: center; gap: 8px;
-      width: 100%; padding: 8px 10px; border: 0; border-radius: 9px; background: none;
+      width: 100%; padding: 6px 10px; border: 0; border-radius: 9px; background: none;
       text-align: left; cursor: pointer; color: var(--muted); text-decoration: none; font-weight: 500;
     }
     .tool:hover { background: rgba(136, 162, 205, 0.08); color: var(--text); }
@@ -175,6 +175,17 @@
     .bar { position: relative; width: 90px; height: 6px; margin-left: auto; border-radius: 3px; background: var(--panel-3); overflow: hidden; }
     .bar i { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 3px; }
     .bar-cell { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+    .results-controls[hidden], .index-chart[hidden], .guide[hidden] { display: none; }
+    .index-chart { position: relative; height: 150px; margin: 0 0 10px; }
+    .index-chart svg { width: 100%; height: 100%; display: block; }
+    .guide { padding: 6px 18px 24px; max-width: 900px; }
+    .guide section { padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .guide h3 { margin: 0 0 6px; font-size: 15px; }
+    .guide p { margin: 0 0 8px; color: var(--muted); }
+    .guide dl { display: grid; grid-template-columns: 170px 1fr; gap: 6px 16px; margin: 6px 0 0; }
+    .guide dt { font-weight: 600; }
+    .guide dd { margin: 0; color: var(--muted); }
+    .guide .fine { font-size: 12px; color: var(--faint); }
     .summary span { padding: 4px 10px; border-radius: 999px; background: var(--panel-3); border: 1px solid var(--line); font-size: 12px; color: var(--muted); }
     .summary strong { color: var(--text); font-variant-numeric: tabular-nums; }
     .empty { padding: 40px 24px; text-align: center; color: var(--muted); }
@@ -268,6 +279,7 @@
       .detail-head img { width: 72px; height: 100px; }
       .detail-head { grid-template-columns: 72px 1fr; padding: 14px 16px 8px; }
       .chart { height: 150px; }
+      .index-chart { height: 110px; }
     }
   </style>
 </head>
@@ -276,6 +288,7 @@
     if (/[?&]list=track_/.test(location.search)) document.body.dataset.area = "track";
     if (/[?&]list=(sets|set|species)(&|$)/.test(location.search)) document.body.dataset.area = "research";
     if (/[?&]list=(sealed_deals|budget)(&|$)/.test(location.search)) document.body.dataset.area = "buy";
+    if (/[?&]list=(indexes|index|guide)(&|$)/.test(location.search)) document.body.dataset.area = "learn";
   </script>
   <div id="site-shell"></div>
 
@@ -302,10 +315,11 @@
 
     <section class="panel" aria-label="Results">
       <div class="results-head">
-        <div class="results-title"><button type="button" class="back" id="backToSets" hidden>← All sets</button><h1 id="listTitle">Top Movers</h1><span class="count" id="listCount"></span></div>
+        <div class="results-title"><button type="button" class="back" id="backButton" hidden></button><h1 id="listTitle">Top Movers</h1><span class="count" id="listCount"></span></div>
         <p class="results-desc" id="listDesc"></p>
         <div class="summary" id="trackSummary" hidden></div>
-        <div class="results-controls">
+        <div class="index-chart" id="indexChart" hidden></div>
+        <div class="results-controls" id="resultsControls">
           <input type="search" id="speciesInput" placeholder="Type a Pokémon name, e.g. Umbreon" aria-label="Pokémon name" hidden />
           <input type="search" id="filterInput" placeholder="Filter this list by name or set" aria-label="Filter list" />
           <select id="setFilter" aria-label="Which cards" hidden></select>
@@ -328,6 +342,13 @@
           </thead>
           <tbody id="setsBody"></tbody>
         </table>
+        <table id="indexesTable" hidden>
+          <thead>
+            <tr><th>Index</th><th class="right">Level</th><th class="right">30-day change</th><th class="right">Since start</th><th class="right">Average card</th><th class="right col-trend">Last year</th></tr>
+          </thead>
+          <tbody id="indexesBody"></tbody>
+        </table>
+        <div class="guide" id="guideView" hidden></div>
         <table id="cardsTable">
           <thead>
             <tr><th>Card</th><th class="right">Price</th><th class="right" id="changeHeader">Change</th><th class="right col-target" id="targetHeader" hidden>Your target</th><th class="right col-target" id="extraHeader" hidden></th><th class="right col-trend">90-day trend</th></tr>
@@ -428,9 +449,13 @@
       { key: "sets", group: "Research", research: true, label: "Sets", desc: "Every set ranked by how broadly its cards are rising. Pick one to see its cards." },
       { key: "set", group: "Research", research: true, hidden: true, label: "Set", desc: "" },
       { key: "species", group: "Research", research: true, label: "Pokémon", desc: "Every printing of a Pokémon across all sets." },
-    ].map((l) => (l.track || l.key === "set" || l.key === "species"
+      { key: "indexes", group: "Learn", learn: true, kindless: true, label: "Market Indexes", desc: "Each index follows the 100 most valuable cards of an era, like a stock index. Every index started at 1,000." },
+      { key: "index", group: "Learn", learn: true, kindless: true, hidden: true, parent: "indexes", label: "Index", desc: "", price: "marketPrice" },
+      { key: "guide", group: "Learn", learn: true, kindless: true, label: "How it works", desc: "What each list and tool means, in plain language." },
+    ].map((l) => (l.track || l.key === "set" || l.key === "species" || l.key === "index"
       ? { price: "latest_price", change: "", changeLabel: "90 days", sparkChange: true, ...l } : l));
-    const MARKET_LISTS = LISTS.filter((l) => !l.track && !l.research && !l.buy);
+    const MARKET_LISTS = LISTS.filter((l) => !l.track && !l.research && !l.buy && !l.learn);
+    LISTS.find((l) => l.key === "set").parent = "sets";
     const SORTS = {
       market: [["signal", "signal strength"], ["change", "biggest change"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"]],
       track: [["signal", "saved order"], ["target", "closest to buy target"], ["change", "biggest change"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"]],
@@ -438,6 +463,8 @@
       species: [["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"], ["signal", "set"]],
       sealed_deals: [["signal", "best deal"], ["per_pack", "price per pack"], ["price_asc", "price, low to high"], ["price_desc", "price, high to low"]],
       budget: [["signal", "best pick"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
+      indexes: [["era", "newest era"], ["change30", "30-day change"], ["start", "change since start"], ["level", "level"]],
+      index: [["signal", "rank"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
       sets: [["strength", "strength"], ["avg30", "30-day average"], ["avg90", "90-day average"], ["items", "most items"], ["name", "name"]],
     };
     const sortKind = (list) => (list.track ? "track" : SORTS[list.key] ? list.key : "market");
@@ -449,10 +476,14 @@
       ball_pattern: "Ball Pattern", energy_symbol_pattern: "Energy Symbol Pattern",
     };
     const SPECIES_SUGGESTIONS = ["Charizard", "Pikachu", "Umbreon", "Gengar", "Mew", "Rayquaza", "Lugia", "Eevee"];
-    const RESEARCH_LINKS = [
-      ["Set Explorer", "/set-explorer"],
-      ["Market Indexes", "/index-overview"],
-    ];
+    const GROUP_LINKS = {
+      Research: [["Set Explorer", "/set-explorer"]],
+      Learn: [["Collector Hub", "/collector-hub"], ["Placeholder Library", "/placeholders"]],
+    };
+    const INDEXES = {
+      EN: ["mega100", "sv100", "swsh100", "sm100", "xy100", "bw100", "dp100", "ex100", "ecard100", "neo100", "wotc100", "pokemon100"],
+      JP: ["jp_sv100", "jp_pokemon100"],
+    };
     const SAVE_TAGS = [["favorite", "Favorite"], ["watchlist", "Watchlist"], ["research", "Needs Review"], ["owned", "Buy List"]];
     const TCGPLAYER_AFFILIATE_BASE = "https://partner.tcgplayer.com/jR1OJb";
     const TOKEN_KEY = "pokemon-momentum-tracking-token";
@@ -476,6 +507,8 @@
       budgetMax: Number(params.get("max")) || null,
       budgetRarity: params.get("rarity") || "",
       budgetMeta: null,
+      indexKey: params.get("index") || "",
+      indexRows: [],
       setRows: [],
       productKey: params.get("product") || null,
       days: 90,
@@ -484,6 +517,7 @@
       selected: null,
     };
     if (state.list === "set" && !state.groupId) state.list = "sets";
+    if (state.list === "index" && !state.indexKey) state.list = "indexes";
     const listCache = new Map();
     // Only an explicit ?list= pins the list; otherwise an empty default falls through
     // to the first list that has cards, so the home page never opens on a blank table.
@@ -527,6 +561,7 @@
       }
       if (state.list === "species" && state.species) url.searchParams.set("q", state.species);
       if (state.list === "sets" && state.era) url.searchParams.set("era", state.era);
+      if (state.list === "index") url.searchParams.set("index", state.indexKey);
       if (state.list === "sealed_deals" && state.productType) url.searchParams.set("type", state.productType);
       if (state.list === "budget") {
         url.searchParams.set("budget", String(state.budget));
@@ -568,6 +603,7 @@
       if (!button || button.dataset.market === state.market) return;
       state.market = button.dataset.market;
       if (state.list === "set") state.list = "sets";
+      if (state.list === "index") state.list = "indexes";
       afterScopeChange();
     });
     $("kindSwitch").addEventListener("click", (event) => {
@@ -690,24 +726,25 @@
       const nav = $("toolsNav");
       const nodes = [];
       let group = "";
+      const groupLinks = (name) => (GROUP_LINKS[name] || []).map(([label, href]) =>
+        el("a", { class: "tool", href: `${href}${href.includes("?") ? "&" : "?"}category_id=${categoryId()}` }, el("span", { text: label }), el("span", { class: "ext", text: "↗" })));
       for (const list of LISTS) {
         if (list.hidden) continue;
         if (list.group !== group) {
+          nodes.push(...groupLinks(group));
           group = list.group;
           nodes.push(el("h2", { text: group }));
         }
         const count = counts[list.key];
         const countText = count === undefined ? "" : count >= 200 && !list.track && !list.research ? "200+" : String(count);
-        const current = list.key === state.list || (list.key === "sets" && state.list === "set");
+        const current = list.key === state.list || list.key === currentList().parent;
         const button = el("button", { type: "button", class: "tool", "aria-current": String(current), title: list.desc },
           el("span", { text: list.label }),
           el("span", { class: `count${count === 0 ? " zero" : ""}`, text: countText }));
         button.addEventListener("click", () => openList(list.key));
         nodes.push(button);
       }
-      for (const [label, href] of RESEARCH_LINKS) {
-        nodes.push(el("a", { class: "tool", href: `${href}${href.includes("?") ? "&" : "?"}category_id=${categoryId()}` }, el("span", { text: label }), el("span", { class: "ext", text: "↗" })));
-      }
+      nodes.push(...groupLinks(group));
       nav.replaceChildren(...nodes);
     }
     function openList(key) {
@@ -715,7 +752,8 @@
       fallbackNote = "";
       state.list = key;
       state.productKey = null;
-      document.body.dataset.area = currentList().track ? "track" : currentList().research ? "research" : currentList().buy ? "buy" : "discover";
+      const list = currentList();
+      document.body.dataset.area = list.track ? "track" : list.research ? "research" : list.buy ? "buy" : list.learn ? "learn" : "discover";
       $("filterInput").value = "";
       renderTools(lastCounts);
       loadList();
@@ -726,11 +764,15 @@
       state.setFilter = "all";
       openList("set");
     }
-    $("backToSets").addEventListener("click", () => openList("sets"));
+    function openIndex(key) {
+      state.indexKey = key;
+      openList("index");
+    }
+    $("backButton").addEventListener("click", () => { const parent = currentList().parent; if (parent) openList(parent); });
     const lastCounts = {};
     async function loadCounts() {
       const scope = `${state.market}:${state.kind}`;
-      await Promise.all(LISTS.filter((l) => !["set", "species", "budget"].includes(l.key)).map(async (list) => {
+      await Promise.all(LISTS.filter((l) => !l.learn && !["set", "species", "budget"].includes(l.key)).map(async (list) => {
         try {
           const rows = await fetchList(list);
           if (`${state.market}:${state.kind}` === scope) lastCounts[list.key] = rows.length;
@@ -758,6 +800,13 @@
       if (list.key === "species") return fetchSpecies();
       if (list.key === "sealed_deals") return fetchSealedDeals();
       if (list.key === "budget") return fetchBudget();
+      if (list.key === "indexes") return fetchIndexes();
+      if (list.key === "index") return fetchIndex(state.indexKey).then((payload) => {
+        const rows = (payload.holdings || []).map((raw) => normalizeRow({ productKind: "card", ...raw }, list));
+        rows.payload = payload;
+        return rows;
+      });
+      if (list.key === "guide") return Promise.resolve([]);
       const cacheKey = `${list.key}:${state.market}:${state.kind}`;
       if (!listCache.has(cacheKey)) {
         const query = new URLSearchParams({ product_kind: productKind(), category_id: String(categoryId()) });
@@ -790,6 +839,15 @@
         if (!state.groupName && rows[0]) state.groupName = rows[0].set;
         return rows;
       });
+    }
+    function fetchIndex(key) {
+      const category = key.startsWith("jp_") ? 85 : 3;
+      return cached(`index:${key}`, () => getJson(`/index-overview-data?index=${encodeURIComponent(key)}&category_id=${category}`));
+    }
+    function fetchIndexes() {
+      const keys = INDEXES[state.market];
+      return Promise.all(keys.map((key) => fetchIndex(key).then((payload) => ({ key, era: keys.indexOf(key), payload })).catch(() => null)))
+        .then((rows) => rows.filter(Boolean));
     }
     function fetchSealedDeals() {
       const list = LISTS.find((l) => l.key === "sealed_deals");
@@ -897,10 +955,17 @@
       $("changeHeader").textContent = list.changeHeader || (days ? `${days[1]}-day change` : `Change (${list.changeLabel})`);
       $("targetHeader").hidden = !list.track;
       setSortOptions(list);
-      const isSets = list.key === "sets";
-      $("setsTable").hidden = !isSets;
-      $("cardsTable").hidden = isSets;
-      $("backToSets").hidden = list.key !== "set";
+      const view = ["sets", "indexes", "guide"].includes(list.key) ? list.key : "cards";
+      const isSets = view === "sets";
+      $("setsTable").hidden = view !== "sets";
+      $("indexesTable").hidden = view !== "indexes";
+      $("guideView").hidden = view !== "guide";
+      $("cardsTable").hidden = view !== "cards";
+      $("resultsControls").hidden = view === "guide";
+      $("indexChart").hidden = list.key !== "index";
+      const parent = LISTS.find((l) => l.key === list.parent);
+      $("backButton").hidden = !parent;
+      $("backButton").textContent = parent ? `← All ${parent.label.toLowerCase()}` : "";
       $("speciesInput").hidden = list.key !== "species";
       if (list.key === "species") $("speciesInput").value = state.species;
       $("setFilter").hidden = list.key !== "set" || state.kind === "sealed";
@@ -910,20 +975,23 @@
       $("kindSwitch").hidden = Boolean(list.kindless);
       $("extraHeader").hidden = !list.extra;
       $("extraHeader").textContent = list.extra || "";
-      ["minPriceInput", "maxPriceInput"].forEach((id) => { $(id).hidden = isSets || list.key === "budget"; });
-      $("filterInput").placeholder = isSets ? "Filter sets by name or era" : list.key === "set" ? "Filter this set by name or number" : "Filter this list by name or set";
+      ["minPriceInput", "maxPriceInput"].forEach((id) => { $(id).hidden = isSets || view === "indexes" || list.key === "budget"; });
+      $("filterInput").placeholder = view === "indexes" ? "Filter indexes by name" : isSets ? "Filter sets by name or era" : list.key === "set" ? "Filter this set by name or number" : "Filter this list by name or set";
       if (list.key === "set") describeSet();
       $("trackSummary").hidden = true;
       $("listCount").textContent = "";
       $("listLoading").hidden = false;
       syncUrl();
       if (isSets) return loadSets(seq);
+      if (view === "indexes") return loadIndexes(seq);
+      if (view === "guide") { renderGuide(); $("listLoading").hidden = true; $("resultsEmpty").hidden = true; return; }
       try {
         const rows = await fetchList(list);
         if (seq !== listRequestSeq) return;
         state.rows = rows;
         if (list.key === "set") renderSetFilter(rows.availableFilters || []);
         if (list.key === "sealed_deals") renderTypeFilter(rows);
+        if (list.key === "index") describeIndex(rows.payload);
         if (list.key === "budget") { state.budgetMeta = rows.meta; renderBudgetRarity(rows.meta?.available_rarity_filters || []); }
         // A freshly loaded list keeps the selected card only if it's in that list.
         if (!keepSelection && state.selected && !state.productKey && !rows.some((r) => r.key === state.selected.key)) {
@@ -951,7 +1019,11 @@
       select.value = value;
       select.dataset.kind = sortKind(list);
     }
-    const rerender = () => (state.list === "sets" ? renderSets() : renderResults());
+    const rerender = () => {
+      if (state.list === "sets") renderSets();
+      else if (state.list === "indexes") renderIndexes();
+      else if (state.list !== "guide") renderResults();
+    };
 
     // ---------- sets ----------
     let setLogoIds = null;
@@ -1051,6 +1123,103 @@
       state.selected = null;
       loadList();
     });
+
+    // ---------- market indexes ----------
+    const level = (v) => (Number.isFinite(v) ? Math.round(v).toLocaleString() : "—");
+    async function loadIndexes(seq) {
+      state.rows = [];
+      try {
+        const rows = await fetchIndexes();
+        if (seq !== listRequestSeq) return;
+        state.indexRows = rows;
+        renderIndexes();
+      } catch (_err) {
+        if (seq === listRequestSeq) { state.indexRows = []; renderIndexes(); }
+      } finally {
+        if (seq === listRequestSeq) $("listLoading").hidden = true;
+      }
+    }
+    function renderIndexes() {
+      const text = $("filterInput").value.trim().toLowerCase();
+      let rows = state.indexRows.filter((r) => !text || String(r.payload.index_name).toLowerCase().includes(text));
+      const sum = (r) => r.payload.summary || {};
+      const by = {
+        era: (r) => r.era,
+        change30: (r) => -(sum(r).day30_change?.pct ?? -Infinity),
+        start: (r) => -(sum(r).all_time_index_change?.pct ?? -Infinity),
+        level: (r) => -(sum(r).current_level ?? -Infinity),
+      }[$("sortSelect").value] || ((r) => r.era);
+      rows = [...rows].sort((a, b) => by(a) - by(b));
+      $("listCount").textContent = state.indexRows.length ? `${rows.length} indexes` : "";
+      $("indexesBody").replaceChildren(...rows.map((r) => {
+        const info = sum(r);
+        const levels = (r.payload.series || []).slice(-365).map((p) => p.index_level).filter(Number.isFinite);
+        const tr = el("tr", {},
+          el("td", {}, el("div", { style: "min-width:0" },
+            el("div", { class: "card-name", text: r.payload.index_name }),
+            el("div", { class: "card-meta", text: `${r.payload.description || ""} · as of ${info.as_of ? fmtDate(info.as_of) : "—"}` }))),
+          el("td", { class: "right num", text: level(info.current_level) }),
+          el("td", { class: "right" }, changePill(info.day30_change?.pct)),
+          el("td", { class: "right" }, changePill(info.all_time_index_change?.pct)),
+          el("td", { class: "right num", text: money(info.average_card_price) }),
+          el("td", { class: "right col-trend" }, levels.length > 1 ? sparkSvg(levels) : el("span", { class: "muted", text: "—" })));
+        tr.addEventListener("click", () => openIndex(r.key));
+        return tr;
+      }));
+      const empty = $("resultsEmpty");
+      empty.hidden = rows.length > 0;
+      if (!rows.length) empty.replaceChildren(el("h3", { text: state.indexRows.length ? "No indexes match" : "Indexes couldn't load" }), el("div", { text: state.indexRows.length ? "Clear the filter." : "Try again in a moment." }));
+    }
+    function describeIndex(payload) {
+      if (!payload) return;
+      const info = payload.summary || {};
+      const series = payload.series || [];
+      $("listTitle").textContent = payload.index_name || "Index";
+      const parts = [`Level ${level(info.current_level)}`];
+      if (Number.isFinite(info.day30_change?.pct)) parts.push(`${pct(info.day30_change.pct)} over 30 days`);
+      if (series.length && Number.isFinite(info.all_time_index_change?.pct)) parts.push(`${pct(info.all_time_index_change.pct)} since ${fmtDate(series[0].date)}`);
+      parts.push(`average card ${money(info.average_card_price)}`);
+      $("listDesc").textContent = `${payload.description || ""}. ${parts.join(" · ")}.`;
+      drawChart($("indexChart"), series.map((p) => ({ date: p.date, price: p.index_level, sma30: NaN })), level);
+    }
+
+    // ---------- guide ----------
+    function renderGuide() {
+      const guide = $("guideView");
+      if (guide.childElementCount) return;
+      const section = (title, intro, items = []) => el("section", {},
+        el("h3", { text: title }),
+        intro ? el("p", { text: intro }) : null,
+        items.length ? el("dl", {}, ...items.flatMap(([term, text]) => [el("dt", { text: term }), el("dd", { text })])) : null);
+      guide.replaceChildren(
+        section("Where the prices come from", "Every price is the TCGplayer market price, collected once a night. Lists compare today's price with the last 30, 90 and 180 days. Prices are missing from September 16 to October 7, 2026, so lists that need a week of steady readings will be thin until mid-October."),
+        section("Buy", "", [
+          ["Sealed Deals", "Sealed products ranked by price per pack against the usual retail price. A negative “vs retail” means it's cheaper per pack than retail."],
+          ["Budget Builder", "The strongest actively traded cards that fit your budget, at most two per set so you're not betting on one set."],
+        ]),
+        section("Market lists", "Each list is a different way a card's price can be moving. Click any card to see its chart and the checks below.", [
+          ["Top Movers", "The biggest steady gains over the last 30 days, with real trading activity."],
+          ["Confirmed Movers", "Uptrends backed by moving averages and several up days in a row."],
+          ["Consistent Movers", "Cards that have stayed above their 30-day average for 30 straight days."],
+          ["Early Movers", "Cards just starting to trend up, still close to where they started."],
+          ["Under the Radar", "Quiet risers coming off a flat price."],
+          ["Breakouts", "Cards pushing above their highest price of the last 90 days."],
+          ["Pullbacks", "Valuable cards that have dipped and may be a better entry."],
+        ]),
+        section("Checks on every card", "", [
+          ["6-Month Hold", "Would buying today and selling in six months make money after fees? It adds TCGplayer's cut (about 13.25% + $0.30) and shipping ($1.25 under $35, tracked over $35, signature over $50), then looks at the trend and at every past six-month stretch. “Likely”, “Risky” or “Not a flip”. Type your own buy price to recheck it."],
+          ["Targets", "Your own buy-below and sell-above prices. Saved items show when a card reaches them."],
+          ["Graded", "PSA and CGC prices from PriceCharting, with a link back to the source."],
+          ["Stats", "The 30-day average, window low and high, and printing details."],
+        ]),
+        section("Research and Learn", "", [
+          ["Sets", "Every set ranked by how broadly its cards are rising. Click a set to see its cards, then narrow to hits or a rarity."],
+          ["Pokémon", "Every printing of one Pokémon across all sets."],
+          ["Market Indexes", "The 100 most valuable cards of each era tracked as one number, like a stock index. Each started at 1,000; 2,000 means that group of cards has doubled."],
+        ]),
+        section("Saving cards", "♡ Save adds a card to your Buy List, Watchlist, Favorites or Needs Review. Saved cards stay in this browser, and sync to your account when you're signed in. They appear under My lists, here and on the phone site."),
+        el("p", { class: "fine", text: "Market data for research only, not financial advice. Prices and estimates can be wrong; check the listing before you buy or sell." }));
+    }
 
     // ---------- pokémon lookup ----------
     let speciesTimer = null;
@@ -1422,7 +1591,7 @@
       }
     }
     const fmtDate = (iso) => new Date(`${iso}T00:00:00Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
-    function drawChart(container, points) {
+    function drawChart(container, points, format = money) {
       container.replaceChildren();
       if (points.length < 2) return;
       const width = container.clientWidth || 440, height = container.clientHeight || 190;
@@ -1461,7 +1630,7 @@
         svg.querySelector("#cursor").setAttribute("visibility", "visible");
         const dot = svg.querySelector("#dot"); dot.setAttribute("cx", cx); dot.setAttribute("cy", cy); dot.setAttribute("visibility", "visible");
         tip.hidden = false;
-        tip.textContent = `${fmtDate(best.date)} · ${money(best.price)}`;
+        tip.textContent = `${fmtDate(best.date)} · ${format(best.price)}`;
         tip.style.left = `${(cx / width) * 100}%`;
         tip.style.top = `${(cy / height) * 100}%`;
       });
