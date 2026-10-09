@@ -1499,6 +1499,7 @@
       width: 100%;
     }
 
+    .decision-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 14px; align-items: start; }
     .hold-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
     .hold-card-head h3 { margin: 0; }
     .hold-pill { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); }
@@ -3546,8 +3547,8 @@
                 </div>
                 <div class="stage-product-copy">
                   <div class="section-label">Selected Product</div>
-                  <h1 id="cardTitle">Loading...</h1>
-                  <div class="subtitle" id="cardSubtitle">Fetching product history and metadata.</div>
+                  <h1 id="cardTitle">Pick a card</h1>
+                  <div class="subtitle" id="cardSubtitle">Search above or choose a card from the list to see its price, hold check, and graded prices.</div>
                   <a id="heroBuyLink" class="hero-buy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>TCGplayer</a>
                   <a id="heroStoreLink" class="hero-buy-link hero-store-link" href="#" target="_blank" rel="noopener noreferrer" hidden>Poke6s</a>
                 </div>
@@ -3579,6 +3580,25 @@
           </div>
 
           <div id="chart"></div>
+          <div class="decision-row" id="decisionRow">
+            <section class="detail-card hold-card" id="holdCard" hidden>
+              <div class="hold-card-head">
+                <h3>90-Day Hold</h3>
+                <span class="hold-pill" id="holdPill"></span>
+              </div>
+              <label class="hold-input-label" for="holdBuyInput">Your buy price (blank = market)</label>
+              <input class="hold-input" id="holdBuyInput" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Market price">
+              <p class="hold-headline" id="holdHeadline"></p>
+              <ul class="hold-reasons" id="holdReasons"></ul>
+            </section>
+
+            <section class="detail-card graded-card" id="gradedBox" hidden>
+              <h3 class="graded-title">Graded Prices</h3>
+              <div class="graded-grid" id="gradedGrid"></div>
+              <p class="graded-note" id="gradedNote"></p>
+              <a class="graded-source" id="gradedSource" href="https://www.pricecharting.com/" target="_blank" rel="noopener noreferrer">Prices from PriceCharting ↗</a>
+            </section>
+          </div>
 
           <section class="mobile-hero-bargains" id="mobileBargainBlock" hidden>
             <h3>Quick Buy Targets</h3>
@@ -3772,23 +3792,6 @@
             </div>
           </section>
 
-          <section class="detail-card hold-card" id="holdCard" hidden>
-            <div class="hold-card-head">
-              <h3>90-Day Hold</h3>
-              <span class="hold-pill" id="holdPill"></span>
-            </div>
-            <label class="hold-input-label" for="holdBuyInput">Your buy price (blank = market)</label>
-            <input class="hold-input" id="holdBuyInput" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Market price">
-            <p class="hold-headline" id="holdHeadline"></p>
-            <ul class="hold-reasons" id="holdReasons"></ul>
-          </section>
-
-          <section class="detail-card graded-card" id="gradedBox" hidden>
-            <h3 class="graded-title">Graded Prices</h3>
-            <div class="graded-grid" id="gradedGrid"></div>
-            <p class="graded-note" id="gradedNote"></p>
-            <a class="graded-source" id="gradedSource" href="https://www.pricecharting.com/" target="_blank" rel="noopener noreferrer">Prices from PriceCharting ↗</a>
-          </section>
 
           <section class="detail-card track-actions-card">
             <h3>Track This Item</h3>
