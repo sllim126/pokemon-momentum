@@ -4,7 +4,7 @@ import json
 import os
 import re
 import bisect
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import unquote
 import sys
@@ -585,8 +585,13 @@ def is_mobile_request(request: Request) -> bool:
     return any(marker in user_agent for marker in mobile_markers)
 
 
+# Tabs the mobile page has no view for; phones get the full dashboard instead of an
+# unrelated feed.
+DESKTOP_ONLY_TABS = {"group_products", "group_signals", "time_to_buy", "browse_species"}
+
+
 def dashboard_response_for_request(request: Request) -> FileResponse:
-    if is_mobile_request(request):
+    if is_mobile_request(request) and request.query_params.get("tab") not in DESKTOP_ONLY_TABS:
         return FileResponse(MOBILE_DASHBOARD_HTML)
     return FileResponse(DASHBOARD_HTML)
 
@@ -839,6 +844,22 @@ def resolve_image_path(filename: str) -> Path | None:
         if path.exists() and path.is_file():
             return path
     return None
+
+
+_SET_LOGO_CACHE: dict[str, object] = {"mtime": None, "ids": []}
+
+
+@app.get("/set-logos.json")
+def set_logos():
+    """Group IDs that have an uploaded set logo, so pages only request logos that exist."""
+    logo_dir = next((d / "logos" for d in IMAGE_DIR_CANDIDATES if (d / "logos").is_dir()), None)
+    if logo_dir is None:
+        return {"groupIds": []}
+    mtime = logo_dir.stat().st_mtime
+    if _SET_LOGO_CACHE["mtime"] != mtime:
+        _SET_LOGO_CACHE["ids"] = sorted(int(f.stem) for f in logo_dir.glob("*.png") if f.stem.isdigit())
+        _SET_LOGO_CACHE["mtime"] = mtime
+    return {"groupIds": _SET_LOGO_CACHE["ids"]}
 
 
 @app.get("/images/{filename:path}")
@@ -6055,14 +6076,17 @@ def series(productId: int, subTypeName: str, days: int = 365, category_id: int =
             prices = json.loads(prices_json or "[]")
             sma7 = json.loads(sma7_json or "[]")
             sma30 = json.loads(sma30_json or "[]")
-            slice_len = min(days, len(dates))
-            rows_out = list(zip(
-                dates[-slice_len:],
-                prices[-slice_len:],
-                sma7[-slice_len:],
-                sma30[-slice_len:],
-            ))
-            start = dates[-slice_len] if slice_len else None
+            # Windows are calendar days back from the product's latest price, not a
+            # count of observations, so gaps in the data don't stretch "30D" backwards.
+            cutoff = (
+                (date.fromisoformat(str(dates[-1])[:10]) - timedelta(days=days - 1)).isoformat()
+                if dates else ""
+            )
+            rows_out = [
+                row for row in zip(dates, prices, sma7, sma30)
+                if str(row[0])[:10] >= cutoff
+            ]
+            start = rows_out[0][0] if rows_out else None
             # If the cached snapshot is too sparse, fall back to the raw prices table
             # so thin snapshots (like 3-4 points) don't flatten the chart view.
             if len(rows_out) >= min(7, days):

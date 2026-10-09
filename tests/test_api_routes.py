@@ -39,6 +39,30 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Deal Checker", response.text)
 
+    def test_dashboard_route_serves_full_dashboard_for_desktop_only_tabs_on_mobile(self):
+        for tab in ("group_products", "group_signals", "time_to_buy", "browse_species"):
+            response = self.client.get(
+                f"/dashboard?tab={tab}",
+                headers={"user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148"},
+            )
+
+            self.assertEqual(response.status_code, 200, tab)
+            self.assertIn("Market Signals", response.text, tab)
+
+    def test_set_logos_lists_only_existing_png_logos(self):
+        response = self.client.get("/set-logos.json")
+
+        self.assertEqual(response.status_code, 200)
+        ids = response.json()["groupIds"]
+        self.assertTrue(all(isinstance(group_id, int) for group_id in ids))
+        self.assertEqual(ids, sorted(ids))
+
+    def test_mobile_page_has_no_seeded_sample_products(self):
+        response = self.client.get("/mobile")
+
+        self.assertNotIn("Charizard ex", response.text)
+        self.assertNotIn("Pikachu Felt Hat", response.text)
+
     def test_mobile_route_serves_mobile_dashboard(self):
         response = self.client.get("/mobile")
 

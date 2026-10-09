@@ -995,10 +995,17 @@
       });
     }
 
+    // Only request logos that exist: /set-logos.json lists every uploaded set logo (PNG).
+    let setLogoIds = null;
+    fetch("/set-logos.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d && Array.isArray(d.groupIds)) setLogoIds = new Set(d.groupIds.map(String)); })
+      .catch(() => {});
+
     function groupLogoCandidates(groupId) {
       if (groupId == null) return [];
-      const gid = encodeURIComponent(String(groupId));
-      return ["png", "webp", "jpg", "jpeg", "svg"].map((ext) => `/images/logos/${gid}.${ext}`);
+      if (setLogoIds && !setLogoIds.has(String(groupId))) return [];
+      return [`/images/logos/${encodeURIComponent(String(groupId))}.png`];
     }
 
     function renderSpotlightImage(row) {

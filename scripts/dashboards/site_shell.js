@@ -50,9 +50,9 @@
     {
       key: "track",
       label: "Track",
-      question: "What do I own, and what am I watching?",
+      question: "What am I buying and watching?",
       tools: [
-        { label: "My Collection", href: "/mobile?mode=tracked&tracked_tag=owned", text: "Cards and products you own." },
+        { label: "Buy List", href: "/mobile?mode=tracked&tracked_tag=owned", text: "Cards and sealed products you plan to pick up." },
         { label: "Watchlist", href: "/mobile?mode=tracked&tracked_tag=watchlist", text: "Items you're waiting on a price for." },
         { label: "Favorites", href: "/mobile?mode=tracked&tracked_tag=favorite", text: "Cards you've starred." },
         { label: "All Tracked Items", href: "/mobile?mode=tracked&tracked_tag=all", text: "Everything you've saved, in one list." },

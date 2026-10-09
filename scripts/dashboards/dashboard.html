@@ -7316,7 +7316,13 @@
 
       cardTitle.textContent = meta.productName || `productId ${meta.productId}`;
       cardSubtitle.textContent = `${meta.groupName || "Unknown Set"} | ${meta.subTypeName || "n/a"} | ${meta.number ? `#${meta.number}` : "No card number"}`;
-      chartLabel.textContent = `Showing ${rows.length.toLocaleString()} daily observations across the selected chart window.`;
+      const fmtDay = (value) => {
+        const d = new Date(`${String(value).slice(0, 10)}T00:00:00Z`);
+        return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+      };
+      chartLabel.textContent = rows.length
+        ? `${rows.length.toLocaleString()} days with prices, ${fmtDay(rows[0][0])} to ${fmtDay(last[0])}.`
+        : "No prices in this chart window.";
       headlinePrice.textContent = formatNumber(latestPrice, 2);
       headlineChangeWrap.hidden = false;
       headlineWindowChangeWrap.hidden = false;
@@ -7484,10 +7490,17 @@
       openImagePreview(src, caption, anchorEl);
     }
 
+    // Only request logos that exist: /set-logos.json lists every uploaded set logo (PNG).
+    let setLogoIds = null;
+    fetch("/set-logos.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d && Array.isArray(d.groupIds)) setLogoIds = new Set(d.groupIds.map(String)); })
+      .catch(() => {});
+
     function groupLogoCandidates(groupId) {
       if (!groupId && groupId !== 0) return [];
-      const gid = encodeURIComponent(String(groupId));
-      return ["png", "webp", "jpg", "jpeg", "svg"].map((ext) => `/images/logos/${gid}.${ext}`);
+      if (setLogoIds && !setLogoIds.has(String(groupId))) return [];
+      return [`/images/logos/${encodeURIComponent(String(groupId))}.png`];
     }
 
     function renderGroupSummary(groupMeta, series) {
@@ -8144,12 +8157,14 @@
           loadSucceeded = true;
           return rows;
         }
-        if (currentTab === "time_to_buy" && (currentGroupId === null || currentGroupId === undefined || Number.isNaN(currentGroupId))) {
+        const needsSet = currentTab === "time_to_buy" || currentTab === "group_products";
+        if (needsSet && (currentGroupId === null || currentGroupId === undefined || Number.isNaN(currentGroupId))) {
+          const toolName = currentTab === "time_to_buy" ? "Time to Buy" : "Browse Set";
           tableHead.innerHTML = "";
           tableBody.innerHTML = "";
           emptyState.style.display = "block";
-          emptyState.textContent = "Pick a set to run Time to Buy for that set.";
-          tableStatus.textContent = "Time to Buy needs a selected set.";
+          emptyState.textContent = `Pick a set from the Set Picker above to open ${toolName}.`;
+          tableStatus.textContent = `${toolName} needs a selected set.`;
           updateGroupSignalFilterVisibility();
           updateTrackedFilterVisibility();
           updateBrowseSetFilterVisibility();

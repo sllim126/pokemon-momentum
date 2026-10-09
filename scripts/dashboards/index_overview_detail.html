@@ -993,6 +993,13 @@
       return `/dashboard?${params.toString()}`;
     }
 
+    // Only request logos that exist: /set-logos.json lists every uploaded set logo (PNG).
+    let setLogoIds = null;
+    const setLogosReady = fetch("/set-logos.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d && Array.isArray(d.groupIds)) setLogoIds = new Set(d.groupIds.map(String)); })
+      .catch(() => {});
+
     function renderIncludedSets(sets) {
       if (!includedSetGrid) return;
       if (!Array.isArray(sets) || !sets.length) {
@@ -1001,11 +1008,12 @@
       }
       includedSetGrid.innerHTML = sets.map((setItem) => {
         const href = buildSetStrengthSetUrl(setItem);
-        const logoSrc = `/images/logos/${encodeURIComponent(String(setItem.groupId || ""))}.png`;
+        const hasLogo = !setLogoIds || setLogoIds.has(String(setItem.groupId || ""));
+        const logoSrc = hasLogo ? `/images/logos/${encodeURIComponent(String(setItem.groupId || ""))}.png` : "";
         return `
           <a class="set-pill-link" target="_blank" rel="noopener noreferrer" href="${escapeHtml(href)}">
             <div class="set-pill">
-              <img src="${escapeHtml(logoSrc)}" alt="${escapeHtml(setItem.name || "Set logo")}" onerror="this.style.display='none'">
+              ${logoSrc ? `<img src="${escapeHtml(logoSrc)}" alt="${escapeHtml(setItem.name || "Set logo")}" onerror="this.style.display='none'">` : ""}
               <span>${escapeHtml(setItem.name || `Set ${setItem.groupId || ""}`)}</span>
             </div>
           </a>
@@ -1195,7 +1203,7 @@
       document.getElementById("holdingsTotal").textContent = `$${formatNumber(data.summary?.current_aggregate || 0, 2)}`;
       document.getElementById("holdingsCount").textContent = String(data.summary?.holdings_count ?? "--");
       document.getElementById("holdingsAverage").textContent = `$${formatNumber(data.summary?.average_card_price || 0, 2)}`;
-      renderIncludedSets(data.included_sets || []);
+      setLogosReady.finally(() => renderIncludedSets(data.included_sets || []));
       renderHoldings(data.holdings || []);
       setChartStatus(`Live index data loaded (${data.summary?.as_of || "latest"}).`, false);
       renderChart();
