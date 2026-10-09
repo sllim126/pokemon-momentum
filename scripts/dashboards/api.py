@@ -59,6 +59,8 @@ from scripts.dashboards.query_support import (
     to_jsonable,
 )
 from scripts.dashboards.index_config import INDEX_DEFINITIONS, index_keys_for_category
+from scripts.common.selling_costs import CHANNELS, DEFAULT_CHANNEL
+from scripts.dashboards.hold_check import hold_check
 from scripts.dashboards.psa_service import (
     fetch_psa_cert_from_upstream,
     normalize_psa_lookup,
@@ -6136,6 +6138,35 @@ def series(productId: int, subTypeName: str, days: int = 365, category_id: int =
     """
     cols, rows = q(data_sql)
     return {"columns": cols, "rows": rows, "latest": str(latest), "start": str(start)}
+
+
+@app.get("/hold_check")
+def hold_check_route(
+    productId: int,
+    subTypeName: str,
+    buy_price: float | None = None,
+    channel: str = DEFAULT_CHANNEL,
+    horizon_days: int = 90,
+    category_id: int = 3,
+):
+    """Can buying at `buy_price` (default: market) today sell at a profit after `horizon_days`?"""
+    selected = CHANNELS.get(channel)
+    if selected is None:
+        raise HTTPException(status_code=400, detail=f"channel must be one of {sorted(CHANNELS)}")
+    horizon_days = max(30, min(horizon_days, 365))
+    category = category_config(category_id)
+    _, rows = q(
+        f"""
+        SELECT date, marketPrice
+        FROM {prices_from(category.category_id)}
+        WHERE categoryId = ? AND productId = ? AND subTypeName = ? AND marketPrice IS NOT NULL
+        ORDER BY date
+        """,
+        [category.category_id, productId, subTypeName],
+    )
+    if not rows:
+        raise HTTPException(status_code=404, detail="No price history for that productId/subTypeName")
+    return hold_check(rows, buy_price, selected, horizon_days)
 
 
 @app.post("/sparkline_batch")

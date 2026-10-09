@@ -49,6 +49,26 @@ class ApiRouteTests(unittest.TestCase):
             self.assertEqual(response.status_code, 200, tab)
             self.assertIn("Market Signals", response.text, tab)
 
+    @patch.object(api, "prices_from", return_value="prices")
+    @patch.object(api, "q")
+    def test_hold_check_route_returns_verdict(self, q_mock, _prices_from_mock):
+        from datetime import date, timedelta
+        start = date(2025, 9, 1)
+        q_mock.return_value = (["date", "marketPrice"], [(start + timedelta(days=i), 20.0) for i in range(400)])
+
+        response = self.client.get("/hold_check?productId=1&subTypeName=Normal&buy_price=20")
+
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["verdict"], "unlikely")
+        self.assertEqual(body["buy_price"], 20.0)
+        self.assertEqual(q_mock.call_args[0][1], [3, 1, "Normal"])
+
+    def test_hold_check_route_rejects_unknown_channel(self):
+        response = self.client.get("/hold_check?productId=1&subTypeName=Normal&channel=etsy")
+
+        self.assertEqual(response.status_code, 400)
+
     def test_set_logos_lists_only_existing_png_logos(self):
         response = self.client.get("/set-logos.json")
 
