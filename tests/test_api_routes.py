@@ -53,6 +53,34 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Sealed Deals", response.text)
 
+    def test_area_hub_pages_serve_shared_template(self):
+        for area in ("buy", "discover", "research", "track", "learn"):
+            response = self.client.get(f"/{area}")
+
+            self.assertEqual(response.status_code, 200, area)
+            self.assertIn("text/html", response.headers["content-type"])
+            self.assertIn("/site-shell.js", response.text)
+
+    def test_site_shell_script_serves_area_config(self):
+        response = self.client.get("/site-shell.js")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("javascript", response.headers["content-type"])
+        for area in ("buy", "discover", "research", "track", "learn"):
+            self.assertIn(f'key: "{area}"', response.text)
+
+    def test_admin_hub_requires_admin(self):
+        response = self.client.get("/admin")
+
+        self.assertEqual(response.status_code, 401)
+
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
+    def test_admin_hub_serves_html_for_admin(self, _get_session_user_mock):
+        response = self.client.get("/admin", cookies={"pm_tracking_token": "token"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Store operations", response.text)
+
     def test_set_explorer_page_serves_html(self):
         response = self.client.get("/set-explorer")
 

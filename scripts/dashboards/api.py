@@ -109,6 +109,9 @@ MOBILE_REBUILD_HTML = SCRIPT_DIR / "mobile_rebuild_mockup.html"
 INDEX_OVERVIEW_HUB_HTML = SCRIPT_DIR / "index_overview_hub.html"
 INDEX_OVERVIEW_DETAIL_HTML = SCRIPT_DIR / "index_overview_detail.html"
 DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
+SITE_SHELL_JS = SCRIPT_DIR / "site_shell.js"
+AREA_HUB_HTML = SCRIPT_DIR / "area_hub.html"
+ADMIN_HUB_HTML = SCRIPT_DIR / "admin_hub.html"
 # The placeholder/checklist workflow is intentionally published as static files.
 # These constants define which parts of the imported collector project are safe
 # to expose through the main app without turning it into a database-backed
@@ -801,6 +804,26 @@ def index_overview_jp_sv100_page():
 @app.get("/dashboard-common.js")
 def dashboard_common_js():
     return FileResponse(DASHBOARD_COMMON_JS, media_type="application/javascript")
+
+
+@app.get("/site-shell.js")
+def site_shell_js():
+    return FileResponse(SITE_SHELL_JS, media_type="application/javascript")
+
+
+def area_hub_page():
+    """Landing page for one of the five task areas; the page reads the area from its path."""
+    return FileResponse(AREA_HUB_HTML)
+
+
+for _area in ("buy", "discover", "research", "track", "learn"):
+    app.get(f"/{_area}", name=f"area_{_area}")(area_hub_page)
+
+
+@app.get("/admin")
+def admin_hub(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    return FileResponse(ADMIN_HUB_HTML)
 
 
 def resolve_image_path(filename: str) -> Path | None:
