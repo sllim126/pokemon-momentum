@@ -23,6 +23,7 @@ FUTURE_MATCH_TOLERANCE_DAYS = 7
 LIKELY_TRACK_RECORD_PCT = 50
 POSSIBLE_TRACK_RECORD_PCT = 40
 FLAT_TREND_PCT = -1.0  # % per 30 days still counted as flat
+SPIKE_ABOVE_TREND_PCT = 20  # flag prices this far above the trend line
 
 
 def _as_date(value) -> date:
@@ -47,17 +48,20 @@ def _trend(points: list[tuple[date, float]], horizon: int) -> dict | None:
     ss_res = sum((y - (intercept + slope * x)) ** 2 for x, y in zip(xs, ys))
     r2 = 1 - ss_res / ss_tot if ss_tot > 0 else 0.0
     last_x = xs[-1]
+    latest_price = points[-1][1]
     return {
         "points": n,
         "fit_now": math.exp(intercept + slope * last_x),
-        "projected_price": math.exp(intercept + slope * (last_x + horizon)),
+        # Projected from today's price at the trend's rate, so "trending up" always
+        # projects above today even when the latest price sits above the fit line.
+        "projected_price": latest_price * math.exp(slope * horizon),
         "pct_per_30d": (math.exp(slope * 30) - 1) * 100,
         "r2": r2,
     }
 
 
-def _track_record(points: list[tuple[date, float]], horizon: int, channel: Channel) -> dict:
-    """Every past day bought at market and held `horizon` days: did it clear break-even?"""
+def _track_record(points: list[tuple[date, float]], horizon: int, channel: Channel, price_ratio: float = 1.0) -> dict:
+    """Every past day bought at `price_ratio` x market and held `horizon` days: did it clear break-even?"""
     dates = [d for d, _ in points]
     wins = 0
     returns = []
@@ -73,7 +77,7 @@ def _track_record(points: list[tuple[date, float]], horizon: int, channel: Chann
             continue
         future = points[best][1]
         returns.append(future / price - 1)
-        if future >= break_even_price(price, channel):
+        if future >= break_even_price(price * price_ratio, channel):
             wins += 1
     returns.sort()
     return {
@@ -95,7 +99,8 @@ def hold_check(history, buy_price: float | None, channel: Channel, horizon: int 
     be = break_even_price(buy, channel)
     cutoff = latest_date - timedelta(days=horizon - 1)
     trend = _trend([pt for pt in points if pt[0] >= cutoff], horizon)
-    record = _track_record(points, horizon, channel)
+    # A typed buy price is applied as the same discount (or premium) to every past window.
+    record = _track_record(points, horizon, channel, buy / latest_price)
 
     projected = trend["projected_price"] if trend else None
     projected_profit = net_proceeds(projected, channel) - buy if projected else None
@@ -113,6 +118,12 @@ def hold_check(history, buy_price: float | None, channel: Channel, horizon: int 
 
     reasons = [f"Needs ${be:,.2f} (+{(be / buy - 1) * 100:.0f}%) to break even after {channel.label} fees and shipping."]
     if trend:
+        above_trend_pct = (latest_price / trend["fit_now"] - 1) * 100
+        if above_trend_pct >= SPIKE_ABOVE_TREND_PCT:
+            reasons.append(
+                f"Today's price is {above_trend_pct:.0f}% above its {horizon}-day trend line; "
+                "sharp spikes often fall back."
+            )
         direction = "up" if trend["pct_per_30d"] >= 0 else "down"
         reasons.append(
             f"Last {horizon} days trend {direction} {abs(trend['pct_per_30d']):.1f}% a month; "
@@ -120,7 +131,8 @@ def hold_check(history, buy_price: float | None, channel: Channel, horizon: int 
         )
     if cleared is not None:
         reasons.append(
-            f"In {record['windows']} past {horizon}-day stretches, buying at market cleared break-even "
+            f"In {record['windows']} past {horizon}-day stretches, buying at "
+            f"{'market' if abs(buy - latest_price) < 0.005 else f'{buy / latest_price * 100:.0f}% of market'} cleared break-even "
             f"{cleared:.0f}% of the time (median change {record['median_return_pct']:+.0f}%)."
         )
 
@@ -138,6 +150,7 @@ def hold_check(history, buy_price: float | None, channel: Channel, horizon: int 
         "trend_points": trend["points"] if trend else 0,
         "trend_pct_per_30d": round(trend["pct_per_30d"], 1) if trend else None,
         "trend_fit_r2": round(trend["r2"], 2) if trend else None,
+        "above_trend_pct": round((latest_price / trend["fit_now"] - 1) * 100, 1) if trend else None,
         "projected_price": round(projected, 2) if projected else None,
         "projected_profit": round(projected_profit, 2) if projected_profit is not None else None,
         "history_windows": record["windows"],

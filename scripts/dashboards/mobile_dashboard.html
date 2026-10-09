@@ -1316,6 +1316,12 @@
       border-color: rgba(47, 211, 134, 0.34);
     }
 
+    .hold-check { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(140, 163, 199, 0.18); }
+    .hold-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .hold-headline { margin: 8px 0 6px; font-weight: 700; font-size: 15px; color: var(--ink); }
+    .hold-reasons { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .hold-reasons li + li { margin-top: 4px; }
+
     .deal-badge.fair {
       color: #ffe3b6;
       background: rgba(239, 182, 94, 0.16);
@@ -2528,6 +2534,14 @@
             </div>
             <p class="suggestion-line" id="dealGuidance">Enter a seller price to calculate discount versus market.</p>
             <p class="confidence-line" id="dealConfidence"></p>
+            <div class="hold-check" id="holdCheck" hidden>
+              <div class="hold-head">
+                <span class="deal-label" id="holdLabel">90-Day Hold</span>
+                <span class="deal-badge" id="holdBadge"></span>
+              </div>
+              <p class="hold-headline" id="holdHeadline"></p>
+              <ul class="hold-reasons" id="holdReasons"></ul>
+            </div>
           </section>
 
           <div class="detail-tabs" role="tablist" aria-label="Card details">
@@ -2706,6 +2720,62 @@
     const dealMaxBtn = document.getElementById("dealMaxBtn");
     const dealGuidance = document.getElementById("dealGuidance");
     const dealConfidence = document.getElementById("dealConfidence");
+    const holdCheck = document.getElementById("holdCheck");
+    const holdLabel = document.getElementById("holdLabel");
+    const holdBadge = document.getElementById("holdBadge");
+    const holdHeadline = document.getElementById("holdHeadline");
+    const holdReasons = document.getElementById("holdReasons");
+    const HOLD_BADGES = {
+      likely: ["Likely", "good"],
+      possible: ["Risky", "fair"],
+      unlikely: ["Not a flip", "warn"],
+      not_enough_history: ["Too little data", ""],
+    };
+    let holdTimer = null;
+    let holdRequestSeq = 0;
+    // The deal checker pre-fills an ask below market; the hold check only uses a
+    // price the visitor actually typed, otherwise it judges buying at market.
+    let dealAskEdited = false;
+
+    function scheduleHoldCheck() {
+      window.clearTimeout(holdTimer);
+      holdTimer = window.setTimeout(loadHoldCheck, 350);
+    }
+
+    async function loadHoldCheck() {
+      const item = activeItem;
+      const seq = ++holdRequestSeq;
+      if (!item || !item.productId || dealCheck.hidden) {
+        holdCheck.hidden = true;
+        return;
+      }
+      const ask = Number.parseFloat(dealAskInput.value);
+      const params = new URLSearchParams({
+        productId: String(item.productId),
+        subTypeName: item.subTypeName || "",
+        category_id: activeMarket === "JP" ? "85" : "3",
+      });
+      if (dealAskEdited && ask > 0) params.set("buy_price", String(ask));
+      try {
+        const response = await fetch(`/hold_check?${params.toString()}`);
+        if (!response.ok) throw new Error(String(response.status));
+        const result = await response.json();
+        if (seq !== holdRequestSeq) return;
+        const [badgeText, badgeClass] = HOLD_BADGES[result.verdict] || ["", ""];
+        holdLabel.textContent = `90-Day Hold at ${formatMoney(result.buy_price)}${dealAskEdited && ask > 0 ? "" : " (market)"}`;
+        holdBadge.textContent = badgeText;
+        holdBadge.className = `deal-badge${badgeClass ? ` ${badgeClass}` : ""}`;
+        holdHeadline.textContent = result.headline || "";
+        holdReasons.replaceChildren(...(result.reasons || []).map((text) => {
+          const li = document.createElement("li");
+          li.textContent = text;
+          return li;
+        }));
+        holdCheck.hidden = false;
+      } catch (_err) {
+        if (seq === holdRequestSeq) holdCheck.hidden = true;
+      }
+    }
 
     const marketTabs = document.getElementById("marketTabs");
     const scopeRail = document.getElementById("scopeRail");
@@ -4639,7 +4709,9 @@
       dealItemLabel.textContent = `${item.symbol || item.name} · ${item.set}`;
       dealMarketPrice.textContent = formatMoney(item.price);
       dealAskInput.value = (item.price * 0.83).toFixed(2);
+      dealAskEdited = false;
       updateDealVerdict();
+      scheduleHoldCheck();
     }
 
     function clearDealCheck() {
@@ -4659,6 +4731,8 @@
       dealGuidance.textContent = "Enter a seller price to calculate discount versus market.";
       // Nothing to judge without a card; renderDealCheck shows the panel again.
       dealCheck.hidden = true;
+      holdRequestSeq += 1;
+      holdCheck.hidden = true;
     }
 
     function setActiveButton(container, selector, value, dataKey) {
@@ -5187,11 +5261,17 @@
         renderMiniGraph(activeItem, activeChartDays);
       });
     });
-    dealAskInput.addEventListener("input", () => updateDealVerdict());
+    dealAskInput.addEventListener("input", () => {
+      dealAskEdited = true;
+      updateDealVerdict();
+      scheduleHoldCheck();
+    });
     dealMaxBtn.addEventListener("click", () => {
       if (!activeItem) return;
       dealAskInput.value = (activeItem.price * 0.88).toFixed(2);
+      dealAskEdited = true;
       updateDealVerdict();
+      scheduleHoldCheck();
     });
     loadStoredTags();
     loadAlertStorage();

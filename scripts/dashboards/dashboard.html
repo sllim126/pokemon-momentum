@@ -1499,6 +1499,18 @@
       width: 100%;
     }
 
+    .hold-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .hold-card-head h3 { margin: 0; }
+    .hold-pill { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); }
+    .hold-pill.likely { color: #c9ffe6; background: rgba(46, 204, 113, 0.18); border-color: rgba(46, 204, 113, 0.5); }
+    .hold-pill.possible { color: #ffe9b8; background: rgba(230, 160, 34, 0.18); border-color: rgba(230, 160, 34, 0.5); }
+    .hold-pill.unlikely { color: #ffd2d2; background: rgba(231, 76, 60, 0.18); border-color: rgba(231, 76, 60, 0.5); }
+    .hold-input-label { display: block; margin: 12px 0 6px; font-size: 12px; color: var(--muted); }
+    .hold-input { width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: rgba(8, 15, 29, 0.6); color: inherit; font: inherit; }
+    .hold-headline { margin: 12px 0 6px; font-weight: 700; }
+    .hold-reasons { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .hold-reasons li + li { margin-top: 4px; }
+
     #railSegments {
       margin-bottom: 14px;
     }
@@ -3749,6 +3761,17 @@
               <h4 class="bargain-title">Quick Buy Targets</h4>
               <div class="bargain-grid" id="detailBargainGrid"></div>
             </div>
+          </section>
+
+          <section class="detail-card hold-card" id="holdCard" hidden>
+            <div class="hold-card-head">
+              <h3>90-Day Hold</h3>
+              <span class="hold-pill" id="holdPill"></span>
+            </div>
+            <label class="hold-input-label" for="holdBuyInput">Your buy price (blank = market)</label>
+            <input class="hold-input" id="holdBuyInput" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Market price">
+            <p class="hold-headline" id="holdHeadline"></p>
+            <ul class="hold-reasons" id="holdReasons"></ul>
           </section>
 
           <section class="detail-card track-actions-card">
@@ -7369,7 +7392,7 @@
       renderDetailsList(mobileDetailStats, details);
       renderBargainTargets(detailBargainGrid, latestPrice);
       renderBargainTargets(mobileBargainGrid, latestPrice);
-
+      showHoldCheck(meta);
     }
 
     function setHeroImageExpandable(src = "", altText = "") {
@@ -7504,7 +7527,66 @@
       return [`/images/logos/${encodeURIComponent(String(groupId))}.png`];
     }
 
+    const holdCard = document.getElementById("holdCard");
+    const holdPill = document.getElementById("holdPill");
+    const holdBuyInput = document.getElementById("holdBuyInput");
+    const holdHeadline = document.getElementById("holdHeadline");
+    const holdReasons = document.getElementById("holdReasons");
+    const HOLD_PILLS = { likely: "Likely", possible: "Risky", unlikely: "Not a flip", not_enough_history: "Too little data" };
+    let holdMeta = null;
+    let holdTimer = null;
+    let holdRequestSeq = 0;
+
+    function hideHoldCheck() {
+      holdRequestSeq += 1;
+      holdMeta = null;
+      if (holdCard) holdCard.hidden = true;
+    }
+
+    async function loadHoldCheck() {
+      const meta = holdMeta;
+      const seq = ++holdRequestSeq;
+      if (!holdCard || !meta || !meta.productId) return;
+      const params = new URLSearchParams({
+        productId: String(meta.productId),
+        subTypeName: meta.subTypeName || "",
+        category_id: String(currentCategoryId),
+      });
+      const typed = Number.parseFloat(holdBuyInput.value);
+      if (typed > 0) params.set("buy_price", String(typed));
+      try {
+        const response = await fetch(`/hold_check?${params.toString()}`);
+        if (!response.ok) throw new Error(String(response.status));
+        const result = await response.json();
+        if (seq !== holdRequestSeq) return;
+        holdPill.textContent = HOLD_PILLS[result.verdict] || "";
+        holdPill.className = `hold-pill ${result.verdict || ""}`;
+        holdHeadline.textContent = result.headline || "";
+        holdReasons.replaceChildren(...(result.reasons || []).map((text) => {
+          const li = document.createElement("li");
+          li.textContent = text;
+          return li;
+        }));
+        holdCard.hidden = false;
+      } catch (_err) {
+        if (seq === holdRequestSeq) holdCard.hidden = true;
+      }
+    }
+
+    function showHoldCheck(meta) {
+      const changed = !holdMeta || holdMeta.productId !== meta.productId || holdMeta.subTypeName !== meta.subTypeName;
+      holdMeta = meta;
+      if (changed && holdBuyInput) holdBuyInput.value = "";
+      loadHoldCheck();
+    }
+
+    holdBuyInput?.addEventListener("input", () => {
+      window.clearTimeout(holdTimer);
+      holdTimer = window.setTimeout(loadHoldCheck, 350);
+    });
+
     function renderGroupSummary(groupMeta, series) {
+      hideHoldCheck();
       const rows = (series.rows || []).map((row) => ({
         date: row[0],
         equal_weight_index: row[1],

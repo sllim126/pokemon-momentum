@@ -51,6 +51,26 @@ class HoldCheckTests(unittest.TestCase):
         self.assertEqual(hold_check(history, None, TCGPLAYER)["buy_price"], 20.0)
         self.assertEqual(hold_check(history, 15.0, TCGPLAYER)["buy_price"], 15.0)
 
+    def test_typed_discount_applies_to_track_record(self):
+        history = daily(20, 0.0, 400)
+        at_market = hold_check(history, None, TCGPLAYER)
+        at_half = hold_check(history, 10.0, TCGPLAYER)
+
+        self.assertEqual(at_market["cleared_break_even_pct"], 0)
+        self.assertEqual(at_half["cleared_break_even_pct"], 100)
+        self.assertEqual(at_half["verdict"], "likely")
+
+    def test_spike_projects_from_today_and_is_flagged(self):
+        history = daily(20, 0.001, 400)
+        last_date, last_price = history[-1]
+        history[-1] = (last_date, last_price * 1.6)  # sudden +60% on the latest day
+
+        result = hold_check(history, None, TCGPLAYER)
+
+        self.assertGreater(result["projected_price"], result["market_price"])
+        self.assertGreater(result["above_trend_pct"], 20)
+        self.assertTrue(any("above its 90-day trend line" in reason for reason in result["reasons"]))
+
     def test_empty_history(self):
         self.assertEqual(hold_check([], None, TCGPLAYER)["verdict"], "no_data")
 
