@@ -199,11 +199,6 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     f"Build {category.label} series snapshot",
                     ["python", "scripts/indicators/build_series_snapshot.py", "--category-id", str(args.category_id)],
                 ),
-                (
-                    # Expected result: index overview pages can read prebuilt JSON payloads instead of recomputing on first load.
-                    f"Build {category.label} index overview snapshots",
-                    ["python", "scripts/indicators/build_index_overview_snapshot.py", "--category-id", str(args.category_id)],
-                ),
             ]
         )
 
@@ -215,6 +210,16 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     if not args.skip_parquet:
         # Expected result: parquet history includes the latest processed dates for downstream reads.
         steps.append(("Export parquet partitions", ["python", "scripts/utilities/export_parquet.py"]))
+
+    if not args.skip_analytics:
+        # Expected result: index overview pages can read prebuilt JSON payloads instead of recomputing on first load.
+        # Indexes read the parquet history, so this runs after the export or it would miss the newest day.
+        steps.append(
+            (
+                f"Build {category.label} index overview snapshots",
+                ["python", "scripts/indicators/build_index_overview_snapshot.py", "--category-id", str(args.category_id)],
+            )
+        )
 
     return steps
 
