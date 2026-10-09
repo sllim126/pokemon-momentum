@@ -21,6 +21,7 @@ import time
 from dataclasses import dataclass
 from decimal import Decimal, ROUND_FLOOR, ROUND_HALF_UP
 from pathlib import Path
+from datetime import datetime, timezone
 from typing import Dict, Iterable, List, Optional, Tuple
 
 import requests
@@ -86,17 +87,39 @@ def load_squarespace_export(path: str) -> Dict[str, VariantMapping]:
     return mapping
 
 
-def load_created_listing_mapping(path: str) -> Dict[str, VariantMapping]:
+def load_created_listing_mapping(path: str, export_path: str | None = None) -> Dict[str, VariantMapping]:
+    """Load listings created by our scripts that may not be in the export yet.
+
+    A ledger row created before the export was taken but missing from it means the
+    listing was deleted or sold out of the store since; updating it only returns 404,
+    so those rows are skipped. Rows newer than the export are kept.
+    """
     mapping: Dict[str, VariantMapping] = {}
     created_path = Path(path)
     if not created_path.exists():
         return mapping
+    export_skus: set[str] = set()
+    export_taken_at: datetime | None = None
+    if export_path and Path(export_path).exists():
+        export_skus = set(load_squarespace_export(export_path))
+        export_taken_at = datetime.fromtimestamp(Path(export_path).stat().st_mtime, tz=timezone.utc)
+    removed: List[str] = []
     with created_path.open(newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
             sku = (row.get("sku") or "").strip()
             if not sku:
                 continue
+            if export_taken_at is not None and sku not in export_skus:
+                try:
+                    created_at = datetime.fromisoformat((row.get("created_at") or "").strip().replace("Z", "+00:00"))
+                except ValueError:
+                    created_at = None
+                if created_at is not None and created_at.tzinfo is None:
+                    created_at = created_at.replace(tzinfo=timezone.utc)
+                if created_at is None or created_at < export_taken_at:
+                    removed.append(sku)
+                    continue
             mapping[sku] = VariantMapping(
                 sku=sku,
                 product_id=(row.get("product_id") or "").strip(),
@@ -105,6 +128,8 @@ def load_created_listing_mapping(path: str) -> Dict[str, VariantMapping]:
                 current_price=None,
                 current_sale_price=None,
             )
+    if removed:
+        print(f"Skipping {len(removed)} created listing(s) missing from the latest export: {', '.join(sorted(removed))}")
     return mapping
 
 
@@ -344,7 +369,7 @@ def main() -> int:
         return 2
 
     export_map = load_squarespace_export(args.squarespace_export)
-    created_map = load_created_listing_mapping(args.created_listings_csv)
+    created_map = load_created_listing_mapping(args.created_listings_csv, args.squarespace_export)
     combined_map = dict(created_map)
     combined_map.update(export_map)
     Path(args.mapping_csv).parent.mkdir(parents=True, exist_ok=True)
