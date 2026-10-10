@@ -114,6 +114,7 @@ INDEX_OVERVIEW_HUB_HTML = SCRIPT_DIR / "index_overview_hub.html"
 INDEX_OVERVIEW_DETAIL_HTML = SCRIPT_DIR / "index_overview_detail.html"
 DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
 SITE_SHELL_JS = SCRIPT_DIR / "site_shell.js"
+DESKTOP_THEME_CSS = SCRIPT_DIR / "desktop_theme.css"
 AREA_HUB_HTML = SCRIPT_DIR / "area_hub.html"
 ADMIN_HUB_HTML = SCRIPT_DIR / "admin_hub.html"
 DESKTOP_HOME_HTML = SCRIPT_DIR / "desktop_home.html"
@@ -819,6 +820,11 @@ def dashboard_common_js():
 @app.get("/site-shell.js")
 def site_shell_js():
     return FileResponse(SITE_SHELL_JS, media_type="application/javascript")
+
+
+@app.get("/desktop-theme.css")
+def desktop_theme_css():
+    return FileResponse(DESKTOP_THEME_CSS, media_type="text/css")
 
 
 def area_hub_page():

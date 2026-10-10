@@ -1,478 +1,266 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Poke6s Account Settings</title>
-  <link rel="icon" type="image/png" href="/images/Favidon.png">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Poke6s Account</title>
+  <link rel="icon" type="image/png" href="/images/Favidon.png" />
+  <link rel="stylesheet" href="/desktop-theme.css" />
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
-    :root {
-      --bg: #11192f;
-      --panel: rgba(10, 18, 34, 0.34);
-      --panel-2: rgba(7, 13, 24, 0.72);
-      --line: rgba(140, 163, 199, 0.18);
-      --ink: #e6efff;
-      --muted: #9eb4dc;
-      --accent: #22b0ff;
-      --accent-2: #25d0a5;
-      --warn: #ff8a5b;
-      --radius: 22px;
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-    }
-
-    * { box-sizing: border-box; }
-
-    html {
-      min-height: 100%;
-      background: #243f35;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100dvh;
-      font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 8% 0%, rgba(34, 176, 255, 0.18), transparent 34%),
-        radial-gradient(circle at 90% 22%, rgba(37, 208, 165, 0.08), transparent 32%),
-        linear-gradient(180deg, #132944 0%, #11192f 42%, #0f1830 100%);
-    }
-
-    a,
-    button,
-    input {
-      -webkit-tap-highlight-color: rgba(34, 176, 255, 0.18);
-      touch-action: manipulation;
-    }
-
-    button,
-    a {
-      transition:
-        transform 120ms ease,
-        background-color 120ms ease,
-        border-color 120ms ease,
-        box-shadow 120ms ease;
-    }
-
-    button:active,
-    a:active {
-      transform: scale(0.985);
-    }
-
-    button:focus-visible,
-    a:focus-visible,
-    input:focus-visible {
-      outline: 2px solid rgba(34, 176, 255, 0.72);
-      outline-offset: 3px;
-    }
-
-    .shell {
-      width: min(720px, 100%);
-      min-height: 100dvh;
-      margin: 0 auto;
-      padding: calc(18px + var(--safe-top)) 14px calc(30px + var(--safe-bottom));
-      display: grid;
-      grid-auto-rows: max-content;
-      gap: 12px;
-      align-content: start;
-    }
-
-    .mobile-header {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 12px;
-      align-items: center;
-      min-height: 54px;
-    }
-
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-      color: var(--ink);
-      text-decoration: none;
-    }
-
-    .brand img {
-      width: 38px;
-      height: 38px;
-      border-radius: 10px;
-      background: #050b14;
-    }
-
-    .brand span {
-      font-size: clamp(34px, 11vw, 48px);
-      font-weight: 900;
-      line-height: 1;
-      letter-spacing: -0.07em;
-    }
-
-    .panel {
-      background:
-        linear-gradient(180deg, rgba(10, 18, 34, 0.38), rgba(10, 18, 34, 0.24)),
-        var(--panel);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: none;
-      padding: 16px;
-    }
-
-    .hero-panel {
-      border-color: rgba(34, 176, 255, 0.22);
-      background:
-        radial-gradient(circle at 10% 0%, rgba(34, 176, 255, 0.16), transparent 36%),
-        rgba(10, 18, 34, 0.28);
-    }
-
-    .section-label {
-      color: var(--muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-    }
-    h1, h2, p { margin: 0; }
-    h1 {
-      margin-top: 8px;
-      font-size: clamp(34px, 11vw, 54px);
-      line-height: 0.95;
-      letter-spacing: -0.05em;
-    }
-    p {
-      color: var(--muted);
-      line-height: 1.45;
-      margin-top: 10px;
-      font-size: 14px;
-    }
-
-    .account-summary {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      gap: 12px;
-      align-items: center;
-      margin-top: 14px;
-      padding: 12px;
-      border: 1px solid rgba(140, 163, 199, 0.16);
-      border-radius: 18px;
-      background: rgba(7, 13, 24, 0.46);
-    }
-
-    .avatar {
-      width: 48px;
-      height: 48px;
-      border-radius: 999px;
-      display: grid;
-      place-items: center;
-      border: 1px solid rgba(34, 176, 255, 0.28);
-      background:
-        radial-gradient(circle at 50% 32%, #e6efff 0 17%, transparent 18%),
-        radial-gradient(circle at 50% 88%, rgba(230, 239, 255, 0.82) 0 31%, transparent 32%),
-        rgba(34, 176, 255, 0.18);
-    }
-
-    .summary-copy strong {
-      display: block;
-      color: var(--ink);
-      font-size: 17px;
-      line-height: 1.15;
-    }
-
-    .summary-copy span {
-      display: block;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.3;
-      margin-top: 4px;
-    }
-
-    label {
-      display: grid;
-      gap: 8px;
-    }
-    .field-label {
-      color: var(--muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-    }
-    input, button, a {
-      font: inherit;
-    }
-    input {
-      width: 100%;
-      border: 1px solid var(--line);
-      background: rgba(23, 33, 55, 0.96);
-      color: var(--ink);
-      border-radius: 14px;
-      padding: 12px;
-    }
-    .actions {
-      display: grid;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    button, .cta-link {
-      appearance: none;
-      border: 1px solid var(--line);
-      background: rgba(7, 13, 24, 0.64);
-      color: var(--ink);
-      border-radius: 16px;
-      padding: 13px 14px;
-      cursor: pointer;
-      text-decoration: none;
-      min-height: 48px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      font-size: 15px;
-      font-weight: 900;
-    }
-
-    .cta-link::after {
-      content: "›";
-      color: var(--muted);
-      font-size: 22px;
-      line-height: 1;
-    }
-
-    .primary {
-      border-color: rgba(34, 176, 255, 0.34);
-      background: linear-gradient(180deg, rgba(34, 176, 255, 0.92), rgba(31, 141, 206, 0.94));
-      color: #f2fbff;
-      box-shadow: 0 16px 34px rgba(34, 176, 255, 0.14);
-    }
-
-    .danger {
-      border-color: rgba(255, 138, 91, 0.28);
-      color: #ffb39a;
-      background: rgba(255, 138, 91, 0.08);
-      justify-content: center;
-      width: 100%;
-    }
-
-    button:disabled {
-      opacity: 0.58;
-      cursor: not-allowed;
-    }
-
-    .status {
-      margin-top: 14px;
-      color: var(--muted);
-      min-height: 20px;
-      font-size: 13px;
-      line-height: 1.4;
-      padding: 10px 12px;
-      border: 1px solid rgba(37, 208, 165, 0.18);
-      border-radius: 14px;
-      background: rgba(37, 208, 165, 0.07);
-    }
-
-    .status.warn {
-      color: #ffb39a;
-      border-color: rgba(255, 138, 91, 0.22);
-      background: rgba(255, 138, 91, 0.08);
-    }
-
-    .danger-zone {
-      border-color: rgba(255, 138, 91, 0.18);
-      background:
-        radial-gradient(circle at 8% 0%, rgba(255, 138, 91, 0.1), transparent 36%),
-        rgba(10, 18, 34, 0.28);
-    }
-
-    .saved-views-list {
-      display: grid;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .saved-view-card {
-      border: 1px solid rgba(140, 163, 199, 0.16);
-      border-radius: 16px;
-      padding: 12px;
-      background: rgba(7, 13, 24, 0.34);
-    }
-
-    .saved-view-card strong {
-      display: block;
-      font-size: 15px;
-    }
-
-    .saved-view-card span {
-      display: block;
-      margin-top: 6px;
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.4;
-    }
-
-    @media (max-width: 760px) {
-      .grid { grid-template-columns: 1fr; }
-    }
+    .page { max-width: 1180px; width: 100%; margin: 0 auto; }
+    .columns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+    .stack { display: grid; gap: 16px; }
+    .who { display: flex; align-items: center; gap: 14px; }
+    .avatar { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 18px; }
+    .who strong { display: block; font-size: 16px; }
+    .row-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .list-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(136, 162, 205, 0.07); text-decoration: none; }
+    .list-row:last-child { border-bottom: 0; }
+    a.list-row:hover strong { color: var(--accent); }
+    .list-row span { color: var(--muted); font-size: 13px; }
+    .count { font-variant-numeric: tabular-nums; font-weight: 700; }
+    #googleButton { margin-top: 14px; min-height: 44px; }
   </style>
-  <script src="/site-shell.js" defer></script>
 </head>
-<body>
-  <div class="shell">
+<body data-area="track">
+  <div id="site-shell"></div>
 
-    <section class="panel hero-panel">
-      <div class="section-label">Account</div>
-      <h1 id="accountTitle">Tracking Settings</h1>
-      <p>Manage the lightweight tracking account used for synced favorites, watchlists, research tags, and buy-list markers. This page only controls the tracking account, not site-wide membership.</p>
-      <div class="account-summary">
-        <div class="avatar" aria-hidden="true"></div>
-        <div class="summary-copy">
-          <strong id="accountSummaryName">Checking sign-in...</strong>
-          <span id="accountSummaryMeta">Saved research syncs through your tracking account.</span>
-        </div>
+  <main class="page">
+    <div class="page-head">
+      <div>
+        <h1>Account</h1>
+        <p>Sign in with Google to keep your saved lists on every device.</p>
       </div>
-      <div class="actions">
-        <a class="cta-link primary" href="/dashboard">Back to Dashboard</a>
+    </div>
+
+    <div class="columns">
+      <div class="stack">
+        <section class="panel">
+          <div class="panel-head"><h2>Your account</h2></div>
+          <div class="panel-body">
+            <div class="who">
+              <div class="avatar" id="avatar">?</div>
+              <div>
+                <strong id="whoName">Signed out</strong>
+                <span class="muted" id="whoMeta">Your saved lists are only in this browser.</span>
+              </div>
+            </div>
+            <div id="googleButton" hidden></div>
+            <div class="row-actions">
+              <button type="button" class="btn" id="signOutBtn" hidden>Sign out</button>
+            </div>
+            <p class="note" id="status" hidden></p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Your lists</h2>
+            <p id="listsNote">Saved in this browser.</p>
+          </div>
+          <div class="panel-body" id="lists"></div>
+        </section>
       </div>
-    </section>
 
-    <section class="panel">
-      <div class="section-label">Sign-In</div>
-      <h2>Google Sign-In</h2>
-      <p>Google sign-in now handles tracking access on the dashboard. There is no separate username or PIN to manage here.</p>
-      <div class="status" id="accountStatus"></div>
-    </section>
+      <div class="stack">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Saved views</h2>
+            <p>Filter setups saved from the research dashboard.</p>
+          </div>
+          <div class="panel-body" id="views"><span class="muted">Sign in to see your saved views.</span></div>
+        </section>
 
-    <section class="panel">
-      <div class="section-label">Desktop Tools</div>
-      <h2>Admin Shortcuts</h2>
-      <p>These are desktop-oriented tools. They stay here for convenience, but the mobile dashboard remains focused on quick card decisions.</p>
-      <div class="actions">
-        <a class="cta-link" href="/pricing-upload">Squarespace CSV Upload</a>
-        <a class="cta-link" href="/supplier-pricing">Supplier Pricing</a>
-        <a class="cta-link" href="/supplier-profitability">Supplier Profitability</a>
+        <section class="panel" id="adminPanel" hidden>
+          <div class="panel-head"><h2>Admin</h2></div>
+          <div class="panel-body">
+            <a class="list-row" href="/admin"><strong>Admin tools</strong><span>Uploads, supplier pricing, pipeline →</span></a>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Delete account</h2>
+            <p>Removes your account, every synced list and every saved view. Lists in this browser stay.</p>
+          </div>
+          <div class="panel-body">
+            <button type="button" class="btn danger" id="deleteBtn" disabled>Delete my account</button>
+            <p class="note" id="deleteStatus" hidden></p>
+          </div>
+        </section>
       </div>
-    </section>
+    </div>
+  </main>
+  <footer class="legal">Pokémon names and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company; Poke6s Market is independent and not affiliated with or endorsed by them.</footer>
 
-    <section class="panel">
-      <div class="section-label">Saved Views</div>
-      <h2>Synced Filters</h2>
-      <p>Your dashboard views, saved filters, and personalized ticker presets are attached to this tracking account.</p>
-      <div class="status" id="savedViewsStatus">Checking saved views...</div>
-      <div class="saved-views-list" id="savedViewsList"></div>
-    </section>
-
-    <section class="panel danger-zone">
-      <div class="section-label">Delete Account</div>
-      <h2>Danger Zone</h2>
-      <p>This deletes the tracking account, its saved tags, saved views, and all active tracking sessions. Google sign-in itself is not removed; only this dashboard’s synced tracking data is deleted.</p>
-      <div class="actions">
-        <button type="button" class="danger" id="deleteAccountBtn">Delete Tracking Account</button>
-      </div>
-      <div class="status" id="deleteStatus"></div>
-    </section>
-  </div>
-
+  <script src="/site-shell.js"></script>
   <script>
-    const tokenKey = "pokemon-momentum-tracking-token";
-    const token = localStorage.getItem(tokenKey) || "";
-    const accountTitle = document.getElementById("accountTitle");
-    const accountStatus = document.getElementById("accountStatus");
-    const accountSummaryName = document.getElementById("accountSummaryName");
-    const accountSummaryMeta = document.getElementById("accountSummaryMeta");
-    const savedViewsStatus = document.getElementById("savedViewsStatus");
-    const savedViewsList = document.getElementById("savedViewsList");
-    const deleteStatus = document.getElementById("deleteStatus");
-    const deleteAccountBtn = document.getElementById("deleteAccountBtn");
+  (function () {
+    "use strict";
+    const TOKEN_KEY = "pokemon-momentum-tracking-token";
+    const LOCAL_TAGS_KEY = "pokemon-momentum-tags";
+    const LISTS = [["owned", "Buy List"], ["watchlist", "Watchlist"], ["favorite", "Favorites"], ["research", "Needs Review"]];
+    const APP = "/home-preview";
+    const $ = (id) => document.getElementById(id);
+    const el = (tag, attrs = {}, ...children) => {
+      const node = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs)) {
+        if (k === "class") node.className = v;
+        else if (k === "text") node.textContent = v;
+        else node.setAttribute(k, v);
+      }
+      node.append(...children.filter((c) => c !== null && c !== undefined));
+      return node;
+    };
+    const read = (key) => { try { return localStorage.getItem(key) || ""; } catch (_err) { return ""; } };
+    let token = read(TOKEN_KEY);
 
-    function setStatus(el, message, isWarn = false) {
-      el.textContent = message;
-      el.classList.toggle("warn", isWarn);
+    function setToken(value) {
+      token = value || "";
+      try { value ? localStorage.setItem(TOKEN_KEY, value) : localStorage.removeItem(TOKEN_KEY); } catch (_err) { /* storage blocked */ }
+      document.cookie = value
+        ? `pm_tracking_token=${encodeURIComponent(value)}; Path=/; Max-Age=${60 * 60 * 24 * 30}; SameSite=Lax`
+        : "pm_tracking_token=; Path=/; Max-Age=0; SameSite=Lax";
     }
-
+    function note(id, text, warn = false) {
+      $(id).hidden = !text;
+      $(id).textContent = text || "";
+      $(id).classList.toggle("warn", warn);
+    }
     async function api(path, options = {}) {
-      const res = await fetch(path, {
+      const response = await fetch(path, {
         ...options,
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          ...(options.headers || {}),
-        },
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.headers || {}) },
       });
-      if (!res.ok) {
-        let detail = `${res.status} ${res.statusText}`;
-        try {
-          const payload = await res.json();
-          detail = payload.detail || detail;
-        } catch (_) {}
+      if (!response.ok) {
+        let detail = `${response.status}`;
+        try { detail = (await response.json()).detail || detail; } catch (_err) { /* not json */ }
         throw new Error(detail);
       }
-      return res.json();
+      return response.json();
+    }
+    function localTags() {
+      try { return JSON.parse(read(LOCAL_TAGS_KEY) || "{}") || {}; } catch (_err) { return {}; }
     }
 
-    async function init() {
-      // This page is intentionally minimal: it only manages the lightweight tracking
-      // account, not broader site membership or profile settings.
-      if (!token) {
-        accountTitle.textContent = "Tracking Sign-In Required";
-        accountSummaryName.textContent = "Signed out";
-        accountSummaryMeta.textContent = "Open the dashboard and sign in with Google to sync saved lists.";
-        setStatus(accountStatus, "Sign in on the dashboard first, then come back to this page.", true);
-        setStatus(savedViewsStatus, "Saved views appear here after you sign in on the dashboard.", true);
-        deleteAccountBtn.disabled = true;
+    function renderLists(tagsByKey, synced) {
+      const counts = Object.fromEntries(LISTS.map(([tag]) => [tag, 0]));
+      for (const tags of Object.values(tagsByKey)) for (const tag of tags) if (tag in counts) counts[tag] += 1;
+      $("listsNote").textContent = synced ? "Synced to your account." : "Saved in this browser. Sign in to keep them everywhere.";
+      $("lists").replaceChildren(...LISTS.map(([tag, label]) =>
+        el("a", { class: "list-row", href: `${APP}?list=track_${tag}` }, el("strong", { text: label }), el("span", { class: "count", text: String(counts[tag]) }))),
+        el("p", { class: "muted", style: "margin:10px 0 0;font-size:12px", text: "Price targets you set on cards stay in each browser." }));
+    }
+
+    function renderViews(items) {
+      if (!items.length) {
+        $("views").replaceChildren(el("span", { class: "muted", text: "No saved views yet." }));
         return;
       }
+      $("views").replaceChildren(...items.map((item) => {
+        const tab = String(item.state?.tab || "top_movers").replaceAll("_", " ");
+        const segment = item.state?.segment === "sealed" ? "sealed" : "cards";
+        return el("div", { class: "list-row" }, el("strong", { text: item.name || "Saved view" }), el("span", { text: `${tab} · ${segment}` }));
+      }));
+    }
+
+    function showSignedOut(message, warn = false) {
+      $("avatar").textContent = "?";
+      $("whoName").textContent = "Signed out";
+      $("whoMeta").textContent = "Your saved lists are only in this browser.";
+      $("signOutBtn").hidden = true;
+      $("deleteBtn").disabled = true;
+      $("adminPanel").hidden = true;
+      $("views").replaceChildren(el("span", { class: "muted", text: "Sign in to see your saved views." }));
+      renderLists(localTags(), false);
+      note("status", message, warn);
+      renderGoogleButton();
+    }
+
+    async function showSignedIn() {
+      const session = await api("/tracking/session");
+      const user = session.user || {};
+      const name = user.username || "Your account";
+      $("avatar").textContent = name.slice(0, 1).toUpperCase();
+      $("whoName").textContent = name;
+      $("whoMeta").textContent = "Signed in with Google.";
+      $("googleButton").hidden = true;
+      $("signOutBtn").hidden = false;
+      $("deleteBtn").disabled = false;
+      $("adminPanel").hidden = !user.is_admin;
+      note("status", "");
+      const [tags, views] = await Promise.all([api("/tracking/tags").catch(() => ({ items: [] })), api("/tracking/views").catch(() => ({ items: [] }))]);
+      const byKey = {};
+      for (const item of tags.items || []) (byKey[`${item.product_id}||${item.sub_type_name}`] ||= []).push(item.tag);
+      renderLists(byKey, true);
+      renderViews(views.items || []);
+    }
+
+    async function renderGoogleButton() {
       try {
-        const payload = await api("/tracking/session", { method: "GET" });
-        accountTitle.textContent = "Tracking Settings";
-        accountSummaryName.textContent = payload.user.username || "Tracking account";
-        accountSummaryMeta.textContent = "Connected through Google sign-in.";
-        setStatus(accountStatus, "This tracking account is connected through Google sign-in on the dashboard.");
-        const savedViewsPayload = await api("/tracking/views", { method: "GET" });
-        const items = Array.isArray(savedViewsPayload.items) ? savedViewsPayload.items : [];
-        savedViewsList.innerHTML = "";
-        if (!items.length) {
-          setStatus(savedViewsStatus, "No saved views yet. Save one from the dashboard to reuse filters later.");
-        } else {
-          setStatus(savedViewsStatus, `${items.length} saved view${items.length === 1 ? "" : "s"} synced to this account.`);
-          items.forEach((item) => {
-            const card = document.createElement("div");
-            card.className = "saved-view-card";
-            const tabLabel = String(item.state?.tab || "top_movers").replaceAll("_", " ");
-            const segmentLabel = item.state?.segment === "sealed" ? "sealed" : "cards";
-            const title = document.createElement("strong");
-            title.textContent = item.name || "Saved View";
-            const meta = document.createElement("span");
-            meta.textContent = `${tabLabel} | ${segmentLabel}${item.ticker_enabled ? " | personalized ticker" : ""}`;
-            card.append(title, meta);
-            savedViewsList.appendChild(card);
-          });
-        }
-      } catch (err) {
-        localStorage.removeItem(tokenKey);
-        accountTitle.textContent = "Tracking Session Expired";
-        accountSummaryName.textContent = "Session expired";
-        accountSummaryMeta.textContent = "Sign in again from the dashboard to reconnect saved research.";
-        setStatus(accountStatus, "Sign in again on the dashboard, then reopen account settings.", true);
-        setStatus(savedViewsStatus, "Saved views are unavailable until you sign in again.", true);
-        deleteAccountBtn.disabled = true;
+        const config = await api("/tracking/auth_config");
+        if (!config.google_enabled) { note("status", "Google sign-in isn't set up on this site yet.", true); return; }
+        const draw = () => {
+          if (!window.google?.accounts?.id) { setTimeout(draw, 250); return; }
+          window.google.accounts.id.initialize({ client_id: config.google_client_id, callback: (r) => signIn(r?.credential || ""), auto_select: false, cancel_on_tap_outside: true });
+          $("googleButton").hidden = false;
+          window.google.accounts.id.renderButton($("googleButton"), { theme: "outline", size: "large", text: "signin_with", shape: "pill", width: 260 });
+        };
+        draw();
+      } catch (_err) {
+        note("status", "Sign-in is unavailable right now. Try again in a moment.", true);
       }
     }
 
-    deleteAccountBtn.addEventListener("click", async () => {
-      if (!confirm("Delete this tracking account, all saved tags, and all saved views?")) return;
-      setStatus(deleteStatus, "Deleting account...");
+    async function signIn(credential) {
+      if (!credential) { note("status", "Google didn't return a sign-in. Try again.", true); return; }
+      note("status", "Signing in…");
       try {
-        await api("/tracking/account", {
-          method: "DELETE",
-        });
-        localStorage.removeItem(tokenKey);
-        setStatus(deleteStatus, "Tracking account deleted.");
-        window.location.href = "/dashboard";
+        const payload = await api("/tracking/google_session", { method: "POST", body: JSON.stringify({ credential }) });
+        setToken(payload.token);
+        // Lists saved in this browser before signing in join the account.
+        const items = [];
+        for (const [key, tags] of Object.entries(localTags())) {
+          const [productId, subTypeName = ""] = key.split("||");
+          if (!(Number(productId) > 0)) continue;
+          for (const tag of tags) items.push({ category_id: 3, product_id: Number(productId), sub_type_name: subTypeName, tag });
+        }
+        if (items.length) await api("/tracking/tags/merge", { method: "POST", body: JSON.stringify({ items }) }).catch(() => null);
+        await showSignedIn();
       } catch (err) {
-        setStatus(deleteStatus, err.message, true);
+        note("status", `Couldn't sign in: ${err.message}`, true);
+      }
+    }
+
+    $("signOutBtn").addEventListener("click", async () => {
+      try { await api("/tracking/session", { method: "DELETE" }); } catch (_err) { /* already signed out */ }
+      setToken("");
+      showSignedOut("Signed out.");
+    });
+
+    $("deleteBtn").addEventListener("click", async () => {
+      if (!confirm("Delete your account, every synced list and every saved view? This can't be undone.")) return;
+      note("deleteStatus", "Deleting…");
+      try {
+        await api("/tracking/account", { method: "DELETE" });
+        setToken("");
+        note("deleteStatus", "Your account was deleted.");
+        showSignedOut("");
+      } catch (err) {
+        note("deleteStatus", err.message, true);
       }
     });
 
-    init();
+    if (!token) {
+      showSignedOut("");
+    } else {
+      showSignedIn().catch(() => {
+        setToken("");
+        showSignedOut("Your sign-in expired. Sign in again to reconnect your lists.", true);
+      });
+    }
+  })();
   </script>
 </body>
 </html>
