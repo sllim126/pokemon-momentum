@@ -67,7 +67,6 @@
       label: "Learn",
       question: "How does the market work, and what helps me collect?",
       tools: [
-        { label: "Market Indexes", href: "/index-overview", text: "How each era of Pokémon cards is performing over time." },
         { label: "Collector Hub", href: "/collector-hub", text: "Checklists, print tools, and collection workflows." },
         { label: "Placeholder Library", href: "/placeholders", text: "Printable binder placeholders and checklist downloads." },
       ],
