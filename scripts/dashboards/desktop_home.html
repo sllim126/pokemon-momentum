@@ -180,6 +180,27 @@
     .bar i { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 3px; }
     .bar-cell { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
     .results-controls[hidden], .index-chart[hidden], .guide[hidden] { display: none; }
+    .pick-wrap[hidden] { display: none; }
+    .pick-wrap { padding: 14px 16px 18px; }
+    .swapped { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 12px; font-size: 12px; color: var(--muted); }
+    .swapped[hidden] { display: none; }
+    .swapped button { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--panel-2); cursor: pointer; font-size: 12px; }
+    .pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+    .pick {
+      display: grid; grid-template-columns: 96px 1fr; gap: 14px; padding: 12px; border-radius: 12px;
+      background: var(--panel-3); border: 1px solid var(--line); cursor: pointer;
+    }
+    .pick:hover { border-color: var(--line-strong); }
+    .pick[aria-selected="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+    .pick img { width: 96px; height: 134px; object-fit: contain; border-radius: 6px; background: var(--panel); }
+    .pick-body { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+    .pick-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .pick-top strong { font-size: 18px; font-variant-numeric: tabular-nums; }
+    .pick-name { font-weight: 700; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .pick-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+    .reason { padding: 2px 8px; border-radius: 999px; font-size: 11px; color: #8cc8ff; background: var(--accent-soft); }
+    .pick .swap { margin-top: auto; align-self: flex-start; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--line-strong); background: none; cursor: pointer; font-size: 12px; color: var(--muted); }
+    .pick .swap:hover { color: var(--text); border-color: var(--accent); }
     .hit-cell { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: center; min-width: 0; max-width: 260px; }
     .hit-cell img { width: 26px; height: 36px; object-fit: contain; border-radius: 3px; background: var(--panel-3); }
     .info-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
@@ -345,8 +366,21 @@
           <select id="setFilter" aria-label="Which cards" hidden></select>
           <select id="eraFilter" aria-label="Era" hidden></select>
           <select id="typeFilter" aria-label="Product type" hidden></select>
-          <label class="buy-input" id="budgetBox" hidden>Budget $<input id="budgetInput" type="number" min="5" max="5000" step="5" value="150" /></label>
+          <div class="segment" id="budgetPresets" role="group" aria-label="Budget" hidden>
+            <button type="button" data-budget="75">$75</button>
+            <button type="button" data-budget="150">$150</button>
+            <button type="button" data-budget="250">$250</button>
+            <button type="button" data-budget="400">$400</button>
+          </div>
+          <label class="buy-input" id="budgetBox" hidden>$<input id="budgetInput" type="number" min="5" max="5000" step="5" value="150" aria-label="Budget" /></label>
           <label class="buy-input" id="budgetMaxBox" hidden>Max per card $<input id="budgetMaxInput" type="number" min="1" step="1" placeholder="Any" /></label>
+          <select id="budgetCards" aria-label="Number of cards" hidden>
+            <option value="0">Any number of cards</option><option value="6">6 cards</option><option value="8">8 cards</option>
+            <option value="10">10 cards</option><option value="12">12 cards</option><option value="16">16 cards</option>
+          </select>
+          <select id="budgetPerSet" aria-label="Cards per set" hidden>
+            <option value="1">1 per set</option><option value="2">2 per set</option><option value="3">3 per set</option><option value="4">4 per set</option>
+          </select>
           <select id="budgetRarity" aria-label="Rarities" hidden></select>
           <input type="number" id="minPriceInput" min="0" step="1" placeholder="Min $" aria-label="Minimum price" />
           <input type="number" id="maxPriceInput" min="0" step="1" placeholder="Max $" aria-label="Maximum price" />
@@ -375,6 +409,10 @@
           <tbody id="valuesBody"></tbody>
         </table>
         <div class="guide" id="guideView" hidden></div>
+        <div class="pick-wrap" id="pickWrap" hidden>
+          <div class="swapped" id="swapped" hidden></div>
+          <div class="pick-grid" id="pickGrid"></div>
+        </div>
         <table id="cardsTable">
           <thead>
             <tr><th>Card</th><th class="right">Price</th><th class="right" id="changeHeader">Change</th><th class="right col-target" id="targetHeader" hidden>Your target</th><th class="right col-target" id="extraHeader" hidden></th><th class="right col-trend">90-day trend</th></tr>
@@ -462,7 +500,7 @@
     // ---------- configuration ----------
     const LISTS = [
       { key: "sealed_deals", group: "Buy", buy: true, kindless: true, label: "Sealed Deals", desc: "Booster boxes, ETBs, tins and bundles priced per pack against retail. Cheaper per pack is better.", price: "latest_price", change: "premium_pct", changeLabel: "vs retail", changeHeader: "Vs retail", lowerIsBetter: true, extra: "Per pack" },
-      { key: "budget", group: "Buy", buy: true, kindless: true, label: "Budget Builder", desc: "The strongest actively traded cards that fit your budget, spread across sets.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days", extra: "Of budget" },
+      { key: "budget", group: "Buy", buy: true, kindless: true, label: "Budget Builder", desc: "Don't know what to buy? Pick a budget and get a spread of the strongest actively traded hits that fit it.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
       { key: "top_movers", group: "Rising", label: "Top Movers", desc: "Biggest steady 30-day gains with real trading activity.", price: "p_now", change: "roc_pct", changeLabel: "30 days" },
       { key: "confirmed_uptrends", group: "Rising", label: "Confirmed Movers", desc: "Uptrends confirmed by moving averages and a bullish streak.", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg" },
       { key: "sma30_holds", group: "Rising", label: "Consistent Movers", desc: "Held above their 30-day average for 30 straight days.", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg" },
@@ -506,6 +544,11 @@
       promo: "Promo", stamped: "Stamped", reverse_holo: "Reverse Holo", pokeball_holo: "Poke Ball Holo", masterball_holo: "Master Ball Holo",
       ball_pattern: "Ball Pattern", energy_symbol_pattern: "Energy Symbol Pattern",
     };
+    const BUDGET_ALL_RARITIES = ["illustration_rare", "special_illustration_rare", "ultra_rare", "hyper_rare", "secret_rare", "double_rare", "holo_rare", "promo"];
+    const PICK_REASONS = {
+      "near 30d trend": "Near its 30-day average", "active movement": "Trades often", "under the radar": "Under the radar",
+      "early uptrend": "Early mover", "good buy setup": "Pullback entry",
+    };
     const SPECIES_SUGGESTIONS = ["Charizard", "Pikachu", "Umbreon", "Gengar", "Mew", "Rayquaza", "Lugia", "Eevee"];
     const GROUP_LINKS = {
       Learn: [["Collector Hub", "/collector-hub"], ["Placeholder Library", "/placeholders"]],
@@ -536,6 +579,9 @@
       budget: Math.max(5, Math.min(5000, Number(params.get("budget")) || 150)),
       budgetMax: Number(params.get("max")) || null,
       budgetRarity: params.get("rarity") || "",
+      budgetCards: [6, 8, 10, 12, 16].includes(Number(params.get("cards"))) ? Number(params.get("cards")) : 0,
+      budgetPerSet: [1, 2, 3, 4].includes(Number(params.get("per_set"))) ? Number(params.get("per_set")) : 2,
+      budgetSkipped: new Map((params.get("skip") || "").split(",").filter(Boolean).map((key) => [key, ""])),
       budgetMeta: null,
       indexKey: params.get("index") || "",
       indexTab: ["cards", "sets", "reshuffles", "method"].includes(params.get("tab")) ? params.get("tab") : "cards",
@@ -605,6 +651,9 @@
         url.searchParams.set("budget", String(state.budget));
         if (state.budgetMax) url.searchParams.set("max", String(state.budgetMax));
         if (state.budgetRarity) url.searchParams.set("rarity", state.budgetRarity);
+        if (state.budgetCards) url.searchParams.set("cards", String(state.budgetCards));
+        if (state.budgetPerSet !== 2) url.searchParams.set("per_set", String(state.budgetPerSet));
+        if (state.budgetSkipped.size) url.searchParams.set("skip", [...state.budgetSkipped.keys()].join(","));
       }
       if (state.selected) url.searchParams.set("product", state.selected.key);
       history.replaceState(null, "", url);
@@ -926,9 +975,11 @@
     }
     function fetchBudget() {
       const list = LISTS.find((l) => l.key === "budget");
-      const query = new URLSearchParams({ budget: String(state.budget), limit: "0", category_id: String(categoryId()) });
+      const query = new URLSearchParams({ budget: String(state.budget), limit: String(state.budgetCards), max_per_set: String(state.budgetPerSet), category_id: String(categoryId()) });
       if (state.budgetMax) query.set("max_price", String(state.budgetMax));
-      if (state.budgetRarity) query.set("rarities", state.budgetRarity);
+      if (state.budgetRarity === "all") query.set("rarities", BUDGET_ALL_RARITIES.join(","));
+      else if (state.budgetRarity) query.set("rarities", state.budgetRarity);
+      if (state.budgetSkipped.size) query.set("exclude_keys", [...state.budgetSkipped.keys()].join(","));
       return cached(`budget:${state.market}:${query}`, () => getJson(`/budget_builder?${query}`).then((payload) => {
         const rows = (payload.items || []).map((raw) => normalizeRow({ productKind: "card", ...raw }, list));
         rows.meta = payload;
@@ -1050,7 +1101,11 @@
       $("setFilter").hidden = list.key !== "set" || state.kind === "sealed";
       $("eraFilter").hidden = !isSets && view !== "set_values";
       $("typeFilter").hidden = list.key !== "sealed_deals";
-      ["budgetBox", "budgetMaxBox", "budgetRarity"].forEach((id) => { $(id).hidden = list.key !== "budget"; });
+      ["budgetPresets", "budgetBox", "budgetMaxBox", "budgetCards", "budgetPerSet", "budgetRarity"].forEach((id) => { $(id).hidden = list.key !== "budget"; });
+      $("pickWrap").hidden = list.key !== "budget";
+      if (list.key === "budget") $("cardsTable").hidden = true;
+      $("filterInput").hidden = list.key === "budget";
+      $("sortSelect").hidden = list.key === "budget";
       $("kindSwitch").hidden = Boolean(list.kindless);
       $("extraHeader").hidden = !list.extra;
       $("extraHeader").textContent = list.extra || "";
@@ -1459,7 +1514,8 @@
       const track = Boolean(currentList().track);
       const noun = track ? "items" : state.list === "sealed_deals" || (state.kind === "sealed" && !currentList().kindless) ? "products" : "cards";
       $("listCount").textContent = state.rows.length ? `${rows.length.toLocaleString()}${rows.length !== state.rows.length ? ` of ${state.rows.length.toLocaleString()}` : ""} ${noun}` : "";
-      body.replaceChildren(...rows.map((row) => {
+      if (state.list === "budget") renderPicks(rows);
+      body.replaceChildren(...(state.list === "budget" ? [] : rows).map((row) => {
         const image = row.imageUrl ? el("img", { class: "thumb", src: row.imageUrl, alt: "", loading: "lazy" }) : el("div", { class: "thumb" });
         if (row.imageUrl) image.addEventListener("error", () => { image.style.visibility = "hidden"; }, { once: true });
         const meta = (row.productKind === "sealed"
@@ -1491,6 +1547,41 @@
         selectCard(rows[0]);
       }
     }
+    function renderPicks(rows) {
+      $("pickGrid").replaceChildren(...rows.map((row) => {
+        const r = row.raw;
+        const image = el("img", { src: row.imageUrl || "/images/Logo.png", alt: "", loading: "lazy" });
+        image.addEventListener("error", () => { image.style.visibility = "hidden"; }, { once: true });
+        const chip = (label, value) => (Number.isFinite(value) ? el("span", { class: `pill ${value >= 0 ? "up" : "down"}`, text: `${label} ${pct(value)}` }) : null);
+        const swap = el("button", { type: "button", class: "swap", text: "I have this, swap it" });
+        swap.addEventListener("click", (event) => {
+          event.stopPropagation();
+          state.budgetSkipped.set(row.key, row.name);
+          state.selected = null;
+          loadList();
+        });
+        const card = el("article", { class: "pick", "data-key": row.key, "aria-selected": String(state.selected?.key === row.key) },
+          image,
+          el("div", { class: "pick-body" },
+            el("div", { class: "pick-top" }, el("strong", { text: money(row.price) }),
+              el("span", { class: "card-meta", text: Number.isFinite(r.budget_share_pct) ? `${Math.round(r.budget_share_pct)}% of budget` : "" })),
+            el("div", { class: "pick-name", text: row.name, title: row.name }),
+            el("div", { class: "card-meta", text: [row.set, row.number && `#${row.number}`, row.rarity].filter(Boolean).join(" · ") }),
+            el("div", { class: "pick-chips" }, chip("7d", r.roc_7d_pct), chip("30d", r.roc_30d_pct)),
+            el("div", { class: "pick-chips" }, ...(r.reasons || []).filter((reason) => !/7d$/.test(reason))
+              .map((reason) => el("span", { class: "reason", text: PICK_REASONS[reason] || reason }))),
+            swap));
+        card.addEventListener("click", () => selectCard(row));
+        return card;
+      }));
+      const skipped = $("swapped");
+      skipped.hidden = !state.budgetSkipped.size;
+      skipped.replaceChildren(el("span", { text: "Swapped out:" }), ...[...state.budgetSkipped].map(([key, name]) => {
+        const b = el("button", { type: "button", title: "Put it back", text: `${name || key} ✕` });
+        b.addEventListener("click", () => { state.budgetSkipped.delete(key); state.selected = null; loadList(); });
+        return b;
+      }));
+    }
     function changePill(value, lowerIsBetter = false) {
       if (!Number.isFinite(value)) return el("span", { class: "muted", text: "—" });
       const good = lowerIsBetter ? value <= 0 : value >= 0;
@@ -1520,11 +1611,19 @@
     });
     function renderBudgetRarity(options) {
       const select = $("budgetRarity");
-      if (select.options.length) return;
-      select.replaceChildren(el("option", { value: "", text: "Hits: IR and up" }),
-        ...options.map((o) => el("option", { value: o.key, text: o.label })));
+      if (!select.options.length) {
+        select.replaceChildren(el("option", { value: "", text: "Hits: IR and up" }), el("option", { value: "all", text: "All premium rarities" }),
+          ...options.map((o) => el("option", { value: o.key, text: `${o.label} only` })));
+      }
       select.value = state.budgetRarity;
+      document.querySelectorAll("#budgetPresets button").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.budget) === state.budget)));
     }
+    $("budgetPresets").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-budget]");
+      if (!button) return;
+      $("budgetInput").value = button.dataset.budget;
+      budgetChanged(0);
+    });
     function renderBudgetSummary() {
       const meta = state.budgetMeta;
       if (state.list !== "budget" || !meta || !state.rows.length) return;
@@ -1538,18 +1637,22 @@
         chip(String(meta.set_count), meta.set_count === 1 ? "set" : "sets"));
     }
     let budgetTimer = null;
-    function budgetChanged() {
+    function budgetChanged(delay = 500) {
       clearTimeout(budgetTimer);
       budgetTimer = setTimeout(() => {
         state.budget = Math.max(5, Math.min(5000, Number($("budgetInput").value) || 150));
         state.budgetMax = Number($("budgetMaxInput").value) || null;
         state.budgetRarity = $("budgetRarity").value;
+        state.budgetCards = Number($("budgetCards").value) || 0;
+        state.budgetPerSet = Number($("budgetPerSet").value) || 2;
         state.selected = null;
         loadList();
       }, 500);
     }
-    ["budgetInput", "budgetMaxInput"].forEach((id) => $(id).addEventListener("input", budgetChanged));
-    $("budgetRarity").addEventListener("change", budgetChanged);
+    ["budgetInput", "budgetMaxInput"].forEach((id) => $(id).addEventListener("input", () => budgetChanged()));
+    ["budgetRarity", "budgetCards", "budgetPerSet"].forEach((id) => $(id).addEventListener("change", () => budgetChanged(0)));
+    $("budgetCards").value = String(state.budgetCards);
+    $("budgetPerSet").value = String(state.budgetPerSet);
     $("budgetInput").value = String(state.budget);
     if (state.budgetMax) $("budgetMaxInput").value = String(state.budgetMax);
     function renderEmpty(errorText) {
@@ -1576,7 +1679,7 @@
       }
       if (state.list === "budget") {
         empty.replaceChildren(el("h3", { text: `No picks fit ${money(state.budget)} right now` }),
-          el("div", { text: "Budget Builder only picks cards with at least 4 price changes in the last week, so it stays empty until about a week of fresh daily prices has arrived. Try again in a few days, or raise the budget." }));
+          el("div", { text: "Try a larger budget, a higher max per card, more cards per set, or All premium rarities." }));
         return;
       }
       if (state.list === "sealed_deals") {
@@ -1670,8 +1773,8 @@
     // ---------- detail panel ----------
     function selectCard(card, { scroll = false } = {}) {
       state.selected = card;
-      document.querySelectorAll("#resultsBody tr").forEach((tr) => tr.setAttribute("aria-selected", String(tr.dataset.key === card.key)));
-      if (scroll) document.querySelector(`#resultsBody tr[data-key="${CSS.escape(card.key)}"]`)?.scrollIntoView({ block: "nearest" });
+      document.querySelectorAll("#resultsBody tr, #pickGrid .pick").forEach((node) => node.setAttribute("aria-selected", String(node.dataset.key === card.key)));
+      if (scroll) document.querySelector(`#resultsBody tr[data-key="${CSS.escape(card.key)}"], #pickGrid .pick[data-key="${CSS.escape(card.key)}"]`)?.scrollIntoView({ block: "nearest" });
       syncUrl();
       renderDetail();
     }

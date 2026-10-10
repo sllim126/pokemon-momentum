@@ -5011,7 +5011,12 @@ def budget_builder_recommendations(
       AND COALESCE(s.productKind, '') = 'card'
       AND COALESCE(s.latest_price, 0) >= {min_price}
       AND COALESCE(s.latest_price, 0) <= {max_price if max_price is not None else budget}
-      AND COALESCE(s.recent_observations_7d, 0) >= 4
+      -- Four readings in the last week, or every reading there is when the feed has had fewer
+      -- days than that (e.g. right after a data gap), so the builder never goes blank.
+      AND COALESCE(s.recent_observations_7d, 0) >= LEAST(4, (
+        SELECT COALESCE(MAX(recent_observations_7d), 1) FROM {source}
+        WHERE categoryId = {category.category_id} AND latest_date = (SELECT MAX(latest_date) FROM {source})
+      ))
       AND COALESCE(s.recent_distinct_prices_30d, 0) >= 3
       AND {rarity_clause}
     ORDER BY
