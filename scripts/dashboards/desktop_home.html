@@ -499,7 +499,7 @@
 
     // ---------- configuration ----------
     const LISTS = [
-      { key: "sealed_deals", group: "Buy", buy: true, kindless: true, label: "Sealed Deals", desc: "Booster boxes, ETBs, tins and bundles priced per pack against retail. Cheaper per pack is better.", price: "latest_price", change: "premium_pct", changeLabel: "vs retail", changeHeader: "Vs retail", lowerIsBetter: true, extra: "Per pack" },
+      { key: "sealed_deals", group: "Buy", buy: true, kindless: true, label: "Sealed Deals", desc: "Boxes, ETBs, tins and bundles compared with buying the same booster packs loose. Negative means the sealed product is the cheaper way to get those packs.", price: "latest_price", change: "vs_loose_pct", changeLabel: "vs loose packs", changeHeader: "Vs loose packs", lowerIsBetter: true, extra: "Packs bought loose" },
       { key: "budget", group: "Buy", buy: true, kindless: true, label: "Budget Builder", desc: "Don't know what to buy? Pick a budget and get a spread of the strongest actively traded hits that fit it.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
       { key: "top_movers", group: "Rising", label: "Top Movers", desc: "Biggest steady 30-day gains with real trading activity.", price: "p_now", change: "roc_pct", changeLabel: "30 days" },
       { key: "confirmed_uptrends", group: "Rising", label: "Confirmed Movers", desc: "Uptrends confirmed by moving averages and a bullish streak.", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg" },
@@ -529,7 +529,7 @@
       track: [["signal", "saved order"], ["target", "closest to buy target"], ["change", "biggest change"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"]],
       set: [["signal", "card number"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
       species: [["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"], ["signal", "set"]],
-      sealed_deals: [["signal", "best deal"], ["per_pack", "price per pack"], ["price_asc", "price, low to high"], ["price_desc", "price, high to low"]],
+      sealed_deals: [["change_asc", "cheapest vs loose packs"], ["per_pack", "price per pack"], ["price_asc", "price, low to high"], ["price_desc", "price, high to low"]],
       budget: [["signal", "best pick"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
       indexes: [["era", "newest era"], ["change30", "30-day change"], ["start", "change since start"], ["level", "level"]],
       index: [["signal", "rank"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
@@ -675,7 +675,7 @@
         imageUrl: raw.imageUrl || "",
         productKind: raw.productKind || (state.kind === "sealed" ? "sealed" : "card"),
         price: Number.isFinite(price) ? price : null,
-        change: Number(raw[list.change]),
+        change: raw[list.change] === null || raw[list.change] === undefined || raw[list.change] === "" ? NaN : Number(raw[list.change]),
         raw,
       };
     }
@@ -970,8 +970,45 @@
     }
     function fetchSealedDeals() {
       const list = LISTS.find((l) => l.key === "sealed_deals");
-      return cached(`sealed_deals:${state.market}`, () => getJson(`/sealed_deals?category_id=${categoryId()}`)
-        .then((payload) => (payload.items || []).map((raw) => normalizeRow({ productKind: "sealed", ...raw }, list))));
+      return cached(`sealed_deals:${state.market}`, () => getJson(`/sealed_deals?category_id=${categoryId()}&min_price=0&max_price=100000&limit=2000`)
+        .then((payload) => {
+          const items = payload.items || [];
+          const packPrices = loosePackPrices(items);
+          return items.map((raw) => normalizeRow({ productKind: "sealed", ...raw, ...packBreakdown(raw, packPrices) }, list));
+        }));
+    }
+    // Loose booster-pack price per set name. Only plain "<Set> Booster Pack" listings count: mini, promo,
+    // pin-bundle and vintage edition packs would make the comparison misleading.
+    const SAME_SET_PACK_TYPES = new Set(["Booster Box", "Half Booster Box", "Booster Bundle", "Elite Trainer Box", "Pokemon Center ETB", "Pack Blister", "Sleeved Pack"]);
+    const setAliases = (groupName) => {
+      const name = String(groupName || "");
+      const short = name.replace(/^[^:]+:\s*/, "").replace(/^(SM|XY|SWSH|BW|DP|HGSS|EX)\s+-\s+/, "");
+      return [...new Set([name, short])];
+    };
+    function loosePackPrices(items) {
+      const prices = new Map();
+      for (const item of items) {
+        const name = String(item.productName || "");
+        if (item.productType !== "Booster Pack" || item.pack_count !== 1 || !(item.latest_price > 0)) continue;
+        if (/\[|mini|special|promo|packs|general mills|miscellaneous/i.test(`${name} ${item.groupName}`) || !/Booster Pack$/.test(name)) continue;
+        for (const alias of setAliases(item.groupName)) {
+          if (!prices.has(alias) || prices.get(alias).price > item.latest_price) prices.set(alias, { price: item.latest_price, name });
+        }
+      }
+      return prices;
+    }
+    function packBreakdown(item, prices) {
+      if (item.productType === "Booster Pack" || !item.pack_mix) return { vs_loose_pct: null };
+      // Collection boxes and tins often hold packs from other sets; unless their mix was listed by hand
+      // (several sets, comma-separated), the guess from the product's own set isn't reliable enough.
+      const handListed = String(item.pack_mix).includes(",");
+      if (!handListed && !SAME_SET_PACK_TYPES.has(item.productType)) return { vs_loose_pct: null };
+      const parts = String(item.pack_mix).split(",").map((part) => /^(\d+)x (.+)$/.exec(part.trim()));
+      if (parts.some((m) => !m || !prices.has(m[2].trim()))) return { vs_loose_pct: null };
+      const lines = parts.map((m) => ({ count: Number(m[1]), set: m[2].trim(), price: prices.get(m[2].trim()).price }));
+      const loose = lines.reduce((sum, line) => sum + line.count * line.price, 0);
+      if (!(loose > 0) || !(item.latest_price > 0)) return { vs_loose_pct: null };
+      return { loose_value: loose, loose_lines: lines, vs_loose_pct: (item.latest_price / loose - 1) * 100 };
     }
     function fetchBudget() {
       const list = LISTS.find((l) => l.key === "budget");
@@ -1438,8 +1475,8 @@
       guide.replaceChildren(
         section("Where the prices come from", "Every price is the TCGplayer market price, collected once a night. Lists compare today's price with the last 30, 90 and 180 days. Prices are missing from September 16 to October 7, 2026, so lists that need a week of steady readings will be thin until mid-October."),
         section("Buy", "", [
-          ["Sealed Deals", "Sealed products ranked by price per pack against the usual retail price. A negative “vs retail” means it's cheaper per pack than retail."],
-          ["Budget Builder", "The strongest actively traded cards that fit your budget, at most two per set so you're not betting on one set."],
+          ["Sealed Deals", "Boxes, ETBs, bundles and blisters compared with buying the same booster packs loose. A negative “vs loose packs” means the sealed product is the cheaper way to get those packs. Products whose packs can't all be priced show “—”."],
+          ["Budget Builder", "Pick a budget and get a spread of the strongest actively traded hits that fit it, at most two per set by default. Already own one? “I have this, swap it” finds a replacement."],
         ]),
         section("Market lists", "Each list is a different way a card's price can be moving. Click any card to see its chart and the checks below.", [
           ["Top Movers", "The biggest steady gains over the last 30 days, with real trading activity."],
@@ -1456,10 +1493,10 @@
           ["Graded", "PSA and CGC prices from PriceCharting, with a link back to the source."],
           ["Stats", "The 30-day average, window low and high, and printing details."],
         ]),
-        section("Research and Learn", "", [
+        section("Research", "", [
           ["Sets", "Every set ranked by how broadly its cards are rising. Click a set to see its cards, then narrow to hits or a rarity."],
           ["Pokémon", "Every printing of one Pokémon across all sets."],
-          ["Market Indexes", "The 100 most valuable cards of each era tracked as one number, like a stock index. Each started at 1,000; 2,000 means that group of cards has doubled."],
+          ["Market Stats", "The market as a whole. Indexes track the most valuable cards of each era as one number, like a stock index: each started at 1,000, so 2,000 means that group of cards has doubled. Set values show what a full set costs and how much of it sits in the top cards."],
         ]),
         section("Saving cards", "♡ Save adds a card to your Buy List, Watchlist, Favorites or Needs Review. Saved cards stay in this browser, and sync to your account when you're signed in. They appear under My lists, here and on the phone site."),
         el("p", { class: "fine", text: "Market data for research only, not financial advice. Prices and estimates can be wrong; check the listing before you buy or sell." }));
@@ -1497,6 +1534,7 @@
       if (sort === "change") rows = [...rows].sort((a, b) => (b.change || -Infinity) - (a.change || -Infinity));
       if (sort === "price_desc") rows = [...rows].sort((a, b) => (b.price || 0) - (a.price || 0));
       if (sort === "price_asc") rows = [...rows].sort((a, b) => (a.price || 0) - (b.price || 0));
+      if (sort === "change_asc") rows = [...rows].sort((a, b) => (Number.isFinite(a.change) ? a.change : Infinity) - (Number.isFinite(b.change) ? b.change : Infinity));
       if (sort === "per_pack") rows = [...rows].sort((a, b) => (a.raw.price_per_pack ?? Infinity) - (b.raw.price_per_pack ?? Infinity));
       if (sort === "target") {
         const gap = (row) => { const { buy } = targetFor(row); return buy && row.price > 0 ? row.price / buy : Infinity; };
@@ -1587,10 +1625,12 @@
       const good = lowerIsBetter ? value <= 0 : value >= 0;
       return el("span", { class: `pill ${good ? "up" : "down"}`, text: pct(value) });
     }
+    const packs = (n) => `${n} pack${n === 1 ? "" : "s"}`;
     function extraCell(row, list) {
       if (list.key === "sealed_deals") {
         const r = row.raw;
-        return el("span", { class: "target-text", title: r.pack_mix || "", text: Number.isFinite(r.price_per_pack) ? `${money(r.price_per_pack)} × ${r.pack_count} packs` : "—" });
+        const detail = r.loose_lines ? r.loose_lines.map((l) => `${l.count} × ${l.set} at ${money(l.price)}`).join("\n") : `${r.pack_mix || ""}\nNo loose price for every pack inside.`;
+        return el("span", { class: "target-text", title: detail, text: r.loose_value ? `${money(r.loose_value)} for ${packs(r.pack_count)}` : r.pack_count ? packs(r.pack_count) : "—" });
       }
       if (list.key === "budget") return el("span", { class: "target-text", text: Number.isFinite(row.raw.budget_share_pct) ? `${Math.round(row.raw.budget_share_pct)}%` : "—" });
       return el("span", { text: "" });
@@ -1945,6 +1985,10 @@
         ["Window low", money(prices.length ? Math.min(...prices) : NaN)],
         ["Window high", money(prices.length ? Math.max(...prices) : NaN)],
         ["Vs 30-day average", last && last.sma30 ? pct((last.price / last.sma30 - 1) * 100) : "—"],
+        ...(card.raw?.loose_lines ? [
+          ["Packs inside", card.raw.loose_lines.map((l) => `${l.count}× ${l.set}`).join(", ")],
+          ["Bought loose", `${money(card.raw.loose_value)} (${pct(card.raw.vs_loose_pct)} vs this)`],
+        ] : []),
         ["Printing", card.subTypeName || "—"],
         ["Rarity", card.rarity || "—"],
         ["Card number", card.number || "—"],
