@@ -134,6 +134,16 @@ High Priority
   check whether the gap is a matching error (wrong printing or variant) before deciding.
   Code: Graded tab in `scripts/dashboards/desktop_home.html`, `/graded_prices` in `api.py`.
 
+- [planned] Graded vs raw history chart (owner, 2026-10-12: "NO ONE is doing that now").
+  One chart per card comparing the raw TCGplayer price trend with graded trends (PSA 10,
+  PSA 9, BGS/CGC/SGC 10) over time, plus the graded premium (PSA 10 / raw) as its own line.
+  Data: `pricecharting_prices` has a daily history since 2026-10-09 (ungraded, grades
+  7-9.5, PSA/BGS/CGC/SGC 10, sales_volume); raw history is our TCGCSV prices. Build it once
+  a few months of graded history exist. Precompute the series nightly (see the speed plan)
+  and keep the PriceCharting linkback on every graded price shown. Related ideas: graded
+  premium screener (cards whose PSA 10 premium is widening or shrinking), sales-volume
+  trend from the daily `sales_volume` counts.
+
 Desktop App Follow-up
 ---------------------
 
