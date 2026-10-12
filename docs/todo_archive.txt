@@ -7,6 +7,20 @@ Archived Completed Work
 October 2026 (archived 2026-10-12, when todo.txt was rewritten as the main action list)
 ----------------------------------------------------------------------------------------
 
+- Completed and archived at the 2026-10-12 milestone:
+  - 2026-10-12 Comments and docs reviewed across the whole codebase and corrected; new
+    `docs/desktop_app.md`; `AGENTS.md` and this todo list set up as the shared work list.
+  - 2026-10-12 Collector Hub, Placeholder Library and Account restyled to match the desktop app.
+  - 2026-10-09 to 10-10 Desktop app built at `/home-preview`:
+    - Discover lists, Track (saved lists with buy/sell price targets), Research (Sets,
+      Pokémon, Market Stats with indexes and set values), Buy (Sealed Deals with loose-pack
+      comparison, card-art Budget Builder), Learn (How it works), legal footer
+    - 6-month hold check and PriceCharting graded prices on every card
+    - Market Indexes listed only under Research in the site menus
+  - 2026-10-09 Pipeline moved to per-set TCGCSV fetches after the daily archive was retired;
+    Discord pass/fail alerts; index snapshots now build after the parquet export.
+  - 2026-10-09 Squarespace price sync skips deleted listings; listing retire script added;
+    admin lookalike-username escalation closed.
 - Superseded by the desktop app at `/home-preview` (see `docs/desktop_app.md`):
   - the September development program that reshaped `/dashboard-lab` and `/mobile-rebuild`
     around the five task areas (both now development pages to remove or restrict)
