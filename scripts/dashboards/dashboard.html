@@ -672,125 +672,6 @@
       border-radius: 14px;
     }
 
-    .bug-report-modal {
-      position: fixed;
-      inset: 0;
-      display: none;
-      place-items: center;
-      padding: 20px;
-      z-index: 60;
-    }
-
-    .bug-report-modal.open {
-      display: grid;
-    }
-
-    .bug-report-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(7, 11, 21, 0.7);
-      backdrop-filter: blur(8px);
-    }
-
-    .bug-report-card {
-      position: relative;
-      width: min(680px, calc(100vw - 32px));
-      max-height: min(760px, calc(100vh - 32px));
-      overflow: auto;
-      padding: 20px;
-      border: 1px solid var(--line);
-      border-radius: 24px;
-      background: linear-gradient(180deg, rgba(31, 43, 69, 0.98), rgba(20, 29, 48, 0.99));
-      box-shadow: var(--shadow);
-      display: grid;
-      gap: 14px;
-    }
-
-    .bug-report-head {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: flex-start;
-    }
-
-    .bug-report-head h3 {
-      margin: 0 0 6px;
-      font-size: 24px;
-    }
-
-    .bug-report-close {
-      appearance: none;
-      border: 1px solid var(--line);
-      background: rgba(17, 26, 43, 0.84);
-      color: var(--ink);
-      border-radius: 999px;
-      min-width: 38px;
-      min-height: 38px;
-      cursor: pointer;
-      font: inherit;
-    }
-
-    .bug-report-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 12px;
-    }
-
-    .bug-report-grid .full {
-      grid-column: 1 / -1;
-    }
-
-    .bug-report-grid textarea,
-    .bug-report-grid input {
-      width: 100%;
-    }
-
-    .bug-report-context {
-      border: 1px solid rgba(86, 129, 197, 0.22);
-      border-radius: 16px;
-      background: rgba(13, 21, 40, 0.58);
-      padding: 12px;
-      display: grid;
-      gap: 8px;
-    }
-
-    .bug-report-context-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px 12px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .bug-report-context-grid strong {
-      color: var(--ink);
-      font-weight: 600;
-    }
-
-    .bug-report-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .bug-report-actions button {
-      appearance: none;
-      border: 1px solid var(--line);
-      background: rgba(17, 26, 43, 0.84);
-      color: var(--ink);
-      font: inherit;
-      min-height: 42px;
-      padding: 10px 16px;
-      border-radius: 999px;
-      cursor: pointer;
-    }
-
-    .bug-report-actions button.primary {
-      background: linear-gradient(180deg, rgba(30, 113, 181, 0.94), rgba(21, 91, 150, 0.96));
-      border-color: rgba(74, 164, 234, 0.38);
-    }
-
     .guide-modal {
       position: fixed;
       inset: 0;
@@ -3492,7 +3373,8 @@
                 <button type="button" id="trackingLogoutBtn">Sign Out</button>
               </div>
             </div>
-            <button type="button" class="tracking-menu-link" id="openBugReportBtn">Report a Bug</button>
+            <!-- Bug reports go to the #bug-reports channel on Discord; there is no on-site form. -->
+            <a class="tracking-menu-link" href="https://discord.gg/AejcWHkCG" target="_blank" rel="noopener">Report a Bug ↗</a>
             <button type="button" class="tracking-menu-link" id="openGuideBtn">View Guide</button>
             <!-- Public utility pages stay in the normal account menu; admin-only tools live below. -->
             <div class="tracking-menu-pages">
@@ -3808,42 +3690,6 @@
         </div>
       </aside>
     </div>
-    <div class="bug-report-modal" id="bugReportModal" hidden>
-      <div class="bug-report-backdrop" id="bugReportBackdrop"></div>
-      <section class="bug-report-card" aria-labelledby="bugReportTitle" aria-modal="true" role="dialog">
-        <div class="bug-report-head">
-          <div>
-            <div class="section-label">Feedback</div>
-            <h3 id="bugReportTitle">Report a Bug</h3>
-            <div class="subtitle">We’ll save the current dashboard context with your notes so it’s easier to reproduce later and wire into Discord when that integration lands.</div>
-          </div>
-          <button type="button" class="bug-report-close" id="bugReportCloseBtn" aria-label="Close bug report">×</button>
-        </div>
-        <div class="bug-report-grid">
-          <label class="full">
-            <span class="field-label">Title</span>
-            <input type="text" id="bugReportTitleInput" placeholder="Short summary of what broke">
-          </label>
-          <label class="full">
-            <span class="field-label">What Happened</span>
-            <textarea id="bugReportDetailsInput" rows="5" placeholder="What did you do, and what happened instead?"></textarea>
-          </label>
-          <label class="full">
-            <span class="field-label">Expected Behavior</span>
-            <textarea id="bugReportExpectedInput" rows="3" placeholder="Optional: what should have happened?"></textarea>
-          </label>
-        </div>
-        <div class="bug-report-context">
-          <div class="field-label">Captured Context</div>
-          <div class="bug-report-context-grid" id="bugReportContextGrid"></div>
-        </div>
-        <div class="tracking-header-status" id="bugReportStatus">Bug reports stay internal for now. The stored payload is structured so it can be forwarded to Discord later.</div>
-        <div class="bug-report-actions">
-          <button type="button" id="bugReportCancelBtn">Cancel</button>
-          <button type="button" class="primary" id="bugReportSubmitBtn">Submit Report</button>
-        </div>
-      </section>
-    </div>
     <div class="guide-modal" id="guideModal" hidden>
       <div class="guide-backdrop" id="guideBackdrop"></div>
       <div class="guide-shade" id="guideShadeTop" aria-hidden="true"></div>
@@ -4002,7 +3848,6 @@
     const trackingSignedOutCopy = document.getElementById("trackingSignedOutCopy");
     const googleSignInMount = document.getElementById("googleSignInMount");
     const trackingTrackedBtn = document.getElementById("trackingTrackedBtn");
-    const openBugReportBtn = document.getElementById("openBugReportBtn");
     const openGuideBtn = document.getElementById("openGuideBtn");
     const viewTrackedItemsBtn = document.getElementById("viewTrackedItemsBtn");
     const trackingLogoutBtn = document.getElementById("trackingLogoutBtn");
@@ -4043,16 +3888,6 @@
     const imagePreviewPopover = document.getElementById("imagePreviewPopover");
     const imagePreviewImg = document.getElementById("imagePreviewImg");
     const imagePreviewCaption = document.getElementById("imagePreviewCaption");
-    const bugReportModal = document.getElementById("bugReportModal");
-    const bugReportBackdrop = document.getElementById("bugReportBackdrop");
-    const bugReportCloseBtn = document.getElementById("bugReportCloseBtn");
-    const bugReportCancelBtn = document.getElementById("bugReportCancelBtn");
-    const bugReportSubmitBtn = document.getElementById("bugReportSubmitBtn");
-    const bugReportTitleInput = document.getElementById("bugReportTitleInput");
-    const bugReportDetailsInput = document.getElementById("bugReportDetailsInput");
-    const bugReportExpectedInput = document.getElementById("bugReportExpectedInput");
-    const bugReportStatus = document.getElementById("bugReportStatus");
-    const bugReportContextGrid = document.getElementById("bugReportContextGrid");
     const guideModal = document.getElementById("guideModal");
     const guideBackdrop = document.getElementById("guideBackdrop");
     const guideShadeTop = document.getElementById("guideShadeTop");
@@ -4175,7 +4010,6 @@
     let currentHeroImageExpandedAlt = "";
     let currentPreviewImageSrc = "";
     let currentPreviewAnchor = null;
-    let bugReportModalOpen = false;
     let guideModalOpen = false;
     let guideStepIndex = 0;
     let pullRefreshStartY = 0;
@@ -4439,64 +4273,6 @@
       trackingToggleBtn.setAttribute("aria-expanded", trackingMenuOpen ? "true" : "false");
     }
 
-    function buildBugReportContext() {
-      const meta = currentKey ? getMetaForKey(currentKey) : null;
-      return {
-        reporter_username: trackingUser?.username || "",
-        page_path: window.location.pathname,
-        page_url: window.location.href,
-        category_id: currentCategoryId,
-        tab: currentTab,
-        segment: currentSegment,
-        chart_mode: currentChartMode,
-        product_key: currentKey || "",
-        group_id: Number.isFinite(Number(currentGroupId)) ? Number(currentGroupId) : null,
-        search_query: String(headerSearchInput?.value || "").trim(),
-        product_name: meta?.productName || "",
-        group_name: meta?.groupName || "",
-        selected_days: currentDays,
-        user_agent: navigator.userAgent || "",
-      };
-    }
-
-    function renderBugReportContext() {
-      if (!bugReportContextGrid) return;
-      const context = buildBugReportContext();
-      const rows = [
-        ["Page", context.page_path || "/dashboard"],
-        ["Market", String(context.category_id || "")],
-        ["Tab", context.tab || "none"],
-        ["Segment", context.segment || "none"],
-        ["Chart", context.chart_mode || "product"],
-        ["Window", `${context.selected_days}D`],
-        ["Selected Product", context.product_name || context.product_key || "none"],
-        ["Set", context.group_name || (context.group_id ? String(context.group_id) : "none")],
-        ["Search", context.search_query || "none"],
-        ["Reporter", context.reporter_username || "anonymous"],
-      ];
-      bugReportContextGrid.innerHTML = rows
-        .map(([label, value]) => `<div><strong>${label}:</strong> ${value}</div>`)
-        .join("");
-    }
-
-    function setBugReportStatus(message, isWarn = false) {
-      if (!bugReportStatus) return;
-      bugReportStatus.textContent = message;
-      bugReportStatus.classList.toggle("warn", Boolean(isWarn));
-    }
-
-    function setBugReportModalOpen(open) {
-      if (!bugReportModal) return;
-      bugReportModalOpen = Boolean(open);
-      bugReportModal.hidden = !bugReportModalOpen;
-      bugReportModal.classList.toggle("open", bugReportModalOpen);
-      if (bugReportModalOpen) {
-        renderBugReportContext();
-        setBugReportStatus("Bug reports stay internal for now. The stored payload is structured so it can be forwarded to Discord later.");
-        window.setTimeout(() => bugReportTitleInput?.focus(), 0);
-      }
-    }
-
     function renderGuideStep() {
       if (!guideProgress || !guideStepCount || !guideStepTarget || !guideStepTitle || !guideStepCopy || !guideStepPoints) return;
       const safeIndex = Math.max(0, Math.min(guideSteps.length - 1, guideStepIndex));
@@ -4727,47 +4503,6 @@
         setGuideStep(0);
         setGuideModalOpen(true);
       }, 300);
-    }
-
-    async function submitBugReport() {
-      const title = String(bugReportTitleInput?.value || "").trim();
-      const details = String(bugReportDetailsInput?.value || "").trim();
-      const expected = String(bugReportExpectedInput?.value || "").trim();
-      if (title.length < 3) {
-        setBugReportStatus("Give the report a short title so it is easier to scan later.", true);
-        bugReportTitleInput?.focus();
-        return;
-      }
-      if (details.length < 10) {
-        setBugReportStatus("Add a little more detail so we can reproduce the issue later.", true);
-        bugReportDetailsInput?.focus();
-        return;
-      }
-      const context = buildBugReportContext();
-      setBugReportStatus("Submitting report...");
-      bugReportSubmitBtn.disabled = true;
-      try {
-        const payload = await trackingJson("/bug_reports", {
-          method: "POST",
-          body: JSON.stringify({
-            ...context,
-            title,
-            details,
-            expected,
-          }),
-        });
-        setBugReportStatus(`Report #${payload.id} saved.`);
-        if (bugReportTitleInput) bugReportTitleInput.value = "";
-        if (bugReportDetailsInput) bugReportDetailsInput.value = "";
-        if (bugReportExpectedInput) bugReportExpectedInput.value = "";
-        window.setTimeout(() => {
-          setBugReportModalOpen(false);
-        }, 600);
-      } catch (err) {
-        setBugReportStatus(`Could not save report: ${err.message}`, true);
-      } finally {
-        bugReportSubmitBtn.disabled = false;
-      }
     }
 
     function updateTrackingUi() {
@@ -8699,12 +8434,6 @@
         setTrackingMenuOpen(!trackingMenuOpen);
       });
 
-      if (openBugReportBtn) {
-        openBugReportBtn.addEventListener("click", () => {
-          setTrackingMenuOpen(false);
-          setBugReportModalOpen(true);
-        });
-      }
       if (openGuideBtn) {
         openGuideBtn.addEventListener("click", () => {
           setTrackingMenuOpen(false);
@@ -8712,12 +8441,6 @@
           setGuideModalOpen(true, false);
         });
       }
-      bugReportCloseBtn?.addEventListener("click", () => setBugReportModalOpen(false));
-      bugReportCancelBtn?.addEventListener("click", () => setBugReportModalOpen(false));
-      bugReportBackdrop?.addEventListener("click", () => setBugReportModalOpen(false));
-      bugReportSubmitBtn?.addEventListener("click", async () => {
-        await submitBugReport();
-      });
       guideCloseBtn?.addEventListener("click", () => setGuideModalOpen(false));
       guideSkipBtn?.addEventListener("click", () => setGuideModalOpen(false));
       guideBackdrop?.addEventListener("click", () => setGuideModalOpen(false));
@@ -9015,10 +8738,6 @@
           setGuideModalOpen(false);
           return;
         }
-        if (event.key === "Escape" && bugReportModalOpen) {
-          setBugReportModalOpen(false);
-          return;
-        }
         const target = event.target;
         if (target instanceof HTMLElement && target.closest("select, input, textarea, button")) {
           return;
@@ -9068,10 +8787,6 @@
         if (!(target instanceof Node)) return;
         if (guideModalOpen && target === guideBackdrop) {
           setGuideModalOpen(false);
-          return;
-        }
-        if (bugReportModalOpen && target === bugReportBackdrop) {
-          setBugReportModalOpen(false);
           return;
         }
         if (trackingMenuOpen && !trackingMenu.contains(target) && !trackingToggleBtn.contains(target)) {

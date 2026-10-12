@@ -83,7 +83,7 @@ The following pages require a Google sign-in listed in `POKEMON_MOMENTUM_ADMIN_U
 - Desktop screening dashboard and mobile decision dashboard
 - Server-side search, paged pickers, product/set history, and saved URL state
 - Screeners for movers, pullbacks, breakouts, trend confirmation, early movement, set strength, and budget/value research
-- Google sign-in, synced tracking tags, saved views, and structured bug reports
+- Google sign-in, synced tracking tags, saved views, and a mobile feedback form (bug reports go to Discord)
 - English/Japanese market index family
 - Squarespace price sync and inventory audit
 - Singles listing workflow with cached, square-padded Scrydex artwork

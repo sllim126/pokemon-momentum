@@ -771,21 +771,18 @@ Current scope:
 
 Bug report checks
 -----------------
-Bug reports are now handled in the Discord #bug-reports channel. The older in-dashboard form
-below still exists on `/dashboard` and `/mobile` (the desktop app has none); use these checks
-only while it remains.
+Bug reports are handled in the Discord #bug-reports channel (invite:
+https://discord.gg/AejcWHkCG). Since 2026-10-12 every "Report a Bug" link on the site opens
+that invite: the old dashboard's account menu, and the mobile menu and Support > Bug tab.
+There is no on-site bug form any more.
 
 UI checks:
 
-- sign in from the header account menu
-- open `Report a Bug`
-- submit a short test report from a live dashboard state
-- verify the modal captures current tab / market / segment / selected product context
+- `/dashboard` account menu > `Report a Bug ↗` opens the Discord invite in a new tab
+- `/mobile` menu > `Report a Bug ↗`, and Support > Bug > `Open #bug-reports on Discord ↗`
 
-Admin-only review:
-
-- `/bug-reports`
-- intended for operator/admin use only
+The mobile Support > Feedback form still saves into the same `/bug_reports` queue. Review it
+(and older bug reports) at the admin-only `/bug-reports` page.
 
 
 Set explorer checks

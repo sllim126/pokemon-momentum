@@ -40,11 +40,13 @@ Recently Completed
   - `POKE6S_TCGCSV_USER_AGENT` is passed into the container (`docker-compose.yml`)
   - Placeholder Library, Collector Hub and Account stack and scroll on phones
     (`desktop_theme.css`, narrow-screen rules); desktop sizes unchanged
+  - every "Report a Bug" link (old dashboard, mobile menu and Support > Bug tab) now opens
+    the Discord #bug-reports invite https://discord.gg/AejcWHkCG; mobile layout unchanged
   - Budget Builder options: replacing a pick, max cards per set and "why this pick"
     chips were already built; "allow duplicates" dropped
   - set views already show "% at a 90-day high"
   - decided: retire the old research dashboard; swap the Report a Bug form for a Discord
-    link; drop the Strong Buy / Good Buy / Fair Price / Wait / High Risk labels (the
+    link (done); drop the Strong Buy / Good Buy / Fair Price / Wait / High Risk labels (the
     6-Month Hold check replaces them); leave the development pages public
 - 2026-10-12 Comments and docs reviewed across the whole codebase and corrected; new
   `docs/desktop_app.md`; `AGENTS.md` and this todo list set up as the shared work list.
@@ -85,9 +87,6 @@ High Priority
   worth keeping into the desktop app's Stats tab (see Desktop App Follow-up), then remove
   the "Full data →" link and forward `/dashboard` on desktop to the app. Do this with, or
   after, promoting the app to `/`.
-- [planned] Replace the on-site "Report a Bug" form on the old dashboard and `/mobile` with
-  a link to the Discord `#bug-reports` channel (decided 2026-10-12). On mobile change only
-  that menu item, not the layout. Needs a Discord invite link from the owner.
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
