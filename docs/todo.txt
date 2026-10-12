@@ -35,6 +35,11 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-12 Discover lists refilled after the data gap: screener activity thresholds now
+  scale to the days of data in each window (`gap_scaled_threshold` in `query_support.py`;
+  unchanged with a complete feed). Top Movers, Confirmed/Consistent Movers, Breakouts and
+  Pullbacks have cards again. Early Movers and Under the Radar may stay empty for a while
+  because they also need three rises in a row; the app's empty message explains that.
 - 2026-10-12 Quick wins and decisions:
   - `validate_pipeline.py` now builds index snapshots after the parquet export
   - `POKE6S_TCGCSV_USER_AGENT` is passed into the container (`docker-compose.yml`)
@@ -65,15 +70,6 @@ Recently Completed
 High Priority
 -------------
 
-- [next] Discover lists are empty after the data gap. On 2026-10-12 Top Movers, Breakouts,
-  Early Movers, Pullbacks, Confirmed/Consistent Movers and Under the Radar all returned
-  0 rows. Cause: only about 5 days of prices exist since the feed came back on 2026-10-07
-  (no data 2026-09-16 to 10-07). Most lists need 10 distinct prices in 30 days (the best
-  card has 9) and Top Movers needs 5 recent readings (the most available is 4). They
-  recover on their own as days build up, roughly 10-17 for Top Movers and later for the
-  rest. Decide: wait, or make the activity thresholds gap-aware the way Budget Builder's
-  is (`LEAST(4, max available)`). Either way, show a "not enough recent data" message
-  instead of an empty list.
 - [next] Promote the desktop app to the main desktop page (details in
   `docs/desktop_app.md`, "Planned next steps"):
   - serve it at `/` for desktop visitors; phones keep `/mobile`
@@ -217,8 +213,9 @@ Active Queue
 
 - [planned] Expand set rarity / variant filters (now under Research → Sets and Market Stats).
 - [planned] Fix remaining generation grouping mistakes when a set lands in the wrong era.
-- [planned] Watch `Under the Radar` population before loosening it again (empty on
-  2026-10-12 because of the data gap; see High Priority).
+- [planned] Watch `Under the Radar` and `Early Movers` as data builds back up after the gap.
+  While the feed is short, Under the Radar skips its precomputed flag and takes about 3-4 s
+  (normally well under 1 s); this ends on its own once a full 30 days of data exist.
 - [planned] Discord: alerts and bug reports are in place; a key-stat lookup command is the
   remaining idea.
 - [planned] Re-check first-load speed after real usage of the desktop app.

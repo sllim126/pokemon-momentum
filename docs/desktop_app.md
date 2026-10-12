@@ -67,6 +67,11 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
 - **Budget Builder** picks are chosen on the server (`budget_builder_recommendations` and
   `_select_budget_candidates` in `api.py`). It needs four price readings in the last week,
   or every reading available after a feed gap.
+- **Discover lists survive feed gaps.** Each screener's activity bars ("10 different prices
+  in 30 days", "4 readings in 7 days") are scaled to the days that actually have prices in
+  that window (`gap_scaled_threshold` in `query_support.py`), so a gap in the TCGCSV feed
+  doesn't empty every list. With a complete feed the bars are unchanged. Early Movers and
+  Under the Radar can still be empty: they also need three rises in a row.
 - **6-Month Hold** comes from `scripts/dashboards/hold_check.py`; fee and shipping
   assumptions are in `scripts/common/selling_costs.py` (see the operator runbook).
 - **Stale responses are dropped.** `listRequestSeq` and `detailRequestSeq` increase with

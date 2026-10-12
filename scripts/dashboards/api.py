@@ -44,6 +44,7 @@ from scripts.dashboards.query_support import (
     build_generation_case,
     db_has_table,
     build_metadata_cte,
+    gap_scaled_threshold,
     build_premium_rarity_filter,
     build_set_basket_filter,
     category_config,
@@ -5177,6 +5178,9 @@ def good_buys(
     floor_days = max(5, min(floor_days, 10))
     min_floor_observations = max(3, min(min_floor_observations, floor_days))
     category = category_config(category_id)
+    # Lower the activity bars when the feed has missing days (see gap_scaled_threshold).
+    min_recent_distinct_prices_30d = gap_scaled_threshold(min_recent_distinct_prices_30d, 30, category.category_id)
+    min_floor_observations = gap_scaled_threshold(min_floor_observations, floor_days, category.category_id, floor=3)
     signal_source = product_signal_from(category.category_id)
     price_source = prices_from(category.category_id)
     premium_rarity_filter = build_premium_rarity_filter("rarity")
@@ -6327,6 +6331,12 @@ def top_movers(
     min_recent_observations = max(2, min(min_recent_observations, 30))
     min_recent_distinct_prices = max(2, min(min_recent_distinct_prices, 15))
     recent_variation_window_days = max(3, min(recent_variation_window_days, 30))
+    # Lower the activity bars when the feed has missing days (see gap_scaled_threshold).
+    # Signal days are counted over days + 7; readings and distinct prices over the
+    # recent-variation window.
+    min_signal_days = gap_scaled_threshold(min_signal_days, days + 7, category.category_id)
+    min_recent_observations = gap_scaled_threshold(min_recent_observations, recent_variation_window_days, category.category_id)
+    min_recent_distinct_prices = gap_scaled_threshold(min_recent_distinct_prices, recent_variation_window_days, category.category_id)
     use_snapshot = (
         days == 30
         and abs(min_daily_move_pct - 1.0) < 1e-9
@@ -6590,6 +6600,9 @@ def breakouts(
         and min_recent_distinct_prices_30d == 10
         and max_hold_days == 7
     )
+    # Lower the activity bar when the feed has missing days (see gap_scaled_threshold).
+    # Both query paths below use the scaled value.
+    min_recent_distinct_prices_30d = gap_scaled_threshold(min_recent_distinct_prices_30d, 30, category.category_id)
     if uses_default_snapshot:
         snapshot_kind_filter = ""
         if product_kind in {"card", "sealed"}:
@@ -6798,6 +6811,8 @@ def sma30_holds(
     limit = max(1, min(limit, 1000))
     min_recent_distinct_prices_30d = max(2, min(min_recent_distinct_prices_30d, 30))
     category = category_config(category_id)
+    # Lower the activity bar when the feed has missing days (see gap_scaled_threshold).
+    min_recent_distinct_prices_30d = gap_scaled_threshold(min_recent_distinct_prices_30d, 30, category.category_id)
     source = product_signal_from(category.category_id)
     product_kind_filter = ""
     if product_kind in {"card", "sealed"}:
@@ -6935,6 +6950,13 @@ def under_the_radar(
         and recent_cross_within_days == 14
         and max_above30_crosses_180d == 5
     )
+    # Lower the activity bars when the feed has missing days (see gap_scaled_threshold).
+    # The precomputed default flag uses the full bars, so skip it when they were lowered.
+    scaled_distinct_30d = gap_scaled_threshold(min_recent_distinct_prices_30d, 30, category.category_id)
+    scaled_observations = gap_scaled_threshold(min_recent_observations, 7, category.category_id)
+    if (scaled_distinct_30d, scaled_observations) != (min_recent_distinct_prices_30d, min_recent_observations):
+        default_snapshot_query = False
+    min_recent_distinct_prices_30d, min_recent_observations = scaled_distinct_30d, scaled_observations
     if default_snapshot_query:
         sql = f"""
     SELECT
@@ -7266,6 +7288,9 @@ def early_uptrends(
     max_hold_days = max(1, min(max_hold_days, 30))
     recent_cross_within_days = max(1, min(recent_cross_within_days, 30))
     category = category_config(category_id)
+    # Lower the activity bars when the feed has missing days (see gap_scaled_threshold).
+    min_recent_distinct_prices_30d = gap_scaled_threshold(min_recent_distinct_prices_30d, 30, category.category_id)
+    min_recent_observations = gap_scaled_threshold(min_recent_observations, 7, category.category_id)
     use_snapshot = True
     try:
         source = screener_snapshot_from(category.category_id)

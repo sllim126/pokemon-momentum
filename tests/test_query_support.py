@@ -286,3 +286,34 @@ class QuerySupportTests(unittest.TestCase):
         for prefix in ("M5:%", "M6:%", "MEM:%", "MEZ:%", "MF:%"):
             self.assertIn(prefix, sql)
         self.assertIn("ELSE 'Legacy'", sql)
+
+
+class GapScaledThresholdTests(unittest.TestCase):
+    """Screener activity bars shrink with missing feed days and are unchanged otherwise."""
+
+    def _dates(self, days_back):
+        from datetime import date, timedelta
+        latest = date(2026, 10, 11)
+        return [latest - timedelta(days=n) for n in days_back]
+
+    def test_full_feed_keeps_threshold(self):
+        with patch.object(query_support, "recent_feed_dates", return_value=self._dates(range(0, 60))):
+            self.assertEqual(query_support.gap_scaled_threshold(10, 30, 3), 10)
+            self.assertEqual(query_support.gap_scaled_threshold(4, 7, 3), 4)
+
+    def test_gap_scales_down_at_same_rate(self):
+        # 9 of the last 31 dates have prices: ceil(10 * 9 / 31) = 3.
+        dates = self._dates(list(range(0, 4)) + list(range(26, 31)) + list(range(40, 60)))
+        with patch.object(query_support, "recent_feed_dates", return_value=dates):
+            self.assertEqual(query_support.gap_scaled_threshold(10, 30, 3), 3)
+
+    def test_floor_and_never_above_threshold(self):
+        dates = self._dates([0])
+        with patch.object(query_support, "recent_feed_dates", return_value=dates):
+            self.assertEqual(query_support.gap_scaled_threshold(10, 30, 3), 2)
+            self.assertEqual(query_support.gap_scaled_threshold(5, 7, 3, floor=3), 3)
+            self.assertEqual(query_support.gap_scaled_threshold(1, 30, 3), 1)
+
+    def test_unreadable_feed_keeps_threshold(self):
+        with patch.object(query_support, "recent_feed_dates", return_value=[]):
+            self.assertEqual(query_support.gap_scaled_threshold(10, 30, 3), 10)
