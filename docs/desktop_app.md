@@ -124,6 +124,5 @@ These are tracked, with their status, in `docs/todo.txt`.
 1. Serve this page at `/` for desktop visitors (phones keep `/mobile`), point the header menus
    (`AREAS` in `site_shell.js`) at its views, and forward old pages (`/sealed-deals`,
    `/budget-builder`, `/set-explorer`, `/index-overview*`, the area pages) to their new views.
-2. Decide whether the older research dashboard behind "Full data →" is retired or restyled.
-3. Remove or restrict the public development pages `/dashboard-lab`, `/dashboard-dev` and
-   `/mobile-rebuild`.
+2. Retire the older research dashboard behind "Full data →" (decided 2026-10-12): move
+   what's worth keeping into the Stats tab, then remove the link.

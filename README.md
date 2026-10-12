@@ -148,7 +148,7 @@ Settings live in `.env` (never commit it). How each one reaches the code matters
 | `POKEMON_MOMENTUM_ADMIN_USERS` | Comma-separated admin emails (exact match; default `sllim126@gmail.com`) | Website environment only. It is **not** in `docker-compose.yml`, so a value in `.env` is ignored until it is added there |
 | `PRICECHARTING_API_TOKEN` | Nightly PriceCharting graded-price CSV | `fetch_pricecharting.py`, which reads `.env` itself |
 | `POKE6S_DISCORD_WEBHOOK_URL`, `POKE6S_DISCORD_MENTION` | Pipeline and price-sync alerts (mention defaults to `@everyone`; `none` disables) | `notify_discord.py` on the host, which reads `.env` itself |
-| `POKE6S_TCGCSV_USER_AGENT` | Optional override of the `Poke6sMarket/1.0.0` User-Agent | Process environment only (not passed into the pipeline container today) |
+| `POKE6S_TCGCSV_USER_AGENT` | Optional override of the `Poke6sMarket/1.0.0` User-Agent | Pipeline runs (`docker-compose run`), via the `environment:` list in `docker-compose.yml`; blank means the default |
 | `SQUARESPACE_*` | Store price sync and listing scripts | The Squarespace scripts, which read `.env` themselves |
 
 The website only sees the variables listed under `environment:` in `docker-compose.yml`;

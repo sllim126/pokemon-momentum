@@ -35,6 +35,17 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-12 Quick wins and decisions:
+  - `validate_pipeline.py` now builds index snapshots after the parquet export
+  - `POKE6S_TCGCSV_USER_AGENT` is passed into the container (`docker-compose.yml`)
+  - Placeholder Library, Collector Hub and Account stack and scroll on phones
+    (`desktop_theme.css`, narrow-screen rules); desktop sizes unchanged
+  - Budget Builder options: replacing a pick, max cards per set and "why this pick"
+    chips were already built; "allow duplicates" dropped
+  - set views already show "% at a 90-day high"
+  - decided: retire the old research dashboard; swap the Report a Bug form for a Discord
+    link; drop the Strong Buy / Good Buy / Fair Price / Wait / High Risk labels (the
+    6-Month Hold check replaces them); leave the development pages public
 - 2026-10-12 Comments and docs reviewed across the whole codebase and corrected; new
   `docs/desktop_app.md`; `AGENTS.md` and this todo list set up as the shared work list.
 - 2026-10-12 Collector Hub, Placeholder Library and Account restyled to match the desktop app.
@@ -52,15 +63,15 @@ Recently Completed
 High Priority
 -------------
 
-- [next] Fix the code problems found in the 2026-10-12 documentation review:
-  - `scripts/pipeline/validate_pipeline.py` (run-the-steps mode) builds index snapshots
-    before "Export parquet partitions". Move that step after the export, the same fix
-    made to `run_daily_update.py` in commit b4ca0a7.
-  - `POKE6S_TCGCSV_USER_AGENT` is never passed into the container by
-    `docker-compose.yml`. Harmless today (the default is correct); either pass it through
-    or drop it from the README `.env` table.
-  - Placeholder Library spills 16 px sideways at phone width, and Collector Hub may cut
-    content off (both set `body { overflow: hidden }`). Check at 390 px wide.
+- [next] Discover lists are empty after the data gap. On 2026-10-12 Top Movers, Breakouts,
+  Early Movers, Pullbacks, Confirmed/Consistent Movers and Under the Radar all returned
+  0 rows. Cause: only about 5 days of prices exist since the feed came back on 2026-10-07
+  (no data 2026-09-16 to 10-07). Most lists need 10 distinct prices in 30 days (the best
+  card has 9) and Top Movers needs 5 recent readings (the most available is 4). They
+  recover on their own as days build up, roughly 10-17 for Top Movers and later for the
+  rest. Decide: wait, or make the activity thresholds gap-aware the way Budget Builder's
+  is (`LEAST(4, max available)`). Either way, show a "not enough recent data" message
+  instead of an empty list.
 - [next] Promote the desktop app to the main desktop page (details in
   `docs/desktop_app.md`, "Planned next steps"):
   - serve it at `/` for desktop visitors; phones keep `/mobile`
@@ -70,15 +81,16 @@ High Priority
   - remove the Time to Buy menu link (owner decided to leave Time to Buy out)
   - change the `APP` constant in `scripts/dashboards/account_settings.html` to `/`
   - update `docs/project_status.md` page map and `docs/desktop_app.md`
-- [planned] Remove or restrict the public development pages `/dashboard-lab`,
-  `/dashboard-dev` and `/mobile-rebuild`.
+- [planned] Retire the older research dashboard (decided 2026-10-12): move anything still
+  worth keeping into the desktop app's Stats tab (see Desktop App Follow-up), then remove
+  the "Full data →" link and forward `/dashboard` on desktop to the app. Do this with, or
+  after, promoting the app to `/`.
+- [planned] Replace the on-site "Report a Bug" form on the old dashboard and `/mobile` with
+  a link to the Discord `#bug-reports` channel (decided 2026-10-12). On mobile change only
+  that menu item, not the layout. Needs a Discord invite link from the owner.
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
-- [waiting] Decide whether the older research dashboard behind "Full data →" is retired or
-  restyled.
-- [waiting] The old dashboard and `/mobile` still have the on-site "Report a Bug" form.
-  Decide whether to replace it with a link to Discord (touches the mobile page, so ask).
 - [waiting] Black Friday pull lists: the owner will supply the sets and a minimum price.
 
 Desktop App Follow-up
@@ -88,13 +100,11 @@ Smaller pieces the old pages showed that the desktop app does not yet (from the
 2026-10-10 gap review). Check each against the current app before building; some may
 already be covered.
 
-- [planned] Set views: "% at 90-day high" and sealed-vs-cards momentum for a set.
+- [planned] Set views: sealed-vs-cards momentum for a set ("% at a 90-day high" is done).
 - [planned] Index views: included sets, dates the top-100 list was reshuffled, set-release
   markers on the chart, and the method explanation.
 - [planned] Sealed Deals: dollars saved, estimated MSRP, a confidence rating and, for
   Japanese products, the value score.
-- [planned] Budget Builder: "I already own this card, find a replacement", allow
-  duplicates, and a short "why this pick" note per card.
 - [planned] Stats tab: show the numbers specific to the list the visitor came from (streak
   length, days above average, prior 90-day high, distinct prices traded).
 - [parked] Account extras: a "purchased" checkbox on Buy List items, and rethinking Saved
@@ -127,10 +137,9 @@ Active Queue
   screeners out of `scripts/dashboards/api.py` into domain modules with unchanged endpoint
   contracts, so `api.py` mainly sets up the app and registers routes. (PSA lookup already
   lives in `psa_service.py`.)
-- [waiting] Buy labels: an earlier plan replaced the price-edge-only Strong Buy / Good Buy /
-  Fair Price / Wait / High Risk labels with a tested model using trend, volatility,
-  activity and data confidence. The desktop app now shows the 6-Month Hold check instead.
-  Decide whether the labels are still wanted.
+- [planned] Remove the leftover Strong Buy / Good Buy / Fair Price / Wait / High Risk label
+  code wherever it still shows (decided 2026-10-12: the 6-Month Hold check replaces it).
+  Leave the mobile page's layout alone.
 
 - PSA cert enrichment integration:
   - [planned] Add site-facing uses of the backend PSA cert lookup without making PSA the
@@ -209,7 +218,8 @@ Active Queue
 
 - [planned] Expand set rarity / variant filters (now under Research → Sets and Market Stats).
 - [planned] Fix remaining generation grouping mistakes when a set lands in the wrong era.
-- [planned] Watch `Under the Radar` population before loosening it again.
+- [planned] Watch `Under the Radar` population before loosening it again (empty on
+  2026-10-12 because of the data gap; see High Priority).
 - [planned] Discord: alerts and bug reports are in place; a key-stat lookup command is the
   remaining idea.
 - [planned] Re-check first-load speed after real usage of the desktop app.
@@ -273,7 +283,8 @@ Needs Decisions
 - Keep the lightweight tracking account long term, or join a broader site membership?
 - A future assistant: explainer, ranked recommender, or collection copilot? What guardrails
   and disclaimers does it need?
-- (See also the [waiting] items above: old dashboard, Report a Bug form, buy labels.)
+- Development pages `/dashboard-lab`, `/dashboard-dev`, `/mobile-rebuild`: decided
+  2026-10-12 to leave them public for now.
 
 Future Ideas
 ------------

@@ -33,8 +33,8 @@ PriceCharting download and Squarespace price sync were running.
 | `/`, `/dashboard` | Responsive market research entry point | Live; desktop part to be replaced by the desktop app |
 | `/buy`, `/discover`, `/research`, `/track`, `/learn` | Area landing pages from the shared header menu | Live |
 | `/mobile` | Direct mobile decision dashboard | Live |
-| `/dashboard-lab` | Desktop command-center reference | Development page; publicly reachable, to remove or restrict |
-| `/mobile-rebuild` | Earlier mobile concept retained for comparison | Development page; publicly reachable, to remove or restrict |
+| `/dashboard-lab` | Desktop command-center reference | Development page; left public on purpose (decided 2026-10-12) |
+| `/mobile-rebuild` | Earlier mobile concept retained for comparison | Development page; left public on purpose (decided 2026-10-12) |
 | `/set-explorer` | Set cost, concentration, and depth | Live; covered by desktop app Market Stats → Set values |
 | `/budget-builder` | Budget-based recommendation builder | Live; covered by desktop app Budget Builder |
 | `/sealed-deals` | Sealed price-per-pack/value screening | Live; covered by desktop app Sealed Deals |
