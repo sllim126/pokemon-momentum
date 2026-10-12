@@ -12,6 +12,10 @@
  * The highlighted area comes from <body data-area="..."> when set, otherwise from the
  * page address (PATH_AREAS). The same AREAS config renders the area landing pages, so
  * the navigation and the hubs can never disagree.
+ *
+ * The links point at the older page addresses on purpose: on desktop the server forwards
+ * each one to the matching desktop-app view (desktop_app_redirect in api.py), while
+ * phones keep opening the older pages.
  */
 (function () {
   const AREAS = [
@@ -48,7 +52,6 @@
         { label: "Browse a Set", href: "/dashboard?tab=group_products", text: "Every card in a set with prices and signals." },
         { label: "Browse a Pokémon", href: "/dashboard?tab=browse_species", text: "Every print of one Pokémon across all sets." },
         { label: "Set Strength", href: "/dashboard?tab=group_signals", text: "Which sets are strengthening or weakening." },
-        { label: "Time to Buy", href: "/dashboard?tab=time_to_buy", text: "Where each card in a set sits in its price range." },
         { label: "Market Indexes", href: "/index-overview", text: "Era and market-wide indexes for English and Japanese cards." },
       ],
     },

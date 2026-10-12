@@ -19,7 +19,7 @@ the other files under `docs/`.
   (collect only, since 2026-10-12; no site yet) in `data/tcgcsv_archive/`
 - Storage: DuckDB working database, partitioned Parquet history, and generated snapshots
 - Frontend: static HTML/CSS/JavaScript pages served by FastAPI; a new single-page desktop
-  app (`/home-preview`, `docs/desktop_app.md`) covers Buy, Discover, Research, Track and Learn
+  app (`/` on desktop, `docs/desktop_app.md`) covers Buy, Discover, Research, Track and Learn
 - Accounts: Google-backed lightweight tracking accounts with saved tags and views
 - Commerce: Squarespace storefront linking, price synchronization, listing intake, and supplier-profitability workflows
 - Collector resources: generated placeholder libraries, checklists, print pages, review queues, and downloads
@@ -32,9 +32,11 @@ PriceCharting download and Squarespace price sync were running.
 
 | Route | Purpose | Status |
 | --- | --- | --- |
-| `/home-preview` | New desktop app: all five areas in one page | Preview; planned to become `/` on desktop |
-| `/`, `/dashboard` | Responsive market research entry point | Live; desktop part to be replaced by the desktop app |
-| `/buy`, `/discover`, `/research`, `/track`, `/learn` | Area landing pages from the shared header menu | Live |
+| `/` | Desktop: the desktop app (all five areas in one page). Phones: the mobile page | Live; desktop app since 2026-10-12 |
+| `/dashboard` | Phones: the mobile page. Desktop: forwards to the desktop app | Live |
+| `/dashboard-classic` | The older research dashboard ("Full data →" on a card) | Live until retired |
+| `/home-preview` | The desktop app's former preview address | Forwards to `/` on desktop |
+| `/buy`, `/discover`, `/research`, `/track`, `/learn` | Area landing pages from the shared header menu | Live on phones; desktop forwards to the app |
 | `/mobile` | Direct mobile decision dashboard | Live |
 | `/dashboard-lab` | Desktop command-center reference | Development page; left public on purpose (decided 2026-10-12) |
 | `/mobile-rebuild` | Earlier mobile concept retained for comparison | Development page; left public on purpose (decided 2026-10-12) |
@@ -105,6 +107,12 @@ Added 2026-10:
   and Learn (How it works), plus a legal footer
 - Collector Hub, Placeholder Library and Account restyled on a shared desktop stylesheet
 - Index snapshots now build after the parquet export, so indexes are no longer a day behind
+- The desktop app is the desktop home page at `/`; older desktop addresses forward to it
+  (phones unchanged), and the older dashboard is at `/dashboard-classic`
+- Card views answer in about 0.01-0.05 s: cached table checks, one shared DuckDB
+  connection, a weekly long-history snapshot for "All" and the 6-Month Hold, browser caching
+- Discover lists scale their activity thresholds to feed gaps
+- Nightly collect-only archive of Magic, Yu-Gi-Oh, One Piece and Lorcana prices
 
 ## What's next
 

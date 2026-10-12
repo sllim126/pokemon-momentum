@@ -19,6 +19,7 @@ from scripts.common.selling_costs import Channel, break_even_price, net_proceeds
 MIN_TREND_POINTS = 8
 MIN_HISTORY_WINDOWS = 60
 FUTURE_MATCH_TOLERANCE_DAYS = 7
+MAX_POINT_WEIGHT_DAYS = 7  # a weekly history point stands for up to a week of days
 # Verdict judgement calls; tune here.
 LIKELY_TRACK_RECORD_PCT = 50
 POSSIBLE_TRACK_RECORD_PCT = 40
@@ -62,11 +63,19 @@ def _trend(points: list[tuple[date, float]], horizon: int) -> dict | None:
 
 
 def _track_record(points: list[tuple[date, float]], horizon: int, channel: Channel, price_ratio: float = 1.0) -> dict:
-    """Every past day bought at `price_ratio` x market and held `horizon` days: did it clear break-even?"""
+    """Every past day bought at `price_ratio` x market and held `horizon` days: did it clear break-even?
+
+    History older than two years comes from the weekly long-history snapshot, so each point
+    counts for the days it stands for: the days until the next point, capped at
+    MAX_POINT_WEIGHT_DAYS (1 for daily prices, up to 7 for a weekly one; the cap stops a
+    gap in the data from counting as days that had prices). The share and the median are
+    weighted that way, and `windows` is the number of days covered, so the result matches
+    what daily prices would give.
+    """
     dates = [d for d, _ in points]
-    wins = 0
-    returns = []
-    for d, price in points:
+    won = 0.0
+    weighted_returns = []
+    for index, (d, price) in enumerate(points):
         target = d + timedelta(days=horizon)
         i = bisect.bisect_left(dates, target)
         best = None
@@ -76,15 +85,25 @@ def _track_record(points: list[tuple[date, float]], horizon: int, channel: Chann
                     best = j
         if best is None:
             continue
+        weight = min((dates[index + 1] - d).days, MAX_POINT_WEIGHT_DAYS) if index + 1 < len(dates) else 1
         future = points[best][1]
-        returns.append(future / price - 1)
+        weighted_returns.append((future / price - 1, weight))
         if future >= break_even_price(price * price_ratio, channel):
-            wins += 1
-    returns.sort()
+            won += weight
+    total = sum(weight for _, weight in weighted_returns)
+    median = None
+    if weighted_returns:
+        weighted_returns.sort()
+        running = 0.0
+        for value, weight in weighted_returns:
+            running += weight
+            if running > total / 2:
+                median = value
+                break
     return {
-        "windows": len(returns),
-        "cleared_break_even_pct": (wins / len(returns) * 100) if returns else None,
-        "median_return_pct": (returns[len(returns) // 2] * 100) if returns else None,
+        "windows": int(round(total)),
+        "cleared_break_even_pct": (won / total * 100) if total else None,
+        "median_return_pct": (median * 100) if median is not None else None,
     }
 
 

@@ -29,11 +29,56 @@ class ApiRouteTests(unittest.TestCase):
         self.addCleanup(feed_patch.stop)
 
     def test_dashboard_route_serves_html(self):
-        response = self.client.get("/dashboard")
+        # The older research dashboard now lives at /dashboard-classic.
+        response = self.client.get("/dashboard-classic")
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Market Signals", response.text)
+
+    def test_public_market_data_is_browser_cacheable_but_account_data_is_not(self):
+        public = self.client.get("/categories")
+        self.assertEqual(public.headers.get("cache-control"), f"public, max-age={api.PUBLIC_DATA_CACHE_SECONDS}")
+        private = self.client.get("/tracking/auth_config")
+        self.assertNotIn("public", private.headers.get("cache-control", ""))
+
+    def test_home_serves_desktop_app_on_desktop(self):
+        response = self.client.get("/", headers={"user-agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/120"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Poke6s desktop app", response.text)
+
+    def test_old_desktop_pages_forward_to_app_views(self):
+        desktop = {"user-agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/120"}
+        cases = {
+            "/dashboard?tab=breakouts&category_id=85": "/?list=breakouts&market=JP",
+            "/dashboard?tab=group_products&group_id=23237": "/?list=set&set=23237",
+            "/dashboard?product=1%7C%7CHolofoil&segment=sealed": "/?kind=sealed&product=1%7C%7CHolofoil",
+            "/?tab=top_movers": "/?list=top_movers",
+            "/home-preview?list=budget": "/?list=budget",
+            "/sealed-deals": "/?list=sealed_deals",
+            "/set-explorer": "/?list=set_values",
+            "/index-overview-sv100": "/?list=index&index=sv100",
+            "/index-overview-jp-pokemon100": "/?list=index&index=jp_pokemon100&market=JP",
+            "/research": "/?list=sets",
+            "/mobile?mode=tracked&tracked_tag=owned": "/?list=track_owned",
+        }
+        for path, target in cases.items():
+            with self.subTest(path=path):
+                response = self.client.get(path, headers=desktop, follow_redirects=False)
+                self.assertEqual(response.status_code, 302)
+                self.assertEqual(response.headers["location"], target)
+
+    def test_phones_and_data_routes_are_never_forwarded(self):
+        phone = {"user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148"}
+        for path in ("/", "/dashboard?tab=breakouts", "/sealed-deals", "/index-overview-sv100", "/research"):
+            with self.subTest(path=path):
+                response = self.client.get(path, headers=phone, follow_redirects=False)
+                self.assertNotEqual(response.status_code, 302)
+        desktop = {"user-agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/120"}
+        self.assertIsNone(api.desktop_app_redirect(
+            type("R", (), {"method": "GET", "headers": desktop, "query_params": {},
+                           "url": type("U", (), {"path": "/index-overview-data", "query": ""})()})()))
 
     def test_dashboard_route_serves_mobile_page_for_mobile_user_agents(self):
         response = self.client.get(
@@ -57,9 +102,10 @@ class ApiRouteTests(unittest.TestCase):
             self.assertEqual(response.status_code, 200, tab)
             self.assertIn("Market Signals", response.text, tab)
 
+    @patch.object(api, "snapshot_history", return_value=None)  # snapshots not built: raw path
     @patch.object(api, "prices_from", return_value="prices")
     @patch.object(api, "q")
-    def test_hold_check_route_returns_verdict(self, q_mock, _prices_from_mock):
+    def test_hold_check_route_returns_verdict(self, q_mock, _prices_from_mock, _history_mock):
         from datetime import date, timedelta
         start = date(2025, 9, 1)
         q_mock.return_value = (["date", "marketPrice"], [(start + timedelta(days=i), 20.0) for i in range(400)])
@@ -71,6 +117,27 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(body["verdict"], "unlikely")
         self.assertEqual(body["buy_price"], 20.0)
         self.assertEqual(q_mock.call_args[0][1], [3, 1, "Normal"])
+
+    @patch.object(api, "q")
+    @patch.object(api, "snapshot_history")
+    def test_hold_check_and_all_chart_read_the_snapshots(self, history_mock, q_mock):
+        from datetime import date, timedelta
+        start = date(2024, 2, 1)
+        # Weekly points for the first year, then daily, as snapshot_history returns them.
+        weekly = [[(start + timedelta(days=7 * i)).isoformat(), 20.0, 20.0, 20.0] for i in range(52)]
+        daily_start = start + timedelta(days=364)
+        daily = [[(daily_start + timedelta(days=i)).isoformat(), 20.0, 20.0, 20.0] for i in range(400)]
+        history_mock.return_value = weekly + daily
+
+        hold = self.client.get("/hold_check?productId=1&subTypeName=Normal").json()
+        chart = self.client.get("/series?productId=1&subTypeName=Normal&days=5000").json()
+
+        self.assertEqual(hold["verdict"], "unlikely")
+        # Weekly points count for 7 days each, so the windows add up to calendar days.
+        self.assertGreater(hold["history_windows"], 52 + 200)
+        self.assertEqual(len(chart["rows"]), 452)
+        self.assertEqual(chart["rows"][0][0], start.isoformat())
+        q_mock.assert_not_called()  # nothing read from the raw price history
 
     @patch.object(api, "db_has_table", return_value=False)
     def test_graded_prices_unavailable_before_first_snapshot(self, _has_table):

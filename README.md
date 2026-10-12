@@ -18,14 +18,16 @@ The goal is simple: make it easier to spot what is moving, what may be starting 
 
 ## Public Pages
 
-- `/home-preview`
-  - the new desktop app: every Buy, Discover, Research, Track and Learn view in one
-    three-column page; planned to replace `/` for desktop visitors (see
-    `docs/desktop_app.md`)
 - `/`
-  - user-agent-aware entry point: the research dashboard on larger screens and the mobile decision dashboard on phones/tablets
+  - desktop: the desktop app, every Buy, Discover, Research, Track and Learn view in one
+    three-column page (see `docs/desktop_app.md`); phones and tablets: the mobile
+    decision dashboard
+  - older desktop addresses (`/dashboard`, `/sealed-deals`, `/index-overview-*`, the area
+    pages, `/home-preview`...) forward to the matching view; phones are never forwarded
 - `/dashboard`
-  - alias of `/`, with the same responsive routing
+  - phones: the mobile decision dashboard; desktop: forwards to the desktop app
+- `/dashboard-classic`
+  - the older research dashboard, opened by a card's "Full data →" until it is retired
 - `/mobile`
   - direct access to the mobile decision dashboard
 - `/buy`, `/discover`, `/research`, `/track`, `/learn`

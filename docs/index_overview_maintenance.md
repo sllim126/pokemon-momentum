@@ -19,7 +19,7 @@ Every page pulls data from `/index-overview-data`, then renders:
 - included set grid
 - top-N holdings based on each index definition's `constituent_limit`
 
-The desktop app (`/home-preview`, Research → Market Stats → Indexes) reads the same
+The desktop app (`/`, Research → Market Stats → Indexes) reads the same
 `/index-overview-data` payload and shows the level chart with set-release markers, the
 top cards, included sets, reshuffles and a method summary. Its list of indexes per market
 is `INDEXES` in `scripts/dashboards/desktop_home.html`; add a new key there too.

@@ -28,6 +28,16 @@
       --font: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
     }
     * { box-sizing: border-box; }
+
+    /* Scrollbars: thin and in the page's colors, with no track; a little brighter while
+       the pointer is over the scrolling area. scrollbar-color covers Firefox and current
+       Chrome/Edge; the ::-webkit-scrollbar rules cover older Chrome and Safari. */
+    * { scrollbar-width: thin; scrollbar-color: rgba(136, 162, 205, 0.16) transparent; }
+    *:hover { scrollbar-color: rgba(136, 162, 205, 0.32) transparent; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(136, 162, 205, 0.16); border-radius: 8px; }
+    :hover::-webkit-scrollbar-thumb { background: rgba(136, 162, 205, 0.32); }
     html, body { height: 100%; }
     body {
       margin: 0;
@@ -498,8 +508,8 @@
     "use strict";
 
     /*
-     * Poke6s desktop app. Served at /home-preview; it is meant to replace the desktop
-     * dashboard at /. Phones keep the separate mobile page.
+     * Poke6s desktop app: the desktop home page at / (since 2026-10-12). Older desktop
+     * addresses forward here (desktop_app_redirect in api.py); phones keep the mobile page.
      *
      * One page, three columns:
      *   left   - every view, from LISTS below, grouped Buy / Rising / Starting to move /
@@ -1953,7 +1963,7 @@
       $("detailChange").textContent = "";
       $("buyInput").value = "";
       $("tcgLink").href = tcgplayerUrl(card);
-      $("fullDataLink").href = `/dashboard?product=${encodeURIComponent(card.key)}&category_id=${categoryId()}&segment=${card.productKind === "sealed" ? "sealed" : "cards"}`;
+      $("fullDataLink").href = `/dashboard-classic?product=${encodeURIComponent(card.key)}&category_id=${categoryId()}&segment=${card.productKind === "sealed" ? "sealed" : "cards"}`;
       renderSaveMenu();
       loadStoreLink(card);
       const seq = ++detailRequestSeq;

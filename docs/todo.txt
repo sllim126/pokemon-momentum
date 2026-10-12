@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-12 (milestone: quick wins, Discover gap fix, other-games archive)
+Last updated: 2026-10-12 (milestone: desktop app at /, fast card views)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -24,7 +24,7 @@ archive older Recently Completed entries at the next milestone.
 Current Focus (2026-10-12)
 --------------------------
 
-- Desktop: the new single-page desktop app at `/home-preview` holds all five areas (Buy,
+- Desktop: the single-page desktop app at `/` (desktop home since 2026-10-12) holds all five areas (Buy,
   Discover, Research, Track, Learn). Guide: `docs/desktop_app.md`. Collector Hub,
   Placeholder Library and Account share its style through `desktop_theme.css`.
 - Mobile (`/mobile` and the mobile handling on `/`) and the admin pages are parked. The
@@ -35,45 +35,23 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
-- 2026-10-12 Started a nightly collect-only archive of Magic, Yu-Gi-Oh, One Piece and Lorcana
-  prices (`collect_tcgcsv_categories.py`, cron 03:30 UTC, `data/tcgcsv_archive/`). No site
-  for them yet; this only builds history, since TCGCSV no longer keeps one.
-- 2026-10-12 Discover lists refilled after the data gap: screener activity thresholds now
-  scale to the days of data in each window (`gap_scaled_threshold` in `query_support.py`;
-  unchanged with a complete feed). Top Movers, Confirmed/Consistent Movers, Breakouts and
-  Pullbacks have cards again. Early Movers and Under the Radar may stay empty for a while
-  because they also need three rises in a row; the app's empty message explains that.
-- 2026-10-12 Quick wins and decisions:
-  - `validate_pipeline.py` now builds index snapshots after the parquet export
-  - `POKE6S_TCGCSV_USER_AGENT` is passed into the container (`docker-compose.yml`)
-  - Placeholder Library, Collector Hub and Account stack and scroll on phones
-    (`desktop_theme.css`, narrow-screen rules); desktop sizes unchanged
-  - every "Report a Bug" link (old dashboard, mobile menu and Support > Bug tab) now opens
-    the Discord #bug-reports invite https://discord.gg/AejcWHkCG; mobile layout unchanged
-  - Budget Builder options: replacing a pick, max cards per set and "why this pick"
-    chips were already built; "allow duplicates" dropped
-  - set views already show "% at a 90-day high"
-  - decided: retire the old research dashboard; swap the Report a Bug form for a Discord
-    link (done); drop the Strong Buy / Good Buy / Fair Price / Wait / High Risk labels (the
-    6-Month Hold check replaces them); leave the development pages public
+- 2026-10-12 Card views are fast: everything a card loads answers in about 0.01-0.05 s
+  (was 0.4-1.5 s). The web app remembers which tables exist and shares one read-only
+  DuckDB connection; the "All" chart and the 6-Month Hold read a new nightly weekly
+  long-history snapshot instead of the raw history (track record weighted so its numbers
+  match daily data); public market data may be cached by browsers for 10 minutes.
+- 2026-10-12 The desktop app is the desktop home page at `/`. Older desktop addresses
+  (`/dashboard`, old `?tab=` links, `/sealed-deals`, `/budget-builder`, `/set-explorer`,
+  `/index-overview*`, the area pages, `/home-preview`, desktop `/mobile?mode=tracked`)
+  forward to the matching view; phones are never forwarded and see no change. The older
+  dashboard moved to `/dashboard-classic` ("Full data →"). Time to Buy left the menus.
 
 High Priority
 -------------
 
-- [next] Make card views fast: prepare everything during the nightly update, and only look
-  it up when a page asks (owner, 2026-10-12: "speed is better than more options"). Timings
-  measured 2026-10-12 when opening a card in the desktop app:
-  - chart 30D/90D/1Y ~0.4 s: already precomputed nightly (series snapshot), but each
-    request opens several DuckDB connections just to check which tables exist
-    (`db_has_table` in `query_support.py`); the lookup itself is ~0.04 s. Cache the table
-    check; this speeds up every endpoint.
-  - chart "All" ~1.5 s: built from the raw history each time. Keep the option (owner: long-
-    term history is rare and valuable); precompute a weekly long-history series nightly.
-  - 6-Month Hold ~0.9 s: reads the full raw price history per request. Read the nightly
-    series snapshot instead (2 years, enough for the 6-month track record), or precompute
-    the market-price result nightly.
-  - let browsers cache snapshot-backed answers until the next nightly update.
-  - target: a card opens in well under 0.3 s.
+- [planned] Speed follow-ups: Sealed Deals takes ~0.5 s (it works out pack prices for every
+  sealed product per request; could be a nightly snapshot), Set Strength ~0.12 s, and Under
+  the Radar ~3 s while the feed is short after the data gap (ends on its own).
 - [waiting] Copy Discord bug reports onto the server (owner, 2026-10-12). Plan: a small
   scheduled job pulls new messages from `#bug-reports` (channel 1489120381993357464) through
   the Discord API, using the last message ID it saw, and saves each one into the existing
@@ -83,19 +61,10 @@ High Priority
   without an always-running bot or a public endpoint. Waiting on the owner to create a
   Discord bot (Read Message History, Add Reactions, Message Content intent), invite it to
   the server, and put its token in `.env` as `POKE6S_DISCORD_BOT_TOKEN`.
-- [next] Promote the desktop app to the main desktop page (details in
-  `docs/desktop_app.md`, "Planned next steps"):
-  - serve it at `/` for desktop visitors; phones keep `/mobile`
-  - point the header menus (`AREAS` in `scripts/dashboards/site_shell.js`) at its views
-  - forward the pages it replaces: `/sealed-deals`, `/budget-builder`, `/set-explorer`,
-    `/index-overview*` and the five area landing pages
-  - remove the Time to Buy menu link (owner decided to leave Time to Buy out)
-  - change the `APP` constant in `scripts/dashboards/account_settings.html` to `/`
-  - update `docs/project_status.md` page map and `docs/desktop_app.md`
 - [planned] Retire the older research dashboard (decided 2026-10-12): move anything still
   worth keeping into the desktop app's Stats tab (see Desktop App Follow-up), then remove
-  the "Full data →" link and forward `/dashboard` on desktop to the app. Do this with, or
-  after, promoting the app to `/`.
+  the "Full data →" link and `/dashboard-classic` (desktop `/dashboard` already forwards
+  to the app).
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.

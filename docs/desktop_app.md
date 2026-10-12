@@ -3,12 +3,30 @@
 Last reviewed: 2026-10-12
 
 The desktop app is one page that holds the site's five areas (Buy, Discover, Research,
-Track, Learn) in a single three-column layout built for 1080p screens. It is served at
-`/home-preview` while it is reviewed, and is meant to replace the older research dashboard
-at `/` for desktop visitors. Phones keep the separate mobile page (`/mobile`).
+Track, Learn) in a single three-column layout built for 1080p screens. Since 2026-10-12 it
+is the desktop home page at `/`. Phones and tablets keep the separate mobile page.
 
 - Page: `scripts/dashboards/desktop_home.html` (HTML, CSS and JavaScript in one file)
-- Route: `desktop_home_preview` in `scripts/dashboards/api.py`
+- Route: `dashboard` (`/`) in `scripts/dashboards/api.py`
+
+## Older addresses forward here (desktop only)
+
+`desktop_app_redirect` and the `forward_desktop_to_app` middleware in `api.py` send desktop
+visitors from each older page to the matching view, so bookmarks, shared links and the
+shared header's menu links (which still name the older pages) keep working. Phones and
+tablets are never forwarded and still get the older pages.
+
+| Older address | Desktop app view |
+| --- | --- |
+| `/dashboard`, `/?tab=…` (old dashboard links) | the same list (`OLD_TAB_TO_APP_LIST`), with `product`, set, market and Singles/Sealed carried over |
+| `/home-preview` | `/` (the app's former preview address) |
+| `/sealed-deals`, `/budget-builder`, `/set-explorer`, `/index-overview` | Sealed Deals, Budget Builder, Market Stats → Set values, Market Stats |
+| `/index-overview-<index>` (e.g. `-sv100`, `-jp-pokemon100`) | that index |
+| `/buy`, `/discover`, `/research`, `/track`, `/learn` | Sealed Deals, Top Movers, Sets, All saved, How it works |
+| `/mobile?mode=tracked&tracked_tag=<tag>` | that saved list |
+
+The older research dashboard is at `/dashboard-classic`, which the card's "Full data →"
+button opens, until it is retired (see `docs/todo.txt`).
 - Shared header: `scripts/dashboards/site_shell.js`
 
 The top of the page's `<script>` has an overview comment with the same essentials as this
@@ -72,6 +90,10 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
   that window (`gap_scaled_threshold` in `query_support.py`), so a gap in the TCGCSV feed
   doesn't empty every list. With a complete feed the bars are unchanged. Early Movers and
   Under the Radar can still be empty: they also need three rises in a row.
+- **Charts and the 6-Month Hold read nightly snapshots**, not the raw history: 30D/90D/1Y
+  from the daily 730-day series snapshot, "All" and the hold check from that plus the
+  weekly long-history snapshot (`snapshot_history` in `api.py`). In the hold check's track
+  record each weekly point counts for the days it stands for, so its numbers match daily data.
 - **6-Month Hold** comes from `scripts/dashboards/hold_check.py`; fee and shipping
   assumptions are in `scripts/common/selling_costs.py` (see the operator runbook).
 - **Stale responses are dropped.** `listRequestSeq` and `detailRequestSeq` increase with
@@ -110,8 +132,7 @@ Account (`account_settings.html`) load `scripts/dashboards/desktop_theme.css`, s
 `/desktop-theme.css`. Its color tokens copy the `:root` block in `desktop_home.html`;
 change both together.
 
-Account links each saved list to `/home-preview?list=track_<tag>` through its `APP`
-constant. Update that constant when the app moves to `/`.
+Account links each saved list to `/?list=track_<tag>` through its `APP` constant.
 
 ## Testing
 
@@ -126,8 +147,5 @@ constant. Update that constant when the app moves to `/`.
 
 These are tracked, with their status, in `docs/todo.txt`.
 
-1. Serve this page at `/` for desktop visitors (phones keep `/mobile`), point the header menus
-   (`AREAS` in `site_shell.js`) at its views, and forward old pages (`/sealed-deals`,
-   `/budget-builder`, `/set-explorer`, `/index-overview*`, the area pages) to their new views.
-2. Retire the older research dashboard behind "Full data →" (decided 2026-10-12): move
+1. Retire the older research dashboard behind "Full data →" (decided 2026-10-12): move
    what's worth keeping into the Stats tab, then remove the link.

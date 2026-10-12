@@ -2,7 +2,7 @@
 
 Reviewed: 2026-09-10 (one row updated 2026-10-12)
 
-Update 2026-10-12: the new desktop app (`/home-preview`) and the restyled Collector Hub,
+Update 2026-10-12: the new desktop app (`/` on desktop) and the restyled Collector Hub,
 Placeholder Library and Account pages were checked in a real browser (Playwright, run from
 the host's `.venv`) at 1920×1080, 1366×768 and 1280×720. They are desktop layouts; phones
 keep the separate `/mobile` page.
