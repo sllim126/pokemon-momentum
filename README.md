@@ -277,7 +277,9 @@ The dashboards then read:
 
 ## Documentation
 
-Detailed docs live here:
+Start with [AGENTS.md](/opt/pokemon-momentum/AGENTS.md) (rules for anyone changing the
+repo, and the "milestone" wrap-up routine) and [docs/todo.txt](/opt/pokemon-momentum/docs/todo.txt)
+(the work list). Detailed docs live here:
 
 - [docs/project_status.md](/opt/pokemon-momentum/docs/project_status.md)
 - [docs/desktop_app.md](/opt/pokemon-momentum/docs/desktop_app.md)

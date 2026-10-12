@@ -103,55 +103,12 @@ Added 2026-10:
 - Collector Hub, Placeholder Library and Account restyled on a shared desktop stylesheet
 - Index snapshots now build after the parquet export, so indexes are no longer a day behind
 
-## Work in progress at the last checkpoint
+## What's next
 
-- Make the desktop app the desktop home page, point the header menus at its views, and
-  forward the pages it replaces (see `docs/desktop_app.md`)
-- Decide whether the older research dashboard (behind "Full data →") is retired or restyled
-- Mobile versions of Set Explorer, Sealed Deals, Browse Set, Browse Species, Set Strength, and Time to Buy
-  (the mobile page itself is intentionally unchanged)
-- Sealed Squarespace listing intake and creation scripts
-- PSA cert data is available server-side but has not been given a settled public UI
-- Placeholder/checklist source gaps and generated-artifact repository policy
-
-The detailed active queue and design decisions live in `docs/todo.txt`.
-
-## Known engineering follow-up
-
-- Tracking sessions never expire, and some refresh parameters (such as
-  `/index-overview-data?refresh=true`) can be triggered by anyone; both should be tightened.
-- Search ranking can put a promo above the main printing (for example "charizard 199").
-- Fee and shipping numbers in `scripts/common/selling_costs.py` marked ESTIMATE still need
-  confirming against real invoices.
-- The desktop app has no automated browser tests in the repository yet.
-
-- Continue splitting the large `scripts/dashboards/api.py` module by route/service domain;
-  index definitions now live in `scripts/dashboards/index_config.py`.
-- Replace remaining full-catalog browser loads with paged server-side search.
-- Continue profiling custom-window `breakouts`; the normal 90-day dashboard request now
-  uses the product-signal snapshot. Warm local measurements improved from about 2.0 seconds
-  to about 0.5 seconds. The default `under_the_radar` path is about 0.16–0.20 seconds.
-- Extract shared frontend shell, API, chart, formatting, and tracking code.
-- Pin runtime dependencies and separate development-only packages.
-- Perform and record phone/tablet/laptop visual QA for the consolidated pages.
-
-The current source-level responsive audit and outstanding real-browser checklist are recorded
-in `docs/responsive_qa.md`.
-
-The default Product Picker response is capped at 250 rows (roughly 14 KB instead of the old
-44,000-row/3 MB response). Custom picker pagination remains available up to the server cap.
-
-## Before resuming feature work
-
-1. Finish the API-domain and shared-frontend extraction without changing route behavior.
-2. Profile and improve the remaining slow live-query paths.
-3. Complete phone/tablet/laptop visual QA.
-4. Run the full test and pipeline validators after each refactor checkpoint.
-5. Only then resume alerts, PSA UI, or additional data-provider features.
-
-Do not treat `output/`, database files, raw downloads, or other ignored runtime data as a
-substitute for source control. Conversely, do not delete local runtime/generated files until
-their rebuild and backup path has been confirmed.
+The work list is `docs/todo.txt`: priorities, open decisions, parked mobile and admin
+work, and known engineering follow-up all live there, so this file doesn't keep a second
+copy. `AGENTS.md` explains how to keep it current. The responsive audit and the outstanding
+real-browser checklist are in `docs/responsive_qa.md`.
 
 ## Repository artifact policy
 
