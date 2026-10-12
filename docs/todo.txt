@@ -125,6 +125,15 @@ High Priority
   exist. They would need their own rarity rules, set eras, sealed product types and
   screener tuning; PriceCharting graded prices would need a separate download and permission.
 
+- [waiting] Graded tab: which "ungraded" price to show (owner, 2026-10-12). The Graded tab
+  shows PriceCharting's ungraded price next to the PSA grades, while the rest of the card
+  uses the TCGplayer market price (via TCGCSV), and the two can disagree a lot. Example:
+  Pikachu, EX Power Keepers: TCGplayer 429.99 vs PriceCharting ungraded 100.81. Options:
+  (a) show our TCGplayer price as "Ungraded" in the Graded tab, (b) keep PriceCharting's
+  and label it clearly ("Ungraded (PriceCharting)"), or (c) show both with sources. Also
+  check whether the gap is a matching error (wrong printing or variant) before deciding.
+  Code: Graded tab in `scripts/dashboards/desktop_home.html`, `/graded_prices` in `api.py`.
+
 Desktop App Follow-up
 ---------------------
 
