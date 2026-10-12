@@ -37,8 +37,18 @@ class FakeConnection:
     def close(self):
         self.closed = True
 
+    def cursor(self):
+        # get_con() hands out cursors on the shared connection.
+        self.cursor_result = FakeConnection(self.description, self.rows, self.tables)
+        return self.cursor_result
+
 
 class QuerySupportTests(unittest.TestCase):
+    def setUp(self):
+        # The table list, parquet checks and shared connection are remembered per process.
+        query_support.clear_source_caches()
+        self.addCleanup(query_support.clear_source_caches)
+
     def test_category_config_proxy_returns_real_config(self):
         category = query_support.category_config(85)
 
@@ -196,7 +206,7 @@ class QuerySupportTests(unittest.TestCase):
         with patch.object(query_support, "DB_PATH", Path("/tmp/fake.duckdb")), patch.object(
             Path, "exists", return_value=True
         ), patch.object(query_support.duckdb, "connect", return_value=fake_disk):
-            self.assertIs(query_support.get_con(), fake_disk)
+            self.assertIs(query_support.get_con(), fake_disk.cursor_result)
 
         with patch.object(query_support, "DB_PATH", Path("/tmp/fake.duckdb")), patch.object(
             Path, "exists", return_value=False

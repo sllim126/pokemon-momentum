@@ -531,8 +531,9 @@ Manual category runs inside Docker
 ----------------------------------
 Use these when testing a category-specific pipeline path directly.
 
-DuckDB allows one writer, and the running website opens the database for its queries, so a
-pipeline run can fail on a lock while the site is up. The nightly script stops the site
+DuckDB allows one writer, and the running website keeps the database open for reading
+(one shared connection, since 2026-10-12), so any pipeline step that writes to it fails on a
+lock while the site is up. The nightly script stops the site
 first; do the same here (`sudo docker-compose stop pokemon-momentum`, run the commands,
 then `sudo docker-compose up -d pokemon-momentum`), or start the systemd service above,
 which does it for you. `--skip-download` reuses the prices already downloaded today.
@@ -1011,7 +1012,8 @@ Symptoms:
 
 Cause:
 
-- the app container is running and reading from the DB while a write process tries to start
+- the app container is running (it keeps the DB open for reading the whole time) while a
+  write process tries to start
 
 Normal design:
 

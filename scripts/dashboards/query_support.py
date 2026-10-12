@@ -1,4 +1,5 @@
 import math
+import threading
 import time
 from datetime import timedelta
 from pathlib import Path
@@ -60,11 +61,49 @@ def category_config(category_id: int):
     return get_category_config(category_id)
 
 
+# ---- Cached source checks and the shared database connection ------------------------
+#
+# Every request used to open the 13 GB DuckDB file several times just to ask which tables
+# exist (~100 ms each), query the parquet history to see whether a market is in it
+# (~270 ms), and open the file again for each query (~80 ms). Those answers only change
+# when the nightly update rebuilds the data, and the nightly update stops the website
+# first, so they are worked out once and remembered. SOURCE_CHECK_TTL_SECONDS is a
+# backstop in case the data is rebuilt while the site is running. Failed checks (for
+# example a locked database) are never remembered.
+SOURCE_CHECK_TTL_SECONDS = 600
+_table_names_cache: tuple[float, frozenset] | None = None
+_parquet_category_cache: dict[int, tuple[float, bool]] = {}
+_shared_con = None
+_shared_con_lock = threading.Lock()
+
+
+def clear_source_caches() -> None:
+    """Forget the cached table list and parquet checks and close the shared connection."""
+    global _table_names_cache, _shared_con
+    _table_names_cache = None
+    _parquet_category_cache.clear()
+    with _shared_con_lock:
+        if _shared_con is not None:
+            try:
+                _shared_con.close()
+            except Exception:  # noqa: BLE001 - closing a dead connection is fine
+                pass
+        _shared_con = None
+
+
+def _fresh(cached_at: float) -> bool:
+    return time.monotonic() - cached_at < SOURCE_CHECK_TTL_SECONDS
+
+
 def has_parquet() -> bool:
     return PARQUET_ROOT.exists() and any(PARQUET_ROOT.rglob("*.parquet"))
 
 
 def parquet_has_category(category_id: int) -> bool:
+    """Whether the parquet price history has rows for a category (remembered; see above)."""
+    cached = _parquet_category_cache.get(category_id)
+    if cached and _fresh(cached[0]):
+        return cached[1]
     if not has_parquet():
         return False
     con = duckdb.connect()
@@ -78,9 +117,11 @@ def parquet_has_category(category_id: int) -> bool:
             """,
             [category_id],
         ).fetchone()
-        return row is not None
+        found = row is not None
     finally:
         con.close()
+    _parquet_category_cache[category_id] = (time.monotonic(), found)
+    return found
 
 
 def prices_from(category_id: int | None = None) -> str:
@@ -90,6 +131,10 @@ def prices_from(category_id: int | None = None) -> str:
 
 
 def db_has_table(name: str) -> bool:
+    """Whether the DuckDB file has a table (the table list is remembered; see above)."""
+    global _table_names_cache
+    if _table_names_cache and _fresh(_table_names_cache[0]):
+        return name in _table_names_cache[1]
     if not DB_PATH.exists():
         return False
     try:
@@ -100,10 +145,11 @@ def db_has_table(name: str) -> bool:
         # the whole dashboard down.
         return False
     try:
-        tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
-        return name in tables
+        tables = frozenset(row[0] for row in con.execute("SHOW TABLES").fetchall())
     finally:
         con.close()
+    _table_names_cache = (time.monotonic(), tables)
+    return name in tables
 
 
 def first_existing_path(*paths: Path) -> Path | None:
@@ -211,15 +257,25 @@ def screener_snapshot_from(category_id: int) -> str:
 
 
 def get_con():
-    if DB_PATH.exists():
-        try:
-            return duckdb.connect(str(DB_PATH), read_only=True)
-        except duckdb.IOException:
-            # Fall back to an in-memory connection so queries against
-            # read_csv_auto/read_parquet sources can still run while the main
-            # database file is locked by another process.
-            return duckdb.connect()
-    return duckdb.connect()
+    """A connection for one query; close it when done.
+
+    Returns a cursor on one shared read-only connection to the DuckDB file, opened on first
+    use (cursors are DuckDB's way to use one connection from several threads, and closing
+    a cursor leaves the shared connection open). While the site runs it holds a read lock,
+    so anything that writes to the DuckDB file must run with the website stopped, as the
+    nightly update does. If the file is missing or locked by a writer, falls back to an
+    in-memory connection so queries on CSV/parquet sources still work.
+    """
+    global _shared_con
+    if not DB_PATH.exists():
+        return duckdb.connect()
+    with _shared_con_lock:
+        if _shared_con is None:
+            try:
+                _shared_con = duckdb.connect(str(DB_PATH), read_only=True)
+            except duckdb.IOException:
+                return duckdb.connect()
+        return _shared_con.cursor()
 
 
 def q(sql: str, params=None):
