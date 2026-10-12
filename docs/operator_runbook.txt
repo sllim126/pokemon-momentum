@@ -577,8 +577,29 @@ Orange and red messages mention `POKE6S_DISCORD_MENTION` (default `@everyone`; s
 `none` to stop pinging). The webhook is `POKE6S_DISCORD_WEBHOOK_URL` in `.env`; without it
 the summary is only printed to the log. A Discord outage never fails a job.
 
+The collect-only archive of other games (see below) posts as "Other games price archive".
+
 Manual `--dry-run` price syncs do not post. Bug reports from visitors are handled in a
 separate Discord channel (#bug-reports), not on the site.
+
+
+Other games archive (collect only)
+----------------------------------
+Every night at 03:30 UTC (user `adam`'s crontab) `scripts/pipeline/run_tcgcsv_collect_host.sh`
+saves one day of TCGCSV data for Magic (1), Yu-Gi-Oh (2), One Piece (68) and Lorcana (71)
+into `data/tcgcsv_archive/<date>/tcgcsv-<date>-<categoryId>.tar.gz`, exactly as served. It
+waits for the Pokemon nightly update to finish first. It never stops the website or touches
+DuckDB.
+
+- add or remove a game: edit `COLLECT_CATEGORIES` in
+  `scripts/download/collect_tcgcsv_categories.py` (TCGplayer category ids are listed at
+  https://tcgcsv.com/tcgplayer/categories)
+- run by hand: `scripts/pipeline/run_tcgcsv_collect_host.sh` (a day already archived is
+  skipped, so this is safe to repeat)
+- look inside a day: `tar -tzf data/tcgcsv_archive/<date>/tcgcsv-<date>-71.tar.gz`
+- exit 3 in the log means TCGCSV blocked or throttled us: don't retry, check the TCGCSV
+  Discord first
+- the archive is ignored by git; back it up with the rest of `data/`
 
 
 Admin access
@@ -1115,6 +1136,7 @@ Logs:
 
 - `/opt/pokemon-momentum/logs/daily_update.log`
 - `/opt/pokemon-momentum/logs/squarespace_price_sync_cron.log`
+- `/opt/pokemon-momentum/logs/tcgcsv_collect.log` (other games archive)
 - `/opt/pokemon-momentum/output/squarespace_retired_listings.jsonl` (listing retirements)
 
 Core scripts:

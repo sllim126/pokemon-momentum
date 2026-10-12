@@ -245,3 +245,6 @@ Thumbs.db
 
 # VSCode
 .vscode/
+
+# Collect-only TCGCSV archive for other games (large; grows by one file per game per day)
+data/tcgcsv_archive/

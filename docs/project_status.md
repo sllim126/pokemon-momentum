@@ -13,7 +13,10 @@ the other files under `docs/`.
 - Market data: daily English and Japanese TCGCSV-backed updates, fetched per set since
   TCGCSV retired its daily archive (no prices exist for 2026-09-16 to 2026-10-07)
 - Graded data: nightly PriceCharting snapshot, kept as our own history
-- Alerts: nightly update and Squarespace price sync post pass/fail summaries to Discord
+- Alerts: nightly update, Squarespace price sync and the other-games archive post
+  pass/fail summaries to Discord
+- Other games: Magic, Yu-Gi-Oh, One Piece and Lorcana prices are archived nightly
+  (collect only, since 2026-10-12; no site yet) in `data/tcgcsv_archive/`
 - Storage: DuckDB working database, partitioned Parquet history, and generated snapshots
 - Frontend: static HTML/CSS/JavaScript pages served by FastAPI; a new single-page desktop
   app (`/home-preview`, `docs/desktop_app.md`) covers Buy, Discover, Research, Track and Learn

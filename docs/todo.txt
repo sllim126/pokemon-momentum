@@ -35,6 +35,9 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-12 Started a nightly collect-only archive of Magic, Yu-Gi-Oh, One Piece and Lorcana
+  prices (`collect_tcgcsv_categories.py`, cron 03:30 UTC, `data/tcgcsv_archive/`). No site
+  for them yet; this only builds history, since TCGCSV no longer keeps one.
 - 2026-10-12 Discover lists refilled after the data gap: screener activity thresholds now
   scale to the days of data in each window (`gap_scaled_threshold` in `query_support.py`;
   unchanged with a complete feed). Top Movers, Confirmed/Consistent Movers, Breakouts and
@@ -110,6 +113,17 @@ High Priority
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
 - [waiting] Black Friday pull lists: the owner will supply the sets and a minimum price.
+
+- [waiting] Backfill history if TCGCSV brings its daily archive back (owner hears it may
+  return around November 2026). Then download the missing days for Pokemon (the
+  2026-09-16 to 10-07 gap) and as far back as is useful for the collected games. A full
+  1-to-1 copy of TCGCSV is possible but large (94 categories); ask TCGCSV (their Discord)
+  before any bulk download, keep the 150 ms spacing, and stop on 403/429.
+- [planned] Check the size of `data/tcgcsv_archive/` after a month and decide how many
+  games to keep collecting.
+- [idea] Sites for other games (magic6s, yugi6s, lorcana6s...) once 6-12 months of history
+  exist. They would need their own rarity rules, set eras, sealed product types and
+  screener tuning; PriceCharting graded prices would need a separate download and permission.
 
 Desktop App Follow-up
 ---------------------

@@ -656,6 +656,20 @@ Daily behavior (02:00 UTC, systemd timer `pokemon-momentum-daily-update.timer`):
   [notify_discord.py](/opt/pokemon-momentum/scripts/pipeline/notify_discord.py), even when a
   step fails
 
+Collect-only archive for other games (03:30 UTC, user cron,
+[run_tcgcsv_collect_host.sh](/opt/pokemon-momentum/scripts/pipeline/run_tcgcsv_collect_host.sh)):
+
+- waits until the Pokemon nightly update has released its lock, so the two never fetch
+  from TCGCSV at the same time
+- [collect_tcgcsv_categories.py](/opt/pokemon-momentum/scripts/download/collect_tcgcsv_categories.py)
+  saves Magic (1), Yu-Gi-Oh (2), One Piece (68) and Lorcana (71): each game's set list and
+  every set's prices (plus product lists on Sundays and on a game's first run), byte for
+  byte, into `data/tcgcsv_archive/<date>/tcgcsv-<date>-<categoryId>.tar.gz`
+- a day already archived is skipped (TCGCSV asks for each file at most once a day)
+- nothing is loaded into DuckDB, no snapshots, no website pages; the archive exists so
+  those games have real history if a site for them is built later
+- Discord summary: "Other games price archive"
+
 Weekly behavior:
 
 - same overall pipeline
