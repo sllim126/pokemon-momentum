@@ -497,7 +497,55 @@
   (function () {
     "use strict";
 
+    /*
+     * Poke6s desktop app. Served at /home-preview; it is meant to replace the desktop
+     * dashboard at /. Phones keep the separate mobile page.
+     *
+     * One page, three columns:
+     *   left   - every view, from LISTS below, grouped Buy / Rising / Starting to move /
+     *            Dipped / My lists / Research / Learn
+     *   middle - the current view: a table of cards, or one of the special views (Sets,
+     *            Market Stats, Budget Builder's picks grid, How it works)
+     *   right  - the selected card: price chart, 6-Month Hold, Targets, Graded, Stats, actions
+     *
+     * How it fits together:
+     *   - LISTS describes each view: where its rows come from (fetchList), which fields
+     *     are the price and the change figure, and its nav group. A plain market list
+     *     only needs a LISTS entry, because its API path is /<key>.
+     *   - `state` is everything on screen. syncUrl() writes it to the address bar so any
+     *     view can be bookmarked or shared; the start of `state` reads it back.
+     *   - openList(key) switches view; loadList() shows the right controls and loads rows.
+     *     Responses are cached per market (cached()), and listRequestSeq/detailRequestSeq
+     *     drop responses that arrive after the visitor has already moved on.
+     *
+     * URL parameters: market=JP, kind=sealed, list=<LISTS key>, product=<productId||subType>,
+     *   set, filter, from=stats (a set opened from Market Stats), q (Pokémon name), era,
+     *   index, tab (index view), type (Sealed Deals), budget, max, rarity, cards, per_set,
+     *   skip (Budget Builder).
+     *
+     * Browser storage, shared with the mobile site:
+     *   pokemon-momentum-tags            saved lists: {"productId||subType": ["owned", ...]}
+     *   pokemon-momentum-price-targets   {"categoryId||productId||subType": {buy, sell}}
+     *   pokemon-momentum-tracking-token  sign-in token; when present, lists sync via /tracking/tags
+     *
+     * Server endpoints: the market list routes (/top_movers, ...), /search, /universe,
+     *   /health, /series, /sparkline_batch, /hold_check, /graded_prices, /store_link,
+     *   /group_signals, /group_products, /group_series, /set_baskets, /browse_species,
+     *   /index-overview-data, /sealed_deals, /budget_builder, /tracking/*.
+     */
+
     // ---------- configuration ----------
+    // Every view in the app. Fields:
+    //   key           view id; also the ?list= value, and the API path for market lists
+    //   group         nav heading; buy / track / research / learn say which header area it is in
+    //   price         row field holding the price
+    //   change        row field for the change column; changeLabel / changeHeader word it,
+    //                 lowerIsBetter flips its colors (Sealed Deals: cheaper is green)
+    //   sparkChange   no change field from the API: use the 90-day change from the sparkline
+    //   kindless      the Singles/Sealed switch doesn't apply here, so it is hidden
+    //   hidden        not listed in the nav; reached from another view (parent / navParent)
+    //   extra         header of an extra column (Sealed Deals: loose-pack price)
+    //   track / tag   a saved list, and the tag it shows ("all" = every saved item)
     const LISTS = [
       { key: "sealed_deals", group: "Buy", buy: true, kindless: true, label: "Sealed Deals", desc: "Boxes, ETBs, tins and bundles compared with buying the same booster packs loose. Negative means the sealed product is the cheaper way to get those packs.", price: "latest_price", change: "vs_loose_pct", changeLabel: "vs loose packs", changeHeader: "Vs loose packs", lowerIsBetter: true, extra: "Packs bought loose" },
       { key: "budget", group: "Buy", buy: true, kindless: true, label: "Budget Builder", desc: "Don't know what to buy? Pick a budget and get a spread of the strongest actively traded hits that fit it.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
@@ -522,8 +570,11 @@
       { key: "guide", group: "Learn", learn: true, kindless: true, label: "How it works", desc: "What each list and tool means, in plain language." },
     ].map((l) => (l.track || l.key === "set" || l.key === "species" || l.key === "index"
       ? { price: "latest_price", change: "", changeLabel: "90 days", sparkChange: true, ...l } : l));
+    // The market screeners (Rising / Starting to move / Dipped): the ones with counts in the
+    // nav and the ones the home page falls back to when the default list is empty.
     const MARKET_LISTS = LISTS.filter((l) => !l.track && !l.research && !l.buy && !l.learn);
     LISTS.find((l) => l.key === "set").parent = "sets";
+    // Sort menu per kind of view. "signal" keeps the order the API returned.
     const SORTS = {
       market: [["signal", "signal strength"], ["change", "biggest change"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"]],
       track: [["signal", "saved order"], ["target", "closest to buy target"], ["change", "biggest change"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"]],
@@ -564,6 +615,8 @@
     const TARGETS_KEY = "pokemon-momentum-price-targets";
 
     // ---------- state ----------
+    // Everything on screen. Starting values come from the URL so shared links reopen the
+    // same view (see syncUrl for the reverse).
     const params = new URLSearchParams(location.search);
     const state = {
       market: params.get("market") === "JP" ? "JP" : "EN",
@@ -595,13 +648,16 @@
       rows: [],
       selected: null,
     };
+    // A set or index link without its id falls back to the list it came from.
     if (state.list === "set" && !state.groupId) state.list = "sets";
     if (state.list === "index" && !state.indexKey) state.list = "indexes";
+    // API responses per view + market (+ filters), so switching back is instant.
     const listCache = new Map();
     // Only an explicit ?list= pins the list; otherwise an empty default falls through
     // to the first list that has cards, so the home page never opens on a blank table.
     let listPinned = params.has("list");
     let fallbackNote = "";
+    // Bumped on every new request; a response whose number is no longer current is ignored.
     let listRequestSeq = 0;
     let detailRequestSeq = 0;
 
@@ -623,11 +679,14 @@
       node.append(...children.filter((c) => c !== null && c !== undefined));
       return node;
     };
+    // Small helpers: categoryId 3 = English, 85 = Japanese; a card's key is "productId||subType".
     async function getJson(path, options) {
       const response = await fetch(path, options);
       if (!response.ok) throw new Error(`${response.status} ${path}`);
       return response.json();
     }
+    // Write the current view into the address bar (without adding a history entry).
+    // Only non-default values are written, so links stay short.
     function syncUrl() {
       const url = new URL(location.href);
       url.search = "";
@@ -658,10 +717,13 @@
       if (state.selected) url.searchParams.set("product", state.selected.key);
       history.replaceState(null, "", url);
     }
+    // Most endpoints answer {columns, rows}; turn that into one object per row.
     function rowObjects(payload) {
       const cols = payload.columns || [];
       return (payload.rows || []).map((row) => Object.fromEntries(cols.map((c, i) => [c, row[i]])));
     }
+    // The shape every card table uses. `raw` keeps the original API fields for view-specific
+    // columns (pack breakdown, budget share, reasons, ...).
     function normalizeRow(raw, list) {
       const price = Number(raw[list.price] ?? raw.latest_price ?? raw.p_now);
       return {
@@ -710,6 +772,7 @@
       loadCounts();
       loadList();
     }
+    // "Prices as of" in the toolbar: the newest price date for this market.
     async function loadFreshness() {
       try {
         const health = await getJson(`/health?category_id=${categoryId()}`);
@@ -755,6 +818,7 @@
         searchInput.focus();
       }
     });
+    // Typeahead under the search box: cards open in the right column, sets open their card list.
     async function runSearch() {
       const query = searchInput.value.trim();
       const seq = ++searchSeq;
@@ -810,6 +874,7 @@
     }
 
     // ---------- tools nav ----------
+    // Left column: one button per LISTS view (grouped), then each group's links to other pages.
     function renderTools(counts = {}) {
       const nav = $("toolsNav");
       const nodes = [];
@@ -835,6 +900,7 @@
       nodes.push(...groupLinks(group));
       nav.replaceChildren(...nodes);
     }
+    // Switch to another view: highlight it in the nav and the header, clear the filter, load it.
     function openList(key) {
       listPinned = true;
       fallbackNote = "";
@@ -852,6 +918,8 @@
       renderTools(lastCounts);
       loadList();
     }
+    // A set's cards. `from` is where "back" returns to: Sets, or Set values in Market Stats
+    // (which also shows the whole-set price chart).
     function openSet(groupId, name, from = "sets") {
       state.setFrom = from;
       state.groupId = Number(groupId);
@@ -859,6 +927,7 @@
       state.setFilter = "all";
       openList("set");
     }
+    // Which nav item to highlight for views that aren't listed themselves.
     function navOwner() {
       const list = currentList();
       if (list.key === "set") return state.setFrom === "set_values" ? "indexes" : "sets";
@@ -881,6 +950,8 @@
       state.indexTab = button.dataset.indexTab;
       loadList({ keepSelection: true });
     });
+    // Item counts beside each nav entry. Also: if the home page opened on an empty default
+    // list, switch to the first market list that has cards and say so.
     const lastCounts = {};
     async function loadCounts() {
       const scope = `${state.market}:${state.kind}`;
@@ -905,6 +976,9 @@
         rerender();
       }
     }
+    // ---------- data loading ----------
+    // Rows for a view. Special views have their own fetchers below; plain market lists read
+    // /<key>?product_kind=&category_id= and are cached per market and Singles/Sealed.
     function fetchList(list) {
       if (list.track) return fetchTracked().then((rows) => (list.tag === "all" ? rows : rows.filter((r) => tagsFor(r.key).has(list.tag))));
       if (list.key === "sets") return fetchSets();
@@ -929,6 +1003,7 @@
       return listCache.get(cacheKey);
     }
 
+    // Run `load` once per key and share the promise; a failed request is forgotten so it retries.
     function cached(cacheKey, load) {
       if (!listCache.has(cacheKey)) {
         const request = load();
@@ -937,9 +1012,11 @@
       }
       return listCache.get(cacheKey);
     }
+    // Set Strength rows (breadth, 30/90-day averages) for the Sets view.
     function fetchSets() {
       return cached(`sets:${state.market}`, () => getJson(`/group_signals?limit=1000&category_id=${categoryId()}`).then(rowObjects));
     }
+    // One set's cards (or sealed products), optionally narrowed by a rarity filter.
     function fetchSetCards() {
       const filter = state.kind === "sealed" ? "all" : state.setFilter;
       const list = LISTS.find((l) => l.key === "set");
@@ -953,21 +1030,26 @@
         return rows;
       });
     }
+    // One index's full payload. jp_* indexes are Japanese (category 85).
     function fetchIndex(key) {
       const category = key.startsWith("jp_") ? 85 : 3;
       return cached(`index:${key}`, () => getJson(`/index-overview-data?index=${encodeURIComponent(key)}&category_id=${category}`));
     }
+    // Every index for this market, in era order; one that fails to load is left out.
     function fetchIndexes() {
       const keys = INDEXES[state.market];
       return Promise.all(keys.map((key) => fetchIndex(key).then((payload) => ({ key, era: keys.indexOf(key), payload })).catch(() => null)))
         .then((rows) => rows.filter(Boolean));
     }
+    // Set Explorer numbers for Market Stats → Set values.
     function fetchSetValues() {
       return cached(`set_values:${state.market}`, () => getJson(`/set_baskets?limit=2000&category_id=${categoryId()}`).then(rowObjects));
     }
+    // Whole-set price history (equal-weighted, starts at 100) for the set chart.
     function fetchSetSeries(groupId) {
       return cached(`set_series:${state.market}:${groupId}`, () => getJson(`/group_series?groupId=${groupId}&days=5000&category_id=${categoryId()}`).then(rowObjects));
     }
+    // Every sealed product (no price limits, so loose packs are included for the comparison).
     function fetchSealedDeals() {
       const list = LISTS.find((l) => l.key === "sealed_deals");
       return cached(`sealed_deals:${state.market}`, () => getJson(`/sealed_deals?category_id=${categoryId()}&min_price=0&max_price=100000&limit=2000`)
@@ -1010,6 +1092,7 @@
       if (!(loose > 0) || !(item.latest_price > 0)) return { vs_loose_pct: null };
       return { loose_value: loose, loose_lines: lines, vs_loose_pct: (item.latest_price / loose - 1) * 100 };
     }
+    // Budget Builder picks for the current controls; the response summary rides along as rows.meta.
     function fetchBudget() {
       const list = LISTS.find((l) => l.key === "budget");
       const query = new URLSearchParams({ budget: String(state.budget), limit: String(state.budgetCards), max_per_set: String(state.budgetPerSet), category_id: String(categoryId()) });
@@ -1023,6 +1106,7 @@
         return rows;
       }));
     }
+    // Every printing of the typed Pokémon name, then only singles or only sealed.
     function fetchSpecies() {
       const query = state.species.trim();
       if (query.length < 2) return Promise.resolve([]);
@@ -1102,8 +1186,11 @@
         chip(String(states.filter((t) => t.kind === "none").length), "without targets"));
     }
 
-    // ---------- results ----------
+    // ---------- showing a view ----------
     const currentList = () => LISTS.find((l) => l.key === state.list);
+    // Show the current view: set the title and column headers, show only the controls and
+    // table this view uses, update the URL, then load and draw its rows. Views with their
+    // own table (Sets, Market Stats, index details, the guide) hand off to their loaders.
     async function loadList({ keepSelection = false } = {}) {
       const list = currentList();
       const seq = ++listRequestSeq;
@@ -1184,6 +1271,7 @@
         if (seq === listRequestSeq) $("listLoading").hidden = true;
       }
     }
+    // Fill the sort menu for this kind of view, keeping the current choice when it still applies.
     function setSortOptions(list) {
       const select = $("sortSelect");
       const options = SORTS[sortKind(list)];
@@ -1193,6 +1281,7 @@
       select.value = value;
       select.dataset.kind = sortKind(list);
     }
+    // Redraw the current view from rows already loaded (after a filter or sort change).
     const rerender = () => {
       if (state.list === "sets") renderSets();
       else if (state.list === "set_values") renderSetValues();
@@ -1203,6 +1292,8 @@
     // ---------- sets ----------
     let setLogoIds = null;
     getJson("/set-logos.json").then((d) => { setLogoIds = new Set((d.groupIds || []).map(String)); if (state.list === "sets") renderSets(); }).catch(() => {});
+    // Sets view: the Set Strength table. "Strength" is the API's breadth_score, which has no
+    // fixed top, so its bars are scaled to the strongest set shown.
     async function loadSets(seq) {
       state.rows = [];
       $("resultsBody").replaceChildren();
@@ -1268,6 +1359,7 @@
       syncUrl();
       rerender();
     });
+    // Title and one-line summary for a set's card list, from the Sets (and Set values) data.
     async function describeSet() {
       const groupId = state.groupId;
       $("listTitle").textContent = state.groupName || "Set";
@@ -1292,6 +1384,7 @@
         }
       } catch (_err) { /* title stays as-is */ }
     }
+    // "Which cards" menu for a set: only filters the API says this set has.
     function renderSetFilter(available) {
       const select = $("setFilter");
       const ids = ["all", ...available.filter((id) => id !== "all" && SET_FILTER_LABELS[id])];
@@ -1306,6 +1399,7 @@
 
     // ---------- market indexes ----------
     const level = (v) => (Number.isFinite(v) ? Math.round(v).toLocaleString() : "—");
+    // Market Stats → Indexes table.
     async function loadIndexes(seq) {
       state.rows = [];
       try {
@@ -1350,6 +1444,7 @@
       empty.hidden = rows.length > 0;
       if (!rows.length) empty.replaceChildren(el("h3", { text: state.indexRows.length ? "No indexes match" : "Indexes couldn't load" }), el("div", { text: state.indexRows.length ? "Clear the filter." : "Try again in a moment." }));
     }
+    // Header line and chart for one index; set-release dates are drawn as markers.
     function describeIndex(payload) {
       if (!payload) return;
       const info = payload.summary || {};
@@ -1518,6 +1613,8 @@
       if (event.key === "Enter") lookUpSpecies($("speciesInput").value);
     });
 
+    // ---------- card table (every view that lists cards) ----------
+    // The loaded rows after the name filter, price range, Sealed Deals type and sort.
     function visibleRows() {
       const text = $("filterInput").value.trim().toLowerCase();
       const min = Number.parseFloat($("minPriceInput").value);
@@ -1585,6 +1682,7 @@
         selectCard(rows[0]);
       }
     }
+    // Budget Builder draws its picks as a card-art grid instead of the table.
     function renderPicks(rows) {
       $("pickGrid").replaceChildren(...rows.map((row) => {
         const r = row.raw;
@@ -1620,12 +1718,14 @@
         return b;
       }));
     }
+    // Green/red percentage pill; "—" when there's no figure.
     function changePill(value, lowerIsBetter = false) {
       if (!Number.isFinite(value)) return el("span", { class: "muted", text: "—" });
       const good = lowerIsBetter ? value <= 0 : value >= 0;
       return el("span", { class: `pill ${good ? "up" : "down"}`, text: pct(value) });
     }
     const packs = (n) => `${n} pack${n === 1 ? "" : "s"}`;
+    // The view-specific extra column (Sealed Deals: loose-pack total, with the breakdown on hover).
     function extraCell(row, list) {
       if (list.key === "sealed_deals") {
         const r = row.raw;
@@ -1635,6 +1735,8 @@
       if (list.key === "budget") return el("span", { class: "target-text", text: Number.isFinite(row.raw.budget_share_pct) ? `${Math.round(row.raw.budget_share_pct)}%` : "—" });
       return el("span", { text: "" });
     }
+    // ---------- sealed deals and budget builder controls ----------
+    // Product-type menu built from the types actually present, with counts.
     function renderTypeFilter(rows) {
       const counts = {};
       for (const r of rows) if (r.raw.productType) counts[r.raw.productType] = (counts[r.raw.productType] || 0) + 1;
@@ -1664,6 +1766,7 @@
       $("budgetInput").value = button.dataset.budget;
       budgetChanged(0);
     });
+    // "Spent / left / cards / sets" chips above the picks.
     function renderBudgetSummary() {
       const meta = state.budgetMeta;
       if (state.list !== "budget" || !meta || !state.rows.length) return;
@@ -1677,6 +1780,7 @@
         chip(String(meta.set_count), meta.set_count === 1 ? "set" : "sets"));
     }
     let budgetTimer = null;
+    // Read the budget controls and reload; typing waits 500 ms, menus and presets apply at once.
     function budgetChanged(delay = 500) {
       clearTimeout(budgetTimer);
       budgetTimer = setTimeout(() => {
@@ -1695,6 +1799,8 @@
     $("budgetPerSet").value = String(state.budgetPerSet);
     $("budgetInput").value = String(state.budget);
     if (state.budgetMax) $("budgetMaxInput").value = String(state.budgetMax);
+    // ---------- empty states ----------
+    // Explain why a view has nothing to show, and offer the next step.
     function renderEmpty(errorText) {
       const empty = $("resultsEmpty");
       if (errorText) {
@@ -1768,6 +1874,8 @@
 
     // ---------- sparklines ----------
     const sparkCache = new Map();
+    // Fetch 90-day sparklines in batches of 50 for rows not cached yet, draw them, and for
+    // views without an API change figure, fill the change column from the same data.
     async function hydrateSparklines(rows) {
       const scope = categoryId();
       const missing = rows.filter((r) => !sparkCache.has(`${scope}:${r.key}`));
@@ -1811,6 +1919,7 @@
     }
 
     // ---------- detail panel ----------
+    // Make a card the selected one: highlight its row, update the URL, redraw the right column.
     function selectCard(card, { scroll = false } = {}) {
       state.selected = card;
       document.querySelectorAll("#resultsBody tr, #pickGrid .pick").forEach((node) => node.setAttribute("aria-selected", String(node.dataset.key === card.key)));
@@ -1828,6 +1937,8 @@
       // Unknown or stale link: show the top card of the list instead of an empty panel.
       if (!state.selected && state.rows.length) selectCard(state.rows[0]);
     }
+    // Fill the right column for the selected card and start its chart, hold check and graded
+    // requests; each carries detailRequestSeq so a slow answer can't overwrite a newer card.
     function renderDetail() {
       const card = state.selected;
       $("detailEmpty").hidden = Boolean(card);
@@ -1852,6 +1963,7 @@
       renderTargets(card);
       showTab(state.tab);
     }
+    // TCGplayer product link (with language and printing preselected), wrapped in the affiliate link.
     function tcgplayerUrl(card) {
       const target = new URL(`https://www.tcgplayer.com/product/${card.productId}`);
       if (card.productKind !== "sealed") {
@@ -1863,6 +1975,7 @@
       affiliate.searchParams.set("u", target.toString());
       return affiliate.toString();
     }
+    // "Our store" button, shown only when the card is listed and in stock in the Squarespace store.
     async function loadStoreLink(card) {
       const link = $("storeLink");
       link.hidden = true;
@@ -1923,6 +2036,9 @@
       }
     }
     const fmtDate = (iso) => new Date(`${iso}T00:00:00Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+    // Hand-drawn SVG line chart with a hover tooltip. points: [{date, price, sma30}];
+    // `format` labels the tooltip (dollars by default, index points for indexes);
+    // `markers` are dated vertical lines (set releases).
     function drawChart(container, points, format = money, markers = []) {
       container.replaceChildren();
       if (points.length < 2) return;
@@ -2003,6 +2119,7 @@
       clearTimeout(buyTimer);
       buyTimer = setTimeout(() => state.selected && loadHold(state.selected, detailRequestSeq), 350);
     });
+    // 6-Month Hold tab: /hold_check at market price, or at the buy price typed in.
     async function loadHold(card, seq) {
       const query = new URLSearchParams({ productId: card.productId, subTypeName: card.subTypeName, category_id: String(categoryId()) });
       const buy = Number.parseFloat($("buyInput").value);
@@ -2137,6 +2254,8 @@
         el("div", { class: "save-note", text: syncedTags ? "Synced to your account." : "Saved in this browser. Sign in to sync." }));
     }
     $("saveBtn").addEventListener("click", () => { $("saveMenu").hidden = !$("saveMenu").hidden; });
+    // Add or remove a card from a saved list: on the account when signed in, otherwise in this
+    // browser. Then refresh the nav counts and, on a saved list, the list itself.
     async function toggleTag(card, tag, enabled) {
       const token = trackingToken();
       if (token && syncedTags) {

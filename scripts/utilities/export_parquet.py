@@ -1,3 +1,10 @@
+"""Copy any (date, category) price slices that are in DuckDB but not yet in the parquet store.
+
+The parquet files under data/parquet/date=YYYY-MM-DD/ are the long-term price history
+that charts, indexes and the hold check read. Runs near the end of the nightly update;
+safe to re-run, because slices already exported are skipped.
+"""
+
 from pathlib import Path
 
 import duckdb
@@ -10,6 +17,7 @@ DB_PATH = PROCESSED_DIR / "prices_db.duckdb"
 
 
 def pick_source_table(con: duckdb.DuckDBPyConnection) -> str:
+    """Name of the DuckDB price table (older databases call it `prices`)."""
     tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
     if "pokemon_prices" in tables:
         return "pokemon_prices"

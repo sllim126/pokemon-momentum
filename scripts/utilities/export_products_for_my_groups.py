@@ -1,3 +1,12 @@
+"""Refresh product names, images, rarities and card numbers for the sets we have prices for.
+
+Fetching every set's product list each night would be thousands of TCGCSV requests,
+so by default only sets that are new, still placeholders, or whose product file changed
+are fetched. "Changed" is decided with TCGCSV's manifest (a content hash per file),
+compared against the hashes saved after our last successful fetch.
+`--full-refresh` refetches everything.
+"""
+
 import argparse
 import csv
 import json
@@ -134,6 +143,7 @@ def groups_with_placeholder_rows(existing_rows: dict[tuple[int, int], tuple]) ->
 
 
 def products_path(category_id: int, group_id: int) -> str:
+    """TCGCSV path of one set's product list (also its key in the manifest)."""
     return f"/tcgplayer/{category_id}/{group_id}/products"
 
 
@@ -170,6 +180,7 @@ def load_fetched_hashes(path: Path) -> dict[int, str]:
 
 
 def save_fetched_hashes(path: Path, hashes: dict[int, str]) -> None:
+    """Remember each set's manifest hash so tomorrow's run can skip unchanged sets."""
     path.write_text(json.dumps({str(group_id): digest for group_id, digest in sorted(hashes.items())}, indent=0))
 
 
@@ -257,6 +268,7 @@ def main() -> int:
     fetched_hashes = load_fetched_hashes(hashes_path)
 
     def current_hash(gid: int) -> str | None:
+        """Today's manifest hash for a set's product file (None if no manifest)."""
         return manifest.get(products_path(category.category_id, gid)) if manifest is not None else None
 
     if args.full_refresh:

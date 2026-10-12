@@ -27,6 +27,7 @@ SPIKE_ABOVE_TREND_PCT = 20  # flag prices this far above the trend line
 
 
 def _as_date(value) -> date:
+    """Accept a date, a datetime, or an ISO string from the price history."""
     return value if isinstance(value, date) else date.fromisoformat(str(value)[:10])
 
 

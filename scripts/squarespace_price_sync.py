@@ -29,6 +29,8 @@ import requests
 
 @dataclass
 class VariantMapping:
+    """One store listing variant: the IDs the Squarespace API needs, plus its current prices."""
+
     sku: str
     product_id: str
     variant_id: str
@@ -39,12 +41,15 @@ class VariantMapping:
 
 @dataclass
 class MarketRow:
+    """One row of the market price CSV. target_price, when set, is the exact price to charge."""
+
     sku: str
     market_price: Decimal
     target_price: Optional[Decimal]
 
 
 def load_local_dotenv(env_path: Path) -> None:
+    """Load KEY=value lines from .env without overriding variables already set."""
     if not env_path.exists():
         return
 
@@ -57,6 +62,7 @@ def load_local_dotenv(env_path: Path) -> None:
 
 
 def _parse_decimal(value: str) -> Optional[Decimal]:
+    """A price string as a Decimal; blank, 'null' or unreadable values become None."""
     if value is None:
         return None
     value = value.strip()
@@ -69,6 +75,7 @@ def _parse_decimal(value: str) -> Optional[Decimal]:
 
 
 def load_squarespace_export(path: str) -> Dict[str, VariantMapping]:
+    """SKU -> listing IDs and prices, read from a Squarespace product export CSV."""
     mapping: Dict[str, VariantMapping] = {}
     with open(path, newline="") as f:
         reader = csv.DictReader(f)
@@ -134,6 +141,7 @@ def load_created_listing_mapping(path: str, export_path: str | None = None) -> D
 
 
 def load_market_prices(path: str) -> Dict[str, MarketRow]:
+    """SKU -> market price (and optional target price) from the market price CSV."""
     prices: Dict[str, MarketRow] = {}
     with open(path, newline="") as f:
         reader = csv.DictReader(f)
@@ -157,6 +165,7 @@ def load_market_prices(path: str) -> Dict[str, MarketRow]:
 
 
 def round_price(value: Decimal, cents: int) -> Decimal:
+    """Round half-up to `cents` decimal places (0 = whole dollars)."""
     if cents <= 0:
         return value.quantize(Decimal("1"), rounding=ROUND_HALF_UP)
     quant = Decimal("1").scaleb(-cents)
@@ -164,6 +173,11 @@ def round_price(value: Decimal, cents: int) -> Decimal:
 
 
 def round_price_with_ending(value: Decimal, cents: int, price_ending: str) -> Decimal:
+    """Round down to the nearest price with the given ending, e.g. 12.40 with '0.99' -> 11.99.
+
+    Rounding down keeps the store at or below the computed price. An empty ending
+    just rounds normally.
+    """
     normalized_ending = price_ending.strip()
     if not normalized_ending:
         return round_price(value, cents)
@@ -187,6 +201,8 @@ def compute_new_price(
     round_cents: int,
     price_ending: str,
 ) -> Decimal:
+    """Store price = market price + markup %, given its price ending, then kept between
+    min_price and max_price."""
     candidate = market_price * (Decimal("1") + markup_pct / Decimal("100"))
     candidate = round_price_with_ending(candidate, round_cents, price_ending)
     if min_price is not None and candidate < min_price:
@@ -202,6 +218,8 @@ def should_update(
     min_abs: Decimal,
     min_pct: Decimal,
 ) -> bool:
+    """Only change a price when it moves by at least min_abs dollars and min_pct percent,
+    so the store isn't rewritten for a few cents of market noise."""
     if current is None:
         return True
     diff = abs(new - current)
@@ -215,6 +233,7 @@ def should_update(
 
 
 def build_update_payload(new_price: Decimal, currency: str, disable_sale: bool) -> dict:
+    """Squarespace variant update body; optionally turns off an existing sale price."""
     pricing_value = {
         "basePrice": {"currency": currency, "value": str(new_price)},
     }
@@ -233,6 +252,7 @@ def post_update(
     payload: dict,
     timeout: int,
 ) -> requests.Response:
+    """Send one variant price update to the Squarespace Products API."""
     url = f"{base_url}/{api_version}/commerce/products/{product_id}/variants/{variant_id}"
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -243,6 +263,7 @@ def post_update(
 
 
 def write_mapping_csv(path: str, mapping: Iterable[VariantMapping]) -> None:
+    """Save the SKU-to-listing mapping that was used, for checking a run afterwards."""
     fieldnames = [
         "sku",
         "product_id",
@@ -270,6 +291,10 @@ def write_mapping_csv(path: str, mapping: Iterable[VariantMapping]) -> None:
 
 
 def main() -> int:
+    """Match market prices to store listings by SKU, work out each new price, and send the
+    ones that moved enough. --dry-run prints the plan without touching the store. The
+    "Matched SKUs", "Proposed updates", "UPDATED" and "FAILED" lines are read by the
+    Discord summary (scripts/pipeline/notify_discord.py), so keep their wording."""
     load_local_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
     parser = argparse.ArgumentParser(description="Sync Squarespace prices from market CSV")

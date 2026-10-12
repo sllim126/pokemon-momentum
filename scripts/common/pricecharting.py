@@ -33,6 +33,7 @@ _TAG = re.compile(r"\[([^\]]+)\]")
 
 
 def parse_money(value: str | None) -> float | None:
+    """'$1,234.50' -> 1234.5. Blank or $0.00 means PriceCharting has no price: None."""
     text = str(value or "").replace("$", "").replace(",", "").strip()
     if not text:
         return None
@@ -44,11 +45,13 @@ def parse_money(value: str | None) -> float | None:
 
 
 def parse_int(value: str | None) -> int | None:
+    """Whole-number columns such as sales volume; anything else becomes None."""
     text = str(value or "").strip()
     return int(text) if text.isdigit() else None
 
 
 def printing_tags(product_name: str) -> list[str]:
+    """Lower-cased bracket tags in a name: 'Regice [Reverse Holo] #45' -> ['reverse holo']."""
     return [tag.strip().lower() for tag in _TAG.findall(product_name or "")]
 
 

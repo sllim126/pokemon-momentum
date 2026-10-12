@@ -57,6 +57,12 @@
 
   <script src="/site-shell.js"></script>
   <script>
+  /*
+   * Collector Hub: the collector resources listed in /collector-manifest (checklist sites,
+   * placeholder print hubs, reference notes), grouped by section on the left, with a live
+   * preview of the selected one on the right. ?item=<id> reopens a resource.
+   * Styling comes from /desktop-theme.css.
+   */
   (function () {
     "use strict";
     const $ = (id) => document.getElementById(id);

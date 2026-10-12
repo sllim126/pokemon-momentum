@@ -7,9 +7,11 @@
  * Pages that already have their own logo and account menu (the dashboards) use
  * data-shell="nav" on that tag to get only the area navigation row.
  *
- * The header is inserted at the top of <body> (or into <div id="site-shell"> when a
- * page provides one). The same AREAS config renders the area landing pages, so the
- * navigation and the hubs can never disagree.
+ * The header is inserted at the top of <body>, or replaces <div id="site-shell"> when a
+ * page provides one (it is not placed inside it, so select the header as `.ps-shell`).
+ * The highlighted area comes from <body data-area="..."> when set, otherwise from the
+ * page address (PATH_AREAS). The same AREAS config renders the area landing pages, so
+ * the navigation and the hubs can never disagree.
  */
 (function () {
   const AREAS = [
@@ -122,6 +124,7 @@
     }
   `;
 
+  // Area to highlight: the page's data-area if it sets one, otherwise worked out from the URL.
   function currentArea() {
     const forced = document.body && document.body.dataset.area;
     if (forced) return forced;
@@ -131,11 +134,13 @@
     return match ? match[1] : "";
   }
 
+  // The sign-in token cookie (pm_tracking_token) set by the dashboards and Account page.
   function trackingToken() {
     const match = document.cookie.match(/(?:^|;\s*)pm_tracking_token=([^;]+)/);
     return match ? decodeURIComponent(match[1]) : "";
   }
 
+  // Show the Admin link only when the signed-in user is an admin (the server decides).
   async function revealAdminLink(link) {
     const token = trackingToken();
     if (!token) return;

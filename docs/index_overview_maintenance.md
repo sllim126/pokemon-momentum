@@ -19,6 +19,29 @@ Every page pulls data from `/index-overview-data`, then renders:
 - included set grid
 - top-N holdings based on each index definition's `constituent_limit`
 
+The desktop app (`/home-preview`, Research → Market Stats → Indexes) reads the same
+`/index-overview-data` payload and shows the level chart with set-release markers, the
+top cards, included sets, reshuffles and a method summary. Its list of indexes per market
+is `INDEXES` in `scripts/dashboards/desktop_home.html`; add a new key there too.
+
+## Snapshots and the nightly order
+
+`/index-overview-data` normally serves a JSON snapshot built nightly by
+`scripts/indicators/build_index_overview_snapshot.py`. Indexes read the parquet price
+history, so the nightly update builds them **after** the parquet export
+(`scripts/pipeline/run_daily_update.py`). Until 2026-10-10 the step ran before the export
+and every index lagged one night behind; after the September 2026 data gap that left them
+showing 2026-09-15. If an index's "as of" date trails the site's "Prices as of" date,
+rebuild the snapshots by hand:
+
+```bash
+docker-compose exec -T pokemon-momentum python scripts/indicators/build_index_overview_snapshot.py --category-id 3
+docker-compose exec -T pokemon-momentum python scripts/indicators/build_index_overview_snapshot.py --category-id 85
+```
+
+The API also keeps each payload in memory for a while; restart the app to pick up new
+snapshots immediately.
+
 ## Source Files
 
 - Backend/API: `scripts/dashboards/api.py`
@@ -96,6 +119,7 @@ Current policy:
 
 4. Update hub card:
 - add/adjust link and status in `index_overview_hub.html`
+- add the key to `INDEXES` in `desktop_home.html` so the desktop app lists it
 
 5. Update the shared-template contract in `tests/test_secondary_pages.py`.
 

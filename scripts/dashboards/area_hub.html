@@ -37,6 +37,8 @@
   </main>
   <script src="/site-shell.js"></script>
   <script>
+    // One template for /buy, /discover, /research, /track and /learn: the area comes from the
+    // path, and its question and tool links come from AREAS in site_shell.js.
     (function () {
       const key = window.location.pathname.replace(/^\/+|\/+$/g, "");
       const area = (window.Poke6sShell.AREAS || []).find((a) => a.key === key);

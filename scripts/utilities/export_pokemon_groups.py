@@ -1,3 +1,9 @@
+"""Refresh the list of sets (TCGplayer "groups") for one category from TCGCSV.
+
+Writes the set list to a CSV under data/extracted/ and replaces the category's groups
+table in DuckDB. One request per run.
+"""
+
 import csv
 import argparse
 import sys
@@ -17,12 +23,14 @@ from scripts.utilities.tcgcsv_client import build_tcgcsv_session, tcgcsv_get_jso
 
 
 def parse_args() -> argparse.Namespace:
+    """Read --category-id (3 = English Pokemon, 85 = Japanese Pokemon)."""
     parser = argparse.ArgumentParser(description="Export TCG category groups into DuckDB and CSV.")
     parser.add_argument("--category-id", type=int, default=3, help="TCGplayer categoryId to export.")
     return parser.parse_args()
 
 
 def main() -> int:
+    """Fetch the set list once, write the CSV, and replace the DuckDB table."""
     args = parse_args()
     category = get_category_config(args.category_id)
     out_csv = f"{DATA_DIR}/{category.groups_csv}"

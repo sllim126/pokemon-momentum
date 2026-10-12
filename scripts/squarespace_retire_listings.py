@@ -21,10 +21,12 @@ import requests
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_URL = "https://api.squarespace.com"
+# Every attempt is appended here (one JSON line per SKU) so a retirement can be traced or undone.
 LOG_PATH = ROOT / "output" / "squarespace_retired_listings.jsonl"
 
 
 def load_env() -> None:
+    """Load the repo's .env into the environment without overriding variables already set."""
     env_file = ROOT / ".env"
     if not env_file.exists():
         return
@@ -35,6 +37,7 @@ def load_env() -> None:
 
 
 def parse_args() -> argparse.Namespace:
+    """--sku (repeatable), --export-csv, and --apply to actually change the store."""
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--sku", action="append", required=True, help="SKU to retire (repeatable).")
     parser.add_argument("--export-csv", help="Squarespace product export (default: SQUARESPACE_EXPORT_CSV).")
@@ -43,6 +46,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """Look up every SKU first (any unknown SKU stops the run before anything changes),
+    print the plan, then with --apply hide each product and set its stock to 0."""
     load_env()
     args = parse_args()
     export_csv = args.export_csv or os.getenv("SQUARESPACE_EXPORT_CSV", "")
@@ -80,6 +85,8 @@ def main() -> int:
         for sku, row in targets:
             product_id = row["Product ID [Non Editable]"]
             variant_id = row["Variant ID [Non Editable]"]
+            # Two separate API calls: the Products API hides the listing, the Inventory API
+            # zeroes the stock. The Idempotency-Key stops a retried request from applying twice.
             hide = requests.post(
                 f"{BASE_URL}/v2/commerce/products/{product_id}",
                 headers=headers, json={"isVisible": False}, timeout=30,

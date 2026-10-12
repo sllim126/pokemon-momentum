@@ -1,6 +1,9 @@
 Pokemon Momentum Desktop Redesign Notes
 =======================================
 
+Historical planning notes (April 2026), kept for context. The desktop app that was actually
+built in October 2026 is documented in docs/desktop_app.md.
+
 Purpose
 -------
 

@@ -96,12 +96,21 @@
 
   <script src="/site-shell.js"></script>
   <script>
+  /*
+   * Account page. Signed out: shows the Google sign-in button and the lists saved in this
+   * browser. Signed in: the account email, synced list counts (each links to that list in
+   * the desktop app), saved views, sign out, and delete account. The Admin section only
+   * appears when /tracking/session says the user is an admin.
+   *
+   * Sign-in: Google returns a credential -> POST /tracking/google_session -> a token kept in
+   * localStorage and the pm_tracking_token cookie (both are read by the other pages).
+   */
   (function () {
     "use strict";
     const TOKEN_KEY = "pokemon-momentum-tracking-token";
     const LOCAL_TAGS_KEY = "pokemon-momentum-tags";
     const LISTS = [["owned", "Buy List"], ["watchlist", "Watchlist"], ["favorite", "Favorites"], ["research", "Needs Review"]];
-    const APP = "/home-preview";
+    const APP = "/home-preview"; // the desktop app; update when it moves to /
     const $ = (id) => document.getElementById(id);
     const el = (tag, attrs = {}, ...children) => {
       const node = document.createElement(tag);

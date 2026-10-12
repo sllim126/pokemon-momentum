@@ -93,6 +93,22 @@ Important pricing behavior:
 - rows without supplier quotes remain market-based
 - `target_source` in `market_prices_latest.csv` shows whether a row came from `market` or `profit_floor`
 
+Retiring sold listings:
+
+- `scripts/squarespace_retire_listings.py` hides a listing and sets its stock to 0 (the
+  listing, photos and URL stay, so it is reversible; nothing is deleted)
+- it looks up product and variant IDs in the latest Squarespace export, so upload a fresh
+  export first if the listing is new
+- always preview first, then apply:
+
+```bash
+python3 scripts/squarespace_retire_listings.py --sku 610540-holofoil --sku 84840
+python3 scripts/squarespace_retire_listings.py --sku 610540-holofoil --sku 84840 --apply
+```
+
+- every change is logged to `output/squarespace_retired_listings.jsonl`
+- to bring one back, make it visible and set its stock again in Squarespace
+
 Recommended operator flow when adding a new SKU:
 
 1. Add the product in Squarespace with a unique SKU.
@@ -263,9 +279,11 @@ Main app/API:
 
 Main dashboard URLs:
 
-- `http://localhost:8001/dashboard`
-- `http://localhost:8001/embed`
-- `http://localhost:8001/set-explorer`
+- `http://localhost:8001/home-preview` - the new desktop app (Buy, Discover, Research, Track,
+  Learn in one page); see docs/desktop_app.md
+- `http://localhost:8001/dashboard` - the older research dashboard (phones get `/mobile`)
+- `http://localhost:8001/mobile` - the mobile page
+- `http://localhost:8001/admin` - admin tools index (admins only)
 
 Health checks:
 
@@ -302,7 +320,9 @@ Normal expectation:
 - rebuilds snapshots
 - exports new parquet partitions
 - processes both category `3` (Pokemon) and category `85` (Pokemon Japanese) in sequence
-- restarts the app container afterward
+- adds PriceCharting graded prices (English pass) and rebuilds the market-index snapshots
+  after the parquet export
+- restarts the app container afterward and posts a summary to Discord (see Alerts below)
 - the weekly full metadata refresh runs Sunday at `11:00 UTC`
 - the weekly placeholder cleanup runs Monday at `11:00 UTC`, 24 hours later
 - the placeholder cleanup only reruns product metadata + product signal snapshot so stale
@@ -524,6 +544,50 @@ sudo docker-compose run --rm pokemon-momentum bash -lc 'python scripts/pipeline/
 ```
 
 
+Alerts (Discord)
+----------------
+Both scheduled jobs post a summary to the private pipeline-alerts channel when they finish,
+including when they fail. The sender is `scripts/pipeline/notify_discord.py`, called from
+`scripts/pipeline/run_daily_update_host.sh` and `scripts/run_squarespace_price_sync.sh`.
+
+What the colors mean:
+
+- green: succeeded
+- orange: finished, but needs a look (nightly: a market's newest price is more than 2 days
+  old; price sync: some store updates were rejected)
+- red: the job failed; the message quotes the last error lines from the log
+
+Orange and red messages mention `POKE6S_DISCORD_MENTION` (default `@everyone`; set it to
+`none` to stop pinging). The webhook is `POKE6S_DISCORD_WEBHOOK_URL` in `.env`; without it
+the summary is only printed to the log. A Discord outage never fails a job.
+
+Manual `--dry-run` price syncs do not post. Bug reports from visitors are handled in a
+separate Discord channel (#bug-reports), not on the site.
+
+
+Admin access
+------------
+Admin pages (`/admin` and the tools it links to) require a Google sign-in whose email
+exactly matches `POKEMON_MOMENTUM_ADMIN_USERS` in `.env` (comma-separated; default
+`sllim126@gmail.com`). There is no partial or domain matching. The old PIN sign-in is
+retired and answers 410. Admin links on the site only appear for admins, and every admin
+page checks access again on the server.
+
+
+Selling-cost assumptions (6-Month Hold)
+---------------------------------------
+The 6-Month Hold check works out break-even after marketplace fees and shipping. The numbers
+live in `scripts/common/selling_costs.py`; values marked ESTIMATE are not yet confirmed
+against an invoice:
+
+- TCGplayer and eBay: 13.25% + $0.30 per order (ESTIMATE)
+- Squarespace: 2.9% + $0.30 card processing (ESTIMATE)
+- shipping: $1.25 plain envelope under $35 (ESTIMATE), $5.00 tracked from $35 (ESTIMATE),
+  $8.50 tracked with signature from $50
+
+Edit that file, then restart the app (`docker-compose restart pokemon-momentum`).
+
+
 What “healthy” looks like by layer
 ----------------------------------
 
@@ -533,6 +597,9 @@ Download/extract layer:
   group by `scripts/download/fetch_tcgcsv_prices.py`, dated from `last-updated.txt`, and
   written into the same extracted layout: `/app/data/extracted/prices-DATE.ppmd/DATE/<cat>/<group>/prices`
 - `/app/data/raw` only holds the historical archives (through 2026-09-15)
+- there are no prices for 2026-09-16 through 2026-10-07 (between the archive's retirement and
+  the per-group fetch). Lists that need a week of steady daily readings were thin until about
+  a week after prices resumed; this is expected, not a fault
 - all TCGCSV calls go through `scripts/utilities/tcgcsv_client.py`: one request at a time,
   >=100 ms apart, User-Agent `Poke6sMarket/1.0.0`
 - exit code 3 from the fetch or product-metadata step means TCGCSV answered 403/429 (blocked or

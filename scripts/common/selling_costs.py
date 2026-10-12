@@ -15,6 +15,8 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Channel:
+    """Where a card is sold, and what that marketplace keeps from each sale."""
+
     label: str
     fee_pct: float  # fraction of the sale price
     fee_fixed: float  # dollars per order
@@ -36,6 +38,7 @@ SHIPPING_TIERS = [
 
 
 def shipping_cost(sale_price: float) -> tuple[float, str]:
+    """Shipping and supplies cost for a sale at this price, plus the tier's description."""
     for minimum, cost, description in SHIPPING_TIERS:
         if sale_price >= minimum:
             return cost, description
