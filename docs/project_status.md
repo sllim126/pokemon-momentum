@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-09-10
+Last reviewed: 2026-10-12
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -10,31 +10,38 @@ the other files under `docs/`.
 
 - Production entry point: `https://market.poke6s.com/`
 - Primary branch: `main`
-- Market data: daily English and Japanese TCGCSV-backed updates
+- Market data: daily English and Japanese TCGCSV-backed updates, fetched per set since
+  TCGCSV retired its daily archive (no prices exist for 2026-09-16 to 2026-10-07)
+- Graded data: nightly PriceCharting snapshot, kept as our own history
+- Alerts: nightly update and Squarespace price sync post pass/fail summaries to Discord
 - Storage: DuckDB working database, partitioned Parquet history, and generated snapshots
-- Frontend: static HTML/CSS/JavaScript pages served by FastAPI
+- Frontend: static HTML/CSS/JavaScript pages served by FastAPI; a new single-page desktop
+  app (`/home-preview`, `docs/desktop_app.md`) covers Buy, Discover, Research, Track and Learn
 - Accounts: Google-backed lightweight tracking accounts with saved tags and views
 - Commerce: Squarespace storefront linking, price synchronization, listing intake, and supplier-profitability workflows
 - Collector resources: generated placeholder libraries, checklists, print pages, review queues, and downloads
 
-At the 2026-09-10 review, the health snapshot reported 38,831,595 English price rows with
-latest data dated 2026-09-09. The daily pipeline and Squarespace price audit were running.
+At the 2026-10-12 review, the health snapshot reported 39,285,648 English and 13,660,254
+Japanese price rows, both with latest data dated 2026-10-11. The daily pipeline,
+PriceCharting download and Squarespace price sync were running.
 
 ## Public page map
 
 | Route | Purpose | Status |
 | --- | --- | --- |
-| `/`, `/dashboard` | Responsive market research entry point | Live |
+| `/home-preview` | New desktop app: all five areas in one page | Preview; planned to become `/` on desktop |
+| `/`, `/dashboard` | Responsive market research entry point | Live; desktop part to be replaced by the desktop app |
+| `/buy`, `/discover`, `/research`, `/track`, `/learn` | Area landing pages from the shared header menu | Live |
 | `/mobile` | Direct mobile decision dashboard | Live |
-| `/dashboard-lab` | Desktop command-center reference | Working reference |
-| `/mobile-rebuild` | Earlier mobile concept retained for comparison | Legacy reference |
-| `/set-explorer` | Set cost, concentration, and depth | Live; mobile refinement pending |
-| `/budget-builder` | Budget-based recommendation builder | Live; duplicate-name cap covered by regression tests |
-| `/sealed-deals` | Sealed price-per-pack/value screening | Live; mobile refinement pending |
-| `/account-settings` | Synced tracking account management | Live |
-| `/collector-hub` | Collector workflow navigation | Live |
-| `/placeholders` | Placeholder/checklist downloads | Live |
-| `/index-overview` | Market-index hub | Live |
+| `/dashboard-lab` | Desktop command-center reference | Development page; publicly reachable, to remove or restrict |
+| `/mobile-rebuild` | Earlier mobile concept retained for comparison | Development page; publicly reachable, to remove or restrict |
+| `/set-explorer` | Set cost, concentration, and depth | Live; covered by desktop app Market Stats → Set values |
+| `/budget-builder` | Budget-based recommendation builder | Live; covered by desktop app Budget Builder |
+| `/sealed-deals` | Sealed price-per-pack/value screening | Live; covered by desktop app Sealed Deals |
+| `/account-settings` | Google sign-in, synced lists, saved views, account deletion | Live; restyled 2026-10 |
+| `/collector-hub` | Collector resources with live preview | Live; restyled 2026-10 |
+| `/placeholders` | Placeholder/checklist downloads | Live; restyled 2026-10 |
+| `/index-overview` | Market-index hub | Live; covered by desktop app Market Stats → Indexes |
 | `/index-overview-*` | English/Japanese and era index detail pages | Live; all routes use one configured detail template |
 
 Current index detail routes are:
@@ -56,10 +63,12 @@ Current index detail routes are:
 
 ## Protected operator pages
 
-The following pages require an authenticated admin tracking account:
+The following pages require a Google sign-in listed in `POKEMON_MOMENTUM_ADMIN_USERS`
+(exact match; the old PIN sign-in is retired):
 
 | Route | Purpose |
 | --- | --- |
+| `/admin` | Index of the admin tools |
 | `/eod-dashboard` | End-of-day market data view |
 | `/embed` | Lightweight internal/embed dashboard |
 | `/bug-reports` | Internal feedback and bug queue |
@@ -80,48 +89,26 @@ The following pages require an authenticated admin tracking account:
 - Singles listing workflow with cached, square-padded Scrydex artwork
 - Collector Hub and generated placeholder/checklist workflow
 
-## Work in progress at the last checkpoint
+Added 2026-10:
 
-- Cohesive navigation and visual shell across the dashboard and secondary pages
-- Tablet and narrow-desktop layouts
-- Mobile versions of Set Explorer, Sealed Deals, Browse Set, Browse Species, Set Strength, and Time to Buy
-- Search and tracked-list behavior across English/Japanese and Singles/Sealed
-- Sealed Squarespace listing intake and creation scripts
-- PSA cert data is available server-side but has not been given a settled public UI
-- Scrydex/PriceCharting provider evaluation beyond the image workflow
-- Placeholder/checklist source gaps and generated-artifact repository policy
+- Per-set TCGCSV download that follows TCGCSV's usage guidelines, replacing the retired archive
+- Discord pass/fail alerts for the nightly update and the Squarespace price sync
+- Squarespace listing retirement script (hide + stock 0, logged, reversible)
+- PriceCharting graded prices with a nightly history (shown with a required link back)
+- 6-Month Hold check (break-even after fees and shipping, trend, past track record)
+- Shared site header and five area pages
+- Desktop app with Buy (Sealed Deals with loose-pack comparison, card-art Budget Builder),
+  Discover, Track (saved lists with price targets), Research (Sets, Pokémon, Market Stats)
+  and Learn (How it works), plus a legal footer
+- Collector Hub, Placeholder Library and Account restyled on a shared desktop stylesheet
+- Index snapshots now build after the parquet export, so indexes are no longer a day behind
 
-The detailed active queue and design decisions live in `docs/todo.txt`.
+## What's next
 
-## Known engineering follow-up
-
-- Continue splitting the large `scripts/dashboards/api.py` module by route/service domain;
-  index definitions now live in `scripts/dashboards/index_config.py`.
-- Replace remaining full-catalog browser loads with paged server-side search.
-- Continue profiling custom-window `breakouts`; the normal 90-day dashboard request now
-  uses the product-signal snapshot. Warm local measurements improved from about 2.0 seconds
-  to about 0.5 seconds. The default `under_the_radar` path is about 0.16–0.20 seconds.
-- Extract shared frontend shell, API, chart, formatting, and tracking code.
-- Pin runtime dependencies and separate development-only packages.
-- Perform and record phone/tablet/laptop visual QA for the consolidated pages.
-
-The current source-level responsive audit and outstanding real-browser checklist are recorded
-in `docs/responsive_qa.md`.
-
-The default Product Picker response is capped at 250 rows (roughly 14 KB instead of the old
-44,000-row/3 MB response). Custom picker pagination remains available up to the server cap.
-
-## Before resuming feature work
-
-1. Finish the API-domain and shared-frontend extraction without changing route behavior.
-2. Profile and improve the remaining slow live-query paths.
-3. Complete phone/tablet/laptop visual QA.
-4. Run the full test and pipeline validators after each refactor checkpoint.
-5. Only then resume alerts, PSA UI, or additional data-provider features.
-
-Do not treat `output/`, database files, raw downloads, or other ignored runtime data as a
-substitute for source control. Conversely, do not delete local runtime/generated files until
-their rebuild and backup path has been confirmed.
+The work list is `docs/todo.txt`: priorities, open decisions, parked mobile and admin
+work, and known engineering follow-up all live there, so this file doesn't keep a second
+copy. `AGENTS.md` explains how to keep it current. The responsive audit and the outstanding
+real-browser checklist are in `docs/responsive_qa.md`.
 
 ## Repository artifact policy
 

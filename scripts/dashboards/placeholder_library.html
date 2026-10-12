@@ -1,579 +1,146 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Poke6s Placeholder Library</title>
-  <link rel="icon" type="image/png" href="/images/Favidon.png">
+  <link rel="icon" type="image/png" href="/images/Favidon.png" />
+  <link rel="stylesheet" href="/desktop-theme.css" />
   <style>
-    :root {
-      --bg: #f5efe4;
-      --paper: rgba(255, 251, 243, 0.96);
-      --panel: rgba(255, 248, 237, 0.92);
-      --panel-2: rgba(255, 253, 249, 0.98);
-      --ink: #1f1b17;
-      --muted: #6d6256;
-      --line: rgba(99, 76, 50, 0.16);
-      --line-strong: rgba(99, 76, 50, 0.28);
-      --accent: #bb5a2a;
-      --accent-2: #efc14a;
-      --accent-3: #176b52;
-      --shadow: 0 22px 56px rgba(74, 52, 32, 0.12);
-      --radius: 24px;
-    }
-
-    * { box-sizing: border-box; }
-
-    html, body {
-      margin: 0;
-      min-height: 100%;
-      color: var(--ink);
-      font-family: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(239, 193, 74, 0.26), transparent 26%),
-        radial-gradient(circle at top right, rgba(23, 107, 82, 0.12), transparent 22%),
-        linear-gradient(180deg, #fbf7ef 0%, var(--bg) 100%);
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    button {
-      font: inherit;
-    }
-
-    button:focus-visible,
-    a:focus-visible {
-      outline: 2px solid rgba(187, 90, 42, 0.8);
-      outline-offset: 3px;
-    }
-
-    .app {
-      min-height: 100vh;
-      display: grid;
-      gap: 18px;
-      padding: 18px;
-    }
-
-    .topbar,
-    .hero,
-    .layout > section,
-    .layout > aside {
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: linear-gradient(180deg, var(--panel-2), var(--paper));
-      box-shadow: var(--shadow);
-    }
-
-    .topbar {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
-      gap: 16px;
-      align-items: center;
-      padding: 16px 18px;
-    }
-
-    .brand {
-      display: grid;
-      gap: 8px;
-    }
-
-    .badge-row,
-    .route-strip,
-    .hero-pills,
-    .action-row,
-    .filter-row,
-    .card-tags,
-    .mini-metrics {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .badge,
-    .route-chip,
-    .filter-chip,
-    .mini-pill,
-    .metric-pill {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      border-radius: 999px;
-      border: 1px solid var(--line);
-      padding: 6px 10px;
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .badge.primary,
-    .metric-pill.primary {
-      color: #fff8ef;
-      background: linear-gradient(135deg, var(--accent), #d7733d);
-      border-color: transparent;
-    }
-
-    .badge.success {
-      color: #f1fff9;
-      background: linear-gradient(135deg, var(--accent-3), #2c8b6e);
-      border-color: transparent;
-    }
-
-    .brand strong {
-      font-size: 30px;
-      line-height: 0.96;
-      letter-spacing: -0.04em;
-    }
-
-    .brand span,
-    .subtle,
-    .panel-head p,
-    .hero-copy p,
-    .preview-body p,
-    .card p {
-      color: var(--muted);
-      line-height: 1.55;
-    }
-
-    .route-chip,
-    .filter-chip,
-    .action-link,
-    .resource-link {
-      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
-    }
-
-    .route-chip:hover,
-    .filter-chip:hover,
-    .action-link:hover,
-    .resource-link:hover,
-    .card:hover {
-      transform: translateY(-1px);
-    }
-
-    .route-chip {
-      background: rgba(255, 252, 246, 0.94);
-    }
-
-    .actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-
-    .action-link,
-    .filter-chip,
-    .resource-link {
-      appearance: none;
-      border: 1px solid var(--line-strong);
-      border-radius: 14px;
-      padding: 10px 14px;
-      background: rgba(255, 252, 246, 0.96);
-      color: var(--ink);
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .action-link.primary,
-    .resource-link.primary {
-      border-color: transparent;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: #2a180a;
-    }
-
-    .hero {
-      display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.9fr);
-      gap: 18px;
-      padding: 22px;
-    }
-
-    .hero-copy {
-      display: grid;
-      gap: 14px;
-      align-content: start;
-    }
-
-    .hero-copy h1 {
-      margin: 0;
-      font-size: clamp(34px, 5vw, 56px);
-      line-height: 0.95;
-      letter-spacing: -0.05em;
-      max-width: 12ch;
-    }
-
-    .hero-card {
-      display: grid;
-      gap: 14px;
-      padding: 18px;
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      background:
-        linear-gradient(135deg, rgba(239, 193, 74, 0.22), rgba(187, 90, 42, 0.1)),
-        rgba(255, 249, 239, 0.96);
-    }
-
-    .hero-stats {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .stat {
-      padding: 14px;
-      border-radius: 18px;
-      border: 1px solid var(--line);
-      background: rgba(255, 252, 246, 0.82);
-    }
-
-    .stat strong {
-      display: block;
-      font-size: 28px;
-      letter-spacing: -0.05em;
-    }
-
-    .stat span {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.45;
-    }
-
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
-      gap: 18px;
-    }
-
-    .resource-panel,
-    .preview-panel {
-      padding: 18px;
-    }
-
-    .panel-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: end;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .panel-head h2,
-    .panel-head h3,
-    .preview-body h3,
-    .card h3 {
-      margin: 0;
-    }
-
-    .resource-grid {
-      display: grid;
-      gap: 14px;
-    }
-
-    .card {
-      display: grid;
-      gap: 12px;
-      padding: 16px;
-      border-radius: 20px;
-      border: 1px solid var(--line);
-      background: rgba(255, 252, 246, 0.86);
-      box-shadow: 0 12px 28px rgba(99, 76, 50, 0.06);
-      transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
-    }
-
-    .card.is-active {
-      border-color: rgba(187, 90, 42, 0.45);
-      box-shadow: 0 16px 34px rgba(187, 90, 42, 0.12);
-    }
-
-    .card-topline {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: center;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    .card-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .preview-body {
-      display: grid;
-      gap: 12px;
-      padding: 18px;
-      border-radius: 20px;
-      border: 1px solid var(--line);
-      background: rgba(255, 252, 246, 0.82);
-    }
-
-    .empty-state {
-      padding: 20px;
-      border-radius: 20px;
-      border: 1px dashed var(--line-strong);
-      color: var(--muted);
-      text-align: center;
-      background: rgba(255, 251, 243, 0.7);
-    }
-
-    @media (max-width: 1100px) {
-      .topbar,
-      .hero,
-      .layout {
-        grid-template-columns: 1fr;
-      }
-
-      .actions {
-        justify-content: flex-start;
-      }
-    }
-
-    @media (max-width: 700px) {
-      .app {
-        padding: 12px;
-      }
-
-      .topbar,
-      .hero,
-      .resource-panel,
-      .preview-panel {
-        padding: 16px;
-      }
-
-      .hero-stats {
-        grid-template-columns: 1fr;
-      }
-    }
+    body { overflow: hidden; }
+    .preview { flex: 1; min-height: 0; border: 0; border-top: 1px solid var(--line); background: #fff; width: 100%; }
+    .detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 16px 18px; }
+    .detail-head h2 { margin: 0; font-size: 18px; }
+    .detail-head p { margin: 4px 0 10px; color: var(--muted); }
+    .detail-actions { display: flex; gap: 8px; }
+    .file-card { margin: 0 18px 18px; }
   </style>
-  <script src="/site-shell.js" defer></script>
 </head>
-<body>
-  <div class="app">
-    <header class="topbar">
-      <div class="brand">
-        <div class="badge-row">
-          <span class="badge primary">Collector Downloads</span>
-          <span class="badge success" id="statusPill">Loading</span>
-        </div>
-        <strong>Placeholder Library</strong>
-        <span>One clean place to open the printable placeholder hubs or download the source and generated files that power them.</span>
-      </div>
-      <div class="actions">
-        <a class="action-link" href="/placeholder-downloads/sv-source-csv">Download SV Source CSV</a>
-        <a class="action-link" href="/collector-assets/checklists-sv/index.html">Open SV Checklists</a>
-        <a class="action-link primary" href="/collector-assets/print-combined/index.html">Open Print Hub</a>
-      </div>
-    </header>
+<body data-area="learn">
+  <div id="site-shell"></div>
 
-    <section class="hero">
-      <div class="hero-copy">
-        <div class="hero-pills">
-          <span class="badge">Print-ready</span>
-          <span class="badge">CSV downloads</span>
-          <span class="badge">JSON export</span>
-          <span class="badge">Checklist review</span>
-        </div>
-        <h1>Downloadable placeholder tools, ready now.</h1>
-        <p>This page keeps the placeholder workflow separate from the main market app and makes it immediately usable as a public-facing collector utility. Open the browser tools when you want interactive pages, or download the exact CSV and JSON outputs when you want to print, audit, or republish elsewhere.</p>
+  <main class="page">
+    <div class="page-head">
+      <div>
+        <h1>Placeholder Library</h1>
+        <p>Printable binder placeholders, checklist pages, and the CSV and JSON files behind them.</p>
       </div>
-      <div class="hero-card">
-        <div class="hero-stats">
-          <div class="stat">
-            <strong id="browserCount">0</strong>
-            <span>browser-ready hubs</span>
-          </div>
-          <div class="stat">
-            <strong id="downloadCount">0</strong>
-            <span>direct downloads</span>
-          </div>
-          <div class="stat">
-            <strong id="sourceCount">0</strong>
-            <span>source CSV lanes</span>
-          </div>
-          <div class="stat">
-            <strong id="sectionCount">0</strong>
-            <span>resource sections</span>
-          </div>
-        </div>
-        <div class="mini-metrics">
-          <span class="metric-pill primary" id="manifestUpdated">Manifest pending</span>
-        </div>
+      <div class="page-actions">
+        <a class="btn" href="/placeholder-downloads/sv-source-csv">Download SV source CSV</a>
+        <a class="btn" href="/collector-assets/checklists-sv/index.html" target="_blank" rel="noopener">SV checklists ↗</a>
+        <a class="btn primary" href="/collector-assets/print-combined/index.html" target="_blank" rel="noopener">Print placeholders ↗</a>
       </div>
-    </section>
+    </div>
 
-    <div class="layout">
-      <section class="resource-panel">
+    <div class="split">
+      <section class="panel" aria-label="Files and tools">
         <div class="panel-head">
-          <div>
-            <h2>Available Resources</h2>
-            <p>Filter by lane, then open the full browser tool or download the exact file behind it.</p>
-          </div>
+          <h2>Files and tools</h2>
+          <p id="updated">Loading…</p>
         </div>
-        <div class="filter-row" id="filterRow"></div>
-        <div class="resource-grid" id="resourceGrid">
-          <div class="empty-state">Loading placeholder resources...</div>
-        </div>
+        <div class="panel-scroll list" id="list"></div>
       </section>
 
-      <aside class="preview-panel">
-        <div class="panel-head">
+      <section class="panel" aria-label="Selected item">
+        <div class="detail-head">
           <div>
-            <h3>Selected Resource</h3>
-            <p>Quick notes on what the current file or page is for.</p>
+            <h2 id="title">Select a file or tool</h2>
+            <p id="summary"></p>
+            <div class="chips" id="chips"></div>
           </div>
+          <div class="detail-actions" id="actions"></div>
         </div>
-        <div class="preview-body">
-          <h3 id="previewTitle">Select a placeholder resource</h3>
-          <p id="previewSummary">Choose a row on the left to see its recommended use.</p>
-          <div class="card-tags" id="previewTags"></div>
-          <div class="mini-metrics" id="previewMetrics"></div>
-          <div class="action-row" id="previewActions"></div>
-        </div>
-      </aside>
+        <iframe class="preview" id="preview" title="Preview" hidden></iframe>
+        <div class="stat-grid file-card" id="fileCard" hidden></div>
+        <div class="empty" id="previewEmpty">Pick a file or tool on the left.</div>
+      </section>
     </div>
-  </div>
+  </main>
+  <footer class="legal">Pokémon names and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company; Poke6s Market is independent and not affiliated with or endorsed by them.</footer>
 
+  <script src="/site-shell.js"></script>
   <script>
-    const filterRow = document.getElementById("filterRow");
-    const resourceGrid = document.getElementById("resourceGrid");
-    const statusPill = document.getElementById("statusPill");
-    const browserCount = document.getElementById("browserCount");
-    const downloadCount = document.getElementById("downloadCount");
-    const sourceCount = document.getElementById("sourceCount");
-    const sectionCount = document.getElementById("sectionCount");
-    const manifestUpdated = document.getElementById("manifestUpdated");
-    const previewTitle = document.getElementById("previewTitle");
-    const previewSummary = document.getElementById("previewSummary");
-    const previewTags = document.getElementById("previewTags");
-    const previewMetrics = document.getElementById("previewMetrics");
-    const previewActions = document.getElementById("previewActions");
-
-    let allItems = [];
-    let activeSection = "All";
-    let activeItemId = "";
-
-    function sectionName(item) {
-      return item.section || "Other";
-    }
-
-    function renderPreview(item) {
-      activeItemId = item.id;
-      previewTitle.textContent = item.title;
-      previewSummary.textContent = item.summary;
-      previewTags.innerHTML = (item.tags || []).map((tag) => `<span class="mini-pill">${tag}</span>`).join("");
-      const metrics = [];
-      if (item.kind === "download" && item.filename) metrics.push(item.filename);
-      if (item.kind === "download" && item.size_label) metrics.push(item.size_label);
-      metrics.push(item.kind === "page" ? "Browser tool" : "Direct download");
-      previewMetrics.innerHTML = metrics.map((metric) => `<span class="metric-pill">${metric}</span>`).join("");
-      previewActions.innerHTML = item.kind === "page"
-        ? `<a class="resource-link primary" href="${item.href}" target="_blank" rel="noreferrer">Open Page</a>`
-        : `<a class="resource-link primary" href="${item.href}">Download File</a>`;
-      if (item.kind === "download") {
-        previewActions.innerHTML += `<a class="resource-link" href="${item.href}" target="_blank" rel="noreferrer">Open Raw File</a>`;
+  /*
+   * Placeholder Library: the files and browser tools in /placeholder-downloads-manifest.
+   * Items of kind "page" preview live on the right; "download" items show the file name,
+   * size and Download / Open buttons. ?item=<id> reopens an item.
+   * Styling comes from /desktop-theme.css.
+   */
+  (function () {
+    "use strict";
+    const $ = (id) => document.getElementById(id);
+    const el = (tag, attrs = {}, ...children) => {
+      const node = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs)) {
+        if (k === "class") node.className = v;
+        else if (k === "text") node.textContent = v;
+        else node.setAttribute(k, v);
       }
-      renderGrid();
+      node.append(...children.filter(Boolean));
+      return node;
+    };
+    let items = [];
+    let selectedId = new URLSearchParams(location.search).get("item");
+
+    function select(item) {
+      selectedId = item.id;
+      document.querySelectorAll(".list-item").forEach((b) => b.setAttribute("aria-current", String(b.dataset.id === item.id)));
+      $("title").textContent = item.title;
+      $("summary").textContent = item.summary || "";
+      $("chips").replaceChildren(...(item.tags || []).map((text) => el("span", { class: "chip", text })));
+      const isPage = item.kind === "page";
+      $("actions").replaceChildren(...(isPage
+        ? [el("a", { class: "btn primary", href: item.href, target: "_blank", rel: "noopener", text: "Open page ↗" })]
+        : [el("a", { class: "btn primary", href: item.href, download: item.filename || "", text: "Download" }),
+           el("a", { class: "btn", href: item.href, target: "_blank", rel: "noopener", text: "Open in a new tab ↗" })]));
+      $("preview").hidden = !isPage;
+      if (isPage) $("preview").src = item.href;
+      $("fileCard").hidden = isPage;
+      $("fileCard").replaceChildren(...(isPage ? [] : [
+        ["File", item.filename || "—"], ["Size", item.size_label || "—"], ["Type", item.section || "Download"],
+      ].map(([label, value]) => el("div", { class: "stat" }, el("span", { text: label }), el("strong", { text: value })))));
+      $("previewEmpty").hidden = true;
+      const url = new URL(location.href);
+      url.searchParams.set("item", item.id);
+      history.replaceState(null, "", url);
     }
 
-    function renderFilters() {
-      const sections = ["All", ...new Set(allItems.map(sectionName))];
-      filterRow.innerHTML = sections.map((section) => `
-        <button class="filter-chip ${section === activeSection ? "is-active" : ""}" type="button" data-section="${section}">
-          ${section}
-        </button>
-      `).join("");
-      filterRow.querySelectorAll("[data-section]").forEach((button) => {
-        button.addEventListener("click", () => {
-          activeSection = button.dataset.section;
-          renderFilters();
-          renderGrid();
-        });
-      });
-    }
-
-    function filteredItems() {
-      if (activeSection === "All") return allItems;
-      return allItems.filter((item) => sectionName(item) === activeSection);
-    }
-
-    function renderGrid() {
-      const items = filteredItems();
-      if (!items.length) {
-        resourceGrid.innerHTML = '<div class="empty-state">No placeholder resources matched this filter.</div>';
-        return;
+    function render() {
+      const nodes = [];
+      let section = "";
+      for (const item of items) {
+        if (item.section !== section) {
+          section = item.section;
+          nodes.push(el("h3", { text: section }));
+        }
+        const meta = item.kind === "page" ? "Opens in the browser" : [item.filename, item.size_label].filter(Boolean).join(" · ");
+        const button = el("button", { type: "button", class: "list-item", "data-id": item.id, "aria-current": "false" },
+          el("strong", { text: item.title }), el("span", { text: meta }));
+        button.addEventListener("click", () => select(item));
+        nodes.push(button);
       }
-      resourceGrid.innerHTML = items.map((item) => `
-        <article class="card ${item.id === activeItemId ? "is-active" : ""}" data-item-id="${item.id}">
-          <div class="card-topline">
-            <span>${item.section}</span>
-            <span>${item.kind === "page" ? "Open" : item.size_label || "Download"}</span>
-          </div>
-          <div>
-            <h3>${item.title}</h3>
-            <p>${item.summary}</p>
-          </div>
-          <div class="card-tags">
-            ${(item.tags || []).map((tag) => `<span class="mini-pill">${tag}</span>`).join("")}
-          </div>
-          <div class="card-actions">
-            <a class="resource-link primary" href="${item.href}" ${item.kind === "page" ? 'target="_blank" rel="noreferrer"' : ""}>
-              ${item.kind === "page" ? "Open Page" : "Download"}
-            </a>
-          </div>
-        </article>
-      `).join("");
-      resourceGrid.querySelectorAll("[data-item-id]").forEach((card) => {
-        card.addEventListener("click", (event) => {
-          if (event.target.closest("a")) return;
-          const item = allItems.find((candidate) => candidate.id === card.dataset.itemId);
-          if (item) renderPreview(item);
-        });
-      });
+      $("list").replaceChildren(...nodes);
     }
 
-    function updateHero(manifest) {
-      const sections = new Set(allItems.map(sectionName));
-      statusPill.textContent = manifest.project_root_exists ? "Ready" : "Missing Files";
-      browserCount.textContent = String(manifest.browser_count || 0);
-      downloadCount.textContent = String(manifest.download_count || 0);
-      sourceCount.textContent = String(manifest.source_count || 0);
-      sectionCount.textContent = String(sections.size);
-      if (manifest.updated_at) {
-        manifestUpdated.textContent = `Updated ${new Date(manifest.updated_at).toLocaleString()}`;
-      }
-    }
-
-    async function boot() {
+    async function load() {
       try {
         const response = await fetch("/placeholder-downloads-manifest");
-        if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-        const manifest = await response.json();
-        allItems = manifest.items || [];
-        if (!allItems.length) {
-          statusPill.textContent = "Unavailable";
-          resourceGrid.innerHTML = '<div class="empty-state">Placeholder files were not found yet.</div>';
-          return;
-        }
-        updateHero(manifest);
-        renderFilters();
-        renderPreview(allItems[0]);
-      } catch (error) {
-        console.error(error);
-        statusPill.textContent = "Error";
-        resourceGrid.innerHTML = '<div class="empty-state">Unable to load placeholder downloads right now.</div>';
+        if (!response.ok) throw new Error(String(response.status));
+        const data = await response.json();
+        items = data.items || [];
+        const when = data.updated_at ? ` · updated ${new Date(data.updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : "";
+        $("updated").textContent = `${data.browser_count ?? 0} browser tools · ${data.download_count ?? 0} downloads${when}`;
+        render();
+        const first = items.find((i) => i.id === selectedId) || items[0];
+        if (first) select(first);
+        if (!items.length) $("list").replaceChildren(el("div", { class: "empty", text: "No placeholder files are published right now." }));
+      } catch (_err) {
+        $("updated").textContent = "";
+        $("list").replaceChildren(el("div", { class: "empty", text: "Placeholder files couldn't load. Try again in a moment." }));
       }
     }
-
-    boot();
+    load();
+  })();
   </script>
 </body>
 </html>

@@ -1,3 +1,5 @@
+> Archived (March 2026). Superseded by README.md; kept for history only.
+
 # pokemon-momentum
 
 Pokemon market research dashboards, set-analysis tools, and a daily TCGCSV-backed data pipeline.

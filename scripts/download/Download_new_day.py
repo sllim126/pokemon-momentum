@@ -1,3 +1,10 @@
+"""RETIRED: downloaded TCGCSV's daily .7z price archive and extracted it.
+
+TCGCSV removed the archive in September 2026; the nightly run now uses
+scripts/download/fetch_tcgcsv_prices.py instead. Kept only for re-extracting the old
+archives in /app/data/raw (through 2026-09-15).
+"""
+
 import os
 import sys
 import shutil

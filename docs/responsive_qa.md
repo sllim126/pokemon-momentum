@@ -1,6 +1,11 @@
 # Responsive QA Snapshot
 
-Reviewed: 2026-09-10
+Reviewed: 2026-09-10 (one row updated 2026-10-12)
+
+Update 2026-10-12: the new desktop app (`/home-preview`) and the restyled Collector Hub,
+Placeholder Library and Account pages were checked in a real browser (Playwright, run from
+the host's `.venv`) at 1920×1080, 1366×768 and 1280×720. They are desktop layouts; phones
+keep the separate `/mobile` page.
 
 This pass covers the FastAPI-served HTML pages at phone (approximately 390 px), tablet
 (768–1024 px), and laptop (1280–1440 px) widths. It is a source-level and route-contract
@@ -17,10 +22,11 @@ comparison and real-device interaction remain a release check rather than a comp
 | Set Explorer | Scrollable wide data region | Breakpoint present | Full data layout | Needs screenshot verification |
 | Budget Builder | Scrollable 820 px comparison region | Breakpoint present | Full comparison layout | Duplicate-name behavior is regression-tested |
 | Sealed Deals | Scrollable 980 px table region | Breakpoint present | Full table | Needs touch/scroll verification |
-| Collector and account pages | Narrow-screen breakpoints present | Responsive panels | Full panels | Route contracts pass |
+| Collector and account pages | Not designed for phones since the 2026-10 desktop restyle (Placeholder Library overflows by ~16 px at 390 px; Collector Hub hides page scroll) | Untested | Full panels | Route contracts pass |
 | Operator upload/supplier pages | 640/920/960 px breakpoints present | Responsive forms | Full forms/tables | Authentication behavior covered separately |
 
-Every dashboard HTML document has a viewport meta tag and at least one responsive media
+Every dashboard HTML document has a viewport meta tag. All except the 2026-10 restyled
+Collector Hub, Placeholder Library and Account pages have at least one responsive media
 query. Static duplicate-ID scanning found no repeated IDs after correcting the shared index
 template. Wide tables intentionally retain a minimum width inside horizontally scrollable
 containers; these should be checked for discoverability and sticky-column behavior on real

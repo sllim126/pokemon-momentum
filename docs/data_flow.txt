@@ -14,11 +14,11 @@ Recent Data/Serving Changes (March 2026)
   - lower browser-side network cost
   - faster tab/set/product transitions
 
-2. Set Products server-side name fallback hardening
+2. Browse Set (`/group_products`) server-side name fallback hardening
 - `group_products` now detects placeholder metadata names (`Product <id>` / `ProductId <id>`).
 - When placeholder is detected, server falls back to `product_signal_snapshot.productName` when available.
 - Expected result:
-  - fewer placeholder names in Set Products output even if metadata table contains stale placeholder rows
+  - fewer placeholder names in Browse Set output even if metadata table contains stale placeholder rows
 
 3. Client-side row normalization fallback hardening
 - `dashboard_common.enrichRows()` now prioritizes non-placeholder payload names over cached metadata names.
@@ -43,6 +43,7 @@ Recent Data/Serving Changes (March 2026)
   - less repeated work on phone/tablet refreshes
 
 6. Search and screener workflow refinements
+(`Good Buys` below is the API/snapshot name, `good_buys`, of the list the site shows as `Pullbacks`.)
 - header search now routes set-oriented selections into `Browse Set` instead of acting like a raw product jump
 - `Good Buys` now filters for `recent_distinct_prices_30d >= 10`
 - `Good Buys` now supports a client-side `Filter Sets` popout over the current result set
@@ -67,8 +68,8 @@ Recent Data/Serving Changes (March 2026)
 
 What this document is for
 -------------------------
-This file explains how data moves through the project from raw TCGCSV archives to the
-dashboard screens. It is meant to answer:
+This file explains how data moves through the project from TCGCSV's daily price files to
+the dashboard screens. It is meant to answer:
 
 - where the data comes from
 - where it is stored
@@ -80,14 +81,21 @@ dashboard screens. It is meant to answer:
 High-level flow
 ---------------
 
-1. Download raw daily archives from TCGCSV
-2. Extract those archives to disk
-3. Load category-specific price history into DuckDB
-4. Refresh group and product metadata
-5. Build joined/named exports for inspection
-6. Build product-level and group-level signal snapshots
+1. Download today's prices from TCGCSV, one request per set ("group"), into the
+   extracted-day folder layout
+2. Load category-specific price history into DuckDB
+3. Refresh group and product metadata
+4. Build joined/named exports for inspection
+5. Build product-level and group-level signal snapshots (plus screener, sparkline,
+   series and health snapshots)
+6. Download PriceCharting graded prices (English pass only; covers both markets)
 7. Export partitioned parquet history
-8. Serve dashboards and API from DuckDB + parquet
+8. Build market-index snapshots (these read parquet, so they must come after step 7)
+9. Serve dashboards and API from DuckDB + parquet
+
+Data gap: TCGCSV retired its daily archive in September 2026, so there are no prices for
+2026-09-16 through 2026-10-07. Days on either side load normally; charts and indexes
+simply join across the gap.
 
 Host-driven daily automation now runs that pipeline for both category `3` and category `85`
 sequentially, so Japanese snapshots are rebuilt during the same nightly maintenance window
@@ -137,7 +145,7 @@ workflow features:
 
 - uploaded set-logo support
   - local files from `/images/set logos` can now be synced into `/images/logos/<groupId>.<ext>`
-  - Group Signals and Set Explorer both look for those synced groupId-based logo files
+  - Set Strength and Set Explorer both look for those synced groupId-based logo files
   - this keeps set imagery independent from individual product/card imagery
 
 - stricter breakout screening
@@ -209,29 +217,38 @@ and for Japanese:
 - `pokemon_jp_group_signal_snapshot`
 
 
-Stage 1: Raw download
----------------------
+Stage 1: Price download
+-----------------------
 Script:
 
-- [Download_new_day.py](/opt/pokemon-momentum/scripts/download/Download_new_day.py)
+- [fetch_tcgcsv_prices.py](/opt/pokemon-momentum/scripts/download/fetch_tcgcsv_prices.py)
+  using the shared polite client
+  [tcgcsv_client.py](/opt/pokemon-momentum/scripts/utilities/tcgcsv_client.py)
 
 Purpose:
 
-- download daily `.7z` archives from TCGCSV
-- store them in `/app/data/raw`
-- extract only newly downloaded archives into `/app/data/extracted`
+- read the snapshot date from `https://tcgcsv.com/last-updated.txt`
+- list the category's groups, then fetch `/tcgplayer/<category>/<group>/prices` for each
+- write each response into a staging folder, and rename the folder into place only after
+  every group succeeded (the loader treats a date as loaded the first time it sees it)
+
+Etiquette (TCGCSV's published usage guidelines):
+
+- requests one at a time, at least 150 ms apart, with a `Poke6sMarket/1.0.0` User-Agent
+- each day's files are requested once; a run that finds today's folder skips the download
+- a 403 or 429 stops the whole run (exit code 3) with no retries; check the TCGCSV
+  Discord before trying again
 
 Important detail:
 
-- this is not category-specific
-- one downloaded archive contains many category folders
-- category `3` and category `85` both come from the same extracted day package
+- this stage is category-specific: the nightly run calls it once for `3` and once for `85`
+- before 2026-09 this stage downloaded TCGCSV's daily `.7z` archive instead; those old
+  archives remain in `/app/data/raw` and are no longer updated
 
 Result of this stage:
 
-- raw archive files in `/app/data/raw`
-- extracted folders like:
-  - `/app/data/extracted/prices-YYYY-MM-DD.ppmd/...`
+- extracted folders in the same layout the archive used, so later stages are unchanged:
+  - `/app/data/extracted/prices-YYYY-MM-DD.ppmd/YYYY-MM-DD/<categoryId>/<groupId>/prices`
 
 
 Stage 2: Historical price load
@@ -328,14 +345,24 @@ Placeholder behavior:
 - if price history contains a productId that metadata does not return, a placeholder row is created
 - this keeps downstream joins from dropping priced products
 
+What "incremental" means:
+
+- a set is fetched when it is new to our metadata, still has placeholder rows, or its
+  product file changed since our last fetch
+- "changed" uses TCGCSV's `/tcgplayer/manifest.txt` (a content hash per file), compared
+  with the hashes saved after our last successful fetch
+- if the manifest can't be read, only new and placeholder sets are fetched that night
+
 Incremental refresh safeguard:
 
 - incremental product refreshes now re-fetch any group whose cached metadata still contains
   placeholder names like `Product 586829`
 - this prevents stale fallback rows from becoming permanent when tcgcsv later starts returning
   the missing product metadata
-- dashboard/API metadata reads also prefer the category CSV when it is newer than the DuckDB
-  file, which helps if a metadata refresh updated the CSV but the DuckDB table was not rebuilt yet
+- dashboard/API metadata reads use the category CSV whenever it exists, and the DuckDB
+  table only when there is no CSV (see `prefer_csv_source` in
+  `scripts/dashboards/query_support.py`), so a refreshed CSV is picked up even if the
+  DuckDB table was not rebuilt
 
 Result of this stage:
 
@@ -455,7 +482,7 @@ Result of this stage:
 Recent API-side addition:
 
 - the dashboard now derives a broad generation/era label for each set when serving
-  `Group Signals`
+  `Set Strength` (API: `/group_signals`)
 - this label is built from group metadata such as set name, abbreviation, and
   publication date so the UI can filter set breadth screens by era
 - Japanese Mega-era overrides now cover multiple modern Mega prefixes so sets like `M2`,
@@ -536,24 +563,66 @@ Result of this stage:
 - large historical scans can use parquet rather than only the DuckDB fact table
 
 
-English-only legacy analytics
+Stage 9: Market-index snapshots
+-------------------------------
+Script:
+
+- [build_index_overview_snapshot.py](/opt/pokemon-momentum/scripts/indicators/build_index_overview_snapshot.py)
+
+Purpose:
+
+- precompute each market index (level series, holdings, included sets, reshuffles) into
+  JSON snapshots that `/index-overview-data` serves
+
+Important detail:
+
+- indexes read the parquet history, so this step runs after the parquet export; before
+  2026-10-10 it ran earlier and every index lagged a day behind (see
+  docs/index_overview_maintenance.md)
+
+
+Graded prices (PriceCharting)
 -----------------------------
-Some ranking scripts are still English-only and only run for category `3`.
+Script:
 
-Examples:
+- [fetch_pricecharting.py](/opt/pokemon-momentum/scripts/download/fetch_pricecharting.py)
+  with matching rules in [pricecharting.py](/opt/pokemon-momentum/scripts/common/pricecharting.py)
 
-- top-200 universe
-- top-200 lookup
-- top-200 indicators
-- top-200 timeseries
-- legacy ROC snapshot
+Purpose:
 
-These are still part of the English pipeline, but not yet mirrored for Japanese.
+- download PriceCharting's daily Pokemon CSV once a night (English pass; it covers
+  English and Japanese)
+- match each row to our (productId, subTypeName) using its TCGplayer id and the bracket
+  tag in its name ([Reverse Holo], [1st Edition], ...)
+- keep a dated history in DuckDB table `pricecharting_prices`; PriceCharting publishes no
+  history of its own, so this table is the only graded history we have
 
-That means:
+Storage:
 
-- core ingest + metadata + snapshots work for both `3` and `85`
-- legacy top-200 ranking stack currently remains English-specific
+- raw CSVs (gzipped): `/app/data/pricecharting/raw/` (ignored by git)
+- matched rows: DuckDB `pricecharting_prices`
+
+Licensing:
+
+- shown with PriceCharting's permission on the condition that every displayed price links
+  back to its PriceCharting product page
+- if the subscription ends, delete both the raw folder and the table
+
+This step is a soft step: a PriceCharting failure warns but does not stop the price update.
+
+
+Legacy scripts (not run)
+------------------------
+The older top-200 ranking and ROC scripts are kept in the repository but are no longer part
+of the pipeline: `run_daily_update.py` does not call them and the API does not read their
+output. They were English-only.
+
+- `scripts/rankings/` (top-200 universe, lookup, names, timeseries, 30-day movers)
+- `scripts/indicators/compute_*.py`, `export_timeseries_ma.py`,
+  `single_card_moving_average.py`, `build_151_indicators.py`
+- `scripts/dashboards/build_*dashboard*.py` (static HTML generators that predate the API)
+
+Everything the site shows today comes from the snapshot stages above, for both `3` and `85`.
 
 
 Automation flow
@@ -573,21 +642,23 @@ Why the host wrapper exists:
 - run the pipeline in a one-off container
 - start the app container again afterward
 
-Daily behavior:
+Daily behavior (02:00 UTC, systemd timer `pokemon-momentum-daily-update.timer`):
 
-- incremental price load
-- incremental metadata refresh
+- per-group TCGCSV price download and incremental price load
+- incremental metadata refresh (only sets whose product file changed, using TCGCSV's manifest)
 - snapshot rebuild
+- PriceCharting graded prices (English pass)
 - parquet export
+- market-index snapshots
+- store pricing coverage audit (warning only)
+- a pass/fail summary posted to Discord by
+  [notify_discord.py](/opt/pokemon-momentum/scripts/pipeline/notify_discord.py), even when a
+  step fails
 
 Weekly behavior:
 
 - same overall pipeline
 - but product metadata refresh is forced to full-refresh mode
-- a second weekly metadata placeholder cleanup runs 24 hours later
-- that follow-up reruns product metadata plus the product signal snapshot only
-- its job is to replace stale `Product <id>` placeholders after tcgcsv starts returning
-  the missing product metadata
 - a second weekly metadata placeholder cleanup runs 24 hours later
 - that follow-up reruns product metadata plus the product signal snapshot only
 - its job is to replace stale `Product <id>` placeholders after tcgcsv starts returning
@@ -629,10 +700,16 @@ What it does:
 - exposes JSON endpoints for universe, groups, series, movers, signals, and set views
 - picks the best history source for each category
 - exposes newer workflow endpoints like:
-  - `/good_buys`
+  - `/good_buys` (shown on the site as Pullbacks)
   - `group_signals?generation=...`
   - `/group_series?groupId=...`
   - `/set_baskets`
+  - `/sealed_deals`, `/budget_builder`
+  - `/index-overview-data` (market indexes, served from nightly snapshots)
+  - `/hold_check` (6-month profit check after fees and shipping)
+  - `/graded_prices` (PriceCharting graded prices and history)
+  - `/sparkline_batch` (many trend lines in one request)
+  - `/store_link` (whether a product is listed in the Squarespace store)
   - `/tracking/...`
 
 Set history endpoint:
@@ -644,7 +721,7 @@ Set history endpoint:
     - daily percent of items above SMA30
     - active item count
     - average and median set price
-  - this is what lets `Group Signals` drive the main chart without forcing an immediate drilldown to one product
+  - this is what lets `Set Strength` drive the main chart without forcing an immediate drilldown to one product
 
 Set explorer endpoint:
 
@@ -657,7 +734,8 @@ Set explorer endpoint:
     - top hit share of total set value
     - top 3 share of total set value
     - depth score
-  - this powers the separate `/set-explorer` page
+  - this powers the separate `/set-explorer` page and the desktop app's
+    Market Stats → Set values view
   - it is designed for "poke around in the set data" questions rather than live chart analysis
 
 Tracking endpoints:
@@ -669,14 +747,18 @@ Tracking endpoints:
   - verifies a Google identity token, creates the tracking user if needed, and returns the normal synced tracking session
 
 - `/tracking/session`
-  - legacy sign-in endpoint retained for older locally created tracking accounts, though the
-    current dashboard UI uses Google sign-in
+  - `GET` reports the signed-in user (and whether they are an admin); `DELETE` signs out
+  - `POST` was the old username + PIN sign-in; it is retired and answers 410
 
 - `/tracking/tags`
   - reads and writes saved workflow tags for one signed-in user
 
 - `/tracking/tags/merge`
   - pushes locally-created tags into the saved account after sign-in
+- `/tracking/items/resolve`
+  - turns a list of saved tags into display rows (names, images, latest prices)
+- `/tracking/views`
+  - lists, saves and deletes saved dashboard views
 
 - `/tracking/account`
   - deletes the signed-in tracking account, tags, and active sessions
@@ -707,6 +789,11 @@ Result:
 
 Dashboard flow
 --------------
+Desktop app (planned to replace the main dashboard on desktop):
+
+- [desktop_home.html](/opt/pokemon-momentum/scripts/dashboards/desktop_home.html), served at
+  `/home-preview`; its data sources per view are listed in docs/desktop_app.md
+
 Main dashboard:
 
 - [dashboard.html](/opt/pokemon-momentum/scripts/dashboards/dashboard.html)
@@ -745,9 +832,9 @@ Additional dashboard behavior:
 - tags can stay local-only or sync through the new tracking account flow
 - the account dropdown can jump directly into the `Tracked` tab
 
-Embed dashboard responsibilities:
+Embed dashboard responsibilities (admin-only at `/embed`):
 
-- compact feed for iframe/public use
+- compact feed designed for embedding in an iframe
 - one chart
 - minimal controls
 
@@ -764,7 +851,9 @@ Source-of-truth guidance
 If you are trying to decide where something "really lives", use this mental model:
 
 - Raw upstream source:
-  - TCGCSV daily archives
+  - TCGCSV per-group daily price files (the old daily archives, through 2026-09-15,
+    remain in `/app/data/raw`)
+  - PriceCharting daily CSV for graded prices (`/app/data/pricecharting/raw`)
 
 - Working historical fact table:
   - DuckDB `pokemon_prices`
@@ -777,6 +866,9 @@ If you are trying to decide where something "really lives", use this mental mode
 
 - Latest analytical state:
   - category-specific product/group signal snapshot tables
+
+- Graded price history:
+  - DuckDB `pricecharting_prices`
 
 - Tracking state:
   - SQLite `tracking.sqlite3`
@@ -791,18 +883,17 @@ Typical daily success path
 --------------------------
 On a normal successful daily run, the expected sequence is:
 
-1. new archive is downloaded if available
-2. new day is extracted if needed
-3. missing price rows are inserted into `pokemon_prices`
-4. group metadata is refreshed
-5. product metadata is refreshed
-6. joined named export is rebuilt
-7. product signal snapshot is rebuilt
-8. group signal snapshot is rebuilt
-9. new parquet partitions are exported
+1. today's per-group price files are downloaded (skipped if already downloaded today)
+2. missing price rows are inserted into `pokemon_prices`
+3. group metadata is refreshed
+4. product metadata is refreshed for sets whose product file changed
+5. joined named export is rebuilt
+6. product, group, screener, sparkline, series and health snapshots are rebuilt
+7. PriceCharting graded prices are added (English pass)
+8. new parquet partitions are exported
+9. market-index snapshots are rebuilt from the parquet history
 10. API serves the new latest date
-11. dashboards can immediately use the refreshed snapshot-driven screens, including
-    `Good Buys`, generation-filtered `Group Signals`, and the lighter `Set Explorer`
+11. Discord shows a green summary with each market's latest date
 
 
 Common failure patterns
@@ -834,7 +925,7 @@ Recommended long-term architecture
 ----------------------------------
 The intended long-term shape of the system is:
 
-- TCGCSV archive download
+- TCGCSV per-group price download
 - extracted day folders
 - DuckDB ingest / metadata / snapshots
 - parquet as historical fact read layer

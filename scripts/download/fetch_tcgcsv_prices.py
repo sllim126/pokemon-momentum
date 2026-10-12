@@ -34,10 +34,19 @@ from scripts.utilities.tcgcsv_client import (
 DATA_DIR = Path("/app/data")
 EXTRACT_ROOT = DATA_DIR / "extracted"
 STAGING_ROOT = DATA_DIR / "staging"
+# If TCGCSV hasn't refreshed in this long, its data would just repeat an old day.
 MAX_SNAPSHOT_AGE_HOURS = 48
+
+# Exit codes. The nightly run treats any non-zero code as a failure (and Discord alerts);
+# the number tells whoever reads the log why it stopped:
+#   0 = published (or already downloaded today)
+#   1 = download failed or returned no prices
+#   2 = TCGCSV data is stale, nothing new to load
+#   3 = TCGCSV blocked/throttled us (403/429); do not retry until investigated
 
 
 def parse_args() -> argparse.Namespace:
+    """Read --category-id (3 = English Pokemon, 85 = Japanese Pokemon)."""
     parser = argparse.ArgumentParser(
         description="Download today's TCGCSV prices per group into the extracted archive layout."
     )
@@ -46,11 +55,18 @@ def parse_args() -> argparse.Namespace:
 
 
 def fetch_snapshot_time(session) -> datetime:
+    """When TCGCSV last refreshed its data; its UTC date becomes our price date."""
     resp = tcgcsv_get(session, "/last-updated.txt")
     return datetime.strptime(resp.text.strip(), "%Y-%m-%dT%H:%M:%S%z")
 
 
 def download_category(session, category_id: int) -> int:
+    """Download every group's prices for one category and publish them as one day.
+
+    Steps: check the snapshot is fresh, skip if today's folder already exists, list the
+    groups, fetch each group's prices into a staging folder, then rename the staging
+    folder into place. Returns one of the exit codes listed at the top of this file.
+    """
     snapshot_time = fetch_snapshot_time(session)
     age_hours = (datetime.now(timezone.utc) - snapshot_time).total_seconds() / 3600
     date_str = snapshot_time.astimezone(timezone.utc).date().isoformat()
@@ -117,6 +133,7 @@ def download_category(session, category_id: int) -> int:
 
 
 def main() -> int:
+    """Entry point; turns a TCGCSV block into exit code 3 so the pipeline stops politely."""
     args = parse_args()
     try:
         return download_category(build_tcgcsv_session(), args.category_id)

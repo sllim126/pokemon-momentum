@@ -114,6 +114,7 @@ INDEX_OVERVIEW_HUB_HTML = SCRIPT_DIR / "index_overview_hub.html"
 INDEX_OVERVIEW_DETAIL_HTML = SCRIPT_DIR / "index_overview_detail.html"
 DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
 SITE_SHELL_JS = SCRIPT_DIR / "site_shell.js"
+DESKTOP_THEME_CSS = SCRIPT_DIR / "desktop_theme.css"
 AREA_HUB_HTML = SCRIPT_DIR / "area_hub.html"
 ADMIN_HUB_HTML = SCRIPT_DIR / "admin_hub.html"
 DESKTOP_HOME_HTML = SCRIPT_DIR / "desktop_home.html"
@@ -596,6 +597,7 @@ DESKTOP_ONLY_TABS = {"group_products", "group_signals", "time_to_buy", "browse_s
 
 
 def dashboard_response_for_request(request: Request) -> FileResponse:
+    """/ and /dashboard: phones get the mobile page, desktops get the research dashboard."""
     if is_mobile_request(request) and request.query_params.get("tab") not in DESKTOP_ONLY_TABS:
         return FileResponse(MOBILE_DASHBOARD_HTML)
     return FileResponse(DASHBOARD_HTML)
@@ -747,7 +749,7 @@ def index_overview_sv100_page():
 
 @app.get("/index-overview-mega100")
 def index_overview_mega100_page():
-    """Serve the desktop index-overview concept page for Mega Evolution 100."""
+    """Serve the desktop index-overview detail page for Mega Evolution 100."""
     return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
@@ -818,7 +820,14 @@ def dashboard_common_js():
 
 @app.get("/site-shell.js")
 def site_shell_js():
+    """Shared site header (logo, Buy/Discover/Research/Track/Learn, Account) used by every page."""
     return FileResponse(SITE_SHELL_JS, media_type="application/javascript")
+
+
+@app.get("/desktop-theme.css")
+def desktop_theme_css():
+    """Shared colors, panels and buttons for desktop pages outside the main desktop app."""
+    return FileResponse(DESKTOP_THEME_CSS, media_type="text/css")
 
 
 def area_hub_page():
@@ -838,6 +847,7 @@ def desktop_home_preview():
 
 @app.get("/admin")
 def admin_hub(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    """Links to the admin-only tools; 401/403 for anyone who isn't a signed-in admin."""
     require_admin_user(authorization=authorization, tracking_token=tracking_token)
     return FileResponse(ADMIN_HUB_HTML)
 
@@ -1034,6 +1044,8 @@ def _budget_name_root(name: str | None) -> str:
 
 
 def _budget_candidate_score(row: dict, budget: float) -> float:
+    """Rank a Budget Builder candidate: rewards recent gains, acceleration, trend strength
+    and active trading, each capped so one extreme number can't dominate."""
     price = max(_safe_float(row.get("latest_price")), 0.0)
     roc_7d = _safe_float(row.get("roc_7d_pct"))
     roc_30d = _safe_float(row.get("roc_30d_pct"))
@@ -1108,6 +1120,12 @@ def _select_budget_candidates(
     max_per_set: int,
     allow_duplicates: bool = False,
 ) -> list[dict]:
+    """Walk the ranked candidates and keep each one that still fits the money left.
+
+    Three passes: first only cards up to 45% of the budget, then 65%, then any price, so a
+    single expensive card can't take the whole budget before cheaper strong picks are in.
+    Also enforces max_per_set and, unless allow_duplicates, one card per Pokémon name.
+    """
     if budget <= 0:
         return []
 
@@ -1172,7 +1190,7 @@ def _resolve_index_group_ids(index_key: str, category_id: int) -> list[int]:
 
     Resolution priority is intentional:
     1) explicit `group_ids` (exact historical boundaries, no ambiguity),
-    2) `all_active_groups` (global top 100 concept page),
+    2) `all_active_groups` (the global Pokemon Top 151 indexes, every set with prices),
     3) `generation` bucket from build_generation_case (modern eras).
     """
     definition = INDEX_DEFINITIONS.get(index_key)
@@ -1598,6 +1616,11 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
 
 @app.get("/index-overview-data")
 def index_overview_data(category_id: int = 3, index: str = "sv100", refresh: bool = False):
+    """Everything one market index page needs: level series, holdings, sets, reshuffles.
+
+    Served from the snapshot the nightly update builds (it runs after the parquet export,
+    so it includes the newest day), cached in memory; refresh=true recomputes it live.
+    """
     requested_category = int(category_id)
     if requested_category not in (3, 85):
         raise HTTPException(status_code=400, detail="Index overview is only configured for category_id in {3, 85}.")
@@ -2260,6 +2283,7 @@ def require_tracking_user(authorization: str | None):
 
 
 def is_admin_username(username: str | None) -> bool:
+    """Exact (case-insensitive) match against ADMIN_USERNAMES; no partial or domain matching."""
     return str(username or "").strip().lower() in ADMIN_USERNAMES
 
 
@@ -2285,6 +2309,7 @@ def require_admin_user(
     authorization: str | None = None,
     tracking_token: str | None = None,
 ):
+    """Return the signed-in admin, or raise 401 (not signed in) / 403 (signed in, not admin)."""
     session_user = require_tracking_user_from_request(authorization=authorization, tracking_token=tracking_token)
     if not is_admin_username(session_user.username):
         raise HTTPException(status_code=403, detail="Admin access required")
@@ -4950,6 +4975,15 @@ def budget_builder_recommendations(
     allow_duplicates: bool = False,
     category_id: int = 3,
 ):
+    """Pick actively traded cards that together fit `budget`, at most `max_per_set` per set.
+
+    Candidates: cards (not sealed) between min_price and max_price, in the chosen rarities
+    (default IR and up), that are trading actively (see the readings filter in the query).
+    Each gets a score from trend and recent movement, plus short "why" reasons, and
+    _select_budget_candidates fills the budget from the top of that ranking. limit=0
+    fills the budget with as many as fit; exclude_keys ("productId||subType,...") swaps
+    out cards the visitor already owns.
+    """
     budget = max(5.0, min(float(budget), 5000.0))
     min_price = max(0.5, min(float(min_price), budget))
     if max_price is not None:

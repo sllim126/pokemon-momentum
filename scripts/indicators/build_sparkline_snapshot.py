@@ -1,3 +1,8 @@
+"""Sparkline snapshot: the last 365 days of prices for every printing, as one JSON list.
+
+Lets the trend lines in tables (/sparkline_batch) load without scanning price history.
+"""
+
 import argparse
 import sys
 from pathlib import Path

@@ -1,3 +1,10 @@
+"""Build the JSON snapshot for every market index in one category.
+
+Each index payload (level series, holdings, included sets, reshuffles) is computed from
+the parquet price history and saved for /index-overview-data. The nightly update runs this
+after the parquet export so the newest day is included.
+"""
+
 import argparse
 import sys
 from pathlib import Path

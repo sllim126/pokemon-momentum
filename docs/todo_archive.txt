@@ -4,9 +4,90 @@ Pokemon Momentum TODO Archive
 Archived Completed Work
 -----------------------
 
+October 2026 (archived 2026-10-12, when todo.txt was rewritten as the main action list)
+----------------------------------------------------------------------------------------
+
+- Superseded by the desktop app at `/home-preview` (see `docs/desktop_app.md`):
+  - the September development program that reshaped `/dashboard-lab` and `/mobile-rebuild`
+    around the five task areas (both now development pages to remove or restrict)
+  - "Desktop command-center redesign": filters, ranked tables and a persistent
+    selected-product drilldown are what the desktop app does
+  - "Make tool/page navigation more discoverable": the shared site header (`site_shell.js`)
+    puts the five areas on every page
+  - "Improve narrower laptop responsiveness": the desktop app is checked at 1920×1080,
+    1366×768 and 1280×720
+  - "Extend tracking into `/set-explorer`": every card opened from a set view in the desktop
+    app has Save
+- Market-index startup with an older cached `dashboard-common.js` was fixed (2026-09-10);
+  every index returned its configured top 100 or 151 holdings with `imageUrl`.
+- PSA lookup logic was extracted from `api.py` into `scripts/dashboards/psa_service.py`.
+- PriceCharting graded prices shipped 2026-10-09 (the provider sprint had planned a
+  `PRICECHARTING_TOKEN` setting; the one built is `PRICECHARTING_API_TOKEN`).
+- Principles from the April mobile-first refresh, kept for reference (details in
+  `docs/mobile_redesign_notes.txt`): answer "buy, wait, avoid or research more?" first;
+  search-first header; obvious EN/JP and Singles/Sealed switches; list-first results with
+  thumbnails; phone as the primary target, tablet for comparison, desktop for power users;
+  make the value proposition (long-term momentum without chasing hype or spikes) obvious.
+
+July 2026
+---------
+
+- Squarespace singles listing image workflow completed on 2026-07-30:
+  - added a local `/images/cards/...` cache for single-card artwork
+  - added Scrydex-derived card image support with local fallback-friendly caching
+  - added square-padding so cached card images upload to Squarespace as 1:1 thumbnails
+    without cropping the card top/bottom in previews
+  - uploaded the first 12 hidden Squarespace single listings with locally cached,
+    square-padded card images
+  - kept local metadata and draft CSVs as the source of truth while Squarespace remains
+    the publishing target
+
 April 2026
 ----------
 
+- Mobile decision-card prototype (moved from todo.txt 2026-10-12):
+  - Accomplished on 2026-04-28:
+    - Promoted the mobile decision-card redesign to the live mobile/tablet `/` and `/dashboard` experience.
+    - Preserved the preferred hamburger menu and account drawer patterns from the mockup.
+    - Removed the old visual-card wrapper styling so the mobile shell feels more integrated with the site background.
+    - Added persistent search/header shell plus obvious English/Japanese and Singles/Sealed switches.
+    - Defaulted the landing feed to the current desktop `Top Movers` indicator.
+    - Moved market price next to the selected item name and kept the selected item detail above the result feed.
+    - Reworked the deal checker layout with seller price first, edge vs market, suggested offer, and corrected buyer/seller wording.
+    - Added Stats / Graph / Insight tabs so only one supporting panel is visible at a time.
+    - Made the graph functional with lazy-loaded real series data, underfill, date markers, and chart range controls.
+    - Hydrated row sparklines for all visible results in safe batches instead of limiting to the first 30.
+    - Added card/product images where available.
+    - Added Save bottom-sheet behavior with Favorite, Watchlist, Needs Review, and Buy List options.
+    - Added Full Data modal behavior for the previous full-detail style flow.
+    - Improved touch targets, focus states, and thumb-friendly controls across header, drawers, rows, tabs, and bottom actions.
+    - Updated the account icon, tracked-count heart badge, and heart click behavior.
+    - Made the heart open all tracked items.
+    - Made account menu saved-research links open filtered tracked views:
+      - Tracked Items = all saved items
+      - Favorites = `favorite`
+      - Watchlist = `watchlist`
+      - Needs Review = `research`
+      - Buy List = `owned`
+    - Built, then intentionally hid, the first Alerts & Targets mobile workspace while the notification strategy waits:
+      - Price Targets = local buy-below / sell-above target inputs for tracked items
+      - Momentum Alerts = local rule toggles for breakout, pullback, momentum shift, and stale tracking ideas
+      - Recent Alerts = first-pass inbox shape using saved targets and tracked-item movement context
+    - Hid the deal checker while viewing tracked/favorites lists but kept Stats / Graph / Insight visible.
+    - Added URL refresh persistence for selected market, product type, feed/mode, search query, selected product, subtype, and tracked tag.
+    - Mapped hamburger indicator links to mobile in-page feeds for:
+      - Top Movers
+      - Early Movers
+      - Pullbacks
+      - Under the Radar
+      - Confirmed Movers
+      - Consistent Movers
+      - Breakouts
+    - Removed the live menu link back to the Mobile Rebuild Mockup.
+    - Built the mobile Feedback & Support page shell:
+      - account-menu links now open Feedback, Report a Bug, and View Guide tabs
+      - feedback and bug reports submit into the existing `/bug_reports` internal review queue with mobile context
+      - View Guide now has a first-pass quick guide for search, scope switches, deal check, and saved lists
 - Reviewed phone/tablet dashboard behavior and turned the generic mobile task into concrete layout findings. (Reviewed 2026-04-15)
 - Index Funds concept completed. (Done 2026-04-20)
   - Built and shipped desktop `Index Overview` hub + live era pages:

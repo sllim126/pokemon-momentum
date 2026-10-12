@@ -1,345 +1,308 @@
 Pokemon Momentum TODO
 =====================
 
-This is the authoritative running monitor for current projects, decisions, and future
-improvements. Update it whenever work starts, changes direction, ships, or is deferred.
-Archived completed items live in `docs/todo_archive.txt`.
+Last updated: 2026-10-12 (milestone: todo list becomes the main action list)
 
-Current Development Program (2026-09-10)
------------------------------------------
+This is the single list of what to work on next. Whoever picks up the project (a person,
+Claude, Codex or any other coding agent) should be able to start from this file without
+the earlier conversations. `AGENTS.md` at the repository root says how to keep it current
+and defines the "milestone" wrap-up routine. Completed items move to
+`docs/todo_archive.txt`.
 
-- Keep the current production experiences unchanged while the replacement is developed:
-  - production desktop: `/` and `/dashboard`
-  - production mobile: `/mobile` and mobile-user-agent handling on `/`
-  - development desktop baseline: `/dashboard-lab`
-  - development mobile baseline: `/mobile-rebuild`
-- Build both development experiences around five task areas:
-  - `Buy`: quick Card Check, seller-price evaluation, sealed checks, and Budget Builder
-  - `Discover`: Good Buys, Early Movers, Quiet Risers, Breakouts, and Pullbacks
-  - `Research`: card, set, species, sealed, and market-index analysis
-  - `Track`: favorites, watchlist, owned items, buy targets, and saved views
-  - `Learn`: Market Pulse, data-driven hobby facts, methodology, and collector resources
-- Development experience rules:
-  - phone defaults to Card Check and answers buy/wait/risk before showing deep metrics
-  - desktop defaults to a market/research workspace with ranked opportunities and drilldown
-  - use progressive disclosure: Decision first, Evidence second, Deep Research on demand
-  - every recommendation needs a plain-language reason and data-confidence label
-  - use shared names, result cards, navigation, and actions across the two experiences
-  - do not replace production routes until responsive QA and route/data contracts pass
-- Current implementation status:
-  - [first pass ready for review] reshape `/dashboard-lab` around the five task areas
-  - [first pass ready for review] rebuild `/mobile-rebuild` from the current live mobile
-    implementation, preserving live API data, card `imageUrl` rendering, search, charts,
-    tracking, and account behavior while adding Card Check and the five task areas
-  - [in progress] replace the preliminary price-edge-only Strong Buy / Good Buy / Fair Price /
-    Wait / High Risk labels with a shared, tested model that includes trend, volatility,
-    activity, and data confidence
-  - [fixed, awaiting visual review] restore market-index startup when a browser has an
-    older cached `dashboard-common.js`; verified every index returns its configured top
-    100 or 151 holdings and every current holding includes `imageUrl`
-  - [planned] add Market Pulse facts backed by current snapshots rather than editorial filler
-  - [planned] complete 390/768/1024/1440 px browser and real-device QA
-  - [planned] review the development experience before promoting any route
-- Backend cleanup follows the development-shell pass:
-  - [in progress, uncommitted] extract PSA lookup logic from `api.py` into `psa_service.py`
-  - [planned] split tracking/auth, supplier/store, collector assets, and market screeners into
-    domain modules with unchanged endpoint contracts
-  - [planned] keep `api.py` primarily responsible for app setup and route registration
+Status tags used below:
+
+  [next]         pick these up first, top to bottom
+  [in progress]  started; the note says where it stopped
+  [waiting]      needs a decision or input from the owner before anyone starts
+  [planned]      agreed, not started
+  [parked]       on hold on purpose; do not start without asking the owner
+  [idea]         not agreed yet; raise it with the owner before building
+
+When you finish an item, move it to Recently Completed with the date and commit, then
+archive older Recently Completed entries at the next milestone.
+
+Current Focus (2026-10-12)
+--------------------------
+
+- Desktop: the new single-page desktop app at `/home-preview` holds all five areas (Buy,
+  Discover, Research, Track, Learn). Guide: `docs/desktop_app.md`. Collector Hub,
+  Placeholder Library and Account share its style through `desktop_theme.css`.
+- Mobile (`/mobile` and the mobile handling on `/`) and the admin pages are parked. The
+  mobile layout must not change without the owner's go-ahead.
+- Bug reports go to the Discord `#bug-reports` channel. New pages get no on-site bug form.
+- Project map: `docs/project_status.md`. Operating steps: `docs/operator_runbook.txt`.
 
 Recently Completed
 ------------------
 
-- Squarespace singles listing image workflow completed on 2026-07-30:
-  - added a local `/images/cards/...` cache for single-card artwork
-  - added Scrydex-derived card image support with local fallback-friendly caching
-  - added square-padding so cached card images can upload to Squarespace as 1:1 thumbnails without cropping the card top/bottom in previews
-  - uploaded the first 12 hidden Squarespace single listings with locally cached, square-padded card images
-  - kept local metadata and draft CSVs as the source of truth while Squarespace remains the publishing target
+- 2026-10-12 Comments and docs reviewed across the whole codebase and corrected; new
+  `docs/desktop_app.md`; `AGENTS.md` and this todo list set up as the shared work list.
+- 2026-10-12 Collector Hub, Placeholder Library and Account restyled to match the desktop app.
+- 2026-10-09 to 10-10 Desktop app built at `/home-preview`:
+  - Discover lists, Track (saved lists with buy/sell price targets), Research (Sets,
+    Pokémon, Market Stats with indexes and set values), Buy (Sealed Deals with loose-pack
+    comparison, card-art Budget Builder), Learn (How it works), legal footer
+  - 6-month hold check and PriceCharting graded prices on every card
+  - Market Indexes listed only under Research in the site menus
+- 2026-10-09 Pipeline moved to per-set TCGCSV fetches after the daily archive was retired;
+  Discord pass/fail alerts; index snapshots now build after the parquet export.
+- 2026-10-09 Squarespace price sync skips deleted listings; listing retire script added;
+  admin lookalike-username escalation closed.
 
 High Priority
 -------------
 
-- Mobile-first UI/UX refresh:
-  - Source notes and the decision-card HTML reference live in `docs/mobile_redesign_notes.txt`.
-  - Treat this as both a UI refresh (visual system, shared components, responsive layout) and a UX refresh (task flow, navigation, wording, speed, and confidence).
-  - Rebuild around the core user questions:
-    - what should I look up quickly?
-    - is this card/sealed item buyable at market or below market?
-    - is it likely rising, flattening, declining, or caught in hype/a spike?
-    - how healthy is the overall market, and how healthy is this set?
-    - what can I buy with a specific budget?
-    - what is worth picking up now, including items going down while the broader market rises?
-  - Use a cohesive site shell across dashboard, set explorer, sealed deals, index pages, tracking, and future assistant flows instead of standalone pages with separate navigation patterns.
-  - Borrow mobile patterns intentionally from Amazon/Walmart/Yahoo Finance:
-    - persistent search-first header
-    - obvious category/scope switching
-    - list-first results with recognizable thumbnails
-    - quick price/change/sparkline summary rows
-    - tap-through product detail that answers "buy, wait, avoid, or research more?"
-  - Make phone the primary design target, tablet the analysis/comparison target, and desktop the power-user target.
-  - Align English/Japanese and Singles/Sealed as first-class scope switches throughout the experience.
-  - Make the public-facing value proposition obvious on first view: Pokemon market screening for long-term momentum without chasing hype, buyouts, or short spikes.
-  - Add spike/dip suppression to price-history indicators:
-    - for cards valued over `$200`, ignore single-observation moves greater than roughly `25%` up or down as likely manipulation, bad data, buyout noise, or non-repeatable market distortion
-    - make the threshold configurable later by price band, liquidity, and observation count instead of hard-coding one global rule
-- Mobile decision-card prototype:
-  - Accomplished on 2026-04-28:
-    - Promoted the mobile decision-card redesign to the live mobile/tablet `/` and `/dashboard` experience.
-    - Preserved the preferred hamburger menu and account drawer patterns from the mockup.
-    - Removed the old visual-card wrapper styling so the mobile shell feels more integrated with the site background.
-    - Added persistent search/header shell plus obvious English/Japanese and Singles/Sealed switches.
-    - Defaulted the landing feed to the current desktop `Top Movers` indicator.
-    - Moved market price next to the selected item name and kept the selected item detail above the result feed.
-    - Reworked the deal checker layout with seller price first, edge vs market, suggested offer, and corrected buyer/seller wording.
-    - Added Stats / Graph / Insight tabs so only one supporting panel is visible at a time.
-    - Made the graph functional with lazy-loaded real series data, underfill, date markers, and chart range controls.
-    - Hydrated row sparklines for all visible results in safe batches instead of limiting to the first 30.
-    - Added card/product images where available.
-    - Added Save bottom-sheet behavior with Favorite, Watchlist, Needs Review, and Buy List options.
-    - Added Full Data modal behavior for the previous full-detail style flow.
-    - Improved touch targets, focus states, and thumb-friendly controls across header, drawers, rows, tabs, and bottom actions.
-    - Updated the account icon, tracked-count heart badge, and heart click behavior.
-    - Made the heart open all tracked items.
-    - Made account menu saved-research links open filtered tracked views:
-      - Tracked Items = all saved items
-      - Favorites = `favorite`
-      - Watchlist = `watchlist`
-      - Needs Review = `research`
-      - Buy List = `owned`
-    - Built, then intentionally hid, the first Alerts & Targets mobile workspace while the notification strategy waits:
-      - Price Targets = local buy-below / sell-above target inputs for tracked items
-      - Momentum Alerts = local rule toggles for breakout, pullback, momentum shift, and stale tracking ideas
-      - Recent Alerts = first-pass inbox shape using saved targets and tracked-item movement context
-    - Hid the deal checker while viewing tracked/favorites lists but kept Stats / Graph / Insight visible.
-    - Added URL refresh persistence for selected market, product type, feed/mode, search query, selected product, subtype, and tracked tag.
-    - Mapped hamburger indicator links to mobile in-page feeds for:
-      - Top Movers
-      - Early Movers
-      - Pullbacks
-      - Under the Radar
-      - Confirmed Movers
-      - Consistent Movers
-      - Breakouts
-    - Removed the live menu link back to the Mobile Rebuild Mockup.
-    - Built the mobile Feedback & Support page shell:
-      - account-menu links now open Feedback, Report a Bug, and View Guide tabs
-      - feedback and bug reports submit into the existing `/bug_reports` internal review queue with mobile context
-      - View Guide now has a first-pass quick guide for search, scope switches, deal check, and saved lists
-  - Next pass to review:
-    - Decide whether tracked account lists should show English and Japanese together by default, with row-level EN/JP labels and optional list filtering.
-    - Store or migrate tracking metadata so saved items reliably retain category/market, not just `productId||subTypeName`.
-    - Build proper mobile flows for Browse Set, Browse Species, Set Strength, and Time to Buy instead of relying on desktop-dashboard tab concepts.
-    - Make Set Explorer mobile-friendly with the same mobile shell, readable set cards, thumb-friendly filters, and quick tap-through behavior.
-    - Make Sealed Deals mobile-friendly with the same mobile shell, clearer deal rows/cards, and phone-first sorting/filter controls.
-    - Tidy index overview pages for mobile: improve spacing, row readability, tap targets, and index navigation without rebuilding the whole index experience yet.
-    - Revisit Alerts & Targets later:
-      - keep this section hidden from the account menu for now
-      - site-specific/in-site notifications should be workable because market data updates daily, not continuously
-      - define daily alert evaluation rules for target hits, watchlist movement, breakouts, pullbacks, stale tracked items, and sell-above targets
-      - decide whether alert targets/rules should sync to the tracking account instead of localStorage
-      - decide whether notification delivery should start as in-site badges/inbox only before email, Discord, PWA push, or native-app push
-    - Upgrade View Guide from first-pass static help into a real guided walkthrough if users need more onboarding.
-    - Mobile account follow-up: add the desktop Google sign-in block later if mobile should manage sign-in directly; for now mobile can reuse an existing tracking token and supports sign-out.
-    - Review hamburger menu labels after real usage and remove anything that does not earn its spot on mobile.
-    - Improve mobile search results and search suggestions beyond filtering the currently loaded feed.
-    - Decide if tracked/favorites should have their own internal All / EN / JP / Singles / Sealed filter row.
-    - Decide whether the deal checker should remain hidden for all tracked views or be available behind a secondary action.
-    - Add better empty states for filtered tracked lists and list-specific onboarding text.
-    - Confirm Full Data modal has every field/link needed from the previous mobile details page.
-    - Confirm all indicator feeds use the right mobile row labels, scoring, and sorting behavior.
-    - Review performance on real phones after the full-result sparkline hydration change.
-    - Run a link-by-link mobile QA pass after the next migration/deployment.
-- Desktop command-center redesign:
-  - source notes for the desktop mockup live in `docs/desktop_redesign_notes.txt`
-  - preserve desktop as the exploration / analysis product rather than forcing the mobile decision-card flow onto large screens
-  - center the desktop around filters, ranked opportunity tables, and a persistent selected-product drilldown
-  - reconcile proposed tabs like `Top Opportunities` and `Undervalued` with current dashboard indicators
-- Mobile / tablet layout acceptance criteria:
-  - iPhone 14 Pro Max: stop the bottom mobile nav from overlapping the last visible `Filter Sets` card.
-  - iPhone 14 Pro Max: reduce aggressive card-row title truncation so premium-card names stay distinguishable.
-  - iPad Air / iPad Pro: give tablet a dedicated analysis layout with stronger information hierarchy instead of enlarged mobile.
-  - Tablet workflow: reduce the chart/list scroll ping-pong so comparing cards does not require repeated long scrolls.
-  - Rebalance the selected-product hero and `Market Signals` panel so the main screener/chart stay primary on tablet.
-- Mobile search/discovery UX follow-up from bug ticket `id=6` (2026-04-16):
-  - review 5 leading commerce/mobile shopping layouts and document shared patterns worth borrowing
-  - increase search-result thumbnail size on mobile so card recognition is faster
-  - prioritize fast "find card quickly" flow over dense data in the mobile search experience
-- Market-switch/search intent follow-up from bug ticket `id=5` (2026-04-15):
-  - make EN vs JP market switching more obvious on mobile
-  - evaluate auto-market suggestion/switch when query strongly matches market-specific sealed terms (example: EN query typed while JP is intended)
-- Product classification cleanup:
-  - verify product-kind rebuild results now that broad `other` classifications default into sealed instead of singles/cards.
-- Make tool/page navigation more discoverable on desktop and mobile instead of hiding too much in the bottom-left account/menu area.
-- Improve narrower laptop / small-desktop responsiveness so the chart, indicators, and table columns stay more obvious without requiring ultra-wide screens.
+- [next] Fix the code problems found in the 2026-10-12 documentation review:
+  - `scripts/pipeline/validate_pipeline.py` (run-the-steps mode) builds index snapshots
+    before "Export parquet partitions". Move that step after the export, the same fix
+    made to `run_daily_update.py` in commit b4ca0a7.
+  - `POKE6S_TCGCSV_USER_AGENT` is never passed into the container by
+    `docker-compose.yml`. Harmless today (the default is correct); either pass it through
+    or drop it from the README `.env` table.
+  - Placeholder Library spills 16 px sideways at phone width, and Collector Hub may cut
+    content off (both set `body { overflow: hidden }`). Check at 390 px wide.
+- [next] Promote the desktop app to the main desktop page (details in
+  `docs/desktop_app.md`, "Planned next steps"):
+  - serve it at `/` for desktop visitors; phones keep `/mobile`
+  - point the header menus (`AREAS` in `scripts/dashboards/site_shell.js`) at its views
+  - forward the pages it replaces: `/sealed-deals`, `/budget-builder`, `/set-explorer`,
+    `/index-overview*` and the five area landing pages
+  - remove the Time to Buy menu link (owner decided to leave Time to Buy out)
+  - change the `APP` constant in `scripts/dashboards/account_settings.html` to `/`
+  - update `docs/project_status.md` page map and `docs/desktop_app.md`
+- [planned] Remove or restrict the public development pages `/dashboard-lab`,
+  `/dashboard-dev` and `/mobile-rebuild`.
+- [planned] Move the desktop app's browser checks into the repository. Playwright scripts
+  were written during development but only lived in a temporary folder; add them under
+  `tests/` with instructions for running them.
+- [waiting] Decide whether the older research dashboard behind "Full data →" is retired or
+  restyled.
+- [waiting] The old dashboard and `/mobile` still have the on-site "Report a Bug" form.
+  Decide whether to replace it with a link to Discord (touches the mobile page, so ask).
+- [waiting] Black Friday pull lists: the owner will supply the sets and a minimum price.
+
+Desktop App Follow-up
+---------------------
+
+Smaller pieces the old pages showed that the desktop app does not yet (from the
+2026-10-10 gap review). Check each against the current app before building; some may
+already be covered.
+
+- [planned] Set views: "% at 90-day high" and sealed-vs-cards momentum for a set.
+- [planned] Index views: included sets, dates the top-100 list was reshuffled, set-release
+  markers on the chart, and the method explanation.
+- [planned] Sealed Deals: dollars saved, estimated MSRP, a confidence rating and, for
+  Japanese products, the value score.
+- [planned] Budget Builder: "I already own this card, find a replacement", allow
+  duplicates, and a short "why this pick" note per card.
+- [planned] Stats tab: show the numbers specific to the list the visitor came from (streak
+  length, days above average, prior 90-day high, distinct prices traded).
+- [parked] Account extras: a "purchased" checkbox on Buy List items, and rethinking Saved
+  Views now that links keep the visitor's place (owner: low priority).
 
 Active Queue
 ------------
 
+- [planned] Security tightening (from `docs/project_status.md`):
+  - tracking sessions never expire
+  - refresh parameters such as `/index-overview-data?refresh=true` can be triggered by anyone
+- [planned] Search ranking can put a promo above the main printing (example: "charizard 199").
+- [waiting] Confirm the fee and shipping numbers marked ESTIMATE in
+  `scripts/common/selling_costs.py` against real invoices (owner has the invoices).
+- [planned] Spike/dip suppression for price-history indicators: for cards over $200, ignore
+  single-observation moves greater than about 25% up or down as likely manipulation, bad
+  data or buyout noise. Make the threshold configurable later by price band, liquidity and
+  observation count.
+- [planned] Sealed Squarespace listing intake and creation scripts (in progress before
+  the desktop app work; check `scripts/` for the current state before continuing).
+- [planned] Replace the remaining full-catalog browser loads with paged server-side search.
+- [planned] Keep profiling custom-window `breakouts` (the default 90-day request already uses
+  the product-signal snapshot: about 2.0 s down to 0.5 s warm).
+- [planned] Pin runtime dependencies and separate development-only packages.
+- [planned] Pull the shared frontend code (shell, API calls, charts, formatting, tracking)
+  out of the individual pages.
+- [planned] Product classification: verify the product-kind rebuild now that broad `other`
+  classifications default to sealed instead of cards.
+- [planned] Backend cleanup: split tracking/auth, supplier/store, collector assets and market
+  screeners out of `scripts/dashboards/api.py` into domain modules with unchanged endpoint
+  contracts, so `api.py` mainly sets up the app and registers routes. (PSA lookup already
+  lives in `psa_service.py`.)
+- [waiting] Buy labels: an earlier plan replaced the price-edge-only Strong Buy / Good Buy /
+  Fair Price / Wait / High Risk labels with a tested model using trend, volatility,
+  activity and data confidence. The desktop app now shows the 6-Month Hold check instead.
+  Decide whether the labels are still wanted.
+
 - PSA cert enrichment integration:
-  - Add site-facing uses of the current backend PSA cert lookup without making PSA the source of truth for card data.
-  - Safe first-pass uses:
-    - show PSA cert verification details on product/detail views when a cert number is provided
-    - surface normalized PSA fields such as cert number, grade, year, brand/set text, subject, and status as contextual enrichment
+  - [planned] Add site-facing uses of the backend PSA cert lookup without making PSA the
+    source of truth for card data. Safe first uses:
+    - show PSA cert details on product views when a cert number is provided
+    - show normalized PSA fields (cert number, grade, year, brand/set text, subject,
+      status) as context
     - link/attribute PSA anywhere PSA-sourced fields are shown
-    - prefer cached PSA results and avoid repeated live lookups during normal browsing
-  - Keep within current PSA limits:
-    - no client-side PSA API calls
-    - no bulk PSA browsing/database cloning/export tooling
-    - no population-report mirroring or PSA-first product experience
-  - Follow-up questions for implementation:
-    - where cert numbers should enter the product flow: manual lookup, tracked item notes, admin-only enrichment, or future item metadata
-    - whether PSA details belong on the mobile decision-card detail panel, a desktop drilldown module, a dedicated cert lookup page, or some combination
-    - whether manual refresh should stay admin-only when cache is stale or suspected wrong
-  - If PSA adds new allowed endpoints later, extend the current server-side client rather than rebuilding the integration from scratch.
+    - prefer cached PSA results; avoid repeated live lookups during normal browsing
+  - Stay within PSA limits: no client-side PSA calls, no bulk browsing/cloning/export, no
+    population-report mirroring or PSA-first product experience.
+  - [waiting] Open questions: where cert numbers enter (manual lookup, tracked-item notes,
+    admin-only enrichment); where PSA details are shown; whether manual refresh stays
+    admin-only.
+  - If PSA adds allowed endpoints later, extend the current server-side client.
 
-- Provider discovery sprint for Scrydex and PriceCharting:
-  - Treat this as a one-month data evaluation pass, not a production-provider migration.
-  - Keep TCGPlayer CSV as the current foundation and evaluate new providers as enrichment only.
-  - Avoid frontend coupling to provider schemas; normalize provider data into Momentum-owned tables or reports first.
-  - First providers to evaluate:
-    - Scrydex for Pokemon-focused raw pricing, graded pricing, price history, pop reports, EN/JP coverage, and webhook support
-    - PriceCharting for comparison on current values, graded coverage, CSV exports, and possible sales coverage if subscription access allows it
-  - First implementation pass:
-    - add env/config support for `SCRYDEX_API_KEY`, `SCRYDEX_TEAM_ID`, and `PRICECHARTING_TOKEN`
-    - build safe credential/health-check scripts without logging secrets
-    - save sample provider responses under `data/provider_samples/`
-    - compare a small fixed set of cards across Momentum, TCGPlayer, Scrydex, and PriceCharting
-    - export mapping/comparison results to `data/provider_comparison.csv`
-  - Evaluate these questions before any public product work:
-    - provider card matching quality
-    - graded pricing quality
-    - historical pricing availability
-    - pop report usefulness
-    - Japanese/promo/reverse-holo coverage
-    - cacheability, operational cost, and cancellation pain
-  - Likely first provider to test: Scrydex.
-  - Keep one architecture caution in mind:
-    - the notes use a future `backend/app/providers/...` shape, but the current repo is still centered on `scripts/dashboards/api.py` plus helper modules, so any first pass should follow the current project layout unless we intentionally do a broader backend refactor
+- eBay active-listing integration:
+  - [planned] Register a free eBay Developers Program application.
+  - Use the Browse API for current listings, asking prices, images, seller details, item
+    specifics and direct purchase links.
+  - Treat eBay as a live shopping source, not the source of market value; asking prices
+    are not completed sales.
+  - Server-side OAuth client-credentials handling only; never expose eBay credentials in
+    browser code.
+  - Match listings to card identity, printing, language, grader and grade with an explicit
+    confidence score and a way to reject false matches.
+  - Start with a small PSA-card pilot comparing the lowest relevant asks with the graded
+    market estimate and recent sales from the pricing provider.
+  - Do not depend on Marketplace Insights for sold history: eBay describes it as restricted
+    and not open to new users.
 
-- TCG placeholder workflow intake:
-  - Treat `TCG Placeholders/placeholders.csv` as the current Scarlet & Violet source of truth and `TCG Placeholders/mega_placeholders.csv` as the Mega-era source, matching the workflow notes in `TCG Placeholders/README.md`.
-  - Keep `TCG Placeholders/Placeholders.xlsx` as historical reference only unless we intentionally switch the source back to workbook-first editing.
-  - Use these validation/build commands before changing or publishing placeholder outputs:
+- PriceCharting graded pricing and sales:
+  - Done 2026-10-09: nightly CSV download (`PRICECHARTING_API_TOKEN`), graded prices on
+    every card with the required PriceCharting linkback, kept as our own history. License
+    notes: display allowed with linkbacks; revenue share applies at $1k/month.
+  - [planned] Confirm whether individual sales records (date, price, grade, source, listing
+    URL) are available under the current subscription.
+  - [planned] Model graded instruments separately from physical slabs:
+    - market identity: card + printing/language + grader + grade
+    - owned/listed slab: cert number + purchase/listing price + acquired date + notes
+  - [planned] Compare raw TCGplayer value, PSA 8/9/10 value, recent sales, active eBay asks,
+    graded premium, sale frequency, trend and data confidence.
+
+- Scrydex evaluation (rest of the provider discovery sprint):
+  - [planned] One-month data evaluation, not a provider migration. TCGplayer data via TCGCSV
+    stays the foundation; new providers are enrichment only, normalized into our own tables
+    before any page uses them.
+  - Settings to add when started: `SCRYDEX_API_KEY`, `SCRYDEX_TEAM_ID`. Build a credential
+    health check that never logs secrets.
+  - Save sample responses under `data/provider_samples/`; compare a fixed set of cards across
+    Momentum, TCGplayer, Scrydex and PriceCharting into `data/provider_comparison.csv`.
+  - Judge: card matching, graded pricing, history, pop reports, Japanese/promo/reverse-holo
+    coverage, cacheability, cost and cancellation pain.
+  - Follow the current layout (`scripts/` plus helper modules), not the `backend/app/providers`
+    shape in the old notes, unless a backend refactor is agreed.
+
+- TCG placeholder workflow:
+  - Sources: `TCG Placeholders/placeholders.csv` (Scarlet & Violet) and
+    `TCG Placeholders/mega_placeholders.csv` (Mega era), as described in
+    `TCG Placeholders/README.md`. `Placeholders.xlsx` is historical reference only.
+  - Validate before changing or publishing outputs:
     - `python3 "TCG Placeholders/tools/build_placeholders.py" --input "TCG Placeholders/placeholders.csv" --output-dir /tmp/tcg_placeholders_check`
     - `python3 "TCG Placeholders/tools/build_checklists.py" --input "TCG Placeholders/placeholders.csv" --input "TCG Placeholders/mega_placeholders.csv" --input "TCG Placeholders/prize_pack_series7.csv" --input "TCG Placeholders/prize_pack_series8.csv" --output-dir /tmp/tcg_checklists_check --set-catalog "TCG Placeholders/data/set_release_dates.csv" --overrides "TCG Placeholders/data/checklist_overrides.csv" --additions "TCG Placeholders/data/checklist_additions.csv"`
-  - Current local review result on 2026-07-02:
-    - placeholder builder ran cleanly on `placeholders.csv` with 781 rows and no validation issues
-    - checklist builder ran cleanly across placeholder + mega + Prize Pack 7/8 sources and produced 816 checklist rows across 18 set pages
-  - Data gaps already identified by the imported review reports:
-    - `TCG Placeholders/checklists_sv/svp_compare_report.md` calls out missing standard-size SVP rows like `SVP175`, `SVP176`, `SVP213`, `SVP214`, and `SVP215`
-    - `TCG Placeholders/checklists_sv/mep_compare_report.md` calls out missing MEP staff variants plus future Pitch Black prerelease rows such as `MEP082`-`MEP085`
-  - Decide repo hygiene before committing this folder:
-    - whether generated outputs under `TCG Placeholders/output*` and `TCG Placeholders/checklists_*` should be committed or treated as build artifacts
-    - whether nested metadata folders like `TCG Placeholders/.git`, `TCG Placeholders/.agents`, and `TCG Placeholders/tools/__pycache__` should be removed from the working tree or ignored
-  - If we keep this workflow, add a first-class repo script or Make target later so placeholder/checklist regeneration does not live only inside the imported folder README.
+  - Last clean run 2026-07-02: 781 placeholder rows; 816 checklist rows across 18 set pages.
+  - [planned] Fill known data gaps: missing standard-size SVP rows (`SVP175`, `SVP176`,
+    `SVP213`-`SVP215`, see `checklists_sv/svp_compare_report.md`) and missing MEP staff
+    variants plus Pitch Black prerelease rows `MEP082`-`MEP085`
+    (`checklists_sv/mep_compare_report.md`).
+  - [waiting] Repo hygiene: commit or ignore generated `TCG Placeholders/output*` and
+    `checklists_*`; remove or ignore nested `TCG Placeholders/.git`, `.agents` and
+    `tools/__pycache__`.
+  - [planned] Add a repo script or Make target for regeneration so it doesn't live only in
+    the folder README.
+  - [planned] Review the print hubs, checklist pages and review workspace again; decide
+    whether they stay generator-owned HTML, app-wrapped static assets or app-rendered.
 
-- Expand Set Explorer rarity / variant filters beyond the current first pass.
-- Fix any remaining generation grouping mistakes when a set clearly lands in the wrong era bucket.
-- Extend tracking into:
-  - `/set-explorer`
-- Add keyboard shortcuts beyond the current up/down row stepping if they clearly improve desktop workflow.
-- Monitor `Under the Radar` population for a few days before loosening it again.
-- Add a basic Discord path for:
-  - key stat lookups
-  - webhook notifications
-  - bug report forwarding
-- Review first-load performance again after real usage and confirm the server-computed screener path actually solved the slow default loads.
-- Placeholder/checklist UX refinement follow-up:
-  - current collector-shell rebuild is a strong first pass, but review the placeholder library, print hubs, checklist pages, and review workspace again in a future session
-  - decide whether the long-term direction should stay generator-owned HTML, app-wrapped static assets, or a fuller app-rendered collector experience
-  - refine information hierarchy, wording, and action flow after real usage now that the bright-white utility pages have been replaced
+- [planned] Expand set rarity / variant filters (now under Research → Sets and Market Stats).
+- [planned] Fix remaining generation grouping mistakes when a set lands in the wrong era.
+- [planned] Watch `Under the Radar` population before loosening it again.
+- [planned] Discord: alerts and bug reports are in place; a key-stat lookup command is the
+  remaining idea.
+- [planned] Re-check first-load speed after real usage of the desktop app.
+- [idea] Keyboard shortcuts beyond up/down row stepping, if they clearly help.
+
+Parked: Mobile and Admin
+------------------------
+
+The owner put mobile and admin aside on 2026-10-12. Kept here so nothing is lost; do not
+start these without asking. Mobile background: `docs/mobile_redesign_notes.txt`.
+
+- Mobile follow-ups from the 2026-04-28 decision-card release:
+  - show English and Japanese together in tracked lists by default, with EN/JP row labels
+    and optional filtering
+  - store tracking metadata so saved items keep their category/market, not just
+    `productId||subTypeName`
+  - mobile flows for Browse Set, Browse Species, Set Strength, Set Explorer, Sealed Deals and
+    the index pages
+  - Alerts & Targets (hidden for now): daily rules for target hits, watchlist movement,
+    breakouts, pullbacks, stale items and sell-above targets; decide account sync versus
+    browser storage, and in-site inbox before email, Discord or push
+  - Google sign-in directly on mobile (today mobile reuses an existing token)
+  - review hamburger menu labels; better search and suggestions beyond the loaded feed
+  - tracked-list filter row (All / EN / JP / Singles / Sealed); deal checker in tracked views
+  - empty states for filtered lists; check the Full Data modal and indicator feed labels
+  - real-phone performance check after full sparkline hydration; link-by-link QA after the
+    next deployment
+- Mobile/tablet layout fixes:
+  - iPhone 14 Pro Max: bottom nav overlaps the last `Filter Sets` card; card titles truncate
+    too aggressively
+  - iPad: a dedicated analysis layout instead of enlarged mobile; less chart/list scrolling
+- Bug ticket 6 (2026-04-16): larger search thumbnails; a faster "find card quickly" flow.
+- Bug ticket 5 (2026-04-15): make the EN/JP switch more obvious; consider suggesting a market
+  switch when a query clearly matches the other market.
+- Real-device QA at 390 / 768 / 1024 / 1440 px (`docs/responsive_qa.md`).
+- Admin pages: no restyle planned.
 
 Deferred / Not Now
 ------------------
 
-- Keep high-resolution image support deferred until there is a stronger need than the current fast-loading image flow.
-- Keep camera / photo card lookup as a later project after the main phone workflow settles.
+- High-resolution image support, until the fast-loading image flow isn't enough.
+- Camera / photo card lookup, after the main phone workflow settles.
 
 Profiling Notes (April 2026)
 ----------------------------
 
-- First-load profiling pass completed on the current dashboard boot path.
-  - Container timing sample for the default card dashboard path:
-    - `/series?productId=88029&subTypeName=Reverse+Holofoil&days=365&category_id=3` ~= 472 ms
-    - `/health?category_id=3` ~= 227 ms
-    - `/top_movers?days=30&limit=120&min_prior=5&product_kind=card&category_id=3` ~= 169 ms
-    - `/sma30_holds?...` ~= 121 ms
-    - `/tracking/auth_config` and `/categories` were negligible by comparison
-  - Browser waterfall on a URL-selected `early_uptrends` view showed slower first paint requests:
-    - `/early_uptrends?...` ~= 2.19 s
-    - `/series?...` ~= 1.55 s
-    - `/universe?limit=1...` ~= 1.35 s
-    - `/health?category_id=3` ~= 1.27 s
-- Current first-load suspects worth reducing next:
-  - avoid first-paint dependence on `/health`
-  - avoid metadata fallback hits like `/universe?limit=1...` when a selected row already has enough payload
-  - keep heavier non-default table endpoints (`early_uptrends`, `group_products`, etc.) from blocking the first usable screen when they come from URL state
+- Container timings for the default card dashboard: `/series` ~472 ms, `/health` ~227 ms,
+  `/top_movers` ~169 ms, `/sma30_holds` ~121 ms.
+- A URL-selected `early_uptrends` view: `/early_uptrends` ~2.19 s, `/series` ~1.55 s,
+  `/universe?limit=1` ~1.35 s, `/health` ~1.27 s.
+- Suspects worth reducing: first-paint dependence on `/health`; `/universe?limit=1` fallback
+  hits when the selected row already has enough data; heavy non-default endpoints blocking
+  the first screen when they come from URL state.
 
 Needs Decisions
 ---------------
 
-- Mobile should move to a task-based stacked layout instead of preserving the current desktop three-panel structure.
-- Right-rail content should collapse into the selected product/detail flow on phone and compact tablet layouts.
-- Market Signals should become the mobile home/feed layer, while the chart/product detail becomes a drilldown or comparison view.
-- Decide whether the site should use shorter / cleaner public-facing URLs and shared links.
-- Decide whether the dashboard still has too many indicators or whether the current set is now stable enough.
-- Decide whether tracking should stay private-only or support lightweight sharing.
-- Decide whether the current lightweight tracking-account model should remain the long-term approach or later join a broader site membership system.
-- Decide how the future assistant should behave:
-  - explainer only
-  - ranked recommender
-  - portfolio / collection copilot
-- Decide what guardrails and disclaimers are required if an assistant is added.
+- Shorter, cleaner public URLs and shared links?
+- Too many indicators, or is the current set stable?
+- Tracking private-only, or lightweight sharing?
+- Keep the lightweight tracking account long term, or join a broader site membership?
+- A future assistant: explainer, ranked recommender, or collection copilot? What guardrails
+  and disclaimers does it need?
+- (See also the [waiting] items above: old dashboard, Report a Bug form, buy labels.)
 
 Future Ideas
 ------------
 
-- Keep moving expensive live SQL into precomputed snapshots until the page is mostly rendering prepared data.
-- Keep shifting independent dashboard sections toward parallel loading where it actually improves perceived speed.
-- Add lightweight caching where safe for:
-  - health
-  - group signals
-  - top movers
-  - universe metadata
-- Keep detailed card/set data loading on selection instead of preloading broad datasets.
-- Keep left-rail / ticker mini-graph payloads minimal and snapshot-backed.
-- Build `Buy List` into a stronger sourcing / card-show workflow with target prices and shopping-list behavior.
-- Build a flip-focused budget basket page that uses local snapshot fields like `recent_distinct_prices_30d`, ROC windows, rarity buckets, and spend caps to suggest resale-oriented buys.
-- Explore budget-based assistant prompts.
-- Explore collection-completion prompts.
-- Explore entry / exit prompts such as:
-  - what looks buyable now
-  - what is flattening out
-  - what may have reached a resale target
-- Consider a dedicated pre-breakout accumulation screen.
+- Keep moving expensive live SQL into precomputed snapshots.
+- Load independent sections in parallel where it actually improves perceived speed.
+- Lightweight caching where safe: health, group signals, top movers, universe metadata.
+- Keep detailed card/set data loading on selection; keep mini-graph payloads small and
+  snapshot-backed.
+- Buy List as a card-show sourcing workflow with targets and shopping-list behavior.
+- A flip-focused basket using `recent_distinct_prices_30d`, ROC windows, rarity buckets and
+  spend caps.
+- Market Pulse facts backed by current snapshots rather than editorial filler.
+- Budget, collection-completion and entry/exit assistant prompts ("what looks buyable now",
+  "what is flattening out", "what may have reached a resale target").
+- A pre-breakout accumulation screen.
 
 Future Data / Research
 ----------------------
 
-- Find a condition-aware price source before building any real resale/condition layer.
-- Find a source with usable sales-volume / listing-liquidity signals before adding any real `possible buyout` flag.
-- Confirm whether a future source can provide usable condition tiers such as:
-  - Near Mint
-  - Lightly Played
-  - Moderately Played
-- Confirm whether that source supports:
-  - historical condition pricing
-  - current condition pricing only
-  - broad enough card coverage to matter
-- Confirm whether a future source can provide usable buyout-adjacent signals such as:
-  - sales volume
-  - listing count / available quantity
-  - time-windowed activity that is reliable enough to avoid false alarms
-- If condition data becomes available later, revisit:
-  - NM vs LP spreads
-  - condition-aware buy logic
-  - resale-margin math after fees and shipping
-  - whether condition data belongs inside product fields or a separate valuation layer
+- Find a condition-aware price source (Near Mint / Lightly Played / Moderately Played),
+  and whether it has history or only current prices, before building any condition layer.
+- Find a source with usable sales-volume or listing-count signals before adding any
+  "possible buyout" flag.
+- If condition data arrives: NM vs LP spreads, condition-aware buy logic, resale margin
+  after fees and shipping, and whether it belongs in product fields or a valuation layer.
 
 Future Architecture
 -------------------
 
 - Revisit larger stack consolidation only if the current split becomes a real blocker.
-- Evaluate whether Pokémon Momentum should eventually become:
-  - an installable PWA first
-  - or a native mobile app later if phone/tablet usage becomes the primary workflow
+- Consider an installable PWA first, and a native app only if phone use dominates.

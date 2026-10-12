@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+# Daily Squarespace price sync (cron, 09:15 UTC, as user adam).
+#
+# Builds today's store price targets, then sends any listing prices that moved enough
+# to Squarespace, and posts a summary to Discord. Settings come from .env
+# (SQUARESPACE_MARKET_CSV, SQUARESPACE_EXPORT_CSV, markup/discount/threshold options).
+#
+#   scripts/run_squarespace_price_sync.sh            # live run, notifies Discord
+#   scripts/run_squarespace_price_sync.sh --dry-run  # preview only, no store changes, no Discord
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

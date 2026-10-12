@@ -1,0 +1,96 @@
+/* Shared look for the desktop pages that live outside the main desktop app
+   (Collector Hub, Placeholder Library, Account). Tokens match desktop_home.html. */
+:root {
+  --bg: #08111d;
+  --panel: #0e1828;
+  --panel-2: #132036;
+  --panel-3: #0a1322;
+  --line: rgba(136, 162, 205, 0.16);
+  --line-strong: rgba(136, 162, 205, 0.3);
+  --text: #eaf1ff;
+  --muted: #93a6c8;
+  --faint: #6f82a6;
+  --accent: #4da3ff;
+  --accent-soft: rgba(77, 163, 255, 0.16);
+  --good: #3ddc97;
+  --good-soft: rgba(61, 220, 151, 0.14);
+  --bad: #ff7d7d;
+  --bad-soft: rgba(255, 125, 125, 0.14);
+  --warn: #f5b94a;
+  --radius: 14px;
+  --font: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.45 var(--font);
+}
+button, input, select { font: inherit; color: inherit; }
+a { color: inherit; }
+[hidden] { display: none !important; }
+.muted { color: var(--muted); }
+
+/* page frame: a title bar, then panels */
+.page { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 16px; padding: 16px 20px 8px; }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.page-head h1 { margin: 0; font-size: 22px; }
+.page-head p { margin: 4px 0 0; color: var(--muted); }
+.page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.panel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.panel-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); }
+.panel-head h2 { margin: 0; font-size: 16px; }
+.panel-head p { margin: 4px 0 0; color: var(--muted); }
+.panel-body { padding: 16px 18px; }
+.panel-scroll { flex: 1; min-height: 0; overflow-y: auto; }
+
+/* two columns: a list on the left, the selected item on the right */
+.split { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(320px, 420px) minmax(0, 1fr); gap: 16px; }
+
+.list h3 { margin: 14px 18px 4px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+.list-item {
+  display: grid; gap: 2px; width: 100%; padding: 10px 18px; border: 0; background: none; text-align: left; cursor: pointer;
+  border-left: 3px solid transparent;
+}
+.list-item:hover { background: rgba(136, 162, 205, 0.06); }
+.list-item[aria-current="true"] { background: var(--accent-soft); border-left-color: var(--accent); }
+.list-item strong { font-weight: 600; }
+.list-item span { font-size: 12px; color: var(--muted); }
+
+.segment { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--panel-3); border: 1px solid var(--line); flex-wrap: wrap; }
+.segment button { border: 0; background: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; color: var(--muted); font-weight: 600; }
+.segment button[aria-pressed="true"] { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 0 0 1px rgba(77, 163, 255, 0.45); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; white-space: nowrap;
+  border: 1px solid var(--line-strong); background: var(--panel-2); cursor: pointer; text-decoration: none; font-weight: 600;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #04121f; }
+.btn.danger { color: var(--bad); border-color: rgba(255, 125, 125, 0.45); background: var(--bad-soft); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 2px 9px; border-radius: 999px; font-size: 12px; color: var(--muted); background: var(--panel-3); border: 1px solid var(--line); }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.stat { padding: 10px 12px; border-radius: 10px; background: var(--panel-3); border: 1px solid var(--line); }
+.stat span { display: block; font-size: 12px; color: var(--muted); }
+.stat strong { font-size: 18px; font-variant-numeric: tabular-nums; }
+.note { padding: 10px 12px; border-radius: 10px; background: var(--panel-3); border: 1px solid var(--line); color: var(--muted); }
+.note.warn { color: var(--warn); border-color: rgba(245, 185, 74, 0.35); }
+.empty { padding: 40px 24px; text-align: center; color: var(--muted); }
+
+.legal { padding: 0 20px 8px; font-size: 11px; line-height: 1.4; color: var(--faint); }

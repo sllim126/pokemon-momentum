@@ -1,5 +1,9 @@
 Pokemon Momentum Dashboard: How To Use
 
+Scope (2026-10): this guide covers the older research dashboard at /dashboard. The new
+desktop app at /home-preview explains itself to visitors under Learn -> How it works, and
+docs/desktop_app.md is its maintainer guide.
+
 Recent Implementation Notes (March 2026)
 ----------------------------------------
 This section documents behavior that changed during the latest dashboard refinement pass so

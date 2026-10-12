@@ -24,13 +24,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 EXTRACTED_DIR = ROOT / "data" / "extracted"
-CATEGORIES = {3: ("English", "pokemon"), 85: ("Japanese", "pokemon_jp")}
-STALE_AFTER_DAYS = 2
-GREEN, ORANGE, RED = 0x2ECC71, 0xE67E22, 0xE74C3C
+CATEGORIES = {3: ("English", "pokemon"), 85: ("Japanese", "pokemon_jp")}  # id -> (label, file slug)
+STALE_AFTER_DAYS = 2  # newest price older than this turns a success orange
+GREEN, ORANGE, RED = 0x2ECC71, 0xE67E22, 0xE74C3C  # embed colors: ok / warning / failed
+# Log lines worth quoting in a failure message.
 ERROR_LINE = re.compile(r"(ERROR|Traceback|Stopping after failed step|^- .+: exit \d+|exit=[1-9])")
 
 
 def parse_args() -> argparse.Namespace:
+    """Options passed by the calling shell script (job name, its exit code, log position)."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--job", choices=sorted(JOBS), default="daily-update")
     parser.add_argument("--exit-code", type=int, required=True, help="Exit status of the job.")
@@ -43,6 +45,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def setting(name: str, default: str = "") -> str:
+    """Read a setting from the environment, falling back to the repo's .env file."""
     value = os.getenv(name, "").strip()
     env_file = ROOT / ".env"
     if not value and env_file.exists():
@@ -54,6 +57,7 @@ def setting(name: str, default: str = "") -> str:
 
 
 def read_health(slug: str) -> dict | None:
+    """The nightly health snapshot for one market (latest price date, row count), if present."""
     path = EXTRACTED_DIR / f"{slug}_health_snapshot.csv"
     try:
         with path.open(newline="", encoding="utf-8") as f:
@@ -63,6 +67,7 @@ def read_health(slug: str) -> dict | None:
 
 
 def run_log(path: Path, offset: int) -> list[str]:
+    """Only this run's lines: the log is appended to, so read from the byte offset onward."""
     try:
         with path.open("rb") as f:
             f.seek(offset)
@@ -72,12 +77,15 @@ def run_log(path: Path, offset: int) -> list[str]:
 
 
 def error_field(lines: list[str]) -> dict:
+    """An embed field quoting the last error lines (kept under Discord's 1,024-character limit)."""
     errors = [line.strip() for line in lines if ERROR_LINE.search(line)]
     detail = "\n".join(errors[-12:]) or "No error lines captured; check the log."
     return {"name": "Errors", "value": f"```\n{detail[-950:]}\n```", "inline": False}
 
 
 def daily_update_summary(args: argparse.Namespace, lines: list[str]) -> tuple[str, int, list[dict]]:
+    """Status, color and fields for the nightly update: data freshness per market, what loaded,
+    the store audit warning, and error lines if it failed."""
     today = datetime.now(timezone.utc).date()
     stale = False
     fields = []
@@ -121,7 +129,10 @@ def daily_update_summary(args: argparse.Namespace, lines: list[str]) -> tuple[st
 
 
 def price_sync_summary(args: argparse.Namespace, lines: list[str]) -> tuple[str, int, list[dict]]:
+    """Status, color and fields for the Squarespace price sync: SKUs matched, updates proposed
+    and made, and any updates Squarespace rejected."""
     def first_value(prefix: str) -> str:
+        """Text after the colon on the first log line starting with prefix."""
         return next((line.split(":", 1)[1].strip() for line in lines if line.startswith(prefix)), "?")
 
     updated = [line for line in lines if line.startswith("UPDATED ")]
@@ -148,6 +159,7 @@ def price_sync_summary(args: argparse.Namespace, lines: list[str]) -> tuple[str,
     return "✅ succeeded", GREEN, fields
 
 
+# Job name -> (message title, default log file, summary builder).
 JOBS = {
     "daily-update": ("Nightly market update", ROOT / "logs" / "daily_update.log", daily_update_summary),
     "price-sync": ("Squarespace price sync", ROOT / "logs" / "squarespace_price_sync_cron.log", price_sync_summary),
@@ -155,6 +167,7 @@ JOBS = {
 
 
 def build_payload(args: argparse.Namespace) -> dict:
+    """The Discord webhook message: one embed, plus a mention only when something needs attention."""
     default_title, default_log, summarize = JOBS[args.job]
     log_file = args.log_file or default_log
     status, color, fields = summarize(args, run_log(log_file, args.log_offset))
@@ -185,6 +198,7 @@ def build_payload(args: argparse.Namespace) -> dict:
 
 
 def post(url: str, payload: dict) -> None:
+    """Send the message to the webhook."""
     request = urllib.request.Request(
         url,
         data=json.dumps(payload).encode("utf-8"),
@@ -197,6 +211,7 @@ def post(url: str, payload: dict) -> None:
 
 
 def main() -> int:
+    """Build and send the message. Always returns 0 so a Discord outage can't fail the job."""
     args = parse_args()
     payload = build_payload(args)
     url = setting("POKE6S_DISCORD_WEBHOOK_URL")

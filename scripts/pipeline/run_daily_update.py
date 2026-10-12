@@ -1,3 +1,17 @@
+"""Run the nightly update for one market (category 3 = English, 85 = Japanese).
+
+The host script scripts/pipeline/run_daily_update_host.sh calls this inside the
+container, once per category. Steps run in order and the run stops at the first
+failure, except the soft steps in METADATA_FALLBACK_STEPS, which only warn:
+
+    download today's TCGCSV prices -> load them into DuckDB -> refresh set and
+    product names -> rebuild health, signal, screener, sparkline and series snapshots ->
+    PriceCharting graded prices (English pass only) -> export parquet history ->
+    build index snapshots (they read the parquet history, so they go last)
+
+`--dry-run` prints the commands without running them.
+"""
+
 import argparse
 import shlex
 import subprocess
@@ -13,6 +27,7 @@ from scripts.common.category_config import get_category_config
 
 
 ROOT = Path("/app")
+# Steps allowed to fail without stopping the run; their failure is reported as a warning.
 METADATA_FALLBACK_STEPS = {
     "Refresh group metadata",
     "Refresh product metadata",
@@ -248,9 +263,10 @@ def run_step(name: str, cmd: list[str], dry_run: bool) -> int:
 def can_fall_back_to_cached_metadata(step_name: str) -> bool:
     """Return whether a failed step can safely reuse the previous metadata snapshot.
 
-    Only tcgcsv-backed metadata refresh stages should be treated as soft failures.
-    Price loads and analytics rebuilds must still fail loudly because they directly
-    control whether the charts advance to a new date.
+    Only the steps in METADATA_FALLBACK_STEPS are soft failures: the tcgcsv-backed set
+    and product metadata refreshes, and the PriceCharting graded-price download. Price
+    loads and analytics rebuilds must still fail loudly because they directly control
+    whether the charts advance to a new date.
     """
     return step_name in METADATA_FALLBACK_STEPS
 

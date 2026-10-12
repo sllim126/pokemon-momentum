@@ -1,6 +1,9 @@
 Pokemon Momentum Mobile Redesign Notes
 ======================================
 
+Historical planning notes (April 2026), kept for context. The mobile page that was built
+is `scripts/dashboards/mobile_dashboard.html`, served at `/mobile`.
+
 Purpose
 -------
 

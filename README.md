@@ -3,10 +3,11 @@
 Pokemon Momentum is a market research and screening project for Pokemon TCG data.
 
 It combines:
-- a daily TCGCSV-backed pipeline
+- a daily TCGCSV-backed pipeline, with Discord alerts
 - DuckDB and Parquet storage
-- separate desktop and mobile research dashboards
+- a desktop app (Buy, Discover, Research, Track, Learn in one page) and a mobile page
 - set, sealed-product, and budget research tools
+- a 6-month "hold check" and PriceCharting graded prices on every card
 - a family of English and Japanese market indexes
 - collector placeholder/checklist resources
 - Google-based synced tracking auth
@@ -17,14 +18,20 @@ The goal is simple: make it easier to spot what is moving, what may be starting 
 
 ## Public Pages
 
+- `/home-preview`
+  - the new desktop app: every Buy, Discover, Research, Track and Learn view in one
+    three-column page; planned to replace `/` for desktop visitors (see
+    `docs/desktop_app.md`)
 - `/`
-  - user-agent-aware entry point: desktop terminal on larger screens and the mobile decision dashboard on phones/tablets
+  - user-agent-aware entry point: the research dashboard on larger screens and the mobile decision dashboard on phones/tablets
 - `/dashboard`
   - alias of `/`, with the same responsive routing
 - `/mobile`
   - direct access to the mobile decision dashboard
+- `/buy`, `/discover`, `/research`, `/track`, `/learn`
+  - area landing pages built from the shared header's menu (`site_shell.js`)
 - `/dashboard-lab`
-  - desktop command-center design/workflow reference
+  - desktop command-center design/workflow reference (development page)
 - `/collector-hub`
   - entry point for collector checklists, print tools, review queues, and downloads
 - `/placeholders`
@@ -44,11 +51,16 @@ The goal is simple: make it easier to spot what is moving, what may be starting 
 - `/index-overview-{index}`
   - individual index pages; see `docs/project_status.md` for the current route list
 
+`/set-explorer`, `/budget-builder`, `/sealed-deals` and the index pages are covered by views
+in the desktop app and are planned to forward there once it becomes the main page.
+
 
 ## Protected Operator Pages
 
-These routes require an authenticated admin tracking account:
+These routes require a Google sign-in whose email is listed in
+`POKEMON_MOMENTUM_ADMIN_USERS` (exact match):
 
+- `/admin` (index of the tools below)
 - `/eod-dashboard`
 - `/embed`
 - `/bug-reports`
@@ -69,6 +81,11 @@ These routes require an authenticated admin tracking account:
   - `Early Movers`
   - `Confirmed Movers`
   - `Set Strength`
+- judges whether a card is likely to sell at a profit in six months after fees and
+  shipping through `/hold_check` (`scripts/dashboards/hold_check.py`)
+- shows PriceCharting graded prices (PSA 9/10, CGC 10) with a nightly history through
+  `/graded_prices`; every price links back to PriceCharting, as its license requires
+- compares sealed products with buying their booster packs loose (desktop app)
 - supports set-level history through `/group_series`
 - supports set-cost and concentration browsing through `/set_baskets`
 - supports sealed deal screening through `/sealed_deals`
@@ -123,10 +140,19 @@ App URL:
 http://localhost:8001
 ```
 
-Google sign-in:
+Settings live in `.env` (never commit it). How each one reaches the code matters:
 
-- set `POKEMON_MOMENTUM_GOOGLE_CLIENT_ID` in `.env`
-- the dashboard account menu will render the Google sign-in button when configured
+| Setting | Used for | Read by |
+| --- | --- | --- |
+| `POKEMON_MOMENTUM_GOOGLE_CLIENT_ID` | Google sign-in button | Website, via the `environment:` list in `docker-compose.yml` |
+| `POKEMON_MOMENTUM_ADMIN_USERS` | Comma-separated admin emails (exact match; default `sllim126@gmail.com`) | Website environment only. It is **not** in `docker-compose.yml`, so a value in `.env` is ignored until it is added there |
+| `PRICECHARTING_API_TOKEN` | Nightly PriceCharting graded-price CSV | `fetch_pricecharting.py`, which reads `.env` itself |
+| `POKE6S_DISCORD_WEBHOOK_URL`, `POKE6S_DISCORD_MENTION` | Pipeline and price-sync alerts (mention defaults to `@everyone`; `none` disables) | `notify_discord.py` on the host, which reads `.env` itself |
+| `POKE6S_TCGCSV_USER_AGENT` | Optional override of the `Poke6sMarket/1.0.0` User-Agent | Process environment only (not passed into the pipeline container today) |
+| `SQUARESPACE_*` | Store price sync and listing scripts | The Squarespace scripts, which read `.env` themselves |
+
+The website only sees the variables listed under `environment:` in `docker-compose.yml`;
+add a setting there (and restart) before relying on it inside the app.
 
 PSA cert lookup:
 
@@ -136,10 +162,15 @@ PSA cert lookup:
 
 ## Daily Pipeline
 
-Run the pipeline manually:
+The nightly run is `scripts/pipeline/run_daily_update_host.sh`, started at 02:00 UTC by
+the `pokemon-momentum-daily-update` systemd timer. It stops the app (DuckDB has one
+writer), runs the pipeline for English then Japanese, restarts the app, and posts a summary
+to Discord.
+
+Run the pipeline for one market manually (inside the container):
 
 ```bash
-python scripts/pipeline/run_daily_update.py
+python scripts/pipeline/run_daily_update.py --category-id 3
 ```
 
 Validate outputs:
@@ -149,15 +180,21 @@ python scripts/pipeline/validate_pipeline.py
 ```
 
 The current daily flow is:
-1. download and extract new TCGCSV archives
+1. download today's prices from TCGCSV, one request per set (TCGCSV retired its daily
+   archive in September 2026; there are no prices for 2026-09-16 to 2026-10-07)
 2. load price history into DuckDB
 3. refresh group metadata
-4. refresh product metadata
+4. refresh product metadata (only sets whose product file changed)
 5. rebuild joined/named exports
 6. build product signal snapshot
 7. build group signal snapshot
-8. build screener, sparkline, series, health, and index-overview snapshots
-9. export parquet history
+8. build screener, sparkline, series, and health snapshots
+9. download PriceCharting graded prices (English pass)
+10. export parquet history
+11. build index-overview snapshots (they read parquet, so they run last)
+
+All TCGCSV requests go through `scripts/utilities/tcgcsv_client.py`, which follows TCGCSV's
+usage guidelines (one request at a time, spaced out, stop on 403/429).
 
 The host automation runs the flow for both English (`category_id=3`) and Japanese
 (`category_id=85`) market data. See `docs/data_flow.txt` for the detailed source and
@@ -186,6 +223,12 @@ Run the suite inside the app container:
 
 ```bash
 make test
+```
+
+or directly:
+
+```bash
+docker-compose exec -T pokemon-momentum python -m pytest -q -p no:cacheprovider tests
 ```
 
 Run every discovered test with plain `pytest`:
@@ -234,9 +277,12 @@ The dashboards then read:
 
 ## Documentation
 
-Detailed docs live here:
+Start with [AGENTS.md](/opt/pokemon-momentum/AGENTS.md) (rules for anyone changing the
+repo, and the "milestone" wrap-up routine) and [docs/todo.txt](/opt/pokemon-momentum/docs/todo.txt)
+(the work list). Detailed docs live here:
 
 - [docs/project_status.md](/opt/pokemon-momentum/docs/project_status.md)
+- [docs/desktop_app.md](/opt/pokemon-momentum/docs/desktop_app.md)
 - [docs/dashboard_how_to.txt](/opt/pokemon-momentum/docs/dashboard_how_to.txt)
 - [docs/data_flow.txt](/opt/pokemon-momentum/docs/data_flow.txt)
 - [docs/index_overview_maintenance.md](/opt/pokemon-momentum/docs/index_overview_maintenance.md)

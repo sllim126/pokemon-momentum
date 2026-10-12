@@ -1,4 +1,16 @@
 #!/usr/bin/env bash
+# Nightly market update, run on the host by a systemd timer at 02:00 UTC.
+# The Sunday 11:00 UTC weekly refresh runs this same script with
+# PIPELINE_ARGS=--full-metadata-refresh (see deploy/systemd/).
+#
+# 1. stops the website container (DuckDB allows only one writer),
+# 2. runs scripts/pipeline/run_daily_update.py for each category (English, then Japanese),
+# 3. runs the store pricing coverage audit (a warning, never a failure),
+# 4. restarts the website and posts a pass/fail summary to Discord, even if a step failed.
+#
+# Manual run: sudo systemctl start pokemon-momentum-daily-update.service (or run this script).
+# Output is appended to logs/daily_update.log. Optional env: DAILY_WORKERS,
+# PIPELINE_ARGS (extra flags for every category), DAILY_CATEGORY_IDS, NOTIFY_TITLE.
 set -euo pipefail
 
 ROOT="/opt/pokemon-momentum"

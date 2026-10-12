@@ -14,10 +14,12 @@ import requests
 
 BASE_URL = "https://tcgcsv.com"
 DEFAULT_USER_AGENT = "Poke6sMarket/1.0.0"
-MIN_REQUEST_INTERVAL_SECONDS = 0.15
-MAX_ATTEMPTS = 4
-REQUEST_TIMEOUT = (10, 60)
+MIN_REQUEST_INTERVAL_SECONDS = 0.15  # TCGCSV asks for >= 100 ms; 150 ms leaves headroom
+MAX_ATTEMPTS = 4  # first try + 3 retries for timeouts / 5xx only
+REQUEST_TIMEOUT = (10, 60)  # (connect, read) seconds
 
+# Time of the last request from this process, shared by every session so the
+# spacing holds even if a script builds more than one session.
 _last_request_at = 0.0
 
 
@@ -42,6 +44,7 @@ def build_tcgcsv_session() -> requests.Session:
 
 
 def _wait_for_turn() -> None:
+    """Sleep just long enough to keep MIN_REQUEST_INTERVAL_SECONDS between requests."""
     global _last_request_at
     remaining = MIN_REQUEST_INTERVAL_SECONDS - (time.monotonic() - _last_request_at)
     if remaining > 0:
@@ -81,5 +84,6 @@ def tcgcsv_get(session: requests.Session, path: str) -> requests.Response | None
 
 
 def tcgcsv_get_json(session: requests.Session, path: str) -> dict | None:
+    """Like tcgcsv_get, but returns the parsed JSON body (None for 404)."""
     resp = tcgcsv_get(session, path)
     return None if resp is None else resp.json()

@@ -7552,6 +7552,9 @@
     const holdBuyInput = document.getElementById("holdBuyInput");
     const holdHeadline = document.getElementById("holdHeadline");
     const holdReasons = document.getElementById("holdReasons");
+    // 6-Month Hold card under the chart: asks /hold_check whether buying the selected card
+    // (at market, or at the price typed in) is likely to sell at a profit after fees and
+    // shipping in six months. holdRequestSeq drops answers for a card no longer selected.
     const HOLD_PILLS = { likely: "Likely", possible: "Risky", unlikely: "Not a flip", not_enough_history: "Too little data" };
     let holdMeta = null;
     let holdTimer = null;

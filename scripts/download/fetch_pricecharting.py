@@ -36,12 +36,14 @@ EXTRACTED_DIR = DATA_DIR / "extracted"
 TABLE = "pricecharting_prices"
 CSV_URL = "https://www.pricecharting.com/price-guide/download-custom"
 USER_AGENT = "Poke6sMarket/1.0.0"
-CATEGORY_IDS = (3, 85)
+CATEGORY_IDS = (3, 85)  # English and Japanese; one PriceCharting CSV covers both
 
+# Price columns kept from the CSV (see scripts/common/pricecharting.py for the mapping).
 PRICE_FIELDS = ["ungraded", "grade7", "grade8", "grade9", "grade9_5", "psa10", "bgs10", "cgc10", "sgc10"]
 
 
 def parse_args() -> argparse.Namespace:
+    """--date records a snapshot under another date; --reload re-matches a saved file."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--date", help="Snapshot date to record (default: today, UTC).")
     parser.add_argument("--reload", action="store_true", help="Re-match an existing raw file without downloading.")
@@ -49,6 +51,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def api_token() -> str:
+    """The PriceCharting token from the environment, falling back to the repo's .env file."""
     token = os.getenv("PRICECHARTING_API_TOKEN", "").strip()
     env_file = ROOT / ".env"
     if not token and env_file.exists():
@@ -60,6 +63,8 @@ def api_token() -> str:
 
 
 def download(raw_path: Path) -> None:
+    """Download today's CSV and save it gzipped at raw_path (via a temp file, so a failed
+    download never leaves a half-written snapshot behind)."""
     token = api_token()
     if not token:
         raise SystemExit("PRICECHARTING_API_TOKEN is not set; skipping PriceCharting download.")
@@ -98,6 +103,7 @@ def tracked_subtypes(con: duckdb.DuckDBPyConnection) -> dict[int, set[str]]:
 
 
 def main() -> int:
+    """Download (once a day), match rows to our printings, and replace that day's rows."""
     args = parse_args()
     snapshot_date = args.date or datetime.now(timezone.utc).date().isoformat()
     raw_path = RAW_DIR / f"pokemon-cards-{snapshot_date}.csv.gz"
