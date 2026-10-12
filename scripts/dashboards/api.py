@@ -704,6 +704,38 @@ async def forward_desktop_to_app(request: Request, call_next):
     return await call_next(request)
 
 
+# ---- Browser caching for public market data --------------------------------------------
+#
+# These answers come from data rebuilt once a night, are the same for every visitor and
+# never depend on who is signed in, so browsers may reuse them for a few minutes (going
+# back to a card or list then needs no request at all). Kept short so a visitor sees the
+# new day's prices soon after the nightly update. Account, tracking and admin answers are
+# never on this list.
+PUBLIC_DATA_CACHE_SECONDS = 600
+PUBLIC_DATA_PATHS = frozenset({
+    "/health", "/categories", "/universe", "/groups", "/search", "/store_link",
+    "/series", "/hold_check", "/graded_prices", "/index-overview-data",
+    "/browse_species", "/group_products", "/group_signals", "/group_series", "/set_baskets",
+    "/product_signals", "/sealed_deals", "/budget_builder",
+    "/top_movers", "/confirmed_uptrends", "/sma30_holds", "/early_uptrends",
+    "/under_the_radar", "/breakouts", "/good_buys", "/time_to_buy",
+})
+
+
+@app.middleware("http")
+async def cache_public_market_data(request: Request, call_next):
+    """Let browsers reuse successful public market-data answers (see PUBLIC_DATA_PATHS)."""
+    response = await call_next(request)
+    if (
+        request.method == "GET"
+        and request.url.path in PUBLIC_DATA_PATHS
+        and response.status_code == 200
+        and "cache-control" not in response.headers
+    ):
+        response.headers["Cache-Control"] = f"public, max-age={PUBLIC_DATA_CACHE_SECONDS}"
+    return response
+
+
 @app.get("/")
 def dashboard(request: Request):
     """Home: the desktop app on desktop, the mobile page on phones and tablets."""

@@ -36,6 +36,12 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Market Signals", response.text)
 
+    def test_public_market_data_is_browser_cacheable_but_account_data_is_not(self):
+        public = self.client.get("/categories")
+        self.assertEqual(public.headers.get("cache-control"), f"public, max-age={api.PUBLIC_DATA_CACHE_SECONDS}")
+        private = self.client.get("/tracking/auth_config")
+        self.assertNotIn("public", private.headers.get("cache-control", ""))
+
     def test_home_serves_desktop_app_on_desktop(self):
         response = self.client.get("/", headers={"user-agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/120"})
 

@@ -35,6 +35,11 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-12 Card views are fast: everything a card loads answers in about 0.01-0.05 s
+  (was 0.4-1.5 s). The web app remembers which tables exist and shares one read-only
+  DuckDB connection; the "All" chart and the 6-Month Hold read a new nightly weekly
+  long-history snapshot instead of the raw history (track record weighted so its numbers
+  match daily data); public market data may be cached by browsers for 10 minutes.
 - 2026-10-12 The desktop app is the desktop home page at `/`. Older desktop addresses
   (`/dashboard`, old `?tab=` links, `/sealed-deals`, `/budget-builder`, `/set-explorer`,
   `/index-overview*`, the area pages, `/home-preview`, desktop `/mobile?mode=tracked`)
@@ -65,20 +70,9 @@ Recently Completed
 High Priority
 -------------
 
-- [next] Make card views fast: prepare everything during the nightly update, and only look
-  it up when a page asks (owner, 2026-10-12: "speed is better than more options"). Timings
-  measured 2026-10-12 when opening a card in the desktop app:
-  - chart 30D/90D/1Y ~0.4 s: already precomputed nightly (series snapshot), but each
-    request opens several DuckDB connections just to check which tables exist
-    (`db_has_table` in `query_support.py`); the lookup itself is ~0.04 s. Cache the table
-    check; this speeds up every endpoint.
-  - chart "All" ~1.5 s: built from the raw history each time. Keep the option (owner: long-
-    term history is rare and valuable); precompute a weekly long-history series nightly.
-  - 6-Month Hold ~0.9 s: reads the full raw price history per request. Read the nightly
-    series snapshot instead (2 years, enough for the 6-month track record), or precompute
-    the market-price result nightly.
-  - let browsers cache snapshot-backed answers until the next nightly update.
-  - target: a card opens in well under 0.3 s.
+- [planned] Speed follow-ups: Sealed Deals takes ~0.5 s (it works out pack prices for every
+  sealed product per request; could be a nightly snapshot), Set Strength ~0.12 s, and Under
+  the Radar ~3 s while the feed is short after the data gap (ends on its own).
 - [waiting] Copy Discord bug reports onto the server (owner, 2026-10-12). Plan: a small
   scheduled job pulls new messages from `#bug-reports` (channel 1489120381993357464) through
   the Discord API, using the last message ID it saw, and saves each one into the existing
