@@ -13,7 +13,10 @@ the other files under `docs/`.
 - Market data: daily English and Japanese TCGCSV-backed updates, fetched per set since
   TCGCSV retired its daily archive (no prices exist for 2026-09-16 to 2026-10-07)
 - Graded data: nightly PriceCharting snapshot, kept as our own history
-- Alerts: nightly update and Squarespace price sync post pass/fail summaries to Discord
+- Alerts: nightly update, Squarespace price sync and the other-games archive post
+  pass/fail summaries to Discord
+- Other games: Magic, Yu-Gi-Oh, One Piece and Lorcana prices are archived nightly
+  (collect only, since 2026-10-12; no site yet) in `data/tcgcsv_archive/`
 - Storage: DuckDB working database, partitioned Parquet history, and generated snapshots
 - Frontend: static HTML/CSS/JavaScript pages served by FastAPI; a new single-page desktop
   app (`/home-preview`, `docs/desktop_app.md`) covers Buy, Discover, Research, Track and Learn
@@ -33,8 +36,8 @@ PriceCharting download and Squarespace price sync were running.
 | `/`, `/dashboard` | Responsive market research entry point | Live; desktop part to be replaced by the desktop app |
 | `/buy`, `/discover`, `/research`, `/track`, `/learn` | Area landing pages from the shared header menu | Live |
 | `/mobile` | Direct mobile decision dashboard | Live |
-| `/dashboard-lab` | Desktop command-center reference | Development page; publicly reachable, to remove or restrict |
-| `/mobile-rebuild` | Earlier mobile concept retained for comparison | Development page; publicly reachable, to remove or restrict |
+| `/dashboard-lab` | Desktop command-center reference | Development page; left public on purpose (decided 2026-10-12) |
+| `/mobile-rebuild` | Earlier mobile concept retained for comparison | Development page; left public on purpose (decided 2026-10-12) |
 | `/set-explorer` | Set cost, concentration, and depth | Live; covered by desktop app Market Stats → Set values |
 | `/budget-builder` | Budget-based recommendation builder | Live; covered by desktop app Budget Builder |
 | `/sealed-deals` | Sealed price-per-pack/value screening | Live; covered by desktop app Sealed Deals |
@@ -83,7 +86,7 @@ The following pages require a Google sign-in listed in `POKEMON_MOMENTUM_ADMIN_U
 - Desktop screening dashboard and mobile decision dashboard
 - Server-side search, paged pickers, product/set history, and saved URL state
 - Screeners for movers, pullbacks, breakouts, trend confirmation, early movement, set strength, and budget/value research
-- Google sign-in, synced tracking tags, saved views, and structured bug reports
+- Google sign-in, synced tracking tags, saved views, and a mobile feedback form (bug reports go to Discord)
 - English/Japanese market index family
 - Squarespace price sync and inventory audit
 - Singles listing workflow with cached, square-padded Scrydex artwork

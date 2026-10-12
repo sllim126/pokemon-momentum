@@ -20,6 +20,14 @@ class ApiRouteTests(unittest.TestCase):
     def setUpClass(cls):
         cls.client = TestClient(api.app)
 
+    def setUp(self):
+        # Screener thresholds shrink when the real price feed has missing days
+        # (query_support.gap_scaled_threshold). Tests check the full thresholds, so they
+        # don't read the real feed: an empty date list leaves every threshold unchanged.
+        feed_patch = patch("scripts.dashboards.query_support.recent_feed_dates", return_value=[])
+        feed_patch.start()
+        self.addCleanup(feed_patch.stop)
+
     def test_dashboard_route_serves_html(self):
         response = self.client.get("/dashboard")
 

@@ -203,16 +203,18 @@ def build_steps(category_id: int, workers: int, full_metadata_refresh: bool) -> 
             table_outputs=(category.series_snapshot_table,),
         ),
         StepSpec(
-            # Expected result: index overview pages can load prebuilt JSON payloads without rescanning raw history on first request.
-            name="Build index overview snapshots",
-            command=["python", "scripts/indicators/build_index_overview_snapshot.py", "--category-id", str(category_id)],
-            file_outputs=index_overview_snapshot_files(category_id),
-        ),
-        StepSpec(
             # Expected result: parquet partitions exist and include the most recent processed date.
             name="Export parquet partitions",
             command=["python", "scripts/utilities/export_parquet.py"],
             requires_parquet=True,
+        ),
+        StepSpec(
+            # Expected result: index overview pages can load prebuilt JSON payloads without rescanning raw history on first request.
+            # Runs after the parquet export because the index builder reads parquet history;
+            # running it first leaves the indexes one day behind (same order as run_daily_update.py).
+            name="Build index overview snapshots",
+            command=["python", "scripts/indicators/build_index_overview_snapshot.py", "--category-id", str(category_id)],
+            file_outputs=index_overview_snapshot_files(category_id),
         ),
     ]
 

@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-12 (milestone: todo list becomes the main action list)
+Last updated: 2026-10-12 (milestone: quick wins, Discover gap fix, other-games archive)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -35,32 +35,54 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
-- 2026-10-12 Comments and docs reviewed across the whole codebase and corrected; new
-  `docs/desktop_app.md`; `AGENTS.md` and this todo list set up as the shared work list.
-- 2026-10-12 Collector Hub, Placeholder Library and Account restyled to match the desktop app.
-- 2026-10-09 to 10-10 Desktop app built at `/home-preview`:
-  - Discover lists, Track (saved lists with buy/sell price targets), Research (Sets,
-    Pokémon, Market Stats with indexes and set values), Buy (Sealed Deals with loose-pack
-    comparison, card-art Budget Builder), Learn (How it works), legal footer
-  - 6-month hold check and PriceCharting graded prices on every card
-  - Market Indexes listed only under Research in the site menus
-- 2026-10-09 Pipeline moved to per-set TCGCSV fetches after the daily archive was retired;
-  Discord pass/fail alerts; index snapshots now build after the parquet export.
-- 2026-10-09 Squarespace price sync skips deleted listings; listing retire script added;
-  admin lookalike-username escalation closed.
+- 2026-10-12 Started a nightly collect-only archive of Magic, Yu-Gi-Oh, One Piece and Lorcana
+  prices (`collect_tcgcsv_categories.py`, cron 03:30 UTC, `data/tcgcsv_archive/`). No site
+  for them yet; this only builds history, since TCGCSV no longer keeps one.
+- 2026-10-12 Discover lists refilled after the data gap: screener activity thresholds now
+  scale to the days of data in each window (`gap_scaled_threshold` in `query_support.py`;
+  unchanged with a complete feed). Top Movers, Confirmed/Consistent Movers, Breakouts and
+  Pullbacks have cards again. Early Movers and Under the Radar may stay empty for a while
+  because they also need three rises in a row; the app's empty message explains that.
+- 2026-10-12 Quick wins and decisions:
+  - `validate_pipeline.py` now builds index snapshots after the parquet export
+  - `POKE6S_TCGCSV_USER_AGENT` is passed into the container (`docker-compose.yml`)
+  - Placeholder Library, Collector Hub and Account stack and scroll on phones
+    (`desktop_theme.css`, narrow-screen rules); desktop sizes unchanged
+  - every "Report a Bug" link (old dashboard, mobile menu and Support > Bug tab) now opens
+    the Discord #bug-reports invite https://discord.gg/AejcWHkCG; mobile layout unchanged
+  - Budget Builder options: replacing a pick, max cards per set and "why this pick"
+    chips were already built; "allow duplicates" dropped
+  - set views already show "% at a 90-day high"
+  - decided: retire the old research dashboard; swap the Report a Bug form for a Discord
+    link (done); drop the Strong Buy / Good Buy / Fair Price / Wait / High Risk labels (the
+    6-Month Hold check replaces them); leave the development pages public
 
 High Priority
 -------------
 
-- [next] Fix the code problems found in the 2026-10-12 documentation review:
-  - `scripts/pipeline/validate_pipeline.py` (run-the-steps mode) builds index snapshots
-    before "Export parquet partitions". Move that step after the export, the same fix
-    made to `run_daily_update.py` in commit b4ca0a7.
-  - `POKE6S_TCGCSV_USER_AGENT` is never passed into the container by
-    `docker-compose.yml`. Harmless today (the default is correct); either pass it through
-    or drop it from the README `.env` table.
-  - Placeholder Library spills 16 px sideways at phone width, and Collector Hub may cut
-    content off (both set `body { overflow: hidden }`). Check at 390 px wide.
+- [next] Make card views fast: prepare everything during the nightly update, and only look
+  it up when a page asks (owner, 2026-10-12: "speed is better than more options"). Timings
+  measured 2026-10-12 when opening a card in the desktop app:
+  - chart 30D/90D/1Y ~0.4 s: already precomputed nightly (series snapshot), but each
+    request opens several DuckDB connections just to check which tables exist
+    (`db_has_table` in `query_support.py`); the lookup itself is ~0.04 s. Cache the table
+    check; this speeds up every endpoint.
+  - chart "All" ~1.5 s: built from the raw history each time. Keep the option (owner: long-
+    term history is rare and valuable); precompute a weekly long-history series nightly.
+  - 6-Month Hold ~0.9 s: reads the full raw price history per request. Read the nightly
+    series snapshot instead (2 years, enough for the 6-month track record), or precompute
+    the market-price result nightly.
+  - let browsers cache snapshot-backed answers until the next nightly update.
+  - target: a card opens in well under 0.3 s.
+- [waiting] Copy Discord bug reports onto the server (owner, 2026-10-12). Plan: a small
+  scheduled job pulls new messages from `#bug-reports` (channel 1489120381993357464) through
+  the Discord API, using the last message ID it saw, and saves each one into the existing
+  `bug_reports` table so it shows on the admin `/bug-reports` page, with author, text,
+  screenshot links and a link back to the message; optionally adds a ✅ reaction once saved.
+  Pulling is simpler than pushing: Discord can't post channel messages to our server
+  without an always-running bot or a public endpoint. Waiting on the owner to create a
+  Discord bot (Read Message History, Add Reactions, Message Content intent), invite it to
+  the server, and put its token in `.env` as `POKE6S_DISCORD_BOT_TOKEN`.
 - [next] Promote the desktop app to the main desktop page (details in
   `docs/desktop_app.md`, "Planned next steps"):
   - serve it at `/` for desktop visitors; phones keep `/mobile`
@@ -70,16 +92,44 @@ High Priority
   - remove the Time to Buy menu link (owner decided to leave Time to Buy out)
   - change the `APP` constant in `scripts/dashboards/account_settings.html` to `/`
   - update `docs/project_status.md` page map and `docs/desktop_app.md`
-- [planned] Remove or restrict the public development pages `/dashboard-lab`,
-  `/dashboard-dev` and `/mobile-rebuild`.
+- [planned] Retire the older research dashboard (decided 2026-10-12): move anything still
+  worth keeping into the desktop app's Stats tab (see Desktop App Follow-up), then remove
+  the "Full data →" link and forward `/dashboard` on desktop to the app. Do this with, or
+  after, promoting the app to `/`.
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
-- [waiting] Decide whether the older research dashboard behind "Full data →" is retired or
-  restyled.
-- [waiting] The old dashboard and `/mobile` still have the on-site "Report a Bug" form.
-  Decide whether to replace it with a link to Discord (touches the mobile page, so ask).
 - [waiting] Black Friday pull lists: the owner will supply the sets and a minimum price.
+
+- [waiting] Backfill history if TCGCSV brings its daily archive back (owner hears it may
+  return around November 2026). Then download the missing days for Pokemon (the
+  2026-09-16 to 10-07 gap) and as far back as is useful for the collected games. A full
+  1-to-1 copy of TCGCSV is possible but large (94 categories); ask TCGCSV (their Discord)
+  before any bulk download, keep the 150 ms spacing, and stop on 403/429.
+- [planned] Check the size of `data/tcgcsv_archive/` after a month and decide how many
+  games to keep collecting.
+- [idea] Sites for other games (magic6s, yugi6s, lorcana6s...) once 6-12 months of history
+  exist. They would need their own rarity rules, set eras, sealed product types and
+  screener tuning; PriceCharting graded prices would need a separate download and permission.
+
+- [waiting] Graded tab: which "ungraded" price to show (owner, 2026-10-12). The Graded tab
+  shows PriceCharting's ungraded price next to the PSA grades, while the rest of the card
+  uses the TCGplayer market price (via TCGCSV), and the two can disagree a lot. Example:
+  Pikachu, EX Power Keepers: TCGplayer 429.99 vs PriceCharting ungraded 100.81. Options:
+  (a) show our TCGplayer price as "Ungraded" in the Graded tab, (b) keep PriceCharting's
+  and label it clearly ("Ungraded (PriceCharting)"), or (c) show both with sources. Also
+  check whether the gap is a matching error (wrong printing or variant) before deciding.
+  Code: Graded tab in `scripts/dashboards/desktop_home.html`, `/graded_prices` in `api.py`.
+
+- [planned] Graded vs raw history chart (owner, 2026-10-12: "NO ONE is doing that now").
+  One chart per card comparing the raw TCGplayer price trend with graded trends (PSA 10,
+  PSA 9, BGS/CGC/SGC 10) over time, plus the graded premium (PSA 10 / raw) as its own line.
+  Data: `pricecharting_prices` has a daily history since 2026-10-09 (ungraded, grades
+  7-9.5, PSA/BGS/CGC/SGC 10, sales_volume); raw history is our TCGCSV prices. Build it once
+  a few months of graded history exist. Precompute the series nightly (see the speed plan)
+  and keep the PriceCharting linkback on every graded price shown. Related ideas: graded
+  premium screener (cards whose PSA 10 premium is widening or shrinking), sales-volume
+  trend from the daily `sales_volume` counts.
 
 Desktop App Follow-up
 ---------------------
@@ -88,13 +138,11 @@ Smaller pieces the old pages showed that the desktop app does not yet (from the
 2026-10-10 gap review). Check each against the current app before building; some may
 already be covered.
 
-- [planned] Set views: "% at 90-day high" and sealed-vs-cards momentum for a set.
+- [planned] Set views: sealed-vs-cards momentum for a set ("% at a 90-day high" is done).
 - [planned] Index views: included sets, dates the top-100 list was reshuffled, set-release
   markers on the chart, and the method explanation.
 - [planned] Sealed Deals: dollars saved, estimated MSRP, a confidence rating and, for
   Japanese products, the value score.
-- [planned] Budget Builder: "I already own this card, find a replacement", allow
-  duplicates, and a short "why this pick" note per card.
 - [planned] Stats tab: show the numbers specific to the list the visitor came from (streak
   length, days above average, prior 90-day high, distinct prices traded).
 - [parked] Account extras: a "purchased" checkbox on Buy List items, and rethinking Saved
@@ -127,10 +175,9 @@ Active Queue
   screeners out of `scripts/dashboards/api.py` into domain modules with unchanged endpoint
   contracts, so `api.py` mainly sets up the app and registers routes. (PSA lookup already
   lives in `psa_service.py`.)
-- [waiting] Buy labels: an earlier plan replaced the price-edge-only Strong Buy / Good Buy /
-  Fair Price / Wait / High Risk labels with a tested model using trend, volatility,
-  activity and data confidence. The desktop app now shows the 6-Month Hold check instead.
-  Decide whether the labels are still wanted.
+- [planned] Remove the leftover Strong Buy / Good Buy / Fair Price / Wait / High Risk label
+  code wherever it still shows (decided 2026-10-12: the 6-Month Hold check replaces it).
+  Leave the mobile page's layout alone.
 
 - PSA cert enrichment integration:
   - [planned] Add site-facing uses of the backend PSA cert lookup without making PSA the
@@ -209,7 +256,9 @@ Active Queue
 
 - [planned] Expand set rarity / variant filters (now under Research → Sets and Market Stats).
 - [planned] Fix remaining generation grouping mistakes when a set lands in the wrong era.
-- [planned] Watch `Under the Radar` population before loosening it again.
+- [planned] Watch `Under the Radar` and `Early Movers` as data builds back up after the gap.
+  While the feed is short, Under the Radar skips its precomputed flag and takes about 3-4 s
+  (normally well under 1 s); this ends on its own once a full 30 days of data exist.
 - [planned] Discord: alerts and bug reports are in place; a key-stat lookup command is the
   remaining idea.
 - [planned] Re-check first-load speed after real usage of the desktop app.
@@ -273,7 +322,8 @@ Needs Decisions
 - Keep the lightweight tracking account long term, or join a broader site membership?
 - A future assistant: explainer, ranked recommender, or collection copilot? What guardrails
   and disclaimers does it need?
-- (See also the [waiting] items above: old dashboard, Report a Bug form, buy labels.)
+- Development pages `/dashboard-lab`, `/dashboard-dev`, `/mobile-rebuild`: decided
+  2026-10-12 to leave them public for now.
 
 Future Ideas
 ------------

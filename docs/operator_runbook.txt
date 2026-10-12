@@ -577,8 +577,29 @@ Orange and red messages mention `POKE6S_DISCORD_MENTION` (default `@everyone`; s
 `none` to stop pinging). The webhook is `POKE6S_DISCORD_WEBHOOK_URL` in `.env`; without it
 the summary is only printed to the log. A Discord outage never fails a job.
 
+The collect-only archive of other games (see below) posts as "Other games price archive".
+
 Manual `--dry-run` price syncs do not post. Bug reports from visitors are handled in a
 separate Discord channel (#bug-reports), not on the site.
+
+
+Other games archive (collect only)
+----------------------------------
+Every night at 03:30 UTC (user `adam`'s crontab) `scripts/pipeline/run_tcgcsv_collect_host.sh`
+saves one day of TCGCSV data for Magic (1), Yu-Gi-Oh (2), One Piece (68) and Lorcana (71)
+into `data/tcgcsv_archive/<date>/tcgcsv-<date>-<categoryId>.tar.gz`, exactly as served. It
+waits for the Pokemon nightly update to finish first. It never stops the website or touches
+DuckDB.
+
+- add or remove a game: edit `COLLECT_CATEGORIES` in
+  `scripts/download/collect_tcgcsv_categories.py` (TCGplayer category ids are listed at
+  https://tcgcsv.com/tcgplayer/categories)
+- run by hand: `scripts/pipeline/run_tcgcsv_collect_host.sh` (a day already archived is
+  skipped, so this is safe to repeat)
+- look inside a day: `tar -tzf data/tcgcsv_archive/<date>/tcgcsv-<date>-71.tar.gz`
+- exit 3 in the log means TCGCSV blocked or throttled us: don't retry, check the TCGCSV
+  Discord first
+- the archive is ignored by git; back it up with the rest of `data/`
 
 
 Admin access
@@ -771,21 +792,18 @@ Current scope:
 
 Bug report checks
 -----------------
-Bug reports are now handled in the Discord #bug-reports channel. The older in-dashboard form
-below still exists on `/dashboard` and `/mobile` (the desktop app has none); use these checks
-only while it remains.
+Bug reports are handled in the Discord #bug-reports channel (invite:
+https://discord.gg/AejcWHkCG). Since 2026-10-12 every "Report a Bug" link on the site opens
+that invite: the old dashboard's account menu, and the mobile menu and Support > Bug tab.
+There is no on-site bug form any more.
 
 UI checks:
 
-- sign in from the header account menu
-- open `Report a Bug`
-- submit a short test report from a live dashboard state
-- verify the modal captures current tab / market / segment / selected product context
+- `/dashboard` account menu > `Report a Bug ↗` opens the Discord invite in a new tab
+- `/mobile` menu > `Report a Bug ↗`, and Support > Bug > `Open #bug-reports on Discord ↗`
 
-Admin-only review:
-
-- `/bug-reports`
-- intended for operator/admin use only
+The mobile Support > Feedback form still saves into the same `/bug_reports` queue. Review it
+(and older bug reports) at the admin-only `/bug-reports` page.
 
 
 Set explorer checks
@@ -1118,6 +1136,7 @@ Logs:
 
 - `/opt/pokemon-momentum/logs/daily_update.log`
 - `/opt/pokemon-momentum/logs/squarespace_price_sync_cron.log`
+- `/opt/pokemon-momentum/logs/tcgcsv_collect.log` (other games archive)
 - `/opt/pokemon-momentum/output/squarespace_retired_listings.jsonl` (listing retirements)
 
 Core scripts:

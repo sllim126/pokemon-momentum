@@ -2453,7 +2453,7 @@
       </div>
       <div class="user-links">
         <a class="user-link" href="#support" data-support-view="feedback">Feedback &amp; Support</a>
-        <a class="user-link" href="#support" data-support-view="bug">Report a Bug</a>
+        <a class="user-link" href="https://discord.gg/AejcWHkCG" target="_blank" rel="noopener">Report a Bug ↗</a>
         <a class="user-link" href="#support" data-support-view="guide">View Guide</a>
       </div>
     </section>
@@ -3862,6 +3862,8 @@
       }
     }
 
+    const BUG_REPORTS_DISCORD_URL = "https://discord.gg/AejcWHkCG";
+
     function normalizeSupportView(view) {
       return ["feedback", "bug", "guide"].includes(view) ? view : "feedback";
     }
@@ -3919,6 +3921,23 @@
       `;
     }
 
+    // Bug reports go to the #bug-reports channel on Discord, so the Bug tab only points
+    // there. Feedback still uses the on-site form above.
+    function supportBugTemplate() {
+      return `
+        <article class="alert-card">
+          <div class="alert-card-head">
+            <div>
+              <h3>Report a Bug</h3>
+              <p>Bug reports go to the #bug-reports channel on our Discord. Tell us what you tapped, what happened, and which card or page you were on.</p>
+            </div>
+            <span class="alert-pill">Bug</span>
+          </div>
+          <a class="target-save-btn" href="${BUG_REPORTS_DISCORD_URL}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;text-decoration:none">Open #bug-reports on Discord ↗</a>
+        </article>
+      `;
+    }
+
     function renderSupportGuide() {
       if (!supportBody) return;
       supportBody.innerHTML = `
@@ -3958,6 +3977,8 @@
       if (!supportBody) return;
       if (activeSupportView === "guide") {
         renderSupportGuide();
+      } else if (activeSupportView === "bug") {
+        supportBody.innerHTML = supportBugTemplate();
       } else {
         supportBody.innerHTML = supportFormTemplate(activeSupportView);
       }

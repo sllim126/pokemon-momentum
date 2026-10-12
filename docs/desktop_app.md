@@ -67,6 +67,11 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
 - **Budget Builder** picks are chosen on the server (`budget_builder_recommendations` and
   `_select_budget_candidates` in `api.py`). It needs four price readings in the last week,
   or every reading available after a feed gap.
+- **Discover lists survive feed gaps.** Each screener's activity bars ("10 different prices
+  in 30 days", "4 readings in 7 days") are scaled to the days that actually have prices in
+  that window (`gap_scaled_threshold` in `query_support.py`), so a gap in the TCGCSV feed
+  doesn't empty every list. With a complete feed the bars are unchanged. Early Movers and
+  Under the Radar can still be empty: they also need three rises in a row.
 - **6-Month Hold** comes from `scripts/dashboards/hold_check.py`; fee and shipping
   assumptions are in `scripts/common/selling_costs.py` (see the operator runbook).
 - **Stale responses are dropped.** `listRequestSeq` and `detailRequestSeq` increase with
@@ -124,6 +129,5 @@ These are tracked, with their status, in `docs/todo.txt`.
 1. Serve this page at `/` for desktop visitors (phones keep `/mobile`), point the header menus
    (`AREAS` in `site_shell.js`) at its views, and forward old pages (`/sealed-deals`,
    `/budget-builder`, `/set-explorer`, `/index-overview*`, the area pages) to their new views.
-2. Decide whether the older research dashboard behind "Full data →" is retired or restyled.
-3. Remove or restrict the public development pages `/dashboard-lab`, `/dashboard-dev` and
-   `/mobile-rebuild`.
+2. Retire the older research dashboard behind "Full data →" (decided 2026-10-12): move
+   what's worth keeping into the Stats tab, then remove the link.

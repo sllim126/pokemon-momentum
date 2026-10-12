@@ -1,3 +1,6 @@
+import math
+import time
+from datetime import timedelta
 from pathlib import Path
 
 import duckdb
@@ -231,6 +234,68 @@ def q(sql: str, params=None):
         return cols, rows
     finally:
         con.close()
+
+
+# --- Feed-gap scaling for screener activity thresholds -------------------------------
+#
+# The Discover screeners require trading activity such as "10 different prices in the last
+# 30 days" or "4 readings in the last 7 days". Those numbers assume a price every day. After
+# a gap in the feed (TCGCSV had none from 2026-09-16 to 2026-10-07) no card can reach them
+# and every list goes empty, so each threshold is scaled to the days of data that actually
+# exist in its window. With a complete feed the thresholds are unchanged.
+
+FEED_DATES_TTL_SECONDS = 600  # re-read after the nightly update within ten minutes
+FEED_DATES_LOOKBACK_DAYS = 400
+_feed_dates_cache: dict[int, tuple[float, list]] = {}
+
+
+def recent_feed_dates(category_id: int) -> list:
+    """Dates (newest first) in the last ~400 days that have any prices for a category.
+
+    Cached for FEED_DATES_TTL_SECONDS because the query scans the price history (~1 s).
+    Returns an empty list if the price source can't be read.
+    """
+    cached = _feed_dates_cache.get(category_id)
+    if cached and time.monotonic() - cached[0] < FEED_DATES_TTL_SECONDS:
+        return cached[1]
+    source = prices_from(category_id)
+    try:
+        _, rows = q(
+            f"""
+            WITH d AS (SELECT MAX(date) AS max_date FROM {source} WHERE categoryId = {int(category_id)})
+            SELECT DISTINCT date
+            FROM {source}
+            WHERE categoryId = {int(category_id)}
+              AND date >= (SELECT max_date FROM d) - INTERVAL {FEED_DATES_LOOKBACK_DAYS} DAY
+            ORDER BY date DESC
+            """
+        )
+        dates = [row[0] for row in rows]
+    except Exception:  # noqa: BLE001 - scaling must never break a screener
+        dates = []
+    _feed_dates_cache[category_id] = (time.monotonic(), dates)
+    return dates
+
+
+def gap_scaled_threshold(threshold: int, window_days: int, category_id: int, floor: int = 2) -> int:
+    """Scale an activity threshold to the days of data in its look-back window.
+
+    `window_days` matches the SQL `date >= latest - INTERVAL window_days DAY`, which spans
+    window_days + 1 dates. The result keeps the same rate (threshold per full window),
+    rounded up, and is never above `threshold` or below `floor` (or the threshold itself,
+    if that is smaller). Example: 10 distinct prices in 30 days, with prices on only 9 of
+    the last 31 dates, becomes ceil(10 * 9 / 31) = 3.
+    """
+    dates = recent_feed_dates(category_id)
+    if not dates or window_days <= 0:
+        return threshold
+    start = dates[0] - timedelta(days=window_days)
+    days_with_data = sum(1 for d in dates if d >= start)
+    expected = window_days + 1
+    if days_with_data >= expected:
+        return threshold
+    scaled = math.ceil(threshold * days_with_data / expected)
+    return max(min(floor, threshold), min(threshold, scaled))
 
 
 def to_jsonable(value):

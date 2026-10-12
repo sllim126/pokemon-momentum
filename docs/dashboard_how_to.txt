@@ -100,11 +100,9 @@ new reviewers can verify expected UX quickly.
 14. Header account menu and bug reporting
 - the upper-right `Account` menu now contains sign-in / account creation, tracked-item access,
   public page links, and a `Report a Bug` action
-- bug reports capture the current page state, active tab, market, segment, selected product,
-  chart mode, and current search query when available
-- expected result:
-  - issues can be reproduced more reliably from the saved context
-  - the account menu becomes the main utility launcher for tracking and support actions
+- `Report a Bug` opens the Discord #bug-reports channel in a new tab (since 2026-10-12;
+  the earlier on-site form, which saved page context with each report, was removed)
+- expected result: the account menu is the main utility launcher for tracking and support
 
 15. Paged product and set pickers
 - the custom `Product Picker` and `Set Picker` now load in pages instead of preloading the full catalog

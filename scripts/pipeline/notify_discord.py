@@ -1,7 +1,8 @@
-"""Post a job summary (nightly update or Squarespace price sync) to a Discord webhook.
+"""Post a job summary (nightly update, Squarespace price sync, or the collect-only TCGCSV
+archive) to a Discord webhook.
 
-Runs on the host (stdlib only) at the end of run_daily_update_host.sh and
-run_squarespace_price_sync.sh, so it still reports when Docker or the job itself is
+Runs on the host (stdlib only) at the end of run_daily_update_host.sh,
+run_squarespace_price_sync.sh and run_tcgcsv_collect_host.sh, so it still reports when Docker or the job itself is
 what broke. Settings come from the environment or the repo's .env file:
 
 - POKE6S_DISCORD_WEBHOOK_URL: channel webhook (without it the message is only printed)
@@ -159,10 +160,29 @@ def price_sync_summary(args: argparse.Namespace, lines: list[str]) -> tuple[str,
     return "✅ succeeded", GREEN, fields
 
 
+def collect_summary(args: argparse.Namespace, lines: list[str]) -> tuple[str, int, list[dict]]:
+    """Status, color and fields for the collect-only archive: one line per game archived."""
+    archived = [re.sub(r" in \d+s -> .*$", "", line.strip()[len("ARCHIVED "):])
+                for line in lines if line.startswith("ARCHIVED ")]
+    skipped = [line.strip()[len("SKIP "):] for line in lines if line.startswith("SKIP ")]
+    fields = [{
+        "name": "Archived",
+        "value": "\n".join(archived)[:1000] if archived else "nothing new",
+        "inline": False,
+    }]
+    if skipped:
+        fields.append({"name": "Already archived", "value": "\n".join(skipped)[:1000], "inline": False})
+    if args.exit_code != 0:
+        fields.append(error_field(lines))
+        return f"❌ FAILED (exit {args.exit_code})", RED, fields
+    return "✅ succeeded", GREEN, fields
+
+
 # Job name -> (message title, default log file, summary builder).
 JOBS = {
     "daily-update": ("Nightly market update", ROOT / "logs" / "daily_update.log", daily_update_summary),
     "price-sync": ("Squarespace price sync", ROOT / "logs" / "squarespace_price_sync_cron.log", price_sync_summary),
+    "collect": ("Other games price archive", ROOT / "logs" / "tcgcsv_collect.log", collect_summary),
 }
 
 
