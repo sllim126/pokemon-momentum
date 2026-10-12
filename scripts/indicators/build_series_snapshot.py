@@ -1,3 +1,7 @@
+"""Series snapshot: the last 730 days of prices for every printing, with 7- and 30-day
+moving averages, stored as JSON lists so normal chart windows load from one row.
+"""
+
 import argparse
 import sys
 from pathlib import Path

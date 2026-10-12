@@ -140,17 +140,19 @@ App URL:
 http://localhost:8001
 ```
 
-Settings live in `.env` (never commit it):
+Settings live in `.env` (never commit it). How each one reaches the code matters:
 
-| Setting | Used for |
-| --- | --- |
-| `POKEMON_MOMENTUM_GOOGLE_CLIENT_ID` | Google sign-in button (dashboards and `/account-settings`) |
-| `POKEMON_MOMENTUM_ADMIN_USERS` | Comma-separated admin emails (exact match) |
-| `PRICECHARTING_API_TOKEN` | Nightly PriceCharting graded-price CSV |
-| `POKE6S_DISCORD_WEBHOOK_URL` | Pipeline and price-sync alerts |
-| `POKE6S_DISCORD_MENTION` | Who to ping on failures (default `@everyone`; `none` to disable) |
-| `POKE6S_TCGCSV_USER_AGENT` | Optional override of the `Poke6sMarket/1.0.0` User-Agent |
-| `SQUARESPACE_API_KEY`, `SQUARESPACE_MARKET_CSV`, `SQUARESPACE_EXPORT_CSV`, ... | Store price sync and listing scripts |
+| Setting | Used for | Read by |
+| --- | --- | --- |
+| `POKEMON_MOMENTUM_GOOGLE_CLIENT_ID` | Google sign-in button | Website, via the `environment:` list in `docker-compose.yml` |
+| `POKEMON_MOMENTUM_ADMIN_USERS` | Comma-separated admin emails (exact match; default `sllim126@gmail.com`) | Website environment only. It is **not** in `docker-compose.yml`, so a value in `.env` is ignored until it is added there |
+| `PRICECHARTING_API_TOKEN` | Nightly PriceCharting graded-price CSV | `fetch_pricecharting.py`, which reads `.env` itself |
+| `POKE6S_DISCORD_WEBHOOK_URL`, `POKE6S_DISCORD_MENTION` | Pipeline and price-sync alerts (mention defaults to `@everyone`; `none` disables) | `notify_discord.py` on the host, which reads `.env` itself |
+| `POKE6S_TCGCSV_USER_AGENT` | Optional override of the `Poke6sMarket/1.0.0` User-Agent | Process environment only (not passed into the pipeline container today) |
+| `SQUARESPACE_*` | Store price sync and listing scripts | The Squarespace scripts, which read `.env` themselves |
+
+The website only sees the variables listed under `environment:` in `docker-compose.yml`;
+add a setting there (and restart) before relying on it inside the app.
 
 PSA cert lookup:
 

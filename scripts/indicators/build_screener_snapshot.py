@@ -1,3 +1,10 @@
+"""Screener snapshot: precomputed flags and ranks for the slower screener lists.
+
+Built from the product signal snapshot (which must exist first). Adds the default
+Pullbacks (good_buys), Early Movers and Under the Radar flags and ranks, recent-lift and
+7-day price-floor fields, so those lists read prepared rows instead of recomputing them.
+"""
+
 import argparse
 import sys
 from pathlib import Path

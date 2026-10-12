@@ -14,11 +14,11 @@ Recent Data/Serving Changes (March 2026)
   - lower browser-side network cost
   - faster tab/set/product transitions
 
-2. Set Products server-side name fallback hardening
+2. Browse Set (`/group_products`) server-side name fallback hardening
 - `group_products` now detects placeholder metadata names (`Product <id>` / `ProductId <id>`).
 - When placeholder is detected, server falls back to `product_signal_snapshot.productName` when available.
 - Expected result:
-  - fewer placeholder names in Set Products output even if metadata table contains stale placeholder rows
+  - fewer placeholder names in Browse Set output even if metadata table contains stale placeholder rows
 
 3. Client-side row normalization fallback hardening
 - `dashboard_common.enrichRows()` now prioritizes non-placeholder payload names over cached metadata names.
@@ -43,6 +43,7 @@ Recent Data/Serving Changes (March 2026)
   - less repeated work on phone/tablet refreshes
 
 6. Search and screener workflow refinements
+(`Good Buys` below is the API/snapshot name, `good_buys`, of the list the site shows as `Pullbacks`.)
 - header search now routes set-oriented selections into `Browse Set` instead of acting like a raw product jump
 - `Good Buys` now filters for `recent_distinct_prices_30d >= 10`
 - `Good Buys` now supports a client-side `Filter Sets` popout over the current result set
@@ -144,7 +145,7 @@ workflow features:
 
 - uploaded set-logo support
   - local files from `/images/set logos` can now be synced into `/images/logos/<groupId>.<ext>`
-  - Group Signals and Set Explorer both look for those synced groupId-based logo files
+  - Set Strength and Set Explorer both look for those synced groupId-based logo files
   - this keeps set imagery independent from individual product/card imagery
 
 - stricter breakout screening
@@ -358,8 +359,10 @@ Incremental refresh safeguard:
   placeholder names like `Product 586829`
 - this prevents stale fallback rows from becoming permanent when tcgcsv later starts returning
   the missing product metadata
-- dashboard/API metadata reads also prefer the category CSV when it is newer than the DuckDB
-  file, which helps if a metadata refresh updated the CSV but the DuckDB table was not rebuilt yet
+- dashboard/API metadata reads use the category CSV whenever it exists, and the DuckDB
+  table only when there is no CSV (see `prefer_csv_source` in
+  `scripts/dashboards/query_support.py`), so a refreshed CSV is picked up even if the
+  DuckDB table was not rebuilt
 
 Result of this stage:
 
@@ -479,7 +482,7 @@ Result of this stage:
 Recent API-side addition:
 
 - the dashboard now derives a broad generation/era label for each set when serving
-  `Group Signals`
+  `Set Strength` (API: `/group_signals`)
 - this label is built from group metadata such as set name, abbreviation, and
   publication date so the UI can filter set breadth screens by era
 - Japanese Mega-era overrides now cover multiple modern Mega prefixes so sets like `M2`,
@@ -608,24 +611,18 @@ Licensing:
 This step is a soft step: a PriceCharting failure warns but does not stop the price update.
 
 
-English-only legacy analytics
------------------------------
-Some ranking scripts are still English-only and only run for category `3`.
+Legacy scripts (not run)
+------------------------
+The older top-200 ranking and ROC scripts are kept in the repository but are no longer part
+of the pipeline: `run_daily_update.py` does not call them and the API does not read their
+output. They were English-only.
 
-Examples:
+- `scripts/rankings/` (top-200 universe, lookup, names, timeseries, 30-day movers)
+- `scripts/indicators/compute_*.py`, `export_timeseries_ma.py`,
+  `single_card_moving_average.py`, `build_151_indicators.py`
+- `scripts/dashboards/build_*dashboard*.py` (static HTML generators that predate the API)
 
-- top-200 universe
-- top-200 lookup
-- top-200 indicators
-- top-200 timeseries
-- legacy ROC snapshot
-
-These are still part of the English pipeline, but not yet mirrored for Japanese.
-
-That means:
-
-- core ingest + metadata + snapshots work for both `3` and `85`
-- legacy top-200 ranking stack currently remains English-specific
+Everything the site shows today comes from the snapshot stages above, for both `3` and `85`.
 
 
 Automation flow
@@ -703,10 +700,16 @@ What it does:
 - exposes JSON endpoints for universe, groups, series, movers, signals, and set views
 - picks the best history source for each category
 - exposes newer workflow endpoints like:
-  - `/good_buys`
+  - `/good_buys` (shown on the site as Pullbacks)
   - `group_signals?generation=...`
   - `/group_series?groupId=...`
   - `/set_baskets`
+  - `/sealed_deals`, `/budget_builder`
+  - `/index-overview-data` (market indexes, served from nightly snapshots)
+  - `/hold_check` (6-month profit check after fees and shipping)
+  - `/graded_prices` (PriceCharting graded prices and history)
+  - `/sparkline_batch` (many trend lines in one request)
+  - `/store_link` (whether a product is listed in the Squarespace store)
   - `/tracking/...`
 
 Set history endpoint:
@@ -718,7 +721,7 @@ Set history endpoint:
     - daily percent of items above SMA30
     - active item count
     - average and median set price
-  - this is what lets `Group Signals` drive the main chart without forcing an immediate drilldown to one product
+  - this is what lets `Set Strength` drive the main chart without forcing an immediate drilldown to one product
 
 Set explorer endpoint:
 
@@ -731,7 +734,8 @@ Set explorer endpoint:
     - top hit share of total set value
     - top 3 share of total set value
     - depth score
-  - this powers the separate `/set-explorer` page
+  - this powers the separate `/set-explorer` page and the desktop app's
+    Market Stats → Set values view
   - it is designed for "poke around in the set data" questions rather than live chart analysis
 
 Tracking endpoints:
@@ -743,14 +747,18 @@ Tracking endpoints:
   - verifies a Google identity token, creates the tracking user if needed, and returns the normal synced tracking session
 
 - `/tracking/session`
-  - legacy sign-in endpoint retained for older locally created tracking accounts, though the
-    current dashboard UI uses Google sign-in
+  - `GET` reports the signed-in user (and whether they are an admin); `DELETE` signs out
+  - `POST` was the old username + PIN sign-in; it is retired and answers 410
 
 - `/tracking/tags`
   - reads and writes saved workflow tags for one signed-in user
 
 - `/tracking/tags/merge`
   - pushes locally-created tags into the saved account after sign-in
+- `/tracking/items/resolve`
+  - turns a list of saved tags into display rows (names, images, latest prices)
+- `/tracking/views`
+  - lists, saves and deletes saved dashboard views
 
 - `/tracking/account`
   - deletes the signed-in tracking account, tags, and active sessions
@@ -781,6 +789,11 @@ Result:
 
 Dashboard flow
 --------------
+Desktop app (planned to replace the main dashboard on desktop):
+
+- [desktop_home.html](/opt/pokemon-momentum/scripts/dashboards/desktop_home.html), served at
+  `/home-preview`; its data sources per view are listed in docs/desktop_app.md
+
 Main dashboard:
 
 - [dashboard.html](/opt/pokemon-momentum/scripts/dashboards/dashboard.html)
@@ -819,9 +832,9 @@ Additional dashboard behavior:
 - tags can stay local-only or sync through the new tracking account flow
 - the account dropdown can jump directly into the `Tracked` tab
 
-Embed dashboard responsibilities:
+Embed dashboard responsibilities (admin-only at `/embed`):
 
-- compact feed for iframe/public use
+- compact feed designed for embedding in an iframe
 - one chart
 - minimal controls
 

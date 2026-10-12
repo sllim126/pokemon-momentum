@@ -1035,7 +1035,7 @@
       const category = key.startsWith("jp_") ? 85 : 3;
       return cached(`index:${key}`, () => getJson(`/index-overview-data?index=${encodeURIComponent(key)}&category_id=${category}`));
     }
-    // Every index for this market, in era order; one that fails to load is left out.
+    // Every index for this market, newest era first; one that fails to load is left out.
     function fetchIndexes() {
       const keys = INDEXES[state.market];
       return Promise.all(keys.map((key) => fetchIndex(key).then((payload) => ({ key, era: keys.indexOf(key), payload })).catch(() => null)))
@@ -1293,7 +1293,7 @@
     let setLogoIds = null;
     getJson("/set-logos.json").then((d) => { setLogoIds = new Set((d.groupIds || []).map(String)); if (state.list === "sets") renderSets(); }).catch(() => {});
     // Sets view: the Set Strength table. "Strength" is the API's breadth_score, which has no
-    // fixed top, so its bars are scaled to the strongest set shown.
+    // fixed top, so its bars are scaled to the strongest set in the whole list.
     async function loadSets(seq) {
       state.rows = [];
       $("resultsBody").replaceChildren();

@@ -34,7 +34,7 @@ sudo docker-compose restart pokemon-momentum
 4. Post-change smoke test checklist
 - `/dashboard` loads
 - switching Market Signals tabs auto-loads first row into chart
-- Set Products loads without generic `Product <id>` for known named sets
+- Browse Set loads without generic `Product <id>` for known named sets
 - header search set results open directly into `Browse Set`
 - header search product results can open `Browse Set` with the matching item selected
 - `Browse Set` can switch between `Browse Set` and set-scoped `Time to Buy` via `Set View`
@@ -42,12 +42,13 @@ sudo docker-compose restart pokemon-momentum
 - no unexpected large universe preloads on routine interactions
 - Google sign-in button renders in `Account` when configured and creates a synced tracking session
 - dashboard `Buy` / TCGplayer links redirect through the affiliate wrapper and still land on the expected product
-- mobile bottom nav works:
+- in a narrow window, the research dashboard's bottom nav works (phones are sent to the
+  separate `/mobile` page, which has its own menu):
   - `Home`
   - `Search`
   - `Tracked`
   - `Indicators`
-- mobile pull-to-refresh refreshes the current view without a full browser reload
+- pull-to-refresh refreshes the current view without a full browser reload
 - clicking a product image opens the anchored in-page preview and clicking it again closes it
 - smaller tablets can swipe left/right on the selected-product area to move through the current result list
 
@@ -88,10 +89,17 @@ Daily price sync inputs:
 
 Important pricing behavior:
 
-- the target builder now uses `max(market_target, profit_floor)` for SKUs with supplier quotes
+- the target builder uses `max(market_target, profit_floor)` for SKUs with supplier quotes
 - `profit_floor` is derived from supplier cost plus landed-cost assumptions
+- Japanese booster boxes use their own floor: landed cost (JPY at 159 per USD, 10% duty,
+  shared inbound shipping, handling) plus 20%
+- a Japanese rule whose latest supplier quote is more than 7 days old is priced at market
+  + 25% instead
 - rows without supplier quotes remain market-based
-- `target_source` in `market_prices_latest.csv` shows whether a row came from `market` or `profit_floor`
+- these defaults can be changed with the environment variables at the top of
+  `scripts/build_store_price_targets.py`
+- `target_source` in `market_prices_latest.csv` says which price won: `market`,
+  `profit_floor`, `jp_landed_markup`, or `jp_market_plus_25_stale_quote`
 
 Retiring sold listings:
 
@@ -349,10 +357,11 @@ Healthy result:
 
 2. Main dashboards load
 
+- `/home-preview` (desktop app: each area opens, a card's chart and 6-Month Hold load)
 - `/dashboard`
-- `/embed`
+- `/embed` (admins only)
 
-Healthy result:
+Healthy result for `/dashboard`:
 
 - page renders
 - left rail loads
@@ -363,8 +372,9 @@ Healthy result:
 - `set-explorer` loads and the set table populates
 - tracking sign-in works and tags persist after refresh
 - `Signals` tab is no longer present in the dashboard UI
-- `Good Buys` supports a `Filter Sets` popout so review can be narrowed to the specific sets you want to inspect
-- `Good Buys` supports `Min Price` / `Max Price` controls and those values persist in the URL after refresh
+- `Pullbacks` (called `Good Buys` in older notes and in the API, `/good_buys`) supports a
+  `Filter Sets` popout so review can be narrowed to the specific sets you want to inspect
+- `Pullbacks` supports `Min Price` / `Max Price` controls and those values persist in the URL after refresh
 - on phone/tablet widths:
   - mobile home shows `Singles / Sealed`
   - selected-product drilldown hides the indicator tabs below the chart
@@ -449,7 +459,7 @@ Expected result:
 
 - files in `/opt/pokemon-momentum/images/set logos`
 - copied into `/opt/pokemon-momentum/images/logos/<groupId>.<ext>`
-- Group Signals and Set Explorer can show local set logos when those files exist
+- Set Strength and Set Explorer can show local set logos when those files exist
 - shared-logo sets such as galleries or subset companions can intentionally reuse the same source logo
 
 Recover from DuckDB lock fallback:
@@ -521,6 +531,12 @@ Manual category runs inside Docker
 ----------------------------------
 Use these when testing a category-specific pipeline path directly.
 
+DuckDB allows one writer, and the running website opens the database for its queries, so a
+pipeline run can fail on a lock while the site is up. The nightly script stops the site
+first; do the same here (`sudo docker-compose stop pokemon-momentum`, run the commands,
+then `sudo docker-compose up -d pokemon-momentum`), or start the systemd service above,
+which does it for you. `--skip-download` reuses the prices already downloaded today.
+
 English / category 3:
 
 ```bash
@@ -568,8 +584,10 @@ separate Discord channel (#bug-reports), not on the site.
 Admin access
 ------------
 Admin pages (`/admin` and the tools it links to) require a Google sign-in whose email
-exactly matches `POKEMON_MOMENTUM_ADMIN_USERS` in `.env` (comma-separated; default
-`sllim126@gmail.com`). There is no partial or domain matching. The old PIN sign-in is
+exactly matches `POKEMON_MOMENTUM_ADMIN_USERS` (comma-separated; default
+`sllim126@gmail.com`). There is no partial or domain matching. The website only receives
+the variables listed under `environment:` in `docker-compose.yml`, and this one is not
+listed yet, so today the default applies; to change the admins, add it there and restart. The old PIN sign-in is
 retired and answers 410. Admin links on the site only appear for admins, and every admin
 page checks access again on the server.
 
@@ -639,7 +657,7 @@ Dashboard layer:
 - main chart loads
 - switching market updates content
 - set browser loads products
-- Group Signals and Set Explorer show uploaded set logos for mapped sets
+- Set Strength and Set Explorer show uploaded set logos for mapped sets
 
 
 Fast verification commands
@@ -683,7 +701,7 @@ Japanese sanity notes:
 
 Tracking checks
 ---------------
-The main dashboard now supports lightweight account-backed tracking tags.
+Saved lists (tags) and saved views can be tied to a Google-backed tracking account.
 
 Storage:
 
@@ -694,25 +712,29 @@ Main endpoints:
 
 - `GET /tracking/auth_config`
 - `POST /tracking/google_session`
-- `POST /tracking/session`
+- `POST /tracking/session` (retired username + PIN sign-in; always answers 410)
 - `GET /tracking/session`
 - `DELETE /tracking/session`
 - `GET /tracking/tags`
 - `PUT /tracking/tags`
 - `POST /tracking/tags/merge`
+- `POST /tracking/items/resolve` (turns saved tags into display rows)
+- `GET /tracking/views`, `POST /tracking/views`, `DELETE /tracking/views/{id}`
 - `DELETE /tracking/account`
 
 Google sign-in config:
 
 - env var:
   - `POKEMON_MOMENTUM_GOOGLE_CLIENT_ID`
-- when this is set, the dashboard account menu renders the Google sign-in button and `/tracking/google_session` becomes usable
+- when this is set, the dashboard account menu and `/account-settings` render the Google
+  sign-in button and `/tracking/google_session` becomes usable
 
 Healthy UI result:
 
 - you can open the `Account` dropdown in the upper-right header
 - sign in with Google
-- tag a product as `Favorite`, `Watchlist`, `Research`, or `Buy List`
+- tag a product as `Favorite`, `Watchlist`, `Needs Review` (stored as `research`), or
+  `Buy List` (stored as `owned`)
 - open `Tracked Items` from the account menu and see the saved list
 - refresh the page
 - the tags remain
@@ -734,16 +756,24 @@ Account settings:
 
 - `/account-settings`
 - supports:
+  - Google sign-in and sign-out
+  - synced list counts (each links to that list in the desktop app)
+  - saved views
   - delete tracking account
+  - an Admin link, shown only to admins
 
 Current scope:
 
-- only `/dashboard` uses the tracking account so far
-- `/embed` and `/set-explorer` are not wired to tracking yet
+- `/dashboard`, `/mobile`, the desktop app (`/home-preview`) and `/account-settings` use the
+  tracking account; lists saved before signing in are merged into the account on sign-in
+- price targets (buy-below / sell-above) stay in each browser and do not sync
+- `/embed` and `/set-explorer` are not wired to tracking
 
 Bug report checks
 -----------------
-Use these when verifying the in-dashboard report flow.
+Bug reports are now handled in the Discord #bug-reports channel. The older in-dashboard form
+below still exists on `/dashboard` and `/mobile` (the desktop app has none); use these checks
+only while it remains.
 
 UI checks:
 
@@ -815,7 +845,7 @@ Keyboard stepping:
 
 Group generation filter:
 
-- open `Group Signals`
+- open `Set Strength` (API: `/group_signals`)
 - change the generation dropdown
 - expected result:
   - the set list narrows to that era
@@ -823,7 +853,7 @@ Group generation filter:
 
 Set history chart:
 
-- open `Group Signals`
+- open `Set Strength` (API: `/group_signals`)
 - click any set row
 - expected result:
   - the main chart switches to a set-level chart
@@ -867,6 +897,8 @@ Symptoms:
 
 Likely causes:
 
+- TCGCSV has not published a new day yet (the download exits 2, "older than 48h"), or is
+  blocking us (exit 3, HTTP 403/429); the Discord alert quotes the error line
 - daily pipeline has not finished
 - parquet export did not run
 - app restarted before the export stage completed
@@ -928,6 +960,8 @@ Symptoms:
 
 Where this usually happens:
 
+- the TCGCSV price download (one request per set, at least 150 ms apart, with retries on
+  slow responses)
 - metadata fetches from tcgcsv
 - large price-load step
 
@@ -1076,14 +1110,22 @@ Useful file locations
 
 Main docs:
 
+- [desktop_app.md](/opt/pokemon-momentum/docs/desktop_app.md)
 - [dashboard_how_to.txt](/opt/pokemon-momentum/docs/dashboard_how_to.txt)
 - [data_flow.txt](/opt/pokemon-momentum/docs/data_flow.txt)
 
 Logs:
 
 - `/opt/pokemon-momentum/logs/daily_update.log`
+- `/opt/pokemon-momentum/logs/squarespace_price_sync_cron.log`
+- `/opt/pokemon-momentum/output/squarespace_retired_listings.jsonl` (listing retirements)
 
 Core scripts:
+
+- [run_daily_update_host.sh](/opt/pokemon-momentum/scripts/pipeline/run_daily_update_host.sh)
+- [fetch_tcgcsv_prices.py](/opt/pokemon-momentum/scripts/download/fetch_tcgcsv_prices.py)
+- [fetch_pricecharting.py](/opt/pokemon-momentum/scripts/download/fetch_pricecharting.py)
+- [notify_discord.py](/opt/pokemon-momentum/scripts/pipeline/notify_discord.py)
 
 - [run_daily_update.py](/opt/pokemon-momentum/scripts/pipeline/run_daily_update.py)
 - [validate_pipeline.py](/opt/pokemon-momentum/scripts/pipeline/validate_pipeline.py)

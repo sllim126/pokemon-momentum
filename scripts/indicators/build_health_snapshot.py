@@ -1,3 +1,9 @@
+"""Health snapshot for one category: total price rows and the newest price date.
+
+Read by /health ("Prices as of" on the site) and by the nightly Discord summary, which
+flags a market whose newest date is more than two days old.
+"""
+
 import argparse
 import sys
 from pathlib import Path

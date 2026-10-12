@@ -272,12 +272,13 @@ def compute_jp_booster_box_floor(cost_jpy: Decimal) -> Decimal | None:
     - Decimal target ending in `.99`
     - None when the quote or FX/shipping assumptions are invalid
 
-    Landed-cost model:
-    - convert supplier JPY to USD
+    Landed-cost model (default values shown; each can be changed with the environment
+    variable named in the constants at the top of this file):
+    - convert supplier JPY to USD at 159 JPY per USD (JP_BOOSTER_BOX_JPY_PER_USD)
     - add 10% import duty
     - allocate `13,800 JPY` shipping across `10` mixed boxes
     - add handling and disbursement
-    - multiply by `1.20`
+    - multiply by `1.20` (JP_BOOSTER_BOX_MARKUP_PCT)
     """
     if cost_jpy <= 0 or DEFAULT_JP_BOOSTER_BOX_JPY_PER_USD <= 0 or DEFAULT_JP_BOOSTER_BOX_ORDER_COUNT <= 0:
         return None

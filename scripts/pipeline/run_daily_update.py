@@ -263,9 +263,10 @@ def run_step(name: str, cmd: list[str], dry_run: bool) -> int:
 def can_fall_back_to_cached_metadata(step_name: str) -> bool:
     """Return whether a failed step can safely reuse the previous metadata snapshot.
 
-    Only tcgcsv-backed metadata refresh stages should be treated as soft failures.
-    Price loads and analytics rebuilds must still fail loudly because they directly
-    control whether the charts advance to a new date.
+    Only the steps in METADATA_FALLBACK_STEPS are soft failures: the tcgcsv-backed set
+    and product metadata refreshes, and the PriceCharting graded-price download. Price
+    loads and analytics rebuilds must still fail loudly because they directly control
+    whether the charts advance to a new date.
     """
     return step_name in METADATA_FALLBACK_STEPS
 

@@ -749,7 +749,7 @@ def index_overview_sv100_page():
 
 @app.get("/index-overview-mega100")
 def index_overview_mega100_page():
-    """Serve the desktop index-overview concept page for Mega Evolution 100."""
+    """Serve the desktop index-overview detail page for Mega Evolution 100."""
     return FileResponse(INDEX_OVERVIEW_DETAIL_HTML)
 
 
@@ -1190,7 +1190,7 @@ def _resolve_index_group_ids(index_key: str, category_id: int) -> list[int]:
 
     Resolution priority is intentional:
     1) explicit `group_ids` (exact historical boundaries, no ambiguity),
-    2) `all_active_groups` (global top 100 concept page),
+    2) `all_active_groups` (the global Pokemon Top 151 indexes, every set with prices),
     3) `generation` bucket from build_generation_case (modern eras).
     """
     definition = INDEX_DEFINITIONS.get(index_key)
