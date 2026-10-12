@@ -196,11 +196,12 @@ def build_steps(category_id: int, workers: int, full_metadata_refresh: bool) -> 
             table_outputs=(category.sparkline_snapshot_table,),
         ),
         StepSpec(
-            # Expected result: compact chart-series payloads exist for normal dashboard chart windows.
+            # Expected result: chart-series payloads exist: the daily 730-day series and the
+            # weekly older history ("All" chart window and the 6-Month Hold).
             name="Build series snapshot",
             command=["python", "scripts/indicators/build_series_snapshot.py", "--category-id", str(category_id)],
-            file_outputs=(EXTRACTED_DIR / category.series_snapshot_csv,),
-            table_outputs=(category.series_snapshot_table,),
+            file_outputs=(EXTRACTED_DIR / category.series_snapshot_csv, EXTRACTED_DIR / category.long_series_snapshot_csv),
+            table_outputs=(category.series_snapshot_table, category.long_series_snapshot_table),
         ),
         StepSpec(
             # Expected result: parquet partitions exist and include the most recent processed date.

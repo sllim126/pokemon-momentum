@@ -90,6 +90,10 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
   that window (`gap_scaled_threshold` in `query_support.py`), so a gap in the TCGCSV feed
   doesn't empty every list. With a complete feed the bars are unchanged. Early Movers and
   Under the Radar can still be empty: they also need three rises in a row.
+- **Charts and the 6-Month Hold read nightly snapshots**, not the raw history: 30D/90D/1Y
+  from the daily 730-day series snapshot, "All" and the hold check from that plus the
+  weekly long-history snapshot (`snapshot_history` in `api.py`). In the hold check's track
+  record each weekly point counts for the days it stands for, so its numbers match daily data.
 - **6-Month Hold** comes from `scripts/dashboards/hold_check.py`; fee and shipping
   assumptions are in `scripts/common/selling_costs.py` (see the operator runbook).
 - **Stale responses are dropped.** `listRequestSeq` and `detailRequestSeq` increase with

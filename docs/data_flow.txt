@@ -32,6 +32,15 @@ Recent Data/Serving Changes (March 2026)
 5. More dashboard reads moved to snapshots
 - `/health` now reads from a compact health snapshot instead of scanning history on request.
 - `/series` now reads a prebuilt recent-series snapshot for normal chart windows.
+- Since 2026-10-12 the same nightly step (`build_series_snapshot.py`) also builds
+  `<slug>_long_series_snapshot`: history older than 730 days, one point per week. The
+  "All" chart window and `/hold_check` join the two rows (`snapshot_history` in `api.py`)
+  instead of scanning the raw parquet history (~1 s down to ~0.05 s). The raw history is
+  only read if the snapshots are missing.
+- Since 2026-10-12 the web app remembers which DuckDB tables exist and whether the parquet
+  history covers a market, and runs queries on cursors of one shared read-only DuckDB
+  connection (`query_support.py`), instead of reopening the 13 GB file several times per
+  request. So anything that writes to DuckDB must run with the website stopped.
 - `/sparkline_batch` now reads prebuilt sparkline payloads instead of rebuilding tiny chart history live.
 - `/universe` now reads from the product signal snapshot instead of scanning raw price history.
 - the dashboard still applies client-side y-axis rules on top of `/series` so repriced windows

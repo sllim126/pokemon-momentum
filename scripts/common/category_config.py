@@ -77,6 +77,14 @@ class CategoryConfig:
         return f"{self.slug}_series_snapshot.csv"
 
     @property
+    def long_series_snapshot_table(self) -> str:
+        return f"{self.slug}_long_series_snapshot"
+
+    @property
+    def long_series_snapshot_csv(self) -> str:
+        return f"{self.slug}_long_series_snapshot.csv"
+
+    @property
     def screener_snapshot_table(self) -> str:
         return f"{self.slug}_screener_snapshot"
 

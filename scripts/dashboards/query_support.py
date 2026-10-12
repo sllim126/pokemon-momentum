@@ -246,6 +246,18 @@ def series_snapshot_from(category_id: int) -> str:
     raise HTTPException(status_code=500, detail=f"{category.series_snapshot_table} snapshot not found")
 
 
+def long_series_snapshot_from(category_id: int) -> str | None:
+    """The weekly older-history table (see build_series_snapshot.py), or None until the
+    nightly update has built it; callers then fall back to the raw price history."""
+    category = category_config(category_id)
+    if db_has_table(category.long_series_snapshot_table):
+        return category.long_series_snapshot_table
+    csv_path = EXTRACTED_DIR / category.long_series_snapshot_csv
+    if csv_path.exists():
+        return f"read_csv_auto('{csv_path}')"
+    return None
+
+
 def screener_snapshot_from(category_id: int) -> str:
     category = category_config(category_id)
     if db_has_table(category.screener_snapshot_table):

@@ -96,9 +96,10 @@ class ApiRouteTests(unittest.TestCase):
             self.assertEqual(response.status_code, 200, tab)
             self.assertIn("Market Signals", response.text, tab)
 
+    @patch.object(api, "snapshot_history", return_value=None)  # snapshots not built: raw path
     @patch.object(api, "prices_from", return_value="prices")
     @patch.object(api, "q")
-    def test_hold_check_route_returns_verdict(self, q_mock, _prices_from_mock):
+    def test_hold_check_route_returns_verdict(self, q_mock, _prices_from_mock, _history_mock):
         from datetime import date, timedelta
         start = date(2025, 9, 1)
         q_mock.return_value = (["date", "marketPrice"], [(start + timedelta(days=i), 20.0) for i in range(400)])
@@ -110,6 +111,27 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(body["verdict"], "unlikely")
         self.assertEqual(body["buy_price"], 20.0)
         self.assertEqual(q_mock.call_args[0][1], [3, 1, "Normal"])
+
+    @patch.object(api, "q")
+    @patch.object(api, "snapshot_history")
+    def test_hold_check_and_all_chart_read_the_snapshots(self, history_mock, q_mock):
+        from datetime import date, timedelta
+        start = date(2024, 2, 1)
+        # Weekly points for the first year, then daily, as snapshot_history returns them.
+        weekly = [[(start + timedelta(days=7 * i)).isoformat(), 20.0, 20.0, 20.0] for i in range(52)]
+        daily_start = start + timedelta(days=364)
+        daily = [[(daily_start + timedelta(days=i)).isoformat(), 20.0, 20.0, 20.0] for i in range(400)]
+        history_mock.return_value = weekly + daily
+
+        hold = self.client.get("/hold_check?productId=1&subTypeName=Normal").json()
+        chart = self.client.get("/series?productId=1&subTypeName=Normal&days=5000").json()
+
+        self.assertEqual(hold["verdict"], "unlikely")
+        # Weekly points count for 7 days each, so the windows add up to calendar days.
+        self.assertGreater(hold["history_windows"], 52 + 200)
+        self.assertEqual(len(chart["rows"]), 452)
+        self.assertEqual(chart["rows"][0][0], start.isoformat())
+        q_mock.assert_not_called()  # nothing read from the raw price history
 
     @patch.object(api, "db_has_table", return_value=False)
     def test_graded_prices_unavailable_before_first_snapshot(self, _has_table):

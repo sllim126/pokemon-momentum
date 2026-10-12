@@ -56,6 +56,7 @@ from scripts.dashboards.query_support import (
     products_from,
     q,
     screener_snapshot_from,
+    long_series_snapshot_from,
     series_snapshot_from,
     sparkline_snapshot_from,
     to_jsonable,
@@ -6213,6 +6214,35 @@ def sealed_deals(
     }
 
 
+def snapshot_history(category_id: int, productId: int, subTypeName: str) -> list | None:
+    """A printing's whole price history from the nightly snapshots, oldest first.
+
+    Rows are [date, price, sma7, sma30]: one per week from the long-history snapshot, then
+    one per day for the last 730 days from the series snapshot. Returns None when the
+    snapshots aren't there (or don't have this printing) so the caller can read the raw
+    price history instead.
+    """
+    long_source = long_series_snapshot_from(category_id)
+    if long_source is None:
+        return None
+    rows_out: list = []
+    for source in (long_source, series_snapshot_from(category_id)):
+        _, rows = q(
+            f"""
+            SELECT dates_json, prices_json, sma7_json, sma30_json
+            FROM {source}
+            WHERE categoryId = ? AND productId = ? AND subTypeName = ?
+              AND latest_date = (SELECT MAX(latest_date) FROM {source})
+            LIMIT 1
+            """,
+            [category_id, productId, subTypeName],
+        )
+        if rows:
+            dates, prices, sma7, sma30 = (json.loads(value or "[]") for value in rows[0])
+            rows_out.extend([list(row) for row in zip(dates, prices, sma7, sma30)])
+    return rows_out or None
+
+
 @app.get("/series")
 def series(productId: int, subTypeName: str, days: int = 365, category_id: int = 3):
     days = max(7, min(days, 5000))
@@ -6260,6 +6290,18 @@ def series(productId: int, subTypeName: str, days: int = 365, category_id: int =
                     "latest": str(latest),
                     "start": str(start) if start is not None else None,
                 }
+    else:
+        # Longer windows ("All"): weekly older history + the daily 730-day series.
+        history = snapshot_history(category.category_id, productId, subTypeName)
+        if history:
+            cutoff = (date.fromisoformat(str(history[-1][0])[:10]) - timedelta(days=days - 1)).isoformat()
+            rows_out = [row for row in history if str(row[0])[:10] >= cutoff]
+            return {
+                "columns": ["date", "price", "sma7", "sma30"],
+                "rows": rows_out,
+                "latest": str(history[-1][0])[:10],
+                "start": str(rows_out[0][0])[:10] if rows_out else None,
+            }
 
     price_source = prices_from(category.category_id)
 
@@ -6317,6 +6359,12 @@ def hold_check_route(
         raise HTTPException(status_code=400, detail=f"channel must be one of {sorted(CHANNELS)}")
     horizon_days = max(30, min(horizon_days, 365))
     category = category_config(category_id)
+    # Read the prepared history (weekly before the last 730 days, daily after); the raw
+    # history is only scanned if the snapshots aren't built yet.
+    history = snapshot_history(category.category_id, productId, subTypeName)
+    if history:
+        rows = [(date.fromisoformat(str(row[0])[:10]), row[1]) for row in history if row[1] is not None]
+        return hold_check(rows, buy_price, selected, horizon_days)
     _, rows = q(
         f"""
         SELECT date, marketPrice
