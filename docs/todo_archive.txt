@@ -7,6 +7,28 @@ Archived Completed Work
 October 2026 (archived 2026-10-12, when todo.txt was rewritten as the main action list)
 ----------------------------------------------------------------------------------------
 
+- Completed and archived at the second 2026-10-12 milestone:
+  - 2026-10-12 Started a nightly collect-only archive of Magic, Yu-Gi-Oh, One Piece and Lorcana
+    prices (`collect_tcgcsv_categories.py`, cron 03:30 UTC, `data/tcgcsv_archive/`). No site
+    for them yet; this only builds history, since TCGCSV no longer keeps one.
+  - 2026-10-12 Discover lists refilled after the data gap: screener activity thresholds now
+    scale to the days of data in each window (`gap_scaled_threshold` in `query_support.py`;
+    unchanged with a complete feed). Top Movers, Confirmed/Consistent Movers, Breakouts and
+    Pullbacks have cards again. Early Movers and Under the Radar may stay empty for a while
+    because they also need three rises in a row; the app's empty message explains that.
+  - 2026-10-12 Quick wins and decisions:
+    - `validate_pipeline.py` now builds index snapshots after the parquet export
+    - `POKE6S_TCGCSV_USER_AGENT` is passed into the container (`docker-compose.yml`)
+    - Placeholder Library, Collector Hub and Account stack and scroll on phones
+      (`desktop_theme.css`, narrow-screen rules); desktop sizes unchanged
+    - every "Report a Bug" link (old dashboard, mobile menu and Support > Bug tab) now opens
+      the Discord #bug-reports invite https://discord.gg/AejcWHkCG; mobile layout unchanged
+    - Budget Builder options: replacing a pick, max cards per set and "why this pick"
+      chips were already built; "allow duplicates" dropped
+    - set views already show "% at a 90-day high"
+    - decided: retire the old research dashboard; swap the Report a Bug form for a Discord
+      link (done); drop the Strong Buy / Good Buy / Fair Price / Wait / High Risk labels (the
+      6-Month Hold check replaces them); leave the development pages public
 - Completed and archived at the 2026-10-12 milestone:
   - 2026-10-12 Comments and docs reviewed across the whole codebase and corrected; new
     `docs/desktop_app.md`; `AGENTS.md` and this todo list set up as the shared work list.

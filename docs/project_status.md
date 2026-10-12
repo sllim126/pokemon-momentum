@@ -107,6 +107,12 @@ Added 2026-10:
   and Learn (How it works), plus a legal footer
 - Collector Hub, Placeholder Library and Account restyled on a shared desktop stylesheet
 - Index snapshots now build after the parquet export, so indexes are no longer a day behind
+- The desktop app is the desktop home page at `/`; older desktop addresses forward to it
+  (phones unchanged), and the older dashboard is at `/dashboard-classic`
+- Card views answer in about 0.01-0.05 s: cached table checks, one shared DuckDB
+  connection, a weekly long-history snapshot for "All" and the 6-Month Hold, browser caching
+- Discover lists scale their activity thresholds to feed gaps
+- Nightly collect-only archive of Magic, Yu-Gi-Oh, One Piece and Lorcana prices
 
 ## What's next
 
