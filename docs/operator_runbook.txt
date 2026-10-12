@@ -287,9 +287,9 @@ Main app/API:
 
 Main dashboard URLs:
 
-- `http://localhost:8001/home-preview` - the new desktop app (Buy, Discover, Research, Track,
-  Learn in one page); see docs/desktop_app.md
-- `http://localhost:8001/dashboard` - the older research dashboard (phones get `/mobile`)
+- `http://localhost:8001/` - on desktop, the desktop app (Buy, Discover, Research, Track,
+  Learn in one page); see docs/desktop_app.md. Phones get the mobile page.
+- `http://localhost:8001/dashboard-classic` - the older research dashboard (until retired)
 - `http://localhost:8001/mobile` - the mobile page
 - `http://localhost:8001/admin` - admin tools index (admins only)
 
@@ -357,7 +357,7 @@ Healthy result:
 
 2. Main dashboards load
 
-- `/home-preview` (desktop app: each area opens, a card's chart and 6-Month Hold load)
+- `/` on desktop (desktop app: each area opens, a card's chart and 6-Month Hold load)
 - `/dashboard`
 - `/embed` (admins only)
 
@@ -785,7 +785,7 @@ Account settings:
 
 Current scope:
 
-- `/dashboard`, `/mobile`, the desktop app (`/home-preview`) and `/account-settings` use the
+- `/dashboard-classic`, `/mobile`, the desktop app (`/`) and `/account-settings` use the
   tracking account; lists saved before signing in are merged into the account on sign-in
 - price targets (buy-below / sell-above) stay in each browser and do not sync
 - `/embed` and `/set-explorer` are not wired to tracking

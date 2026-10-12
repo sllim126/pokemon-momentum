@@ -498,8 +498,8 @@
     "use strict";
 
     /*
-     * Poke6s desktop app. Served at /home-preview; it is meant to replace the desktop
-     * dashboard at /. Phones keep the separate mobile page.
+     * Poke6s desktop app: the desktop home page at / (since 2026-10-12). Older desktop
+     * addresses forward here (desktop_app_redirect in api.py); phones keep the mobile page.
      *
      * One page, three columns:
      *   left   - every view, from LISTS below, grouped Buy / Rising / Starting to move /
@@ -1953,7 +1953,7 @@
       $("detailChange").textContent = "";
       $("buyInput").value = "";
       $("tcgLink").href = tcgplayerUrl(card);
-      $("fullDataLink").href = `/dashboard?product=${encodeURIComponent(card.key)}&category_id=${categoryId()}&segment=${card.productKind === "sealed" ? "sealed" : "cards"}`;
+      $("fullDataLink").href = `/dashboard-classic?product=${encodeURIComponent(card.key)}&category_id=${categoryId()}&segment=${card.productKind === "sealed" ? "sealed" : "cards"}`;
       renderSaveMenu();
       loadStoreLink(card);
       const seq = ++detailRequestSeq;

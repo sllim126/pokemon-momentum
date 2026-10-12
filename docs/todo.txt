@@ -24,7 +24,7 @@ archive older Recently Completed entries at the next milestone.
 Current Focus (2026-10-12)
 --------------------------
 
-- Desktop: the new single-page desktop app at `/home-preview` holds all five areas (Buy,
+- Desktop: the single-page desktop app at `/` (desktop home since 2026-10-12) holds all five areas (Buy,
   Discover, Research, Track, Learn). Guide: `docs/desktop_app.md`. Collector Hub,
   Placeholder Library and Account share its style through `desktop_theme.css`.
 - Mobile (`/mobile` and the mobile handling on `/`) and the admin pages are parked. The
@@ -35,6 +35,11 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-12 The desktop app is the desktop home page at `/`. Older desktop addresses
+  (`/dashboard`, old `?tab=` links, `/sealed-deals`, `/budget-builder`, `/set-explorer`,
+  `/index-overview*`, the area pages, `/home-preview`, desktop `/mobile?mode=tracked`)
+  forward to the matching view; phones are never forwarded and see no change. The older
+  dashboard moved to `/dashboard-classic` ("Full data →"). Time to Buy left the menus.
 - 2026-10-12 Started a nightly collect-only archive of Magic, Yu-Gi-Oh, One Piece and Lorcana
   prices (`collect_tcgcsv_categories.py`, cron 03:30 UTC, `data/tcgcsv_archive/`). No site
   for them yet; this only builds history, since TCGCSV no longer keeps one.
@@ -83,19 +88,10 @@ High Priority
   without an always-running bot or a public endpoint. Waiting on the owner to create a
   Discord bot (Read Message History, Add Reactions, Message Content intent), invite it to
   the server, and put its token in `.env` as `POKE6S_DISCORD_BOT_TOKEN`.
-- [next] Promote the desktop app to the main desktop page (details in
-  `docs/desktop_app.md`, "Planned next steps"):
-  - serve it at `/` for desktop visitors; phones keep `/mobile`
-  - point the header menus (`AREAS` in `scripts/dashboards/site_shell.js`) at its views
-  - forward the pages it replaces: `/sealed-deals`, `/budget-builder`, `/set-explorer`,
-    `/index-overview*` and the five area landing pages
-  - remove the Time to Buy menu link (owner decided to leave Time to Buy out)
-  - change the `APP` constant in `scripts/dashboards/account_settings.html` to `/`
-  - update `docs/project_status.md` page map and `docs/desktop_app.md`
 - [planned] Retire the older research dashboard (decided 2026-10-12): move anything still
   worth keeping into the desktop app's Stats tab (see Desktop App Follow-up), then remove
-  the "Full data →" link and forward `/dashboard` on desktop to the app. Do this with, or
-  after, promoting the app to `/`.
+  the "Full data →" link and `/dashboard-classic` (desktop `/dashboard` already forwards
+  to the app).
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.

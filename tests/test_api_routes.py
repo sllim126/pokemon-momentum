@@ -29,11 +29,50 @@ class ApiRouteTests(unittest.TestCase):
         self.addCleanup(feed_patch.stop)
 
     def test_dashboard_route_serves_html(self):
-        response = self.client.get("/dashboard")
+        # The older research dashboard now lives at /dashboard-classic.
+        response = self.client.get("/dashboard-classic")
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Market Signals", response.text)
+
+    def test_home_serves_desktop_app_on_desktop(self):
+        response = self.client.get("/", headers={"user-agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/120"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Poke6s desktop app", response.text)
+
+    def test_old_desktop_pages_forward_to_app_views(self):
+        desktop = {"user-agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/120"}
+        cases = {
+            "/dashboard?tab=breakouts&category_id=85": "/?list=breakouts&market=JP",
+            "/dashboard?tab=group_products&group_id=23237": "/?list=set&set=23237",
+            "/dashboard?product=1%7C%7CHolofoil&segment=sealed": "/?kind=sealed&product=1%7C%7CHolofoil",
+            "/?tab=top_movers": "/?list=top_movers",
+            "/home-preview?list=budget": "/?list=budget",
+            "/sealed-deals": "/?list=sealed_deals",
+            "/set-explorer": "/?list=set_values",
+            "/index-overview-sv100": "/?list=index&index=sv100",
+            "/index-overview-jp-pokemon100": "/?list=index&index=jp_pokemon100&market=JP",
+            "/research": "/?list=sets",
+            "/mobile?mode=tracked&tracked_tag=owned": "/?list=track_owned",
+        }
+        for path, target in cases.items():
+            with self.subTest(path=path):
+                response = self.client.get(path, headers=desktop, follow_redirects=False)
+                self.assertEqual(response.status_code, 302)
+                self.assertEqual(response.headers["location"], target)
+
+    def test_phones_and_data_routes_are_never_forwarded(self):
+        phone = {"user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148"}
+        for path in ("/", "/dashboard?tab=breakouts", "/sealed-deals", "/index-overview-sv100", "/research"):
+            with self.subTest(path=path):
+                response = self.client.get(path, headers=phone, follow_redirects=False)
+                self.assertNotEqual(response.status_code, 302)
+        desktop = {"user-agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/120"}
+        self.assertIsNone(api.desktop_app_redirect(
+            type("R", (), {"method": "GET", "headers": desktop, "query_params": {},
+                           "url": type("U", (), {"path": "/index-overview-data", "query": ""})()})()))
 
     def test_dashboard_route_serves_mobile_page_for_mobile_user_agents(self):
         response = self.client.get(

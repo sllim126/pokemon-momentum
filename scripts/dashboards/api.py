@@ -6,7 +6,7 @@ import re
 import bisect
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import unquote
+from urllib.parse import unquote, urlencode
 import sys
 import urllib.error
 
@@ -15,7 +15,7 @@ import pandas as pd
 import requests
 from fastapi import Cookie, FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from scripts.build_squarespace_single_listing_drafts import (
     DEFAULT_CREATED_CSV as SINGLE_LISTINGS_CREATED_CSV,
     DEFAULT_EXPORT_CSV as SINGLE_LISTINGS_EXPORT_CSV,
@@ -598,20 +598,129 @@ DESKTOP_ONLY_TABS = {"group_products", "group_signals", "time_to_buy", "browse_s
 
 
 def dashboard_response_for_request(request: Request) -> FileResponse:
-    """/ and /dashboard: phones get the mobile page, desktops get the research dashboard."""
+    """Phones get the mobile page; desktops get the older research dashboard.
+
+    Used by / and /dashboard for phones (desktop visitors are sent to the desktop app by
+    forward_desktop_to_app below) and by /dashboard-classic for everyone.
+    """
     if is_mobile_request(request) and request.query_params.get("tab") not in DESKTOP_ONLY_TABS:
         return FileResponse(MOBILE_DASHBOARD_HTML)
     return FileResponse(DASHBOARD_HTML)
 
 
+# ---- Desktop app as the desktop home page --------------------------------------------
+#
+# Desktop visitors get the single-page desktop app (desktop_home.html) at /. Every older
+# desktop address forwards to the matching view in the app, so bookmarks, shared links and
+# the shared header's menu links keep working. Phones and tablets are never forwarded:
+# they keep the mobile page and the older pages exactly as before.
+#
+# The older research dashboard stays reachable at /dashboard-classic (the app's
+# "Full data ->" button) until it is retired; see docs/todo.txt.
+
+# Old dashboard ?tab= values -> desktop app ?list= views.
+OLD_TAB_TO_APP_LIST = {
+    "top_movers": "top_movers",
+    "confirmed_uptrends": "confirmed_uptrends",
+    "sma30_holds": "sma30_holds",
+    "early_uptrends": "early_uptrends",
+    "under_the_radar": "under_the_radar",
+    "breakouts": "breakouts",
+    "good_buys": "good_buys",
+    "group_products": "sets",  # becomes "set" when a group_id is given
+    "group_signals": "sets",
+    "time_to_buy": "sets",  # Time to Buy was left out of the app on purpose
+    "browse_species": "species",
+}
+# Standalone pages and area landing pages -> desktop app views.
+OLD_PAGE_TO_APP_LIST = {
+    "/sealed-deals": "sealed_deals",
+    "/budget-builder": "budget",
+    "/set-explorer": "set_values",
+    "/index-overview": "indexes",
+    "/buy": "sealed_deals",
+    "/discover": "top_movers",
+    "/research": "sets",
+    "/track": "track_all",
+    "/learn": "guide",
+}
+# Old index detail pages, e.g. /index-overview-sv100 or /index-overview-jp-pokemon100.
+OLD_INDEX_PAGE = re.compile(r"/index-overview-((?:jp-)?[a-z]+\d+)")
+# Query parameters only the old dashboard uses; on / they mean an old-style link.
+OLD_DASHBOARD_PARAMS = {"tab", "segment", "group_id", "category_id", "chart_mode", "days", "mode"}
+
+
+def _app_url(list_key: str | None = None, **params) -> str:
+    """Desktop app URL for a view; empty values are left out."""
+    query = {"list": list_key, **params}
+    query = {k: v for k, v in query.items() if v not in (None, "")}
+    return "/" + (f"?{urlencode(query)}" if query else "")
+
+
+def desktop_app_redirect(request: Request) -> str | None:
+    """Where a desktop request for an older page should go in the desktop app, or None.
+
+    Carries over the market (category_id=85 -> market=JP), Singles/Sealed
+    (segment=sealed -> kind=sealed), the selected product and the set.
+    """
+    if request.method != "GET" or is_mobile_request(request):
+        return None
+    path = request.url.path.rstrip("/") or "/"
+    params = request.query_params
+    market = "JP" if params.get("category_id") == "85" or params.get("market") == "JP" else None
+    kind = "sealed" if params.get("segment") == "sealed" or params.get("kind") == "sealed" else None
+
+    if path == "/home-preview":
+        return "/" + (f"?{request.url.query}" if request.url.query else "")
+    if path in OLD_PAGE_TO_APP_LIST:
+        return _app_url(OLD_PAGE_TO_APP_LIST[path], market=market, kind=kind)
+    index_page = OLD_INDEX_PAGE.fullmatch(path)
+    if index_page:
+        # /index-overview-sv100 -> sv100; /index-overview-jp-sv100 -> jp_sv100 (Japanese).
+        # Only page addresses match: /index-overview-data is the app's own data source.
+        index_key = index_page.group(1).replace("-", "_")
+        return _app_url("index", index=index_key, market="JP" if index_key.startswith("jp_") else market)
+    if path == "/mobile" and params.get("mode") == "tracked":
+        tag = params.get("tracked_tag") or "all"
+        return _app_url(f"track_{tag}", market=market)
+    if path == "/dashboard" or (path == "/" and OLD_DASHBOARD_PARAMS & set(params)):
+        tab = params.get("tab", "")
+        list_key = OLD_TAB_TO_APP_LIST.get(tab)
+        group_id = params.get("group_id")
+        if tab == "group_products" and group_id:
+            list_key = "set"
+        return _app_url(list_key, market=market, kind=kind, product=params.get("product"),
+                        set=group_id if list_key == "set" else None)
+    return None
+
+
+@app.middleware("http")
+async def forward_desktop_to_app(request: Request, call_next):
+    """Send desktop visitors on an older page to the desktop app (see desktop_app_redirect)."""
+    target = desktop_app_redirect(request)
+    if target:
+        return RedirectResponse(target, status_code=302)
+    return await call_next(request)
+
+
 @app.get("/")
 def dashboard(request: Request):
-    return dashboard_response_for_request(request)
+    """Home: the desktop app on desktop, the mobile page on phones and tablets."""
+    if is_mobile_request(request):
+        return dashboard_response_for_request(request)
+    return FileResponse(DESKTOP_HOME_HTML)
 
 
 @app.get("/dashboard")
 def dashboard_alias(request: Request):
+    """Phones: the mobile page. Desktop visitors never get here (forwarded to the app)."""
     return dashboard_response_for_request(request)
+
+
+@app.get("/dashboard-classic")
+def dashboard_classic():
+    """The older research dashboard, kept for the app's "Full data ->" button until retired."""
+    return FileResponse(DASHBOARD_HTML)
 
 
 @app.get("/mobile")
@@ -842,7 +951,8 @@ for _area in ("buy", "discover", "research", "track", "learn"):
 
 @app.get("/home-preview")
 def desktop_home_preview():
-    """New 1080p desktop home, previewed here before it replaces the desktop dashboard."""
+    """The desktop app's former preview address. Desktop visitors are forwarded to /;
+    phones (which the forward skips) get the app here too, as before."""
     return FileResponse(DESKTOP_HOME_HTML)
 
 
