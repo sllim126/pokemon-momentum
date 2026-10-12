@@ -70,6 +70,20 @@ Recently Completed
 High Priority
 -------------
 
+- [next] Make card views fast: prepare everything during the nightly update, and only look
+  it up when a page asks (owner, 2026-10-12: "speed is better than more options"). Timings
+  measured 2026-10-12 when opening a card in the desktop app:
+  - chart 30D/90D/1Y ~0.4 s: already precomputed nightly (series snapshot), but each
+    request opens several DuckDB connections just to check which tables exist
+    (`db_has_table` in `query_support.py`); the lookup itself is ~0.04 s. Cache the table
+    check; this speeds up every endpoint.
+  - chart "All" ~1.5 s: built from the raw history each time. Either precompute a weekly
+    long-history series nightly, or drop the option.
+  - 6-Month Hold ~0.9 s: reads the full raw price history per request. Read the nightly
+    series snapshot instead (2 years, enough for the 6-month track record), or precompute
+    the market-price result nightly.
+  - let browsers cache snapshot-backed answers until the next nightly update.
+  - target: a card opens in well under 0.3 s.
 - [next] Promote the desktop app to the main desktop page (details in
   `docs/desktop_app.md`, "Planned next steps"):
   - serve it at `/` for desktop visitors; phones keep `/mobile`
