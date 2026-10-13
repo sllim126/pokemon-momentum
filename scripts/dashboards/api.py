@@ -2276,6 +2276,30 @@ def _find_pack_count_override(product_id: int | None) -> dict | None:
     return _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID.get(int(product_id))
 
 
+# Elite Trainer Boxes per factory case (owner, 2026-10-13): Pokemon Center exclusive ETB
+# cases hold 4, regular retail ETB cases 10.
+ETB_PER_CASE = {"pokemon_center": 4, "retail": 10}
+
+
+def _etb_case_override(name_raw: str, product_class: str, category_id: int, group_name_raw: str) -> dict | None:
+    """Pack count for an Elite Trainer Box case: the packs in one of its ETBs (found with the
+    same per-set rules as a single ETB) times ETB_PER_CASE. None for anything else; a case
+    with a hand-entered count by product id never gets here."""
+    name = _sealed_name(name_raw)
+    if "elite trainer box" not in name or not re.search(r"\bcase\b", name):
+        return None
+    single_name = re.sub(r"\s*\bcase\b", "", name_raw, flags=re.IGNORECASE)
+    single = _find_pack_count_override_by_name(single_name)
+    per_box = single.get("pack_count") if single else _infer_pack_count(single_name, product_class, category_id, group_name_raw)
+    if not per_box:
+        return None
+    pokemon_center = "pokemon center" in name
+    return {
+        "pack_count": ETB_PER_CASE["pokemon_center" if pokemon_center else "retail"] * per_box,
+        "product_type": "Pokemon Center ETB Case" if pokemon_center else "Elite Trainer Box Case",
+    }
+
+
 def _find_pack_count_override_by_name(name_raw: str) -> dict | None:
     lower = _sealed_name(name_raw)
     for override in _SEALED_PACK_COUNT_OVERRIDES_BY_NAME:
@@ -2510,6 +2534,8 @@ def _infer_product_type(name_raw: str, product_class: str) -> str:
         return "Half Booster Box"
     if "booster box" in name:
         return "Booster Box"
+    if "elite trainer box" in name and re.search(r"\bcase\b", name):
+        return "Pokemon Center ETB Case" if "pokemon center" in name else "Elite Trainer Box Case"
     if "pokemon center elite trainer box" in name:
         return "Pokemon Center ETB"
     if "elite trainer box" in name or " etb" in name or name.startswith("etb "):
@@ -6261,7 +6287,11 @@ def sealed_deals(
             continue
         product_class = str(row.get("productClass") or "")
         product_id = int(row.get("productId")) if row.get("productId") is not None else None
-        pack_count_override = _find_pack_count_override(product_id) or _find_pack_count_override_by_name(name)
+        pack_count_override = (
+            _find_pack_count_override(product_id)
+            or _etb_case_override(name, product_class, category.category_id, str(row.get("groupName") or ""))
+            or _find_pack_count_override_by_name(name)
+        )
         composition_override = _find_pack_composition_override(name)
         packs = []
         if pack_count_override and isinstance(pack_count_override.get("packs"), list):
@@ -6335,7 +6365,7 @@ def sealed_deals(
         elif "[" in name and ("set of" in lower_name or "bundle of" in lower_name):
             confidence = "high"
         elif inferred_type in {"Booster Pack", "Booster Box", "Booster Bundle", "Elite Trainer Box", "Pokemon Center ETB", "Ultra Premium Collection", "Premium Collection",
-                               "Booster Box Case", "Booster Bundle Case", "Elite Trainer Box Case"}:
+                               "Booster Box Case", "Booster Bundle Case", "Elite Trainer Box Case", "Pokemon Center ETB Case"}:
             confidence = "high"
         elif inferred_type in {"Tin", "Mini Tin", "Collection Box", "Pack Blister", "Ultra Premium Collection Case"}:
             # Low-confidence types are left out of the list unless include_low_confidence is

@@ -143,6 +143,11 @@ Desktop App Follow-up
     6. 39 other collection cases are left out of Sealed Deals until their contents are known
     Also confirm: one Celebrations UPC = 8 SWSH random + 17 Celebrations packs (taken from
     the earlier note on the case).
+    ETB cases: 4 Pokemon Center ETBs or 10 retail ETBs per case, times the packs in one ETB
+    (owner, 2026-10-13; `_etb_case_override`). To confirm: older sets' ETBs with no per-set
+    rule fall back to 9 packs, e.g. Sun & Moon, Battle Styles, Vivid Voltage, Darkness
+    Ablaze, Shining Fates, Evolving Skies (Sword & Shield era ETBs usually held 8; add rules
+    to `_SEALED_PACK_COUNT_OVERRIDES_BY_NAME` as confirmed).
     Booster bundle cases: 25 bundles x 6 packs = 150 by default (owner, 2026-10-13; includes
     Prismatic Evolutions); 151's 60-bundle master case would need its own product id entry
     (only the 25-bundle bulk case is listed today).
