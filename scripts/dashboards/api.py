@@ -2045,6 +2045,10 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID = {
 }
 
 _SEALED_PACK_COUNT_OVERRIDES_BY_NAME = [
+    # Ascended Heroes Collection - Erika / Larry: 2 booster packs, a foil promo and a coin
+    # (retailer listings, 2026-10-13; MSRP $9.99). Both the 1-Tab and 3-Tab listings.
+    {"match": ["ascended heroes collection", "erika"], "pack_count": 2, "product_type": "Collection Box"},
+    {"match": ["ascended heroes collection", "larry"], "pack_count": 2, "product_type": "Collection Box"},
     {
         "match": ["pokemon center", "elite trainer box", "scarlet", "violet"],
         "pack_count": 11,
