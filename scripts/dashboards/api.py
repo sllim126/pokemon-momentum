@@ -1901,6 +1901,45 @@ _SEALED_PACK_COMPOSITION_OVERRIDES = [
         "packs": [{"set": "Prismatic Evolutions", "count": 15}],
         "product_type": "Super Premium Collection",
     },
+    # Cases (owner, 2026-10-13): Super-Premium and Ultra Premium Collection cases hold 4.
+    {
+        "match": ["prismatic evolutions super premium collection", "case"],
+        "packs": [{"set": "Prismatic Evolutions", "count": 60}],
+        "product_type": "Super Premium Collection Case",
+    },
+    {
+        "match": ["mega charizard x ex ultra premium collection", "case"],
+        "packs": [
+            {"set": "Destined Rivals", "count": 16},
+            {"set": "Journey Together", "count": 16},
+            {"set": "Phantasmal Flames", "count": 16},
+            {"set": "Mega Evolution", "count": 16},
+            {"set": "Surging Sparks", "count": 8},
+        ],
+        "product_type": "Ultra Premium Collection Case",
+    },
+    {
+        "match": ["team rocket's moltres ex ultra premium collection", "case"],
+        "packs": [
+            {"set": "Destined Rivals", "count": 8},
+            {"set": "Journey Together", "count": 16},
+            {"set": "Temporal Forces", "count": 8},
+            {"set": "Paradox Rift", "count": 8},
+            {"set": "Obsidian Flames", "count": 12},
+            {"set": "Paldea Evolved", "count": 12},
+            {"set": "Scarlet and Violet", "count": 8},
+        ],
+        "product_type": "Ultra Premium Collection Case",
+    },
+    # One Celebrations UPC, per the owner's earlier note on the case.
+    {
+        "match": ["celebrations ultra premium collection"],
+        "packs": [
+            {"set": "SWSH Random", "count": 8},
+            {"set": "Celebrations (4-card packs)", "count": 17},
+        ],
+        "product_type": "Ultra Premium Collection",
+    },
     {
         "match": ["mega charizard x ex ultra premium collection"],
         "packs": [
@@ -1987,13 +2026,14 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID = {
     591211: {"pack_count": 120, "product_type": "Mini Pack Bundle"},
     566954: {"pack_count": 80, "product_type": "Mini Pack Bundle"},
     # Mixed sealed layouts supplied by user notes.
+    # Celebrations UPC case: 4 UPCs (owner, 2026-10-13) of 8 SWSH random + 17 Celebrations packs.
     518638: {
-        "pack_count": 25,
+        "pack_count": 100,
         "packs": [
-            {"set": "SWSH Random", "count": 8},
-            {"set": "Celebrations (4-card packs)", "count": 17},
+            {"set": "SWSH Random", "count": 32},
+            {"set": "Celebrations (4-card packs)", "count": 68},
         ],
-        "product_type": "Ultra Premium Collection",
+        "product_type": "Ultra Premium Collection Case",
     },
     251895: {
         "pack_count": 150,
@@ -2340,7 +2380,8 @@ def _infer_pack_count(
         return 35 * multiplier
 
     if "ultra premium collection case" in name:
-        return 16 * 6 * multiplier
+        # Ultra Premium Collection cases hold 4 UPCs (owner, 2026-10-13).
+        return 16 * 4 * multiplier
     if "booster box case" in name or ("booster box" in name and "case" in name):
         packs_per_box = jp_packs_per_box if is_japanese_market else 36
         return packs_per_box * 6 * multiplier
