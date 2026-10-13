@@ -8,6 +8,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import unquote, urlencode
 import sys
+import time
 import urllib.error
 
 import duckdb
@@ -45,6 +46,8 @@ from scripts.dashboards.query_support import (
     db_has_table,
     build_metadata_cte,
     gap_scaled_threshold,
+    add_release_dates,
+    set_release_dates,
     build_premium_rarity_filter,
     build_set_basket_filter,
     category_config,
@@ -714,7 +717,7 @@ async def forward_desktop_to_app(request: Request, call_next):
 PUBLIC_DATA_CACHE_SECONDS = 600
 PUBLIC_DATA_PATHS = frozenset({
     "/health", "/categories", "/universe", "/groups", "/search", "/store_link",
-    "/series", "/hold_check", "/graded_prices", "/index-overview-data",
+    "/series", "/hold_check", "/graded_prices", "/card_details", "/index-overview-data",
     "/browse_species", "/group_products", "/group_signals", "/group_series", "/set_baskets",
     "/product_signals", "/sealed_deals", "/budget_builder",
     "/top_movers", "/confirmed_uptrends", "/sma30_holds", "/early_uptrends",
@@ -724,7 +727,8 @@ PUBLIC_DATA_PATHS = frozenset({
 
 @app.middleware("http")
 async def cache_public_market_data(request: Request, call_next):
-    """Let browsers reuse successful public market-data answers (see PUBLIC_DATA_PATHS)."""
+    """Let browsers reuse public market data for a while (PUBLIC_DATA_PATHS), and make them
+    re-check pages, scripts and stylesheets on every visit."""
     response = await call_next(request)
     if (
         request.method == "GET"
@@ -733,6 +737,19 @@ async def cache_public_market_data(request: Request, call_next):
         and "cache-control" not in response.headers
     ):
         response.headers["Cache-Control"] = f"public, max-age={PUBLIC_DATA_CACHE_SECONDS}"
+    elif (
+        request.method == "GET"
+        and response.status_code == 200
+        and "cache-control" not in response.headers
+        and (
+            response.headers.get("content-type", "").startswith("text/html")
+            or request.url.path.endswith((".js", ".css"))
+        )
+    ):
+        # Pages, scripts and stylesheets: the browser must check for a newer copy every time
+        # (cheap: an unchanged file answers 304 thanks to its ETag). Without this, browsers
+        # guess a freshness period and can show an outdated page for hours after a change.
+        response.headers["Cache-Control"] = "no-cache"
     return response
 
 
@@ -1068,11 +1085,20 @@ def health(category_id: int = 3):
 
 
 @app.get("/api/psa/cert/{cert_number}")
-def psa_cert_lookup(cert_number: str, refresh: bool = False):
+def psa_cert_lookup(
+    cert_number: str,
+    refresh: bool = False,
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    """PSA cert details. Fresh cached results are public; anything that would call PSA
+    (a new or stale cert, or refresh=true) is admin-only, because it uses our PSA account
+    and its daily allowance. No public page calls this yet (see docs/todo.txt, PSA)."""
     normalized_cert = validate_psa_cert_number(cert_number)
     cached_row = get_psa_certification(normalized_cert)
     if cached_row is not None and not refresh and psa_cache_is_fresh(cached_row):
         return psa_lookup_response(cached_row, source="cache")
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
 
     payload = fetch_psa_cert_from_upstream(normalized_cert)
     normalized = normalize_psa_lookup(normalized_cert, payload)
@@ -1759,12 +1785,21 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
 
 
 @app.get("/index-overview-data")
-def index_overview_data(category_id: int = 3, index: str = "sv100", refresh: bool = False):
+def index_overview_data(
+    category_id: int = 3,
+    index: str = "sv100",
+    refresh: bool = False,
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
     """Everything one market index page needs: level series, holdings, sets, reshuffles.
 
     Served from the snapshot the nightly update builds (it runs after the parquet export,
-    so it includes the newest day), cached in memory; refresh=true recomputes it live.
+    so it includes the newest day), cached in memory. refresh=true recomputes it live from
+    the raw history and overwrites the snapshot, so it is admin-only (401/403 otherwise).
     """
+    if refresh:
+        require_admin_user(authorization=authorization, tracking_token=tracking_token)
     requested_category = int(category_id)
     if requested_category not in (3, 85):
         raise HTTPException(status_code=400, detail="Index overview is only configured for category_id in {3, 85}.")
@@ -1849,6 +1884,62 @@ _SEALED_EXCLUDE_NAME_PATTERNS = (
 )
 
 _SEALED_PACK_COMPOSITION_OVERRIDES = [
+    # Pack mixes from the product listings (owner, 2026-10-13).
+    {
+        "match": ["charizard ex super premium collection"],
+        "packs": [
+            {"set": "Stellar Crown", "count": 2},
+            {"set": "Temporal Forces", "count": 2},
+            {"set": "Twilight Masquerade", "count": 2},
+            {"set": "Paradox Rift", "count": 2},
+            {"set": "Obsidian Flames", "count": 2},
+        ],
+        "product_type": "Super Premium Collection",
+    },
+    {
+        "match": ["prismatic evolutions super premium collection"],
+        "packs": [{"set": "Prismatic Evolutions", "count": 15}],
+        "product_type": "Super Premium Collection",
+    },
+    # Cases (owner, 2026-10-13): Super-Premium and Ultra Premium Collection cases hold 4.
+    {
+        "match": ["prismatic evolutions super premium collection", "case"],
+        "packs": [{"set": "Prismatic Evolutions", "count": 60}],
+        "product_type": "Super Premium Collection Case",
+    },
+    {
+        "match": ["mega charizard x ex ultra premium collection", "case"],
+        "packs": [
+            {"set": "Destined Rivals", "count": 16},
+            {"set": "Journey Together", "count": 16},
+            {"set": "Phantasmal Flames", "count": 16},
+            {"set": "Mega Evolution", "count": 16},
+            {"set": "Surging Sparks", "count": 8},
+        ],
+        "product_type": "Ultra Premium Collection Case",
+    },
+    {
+        "match": ["team rocket's moltres ex ultra premium collection", "case"],
+        "packs": [
+            {"set": "Destined Rivals", "count": 8},
+            {"set": "Journey Together", "count": 16},
+            {"set": "Temporal Forces", "count": 8},
+            {"set": "Paradox Rift", "count": 8},
+            {"set": "Obsidian Flames", "count": 12},
+            {"set": "Paldea Evolved", "count": 12},
+            {"set": "Scarlet and Violet", "count": 8},
+        ],
+        "product_type": "Ultra Premium Collection Case",
+    },
+    # One Celebrations UPC, per the owner's earlier note on the case.
+    {
+        "match": ["celebrations ultra premium collection"],
+        "packs": [
+            {"set": "SWSH Random", "count": 8},
+            {"set": "Celebrations (4-card packs)", "count": 17},
+        ],
+        "product_type": "Ultra Premium Collection",
+    },
     {
         "match": ["mega charizard x ex ultra premium collection"],
         "packs": [
@@ -1898,7 +1989,6 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID = {
     453471: {"pack_count": 100},
     256271: {"pack_count": 80},
     496905: {"pack_count": 216},
-    496131: {"pack_count": 80},
     600697: {"pack_count": 44},
     655281: {"pack_count": 216},
     454377: {
@@ -1935,13 +2025,14 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID = {
     591211: {"pack_count": 120, "product_type": "Mini Pack Bundle"},
     566954: {"pack_count": 80, "product_type": "Mini Pack Bundle"},
     # Mixed sealed layouts supplied by user notes.
+    # Celebrations UPC case: 4 UPCs (owner, 2026-10-13) of 8 SWSH random + 17 Celebrations packs.
     518638: {
-        "pack_count": 25,
+        "pack_count": 100,
         "packs": [
-            {"set": "SWSH Random", "count": 8},
-            {"set": "Celebrations (4-card packs)", "count": 17},
+            {"set": "SWSH Random", "count": 32},
+            {"set": "Celebrations (4-card packs)", "count": 68},
         ],
-        "product_type": "Ultra Premium Collection",
+        "product_type": "Ultra Premium Collection Case",
     },
     251895: {
         "pack_count": 150,
@@ -2168,9 +2259,9 @@ def _parse_bundle_multiplier(name: str) -> int:
 
 
 def _find_pack_composition_override(name_raw: str) -> dict | None:
-    lower = (name_raw or "").lower()
+    lower = _sealed_name(name_raw)
     for override in _SEALED_PACK_COMPOSITION_OVERRIDES:
-        tokens = [token.lower() for token in override.get("match", [])]
+        tokens = [_sealed_name(token) for token in override.get("match", [])]
         if "case" in lower and "case" not in tokens:
             continue
         if tokens and all(token in lower for token in tokens):
@@ -2184,10 +2275,34 @@ def _find_pack_count_override(product_id: int | None) -> dict | None:
     return _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID.get(int(product_id))
 
 
+# Elite Trainer Boxes per factory case (owner, 2026-10-13): Pokemon Center exclusive ETB
+# cases hold 4, regular retail ETB cases 10.
+ETB_PER_CASE = {"pokemon_center": 4, "retail": 10}
+
+
+def _etb_case_override(name_raw: str, product_class: str, category_id: int, group_name_raw: str) -> dict | None:
+    """Pack count for an Elite Trainer Box case: the packs in one of its ETBs (found with the
+    same per-set rules as a single ETB) times ETB_PER_CASE. None for anything else; a case
+    with a hand-entered count by product id never gets here."""
+    name = _sealed_name(name_raw)
+    if "elite trainer box" not in name or not re.search(r"\bcase\b", name):
+        return None
+    single_name = re.sub(r"\s*\bcase\b", "", name_raw, flags=re.IGNORECASE)
+    single = _find_pack_count_override_by_name(single_name)
+    per_box = single.get("pack_count") if single else _infer_pack_count(single_name, product_class, category_id, group_name_raw)
+    if not per_box:
+        return None
+    pokemon_center = "pokemon center" in name
+    return {
+        "pack_count": ETB_PER_CASE["pokemon_center" if pokemon_center else "retail"] * per_box,
+        "product_type": "Pokemon Center ETB Case" if pokemon_center else "Elite Trainer Box Case",
+    }
+
+
 def _find_pack_count_override_by_name(name_raw: str) -> dict | None:
-    lower = (name_raw or "").lower()
+    lower = _sealed_name(name_raw)
     for override in _SEALED_PACK_COUNT_OVERRIDES_BY_NAME:
-        tokens = [token.lower() for token in override.get("match", [])]
+        tokens = [_sealed_name(token) for token in override.get("match", [])]
         if tokens and all(token in lower for token in tokens):
             return override
     return None
@@ -2253,13 +2368,38 @@ def _looks_like_individual_card(name_raw: str, rarity: str | None, number: str |
     return False
 
 
+def _sealed_name(name_raw: str) -> str:
+    """Lower-cased product name for the sealed rules and the hand-entered overrides, with
+    spelling variants unified: "Ultra-Premium" = "Ultra Premium", and TCGplayer's curly
+    apostrophe (Rocket’s) = a straight one."""
+    return (
+        (name_raw or "").lower()
+        .replace("\u2019", "'").replace("\u2018", "'")
+        .replace("ultra-premium", "ultra premium").replace("super-premium", "super premium")
+    )
+
+
+def _is_sleeved_booster_case(name: str) -> bool:
+    """"<Set> Sleeved Booster Case" or "<Set> Sleeved Booster Pack Case" (name already lower-cased)."""
+    return "sleeved booster" in name and bool(re.search(r"\bcase\b", name))
+
+
+def _pack_number(value: float) -> float | int:
+    """A pack count as a whole number when it is one (2.0 -> 2), else kept as 2.5."""
+    return int(value) if float(value).is_integer() else round(float(value), 1)
+
+
 def _infer_pack_count(
     name_raw: str,
     product_class: str,
     category_id: int | None = None,
     group_name_raw: str = "",
-) -> int | None:
-    name = (name_raw or "").lower()
+) -> float | None:
+    """Booster packs inside a sealed product, guessed from its name (None if unknown).
+
+    Usually a whole number; a product with a short promo pack can count it as half a pack.
+    """
+    name = _sealed_name(name_raw)
     multiplier = _parse_bundle_multiplier(name)
     is_japanese_market = int(category_id or 0) == 85
     jp_packs_per_box, _ = _jp_pricing_profile(name_raw, group_name_raw) if is_japanese_market else (36, 0.0)
@@ -2267,8 +2407,12 @@ def _infer_pack_count(
     if _is_trick_or_trade_product(name_raw):
         return 35 * multiplier
 
+    if _is_sleeved_booster_case(name):
+        # Every sleeved booster case holds 144 single sleeved packs (owner, 2026-10-13).
+        return 144 * multiplier
     if "ultra premium collection case" in name:
-        return 16 * 6 * multiplier
+        # Ultra Premium Collection cases hold 4 UPCs (owner, 2026-10-13).
+        return 16 * 4 * multiplier
     if "booster box case" in name or ("booster box" in name and "case" in name):
         packs_per_box = jp_packs_per_box if is_japanese_market else 36
         return packs_per_box * 6 * multiplier
@@ -2287,6 +2431,11 @@ def _infer_pack_count(
         return packs_per_box * multiplier
     if "ultra premium collection" in name:
         return 16 * multiplier
+    if "booster bundle" in name and "case" in name:
+        # A booster bundle case holds 25 bundles of 6 packs (owner, 2026-10-13). Sets packed
+        # differently (151's 60-bundle master case, Paldean Fates, Crown Zenith) are entered
+        # by product id in _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID.
+        return 25 * 6 * multiplier
     if "booster bundle" in name:
         return 6 * multiplier
     if "build & battle box" in name or "build and battle box" in name:
@@ -2321,6 +2470,16 @@ def _infer_pack_count(
         return 3 * multiplier
     if re.search(r"\btin[s]?\b", name):
         return 4 * multiplier
+    # A case of collections: how many collections it holds isn't in the name, so the pack
+    # count is unknown. Add the product to _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID when known.
+    if "collection case" in name:
+        return None
+    # Smaller collections with a known pack count, before the generic "collection" guess.
+    if "knock out collection" in name:
+        return 2 * multiplier
+    if "first partner illustration collection" in name:
+        # Two booster packs plus a 3-card promo pack, counted as half a pack.
+        return 2.5 * multiplier
     if "collection" in name or "figure collection" in name:
         return 5 * multiplier
 
@@ -2334,7 +2493,7 @@ def _infer_pack_count(
 
 
 def _infer_retail_per_pack(name_raw: str, product_class: str, product_type: str | None = None) -> float:
-    name = (name_raw or "").lower()
+    name = _sealed_name(name_raw)
     normalized_type = str(product_type or "").lower()
 
     if _is_trick_or_trade_product(name_raw):
@@ -2342,6 +2501,8 @@ def _infer_retail_per_pack(name_raw: str, product_class: str, product_type: str 
 
     if normalized_type == "mini pack bundle":
         return 0.0
+    if "sleeved booster" in name:
+        return 4.99
     if "booster box" in name:
         return 4.49
     if "booster bundle" in name:
@@ -2373,7 +2534,7 @@ def _infer_retail_per_pack(name_raw: str, product_class: str, product_type: str 
 
 
 def _infer_product_type(name_raw: str, product_class: str) -> str:
-    name = (name_raw or "").lower()
+    name = _sealed_name(name_raw)
     if "ultra premium collection" in name:
         return "Ultra Premium Collection"
     if "booster box case" in name or ("booster box" in name and "case" in name):
@@ -2382,10 +2543,16 @@ def _infer_product_type(name_raw: str, product_class: str) -> str:
         return "Half Booster Box"
     if "booster box" in name:
         return "Booster Box"
+    if _is_sleeved_booster_case(name):
+        return "Sleeved Booster Case"
+    if "elite trainer box" in name and re.search(r"\bcase\b", name):
+        return "Pokemon Center ETB Case" if "pokemon center" in name else "Elite Trainer Box Case"
     if "pokemon center elite trainer box" in name:
         return "Pokemon Center ETB"
     if "elite trainer box" in name or " etb" in name or name.startswith("etb "):
         return "Elite Trainer Box"
+    if "booster bundle" in name and "case" in name:
+        return "Booster Bundle Case"
     if "booster bundle" in name:
         return "Booster Bundle"
     if re.search(r"\bmini\s*tin[s]?\b", name):
@@ -3942,6 +4109,9 @@ def tracking_saved_views_delete(view_id: int, authorization: str | None = Header
     return {"ok": True}
 
 
+TRACKED_ITEMS_LIMIT = 5000  # far above any real saved list; stops oversized requests
+
+
 @app.post("/tracking/items/resolve")
 def tracking_items_resolve(payload: dict | None = None):
     """Resolve tracked tag rows into display-ready dashboard items on the server."""
@@ -3953,6 +4123,8 @@ def tracking_items_resolve(payload: dict | None = None):
     raw_items = body.get("items") or []
     if not isinstance(raw_items, list):
         raise HTTPException(status_code=400, detail="items must be a list")
+    if len(raw_items) > TRACKED_ITEMS_LIMIT:
+        raise HTTPException(status_code=400, detail=f"At most {TRACKED_ITEMS_LIMIT} saved items per request")
 
     tags_by_key: dict[tuple[int, str], set[str]] = {}
     for item in raw_items:
@@ -4039,8 +4211,56 @@ def tracking_delete_account(payload: dict | None = None, authorization: str | No
     return {"ok": True}
 
 
+# Limits for the anonymous mobile Feedback form (bug reports go to Discord): text is
+# trimmed to these lengths, each address may send FEEDBACK_PER_HOUR reports an hour, and
+# the whole site accepts at most FEEDBACK_SITE_PER_HOUR an hour, so the queue can't be
+# flooded even with faked addresses. Counts are in memory and reset on restart.
+FEEDBACK_FIELD_LIMITS = {"title": 200, "details": 5000, "expected": 2000}
+FEEDBACK_OTHER_FIELD_LIMIT = 500
+FEEDBACK_PER_HOUR = 5
+FEEDBACK_SITE_PER_HOUR = 60
+_feedback_times: dict[str, list[float]] = {}
+
+
+def client_address(request: Request) -> str:
+    """The visitor's address. The site runs behind a proxy, so use Cloudflare's header if
+    present, else the last X-Forwarded-For entry (the one our proxy adds; earlier entries
+    can be faked by the visitor), else the connection's address."""
+    cloudflare = request.headers.get("cf-connecting-ip", "").strip()
+    if cloudflare:
+        return cloudflare
+    forwarded = [part.strip() for part in request.headers.get("x-forwarded-for", "").split(",") if part.strip()]
+    if forwarded:
+        return forwarded[-1]
+    return request.client.host if request.client else "unknown"
+
+
+def _feedback_allowed(address: str) -> bool:
+    """Per-address and site-wide hourly limits for /bug_reports."""
+    now = time.monotonic()
+    for key in list(_feedback_times):
+        _feedback_times[key] = [t for t in _feedback_times[key] if now - t < 3600]
+        if not _feedback_times[key]:
+            del _feedback_times[key]
+    if len(_feedback_times.get(address, [])) >= FEEDBACK_PER_HOUR:
+        return False
+    if sum(len(times) for times in _feedback_times.values()) >= FEEDBACK_SITE_PER_HOUR:
+        return False
+    _feedback_times.setdefault(address, []).append(now)
+    return True
+
+
 @app.post("/bug_reports")
-def submit_bug_report(payload: dict):
+def submit_bug_report(payload: dict, request: Request):
+    """Save a mobile Feedback form submission into the bug_reports review queue."""
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Expected a JSON object")
+    if not _feedback_allowed(client_address(request)):
+        raise HTTPException(status_code=429, detail="Too many reports from this address; try again in an hour.")
+    payload = {
+        key: (str(value)[: FEEDBACK_FIELD_LIMITS.get(key, FEEDBACK_OTHER_FIELD_LIMIT)] if isinstance(value, str) else value)
+        for key, value in payload.items()
+    }
     title = str(payload.get("title", "")).strip()
     details = str(payload.get("details", "")).strip()
     if len(title) < 3:
@@ -5795,6 +6015,8 @@ def group_signals(limit: int = 500, min_items: int = 5, generation: str | None =
     LIMIT {limit}
     """
     cols, rows = q(sql)
+    # Each set's release date (see set_release_dates in query_support.py).
+    cols, rows = add_release_dates(cols, rows, category.category_id)
     return {"columns": cols, "rows": rows}
 
 
@@ -5994,6 +6216,8 @@ def set_baskets(
     LIMIT {limit}
     """
     cols, rows = q(sql)
+    # Each set's release date (see set_release_dates in query_support.py).
+    cols, rows = add_release_dates(cols, rows, category.category_id)
     return {
         "columns": cols,
         "rows": rows,
@@ -6074,7 +6298,11 @@ def sealed_deals(
             continue
         product_class = str(row.get("productClass") or "")
         product_id = int(row.get("productId")) if row.get("productId") is not None else None
-        pack_count_override = _find_pack_count_override(product_id) or _find_pack_count_override_by_name(name)
+        pack_count_override = (
+            _find_pack_count_override(product_id)
+            or _etb_case_override(name, product_class, category.category_id, str(row.get("groupName") or ""))
+            or _find_pack_count_override_by_name(name)
+        )
         composition_override = _find_pack_composition_override(name)
         packs = []
         if pack_count_override and isinstance(pack_count_override.get("packs"), list):
@@ -6088,7 +6316,7 @@ def sealed_deals(
         else:
             pack_count = _infer_pack_count(name, product_class, category.category_id, str(row.get("groupName") or ""))
             pack_set = str(row.get("groupName") or "Unknown Set")
-            packs = [{"set": pack_set, "count": int(pack_count or 0)}] if pack_count else []
+            packs = [{"set": pack_set, "count": _pack_number(pack_count or 0)}] if pack_count else []
         if pack_count is None or pack_count <= 0:
             continue
 
@@ -6147,9 +6375,13 @@ def sealed_deals(
             confidence = "high"
         elif "[" in name and ("set of" in lower_name or "bundle of" in lower_name):
             confidence = "high"
-        elif inferred_type in {"Booster Pack", "Booster Box", "Booster Bundle", "Elite Trainer Box", "Pokemon Center ETB", "Ultra Premium Collection", "Premium Collection"}:
+        elif inferred_type in {"Booster Pack", "Booster Box", "Booster Bundle", "Elite Trainer Box", "Pokemon Center ETB", "Ultra Premium Collection", "Premium Collection",
+                               "Booster Box Case", "Booster Bundle Case", "Elite Trainer Box Case", "Pokemon Center ETB Case",
+                               "Sleeved Booster Case"}:
             confidence = "high"
-        elif inferred_type in {"Tin", "Mini Tin", "Collection Box", "Pack Blister"}:
+        elif inferred_type in {"Tin", "Mini Tin", "Collection Box", "Pack Blister", "Ultra Premium Collection Case"}:
+            # Low-confidence types are left out of the list unless include_low_confidence is
+            # set, so a new product type must be added to one of these sets to be shown.
             confidence = "medium"
         else:
             confidence = "low"
@@ -6169,7 +6401,7 @@ def sealed_deals(
                 "productType": inferred_type,
                 "subTypeName": row.get("subTypeName"),
                 "latest_price": round(latest_price, 2),
-                "pack_count": int(pack_count),
+                "pack_count": _pack_number(pack_count),
                 "pack_mix": _pack_mix_text(packs),
                 "pack_sets": [str(pack.get("set")) for pack in packs if pack.get("set")],
                 "price_per_pack": round(price_per_pack, 3),
@@ -6374,6 +6606,47 @@ def series(productId: int, subTypeName: str, days: int = 365, category_id: int =
     """
     cols, rows = q(data_sql)
     return {"columns": cols, "rows": rows, "latest": str(latest), "start": str(start)}
+
+
+@app.get("/card_details")
+def card_details(productId: int, subTypeName: str, category_id: int = 3):
+    """Everything the nightly product snapshot knows about one printing, for the desktop
+    app's full card page: price, 7/30/90/365-day changes, moving averages, 90-day high,
+    streaks, trading activity, the set's release date, and the card's other printings.
+    """
+    category = category_config(category_id)
+    source = product_signal_from(category.category_id)
+    latest = f"(SELECT MAX(latest_date) FROM {source} WHERE categoryId = {category.category_id})"
+    cols, rows = q(
+        f"""
+        SELECT *
+        FROM {source}
+        WHERE categoryId = ? AND productId = ? AND subTypeName = ? AND latest_date = {latest}
+        LIMIT 1
+        """,
+        [category.category_id, productId, subTypeName],
+    )
+    if not rows:
+        raise HTTPException(status_code=404, detail="No snapshot row for that productId/subTypeName")
+    card = dict(zip(cols, rows[0]))
+    release = set_release_dates(category.category_id).get(int(card["groupId"]), {})
+    card["release_date"] = release.get("release_date")
+    card["release_precision"] = release.get("release_precision", "unknown")
+    _, printings = q(
+        f"""
+        SELECT subTypeName, latest_price, roc_30d_pct
+        FROM {source}
+        WHERE categoryId = ? AND productId = ? AND subTypeName <> ? AND latest_date = {latest}
+        ORDER BY latest_price DESC
+        """,
+        [category.category_id, productId, subTypeName],
+    )
+    return to_jsonable({
+        "card": card,
+        "other_printings": [
+            {"subTypeName": sub, "latest_price": price, "roc_30d_pct": change} for sub, price, change in printings
+        ],
+    })
 
 
 @app.get("/hold_check")

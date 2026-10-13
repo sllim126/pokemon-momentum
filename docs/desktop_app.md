@@ -25,8 +25,8 @@ tablets are never forwarded and still get the older pages.
 | `/buy`, `/discover`, `/research`, `/track`, `/learn` | Sealed Deals, Top Movers, Sets, All saved, How it works |
 | `/mobile?mode=tracked&tracked_tag=<tag>` | that saved list |
 
-The older research dashboard is at `/dashboard-classic`, which the card's "Full data →"
-button opens, until it is retired (see `docs/todo.txt`).
+The older research dashboard is still reachable at `/dashboard-classic`, but nothing in the
+app links to it since the full card page replaced "Full data →" (2026-10-13).
 - Shared header: `scripts/dashboards/site_shell.js`
 
 The top of the page's `<script>` has an overview comment with the same essentials as this
@@ -36,9 +36,15 @@ guide; keep the two in step.
 
 | Column | What it shows |
 | --- | --- |
-| Left | Every view, grouped Buy / Rising / Starting to move / Dipped / My lists / Research / Learn, with item counts |
+| Left | Every view, grouped Buy / Rising / Starting to move / Dipped / Research / My lists / Learn (the header menu's order), with item counts |
 | Middle | The current view: a table of cards, or a special view (Sets, Market Stats, Budget Builder grid, How it works) |
 | Right | The selected card: price chart, 6-Month Hold, Targets, Graded and Stats tabs, plus Save, TCGplayer, Our store and Full data |
+
+**Full card page.** "Full data →", or double-clicking a card's picture, switches to the full
+card page (`&card=1` in the address): the card panel widens over the list, shows every tab at
+once, and adds every snapshot number (`/card_details`), the market lists the card is in today,
+and its other printings. "← Back", Esc or any menu item returns to the list, which stays
+loaded underneath. See `setFullCard()` and `loadFullExtra()`.
 
 The page itself never scrolls; each column scrolls on its own. It is checked at 1920×1080,
 1366×768 and 1280×720. Below 1500 px wide the trend column hides and spacing tightens.
@@ -61,7 +67,7 @@ Every view is one entry in the `LISTS` array; its fields are documented above th
 
 Other endpoints: `/search` (top search box), `/universe` (opening a card from a link),
 `/health` ("Prices as of"), `/series` (price chart), `/sparkline_batch` (trend column),
-`/hold_check`, `/graded_prices`, `/store_link`, `/set-logos.json`.
+`/hold_check`, `/graded_prices`, `/card_details` (full card page), `/store_link`, `/set-logos.json`.
 
 ### Adding a view
 
@@ -76,6 +82,11 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
 
 - **Graded prices must link back.** PriceCharting allows display only if every price links to
   its PriceCharting product page. The Graded tab hides the link only when no price is shown.
+- **Sealed pack counts** come from the product name (`_infer_pack_count` in `api.py`) unless
+  entered by hand (`_SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID`,
+  `_SEALED_PACK_COMPOSITION_OVERRIDES`); cases multiply their contents (ETB cases via
+  `_etb_case_override`). A product type must be in the confidence sets in `sealed_deals`
+  or the product is left out of the list.
 - **Sealed Deals compares with loose packs, not retail.** Only plain "<Set> Booster Pack"
   listings count as loose prices (no mini, promo, pin-bundle or 1st Edition/Unlimited
   packs), and only booster boxes, half boxes, bundles, ETBs, blisters and sleeved packs are
@@ -129,7 +140,12 @@ Saved-list tag names: `owned` is shown as Buy List, `research` as Needs Review.
 
 Collector Hub (`collector_hub.html`), Placeholder Library (`placeholder_library.html`) and
 Account (`account_settings.html`) load `scripts/dashboards/desktop_theme.css`, served at
-`/desktop-theme.css`. Its color tokens copy the `:root` block in `desktop_home.html`;
+`/desktop-theme.css`. Collector Hub and Placeholder Library are scrolling "reading pages"
+(since 2026-10-13): Collector Hub explains master-set collecting in three steps and shows
+each resource as a tile; Placeholder Library lists every file by who it's for. Both take
+their items from the manifests and their wording from a `COPY` table in the page, keyed by
+item id (a new item falls back to the manifest's summary). Resources open in a new tab;
+nothing is embedded. Its color tokens copy the `:root` block in `desktop_home.html`;
 change both together.
 
 Account links each saved list to `/?list=track_<tag>` through its `APP` constant.

@@ -6,61 +6,40 @@
   <title>Poke6s Collector Hub</title>
   <link rel="icon" type="image/png" href="/images/Favidon.png" />
   <link rel="stylesheet" href="/desktop-theme.css" />
-  <style>
-    body { overflow: hidden; }
-    .preview { flex: 1; min-height: 0; border: 0; border-top: 1px solid var(--line); background: #fff; width: 100%; }
-    .detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 16px 18px; }
-    .detail-head h2 { margin: 0; font-size: 18px; }
-    .detail-head p { margin: 4px 0 10px; color: var(--muted); }
-  </style>
 </head>
-<body data-area="learn">
+<body data-area="learn" class="scroll-page">
   <div id="site-shell"></div>
 
-  <main class="page">
+  <main class="page reading">
     <div class="page-head">
       <div>
         <h1>Collector Hub</h1>
-        <p>Master Set Hub: checklists, printable binder placeholders and set reference notes for master set collecting.</p>
+        <p>Free tools for building a master set: every card from a set, including every printing.
+          Track what you own, and print placeholder cards to keep your binder in order while you collect.</p>
       </div>
       <div class="page-actions">
-        <a class="btn" href="/placeholders">Placeholder downloads</a>
-        <a class="btn" href="/collector-assets/checklists-sv/index.html" target="_blank" rel="noopener">SV checklists ↗</a>
-        <a class="btn primary" href="/collector-assets/print-combined/index.html" target="_blank" rel="noopener">Print placeholders ↗</a>
+        <a class="btn" href="/placeholders">All files and downloads</a>
       </div>
     </div>
 
-    <div class="split">
-      <section class="panel" aria-label="Resources">
-        <div class="panel-head">
-          <h2>Resources</h2>
-          <p id="updated">Loading…</p>
-        </div>
-        <div class="panel-scroll list" id="list"></div>
-      </section>
+    <section class="steps" aria-label="How it works">
+      <div class="step"><b>1</b><div><strong>Pick a checklist</strong><span>Open your set and tick off the cards you already own. Ticks are saved in this browser.</span></div></div>
+      <div class="step"><b>2</b><div><strong>Print placeholders</strong><span>Print a stand-in card for each card you still need and slide it into the binder pocket where that card belongs.</span></div></div>
+      <div class="step"><b>3</b><div><strong>Swap as you collect</strong><span>When you get a card, replace its placeholder. The empty pockets always show what's missing.</span></div></div>
+    </section>
 
-      <section class="panel" aria-label="Preview">
-        <div class="detail-head">
-          <div>
-            <h2 id="title">Select a resource</h2>
-            <p id="summary"></p>
-            <div class="chips" id="chips"></div>
-          </div>
-          <a class="btn primary" id="openLink" target="_blank" rel="noopener" hidden>Open full page ↗</a>
-        </div>
-        <iframe class="preview" id="preview" title="Resource preview" hidden></iframe>
-        <div class="empty" id="previewEmpty">Pick a resource on the left to preview it here.</div>
-      </section>
-    </div>
+    <p class="muted" id="status">Loading…</p>
+    <div id="sections"></div>
   </main>
   <footer class="legal">Pokémon names and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company; Poke6s Market is independent and not affiliated with or endorsed by them.</footer>
 
   <script src="/site-shell.js"></script>
   <script>
   /*
-   * Collector Hub: the collector resources listed in /collector-manifest (checklist sites,
-   * placeholder print hubs, reference notes), grouped by section on the left, with a live
-   * preview of the selected one on the right. ?item=<id> reopens a resource.
+   * Collector Hub: the collector resources from /collector-manifest shown as tiles grouped by
+   * task, each with a plain explanation (COPY below, keyed by the manifest item's id; a new
+   * item without an entry falls back to the manifest's own summary) and buttons to open or
+   * download it. Resources open in a new tab; nothing is embedded.
    * Styling comes from /desktop-theme.css.
    */
   (function () {
@@ -76,40 +55,64 @@
       node.append(...children.filter(Boolean));
       return node;
     };
-    let items = [];
-    let selectedId = new URLSearchParams(location.search).get("item");
 
-    function select(item) {
-      selectedId = item.id;
-      document.querySelectorAll(".list-item").forEach((b) => b.setAttribute("aria-current", String(b.dataset.id === item.id)));
-      $("title").textContent = item.title;
-      $("summary").textContent = item.summary || "";
-      $("chips").replaceChildren(...[...(item.stats || []), ...(item.tags || [])].map((text) => el("span", { class: "chip", text })));
-      $("openLink").href = item.href;
-      $("openLink").hidden = false;
-      $("preview").src = item.preview_href || item.href;
-      $("preview").hidden = false;
-      $("previewEmpty").hidden = true;
-      const url = new URL(location.href);
-      url.searchParams.set("item", item.id);
-      history.replaceState(null, "", url);
-    }
+    // Sections in the order a collector uses them; manifest sections map onto these.
+    const SECTIONS = [
+      { key: "Checklist Sites", title: "Track your collection", text: "Checklists for every set, with the cards you own ticked off." },
+      { key: "Print Dashboards", title: "Print binder placeholders", text: "Stand-in cards for the cards you're still missing, ready to print and cut." },
+      { key: "Reference Docs", title: "Reference", text: "Background for planning a master set." },
+    ];
+    // Plain-language explanation and an optional download for each resource (by manifest id).
+    const COPY = {
+      "sv-checklists": {
+        title: "Scarlet & Violet checklists",
+        text: "One page per Scarlet & Violet set listing every card and printing. Tick off what you own; your ticks stay in this browser. Each set page can be printed or saved as a spreadsheet.",
+        open: "Open checklists",
+        download: ["sv-checklist-csv", "All SV rows (CSV)"],
+      },
+      "mega-checklists": {
+        title: "Mega Evolution checklists",
+        text: "The same checklists for the Mega Evolution era, including promos and the Prize Pack cards that carry over.",
+        open: "Open checklists",
+        download: ["mega-checklist-csv", "All Mega rows (CSV)"],
+      },
+      "combined-placeholders": {
+        title: "All placeholders (start here)",
+        text: "Printable placeholder cards for Scarlet & Violet, Mega Evolution and Prize Pack cards in one place. Choose cards by set release or by card code, then print.",
+        open: "Open print page",
+        download: ["combined-printable-csv", "Card list (CSV)"],
+      },
+      "sv-placeholders": {
+        title: "Scarlet & Violet placeholders",
+        text: "Only the Scarlet & Violet era, grouped by set release and card code.",
+        open: "Open print page",
+      },
+      "mega-placeholders": {
+        title: "Mega Evolution placeholders",
+        text: "Only the Mega Evolution era, including promos, grouped by set release.",
+        open: "Open print page",
+      },
+      "release-dates": {
+        title: "Set release date notes",
+        text: "When each set, promo block and special release came out. For release dates alongside prices, sort Research → Sets by release date.",
+        open: "Read the notes",
+        extra: ["/?list=sets", "Sets by release date"],
+      },
+    };
 
-    function render() {
-      const nodes = [];
-      let section = "";
-      for (const item of items) {
-        if (item.section !== section) {
-          section = item.section;
-          nodes.push(el("h3", { text: section }));
-        }
-        const button = el("button", { type: "button", class: "list-item", "data-id": item.id, "aria-current": "false" },
-          el("strong", { text: item.title }),
-          el("span", { text: (item.stats || []).join(" · ") || item.summary || "" }));
-        button.addEventListener("click", () => select(item));
-        nodes.push(button);
-      }
-      $("list").replaceChildren(...nodes);
+    function tile(item) {
+      const copy = COPY[item.id] || {};
+      const buttons = [
+        el("a", { class: "btn primary", href: item.href, target: "_blank", rel: "noopener", text: `${copy.open || "Open"} ↗` }),
+      ];
+      if (copy.download) buttons.push(el("a", { class: "btn", href: `/placeholder-downloads/${copy.download[0]}`, text: `Download ${copy.download[1]}` }));
+      if (copy.extra) buttons.push(el("a", { class: "btn", href: copy.extra[0], text: copy.extra[1] }));
+      return el("article", { class: "tile" },
+        el("div", { class: "chips" }, ...(item.tags || []).map((t) => el("span", { class: "chip", text: t }))),
+        el("h3", { text: copy.title || item.title }),
+        el("p", { text: copy.text || item.summary || "" }),
+        (item.stats || []).length ? el("p", { class: "tile-stats", text: item.stats.join(" · ") }) : null,
+        el("div", { class: "tile-actions" }, ...buttons));
     }
 
     async function load() {
@@ -117,17 +120,23 @@
         const response = await fetch("/collector-manifest");
         if (!response.ok) throw new Error(String(response.status));
         const data = await response.json();
-        items = data.items || [];
-        $("updated").textContent = data.updated_at
-          ? `${items.length} resources · updated ${new Date(data.updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
-          : `${items.length} resources`;
-        render();
-        const first = items.find((i) => i.id === selectedId) || items[0];
-        if (first) select(first);
-        if (!items.length) $("list").replaceChildren(el("div", { class: "empty", text: "No collector resources are published right now." }));
+        const items = data.items || [];
+        const known = new Set(SECTIONS.map((s) => s.key));
+        const sections = [...SECTIONS, ...[...new Set(items.map((i) => i.section))].filter((k) => !known.has(k)).map((k) => ({ key: k, title: k, text: "" }))];
+        $("sections").replaceChildren(...sections.map((section) => {
+          const sectionItems = items.filter((i) => i.section === section.key);
+          if (!sectionItems.length) return null;
+          return el("section", { class: "tile-section" },
+            el("h2", { text: section.title }),
+            section.text ? el("p", { class: "muted", text: section.text }) : null,
+            el("div", { class: "tile-grid" }, ...sectionItems.map(tile)));
+        }).filter(Boolean));
+        $("status").textContent = data.updated_at
+          ? `Files last rebuilt ${new Date(data.updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}.`
+          : "";
+        if (!items.length) $("status").textContent = "No collector resources are published right now.";
       } catch (_err) {
-        $("updated").textContent = "";
-        $("list").replaceChildren(el("div", { class: "empty", text: "Collector resources couldn't load. Try again in a moment." }));
+        $("status").textContent = "Collector resources couldn't load. Try again in a moment.";
       }
     }
     load();

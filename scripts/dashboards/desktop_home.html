@@ -168,8 +168,9 @@
     tbody tr:hover { background: rgba(136, 162, 205, 0.06); }
     tbody tr[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
     td { padding: 7px 12px; vertical-align: middle; }
-    .card-cell { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; min-width: 0; }
-    .thumb { width: 34px; height: 47px; object-fit: contain; border-radius: 4px; background: var(--panel-3); }
+    .card-cell { display: grid; grid-template-columns: 43px 1fr; gap: 10px; align-items: center; min-width: 0; }
+    .overall-tag { margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-soft); vertical-align: 2px; }
+    .thumb { width: 43px; height: 59px; object-fit: contain; border-radius: 4px; background: var(--panel-3); }
     .card-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-meta { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -237,6 +238,32 @@
     .loading-bar { height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); background-size: 50% 100%; animation: slide 1s linear infinite; }
     .loading-bar[hidden] { display: none; }
     @keyframes slide { from { background-position: -50% 0; } to { background-position: 150% 0; } }
+
+    /* ---------- full card page (&card=1) ----------
+       The card panel widens over the list and shows every tab's content at once, plus the
+       sections in #fullExtra. The list stays loaded underneath for "Back". */
+    .layout.full-card { grid-template-columns: 236px minmax(0, 1fr); }
+    .layout.full-card > section.panel { display: none; }
+    .layout.full-card #detail .panel-scroll { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
+    .layout.full-card #detail .detail-head,
+    .layout.full-card #detail .chart-block,
+    .layout.full-card #detail .full-extra { grid-column: 1 / -1; }
+    .layout.full-card #detail .tabs { display: none; }
+    .layout.full-card #detail .tab-body { display: block !important; border-top: 1px solid var(--line); }
+    .layout.full-card #detail .tab-body::before { content: attr(data-title); display: block; margin-bottom: 10px; font-weight: 700; }
+    .layout.full-card .detail-head { grid-template-columns: 150px 1fr; }
+    .layout.full-card .detail-head img { width: 150px; height: 209px; cursor: default; }
+    .layout.full-card .chart { height: 320px; }
+    @media (max-width: 1500px) { .layout.full-card { grid-template-columns: 200px minmax(0, 1fr); } }
+    .full-extra { border-top: 1px solid var(--line); padding: 14px 18px; display: grid; gap: 16px; }
+    .full-extra[hidden] { display: none; }
+    .full-extra h3 { margin: 0 0 8px; font-size: 14px; }
+    .full-extra .grid-4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip-row button { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--panel-2); cursor: pointer; }
+    .chip-row button:hover { border-color: var(--accent); }
+    #resultsBody img.thumb, #pickGrid .pick img, #detailImage { cursor: zoom-in; }
+    #fullDataLink[hidden], #fullBackBtn[hidden] { display: none; } /* .btn is inline-flex, which ignores [hidden] */
 
     /* ---------- detail ---------- */
     #detailBody { display: flex; flex-direction: column; flex: 1; min-height: 0; }
@@ -452,6 +479,7 @@
                 <button type="button" data-days="30">30D</button>
                 <button type="button" data-days="90">90D</button>
                 <button type="button" data-days="365">1Y</button>
+                <button type="button" data-days="730" title="Two years, to compare this season with last">2Y</button>
                 <button type="button" data-days="5000">All</button>
               </div>
             </div>
@@ -463,7 +491,7 @@
             <button type="button" role="tab" data-tab="graded">Graded</button>
             <button type="button" role="tab" data-tab="stats">Stats</button>
           </div>
-          <div class="tab-body" id="tabHold" role="tabpanel">
+          <div class="tab-body" id="tabHold" role="tabpanel" data-title="6-Month Hold">
             <div class="verdict-row">
               <label class="buy-input">Buy price <input id="buyInput" type="number" min="0" step="0.01" placeholder="Market" /></label>
               <span class="verdict" id="holdVerdict"></span>
@@ -471,7 +499,7 @@
             <p class="headline" id="holdHeadline"></p>
             <ul class="reasons" id="holdReasons"></ul>
           </div>
-          <div class="tab-body" id="tabTargets" role="tabpanel" hidden>
+          <div class="tab-body" id="tabTargets" role="tabpanel" data-title="Your targets" hidden>
             <div class="target-fields">
               <label>Buy at or below <input id="targetBuy" type="number" min="0" step="0.01" /></label>
               <label>Sell at or above <input id="targetSell" type="number" min="0" step="0.01" /></label>
@@ -479,20 +507,22 @@
             <p class="headline" id="targetStatus"></p>
             <p class="muted" style="margin:0;font-size:12px">Targets are saved in this browser and shared with the mobile site. Items you've saved show them in My lists.</p>
           </div>
-          <div class="tab-body" id="tabGraded" role="tabpanel" hidden>
+          <div class="tab-body" id="tabGraded" role="tabpanel" data-title="Graded prices" hidden>
             <div class="grid-2" id="gradedGrid"></div>
             <p class="muted" id="gradedNote" style="margin:10px 0 0"></p>
             <a class="source" id="gradedSource" href="https://www.pricecharting.com/" target="_blank" rel="noopener noreferrer">Prices from PriceCharting ↗</a>
           </div>
-          <div class="tab-body" id="tabStats" role="tabpanel" hidden>
+          <div class="tab-body" id="tabStats" role="tabpanel" data-title="This chart window" hidden>
             <div class="grid-2" id="statsGrid"></div>
           </div>
+          <div class="full-extra" id="fullExtra" hidden></div>
         </div>
         <div class="actions">
           <button type="button" class="btn" id="saveBtn" aria-haspopup="true">♡ Save</button>
           <a class="btn primary" id="tcgLink" target="_blank" rel="noopener noreferrer">TCGplayer ↗</a>
           <a class="btn" id="storeLink" target="_blank" rel="noopener noreferrer" hidden>Our store ↗</a>
-          <a class="btn" id="fullDataLink" style="margin-left:auto">Full data →</a>
+          <a class="btn" id="fullDataLink" style="margin-left:auto" title="Everything about this card on one page (or double-click its picture)">Full data →</a>
+          <button type="button" class="btn" id="fullBackBtn" style="margin-left:auto" hidden>← Back</button>
           <div class="save-menu" id="saveMenu" hidden></div>
         </div>
       </div>
@@ -513,7 +543,7 @@
      *
      * One page, three columns:
      *   left   - every view, from LISTS below, grouped Buy / Rising / Starting to move /
-     *            Dipped / My lists / Research / Learn
+     *            Dipped / Research / My lists / Learn (the same order as the header menu)
      *   middle - the current view: a table of cards, or one of the special views (Sets,
      *            Market Stats, Budget Builder's picks grid, How it works)
      *   right  - the selected card: price chart, 6-Month Hold, Targets, Graded, Stats, actions
@@ -566,17 +596,17 @@
       { key: "under_the_radar", group: "Starting to move", label: "Under the Radar", desc: "Quiet risers emerging from a flat base.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
       { key: "breakouts", group: "Starting to move", label: "Breakouts", desc: "Breaking above their 90-day high with recent activity.", price: "latest_price", change: "breakout_pct", changeLabel: "above 90-day high" },
       { key: "good_buys", group: "Dipped", label: "Pullbacks", desc: "Premium cards that have dipped and may be good entries.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
-      { key: "track_all", group: "My lists", track: true, tag: "all", label: "All saved", desc: "Everything you've saved, with your price targets." },
-      { key: "track_owned", group: "My lists", track: true, tag: "owned", label: "Buy List", desc: "Cards and sealed products you plan to pick up." },
-      { key: "track_watchlist", group: "My lists", track: true, tag: "watchlist", label: "Watchlist", desc: "Items you're waiting on a price for." },
-      { key: "track_favorite", group: "My lists", track: true, tag: "favorite", label: "Favorites", desc: "Cards you've starred." },
-      { key: "track_research", group: "My lists", track: true, tag: "research", label: "Needs Review", desc: "Items you flagged to look into." },
       { key: "sets", group: "Research", research: true, label: "Sets", desc: "Every set ranked by how broadly its cards are rising. Pick one to see its cards." },
       { key: "set", group: "Research", research: true, hidden: true, label: "Set", desc: "" },
       { key: "species", group: "Research", research: true, label: "Pokémon", desc: "Every printing of a Pokémon across all sets." },
       { key: "indexes", group: "Research", research: true, kindless: true, label: "Market Stats", desc: "Each index follows the most valuable cards of an era, like a stock index. Every index started at 1,000." },
       { key: "set_values", group: "Research", research: true, kindless: true, hidden: true, navParent: "indexes", label: "Market Stats", desc: "What it costs to buy every card in a set, and how much of that value sits in its top cards." },
       { key: "index", group: "Research", research: true, kindless: true, hidden: true, parent: "indexes", backLabel: "← All indexes", label: "Index", desc: "", price: "marketPrice" },
+      { key: "track_all", group: "My lists", track: true, tag: "all", label: "All saved", desc: "Everything you've saved, with your price targets." },
+      { key: "track_owned", group: "My lists", track: true, tag: "owned", label: "Buy List", desc: "Cards and sealed products you plan to pick up." },
+      { key: "track_watchlist", group: "My lists", track: true, tag: "watchlist", label: "Watchlist", desc: "Items you're waiting on a price for." },
+      { key: "track_favorite", group: "My lists", track: true, tag: "favorite", label: "Favorites", desc: "Cards you've starred." },
+      { key: "track_research", group: "My lists", track: true, tag: "research", label: "Needs Review", desc: "Items you flagged to look into." },
       { key: "guide", group: "Learn", learn: true, kindless: true, label: "How it works", desc: "What each list and tool means, in plain language." },
     ].map((l) => (l.track || l.key === "set" || l.key === "species" || l.key === "index"
       ? { price: "latest_price", change: "", changeLabel: "90 days", sparkChange: true, ...l } : l));
@@ -592,10 +622,10 @@
       species: [["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"], ["signal", "set"]],
       sealed_deals: [["change_asc", "cheapest vs loose packs"], ["per_pack", "price per pack"], ["price_asc", "price, low to high"], ["price_desc", "price, high to low"]],
       budget: [["signal", "best pick"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
-      indexes: [["era", "newest era"], ["change30", "30-day change"], ["start", "change since start"], ["level", "level"]],
+      indexes: [["era", "newest era"], ["era_old", "oldest era"], ["change30", "30-day change"], ["start", "change since start"], ["level", "level"]],
       index: [["signal", "rank"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
-      set_values: [["cost", "full set cost"], ["avg", "average card"], ["top_share", "top hit share"], ["depth", "depth"], ["name", "name"]],
-      sets: [["strength", "strength"], ["avg30", "30-day average"], ["avg90", "90-day average"], ["items", "most items"], ["name", "name"]],
+      set_values: [["cost", "full set cost"], ["release", "release date, newest"], ["release_old", "release date, oldest"], ["avg", "average card"], ["top_share", "top hit share"], ["depth", "depth"], ["name", "name"]],
+      sets: [["strength", "strength"], ["release", "release date, newest"], ["release_old", "release date, oldest"], ["avg30", "30-day average"], ["avg90", "90-day average"], ["items", "most items"], ["name", "name"]],
     };
     const sortKind = (list) => (list.track ? "track" : SORTS[list.key] ? list.key : "market");
     const SET_FILTER_LABELS = {
@@ -614,6 +644,8 @@
     const GROUP_LINKS = {
       Learn: [["Collector Hub", "/collector-hub"], ["Placeholder Library", "/placeholders"]],
     };
+    // The Top 151 indexes stand for the overall Pokémon market: pinned first in Market Stats.
+    const OVERALL_INDEXES = new Set(["pokemon100", "jp_pokemon100"]);
     const INDEXES = {
       EN: ["mega100", "sv100", "swsh100", "sm100", "xy100", "bw100", "dp100", "ex100", "ecard100", "neo100", "wotc100", "pokemon100"],
       JP: ["jp_sv100", "jp_pokemon100"],
@@ -653,6 +685,7 @@
       indexRows: [],
       setRows: [],
       productKey: params.get("product") || null,
+      fullCard: params.get("card") === "1" && Boolean(params.get("product")),
       days: 90,
       tab: "hold",
       rows: [],
@@ -725,6 +758,7 @@
         if (state.budgetSkipped.size) url.searchParams.set("skip", [...state.budgetSkipped.keys()].join(","));
       }
       if (state.selected) url.searchParams.set("product", state.selected.key);
+      if (state.fullCard && state.selected) url.searchParams.set("card", "1");
       history.replaceState(null, "", url);
     }
     // Most endpoints answer {columns, rows}; turn that into one object per row.
@@ -912,6 +946,7 @@
     }
     // Switch to another view: highlight it in the nav and the header, clear the filter, load it.
     function openList(key) {
+      if (state.fullCard) setFullCard(false);
       listPinned = true;
       fallbackNote = "";
       state.list = key;
@@ -1071,7 +1106,7 @@
     }
     // Loose booster-pack price per set name. Only plain "<Set> Booster Pack" listings count: mini, promo,
     // pin-bundle and vintage edition packs would make the comparison misleading.
-    const SAME_SET_PACK_TYPES = new Set(["Booster Box", "Half Booster Box", "Booster Bundle", "Elite Trainer Box", "Pokemon Center ETB", "Pack Blister", "Sleeved Pack"]);
+    const SAME_SET_PACK_TYPES = new Set(["Booster Box", "Booster Box Case", "Half Booster Box", "Booster Bundle", "Booster Bundle Case", "Elite Trainer Box", "Elite Trainer Box Case", "Pokemon Center ETB", "Pokemon Center ETB Case", "Pack Blister", "Sleeved Pack", "Sleeved Booster Case"]);
     const setAliases = (groupName) => {
       const name = String(groupName || "");
       const short = name.replace(/^[^:]+:\s*/, "").replace(/^(SM|XY|SWSH|BW|DP|HGSS|EX)\s+-\s+/, "");
@@ -1281,15 +1316,19 @@
         if (seq === listRequestSeq) $("listLoading").hidden = true;
       }
     }
-    // Fill the sort menu for this kind of view, keeping the current choice when it still applies.
+    // The last sort chosen for each kind of view (SORTS key), so going into a set and back
+    // to Sets, or between two market lists, keeps the visitor's choice.
+    const chosenSort = {};
+    // Fill the sort menu for this kind of view with the remembered choice, or its first option.
     function setSortOptions(list) {
       const select = $("sortSelect");
-      const options = SORTS[sortKind(list)];
-      const keep = options.some(([value]) => value === select.value) && select.dataset.kind === sortKind(list);
-      const value = keep ? select.value : options[0][0];
+      const kind = sortKind(list);
+      const options = SORTS[kind];
+      const remembered = chosenSort[kind];
+      const value = options.some(([v]) => v === remembered) ? remembered : options[0][0];
       select.replaceChildren(...options.map(([v, label]) => el("option", { value: v, text: `Sort: ${label}` })));
       select.value = value;
-      select.dataset.kind = sortKind(list);
+      select.dataset.kind = kind;
     }
     // Redraw the current view from rows already loaded (after a filter or sort change).
     const rerender = () => {
@@ -1321,6 +1360,23 @@
         if (seq === listRequestSeq) $("listLoading").hidden = true;
       }
     }
+    // Release-date sorting for set lists. Dates come from the server (set_release_dates in
+    // query_support.py); a set without one sorts last either way.
+    const releaseTime = (r) => (r.release_date ? Date.parse(r.release_date) : NaN);
+    function sortByRelease(rows, newestFirst) {
+      return [...rows].sort((a, b) => {
+        const ta = releaseTime(a), tb = releaseTime(b);
+        if (Number.isNaN(ta) || Number.isNaN(tb)) return Number.isNaN(ta) - Number.isNaN(tb);
+        return newestFirst ? tb - ta : ta - tb;
+      });
+    }
+    // "Released Mar 2006" for the row's detail line; approximate dates show the year only.
+    function releaseLabel(r) {
+      if (!r.release_date) return "";
+      if (r.release_precision === "approximate") return `released ~${r.release_date.slice(0, 4)}`;
+      const d = new Date(`${r.release_date}T12:00:00Z`);
+      return `released ${d.toLocaleDateString(undefined, r.release_precision === "month" ? { month: "short", year: "numeric" } : { month: "short", day: "numeric", year: "numeric" })}`;
+    }
     function renderSets(errorText) {
       const text = $("filterInput").value.trim().toLowerCase();
       let rows = state.setRows.filter((r) => (!state.era || r.generation === state.era)
@@ -1329,6 +1385,7 @@
       const sort = $("sortSelect").value;
       const field = { strength: "breadth_score", avg30: "avg_30d_pct", avg90: "avg_90d_pct", items: "item_count" }[sort];
       rows = sort === "name" ? [...rows].sort((a, b) => String(a.groupName).localeCompare(String(b.groupName)))
+        : sort === "release" || sort === "release_old" ? sortByRelease(rows, sort === "release")
         : [...rows].sort((a, b) => num(b[field]) - num(a[field]));
       $("listCount").textContent = state.setRows.length ? `${rows.length}${rows.length !== state.setRows.length ? ` of ${state.setRows.length}` : ""} sets` : "";
       const topStrength = Math.max(1, ...state.setRows.map((r) => Number(r.breadth_score) || 0));
@@ -1342,7 +1399,7 @@
         const tr = el("tr", {},
           el("td", {}, el("div", { class: "set-cell" }, logo, el("div", { style: "min-width:0" },
             el("div", { class: "card-name", text: r.groupName, title: r.groupName }),
-            el("div", { class: "card-meta", text: [r.generation, `${r.card_count || 0} cards`, r.sealed_count ? `${r.sealed_count} sealed` : ""].filter(Boolean).join(" · ") })))),
+            el("div", { class: "card-meta", text: [r.generation, releaseLabel(r), `${r.card_count || 0} cards`, r.sealed_count ? `${r.sealed_count} sealed` : ""].filter(Boolean).join(" · ") })))),
           el("td", { class: "right num", text: String(r.item_count ?? "—") }),
           el("td", { class: "right" }, changePill(Number(r.avg_30d_pct ?? NaN))),
           el("td", { class: "right" }, changePill(Number(r.avg_90d_pct ?? NaN))),
@@ -1427,20 +1484,23 @@
       const text = $("filterInput").value.trim().toLowerCase();
       let rows = state.indexRows.filter((r) => !text || String(r.payload.index_name).toLowerCase().includes(text));
       const sum = (r) => r.payload.summary || {};
+      // r.era is the index's position in INDEXES (0 = newest era).
       const by = {
         era: (r) => r.era,
+        era_old: (r) => -r.era,
         change30: (r) => -(sum(r).day30_change?.pct ?? -Infinity),
         start: (r) => -(sum(r).all_time_index_change?.pct ?? -Infinity),
         level: (r) => -(sum(r).current_level ?? -Infinity),
       }[$("sortSelect").value] || ((r) => r.era);
-      rows = [...rows].sort((a, b) => by(a) - by(b));
+      // The Top 151 (OVERALL_INDEXES) is the overall Pokémon market and stays first whatever the sort.
+      rows = [...rows].sort((a, b) => (OVERALL_INDEXES.has(b.key) - OVERALL_INDEXES.has(a.key)) || by(a) - by(b));
       $("listCount").textContent = state.indexRows.length ? `${rows.length} indexes` : "";
       $("indexesBody").replaceChildren(...rows.map((r) => {
         const info = sum(r);
         const levels = (r.payload.series || []).slice(-365).map((p) => p.index_level).filter(Number.isFinite);
         const tr = el("tr", {},
           el("td", {}, el("div", { style: "min-width:0" },
-            el("div", { class: "card-name", text: r.payload.index_name }),
+            el("div", { class: "card-name" }, r.payload.index_name, OVERALL_INDEXES.has(r.key) ? el("span", { class: "overall-tag", text: "Overall market" }) : null),
             el("div", { class: "card-meta", text: `${r.payload.description || ""} · as of ${info.as_of ? fmtDate(info.as_of) : "—"}` }))),
           el("td", { class: "right num", text: level(info.current_level) }),
           el("td", { class: "right" }, changePill(info.day30_change?.pct)),
@@ -1492,6 +1552,7 @@
       const field = { cost: "total_set_cost", avg: "avg_card_price", top_share: "top_hit_share_pct", depth: "depth_score" }[sort];
       const num = (v) => (Number.isFinite(Number(v)) && v !== null ? Number(v) : -Infinity);
       rows = sort === "name" ? [...rows].sort((a, b) => String(a.groupName).localeCompare(String(b.groupName)))
+        : sort === "release" || sort === "release_old" ? sortByRelease(rows, sort === "release")
         : [...rows].sort((a, b) => num(b[field]) - num(a[field]));
       $("listCount").textContent = state.valueRows.length ? `${rows.length}${rows.length !== state.valueRows.length ? ` of ${state.valueRows.length}` : ""} sets` : "";
       const share = (v) => (Number.isFinite(Number(v)) ? `${Math.round(v)}%` : "—");
@@ -1500,7 +1561,7 @@
         const tr = el("tr", {},
           el("td", {}, el("div", { style: "min-width:0" },
             el("div", { class: "card-name", text: r.groupName, title: r.groupName }),
-            el("div", { class: "card-meta", text: r.generation || "" }))),
+            el("div", { class: "card-meta", text: [r.generation, releaseLabel(r)].filter(Boolean).join(" · ") }))),
           el("td", { class: "right num", text: String(r.card_count ?? "—") }),
           el("td", { class: "right num", text: money(Number(r.total_set_cost)) }),
           el("td", { class: "right num", text: `${money(Number(r.avg_card_price))} / ${money(Number(r.median_card_price))}` }),
@@ -1650,7 +1711,10 @@
       return rows;
     }
     ["filterInput", "minPriceInput", "maxPriceInput"].forEach((id) => $(id).addEventListener("input", rerender));
-    $("sortSelect").addEventListener("change", rerender);
+    $("sortSelect").addEventListener("change", () => {
+      chosenSort[$("sortSelect").dataset.kind] = $("sortSelect").value;
+      rerender();
+    });
 
     function renderResults(errorText) {
       const rows = visibleRows();
@@ -1954,6 +2018,7 @@
       $("detailEmpty").hidden = Boolean(card);
       $("detailBody").hidden = !card;
       if (!card) return;
+      applyFullCardLayout();
       $("detailImage").src = card.imageUrl || "";
       $("detailImage").alt = card.name;
       $("detailImage").style.visibility = card.imageUrl ? "visible" : "hidden";
@@ -1963,7 +2028,8 @@
       $("detailChange").textContent = "";
       $("buyInput").value = "";
       $("tcgLink").href = tcgplayerUrl(card);
-      $("fullDataLink").href = `/dashboard-classic?product=${encodeURIComponent(card.key)}&category_id=${categoryId()}&segment=${card.productKind === "sealed" ? "sealed" : "cards"}`;
+      // Real link (so it can open in a new tab); a plain click switches mode in place.
+      $("fullDataLink").href = (() => { const u = new URL(location.href); u.searchParams.set("product", card.key); u.searchParams.set("card", "1"); return u.toString(); })();
       renderSaveMenu();
       loadStoreLink(card);
       const seq = ++detailRequestSeq;
@@ -1972,6 +2038,7 @@
       loadGraded(card, seq);
       renderTargets(card);
       showTab(state.tab);
+      if (state.fullCard) loadFullExtra(card, seq);
     }
     // TCGplayer product link (with language and printing preselected), wrapped in the affiliate link.
     function tcgplayerUrl(card) {
@@ -1996,6 +2063,88 @@
           link.hidden = false;
         }
       } catch (_err) { /* no store listing */ }
+    }
+
+    // ---------- full card page ----------
+    // Switch the card panel between its normal column and the full page (&card=1).
+    function setFullCard(on) {
+      state.fullCard = Boolean(on && state.selected);
+      syncUrl();
+      if (state.selected) renderDetail(); // applies the layout, redraws the chart at its new size, fills #fullExtra
+      else applyFullCardLayout();
+    }
+    // Layout and buttons for the current mode; renderDetail calls this for every card, which
+    // also covers opening the page straight from a &card=1 link.
+    function applyFullCardLayout() {
+      document.querySelector("main.layout").classList.toggle("full-card", state.fullCard);
+      $("fullDataLink").hidden = state.fullCard;
+      $("fullBackBtn").hidden = !state.fullCard;
+      $("fullBackBtn").textContent = `← Back to ${currentList().label}`;
+      $("fullExtra").hidden = !state.fullCard;
+    }
+    $("fullDataLink").addEventListener("click", (event) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return; // new tab: follow the link
+      event.preventDefault();
+      setFullCard(true);
+    });
+    $("fullBackBtn").addEventListener("click", () => setFullCard(false));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && state.fullCard && !event.target.closest("input, select, textarea")) setFullCard(false);
+    });
+    // Double-clicking a card's picture opens its full page (the first click already selected it).
+    document.addEventListener("dblclick", (event) => {
+      if (event.target.closest("#resultsBody img.thumb, #pickGrid .pick img, #detailImage") && state.selected && !state.fullCard) setFullCard(true);
+    });
+    // Extra sections on the full page: every snapshot number (/card_details), the market
+    // lists the card is in right now, and its other printings.
+    async function loadFullExtra(card, seq) {
+      const box = $("fullExtra");
+      box.replaceChildren(el("p", { class: "muted", text: "Loading the full numbers…" }));
+      let data = null;
+      try {
+        data = await getJson(`/card_details?${new URLSearchParams({ productId: card.productId, subTypeName: card.subTypeName, category_id: String(categoryId()) })}`);
+      } catch (_err) { /* shown below */ }
+      if (seq !== detailRequestSeq) return;
+      const c = data?.card || {};
+      const changeStat = (label, pctValue, before) => [label, Number.isFinite(pctValue) ? `${pct(pctValue)}${Number.isFinite(before) ? ` (from ${money(before)})` : ""}` : "—"];
+      const days = (n) => (Number.isFinite(n) ? `${n} day${n === 1 ? "" : "s"}` : "—");
+      const stats = data ? [
+        ["Market price", money(c.latest_price)],
+        changeStat("7-day change", c.roc_7d_pct, c.price_7d),
+        changeStat("30-day change", c.roc_30d_pct, c.price_30d),
+        changeStat("90-day change", c.roc_90d_pct, c.price_90d),
+        changeStat("1-year change", c.roc_365d_pct, c.price_365d),
+        ["30-day average", `${money(c.sma_30)}${Number.isFinite(c.price_vs_sma30_pct) ? ` (${pct(c.price_vs_sma30_pct)} vs)` : ""}`],
+        ["90-day average", `${money(c.sma_90)}${Number.isFinite(c.price_vs_sma90_pct) ? ` (${pct(c.price_vs_sma90_pct)} vs)` : ""}`],
+        ["90-day high", money(c.high_90d)],
+        ["Days above 30-day average", days(c.hold_days)],
+        ["Uptrend streak", days(c.bullish_streak)],
+        ["Price readings, last 30 days", Number.isFinite(c.recent_observations_30d) ? String(c.recent_observations_30d) : "—"],
+        ["Different prices, last 30 days", Number.isFinite(c.recent_distinct_prices_30d) ? String(c.recent_distinct_prices_30d) : "—"],
+        ["Last price change", c.last_change_date ? fmtDate(c.last_change_date) : "—"],
+        ["Set released", c.release_date ? (c.release_precision === "approximate" ? `~${c.release_date.slice(0, 4)}` : fmtDate(c.release_date)) : "—"],
+      ] : [];
+      const sections = [];
+      sections.push(el("div", {}, el("h3", { text: "Price history in numbers" }),
+        data ? el("div", { class: "grid-4" }, ...stats.map(([label, value]) => el("div", { class: "stat" }, el("span", { text: label }), el("strong", { text: value }))))
+          : el("p", { class: "muted", text: "The full numbers for this card aren't available right now." })));
+      // Market lists that contain this card (the lists are already cached for the menu counts).
+      const lists = MARKET_LISTS.filter((l) => !l.kindless);
+      const found = (await Promise.all(lists.map((l) => fetchList(l).then((rows) => (rows.some((r) => r.key === card.key) ? l : null)).catch(() => null)))).filter(Boolean);
+      if (seq !== detailRequestSeq) return;
+      sections.push(el("div", {}, el("h3", { text: "Appears in" }),
+        found.length ? el("div", { class: "chip-row" }, ...found.map((l) => { const b = el("button", { type: "button", text: l.label }); b.addEventListener("click", () => openList(l.key)); return b; }))
+          : el("p", { class: "muted", style: "margin:0", text: "Not in any of the market lists today." })));
+      const printings = data?.other_printings || [];
+      if (printings.length) {
+        sections.push(el("div", {}, el("h3", { text: "Other printings" }),
+          el("div", { class: "chip-row" }, ...printings.map((p) => {
+            const b = el("button", { type: "button", text: `${p.subTypeName} · ${money(p.latest_price)}` });
+            b.addEventListener("click", () => loadCardByKey(`${card.productId}||${p.subTypeName}`));
+            return b;
+          }))));
+      }
+      box.replaceChildren(...sections);
     }
 
     // tabs

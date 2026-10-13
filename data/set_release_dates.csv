@@ -1,0 +1,33 @@
+category_id,group_id,name,release_date,precision,source,note
+3,1422,POP Series 1,2004-09-01,month,Bulbapedia,
+3,1447,POP Series 2,2005-08-01,month,Bulbapedia,
+3,1442,POP Series 3,2006-04-01,month,Bulbapedia,
+3,1452,POP Series 4,2006-08-01,month,Bulbapedia,
+3,1439,POP Series 5,2007-03-01,month,Bulbapedia,
+3,1432,POP Series 6,2007-09-01,month,Bulbapedia,
+3,1414,POP Series 7,2008-03-01,month,Bulbapedia,
+3,1450,POP Series 8,2008-09-01,month,Bulbapedia,
+3,1446,POP Series 9,2009-03-01,month,Bulbapedia,
+3,1543,EX Trainer Kit 1: Latias & Latios,2004-06-01,month,Bulbapedia,
+3,1542,EX Trainer Kit 2: Plusle & Minun,2006-03-01,month,Bulbapedia,
+3,2175,Burger King Promos,2008-07-07,day,Bulbapedia,TCGplayer set holds the 2008 Diamond & Pearl and 2009 Platinum promo cards (2008 promotion began July 7 2008)
+3,2205,Pikachu World Collection Promos,2000-09-12,day,Bulbapedia,sold at Pokemon Park 2000 (Sydney)
+3,1423,Nintendo Promos,2003-10-01,approximate,,Nintendo-era Black Star promos ran 2003-2006; start month not verified
+3,2776,First Partner Pack,2021-01-01,approximate,,Pokemon 25th anniversary product; month not verified
+3,1938,Alternate Art Promos,2012-01-01,approximate,,collection spanning many years; date not verified
+3,2289,Blister Exclusives,2010-01-01,approximate,,collection spanning many years; date not verified
+3,2332,Professor Program Promos,2005-01-01,approximate,,collection spanning many years; date not verified
+3,2374,Miscellaneous Cards & Products,1999-01-01,approximate,,mixed collection; date not verified
+85,24206,Vending Machine cards Series 1 (Blue),1998-03-23,day,Bulbapedia,Expansion Sheet 1
+85,24207,Vending Machine cards Series 2 (Red),1998-06-01,approximate,,between Expansion Sheet 1 (1998-03) and 3 (1998-11); month not verified
+85,24208,Vending Machine cards Series 3 (Green),1998-11-24,day,Bulbapedia,Expansion Sheet 3
+85,24194,CoroCoro Promotional Cards,1997-11-01,approximate,Bulbapedia,CoroCoro promos began around the November 1997 issue; collection spans many years
+85,24200,World Hobby Fair,1997-07-01,approximate,,World Hobby Fair promos over many years; date not verified
+85,24202,Gym Challenge,1998-01-01,approximate,,gym promos; date not verified
+85,24204,Pokemon Card Fan Club,1998-01-01,approximate,,fan club promos; date not verified
+85,24172,Unnumbered Promotional cards,1997-01-01,approximate,,mixed collection; date not verified
+85,24198,Pokemon Card Information Promotional cards,1999-01-01,approximate,,date not verified
+85,24199,Battle Road,2004-01-01,approximate,,tournament promos over many years; date not verified
+85,24201,Champion Road,2005-01-01,approximate,,tournament promos; date not verified
+85,24205,Unnumbered World Championships,2004-01-01,approximate,,date not verified
+85,24195,How I Became a Pokemon Card,2006-01-01,approximate,,picture-book promos; date not verified

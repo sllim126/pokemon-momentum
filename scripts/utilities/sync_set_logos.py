@@ -1,3 +1,20 @@
+"""Copy set logos into the folder the site serves them from.
+
+Logos are kept by hand in `images/set logos/` (original names) and copied to
+`images/logos/<groupId>.<ext>`, which every page loads as /images/logos/<groupId>.png.
+LOGO_MAP below says which file belongs to which TCGplayer set (groupId).
+
+Where logos come from:
+- older ones were downloaded by hand from Bulbapedia's image archive
+  (archives.bulbagarden.net); that site blocks scripted downloads, so do it in a browser
+- since 2026-10-13, the Pokemon TCG developer API (https://api.pokemontcg.io/v2/sets)
+  lists every set with an `images.logo` URL; download the file, save it here as
+  `ptcg_<setId>_logo.png`, and add it to LOGO_MAP. Brand-new sets can take a few weeks
+  to appear there (ME06 Delta Reign was missing on 2026-10-13).
+
+Run after adding a logo: python3 scripts/utilities/sync_set_logos.py
+"""
+
 from __future__ import annotations
 
 import shutil
@@ -141,6 +158,16 @@ LOGO_MAP = {
     "1598px-ME4_Logo_EN.png": [24655],
     "1600px-SouthernIslandsLogo.png": [648],
     "1599px-Pokémon_Rumble_logo.png": [1433],
+    # Downloaded 2026-10-13 from the Pokemon TCG developer API (pokemontcg.io; images
+    # served by Scrydex), whose set list includes each set's logo URL.
+    "ptcg_me5_logo.png": [24688],     # ME05: Pitch Black
+    "ptcg_me55_logo.png": [24722],    # ME: 30th Celebration
+    "ptcg_me55c_logo.png": [24837],   # ME: 30th Celebration Classic Collection
+    "ptcg_col1_logo.png": [1415],     # Call of Legends
+    # Shared badges for families of small sets that have no logo of their own.
+    "ptcg_pop_organized_play_logo.png": [1422, 1447, 1442, 1452, 1439, 1432, 1414, 1450, 1446],  # POP Series 1-9
+    "ptcg_black_star_promo_logo.png": [1418, 1423, 1421, 1453, 1407, 1451, 1861, 2545, 22872],  # Black Star promo sets
+    "ptcg_mcdonalds_logo.png": [1401, 1427, 1692, 1694, 2148, 2364, 2555],  # McDonald's Promos
 }
 
 

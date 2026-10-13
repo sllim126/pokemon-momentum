@@ -113,6 +113,11 @@ Added 2026-10:
   connection, a weekly long-history snapshot for "All" and the 6-Month Hold, browser caching
 - Discover lists scale their activity thresholds to feed gaps
 - Nightly collect-only archive of Magic, Yu-Gi-Oh, One Piece and Lorcana prices
+- Sign-in sessions expire and are stored hashed; public endpoints that cost money or
+  rebuild data are admin-only or rate-limited
+- Full card page in the desktop app (`&card=1`), release-date sorting for sets, 29 more
+  set logos, rebuilt Collector Hub and Placeholder Library
+- Sealed Deals pack counts corrected for cases, UPCs and Super-Premium Collections
 
 ## What's next
 
