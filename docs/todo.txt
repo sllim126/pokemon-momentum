@@ -107,6 +107,29 @@ High Priority
 Desktop App Follow-up
 ---------------------
 
+- [in progress] Owner feedback 2026-10-13 on the desktop app:
+  - [next] Left menu order to match the header: Buy, Discover lists, Research, My lists
+    (Track), Learn (Research and My lists are swapped today).
+  - [next] Card images in the lists 25% larger.
+  - [next] Research → Sets: add a "release date" sort. TCGCSV's set dates aren't reliable:
+    TCGplayer re-publishes old sets (on 2026-10-12, 19 English and 17 Japanese sets such as
+    POP Series 1-9 got "published" dates of that day; in March they had 2026-03-04). Use
+    TCGCSV's date only when it isn't later than the set's first price, else a hand-kept
+    date file, else sort by first price and show "before Feb 2024".
+  - [next] Market Stats: the same release-date sort, and the Pokemon Top 151 pinned at the
+    top as the "overall Pokemon market" whatever the sort. Later idea: a true whole-market
+    index covering every card, not only the top 151.
+  - [next] "Full data →" still opens /dashboard-classic. Replace it with a full card page
+    in the new style, and open that page when a card image is double-clicked.
+  - [next] Collector Hub and Placeholder Library: explain each resource better and make
+    them look like part of the site rather than an embedded page.
+  - [waiting] Set logos for the newest sets are missing: ME05 Pitch Black, ME06 Delta
+    Reign, ME: 30th Celebration (+ Classic Collection), First Partner Collection 2026, and
+    several promo sets. Logos have always been downloaded by hand into
+    `images/set logos/` and mapped by `scripts/utilities/sync_set_logos.py`. Owner to choose:
+    keep doing it by hand, or fetch them automatically from a public set-logo source.
+
+
 Smaller pieces the old pages showed that the desktop app does not yet (from the
 2026-10-10 gap review). Check each against the current app before building; some may
 already be covered.
