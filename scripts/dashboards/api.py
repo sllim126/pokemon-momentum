@@ -2414,6 +2414,7 @@ def _infer_pack_count(
         # Ultra Premium Collection cases hold 4 UPCs (owner, 2026-10-13).
         return 16 * 4 * multiplier
     if "booster box case" in name or ("booster box" in name and "case" in name):
+        # 6 booster boxes of 36 packs (owner-confirmed 2026-10-13 for English sets).
         packs_per_box = jp_packs_per_box if is_japanese_market else 36
         return packs_per_box * 6 * multiplier
     if "half booster box" in name:

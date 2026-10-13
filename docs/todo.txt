@@ -138,6 +138,7 @@ Desktop App Follow-up
     6. 39 other collection cases are left out of Sealed Deals until their contents are known
     Also confirm: one Celebrations UPC = 8 SWSH random + 17 Celebrations packs (taken from
     the earlier note on the case).
+    Booster box cases: 6 boxes x 36 packs = 216 (owner-confirmed 2026-10-13; already counted so).
     Booster bundle displays: 10 bundles (60 packs); blister cases: 24 blisters (3-pack 72,
     2-pack 48) (owner, 2026-10-13). To confirm: the Paldean Fates Booster Bundle Display
     Case is entered as 260 packs, which isn't a whole number of 60-pack displays.
