@@ -6,64 +6,32 @@
   <title>Poke6s Placeholder Library</title>
   <link rel="icon" type="image/png" href="/images/Favidon.png" />
   <link rel="stylesheet" href="/desktop-theme.css" />
-  <style>
-    body { overflow: hidden; }
-    .preview { flex: 1; min-height: 0; border: 0; border-top: 1px solid var(--line); background: #fff; width: 100%; }
-    .detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 16px 18px; }
-    .detail-head h2 { margin: 0; font-size: 18px; }
-    .detail-head p { margin: 4px 0 10px; color: var(--muted); }
-    .detail-actions { display: flex; gap: 8px; }
-    .file-card { margin: 0 18px 18px; }
-  </style>
 </head>
-<body data-area="learn">
+<body data-area="learn" class="scroll-page">
   <div id="site-shell"></div>
 
-  <main class="page">
+  <main class="page reading">
     <div class="page-head">
       <div>
         <h1>Placeholder Library</h1>
-        <p>Printable binder placeholders, checklist pages, and the CSV and JSON files behind them.</p>
-      </div>
-      <div class="page-actions">
-        <a class="btn" href="/placeholder-downloads/sv-source-csv">Download SV source CSV</a>
-        <a class="btn" href="/collector-assets/checklists-sv/index.html" target="_blank" rel="noopener">SV checklists ↗</a>
-        <a class="btn primary" href="/collector-assets/print-combined/index.html" target="_blank" rel="noopener">Print placeholders ↗</a>
+        <p>Every file behind the <a href="/collector-hub">Collector Hub</a>. Placeholders are printable stand-in cards
+          that hold a binder pocket until you own the real card. Collectors usually only need the print pages
+          and checklists; the other files are for spreadsheets and for fixing the card lists.</p>
       </div>
     </div>
 
-    <div class="split">
-      <section class="panel" aria-label="Files and tools">
-        <div class="panel-head">
-          <h2>Files and tools</h2>
-          <p id="updated">Loading…</p>
-        </div>
-        <div class="panel-scroll list" id="list"></div>
-      </section>
-
-      <section class="panel" aria-label="Selected item">
-        <div class="detail-head">
-          <div>
-            <h2 id="title">Select a file or tool</h2>
-            <p id="summary"></p>
-            <div class="chips" id="chips"></div>
-          </div>
-          <div class="detail-actions" id="actions"></div>
-        </div>
-        <iframe class="preview" id="preview" title="Preview" hidden></iframe>
-        <div class="stat-grid file-card" id="fileCard" hidden></div>
-        <div class="empty" id="previewEmpty">Pick a file or tool on the left.</div>
-      </section>
-    </div>
+    <p class="muted" id="status">Loading…</p>
+    <div id="sections"></div>
   </main>
   <footer class="legal">Pokémon names and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company; Poke6s Market is independent and not affiliated with or endorsed by them.</footer>
 
   <script src="/site-shell.js"></script>
   <script>
   /*
-   * Placeholder Library: the files and browser tools in /placeholder-downloads-manifest.
-   * Items of kind "page" preview live on the right; "download" items show the file name,
-   * size and Download / Open buttons. ?item=<id> reopens an item.
+   * Placeholder Library: the files and browser pages in /placeholder-downloads-manifest as a
+   * downloads list, grouped by who they're for. COPY (keyed by the manifest item's id) gives
+   * each one a plain explanation and audience; a new item without an entry falls back to the
+   * manifest's summary. Pages open in a new tab; nothing is embedded.
    * Styling comes from /desktop-theme.css.
    */
   (function () {
@@ -79,47 +47,46 @@
       node.append(...children.filter(Boolean));
       return node;
     };
-    let items = [];
-    let selectedId = new URLSearchParams(location.search).get("item");
 
-    function select(item) {
-      selectedId = item.id;
-      document.querySelectorAll(".list-item").forEach((b) => b.setAttribute("aria-current", String(b.dataset.id === item.id)));
-      $("title").textContent = item.title;
-      $("summary").textContent = item.summary || "";
-      $("chips").replaceChildren(...(item.tags || []).map((text) => el("span", { class: "chip", text })));
+    // Manifest sections, renamed and explained for visitors, in this order.
+    const SECTIONS = [
+      { key: "Open In Browser", title: "Print pages and checklists", text: "Open in the browser. Most collectors only need these." },
+      { key: "Checklist Downloads", title: "Checklists as spreadsheets", text: "The checklists as CSV files that open in Excel, Numbers or Google Sheets." },
+      { key: "Generated Downloads", title: "Generated files", text: "Built automatically from the source lists each time they change." },
+      { key: "Source CSVs", title: "Source lists", text: "The hand-edited lists everything above is built from. Fix a card name or add a missing card here." },
+    ];
+    // Plain explanation and audience for each file or page (by manifest id).
+    const COPY = {
+      "combined-print-hub": ["Print placeholder cards for Scarlet & Violet, Mega Evolution and Prize Pack cards, chosen by set release or card code.", "Collectors"],
+      "sv-checklists-hub": ["Tick-off checklists for every Scarlet & Violet set, saved in your browser.", "Collectors"],
+      "mega-checklists-hub": ["Tick-off checklists for the Mega Evolution era, including promos.", "Collectors"],
+      "sv-checklist-csv": ["Every Scarlet & Violet checklist row in one spreadsheet.", "Collectors"],
+      "mega-checklist-csv": ["Every Mega Evolution checklist row in one spreadsheet.", "Collectors"],
+      "sv-review-queue": ["Checklist rows that may need fixing: missing cards, or cards filed under the wrong set.", "Maintainers"],
+      "mega-review-queue": ["The same review worksheet for Mega Evolution.", "Maintainers"],
+      "combined-printable-csv": ["One row per card to print, with duplicates removed. Handy for checking what's missing or printing with your own tool.", "Spreadsheets"],
+      "combined-normalized-csv": ["Every placeholder row after clean-up, for checking in a spreadsheet.", "Spreadsheets"],
+      "combined-json": ["The same data as JSON, for scripts and other apps.", "Developers"],
+      "combined-validation-report": ["An automatic check of the lists: row counts, duplicates and missing fields.", "Maintainers"],
+      "sv-source-csv": ["The hand-edited list every Scarlet & Violet placeholder is built from.", "Maintainers"],
+      "mega-source-csv": ["The hand-edited list for Mega Evolution cards.", "Maintainers"],
+      "prize-pack-series7-csv": ["Prize Pack Series 7 cards that also get placeholders.", "Maintainers"],
+      "prize-pack-series8-csv": ["Prize Pack Series 8 cards that also get placeholders.", "Maintainers"],
+    };
+
+    function row(item) {
+      const [text, audience] = COPY[item.id] || [item.summary || "", ""];
       const isPage = item.kind === "page";
-      $("actions").replaceChildren(...(isPage
-        ? [el("a", { class: "btn primary", href: item.href, target: "_blank", rel: "noopener", text: "Open page ↗" })]
-        : [el("a", { class: "btn primary", href: item.href, download: item.filename || "", text: "Download" }),
-           el("a", { class: "btn", href: item.href, target: "_blank", rel: "noopener", text: "Open in a new tab ↗" })]));
-      $("preview").hidden = !isPage;
-      if (isPage) $("preview").src = item.href;
-      $("fileCard").hidden = isPage;
-      $("fileCard").replaceChildren(...(isPage ? [] : [
-        ["File", item.filename || "—"], ["Size", item.size_label || "—"], ["Type", item.section || "Download"],
-      ].map(([label, value]) => el("div", { class: "stat" }, el("span", { text: label }), el("strong", { text: value })))));
-      $("previewEmpty").hidden = true;
-      const url = new URL(location.href);
-      url.searchParams.set("item", item.id);
-      history.replaceState(null, "", url);
-    }
-
-    function render() {
-      const nodes = [];
-      let section = "";
-      for (const item of items) {
-        if (item.section !== section) {
-          section = item.section;
-          nodes.push(el("h3", { text: section }));
-        }
-        const meta = item.kind === "page" ? "Opens in the browser" : [item.filename, item.size_label].filter(Boolean).join(" · ");
-        const button = el("button", { type: "button", class: "list-item", "data-id": item.id, "aria-current": "false" },
-          el("strong", { text: item.title }), el("span", { text: meta }));
-        button.addEventListener("click", () => select(item));
-        nodes.push(button);
-      }
-      $("list").replaceChildren(...nodes);
+      const actions = isPage
+        ? [el("a", { class: "btn primary", href: item.href, target: "_blank", rel: "noopener", text: "Open ↗" })]
+        : [el("a", { class: "btn", href: item.href, download: item.filename || "", text: "Download" })];
+      return el("div", { class: "file-row" },
+        el("div", { class: "file-main" },
+          el("strong", { text: item.title }),
+          el("span", { text }),
+          el("span", { class: "file-meta", text: isPage ? "Opens in a new tab" : [item.filename, item.size_label].filter(Boolean).join(" · ") })),
+        audience ? el("span", { class: "chip", text: audience }) : el("span"),
+        el("div", { class: "tile-actions" }, ...actions));
     }
 
     async function load() {
@@ -127,16 +94,22 @@
         const response = await fetch("/placeholder-downloads-manifest");
         if (!response.ok) throw new Error(String(response.status));
         const data = await response.json();
-        items = data.items || [];
-        const when = data.updated_at ? ` · updated ${new Date(data.updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}` : "";
-        $("updated").textContent = `${data.browser_count ?? 0} browser tools · ${data.download_count ?? 0} downloads${when}`;
-        render();
-        const first = items.find((i) => i.id === selectedId) || items[0];
-        if (first) select(first);
-        if (!items.length) $("list").replaceChildren(el("div", { class: "empty", text: "No placeholder files are published right now." }));
+        const items = data.items || [];
+        const known = new Set(SECTIONS.map((s) => s.key));
+        const sections = [...SECTIONS, ...[...new Set(items.map((i) => i.section))].filter((k) => !known.has(k)).map((k) => ({ key: k, title: k, text: "" }))];
+        $("sections").replaceChildren(...sections.map((section) => {
+          const sectionItems = items.filter((i) => i.section === section.key);
+          if (!sectionItems.length) return null;
+          return el("section", { class: "tile-section" },
+            el("h2", { text: section.title }),
+            section.text ? el("p", { class: "muted", text: section.text }) : null,
+            el("div", { class: "panel file-list" }, ...sectionItems.map(row)));
+        }).filter(Boolean));
+        const when = data.updated_at ? ` Files last rebuilt ${new Date(data.updated_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}.` : "";
+        $("status").textContent = `${data.browser_count ?? 0} pages and ${data.download_count ?? 0} files.${when}`;
+        if (!items.length) $("status").textContent = "No placeholder files are published right now.";
       } catch (_err) {
-        $("updated").textContent = "";
-        $("list").replaceChildren(el("div", { class: "empty", text: "Placeholder files couldn't load. Try again in a moment." }));
+        $("status").textContent = "Placeholder files couldn't load. Try again in a moment.";
       }
     }
     load();

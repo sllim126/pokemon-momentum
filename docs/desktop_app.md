@@ -135,7 +135,12 @@ Saved-list tag names: `owned` is shown as Buy List, `research` as Needs Review.
 
 Collector Hub (`collector_hub.html`), Placeholder Library (`placeholder_library.html`) and
 Account (`account_settings.html`) load `scripts/dashboards/desktop_theme.css`, served at
-`/desktop-theme.css`. Its color tokens copy the `:root` block in `desktop_home.html`;
+`/desktop-theme.css`. Collector Hub and Placeholder Library are scrolling "reading pages"
+(since 2026-10-13): Collector Hub explains master-set collecting in three steps and shows
+each resource as a tile; Placeholder Library lists every file by who it's for. Both take
+their items from the manifests and their wording from a `COPY` table in the page, keyed by
+item id (a new item falls back to the manifest's summary). Resources open in a new tab;
+nothing is embedded. Its color tokens copy the `:root` block in `desktop_home.html`;
 change both together.
 
 Account links each saved list to `/?list=track_<tag>` through its `APP` constant.

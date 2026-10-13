@@ -271,7 +271,7 @@ class ApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/html", response.headers["content-type"])
-        self.assertIn("Master Set Hub", response.text)
+        self.assertIn("<h1>Collector Hub</h1>", response.text)
 
     def test_placeholder_library_page_serves_html(self):
         response = self.client.get("/placeholders")

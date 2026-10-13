@@ -87,11 +87,14 @@ class SecondaryPageContractTests(unittest.TestCase):
 
     def test_collector_hub_page_has_manifest_and_core_routes(self):
         self.assertIn("Poke6s Collector Hub", self.collector_hub_html)
-        self.assertIn("Master Set Hub", self.collector_hub_html)
         self.assertIn("/collector-manifest", self.collector_hub_html)
         self.assertIn("/placeholders", self.collector_hub_html)
-        self.assertIn("/collector-assets/checklists-sv/index.html", self.collector_hub_html)
-        self.assertIn("/collector-assets/print-combined/index.html", self.collector_hub_html)
+        # Each resource opens in its own tab (links come from the manifest); nothing is embedded.
+        self.assertIn('target: "_blank"', self.collector_hub_html)
+        self.assertNotIn("<iframe", self.collector_hub_html)
+        # Plain-language explanations exist for the manifest's resources.
+        for item_id in ("sv-checklists", "mega-checklists", "combined-placeholders", "release-dates"):
+            self.assertIn(f'"{item_id}"', self.collector_hub_html)
         # Site-wide navigation comes from the shared shell, not a per-page route strip,
         # and development pages are not linked publicly.
         self.assertIn("/site-shell.js", self.collector_hub_html)
@@ -101,9 +104,11 @@ class SecondaryPageContractTests(unittest.TestCase):
         self.assertIn("Poke6s Placeholder Library", self.placeholder_library_html)
         self.assertIn("Placeholder Library", self.placeholder_library_html)
         self.assertIn("/placeholder-downloads-manifest", self.placeholder_library_html)
-        self.assertIn("/placeholder-downloads/sv-source-csv", self.placeholder_library_html)
-        self.assertIn("/collector-assets/print-combined/index.html", self.placeholder_library_html)
-        self.assertIn("/collector-assets/checklists-sv/index.html", self.placeholder_library_html)
+        # Download and open links come from the manifest; nothing is embedded.
+        self.assertIn("Download", self.placeholder_library_html)
+        self.assertNotIn("<iframe", self.placeholder_library_html)
+        for item_id in ("combined-print-hub", "sv-source-csv", "combined-printable-csv"):
+            self.assertIn(f'"{item_id}"', self.placeholder_library_html)
 
     def test_index_overview_hub_page_lists_indexes(self):
         self.assertIn("Index Overview", self.index_overview_hub_html)

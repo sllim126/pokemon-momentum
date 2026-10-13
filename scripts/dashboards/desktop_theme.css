@@ -1,5 +1,7 @@
 /* Shared look for the desktop pages that live outside the main desktop app
-   (Collector Hub, Placeholder Library, Account). Tokens match desktop_home.html. */
+   (Collector Hub, Placeholder Library, Account). Tokens match desktop_home.html.
+   Collector Hub and Placeholder Library are "reading pages" (body.scroll-page, .page.reading):
+   tiles and file lists that scroll as a whole. Account uses panels in .columns. */
 :root {
   --bg: #08111d;
   --panel: #0e1828;
@@ -66,19 +68,6 @@ a { color: inherit; }
 .panel-body { padding: 16px 18px; }
 .panel-scroll { flex: 1; min-height: 0; overflow-y: auto; }
 
-/* two columns: a list on the left, the selected item on the right */
-.split { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(320px, 420px) minmax(0, 1fr); gap: 16px; }
-
-.list h3 { margin: 14px 18px 4px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
-.list-item {
-  display: grid; gap: 2px; width: 100%; padding: 10px 18px; border: 0; background: none; text-align: left; cursor: pointer;
-  border-left: 3px solid transparent;
-}
-.list-item:hover { background: rgba(136, 162, 205, 0.06); }
-.list-item[aria-current="true"] { background: var(--accent-soft); border-left-color: var(--accent); }
-.list-item strong { font-weight: 600; }
-.list-item span { font-size: 12px; color: var(--muted); }
-
 .segment { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--panel-3); border: 1px solid var(--line); flex-wrap: wrap; }
 .segment button { border: 0; background: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; color: var(--muted); font-weight: 600; }
 .segment button[aria-pressed="true"] { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 0 0 1px rgba(77, 163, 255, 0.45); }
@@ -105,15 +94,51 @@ a { color: inherit; }
 .legal { padding: 0 20px 8px; font-size: 11px; line-height: 1.4; color: var(--faint); }
 
 /* Narrow screens (phones, small tablets). These pages are built for desktop, but a phone
-   can still open them: stack the columns, let the page scroll, and give the live preview
-   a usable height. The `html` prefix beats the same rules in each page's own <style>. */
+   can still open them: stack the columns and let the page scroll. The `html` prefix beats
+   the same rules in a page's own <style>. */
 @media (max-width: 900px) {
   html, html body { height: auto; }
   html body { overflow: auto; }
-  .page, .split { flex: none; }
-  .page { padding: 12px 16px 8px; }
+  .page { flex: none; padding: 12px 16px 8px; }
   .page-head { flex-direction: column; align-items: stretch; }
-  .split, .columns { grid-template-columns: minmax(0, 1fr); }
-  .panel-scroll { max-height: 60vh; }
-  html .preview { flex: none; height: 70vh; }
+  .columns { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Reading pages (Collector Hub, Placeholder Library): the page scrolls as a whole and the
+   content keeps a comfortable width, instead of the app's fixed-height columns. */
+html:has(body.scroll-page), body.scroll-page { height: auto; }
+body.scroll-page { min-height: 100vh; }
+.page.reading { max-width: 1280px; width: 100%; margin: 0 auto; padding: 24px 20px 32px; gap: 20px; }
+.page.reading .page-head { align-items: flex-start; }
+.page.reading .page-head p { max-width: 760px; line-height: 1.6; }
+.page.reading .page-head a { color: var(--accent); }
+
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.step { display: flex; gap: 12px; padding: 14px 16px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); }
+.step b { flex: none; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--accent-soft); color: var(--accent); }
+.step strong { display: block; margin-bottom: 2px; }
+.step span { color: var(--muted); font-size: 13px; }
+
+.tile-section h2 { margin: 6px 0 2px; font-size: 18px; }
+.tile-section > .muted { margin: 0 0 12px; }
+.tile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.tile { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); }
+.tile h3 { margin: 0; font-size: 16px; }
+.tile p { margin: 0; color: var(--muted); line-height: 1.5; }
+.tile .tile-stats { font-size: 12px; color: var(--faint); }
+.tile-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 6px; }
+
+.file-list { padding: 4px 0; }
+.file-row { display: grid; grid-template-columns: minmax(0, 1fr) 110px auto; gap: 14px; align-items: center; padding: 12px 18px; border-bottom: 1px solid rgba(136, 162, 205, 0.07); }
+.file-row:last-child { border-bottom: 0; }
+.file-main { display: grid; gap: 2px; min-width: 0; }
+.file-main span { color: var(--muted); font-size: 13px; }
+.file-main .file-meta { color: var(--faint); font-size: 12px; }
+.file-row .tile-actions { margin: 0; padding: 0; justify-content: flex-end; }
+
+@media (max-width: 900px) {
+  .steps { grid-template-columns: minmax(0, 1fr); }
+  .file-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .file-row .tile-actions { justify-content: flex-start; }
+}
+.tile-section + .tile-section { margin-top: 28px; }
