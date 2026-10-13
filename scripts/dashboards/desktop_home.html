@@ -168,8 +168,8 @@
     tbody tr:hover { background: rgba(136, 162, 205, 0.06); }
     tbody tr[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
     td { padding: 7px 12px; vertical-align: middle; }
-    .card-cell { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: center; min-width: 0; }
-    .thumb { width: 34px; height: 47px; object-fit: contain; border-radius: 4px; background: var(--panel-3); }
+    .card-cell { display: grid; grid-template-columns: 43px 1fr; gap: 10px; align-items: center; min-width: 0; }
+    .thumb { width: 43px; height: 59px; object-fit: contain; border-radius: 4px; background: var(--panel-3); }
     .card-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-meta { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -513,7 +513,7 @@
      *
      * One page, three columns:
      *   left   - every view, from LISTS below, grouped Buy / Rising / Starting to move /
-     *            Dipped / My lists / Research / Learn
+     *            Dipped / Research / My lists / Learn (the same order as the header menu)
      *   middle - the current view: a table of cards, or one of the special views (Sets,
      *            Market Stats, Budget Builder's picks grid, How it works)
      *   right  - the selected card: price chart, 6-Month Hold, Targets, Graded, Stats, actions
@@ -566,17 +566,17 @@
       { key: "under_the_radar", group: "Starting to move", label: "Under the Radar", desc: "Quiet risers emerging from a flat base.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
       { key: "breakouts", group: "Starting to move", label: "Breakouts", desc: "Breaking above their 90-day high with recent activity.", price: "latest_price", change: "breakout_pct", changeLabel: "above 90-day high" },
       { key: "good_buys", group: "Dipped", label: "Pullbacks", desc: "Premium cards that have dipped and may be good entries.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
-      { key: "track_all", group: "My lists", track: true, tag: "all", label: "All saved", desc: "Everything you've saved, with your price targets." },
-      { key: "track_owned", group: "My lists", track: true, tag: "owned", label: "Buy List", desc: "Cards and sealed products you plan to pick up." },
-      { key: "track_watchlist", group: "My lists", track: true, tag: "watchlist", label: "Watchlist", desc: "Items you're waiting on a price for." },
-      { key: "track_favorite", group: "My lists", track: true, tag: "favorite", label: "Favorites", desc: "Cards you've starred." },
-      { key: "track_research", group: "My lists", track: true, tag: "research", label: "Needs Review", desc: "Items you flagged to look into." },
       { key: "sets", group: "Research", research: true, label: "Sets", desc: "Every set ranked by how broadly its cards are rising. Pick one to see its cards." },
       { key: "set", group: "Research", research: true, hidden: true, label: "Set", desc: "" },
       { key: "species", group: "Research", research: true, label: "Pokémon", desc: "Every printing of a Pokémon across all sets." },
       { key: "indexes", group: "Research", research: true, kindless: true, label: "Market Stats", desc: "Each index follows the most valuable cards of an era, like a stock index. Every index started at 1,000." },
       { key: "set_values", group: "Research", research: true, kindless: true, hidden: true, navParent: "indexes", label: "Market Stats", desc: "What it costs to buy every card in a set, and how much of that value sits in its top cards." },
       { key: "index", group: "Research", research: true, kindless: true, hidden: true, parent: "indexes", backLabel: "← All indexes", label: "Index", desc: "", price: "marketPrice" },
+      { key: "track_all", group: "My lists", track: true, tag: "all", label: "All saved", desc: "Everything you've saved, with your price targets." },
+      { key: "track_owned", group: "My lists", track: true, tag: "owned", label: "Buy List", desc: "Cards and sealed products you plan to pick up." },
+      { key: "track_watchlist", group: "My lists", track: true, tag: "watchlist", label: "Watchlist", desc: "Items you're waiting on a price for." },
+      { key: "track_favorite", group: "My lists", track: true, tag: "favorite", label: "Favorites", desc: "Cards you've starred." },
+      { key: "track_research", group: "My lists", track: true, tag: "research", label: "Needs Review", desc: "Items you flagged to look into." },
       { key: "guide", group: "Learn", learn: true, kindless: true, label: "How it works", desc: "What each list and tool means, in plain language." },
     ].map((l) => (l.track || l.key === "set" || l.key === "species" || l.key === "index"
       ? { price: "latest_price", change: "", changeLabel: "90 days", sparkChange: true, ...l } : l));

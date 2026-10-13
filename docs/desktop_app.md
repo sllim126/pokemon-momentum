@@ -36,7 +36,7 @@ guide; keep the two in step.
 
 | Column | What it shows |
 | --- | --- |
-| Left | Every view, grouped Buy / Rising / Starting to move / Dipped / My lists / Research / Learn, with item counts |
+| Left | Every view, grouped Buy / Rising / Starting to move / Dipped / Research / My lists / Learn (the header menu's order), with item counts |
 | Middle | The current view: a table of cards, or a special view (Sets, Market Stats, Budget Builder grid, How it works) |
 | Right | The selected card: price chart, 6-Month Hold, Targets, Graded and Stats tabs, plus Save, TCGplayer, Our store and Full data |
 
