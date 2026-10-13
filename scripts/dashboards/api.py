@@ -2495,6 +2495,9 @@ def _infer_pack_count(
     # Smaller collections with a known pack count, before the generic "collection" guess.
     if "knock out collection" in name:
         return 2 * multiplier
+    if "tech sticker collection" in name:
+        # 3 booster packs (owner, 2026-10-13: Ascended Heroes); "Set of 3" multiplies it.
+        return 3 * multiplier
     if "first partner illustration collection" in name:
         # Two booster packs; its 3-card First Partner promo pack isn't counted (see _sealed_pack_note).
         return 2 * multiplier
