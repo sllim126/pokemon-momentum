@@ -35,6 +35,9 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-13 Full card page in the desktop app: "Full data →" or double-clicking a card's
+  picture shows everything about the card on one page (`&card=1`), with every snapshot
+  number from the new `/card_details`, the lists it appears in and its other printings.
 - 2026-10-13 Owner feedback, first part: left menu in the header's order (Research before
   My lists); list images 25% larger; "release date" sorts for Sets and Set values with each
   set's date shown (hand-checked dates for re-published sets in
@@ -72,10 +75,10 @@ High Priority
   without an always-running bot or a public endpoint. Waiting on the owner to create a
   Discord bot (Read Message History, Add Reactions, Message Content intent), invite it to
   the server, and put its token in `.env` as `POKE6S_DISCORD_BOT_TOKEN`.
-- [planned] Retire the older research dashboard (decided 2026-10-12): move anything still
-  worth keeping into the desktop app's Stats tab (see Desktop App Follow-up), then remove
-  the "Full data →" link and `/dashboard-classic` (desktop `/dashboard` already forwards
-  to the app).
+- [planned] Retire the older research dashboard (decided 2026-10-12). Since 2026-10-13 the
+  app's full card page replaces "Full data →", so nothing links to `/dashboard-classic`
+  any more. Check nothing else needs it, then remove the route and `dashboard.html`
+  (phones use `mobile_dashboard.html`, not this file).
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
@@ -115,8 +118,6 @@ Desktop App Follow-up
 ---------------------
 
 - [in progress] Owner feedback 2026-10-13 on the desktop app:
-  - [next] "Full data →" still opens /dashboard-classic. Replace it with a full card page
-    in the new style, and open that page when a card image is double-clicked.
   - [next] Collector Hub and Placeholder Library: explain each resource better and make
     them look like part of the site rather than an embedded page.
   - [planned] Set logos still missing: ME06 Delta Reign (not yet in the developer API on

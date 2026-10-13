@@ -25,8 +25,8 @@ tablets are never forwarded and still get the older pages.
 | `/buy`, `/discover`, `/research`, `/track`, `/learn` | Sealed Deals, Top Movers, Sets, All saved, How it works |
 | `/mobile?mode=tracked&tracked_tag=<tag>` | that saved list |
 
-The older research dashboard is at `/dashboard-classic`, which the card's "Full data →"
-button opens, until it is retired (see `docs/todo.txt`).
+The older research dashboard is still reachable at `/dashboard-classic`, but nothing in the
+app links to it since the full card page replaced "Full data →" (2026-10-13).
 - Shared header: `scripts/dashboards/site_shell.js`
 
 The top of the page's `<script>` has an overview comment with the same essentials as this
@@ -39,6 +39,12 @@ guide; keep the two in step.
 | Left | Every view, grouped Buy / Rising / Starting to move / Dipped / Research / My lists / Learn (the header menu's order), with item counts |
 | Middle | The current view: a table of cards, or a special view (Sets, Market Stats, Budget Builder grid, How it works) |
 | Right | The selected card: price chart, 6-Month Hold, Targets, Graded and Stats tabs, plus Save, TCGplayer, Our store and Full data |
+
+**Full card page.** "Full data →", or double-clicking a card's picture, switches to the full
+card page (`&card=1` in the address): the card panel widens over the list, shows every tab at
+once, and adds every snapshot number (`/card_details`), the market lists the card is in today,
+and its other printings. "← Back", Esc or any menu item returns to the list, which stays
+loaded underneath. See `setFullCard()` and `loadFullExtra()`.
 
 The page itself never scrolls; each column scrolls on its own. It is checked at 1920×1080,
 1366×768 and 1280×720. Below 1500 px wide the trend column hides and spacing tightens.
@@ -61,7 +67,7 @@ Every view is one entry in the `LISTS` array; its fields are documented above th
 
 Other endpoints: `/search` (top search box), `/universe` (opening a card from a link),
 `/health` ("Prices as of"), `/series` (price chart), `/sparkline_batch` (trend column),
-`/hold_check`, `/graded_prices`, `/store_link`, `/set-logos.json`.
+`/hold_check`, `/graded_prices`, `/card_details` (full card page), `/store_link`, `/set-logos.json`.
 
 ### Adding a view
 

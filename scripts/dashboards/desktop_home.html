@@ -239,6 +239,32 @@
     .loading-bar[hidden] { display: none; }
     @keyframes slide { from { background-position: -50% 0; } to { background-position: 150% 0; } }
 
+    /* ---------- full card page (&card=1) ----------
+       The card panel widens over the list and shows every tab's content at once, plus the
+       sections in #fullExtra. The list stays loaded underneath for "Back". */
+    .layout.full-card { grid-template-columns: 236px minmax(0, 1fr); }
+    .layout.full-card > section.panel { display: none; }
+    .layout.full-card #detail .panel-scroll { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
+    .layout.full-card #detail .detail-head,
+    .layout.full-card #detail .chart-block,
+    .layout.full-card #detail .full-extra { grid-column: 1 / -1; }
+    .layout.full-card #detail .tabs { display: none; }
+    .layout.full-card #detail .tab-body { display: block !important; border-top: 1px solid var(--line); }
+    .layout.full-card #detail .tab-body::before { content: attr(data-title); display: block; margin-bottom: 10px; font-weight: 700; }
+    .layout.full-card .detail-head { grid-template-columns: 150px 1fr; }
+    .layout.full-card .detail-head img { width: 150px; height: 209px; cursor: default; }
+    .layout.full-card .chart { height: 320px; }
+    @media (max-width: 1500px) { .layout.full-card { grid-template-columns: 200px minmax(0, 1fr); } }
+    .full-extra { border-top: 1px solid var(--line); padding: 14px 18px; display: grid; gap: 16px; }
+    .full-extra[hidden] { display: none; }
+    .full-extra h3 { margin: 0 0 8px; font-size: 14px; }
+    .full-extra .grid-4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip-row button { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--panel-2); cursor: pointer; }
+    .chip-row button:hover { border-color: var(--accent); }
+    #resultsBody img.thumb, #pickGrid .pick img, #detailImage { cursor: zoom-in; }
+    #fullDataLink[hidden], #fullBackBtn[hidden] { display: none; } /* .btn is inline-flex, which ignores [hidden] */
+
     /* ---------- detail ---------- */
     #detailBody { display: flex; flex-direction: column; flex: 1; min-height: 0; }
     #detailBody[hidden], .detail-empty[hidden] { display: none; }
@@ -464,7 +490,7 @@
             <button type="button" role="tab" data-tab="graded">Graded</button>
             <button type="button" role="tab" data-tab="stats">Stats</button>
           </div>
-          <div class="tab-body" id="tabHold" role="tabpanel">
+          <div class="tab-body" id="tabHold" role="tabpanel" data-title="6-Month Hold">
             <div class="verdict-row">
               <label class="buy-input">Buy price <input id="buyInput" type="number" min="0" step="0.01" placeholder="Market" /></label>
               <span class="verdict" id="holdVerdict"></span>
@@ -472,7 +498,7 @@
             <p class="headline" id="holdHeadline"></p>
             <ul class="reasons" id="holdReasons"></ul>
           </div>
-          <div class="tab-body" id="tabTargets" role="tabpanel" hidden>
+          <div class="tab-body" id="tabTargets" role="tabpanel" data-title="Your targets" hidden>
             <div class="target-fields">
               <label>Buy at or below <input id="targetBuy" type="number" min="0" step="0.01" /></label>
               <label>Sell at or above <input id="targetSell" type="number" min="0" step="0.01" /></label>
@@ -480,20 +506,22 @@
             <p class="headline" id="targetStatus"></p>
             <p class="muted" style="margin:0;font-size:12px">Targets are saved in this browser and shared with the mobile site. Items you've saved show them in My lists.</p>
           </div>
-          <div class="tab-body" id="tabGraded" role="tabpanel" hidden>
+          <div class="tab-body" id="tabGraded" role="tabpanel" data-title="Graded prices" hidden>
             <div class="grid-2" id="gradedGrid"></div>
             <p class="muted" id="gradedNote" style="margin:10px 0 0"></p>
             <a class="source" id="gradedSource" href="https://www.pricecharting.com/" target="_blank" rel="noopener noreferrer">Prices from PriceCharting ↗</a>
           </div>
-          <div class="tab-body" id="tabStats" role="tabpanel" hidden>
+          <div class="tab-body" id="tabStats" role="tabpanel" data-title="This chart window" hidden>
             <div class="grid-2" id="statsGrid"></div>
           </div>
+          <div class="full-extra" id="fullExtra" hidden></div>
         </div>
         <div class="actions">
           <button type="button" class="btn" id="saveBtn" aria-haspopup="true">♡ Save</button>
           <a class="btn primary" id="tcgLink" target="_blank" rel="noopener noreferrer">TCGplayer ↗</a>
           <a class="btn" id="storeLink" target="_blank" rel="noopener noreferrer" hidden>Our store ↗</a>
-          <a class="btn" id="fullDataLink" style="margin-left:auto">Full data →</a>
+          <a class="btn" id="fullDataLink" style="margin-left:auto" title="Everything about this card on one page (or double-click its picture)">Full data →</a>
+          <button type="button" class="btn" id="fullBackBtn" style="margin-left:auto" hidden>← Back</button>
           <div class="save-menu" id="saveMenu" hidden></div>
         </div>
       </div>
@@ -656,6 +684,7 @@
       indexRows: [],
       setRows: [],
       productKey: params.get("product") || null,
+      fullCard: params.get("card") === "1" && Boolean(params.get("product")),
       days: 90,
       tab: "hold",
       rows: [],
@@ -728,6 +757,7 @@
         if (state.budgetSkipped.size) url.searchParams.set("skip", [...state.budgetSkipped.keys()].join(","));
       }
       if (state.selected) url.searchParams.set("product", state.selected.key);
+      if (state.fullCard && state.selected) url.searchParams.set("card", "1");
       history.replaceState(null, "", url);
     }
     // Most endpoints answer {columns, rows}; turn that into one object per row.
@@ -915,6 +945,7 @@
     }
     // Switch to another view: highlight it in the nav and the header, clear the filter, load it.
     function openList(key) {
+      if (state.fullCard) setFullCard(false);
       listPinned = true;
       fallbackNote = "";
       state.list = key;
@@ -1980,6 +2011,7 @@
       $("detailEmpty").hidden = Boolean(card);
       $("detailBody").hidden = !card;
       if (!card) return;
+      applyFullCardLayout();
       $("detailImage").src = card.imageUrl || "";
       $("detailImage").alt = card.name;
       $("detailImage").style.visibility = card.imageUrl ? "visible" : "hidden";
@@ -1989,7 +2021,8 @@
       $("detailChange").textContent = "";
       $("buyInput").value = "";
       $("tcgLink").href = tcgplayerUrl(card);
-      $("fullDataLink").href = `/dashboard-classic?product=${encodeURIComponent(card.key)}&category_id=${categoryId()}&segment=${card.productKind === "sealed" ? "sealed" : "cards"}`;
+      // Real link (so it can open in a new tab); a plain click switches mode in place.
+      $("fullDataLink").href = (() => { const u = new URL(location.href); u.searchParams.set("product", card.key); u.searchParams.set("card", "1"); return u.toString(); })();
       renderSaveMenu();
       loadStoreLink(card);
       const seq = ++detailRequestSeq;
@@ -1998,6 +2031,7 @@
       loadGraded(card, seq);
       renderTargets(card);
       showTab(state.tab);
+      if (state.fullCard) loadFullExtra(card, seq);
     }
     // TCGplayer product link (with language and printing preselected), wrapped in the affiliate link.
     function tcgplayerUrl(card) {
@@ -2022,6 +2056,88 @@
           link.hidden = false;
         }
       } catch (_err) { /* no store listing */ }
+    }
+
+    // ---------- full card page ----------
+    // Switch the card panel between its normal column and the full page (&card=1).
+    function setFullCard(on) {
+      state.fullCard = Boolean(on && state.selected);
+      syncUrl();
+      if (state.selected) renderDetail(); // applies the layout, redraws the chart at its new size, fills #fullExtra
+      else applyFullCardLayout();
+    }
+    // Layout and buttons for the current mode; renderDetail calls this for every card, which
+    // also covers opening the page straight from a &card=1 link.
+    function applyFullCardLayout() {
+      document.querySelector("main.layout").classList.toggle("full-card", state.fullCard);
+      $("fullDataLink").hidden = state.fullCard;
+      $("fullBackBtn").hidden = !state.fullCard;
+      $("fullBackBtn").textContent = `← Back to ${currentList().label}`;
+      $("fullExtra").hidden = !state.fullCard;
+    }
+    $("fullDataLink").addEventListener("click", (event) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return; // new tab: follow the link
+      event.preventDefault();
+      setFullCard(true);
+    });
+    $("fullBackBtn").addEventListener("click", () => setFullCard(false));
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && state.fullCard && !event.target.closest("input, select, textarea")) setFullCard(false);
+    });
+    // Double-clicking a card's picture opens its full page (the first click already selected it).
+    document.addEventListener("dblclick", (event) => {
+      if (event.target.closest("#resultsBody img.thumb, #pickGrid .pick img, #detailImage") && state.selected && !state.fullCard) setFullCard(true);
+    });
+    // Extra sections on the full page: every snapshot number (/card_details), the market
+    // lists the card is in right now, and its other printings.
+    async function loadFullExtra(card, seq) {
+      const box = $("fullExtra");
+      box.replaceChildren(el("p", { class: "muted", text: "Loading the full numbers…" }));
+      let data = null;
+      try {
+        data = await getJson(`/card_details?${new URLSearchParams({ productId: card.productId, subTypeName: card.subTypeName, category_id: String(categoryId()) })}`);
+      } catch (_err) { /* shown below */ }
+      if (seq !== detailRequestSeq) return;
+      const c = data?.card || {};
+      const changeStat = (label, pctValue, before) => [label, Number.isFinite(pctValue) ? `${pct(pctValue)}${Number.isFinite(before) ? ` (from ${money(before)})` : ""}` : "—"];
+      const days = (n) => (Number.isFinite(n) ? `${n} day${n === 1 ? "" : "s"}` : "—");
+      const stats = data ? [
+        ["Market price", money(c.latest_price)],
+        changeStat("7-day change", c.roc_7d_pct, c.price_7d),
+        changeStat("30-day change", c.roc_30d_pct, c.price_30d),
+        changeStat("90-day change", c.roc_90d_pct, c.price_90d),
+        changeStat("1-year change", c.roc_365d_pct, c.price_365d),
+        ["30-day average", `${money(c.sma_30)}${Number.isFinite(c.price_vs_sma30_pct) ? ` (${pct(c.price_vs_sma30_pct)} vs)` : ""}`],
+        ["90-day average", `${money(c.sma_90)}${Number.isFinite(c.price_vs_sma90_pct) ? ` (${pct(c.price_vs_sma90_pct)} vs)` : ""}`],
+        ["90-day high", money(c.high_90d)],
+        ["Days above 30-day average", days(c.hold_days)],
+        ["Uptrend streak", days(c.bullish_streak)],
+        ["Price readings, last 30 days", Number.isFinite(c.recent_observations_30d) ? String(c.recent_observations_30d) : "—"],
+        ["Different prices, last 30 days", Number.isFinite(c.recent_distinct_prices_30d) ? String(c.recent_distinct_prices_30d) : "—"],
+        ["Last price change", c.last_change_date ? fmtDate(c.last_change_date) : "—"],
+        ["Set released", c.release_date ? (c.release_precision === "approximate" ? `~${c.release_date.slice(0, 4)}` : fmtDate(c.release_date)) : "—"],
+      ] : [];
+      const sections = [];
+      sections.push(el("div", {}, el("h3", { text: "Price history in numbers" }),
+        data ? el("div", { class: "grid-4" }, ...stats.map(([label, value]) => el("div", { class: "stat" }, el("span", { text: label }), el("strong", { text: value }))))
+          : el("p", { class: "muted", text: "The full numbers for this card aren't available right now." })));
+      // Market lists that contain this card (the lists are already cached for the menu counts).
+      const lists = MARKET_LISTS.filter((l) => !l.kindless);
+      const found = (await Promise.all(lists.map((l) => fetchList(l).then((rows) => (rows.some((r) => r.key === card.key) ? l : null)).catch(() => null)))).filter(Boolean);
+      if (seq !== detailRequestSeq) return;
+      sections.push(el("div", {}, el("h3", { text: "Appears in" }),
+        found.length ? el("div", { class: "chip-row" }, ...found.map((l) => { const b = el("button", { type: "button", text: l.label }); b.addEventListener("click", () => openList(l.key)); return b; }))
+          : el("p", { class: "muted", style: "margin:0", text: "Not in any of the market lists today." })));
+      const printings = data?.other_printings || [];
+      if (printings.length) {
+        sections.push(el("div", {}, el("h3", { text: "Other printings" }),
+          el("div", { class: "chip-row" }, ...printings.map((p) => {
+            const b = el("button", { type: "button", text: `${p.subTypeName} · ${money(p.latest_price)}` });
+            b.addEventListener("click", () => loadCardByKey(`${card.productId}||${p.subTypeName}`));
+            return b;
+          }))));
+      }
+      box.replaceChildren(...sections);
     }
 
     // tabs

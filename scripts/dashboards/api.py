@@ -47,6 +47,7 @@ from scripts.dashboards.query_support import (
     build_metadata_cte,
     gap_scaled_threshold,
     add_release_dates,
+    set_release_dates,
     build_premium_rarity_filter,
     build_set_basket_filter,
     category_config,
@@ -716,7 +717,7 @@ async def forward_desktop_to_app(request: Request, call_next):
 PUBLIC_DATA_CACHE_SECONDS = 600
 PUBLIC_DATA_PATHS = frozenset({
     "/health", "/categories", "/universe", "/groups", "/search", "/store_link",
-    "/series", "/hold_check", "/graded_prices", "/index-overview-data",
+    "/series", "/hold_check", "/graded_prices", "/card_details", "/index-overview-data",
     "/browse_species", "/group_products", "/group_signals", "/group_series", "/set_baskets",
     "/product_signals", "/sealed_deals", "/budget_builder",
     "/top_movers", "/confirmed_uptrends", "/sma30_holds", "/early_uptrends",
@@ -6451,6 +6452,47 @@ def series(productId: int, subTypeName: str, days: int = 365, category_id: int =
     """
     cols, rows = q(data_sql)
     return {"columns": cols, "rows": rows, "latest": str(latest), "start": str(start)}
+
+
+@app.get("/card_details")
+def card_details(productId: int, subTypeName: str, category_id: int = 3):
+    """Everything the nightly product snapshot knows about one printing, for the desktop
+    app's full card page: price, 7/30/90/365-day changes, moving averages, 90-day high,
+    streaks, trading activity, the set's release date, and the card's other printings.
+    """
+    category = category_config(category_id)
+    source = product_signal_from(category.category_id)
+    latest = f"(SELECT MAX(latest_date) FROM {source} WHERE categoryId = {category.category_id})"
+    cols, rows = q(
+        f"""
+        SELECT *
+        FROM {source}
+        WHERE categoryId = ? AND productId = ? AND subTypeName = ? AND latest_date = {latest}
+        LIMIT 1
+        """,
+        [category.category_id, productId, subTypeName],
+    )
+    if not rows:
+        raise HTTPException(status_code=404, detail="No snapshot row for that productId/subTypeName")
+    card = dict(zip(cols, rows[0]))
+    release = set_release_dates(category.category_id).get(int(card["groupId"]), {})
+    card["release_date"] = release.get("release_date")
+    card["release_precision"] = release.get("release_precision", "unknown")
+    _, printings = q(
+        f"""
+        SELECT subTypeName, latest_price, roc_30d_pct
+        FROM {source}
+        WHERE categoryId = ? AND productId = ? AND subTypeName <> ? AND latest_date = {latest}
+        ORDER BY latest_price DESC
+        """,
+        [category.category_id, productId, subTypeName],
+    )
+    return to_jsonable({
+        "card": card,
+        "other_printings": [
+            {"subTypeName": sub, "latest_price": price, "roc_30d_pct": change} for sub, price, change in printings
+        ],
+    })
 
 
 @app.get("/hold_check")
