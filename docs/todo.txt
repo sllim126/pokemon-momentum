@@ -128,16 +128,20 @@ Desktop App Follow-up
 ---------------------
 
 - Follow-ups from the owner's 2026-10-13 feedback:
-  - [waiting] Sealed pack counts to confirm (owner is checking the Super-Premium
-    Collections and the UPC cases) (each is guessed from the product name in
-    `_infer_pack_count` in `api.py`; add exact ones to `_SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID`):
-    - Super-Premium Collections (Charizard ex, Prismatic Evolutions, Shining Legends,
-      Dragon Majesty, Mew & Mewtwo) are counted as 5 packs, probably too few
-    - Ultra Premium Collection cases default to 6 x 16 = 96 packs, but 151's case is
-      entered as 64; check Moltres, 30th Celebration and other UPC cases
-    - other collection cases (39 on 2026-10-13, e.g. Celebrations Collection, Pokemon Day
-      2026, First Partner Illustration) are left out of Sealed Deals until their contents
-      are known
+  - [waiting] Sealed pack counts to confirm (owner is checking). Done 2026-10-13: Charizard ex
+    SPC (10 packs, 2 each from 5 sets), Prismatic Evolutions SPC (15), 151 UPC case (4 UPCs,
+    64 packs). Still to confirm; add answers to `_SEALED_PACK_COMPOSITION_OVERRIDES` or
+    `_SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID` in `api.py`:
+    - Super-Premium Collections still guessed at 5 packs: Shining Legends [Ho-Oh GX],
+      Dragon Majesty, Mew & Mewtwo (Generations); Prismatic Evolutions SPC case (SPCs per case)
+    - UPC cases (UPCs per case): Mega Charizard X, Team Rocket's Moltres and 30th Celebration
+      (guessed 6 each), Sword & Shield Charizard (entered as 4), Celebrations (entered as
+      25 packs, which looks like one UPC's contents, not a case)
+    - UPCs counted as the default 16 packs: Terapagos, Zacian & Zamazenta, Arceus VSTAR,
+      Greninja ex, Sword & Shield Charizard, 30th Celebration Day / Night, Celebrations,
+      Hidden Fates
+    - Premium Tournament Collection Box cases (Lillie, Professor Juniper) counted as 5 packs
+    - 39 other collection cases are left out of Sealed Deals until their contents are known
   - [waiting] Promo sets are filed under a shared "PROMO" era. Burger King Promos moved to
     DP/HGSS (owner, 2026-10-13); the other era promo sets (Diamond and Pearl Promos, HGSS
     Promos, BW, XY, SM, SWSH, SV Promos) stay under PROMO unless the owner asks.

@@ -1884,6 +1884,23 @@ _SEALED_EXCLUDE_NAME_PATTERNS = (
 )
 
 _SEALED_PACK_COMPOSITION_OVERRIDES = [
+    # Pack mixes from the product listings (owner, 2026-10-13).
+    {
+        "match": ["charizard ex super premium collection"],
+        "packs": [
+            {"set": "Stellar Crown", "count": 2},
+            {"set": "Temporal Forces", "count": 2},
+            {"set": "Twilight Masquerade", "count": 2},
+            {"set": "Paradox Rift", "count": 2},
+            {"set": "Obsidian Flames", "count": 2},
+        ],
+        "product_type": "Super Premium Collection",
+    },
+    {
+        "match": ["prismatic evolutions super premium collection"],
+        "packs": [{"set": "Prismatic Evolutions", "count": 15}],
+        "product_type": "Super Premium Collection",
+    },
     {
         "match": ["mega charizard x ex ultra premium collection"],
         "packs": [
@@ -2203,9 +2220,9 @@ def _parse_bundle_multiplier(name: str) -> int:
 
 
 def _find_pack_composition_override(name_raw: str) -> dict | None:
-    lower = (name_raw or "").lower()
+    lower = _sealed_name(name_raw)
     for override in _SEALED_PACK_COMPOSITION_OVERRIDES:
-        tokens = [token.lower() for token in override.get("match", [])]
+        tokens = [_sealed_name(token) for token in override.get("match", [])]
         if "case" in lower and "case" not in tokens:
             continue
         if tokens and all(token in lower for token in tokens):
@@ -2220,9 +2237,9 @@ def _find_pack_count_override(product_id: int | None) -> dict | None:
 
 
 def _find_pack_count_override_by_name(name_raw: str) -> dict | None:
-    lower = (name_raw or "").lower()
+    lower = _sealed_name(name_raw)
     for override in _SEALED_PACK_COUNT_OVERRIDES_BY_NAME:
-        tokens = [token.lower() for token in override.get("match", [])]
+        tokens = [_sealed_name(token) for token in override.get("match", [])]
         if tokens and all(token in lower for token in tokens):
             return override
     return None
@@ -2289,9 +2306,14 @@ def _looks_like_individual_card(name_raw: str, rarity: str | None, number: str |
 
 
 def _sealed_name(name_raw: str) -> str:
-    """Lower-cased product name for the sealed rules, with spelling variants unified
-    ("Ultra-Premium" and "Ultra Premium" are the same product type)."""
-    return (name_raw or "").lower().replace("ultra-premium", "ultra premium").replace("super-premium", "super premium")
+    """Lower-cased product name for the sealed rules and the hand-entered overrides, with
+    spelling variants unified: "Ultra-Premium" = "Ultra Premium", and TCGplayer's curly
+    apostrophe (Rocket’s) = a straight one."""
+    return (
+        (name_raw or "").lower()
+        .replace("\u2019", "'").replace("\u2018", "'")
+        .replace("ultra-premium", "ultra premium").replace("super-premium", "super premium")
+    )
 
 
 def _pack_number(value: float) -> float | int:
