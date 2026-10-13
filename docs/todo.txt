@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-13 (milestone: security, owner feedback, full card page, sealed pack counts)
+Last updated: 2026-10-13 (milestone: more sealed pack counts)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -35,13 +35,18 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-13 More sealed pack counts with the owner: booster bundle displays 60 (10
+  bundles), blister cases 72 / 48 (24 blisters), Build & Battle displays 40 (10 boxes),
+  Tech Sticker Collections 3, Ascended Heroes Erika/Larry 2, First Partner Illustration 2
+  with a hover note about its promo pack, hyphenated and spelled-out blister counts
+  ("3-Pack", "Three Pack"); booster box cases confirmed at 216.
 - 2026-10-13 Sealed Deals pack counts corrected with the owner: booster bundle cases 150
   packs (25 bundles), ETB cases 4 Pokemon Center or 10 retail ETBs, sleeved booster cases
   144, UPC cases 4 UPCs, Super-Premium Collections (Charizard ex 10, Prismatic 15, its case
-  60), Knock Out 2, First Partner Illustration 2.5; "Ultra-Premium" and curly-apostrophe
+  60), Knock Out 2, First Partner Illustration 2 (its promo pack noted on hover, not counted); "Ultra-Premium" and curly-apostrophe
   names now match their rules; case types are no longer hidden as low confidence.
 - 2026-10-13 Owner feedback, second part: Knock Out Collections count 2 packs and First
-  Partner Illustration Collections 2.5; "Ultra-Premium" spelled with a hyphen now counts as
+  Partner Illustration Collections 2 (promo pack noted, not counted); "Ultra-Premium" spelled with a hyphen now counts as
   an Ultra Premium Collection (16 packs, was 5); collection cases with unknown contents are
   left out instead of counted as 5 packs; Market Stats sorts are newest/oldest era (the
   duplicate "newest set release" is gone); a 2Y chart window; the chosen sort is kept when
@@ -138,6 +143,15 @@ Desktop App Follow-up
     6. 39 other collection cases are left out of Sealed Deals until their contents are known
     Also confirm: one Celebrations UPC = 8 SWSH random + 17 Celebrations packs (taken from
     the earlier note on the case).
+    Tech Sticker Collections: 3 packs each, "Set of 2/3" = 2 or 3 collections (owner-confirmed
+    2026-10-13). Ascended Heroes Erika and Larry collections: 2 packs each (owner-confirmed).
+    Many smaller collections still fall back to the generic 5-pack "collection" guess; a list
+    of them for the owner to check is the next step here.
+    Build & Battle displays: 10 boxes x 4 packs = 40 (owner, 2026-10-13: Destined Rivals; applied to all).
+    Booster box cases: 6 boxes x 36 packs = 216 (owner-confirmed 2026-10-13; already counted so).
+    Booster bundle displays: 10 bundles (60 packs); blister cases: 24 blisters (3-pack 72,
+    2-pack 48) (owner, 2026-10-13). To confirm: the Paldean Fates Booster Bundle Display
+    Case is entered as 260 packs, which isn't a whole number of 60-pack displays.
     Sleeved booster cases: 144 sleeved packs each (owner, 2026-10-13; replaces the earlier
     80 entered for Lost Origin).
     ETB cases: 4 Pokemon Center ETBs or 10 retail ETBs per case, times the packs in one ETB

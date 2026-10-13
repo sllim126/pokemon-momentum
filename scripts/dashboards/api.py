@@ -2045,6 +2045,10 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID = {
 }
 
 _SEALED_PACK_COUNT_OVERRIDES_BY_NAME = [
+    # Ascended Heroes Collection - Erika / Larry: 2 booster packs, a foil promo and a coin
+    # (retailer listings, 2026-10-13; MSRP $9.99). Both the 1-Tab and 3-Tab listings.
+    {"match": ["ascended heroes collection", "erika"], "pack_count": 2, "product_type": "Collection Box"},
+    {"match": ["ascended heroes collection", "larry"], "pack_count": 2, "product_type": "Collection Box"},
     {
         "match": ["pokemon center", "elite trainer box", "scarlet", "violet"],
         "pack_count": 11,
@@ -2379,9 +2383,25 @@ def _sealed_name(name_raw: str) -> str:
     )
 
 
+WORD_NUMBERS = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6}
+
+
+def _is_build_battle_display(name: str) -> bool:
+    """"<Set> Build & Battle Box Display" or "<Set> Build & Battle Display" (lower-cased name)."""
+    return bool(re.search(r"build (&|and) battle (box )?display", name))
+
+
 def _is_sleeved_booster_case(name: str) -> bool:
     """"<Set> Sleeved Booster Case" or "<Set> Sleeved Booster Pack Case" (name already lower-cased)."""
     return "sleeved booster" in name and bool(re.search(r"\bcase\b", name))
+
+
+def _sealed_pack_note(name_raw: str) -> str | None:
+    """A short note about what a sealed product's pack count leaves out, shown on hover."""
+    name = _sealed_name(name_raw)
+    if "first partner illustration collection" in name:
+        return "Also includes a 3-card First Partner promo pack, which isn't counted in the packs or the price per pack."
+    return None
 
 
 def _pack_number(value: float) -> float | int:
@@ -2414,6 +2434,7 @@ def _infer_pack_count(
         # Ultra Premium Collection cases hold 4 UPCs (owner, 2026-10-13).
         return 16 * 4 * multiplier
     if "booster box case" in name or ("booster box" in name and "case" in name):
+        # 6 booster boxes of 36 packs (owner-confirmed 2026-10-13 for English sets).
         packs_per_box = jp_packs_per_box if is_japanese_market else 36
         return packs_per_box * 6 * multiplier
     if "half booster box" in name:
@@ -2431,6 +2452,15 @@ def _infer_pack_count(
         return packs_per_box * multiplier
     if "ultra premium collection" in name:
         return 16 * multiplier
+    if "booster bundle display" in name and not re.search(r"\bcase\b", name):
+        # A booster bundle display holds 10 bundles of 6 packs (owner, 2026-10-13: 151,
+        # Ascended Heroes, Prismatic Evolutions, White Flare, Black Bolt).
+        return 10 * 6 * multiplier
+    blister_case = re.search(r"(\d+)\s*-?\s*pack\s*blister", name)
+    if blister_case and re.search(r"\bcase\b", name):
+        # A blister case holds 24 blisters (owner, 2026-10-13: 3-pack cases 72 packs,
+        # Prismatic Evolutions 2-pack case 48).
+        return 24 * max(1, int(blister_case.group(1))) * multiplier
     if "booster bundle" in name and "case" in name:
         # A booster bundle case holds 25 bundles of 6 packs (owner, 2026-10-13). Sets packed
         # differently (151's 60-bundle master case, Paldean Fates, Crown Zenith) are entered
@@ -2438,6 +2468,9 @@ def _infer_pack_count(
         return 25 * 6 * multiplier
     if "booster bundle" in name:
         return 6 * multiplier
+    if _is_build_battle_display(name):
+        # A display holds 10 Build & Battle Boxes of 4 packs (owner, 2026-10-13: Destined Rivals).
+        return 10 * 4 * multiplier
     if "build & battle box" in name or "build and battle box" in name:
         return 4 * multiplier
 
@@ -2452,9 +2485,12 @@ def _infer_pack_count(
     if re.search(r"\bmini\s*tin[s]?\b", name):
         return 2 * multiplier
 
-    pack_blister = re.search(r"(\d+)\s*pack\s*blister", name)
+    pack_blister = re.search(r"(\d+)\s*-?\s*pack\s*blister", name)  # "3 pack" or "3-Pack"
     if pack_blister:
         return max(1, int(pack_blister.group(1))) * multiplier
+    worded_blister = re.search(r"\b(two|three|four|five|six)\s*-?\s*pack\s*blister", name)  # "Three Pack Blister"
+    if worded_blister:
+        return WORD_NUMBERS[worded_blister.group(1)] * multiplier
     if "checklane blister" in name:
         return 1 * multiplier
     if "single pack blister" in name:
@@ -2477,9 +2513,12 @@ def _infer_pack_count(
     # Smaller collections with a known pack count, before the generic "collection" guess.
     if "knock out collection" in name:
         return 2 * multiplier
+    if "tech sticker collection" in name:
+        # 3 booster packs (owner, 2026-10-13: Ascended Heroes); "Set of 3" multiplies it.
+        return 3 * multiplier
     if "first partner illustration collection" in name:
-        # Two booster packs plus a 3-card promo pack, counted as half a pack.
-        return 2.5 * multiplier
+        # Two booster packs; its 3-card First Partner promo pack isn't counted (see _sealed_pack_note).
+        return 2 * multiplier
     if "collection" in name or "figure collection" in name:
         return 5 * multiplier
 
@@ -2511,7 +2550,7 @@ def _infer_retail_per_pack(name_raw: str, product_class: str, product_type: str 
         return 6.25
     if "single pack blister" in name:
         return 4.99
-    if re.search(r"\b\d+\s*pack\s*blister\b", name):
+    if re.search(r"\b\d+\s*-?\s*pack\s*blister\b", name):
         return 4.99
     if "mini tin" in name:
         return 5.00
@@ -2545,6 +2584,14 @@ def _infer_product_type(name_raw: str, product_class: str) -> str:
         return "Booster Box"
     if _is_sleeved_booster_case(name):
         return "Sleeved Booster Case"
+    if _is_build_battle_display(name):
+        return "Build & Battle Display"
+    if "build & battle box" in name or "build and battle box" in name:
+        return "Build & Battle Box"
+    if "booster bundle display" in name and not re.search(r"\bcase\b", name):
+        return "Booster Bundle Display"
+    if re.search(r"\d+\s*-?\s*pack\s*blister", name) and re.search(r"\bcase\b", name):
+        return "Pack Blister Case"
     if "elite trainer box" in name and re.search(r"\bcase\b", name):
         return "Pokemon Center ETB Case" if "pokemon center" in name else "Elite Trainer Box Case"
     if "pokemon center elite trainer box" in name:
@@ -6377,7 +6424,8 @@ def sealed_deals(
             confidence = "high"
         elif inferred_type in {"Booster Pack", "Booster Box", "Booster Bundle", "Elite Trainer Box", "Pokemon Center ETB", "Ultra Premium Collection", "Premium Collection",
                                "Booster Box Case", "Booster Bundle Case", "Elite Trainer Box Case", "Pokemon Center ETB Case",
-                               "Sleeved Booster Case"}:
+                               "Sleeved Booster Case", "Booster Bundle Display", "Pack Blister Case",
+                               "Build & Battle Box", "Build & Battle Display"}:
             confidence = "high"
         elif inferred_type in {"Tin", "Mini Tin", "Collection Box", "Pack Blister", "Ultra Premium Collection Case"}:
             # Low-confidence types are left out of the list unless include_low_confidence is
@@ -6413,6 +6461,7 @@ def sealed_deals(
                 "deal_score": round(deal_score, 3) if deal_score is not None else None,
                 "jp_value_score": None,
                 "confidence": confidence,
+                "pack_note": _sealed_pack_note(name),
             }
         )
 
