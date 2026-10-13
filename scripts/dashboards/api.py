@@ -2379,6 +2379,11 @@ def _sealed_name(name_raw: str) -> str:
     )
 
 
+def _is_build_battle_display(name: str) -> bool:
+    """"<Set> Build & Battle Box Display" or "<Set> Build & Battle Display" (lower-cased name)."""
+    return bool(re.search(r"build (&|and) battle (box )?display", name))
+
+
 def _is_sleeved_booster_case(name: str) -> bool:
     """"<Set> Sleeved Booster Case" or "<Set> Sleeved Booster Pack Case" (name already lower-cased)."""
     return "sleeved booster" in name and bool(re.search(r"\bcase\b", name))
@@ -2456,6 +2461,9 @@ def _infer_pack_count(
         return 25 * 6 * multiplier
     if "booster bundle" in name:
         return 6 * multiplier
+    if _is_build_battle_display(name):
+        # A display holds 10 Build & Battle Boxes of 4 packs (owner, 2026-10-13: Destined Rivals).
+        return 10 * 4 * multiplier
     if "build & battle box" in name or "build and battle box" in name:
         return 4 * multiplier
 
@@ -2566,6 +2574,10 @@ def _infer_product_type(name_raw: str, product_class: str) -> str:
         return "Booster Box"
     if _is_sleeved_booster_case(name):
         return "Sleeved Booster Case"
+    if _is_build_battle_display(name):
+        return "Build & Battle Display"
+    if "build & battle box" in name or "build and battle box" in name:
+        return "Build & Battle Box"
     if "booster bundle display" in name and not re.search(r"\bcase\b", name):
         return "Booster Bundle Display"
     if re.search(r"\d+\s*-?\s*pack\s*blister", name) and re.search(r"\bcase\b", name):
@@ -6402,7 +6414,8 @@ def sealed_deals(
             confidence = "high"
         elif inferred_type in {"Booster Pack", "Booster Box", "Booster Bundle", "Elite Trainer Box", "Pokemon Center ETB", "Ultra Premium Collection", "Premium Collection",
                                "Booster Box Case", "Booster Bundle Case", "Elite Trainer Box Case", "Pokemon Center ETB Case",
-                               "Sleeved Booster Case", "Booster Bundle Display", "Pack Blister Case"}:
+                               "Sleeved Booster Case", "Booster Bundle Display", "Pack Blister Case",
+                               "Build & Battle Box", "Build & Battle Display"}:
             confidence = "high"
         elif inferred_type in {"Tin", "Mini Tin", "Collection Box", "Pack Blister", "Ultra Premium Collection Case"}:
             # Low-confidence types are left out of the list unless include_low_confidence is
