@@ -2400,6 +2400,11 @@ def _infer_pack_count(
         return packs_per_box * multiplier
     if "ultra premium collection" in name:
         return 16 * multiplier
+    if "booster bundle" in name and "case" in name:
+        # A booster bundle case holds 25 bundles of 6 packs (owner, 2026-10-13). Sets packed
+        # differently (151's 60-bundle master case, Paldean Fates, Crown Zenith) are entered
+        # by product id in _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID.
+        return 25 * 6 * multiplier
     if "booster bundle" in name:
         return 6 * multiplier
     if "build & battle box" in name or "build and battle box" in name:
@@ -2509,6 +2514,8 @@ def _infer_product_type(name_raw: str, product_class: str) -> str:
         return "Pokemon Center ETB"
     if "elite trainer box" in name or " etb" in name or name.startswith("etb "):
         return "Elite Trainer Box"
+    if "booster bundle" in name and "case" in name:
+        return "Booster Bundle Case"
     if "booster bundle" in name:
         return "Booster Bundle"
     if re.search(r"\bmini\s*tin[s]?\b", name):
@@ -6327,9 +6334,12 @@ def sealed_deals(
             confidence = "high"
         elif "[" in name and ("set of" in lower_name or "bundle of" in lower_name):
             confidence = "high"
-        elif inferred_type in {"Booster Pack", "Booster Box", "Booster Bundle", "Elite Trainer Box", "Pokemon Center ETB", "Ultra Premium Collection", "Premium Collection"}:
+        elif inferred_type in {"Booster Pack", "Booster Box", "Booster Bundle", "Elite Trainer Box", "Pokemon Center ETB", "Ultra Premium Collection", "Premium Collection",
+                               "Booster Box Case", "Booster Bundle Case", "Elite Trainer Box Case"}:
             confidence = "high"
-        elif inferred_type in {"Tin", "Mini Tin", "Collection Box", "Pack Blister"}:
+        elif inferred_type in {"Tin", "Mini Tin", "Collection Box", "Pack Blister", "Ultra Premium Collection Case"}:
+            # Low-confidence types are left out of the list unless include_low_confidence is
+            # set, so a new product type must be added to one of these sets to be shown.
             confidence = "medium"
         else:
             confidence = "low"

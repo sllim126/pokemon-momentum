@@ -143,6 +143,9 @@ Desktop App Follow-up
     6. 39 other collection cases are left out of Sealed Deals until their contents are known
     Also confirm: one Celebrations UPC = 8 SWSH random + 17 Celebrations packs (taken from
     the earlier note on the case).
+    Booster bundle cases: 25 bundles x 6 packs = 150 by default (owner, 2026-10-13; includes
+    Prismatic Evolutions); 151's 60-bundle master case would need its own product id entry
+    (only the 25-bundle bulk case is listed today).
   - [waiting] Promo sets are filed under a shared "PROMO" era. Burger King Promos moved to
     DP/HGSS (owner, 2026-10-13); the other era promo sets (Diamond and Pearl Promos, HGSS
     Promos, BW, XY, SM, SWSH, SV Promos) stay under PROMO unless the owner asks.
