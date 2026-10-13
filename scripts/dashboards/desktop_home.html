@@ -1315,15 +1315,19 @@
         if (seq === listRequestSeq) $("listLoading").hidden = true;
       }
     }
-    // Fill the sort menu for this kind of view, keeping the current choice when it still applies.
+    // The last sort chosen for each kind of view (SORTS key), so going into a set and back
+    // to Sets, or between two market lists, keeps the visitor's choice.
+    const chosenSort = {};
+    // Fill the sort menu for this kind of view with the remembered choice, or its first option.
     function setSortOptions(list) {
       const select = $("sortSelect");
-      const options = SORTS[sortKind(list)];
-      const keep = options.some(([value]) => value === select.value) && select.dataset.kind === sortKind(list);
-      const value = keep ? select.value : options[0][0];
+      const kind = sortKind(list);
+      const options = SORTS[kind];
+      const remembered = chosenSort[kind];
+      const value = options.some(([v]) => v === remembered) ? remembered : options[0][0];
       select.replaceChildren(...options.map(([v, label]) => el("option", { value: v, text: `Sort: ${label}` })));
       select.value = value;
-      select.dataset.kind = sortKind(list);
+      select.dataset.kind = kind;
     }
     // Redraw the current view from rows already loaded (after a filter or sort change).
     const rerender = () => {
@@ -1707,7 +1711,10 @@
       return rows;
     }
     ["filterInput", "minPriceInput", "maxPriceInput"].forEach((id) => $(id).addEventListener("input", rerender));
-    $("sortSelect").addEventListener("change", rerender);
+    $("sortSelect").addEventListener("change", () => {
+      chosenSort[$("sortSelect").dataset.kind] = $("sortSelect").value;
+      rerender();
+    });
 
     function renderResults(errorText) {
       const rows = visibleRows();
