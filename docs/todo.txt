@@ -145,8 +145,10 @@ Desktop App Follow-up
     the earlier note on the case).
     Tech Sticker Collections: 3 packs each, "Set of 2/3" = 2 or 3 collections (owner-confirmed
     2026-10-13). Ascended Heroes Erika and Larry collections: 2 packs each (owner-confirmed).
-    Many smaller collections still fall back to the generic 5-pack "collection" guess; a list
-    of them for the owner to check is the next step here.
+    Everything still on a guess is listed in `data/sealed_pack_checklist.csv` (2026-10-13:
+    A 7 open questions, B 9 UPCs on 16, C 33 older ETBs on 9, D 45 Scarlet & Violet / Mega
+    collections and E 202 older ones on the 5-pack guess). The owner fills `your_pack_count`;
+    then load the answers as overrides in `api.py` and regenerate the file.
     Build & Battle displays: 10 boxes x 4 packs = 40 (owner, 2026-10-13: Destined Rivals; applied to all).
     Booster box cases: 6 boxes x 36 packs = 216 (owner-confirmed 2026-10-13; already counted so).
     Booster bundle displays: 10 bundles (60 packs); blister cases: 24 blisters (3-pack 72,
