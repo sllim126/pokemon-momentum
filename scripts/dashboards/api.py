@@ -1989,7 +1989,6 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID = {
     453471: {"pack_count": 100},
     256271: {"pack_count": 80},
     496905: {"pack_count": 216},
-    496131: {"pack_count": 80},
     600697: {"pack_count": 44},
     655281: {"pack_count": 216},
     454377: {
@@ -2380,6 +2379,11 @@ def _sealed_name(name_raw: str) -> str:
     )
 
 
+def _is_sleeved_booster_case(name: str) -> bool:
+    """"<Set> Sleeved Booster Case" or "<Set> Sleeved Booster Pack Case" (name already lower-cased)."""
+    return "sleeved booster" in name and bool(re.search(r"\bcase\b", name))
+
+
 def _pack_number(value: float) -> float | int:
     """A pack count as a whole number when it is one (2.0 -> 2), else kept as 2.5."""
     return int(value) if float(value).is_integer() else round(float(value), 1)
@@ -2403,6 +2407,9 @@ def _infer_pack_count(
     if _is_trick_or_trade_product(name_raw):
         return 35 * multiplier
 
+    if _is_sleeved_booster_case(name):
+        # Every sleeved booster case holds 144 single sleeved packs (owner, 2026-10-13).
+        return 144 * multiplier
     if "ultra premium collection case" in name:
         # Ultra Premium Collection cases hold 4 UPCs (owner, 2026-10-13).
         return 16 * 4 * multiplier
@@ -2494,6 +2501,8 @@ def _infer_retail_per_pack(name_raw: str, product_class: str, product_type: str 
 
     if normalized_type == "mini pack bundle":
         return 0.0
+    if "sleeved booster" in name:
+        return 4.99
     if "booster box" in name:
         return 4.49
     if "booster bundle" in name:
@@ -2534,6 +2543,8 @@ def _infer_product_type(name_raw: str, product_class: str) -> str:
         return "Half Booster Box"
     if "booster box" in name:
         return "Booster Box"
+    if _is_sleeved_booster_case(name):
+        return "Sleeved Booster Case"
     if "elite trainer box" in name and re.search(r"\bcase\b", name):
         return "Pokemon Center ETB Case" if "pokemon center" in name else "Elite Trainer Box Case"
     if "pokemon center elite trainer box" in name:
@@ -6365,7 +6376,8 @@ def sealed_deals(
         elif "[" in name and ("set of" in lower_name or "bundle of" in lower_name):
             confidence = "high"
         elif inferred_type in {"Booster Pack", "Booster Box", "Booster Bundle", "Elite Trainer Box", "Pokemon Center ETB", "Ultra Premium Collection", "Premium Collection",
-                               "Booster Box Case", "Booster Bundle Case", "Elite Trainer Box Case", "Pokemon Center ETB Case"}:
+                               "Booster Box Case", "Booster Bundle Case", "Elite Trainer Box Case", "Pokemon Center ETB Case",
+                               "Sleeved Booster Case"}:
             confidence = "high"
         elif inferred_type in {"Tin", "Mini Tin", "Collection Box", "Pack Blister", "Ultra Premium Collection Case"}:
             # Low-confidence types are left out of the list unless include_low_confidence is

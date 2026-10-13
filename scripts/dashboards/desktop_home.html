@@ -1106,7 +1106,7 @@
     }
     // Loose booster-pack price per set name. Only plain "<Set> Booster Pack" listings count: mini, promo,
     // pin-bundle and vintage edition packs would make the comparison misleading.
-    const SAME_SET_PACK_TYPES = new Set(["Booster Box", "Booster Box Case", "Half Booster Box", "Booster Bundle", "Booster Bundle Case", "Elite Trainer Box", "Elite Trainer Box Case", "Pokemon Center ETB", "Pokemon Center ETB Case", "Pack Blister", "Sleeved Pack"]);
+    const SAME_SET_PACK_TYPES = new Set(["Booster Box", "Booster Box Case", "Half Booster Box", "Booster Bundle", "Booster Bundle Case", "Elite Trainer Box", "Elite Trainer Box Case", "Pokemon Center ETB", "Pokemon Center ETB Case", "Pack Blister", "Sleeved Pack", "Sleeved Booster Case"]);
     const setAliases = (groupName) => {
       const name = String(groupName || "");
       const short = name.replace(/^[^:]+:\s*/, "").replace(/^(SM|XY|SWSH|BW|DP|HGSS|EX)\s+-\s+/, "");
