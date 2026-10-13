@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-13 (milestone: security, owner feedback, full card page, sealed pack counts)
+Last updated: 2026-10-13 (milestone: more sealed pack counts)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -35,6 +35,11 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-13 More sealed pack counts with the owner: booster bundle displays 60 (10
+  bundles), blister cases 72 / 48 (24 blisters), Build & Battle displays 40 (10 boxes),
+  Tech Sticker Collections 3, Ascended Heroes Erika/Larry 2, First Partner Illustration 2
+  with a hover note about its promo pack, hyphenated and spelled-out blister counts
+  ("3-Pack", "Three Pack"); booster box cases confirmed at 216.
 - 2026-10-13 Sealed Deals pack counts corrected with the owner: booster bundle cases 150
   packs (25 bundles), ETB cases 4 Pokemon Center or 10 retail ETBs, sleeved booster cases
   144, UPC cases 4 UPCs, Super-Premium Collections (Charizard ex 10, Prismatic 15, its case
@@ -138,9 +143,10 @@ Desktop App Follow-up
     6. 39 other collection cases are left out of Sealed Deals until their contents are known
     Also confirm: one Celebrations UPC = 8 SWSH random + 17 Celebrations packs (taken from
     the earlier note on the case).
-    Tech Sticker Collections: 3 packs (owner, 2026-10-13, for Ascended Heroes; applied to all
-    of them: 30th Celebration, Prismatic Evolutions, White Flare, Black Bolt, Paldean Fates);
-    confirm the other sets hold 3 too.
+    Tech Sticker Collections: 3 packs each, "Set of 2/3" = 2 or 3 collections (owner-confirmed
+    2026-10-13). Ascended Heroes Erika and Larry collections: 2 packs each (owner-confirmed).
+    Many smaller collections still fall back to the generic 5-pack "collection" guess; a list
+    of them for the owner to check is the next step here.
     Build & Battle displays: 10 boxes x 4 packs = 40 (owner, 2026-10-13: Destined Rivals; applied to all).
     Booster box cases: 6 boxes x 36 packs = 216 (owner-confirmed 2026-10-13; already counted so).
     Booster bundle displays: 10 bundles (60 packs); blister cases: 24 blisters (3-pack 72,
