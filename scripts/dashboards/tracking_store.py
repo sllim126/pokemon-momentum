@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import hashlib
 import hmac
 import json
@@ -13,6 +13,20 @@ from pathlib import Path
 # Tracking data intentionally lives outside the market-history database so lightweight
 # auth/tag writes do not interfere with the analytical DuckDB pipeline.
 TRACKING_DB_PATH = Path("/app/data/processed/tracking.sqlite3")
+
+# Sign-in sessions. A session ends after SESSION_IDLE_DAYS without use, or SESSION_MAX_DAYS
+# after sign-in however much it is used; signing in with Google again starts a new one.
+# Only a SHA-256 hash of each token is stored ("sha256:<hex>"), so a copy of this database
+# can't be used to sign in. last_seen_at is written at most once per SESSION_TOUCH_MINUTES.
+SESSION_IDLE_DAYS = 30
+SESSION_MAX_DAYS = 180
+SESSION_TOUCH_MINUTES = 60
+TOKEN_HASH_PREFIX = "sha256:"
+
+
+def hash_session_token(token: str) -> str:
+    """How a session token is stored and looked up."""
+    return TOKEN_HASH_PREFIX + hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def utc_now_iso() -> str:
@@ -109,6 +123,13 @@ def ensure_tracking_schema() -> None:
             );
             """
         )
+        # One-time upgrade: sessions created before tokens were hashed are hashed in place,
+        # so existing sign-ins keep working.
+        plain = con.execute(
+            "SELECT token FROM tracking_sessions WHERE token NOT LIKE ?", [TOKEN_HASH_PREFIX + "%"]
+        ).fetchall()
+        for (token,) in plain:
+            con.execute("UPDATE tracking_sessions SET token = ? WHERE token = ?", [hash_session_token(token), token])
         con.commit()
     finally:
         con.close()
@@ -190,8 +211,31 @@ def verify_user(username: str, pin: str) -> sqlite3.Row | None:
     return row
 
 
-def create_session(user_id: int) -> str:
+def _session_expired(created_at: str, last_seen_at: str, now: datetime) -> bool:
+    """True when a session is past its idle or absolute limit (see SESSION_* above)."""
+    created = datetime.fromisoformat(created_at)
+    last_seen = datetime.fromisoformat(last_seen_at)
+    return now - last_seen > timedelta(days=SESSION_IDLE_DAYS) or now - created > timedelta(days=SESSION_MAX_DAYS)
+
+
+def purge_expired_sessions() -> int:
+    """Delete every expired session; returns how many were removed."""
     ensure_tracking_schema()
+    now = datetime.now(timezone.utc)
+    con = get_con()
+    try:
+        rows = con.execute("SELECT token, created_at, last_seen_at FROM tracking_sessions").fetchall()
+        expired = [row["token"] for row in rows if _session_expired(row["created_at"], row["last_seen_at"], now)]
+        con.executemany("DELETE FROM tracking_sessions WHERE token = ?", [[token] for token in expired])
+        con.commit()
+        return len(expired)
+    finally:
+        con.close()
+
+
+def create_session(user_id: int) -> str:
+    """Start a session and return its token (the only time the plain token exists)."""
+    purge_expired_sessions()
     token = secrets.token_urlsafe(32)
     now = utc_now_iso()
     con = get_con()
@@ -201,7 +245,7 @@ def create_session(user_id: int) -> str:
             INSERT INTO tracking_sessions (token, user_id, created_at, last_seen_at)
             VALUES (?, ?, ?, ?)
             """,
-            [token, user_id, now, now],
+            [hash_session_token(token), user_id, now, now],
         )
         con.commit()
         return token
@@ -216,26 +260,33 @@ class SessionUser:
 
 
 def get_session_user(token: str) -> SessionUser | None:
+    """The signed-in user for a token, or None if it is unknown or expired (expired ones are deleted)."""
     ensure_tracking_schema()
+    if not token:
+        return None
+    stored = hash_session_token(token)
+    now = datetime.now(timezone.utc)
     con = get_con()
     try:
         row = con.execute(
             """
-            SELECT s.user_id, u.username
+            SELECT s.user_id, s.created_at, s.last_seen_at, u.username
             FROM tracking_sessions s
             JOIN tracking_users u
               ON u.id = s.user_id
             WHERE s.token = ?
             """,
-            [token],
+            [stored],
         ).fetchone()
         if row is None:
             return None
-        con.execute(
-            "UPDATE tracking_sessions SET last_seen_at = ? WHERE token = ?",
-            [utc_now_iso(), token],
-        )
-        con.commit()
+        if _session_expired(row["created_at"], row["last_seen_at"], now):
+            con.execute("DELETE FROM tracking_sessions WHERE token = ?", [stored])
+            con.commit()
+            return None
+        if now - datetime.fromisoformat(row["last_seen_at"]) > timedelta(minutes=SESSION_TOUCH_MINUTES):
+            con.execute("UPDATE tracking_sessions SET last_seen_at = ? WHERE token = ?", [utc_now_iso(), stored])
+            con.commit()
         return SessionUser(user_id=int(row["user_id"]), username=row["username"])
     finally:
         con.close()
@@ -245,7 +296,7 @@ def delete_session(token: str) -> None:
     ensure_tracking_schema()
     con = get_con()
     try:
-        con.execute("DELETE FROM tracking_sessions WHERE token = ?", [token])
+        con.execute("DELETE FROM tracking_sessions WHERE token = ?", [hash_session_token(token)])
         con.commit()
     finally:
         con.close()

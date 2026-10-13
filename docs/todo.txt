@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-12 (milestone: desktop app at /, fast card views)
+Last updated: 2026-10-13 (security tightening)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -35,6 +35,10 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-13 Security tightening: sign-in sessions expire (30 days idle, 180 days max) and
+  are stored as hashes; live index rebuilds and live PSA lookups are admin-only; the
+  mobile Feedback form has size and rate limits; saved-list lookups are capped. Details
+  in `docs/operator_runbook.txt` ("Sign-in sessions", "Public endpoints with limits").
 - 2026-10-12 Card views are fast: everything a card loads answers in about 0.01-0.05 s
   (was 0.4-1.5 s). The web app remembers which tables exist and shares one read-only
   DuckDB connection; the "All" chart and the 6-Month Hold read a new nightly weekly
@@ -120,9 +124,6 @@ already be covered.
 Active Queue
 ------------
 
-- [planned] Security tightening (from `docs/project_status.md`):
-  - tracking sessions never expire
-  - refresh parameters such as `/index-overview-data?refresh=true` can be triggered by anyone
 - [planned] Search ranking can put a promo above the main printing (example: "charizard 199").
 - [waiting] Confirm the fee and shipping numbers marked ESTIMATE in
   `scripts/common/selling_costs.py` against real invoices (owner has the invoices).

@@ -42,6 +42,35 @@ class ApiRouteTests(unittest.TestCase):
         private = self.client.get("/tracking/auth_config")
         self.assertNotIn("public", private.headers.get("cache-control", ""))
 
+    @patch.object(api, "get_psa_certification", return_value=None)
+    @patch.object(api.requests, "get")
+    def test_psa_live_lookup_and_index_refresh_need_admin(self, requests_get_mock, _cache_get_mock):
+        self.assertEqual(self.client.get("/api/psa/cert/12345678").status_code, 401)
+        requests_get_mock.assert_not_called()  # PSA was never called
+        self.assertEqual(self.client.get("/index-overview-data?index=sv100&refresh=true").status_code, 401)
+
+    def test_feedback_form_is_rate_limited_per_address(self):
+        api._feedback_times.clear()
+        self.addCleanup(api._feedback_times.clear)
+        body = {"title": "Chart broken", "details": "The chart did not load on the card page."}
+        headers = {"x-forwarded-for": "203.0.113.9"}
+        with patch.object(api, "create_bug_report", return_value=1):
+            codes = [self.client.post("/bug_reports", json=body, headers=headers).status_code
+                     for _ in range(api.FEEDBACK_PER_HOUR + 1)]
+            other = self.client.post("/bug_reports", json=body, headers={"x-forwarded-for": "203.0.113.10"})
+        self.assertEqual(codes[:-1], [200] * api.FEEDBACK_PER_HOUR)
+        self.assertEqual(codes[-1], 429)
+        self.assertEqual(other.status_code, 200)
+
+    def test_feedback_text_is_trimmed(self):
+        api._feedback_times.clear()
+        self.addCleanup(api._feedback_times.clear)
+        with patch.object(api, "create_bug_report", return_value=1) as create_mock:
+            self.client.post("/bug_reports", json={"title": "x" * 1000, "details": "y" * 20000})
+        saved = create_mock.call_args[0][0]
+        self.assertEqual(len(saved["title"]), api.FEEDBACK_FIELD_LIMITS["title"])
+        self.assertEqual(len(saved["details"]), api.FEEDBACK_FIELD_LIMITS["details"])
+
     def test_home_serves_desktop_app_on_desktop(self):
         response = self.client.get("/", headers={"user-agent": "Mozilla/5.0 (X11; Linux x86_64) Chrome/120"})
 
@@ -508,6 +537,8 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(payload["card"]["card_name"], "Pikachu")
         requests_get_mock.assert_not_called()
 
+    # Live PSA lookups are admin-only; these tests act as a signed-in admin.
+    @patch.object(api, "require_admin_user", new=lambda **_: None)
     @patch.dict("os.environ", {"POKEMON_MOMENTUM_PSA_ACCESS_TOKEN": "test-token"})
     @patch.object(api, "upsert_psa_certification")
     @patch.object(api, "get_psa_certification", return_value=None)
@@ -544,6 +575,8 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(requests_get_mock.call_args.kwargs["headers"]["Authorization"], "bearer test-token")
         self.assertEqual(upsert_mock.call_args.kwargs["lookup_status"], "not_found")
 
+    # Live PSA lookups are admin-only; these tests act as a signed-in admin.
+    @patch.object(api, "require_admin_user", new=lambda **_: None)
     @patch.dict("os.environ", {"POKEMON_MOMENTUM_PSA_ACCESS_TOKEN": "test-token"})
     @patch.object(api, "upsert_psa_certification")
     @patch.object(api, "get_psa_certification", return_value=None)
@@ -589,6 +622,8 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(payload["card"]["grade_description"], "Mint")
         self.assertEqual(payload["card"]["item_status"], "OK")
 
+    # Live PSA lookups are admin-only; these tests act as a signed-in admin.
+    @patch.object(api, "require_admin_user", new=lambda **_: None)
     @patch.dict("os.environ", {"POKEMON_MOMENTUM_PSA_ACCESS_TOKEN": "test-token"})
     @patch.object(api, "get_psa_certification", return_value=None)
     @patch.object(api.requests, "get")

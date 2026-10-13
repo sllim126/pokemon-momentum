@@ -791,6 +791,25 @@ Current scope:
 - price targets (buy-below / sell-above) stay in each browser and do not sync
 - `/embed` and `/set-explorer` are not wired to tracking
 
+Sign-in sessions (`scripts/dashboards/tracking_store.py`, since 2026-10-13):
+
+- a session ends after 30 days without use or 180 days after sign-in
+  (`SESSION_IDLE_DAYS`, `SESSION_MAX_DAYS`); signing in with Google again starts a new one
+- only a SHA-256 hash of each token is stored (`sha256:...` in `tracking_sessions`), so a
+  copy of `data/processed/tracking.sqlite3` can't be used to sign in; tokens from before
+  this change were hashed in place and kept working (pre-upgrade backup:
+  `data/processed/tracking.sqlite3.bak-2026-10-13`, delete once you're happy)
+- expired sessions are deleted at each new sign-in
+
+Public endpoints with limits (since 2026-10-13):
+
+- `/index-overview-data?refresh=true` (live rebuild of an index) is admin-only
+- `/api/psa/cert/<number>`: fresh cached results are public; anything that would call PSA
+  (new or stale cert, `refresh=true`) is admin-only, to protect our PSA allowance
+- `/bug_reports` (the mobile Feedback form): text trimmed (title 200, details 5,000
+  characters), at most 5 per address and 60 site-wide per hour (answers 429 beyond that)
+- `/tracking/items/resolve`: at most 5,000 items per request
+
 Bug report checks
 -----------------
 Bug reports are handled in the Discord #bug-reports channel (invite:

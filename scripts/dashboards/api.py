@@ -8,6 +8,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import unquote, urlencode
 import sys
+import time
 import urllib.error
 
 import duckdb
@@ -1068,11 +1069,20 @@ def health(category_id: int = 3):
 
 
 @app.get("/api/psa/cert/{cert_number}")
-def psa_cert_lookup(cert_number: str, refresh: bool = False):
+def psa_cert_lookup(
+    cert_number: str,
+    refresh: bool = False,
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    """PSA cert details. Fresh cached results are public; anything that would call PSA
+    (a new or stale cert, or refresh=true) is admin-only, because it uses our PSA account
+    and its daily allowance. No public page calls this yet (see docs/todo.txt, PSA)."""
     normalized_cert = validate_psa_cert_number(cert_number)
     cached_row = get_psa_certification(normalized_cert)
     if cached_row is not None and not refresh and psa_cache_is_fresh(cached_row):
         return psa_lookup_response(cached_row, source="cache")
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
 
     payload = fetch_psa_cert_from_upstream(normalized_cert)
     normalized = normalize_psa_lookup(normalized_cert, payload)
@@ -1759,12 +1769,21 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
 
 
 @app.get("/index-overview-data")
-def index_overview_data(category_id: int = 3, index: str = "sv100", refresh: bool = False):
+def index_overview_data(
+    category_id: int = 3,
+    index: str = "sv100",
+    refresh: bool = False,
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
     """Everything one market index page needs: level series, holdings, sets, reshuffles.
 
     Served from the snapshot the nightly update builds (it runs after the parquet export,
-    so it includes the newest day), cached in memory; refresh=true recomputes it live.
+    so it includes the newest day), cached in memory. refresh=true recomputes it live from
+    the raw history and overwrites the snapshot, so it is admin-only (401/403 otherwise).
     """
+    if refresh:
+        require_admin_user(authorization=authorization, tracking_token=tracking_token)
     requested_category = int(category_id)
     if requested_category not in (3, 85):
         raise HTTPException(status_code=400, detail="Index overview is only configured for category_id in {3, 85}.")
@@ -3942,6 +3961,9 @@ def tracking_saved_views_delete(view_id: int, authorization: str | None = Header
     return {"ok": True}
 
 
+TRACKED_ITEMS_LIMIT = 5000  # far above any real saved list; stops oversized requests
+
+
 @app.post("/tracking/items/resolve")
 def tracking_items_resolve(payload: dict | None = None):
     """Resolve tracked tag rows into display-ready dashboard items on the server."""
@@ -3953,6 +3975,8 @@ def tracking_items_resolve(payload: dict | None = None):
     raw_items = body.get("items") or []
     if not isinstance(raw_items, list):
         raise HTTPException(status_code=400, detail="items must be a list")
+    if len(raw_items) > TRACKED_ITEMS_LIMIT:
+        raise HTTPException(status_code=400, detail=f"At most {TRACKED_ITEMS_LIMIT} saved items per request")
 
     tags_by_key: dict[tuple[int, str], set[str]] = {}
     for item in raw_items:
@@ -4039,8 +4063,56 @@ def tracking_delete_account(payload: dict | None = None, authorization: str | No
     return {"ok": True}
 
 
+# Limits for the anonymous mobile Feedback form (bug reports go to Discord): text is
+# trimmed to these lengths, each address may send FEEDBACK_PER_HOUR reports an hour, and
+# the whole site accepts at most FEEDBACK_SITE_PER_HOUR an hour, so the queue can't be
+# flooded even with faked addresses. Counts are in memory and reset on restart.
+FEEDBACK_FIELD_LIMITS = {"title": 200, "details": 5000, "expected": 2000}
+FEEDBACK_OTHER_FIELD_LIMIT = 500
+FEEDBACK_PER_HOUR = 5
+FEEDBACK_SITE_PER_HOUR = 60
+_feedback_times: dict[str, list[float]] = {}
+
+
+def client_address(request: Request) -> str:
+    """The visitor's address. The site runs behind a proxy, so use Cloudflare's header if
+    present, else the last X-Forwarded-For entry (the one our proxy adds; earlier entries
+    can be faked by the visitor), else the connection's address."""
+    cloudflare = request.headers.get("cf-connecting-ip", "").strip()
+    if cloudflare:
+        return cloudflare
+    forwarded = [part.strip() for part in request.headers.get("x-forwarded-for", "").split(",") if part.strip()]
+    if forwarded:
+        return forwarded[-1]
+    return request.client.host if request.client else "unknown"
+
+
+def _feedback_allowed(address: str) -> bool:
+    """Per-address and site-wide hourly limits for /bug_reports."""
+    now = time.monotonic()
+    for key in list(_feedback_times):
+        _feedback_times[key] = [t for t in _feedback_times[key] if now - t < 3600]
+        if not _feedback_times[key]:
+            del _feedback_times[key]
+    if len(_feedback_times.get(address, [])) >= FEEDBACK_PER_HOUR:
+        return False
+    if sum(len(times) for times in _feedback_times.values()) >= FEEDBACK_SITE_PER_HOUR:
+        return False
+    _feedback_times.setdefault(address, []).append(now)
+    return True
+
+
 @app.post("/bug_reports")
-def submit_bug_report(payload: dict):
+def submit_bug_report(payload: dict, request: Request):
+    """Save a mobile Feedback form submission into the bug_reports review queue."""
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Expected a JSON object")
+    if not _feedback_allowed(client_address(request)):
+        raise HTTPException(status_code=429, detail="Too many reports from this address; try again in an hour.")
+    payload = {
+        key: (str(value)[: FEEDBACK_FIELD_LIMITS.get(key, FEEDBACK_OTHER_FIELD_LIMIT)] if isinstance(value, str) else value)
+        for key, value in payload.items()
+    }
     title = str(payload.get("title", "")).strip()
     details = str(payload.get("details", "")).strip()
     if len(title) < 3:
