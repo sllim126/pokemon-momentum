@@ -128,7 +128,8 @@ Desktop App Follow-up
 ---------------------
 
 - Follow-ups from the owner's 2026-10-13 feedback:
-  - [planned] Sealed pack counts to confirm (each is guessed from the product name in
+  - [waiting] Sealed pack counts to confirm (owner is checking the Super-Premium
+    Collections and the UPC cases) (each is guessed from the product name in
     `_infer_pack_count` in `api.py`; add exact ones to `_SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID`):
     - Super-Premium Collections (Charizard ex, Prismatic Evolutions, Shining Legends,
       Dragon Majesty, Mew & Mewtwo) are counted as 5 packs, probably too few
@@ -137,9 +138,9 @@ Desktop App Follow-up
     - other collection cases (39 on 2026-10-13, e.g. Celebrations Collection, Pokemon Day
       2026, First Partner Illustration) are left out of Sealed Deals until their contents
       are known
-  - [waiting] Promo sets are filed under a shared "PROMO" era. Owner to decide whether
-    era-specific ones (Burger King, Diamond and Pearl Promos, HGSS Promos...) move into
-    their eras.
+  - [waiting] Promo sets are filed under a shared "PROMO" era. Burger King Promos moved to
+    DP/HGSS (owner, 2026-10-13); the other era promo sets (Diamond and Pearl Promos, HGSS
+    Promos, BW, XY, SM, SWSH, SV Promos) stay under PROMO unless the owner asks.
   - [planned] Set logos still missing: ME06 Delta Reign (not yet in the developer API on
     2026-10-13), Base Set (the API only has the generic TCG logo), MEE/SVE energies, ME
     promo, First Partner sets, trainer kits and other small product sets. See the header

@@ -33,6 +33,7 @@ GENERATION_OVERRIDES = {
     17688: "SWSH",   # Crown Zenith
     17689: "SWSH",   # Crown Zenith: Galarian Gallery
     1384: "DP/HGSS", # Supreme Victors
+    2175: "DP/HGSS", # Burger King Promos (2008 Diamond & Pearl and 2009 Platinum promo cards)
     1414: "POP",     # POP Series 7
     1422: "POP",     # POP Series 1
     1432: "POP",     # POP Series 6
