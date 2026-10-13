@@ -38,10 +38,10 @@ Recently Completed
 - 2026-10-13 Sealed Deals pack counts corrected with the owner: booster bundle cases 150
   packs (25 bundles), ETB cases 4 Pokemon Center or 10 retail ETBs, sleeved booster cases
   144, UPC cases 4 UPCs, Super-Premium Collections (Charizard ex 10, Prismatic 15, its case
-  60), Knock Out 2, First Partner Illustration 2.5; "Ultra-Premium" and curly-apostrophe
+  60), Knock Out 2, First Partner Illustration 2 (its promo pack noted on hover, not counted); "Ultra-Premium" and curly-apostrophe
   names now match their rules; case types are no longer hidden as low confidence.
 - 2026-10-13 Owner feedback, second part: Knock Out Collections count 2 packs and First
-  Partner Illustration Collections 2.5; "Ultra-Premium" spelled with a hyphen now counts as
+  Partner Illustration Collections 2 (promo pack noted, not counted); "Ultra-Premium" spelled with a hyphen now counts as
   an Ultra Premium Collection (16 packs, was 5); collection cases with unknown contents are
   left out instead of counted as 5 packs; Market Stats sorts are newest/oldest era (the
   duplicate "newest set release" is gone); a 2Y chart window; the chosen sort is kept when

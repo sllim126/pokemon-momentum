@@ -2384,6 +2384,14 @@ def _is_sleeved_booster_case(name: str) -> bool:
     return "sleeved booster" in name and bool(re.search(r"\bcase\b", name))
 
 
+def _sealed_pack_note(name_raw: str) -> str | None:
+    """A short note about what a sealed product's pack count leaves out, shown on hover."""
+    name = _sealed_name(name_raw)
+    if "first partner illustration collection" in name:
+        return "Also includes a 3-card First Partner promo pack, which isn't counted in the packs or the price per pack."
+    return None
+
+
 def _pack_number(value: float) -> float | int:
     """A pack count as a whole number when it is one (2.0 -> 2), else kept as 2.5."""
     return int(value) if float(value).is_integer() else round(float(value), 1)
@@ -2488,8 +2496,8 @@ def _infer_pack_count(
     if "knock out collection" in name:
         return 2 * multiplier
     if "first partner illustration collection" in name:
-        # Two booster packs plus a 3-card promo pack, counted as half a pack.
-        return 2.5 * multiplier
+        # Two booster packs; its 3-card First Partner promo pack isn't counted (see _sealed_pack_note).
+        return 2 * multiplier
     if "collection" in name or "figure collection" in name:
         return 5 * multiplier
 
@@ -6427,6 +6435,7 @@ def sealed_deals(
                 "deal_score": round(deal_score, 3) if deal_score is not None else None,
                 "jp_value_score": None,
                 "confidence": confidence,
+                "pack_note": _sealed_pack_note(name),
             }
         )
 

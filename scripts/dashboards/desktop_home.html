@@ -1803,8 +1803,11 @@
     function extraCell(row, list) {
       if (list.key === "sealed_deals") {
         const r = row.raw;
-        const detail = r.loose_lines ? r.loose_lines.map((l) => `${l.count} × ${l.set} at ${money(l.price)}`).join("\n") : `${r.pack_mix || ""}\nNo loose price for every pack inside.`;
-        return el("span", { class: "target-text", title: detail, text: r.loose_value ? `${money(r.loose_value)} for ${packs(r.pack_count)}` : r.pack_count ? packs(r.pack_count) : "—" });
+        // pack_note (e.g. a promo pack not counted) adds a "*" and goes first in the hover text.
+        const detail = [r.pack_note ? `* ${r.pack_note}` : "",
+          r.loose_lines ? r.loose_lines.map((l) => `${l.count} × ${l.set} at ${money(l.price)}`).join("\n") : `${r.pack_mix || ""}\nNo loose price for every pack inside.`].filter(Boolean).join("\n\n");
+        const star = r.pack_note ? "*" : "";
+        return el("span", { class: "target-text", title: detail, text: r.loose_value ? `${money(r.loose_value)} for ${packs(r.pack_count)}${star}` : r.pack_count ? `${packs(r.pack_count)}${star}` : "—" });
       }
       if (list.key === "budget") return el("span", { class: "target-text", text: Number.isFinite(row.raw.budget_share_pct) ? `${Math.round(row.raw.budget_share_pct)}%` : "—" });
       return el("span", { text: "" });
