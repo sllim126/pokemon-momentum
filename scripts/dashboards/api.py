@@ -2379,6 +2379,9 @@ def _sealed_name(name_raw: str) -> str:
     )
 
 
+WORD_NUMBERS = {"two": 2, "three": 3, "four": 4, "five": 5, "six": 6}
+
+
 def _is_build_battle_display(name: str) -> bool:
     """"<Set> Build & Battle Box Display" or "<Set> Build & Battle Display" (lower-cased name)."""
     return bool(re.search(r"build (&|and) battle (box )?display", name))
@@ -2481,6 +2484,9 @@ def _infer_pack_count(
     pack_blister = re.search(r"(\d+)\s*-?\s*pack\s*blister", name)  # "3 pack" or "3-Pack"
     if pack_blister:
         return max(1, int(pack_blister.group(1))) * multiplier
+    worded_blister = re.search(r"\b(two|three|four|five|six)\s*-?\s*pack\s*blister", name)  # "Three Pack Blister"
+    if worded_blister:
+        return WORD_NUMBERS[worded_blister.group(1)] * multiplier
     if "checklane blister" in name:
         return 1 * multiplier
     if "single pack blister" in name:
