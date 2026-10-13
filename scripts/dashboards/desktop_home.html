@@ -479,6 +479,7 @@
                 <button type="button" data-days="30">30D</button>
                 <button type="button" data-days="90">90D</button>
                 <button type="button" data-days="365">1Y</button>
+                <button type="button" data-days="730" title="Two years, to compare this season with last">2Y</button>
                 <button type="button" data-days="5000">All</button>
               </div>
             </div>
@@ -621,7 +622,7 @@
       species: [["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"], ["signal", "set"]],
       sealed_deals: [["change_asc", "cheapest vs loose packs"], ["per_pack", "price per pack"], ["price_asc", "price, low to high"], ["price_desc", "price, high to low"]],
       budget: [["signal", "best pick"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
-      indexes: [["era", "newest era"], ["release", "newest set release"], ["change30", "30-day change"], ["start", "change since start"], ["level", "level"]],
+      indexes: [["era", "newest era"], ["era_old", "oldest era"], ["change30", "30-day change"], ["start", "change since start"], ["level", "level"]],
       index: [["signal", "rank"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
       set_values: [["cost", "full set cost"], ["release", "release date, newest"], ["release_old", "release date, oldest"], ["avg", "average card"], ["top_share", "top hit share"], ["depth", "depth"], ["name", "name"]],
       sets: [["strength", "strength"], ["release", "release date, newest"], ["release_old", "release date, oldest"], ["avg30", "30-day average"], ["avg90", "90-day average"], ["items", "most items"], ["name", "name"]],
@@ -1483,11 +1484,10 @@
       const text = $("filterInput").value.trim().toLowerCase();
       let rows = state.indexRows.filter((r) => !text || String(r.payload.index_name).toLowerCase().includes(text));
       const sum = (r) => r.payload.summary || {};
-      // Newest release among the index's sets (old sets fall back to their first price date).
-      const newestRelease = (r) => Math.max(0, ...(r.payload.set_releases || []).map((x) => Date.parse(x.release_date) || 0));
+      // r.era is the index's position in INDEXES (0 = newest era).
       const by = {
         era: (r) => r.era,
-        release: (r) => -newestRelease(r),
+        era_old: (r) => -r.era,
         change30: (r) => -(sum(r).day30_change?.pct ?? -Infinity),
         start: (r) => -(sum(r).all_time_index_change?.pct ?? -Infinity),
         level: (r) => -(sum(r).current_level ?? -Infinity),

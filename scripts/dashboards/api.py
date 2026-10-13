@@ -727,7 +727,8 @@ PUBLIC_DATA_PATHS = frozenset({
 
 @app.middleware("http")
 async def cache_public_market_data(request: Request, call_next):
-    """Let browsers reuse successful public market-data answers (see PUBLIC_DATA_PATHS)."""
+    """Let browsers reuse public market data for a while (PUBLIC_DATA_PATHS), and make them
+    re-check pages, scripts and stylesheets on every visit."""
     response = await call_next(request)
     if (
         request.method == "GET"
@@ -736,6 +737,19 @@ async def cache_public_market_data(request: Request, call_next):
         and "cache-control" not in response.headers
     ):
         response.headers["Cache-Control"] = f"public, max-age={PUBLIC_DATA_CACHE_SECONDS}"
+    elif (
+        request.method == "GET"
+        and response.status_code == 200
+        and "cache-control" not in response.headers
+        and (
+            response.headers.get("content-type", "").startswith("text/html")
+            or request.url.path.endswith((".js", ".css"))
+        )
+    ):
+        # Pages, scripts and stylesheets: the browser must check for a newer copy every time
+        # (cheap: an unchanged file answers 304 thanks to its ETag). Without this, browsers
+        # guess a freshness period and can show an outdated page for hours after a change.
+        response.headers["Cache-Control"] = "no-cache"
     return response
 
 
@@ -2274,13 +2288,28 @@ def _looks_like_individual_card(name_raw: str, rarity: str | None, number: str |
     return False
 
 
+def _sealed_name(name_raw: str) -> str:
+    """Lower-cased product name for the sealed rules, with spelling variants unified
+    ("Ultra-Premium" and "Ultra Premium" are the same product type)."""
+    return (name_raw or "").lower().replace("ultra-premium", "ultra premium").replace("super-premium", "super premium")
+
+
+def _pack_number(value: float) -> float | int:
+    """A pack count as a whole number when it is one (2.0 -> 2), else kept as 2.5."""
+    return int(value) if float(value).is_integer() else round(float(value), 1)
+
+
 def _infer_pack_count(
     name_raw: str,
     product_class: str,
     category_id: int | None = None,
     group_name_raw: str = "",
-) -> int | None:
-    name = (name_raw or "").lower()
+) -> float | None:
+    """Booster packs inside a sealed product, guessed from its name (None if unknown).
+
+    Usually a whole number; a product with a short promo pack can count it as half a pack.
+    """
+    name = _sealed_name(name_raw)
     multiplier = _parse_bundle_multiplier(name)
     is_japanese_market = int(category_id or 0) == 85
     jp_packs_per_box, _ = _jp_pricing_profile(name_raw, group_name_raw) if is_japanese_market else (36, 0.0)
@@ -2342,6 +2371,16 @@ def _infer_pack_count(
         return 3 * multiplier
     if re.search(r"\btin[s]?\b", name):
         return 4 * multiplier
+    # A case of collections: how many collections it holds isn't in the name, so the pack
+    # count is unknown. Add the product to _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID when known.
+    if "collection case" in name:
+        return None
+    # Smaller collections with a known pack count, before the generic "collection" guess.
+    if "knock out collection" in name:
+        return 2 * multiplier
+    if "first partner illustration collection" in name:
+        # Two booster packs plus a 3-card promo pack, counted as half a pack.
+        return 2.5 * multiplier
     if "collection" in name or "figure collection" in name:
         return 5 * multiplier
 
@@ -2355,7 +2394,7 @@ def _infer_pack_count(
 
 
 def _infer_retail_per_pack(name_raw: str, product_class: str, product_type: str | None = None) -> float:
-    name = (name_raw or "").lower()
+    name = _sealed_name(name_raw)
     normalized_type = str(product_type or "").lower()
 
     if _is_trick_or_trade_product(name_raw):
@@ -2394,7 +2433,7 @@ def _infer_retail_per_pack(name_raw: str, product_class: str, product_type: str 
 
 
 def _infer_product_type(name_raw: str, product_class: str) -> str:
-    name = (name_raw or "").lower()
+    name = _sealed_name(name_raw)
     if "ultra premium collection" in name:
         return "Ultra Premium Collection"
     if "booster box case" in name or ("booster box" in name and "case" in name):
@@ -6166,7 +6205,7 @@ def sealed_deals(
         else:
             pack_count = _infer_pack_count(name, product_class, category.category_id, str(row.get("groupName") or ""))
             pack_set = str(row.get("groupName") or "Unknown Set")
-            packs = [{"set": pack_set, "count": int(pack_count or 0)}] if pack_count else []
+            packs = [{"set": pack_set, "count": _pack_number(pack_count or 0)}] if pack_count else []
         if pack_count is None or pack_count <= 0:
             continue
 
@@ -6247,7 +6286,7 @@ def sealed_deals(
                 "productType": inferred_type,
                 "subTypeName": row.get("subTypeName"),
                 "latest_price": round(latest_price, 2),
-                "pack_count": int(pack_count),
+                "pack_count": _pack_number(pack_count),
                 "pack_mix": _pack_mix_text(packs),
                 "pack_sets": [str(pack.get("set")) for pack in packs if pack.get("set")],
                 "price_per_pack": round(price_per_pack, 3),

@@ -35,6 +35,13 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-13 Owner feedback, second part: Knock Out Collections count 2 packs and First
+  Partner Illustration Collections 2.5; "Ultra-Premium" spelled with a hyphen now counts as
+  an Ultra Premium Collection (16 packs, was 5); collection cases with unknown contents are
+  left out instead of counted as 5 packs; Market Stats sorts are newest/oldest era (the
+  duplicate "newest set release" is gone); a 2Y chart window; the chosen sort is kept when
+  returning to a list; Burger King Promos dated to 2008; pages, scripts and stylesheets are
+  served with Cache-Control: no-cache so browsers always pick up changes.
 - 2026-10-13 Collector Hub and Placeholder Library rebuilt as scrolling pages: plain
   explanations, a three-step "how it works", resources as tiles or a downloads list by
   audience, links that open in a new tab instead of an embedded preview.
@@ -121,6 +128,18 @@ Desktop App Follow-up
 ---------------------
 
 - Follow-ups from the owner's 2026-10-13 feedback:
+  - [planned] Sealed pack counts to confirm (each is guessed from the product name in
+    `_infer_pack_count` in `api.py`; add exact ones to `_SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID`):
+    - Super-Premium Collections (Charizard ex, Prismatic Evolutions, Shining Legends,
+      Dragon Majesty, Mew & Mewtwo) are counted as 5 packs, probably too few
+    - Ultra Premium Collection cases default to 6 x 16 = 96 packs, but 151's case is
+      entered as 64; check Moltres, 30th Celebration and other UPC cases
+    - other collection cases (39 on 2026-10-13, e.g. Celebrations Collection, Pokemon Day
+      2026, First Partner Illustration) are left out of Sealed Deals until their contents
+      are known
+  - [waiting] Promo sets are filed under a shared "PROMO" era. Owner to decide whether
+    era-specific ones (Burger King, Diamond and Pearl Promos, HGSS Promos...) move into
+    their eras.
   - [planned] Set logos still missing: ME06 Delta Reign (not yet in the developer API on
     2026-10-13), Base Set (the API only has the generic TCG logo), MEE/SVE energies, ME
     promo, First Partner sets, trainer kits and other small product sets. See the header
