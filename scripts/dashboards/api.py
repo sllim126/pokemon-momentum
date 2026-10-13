@@ -46,6 +46,7 @@ from scripts.dashboards.query_support import (
     db_has_table,
     build_metadata_cte,
     gap_scaled_threshold,
+    add_release_dates,
     build_premium_rarity_filter,
     build_set_basket_filter,
     category_config,
@@ -5867,6 +5868,8 @@ def group_signals(limit: int = 500, min_items: int = 5, generation: str | None =
     LIMIT {limit}
     """
     cols, rows = q(sql)
+    # Each set's release date (see set_release_dates in query_support.py).
+    cols, rows = add_release_dates(cols, rows, category.category_id)
     return {"columns": cols, "rows": rows}
 
 
@@ -6066,6 +6069,8 @@ def set_baskets(
     LIMIT {limit}
     """
     cols, rows = q(sql)
+    # Each set's release date (see set_release_dates in query_support.py).
+    cols, rows = add_release_dates(cols, rows, category.category_id)
     return {
         "columns": cols,
         "rows": rows,

@@ -169,6 +169,7 @@
     tbody tr[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
     td { padding: 7px 12px; vertical-align: middle; }
     .card-cell { display: grid; grid-template-columns: 43px 1fr; gap: 10px; align-items: center; min-width: 0; }
+    .overall-tag { margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-soft); vertical-align: 2px; }
     .thumb { width: 43px; height: 59px; object-fit: contain; border-radius: 4px; background: var(--panel-3); }
     .card-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-meta { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -592,10 +593,10 @@
       species: [["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"], ["signal", "set"]],
       sealed_deals: [["change_asc", "cheapest vs loose packs"], ["per_pack", "price per pack"], ["price_asc", "price, low to high"], ["price_desc", "price, high to low"]],
       budget: [["signal", "best pick"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
-      indexes: [["era", "newest era"], ["change30", "30-day change"], ["start", "change since start"], ["level", "level"]],
+      indexes: [["era", "newest era"], ["release", "newest set release"], ["change30", "30-day change"], ["start", "change since start"], ["level", "level"]],
       index: [["signal", "rank"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
-      set_values: [["cost", "full set cost"], ["avg", "average card"], ["top_share", "top hit share"], ["depth", "depth"], ["name", "name"]],
-      sets: [["strength", "strength"], ["avg30", "30-day average"], ["avg90", "90-day average"], ["items", "most items"], ["name", "name"]],
+      set_values: [["cost", "full set cost"], ["release", "release date, newest"], ["release_old", "release date, oldest"], ["avg", "average card"], ["top_share", "top hit share"], ["depth", "depth"], ["name", "name"]],
+      sets: [["strength", "strength"], ["release", "release date, newest"], ["release_old", "release date, oldest"], ["avg30", "30-day average"], ["avg90", "90-day average"], ["items", "most items"], ["name", "name"]],
     };
     const sortKind = (list) => (list.track ? "track" : SORTS[list.key] ? list.key : "market");
     const SET_FILTER_LABELS = {
@@ -614,6 +615,8 @@
     const GROUP_LINKS = {
       Learn: [["Collector Hub", "/collector-hub"], ["Placeholder Library", "/placeholders"]],
     };
+    // The Top 151 indexes stand for the overall Pokémon market: pinned first in Market Stats.
+    const OVERALL_INDEXES = new Set(["pokemon100", "jp_pokemon100"]);
     const INDEXES = {
       EN: ["mega100", "sv100", "swsh100", "sm100", "xy100", "bw100", "dp100", "ex100", "ecard100", "neo100", "wotc100", "pokemon100"],
       JP: ["jp_sv100", "jp_pokemon100"],
@@ -1321,6 +1324,23 @@
         if (seq === listRequestSeq) $("listLoading").hidden = true;
       }
     }
+    // Release-date sorting for set lists. Dates come from the server (set_release_dates in
+    // query_support.py); a set without one sorts last either way.
+    const releaseTime = (r) => (r.release_date ? Date.parse(r.release_date) : NaN);
+    function sortByRelease(rows, newestFirst) {
+      return [...rows].sort((a, b) => {
+        const ta = releaseTime(a), tb = releaseTime(b);
+        if (Number.isNaN(ta) || Number.isNaN(tb)) return Number.isNaN(ta) - Number.isNaN(tb);
+        return newestFirst ? tb - ta : ta - tb;
+      });
+    }
+    // "Released Mar 2006" for the row's detail line; approximate dates show the year only.
+    function releaseLabel(r) {
+      if (!r.release_date) return "";
+      if (r.release_precision === "approximate") return `released ~${r.release_date.slice(0, 4)}`;
+      const d = new Date(`${r.release_date}T12:00:00Z`);
+      return `released ${d.toLocaleDateString(undefined, r.release_precision === "month" ? { month: "short", year: "numeric" } : { month: "short", day: "numeric", year: "numeric" })}`;
+    }
     function renderSets(errorText) {
       const text = $("filterInput").value.trim().toLowerCase();
       let rows = state.setRows.filter((r) => (!state.era || r.generation === state.era)
@@ -1329,6 +1349,7 @@
       const sort = $("sortSelect").value;
       const field = { strength: "breadth_score", avg30: "avg_30d_pct", avg90: "avg_90d_pct", items: "item_count" }[sort];
       rows = sort === "name" ? [...rows].sort((a, b) => String(a.groupName).localeCompare(String(b.groupName)))
+        : sort === "release" || sort === "release_old" ? sortByRelease(rows, sort === "release")
         : [...rows].sort((a, b) => num(b[field]) - num(a[field]));
       $("listCount").textContent = state.setRows.length ? `${rows.length}${rows.length !== state.setRows.length ? ` of ${state.setRows.length}` : ""} sets` : "";
       const topStrength = Math.max(1, ...state.setRows.map((r) => Number(r.breadth_score) || 0));
@@ -1342,7 +1363,7 @@
         const tr = el("tr", {},
           el("td", {}, el("div", { class: "set-cell" }, logo, el("div", { style: "min-width:0" },
             el("div", { class: "card-name", text: r.groupName, title: r.groupName }),
-            el("div", { class: "card-meta", text: [r.generation, `${r.card_count || 0} cards`, r.sealed_count ? `${r.sealed_count} sealed` : ""].filter(Boolean).join(" · ") })))),
+            el("div", { class: "card-meta", text: [r.generation, releaseLabel(r), `${r.card_count || 0} cards`, r.sealed_count ? `${r.sealed_count} sealed` : ""].filter(Boolean).join(" · ") })))),
           el("td", { class: "right num", text: String(r.item_count ?? "—") }),
           el("td", { class: "right" }, changePill(Number(r.avg_30d_pct ?? NaN))),
           el("td", { class: "right" }, changePill(Number(r.avg_90d_pct ?? NaN))),
@@ -1427,20 +1448,24 @@
       const text = $("filterInput").value.trim().toLowerCase();
       let rows = state.indexRows.filter((r) => !text || String(r.payload.index_name).toLowerCase().includes(text));
       const sum = (r) => r.payload.summary || {};
+      // Newest release among the index's sets (old sets fall back to their first price date).
+      const newestRelease = (r) => Math.max(0, ...(r.payload.set_releases || []).map((x) => Date.parse(x.release_date) || 0));
       const by = {
         era: (r) => r.era,
+        release: (r) => -newestRelease(r),
         change30: (r) => -(sum(r).day30_change?.pct ?? -Infinity),
         start: (r) => -(sum(r).all_time_index_change?.pct ?? -Infinity),
         level: (r) => -(sum(r).current_level ?? -Infinity),
       }[$("sortSelect").value] || ((r) => r.era);
-      rows = [...rows].sort((a, b) => by(a) - by(b));
+      // The Top 151 (OVERALL_INDEXES) is the overall Pokémon market and stays first whatever the sort.
+      rows = [...rows].sort((a, b) => (OVERALL_INDEXES.has(b.key) - OVERALL_INDEXES.has(a.key)) || by(a) - by(b));
       $("listCount").textContent = state.indexRows.length ? `${rows.length} indexes` : "";
       $("indexesBody").replaceChildren(...rows.map((r) => {
         const info = sum(r);
         const levels = (r.payload.series || []).slice(-365).map((p) => p.index_level).filter(Number.isFinite);
         const tr = el("tr", {},
           el("td", {}, el("div", { style: "min-width:0" },
-            el("div", { class: "card-name", text: r.payload.index_name }),
+            el("div", { class: "card-name" }, r.payload.index_name, OVERALL_INDEXES.has(r.key) ? el("span", { class: "overall-tag", text: "Overall market" }) : null),
             el("div", { class: "card-meta", text: `${r.payload.description || ""} · as of ${info.as_of ? fmtDate(info.as_of) : "—"}` }))),
           el("td", { class: "right num", text: level(info.current_level) }),
           el("td", { class: "right" }, changePill(info.day30_change?.pct)),
@@ -1492,6 +1517,7 @@
       const field = { cost: "total_set_cost", avg: "avg_card_price", top_share: "top_hit_share_pct", depth: "depth_score" }[sort];
       const num = (v) => (Number.isFinite(Number(v)) && v !== null ? Number(v) : -Infinity);
       rows = sort === "name" ? [...rows].sort((a, b) => String(a.groupName).localeCompare(String(b.groupName)))
+        : sort === "release" || sort === "release_old" ? sortByRelease(rows, sort === "release")
         : [...rows].sort((a, b) => num(b[field]) - num(a[field]));
       $("listCount").textContent = state.valueRows.length ? `${rows.length}${rows.length !== state.valueRows.length ? ` of ${state.valueRows.length}` : ""} sets` : "";
       const share = (v) => (Number.isFinite(Number(v)) ? `${Math.round(v)}%` : "—");
@@ -1500,7 +1526,7 @@
         const tr = el("tr", {},
           el("td", {}, el("div", { style: "min-width:0" },
             el("div", { class: "card-name", text: r.groupName, title: r.groupName }),
-            el("div", { class: "card-meta", text: r.generation || "" }))),
+            el("div", { class: "card-meta", text: [r.generation, releaseLabel(r)].filter(Boolean).join(" · ") }))),
           el("td", { class: "right num", text: String(r.card_count ?? "—") }),
           el("td", { class: "right num", text: money(Number(r.total_set_cost)) }),
           el("td", { class: "right num", text: `${money(Number(r.avg_card_price))} / ${money(Number(r.median_card_price))}` }),

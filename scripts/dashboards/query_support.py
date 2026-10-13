@@ -1,7 +1,8 @@
+import csv
 import math
 import threading
 import time
-from datetime import timedelta
+from datetime import date, timedelta
 from pathlib import Path
 
 import duckdb
@@ -82,6 +83,7 @@ def clear_source_caches() -> None:
     global _table_names_cache, _shared_con
     _table_names_cache = None
     _parquet_category_cache.clear()
+    _release_dates_cache.clear()
     with _shared_con_lock:
         if _shared_con is not None:
             try:
@@ -364,6 +366,77 @@ def gap_scaled_threshold(threshold: int, window_days: int, category_id: int, flo
         return threshold
     scaled = math.ceil(threshold * days_with_data / expected)
     return max(min(floor, threshold), min(threshold, scaled))
+
+
+# ---- Set release dates ---------------------------------------------------------------
+#
+# TCGCSV's set "publishedOn" date is the release date for normal sets (new sets show
+# pre-sale prices months before it, which is fine), but TCGplayer sometimes re-publishes
+# old sets and their date jumps to that day (on 2026-10-12, POP Series 1-9 and many promo
+# sets got that date). So, per set:
+#   1. a hand-checked date from data/set_release_dates.csv, if listed there;
+#   2. otherwise publishedOn, unless it is more than REPUBLISHED_AFTER_DAYS after the set's
+#      first price (then it was re-published and the date is unknown: None).
+SET_RELEASE_DATES_CSV = DATA_ROOT / "set_release_dates.csv"
+REPUBLISHED_AFTER_DAYS = 300
+_release_dates_cache: dict[int, tuple[float, dict]] = {}
+
+
+def set_release_dates(category_id: int) -> dict[int, dict]:
+    """{groupId: {"release_date": "YYYY-MM-DD" or None, "release_precision": ...}} for a market.
+
+    release_precision is "day", "month", "approximate" (from the CSV) or "published"
+    (TCGCSV's date), or "unknown". Remembered for SOURCE_CHECK_TTL_SECONDS.
+    """
+    cached = _release_dates_cache.get(category_id)
+    if cached and _fresh(cached[0]):
+        return cached[1]
+    _, rows = q(
+        f"""
+        WITH first_price AS (
+            SELECT groupId, MIN(date) AS first_price
+            FROM {prices_from(category_id)}
+            WHERE categoryId = {int(category_id)}
+            GROUP BY groupId
+        )
+        SELECT g.groupId, CAST(CAST(g.publishedOn AS TIMESTAMP) AS DATE), fp.first_price
+        FROM {groups_from(category_id)} g
+        LEFT JOIN first_price fp ON fp.groupId = g.groupId
+        """
+    )
+    dates: dict[int, dict] = {}
+    for group_id, published, first_price in rows:
+        republished = published is not None and first_price is not None and (
+            (published - (first_price.date() if hasattr(first_price, "date") else first_price)).days > REPUBLISHED_AFTER_DAYS
+        )
+        if published is None or republished:
+            dates[int(group_id)] = {"release_date": None, "release_precision": "unknown"}
+        else:
+            dates[int(group_id)] = {"release_date": published.isoformat(), "release_precision": "published"}
+    # The hand-kept file is edited by people: a row that can't be read is skipped (and
+    # printed to the server log) rather than breaking the Sets pages.
+    if SET_RELEASE_DATES_CSV.exists():
+        with SET_RELEASE_DATES_CSV.open(newline="", encoding="utf-8") as f:
+            for line_number, row in enumerate(csv.DictReader(f), start=2):
+                try:
+                    if int(row["category_id"]) == int(category_id):
+                        released = date.fromisoformat(row["release_date"].strip()).isoformat()
+                        dates[int(row["group_id"])] = {"release_date": released, "release_precision": (row.get("precision") or "day").strip()}
+                except (KeyError, TypeError, ValueError, AttributeError):
+                    print(f"set_release_dates.csv line {line_number} skipped: {row}")
+    _release_dates_cache[category_id] = (time.monotonic(), dates)
+    return dates
+
+
+def add_release_dates(cols: list, rows: list, category_id: int, group_column: str = "groupId") -> tuple[list, list]:
+    """Append release_date and release_precision columns to a result keyed by groupId."""
+    dates = set_release_dates(category_id)
+    index = cols.index(group_column)
+    out = []
+    for row in rows:
+        info = dates.get(int(row[index]), {"release_date": None, "release_precision": "unknown"})
+        out.append(tuple(row) + (info["release_date"], info["release_precision"]))
+    return cols + ["release_date", "release_precision"], out
 
 
 def to_jsonable(value):
