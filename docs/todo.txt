@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-13 (security tightening)
+Last updated: 2026-10-13 (milestone: security, owner feedback, full card page, sealed pack counts)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -35,6 +35,11 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-13 Sealed Deals pack counts corrected with the owner: booster bundle cases 150
+  packs (25 bundles), ETB cases 4 Pokemon Center or 10 retail ETBs, sleeved booster cases
+  144, UPC cases 4 UPCs, Super-Premium Collections (Charizard ex 10, Prismatic 15, its case
+  60), Knock Out 2, First Partner Illustration 2.5; "Ultra-Premium" and curly-apostrophe
+  names now match their rules; case types are no longer hidden as low confidence.
 - 2026-10-13 Owner feedback, second part: Knock Out Collections count 2 packs and First
   Partner Illustration Collections 2.5; "Ultra-Premium" spelled with a hyphen now counts as
   an Ultra Premium Collection (16 packs, was 5); collection cases with unknown contents are
@@ -59,16 +64,6 @@ Recently Completed
   are stored as hashes; live index rebuilds and live PSA lookups are admin-only; the
   mobile Feedback form has size and rate limits; saved-list lookups are capped. Details
   in `docs/operator_runbook.txt` ("Sign-in sessions", "Public endpoints with limits").
-- 2026-10-12 Card views are fast: everything a card loads answers in about 0.01-0.05 s
-  (was 0.4-1.5 s). The web app remembers which tables exist and shares one read-only
-  DuckDB connection; the "All" chart and the 6-Month Hold read a new nightly weekly
-  long-history snapshot instead of the raw history (track record weighted so its numbers
-  match daily data); public market data may be cached by browsers for 10 minutes.
-- 2026-10-12 The desktop app is the desktop home page at `/`. Older desktop addresses
-  (`/dashboard`, old `?tab=` links, `/sealed-deals`, `/budget-builder`, `/set-explorer`,
-  `/index-overview*`, the area pages, `/home-preview`, desktop `/mobile?mode=tracked`)
-  forward to the matching view; phones are never forwarded and see no change. The older
-  dashboard moved to `/dashboard-classic` ("Full data →"). Time to Buy left the menus.
 
 High Priority
 -------------

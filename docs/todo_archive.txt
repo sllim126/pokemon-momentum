@@ -7,6 +7,17 @@ Archived Completed Work
 October 2026 (archived 2026-10-12, when todo.txt was rewritten as the main action list)
 ----------------------------------------------------------------------------------------
 
+- Completed and archived at the 2026-10-13 milestone:
+  - 2026-10-12 Card views are fast: everything a card loads answers in about 0.01-0.05 s
+    (was 0.4-1.5 s). The web app remembers which tables exist and shares one read-only
+    DuckDB connection; the "All" chart and the 6-Month Hold read a new nightly weekly
+    long-history snapshot instead of the raw history (track record weighted so its numbers
+    match daily data); public market data may be cached by browsers for 10 minutes.
+  - 2026-10-12 The desktop app is the desktop home page at `/`. Older desktop addresses
+    (`/dashboard`, old `?tab=` links, `/sealed-deals`, `/budget-builder`, `/set-explorer`,
+    `/index-overview*`, the area pages, `/home-preview`, desktop `/mobile?mode=tracked`)
+    forward to the matching view; phones are never forwarded and see no change. The older
+    dashboard moved to `/dashboard-classic` ("Full data →"). Time to Buy left the menus.
 - Completed and archived at the second 2026-10-12 milestone:
   - 2026-10-12 Started a nightly collect-only archive of Magic, Yu-Gi-Oh, One Piece and Lorcana
     prices (`collect_tcgcsv_categories.py`, cron 03:30 UTC, `data/tcgcsv_archive/`). No site
