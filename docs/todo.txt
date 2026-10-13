@@ -138,6 +138,9 @@ Desktop App Follow-up
     6. 39 other collection cases are left out of Sealed Deals until their contents are known
     Also confirm: one Celebrations UPC = 8 SWSH random + 17 Celebrations packs (taken from
     the earlier note on the case).
+    Booster bundle displays: 10 bundles (60 packs); blister cases: 24 blisters (3-pack 72,
+    2-pack 48) (owner, 2026-10-13). To confirm: the Paldean Fates Booster Bundle Display
+    Case is entered as 260 packs, which isn't a whole number of 60-pack displays.
     Sleeved booster cases: 144 sleeved packs each (owner, 2026-10-13; replaces the earlier
     80 entered for Lost Origin).
     ETB cases: 4 Pokemon Center ETBs or 10 retail ETBs per case, times the packs in one ETB

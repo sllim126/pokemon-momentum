@@ -2431,6 +2431,15 @@ def _infer_pack_count(
         return packs_per_box * multiplier
     if "ultra premium collection" in name:
         return 16 * multiplier
+    if "booster bundle display" in name and not re.search(r"\bcase\b", name):
+        # A booster bundle display holds 10 bundles of 6 packs (owner, 2026-10-13: 151,
+        # Ascended Heroes, Prismatic Evolutions, White Flare, Black Bolt).
+        return 10 * 6 * multiplier
+    blister_case = re.search(r"(\d+)\s*-?\s*pack\s*blister", name)
+    if blister_case and re.search(r"\bcase\b", name):
+        # A blister case holds 24 blisters (owner, 2026-10-13: 3-pack cases 72 packs,
+        # Prismatic Evolutions 2-pack case 48).
+        return 24 * max(1, int(blister_case.group(1))) * multiplier
     if "booster bundle" in name and "case" in name:
         # A booster bundle case holds 25 bundles of 6 packs (owner, 2026-10-13). Sets packed
         # differently (151's 60-bundle master case, Paldean Fates, Crown Zenith) are entered
@@ -2452,7 +2461,7 @@ def _infer_pack_count(
     if re.search(r"\bmini\s*tin[s]?\b", name):
         return 2 * multiplier
 
-    pack_blister = re.search(r"(\d+)\s*pack\s*blister", name)
+    pack_blister = re.search(r"(\d+)\s*-?\s*pack\s*blister", name)  # "3 pack" or "3-Pack"
     if pack_blister:
         return max(1, int(pack_blister.group(1))) * multiplier
     if "checklane blister" in name:
@@ -2511,7 +2520,7 @@ def _infer_retail_per_pack(name_raw: str, product_class: str, product_type: str 
         return 6.25
     if "single pack blister" in name:
         return 4.99
-    if re.search(r"\b\d+\s*pack\s*blister\b", name):
+    if re.search(r"\b\d+\s*-?\s*pack\s*blister\b", name):
         return 4.99
     if "mini tin" in name:
         return 5.00
@@ -2545,6 +2554,10 @@ def _infer_product_type(name_raw: str, product_class: str) -> str:
         return "Booster Box"
     if _is_sleeved_booster_case(name):
         return "Sleeved Booster Case"
+    if "booster bundle display" in name and not re.search(r"\bcase\b", name):
+        return "Booster Bundle Display"
+    if re.search(r"\d+\s*-?\s*pack\s*blister", name) and re.search(r"\bcase\b", name):
+        return "Pack Blister Case"
     if "elite trainer box" in name and re.search(r"\bcase\b", name):
         return "Pokemon Center ETB Case" if "pokemon center" in name else "Elite Trainer Box Case"
     if "pokemon center elite trainer box" in name:
@@ -6377,7 +6390,7 @@ def sealed_deals(
             confidence = "high"
         elif inferred_type in {"Booster Pack", "Booster Box", "Booster Bundle", "Elite Trainer Box", "Pokemon Center ETB", "Ultra Premium Collection", "Premium Collection",
                                "Booster Box Case", "Booster Bundle Case", "Elite Trainer Box Case", "Pokemon Center ETB Case",
-                               "Sleeved Booster Case"}:
+                               "Sleeved Booster Case", "Booster Bundle Display", "Pack Blister Case"}:
             confidence = "high"
         elif inferred_type in {"Tin", "Mini Tin", "Collection Box", "Pack Blister", "Ultra Premium Collection Case"}:
             # Low-confidence types are left out of the list unless include_low_confidence is
