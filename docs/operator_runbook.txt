@@ -584,9 +584,32 @@ Manual `--dry-run` price syncs do not post. Bug reports from visitors are handle
 separate Discord channel (#bug-reports), not on the site.
 
 
+After a power cut or reboot
+---------------------------
+What happens on its own: the nightly update's systemd timer has `Persistent=true`, so a
+missed 02:00 run starts as soon as the machine is back. Since 2026-10-15 both nightly scripts
+first wait up to 10 minutes for `tcgcsv.com` to resolve (at boot the network can be "up"
+before DNS works; on 2026-10-15 the catch-up run failed on exactly that).
+
+Check (the morning after):
+- Discord: a green "Nightly market update" and "Other games price archive" for the day
+- `curl -s localhost:8001/health?category_id=3` and `...=85`: `latest` should be yesterday
+
+If the update still failed or never ran:
+- easiest: `sudo systemctl start pokemon-momentum-daily-update.service` (logs to
+  `logs/daily_update.log`, posts to Discord). It only fetches TCGCSV's current day, so a
+  day TCGCSV has already replaced can't be fetched later.
+- the other-games archive: `scripts/pipeline/run_tcgcsv_collect_host.sh` (safe to repeat)
+- the Squarespace price sync (09:15) is not re-run automatically. It changes live store
+  prices, so run it by hand only if wanted: `scripts/run_squarespace_price_sync.sh`
+  (`--dry-run` first to preview)
+
+
 Other games archive (collect only)
 ----------------------------------
-Every night at 03:30 UTC (user `adam`'s crontab) `scripts/pipeline/run_tcgcsv_collect_host.sh`
+Every night at 03:30 UTC (user `adam`'s crontab; a systemd timer that also catches up after
+downtime is ready in `deploy/systemd/pokemon-momentum-tcgcsv-collect.*`, see docs/todo.txt)
+`scripts/pipeline/run_tcgcsv_collect_host.sh`
 saves one day of TCGCSV data for Magic (1), Yu-Gi-Oh (2), One Piece (68) and Lorcana (71)
 into `data/tcgcsv_archive/<date>/tcgcsv-<date>-<categoryId>.tar.gz`, exactly as served. It
 waits for the Pokemon nightly update to finish first. It never stops the website or touches

@@ -50,6 +50,20 @@ notify() {
 
 echo "[$STAMP] Starting Pokemon Momentum daily update" | tee -a "$LOG_DIR/daily_update.log"
 
+# Expected result: name lookups work before anything is stopped. After a power cut the
+# timer's catch-up run starts at boot, sometimes before DNS is ready (2026-10-15 it failed
+# with "Temporary failure in name resolution"). Wait up to 10 minutes; this is a local DNS
+# check and sends nothing to TCGCSV.
+for _ in $(seq 1 60); do
+  getent hosts tcgcsv.com >/dev/null 2>&1 && break
+  sleep 10
+done
+if ! getent hosts tcgcsv.com >/dev/null 2>&1; then
+  echo "[$STAMP] ERROR: tcgcsv.com still can't be resolved after 10 minutes; network not ready" | tee -a "$LOG_DIR/daily_update.log"
+  notify 1
+  exit 1
+fi
+
 if ! docker-compose ps "$SERVICE_NAME" >/dev/null 2>&1; then
   echo "[$STAMP] ERROR: docker-compose service lookup failed" | tee -a "$LOG_DIR/daily_update.log"
   notify 1

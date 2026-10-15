@@ -35,6 +35,10 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-15 Recovered from the power cut: the boot-time catch-up run failed on DNS, so the
+  nightly update (English + Japanese, PriceCharting) and the other-games archive were re-run
+  by hand for 2026-10-14 (log: logs/daily_update_rerun_2026-10-15.log). Both nightly scripts
+  now wait up to 10 minutes for DNS; runbook has an "After a power cut" section.
 - 2026-10-13 More sealed pack counts with the owner: booster bundle displays 60 (10
   bundles), blister cases 72 / 48 (24 blisters), Build & Battle displays 40 (10 boxes),
   Tech Sticker Collections 3, Ascended Heroes Erika/Larry 2, First Partner Illustration 2
@@ -76,6 +80,11 @@ High Priority
 - [planned] Speed follow-ups: Sealed Deals takes ~0.5 s (it works out pack prices for every
   sealed product per request; could be a nightly snapshot), Set Strength ~0.12 s, and Under
   the Radar ~3 s while the feed is short after the data gap (ends on its own).
+- [waiting] Install the other-games archive as a systemd timer so it catches up after a power
+  cut (cron skipped 2026-10-15). Needs sudo, so the owner runs:
+    sudo cp deploy/systemd/pokemon-momentum-tcgcsv-collect.{service,timer} /etc/systemd/system/
+    sudo systemctl daemon-reload && sudo systemctl enable --now pokemon-momentum-tcgcsv-collect.timer
+  then remove the 03:30 line from `crontab -e` (adam) so it doesn't run twice.
 - [waiting] Copy Discord bug reports onto the server (owner, 2026-10-12). Plan: a small
   scheduled job pulls new messages from `#bug-reports` (channel 1489120381993357464) through
   the Discord API, using the last message ID it saw, and saves each one into the existing
