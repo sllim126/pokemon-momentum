@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-10-12
+Last reviewed: 2026-10-15
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -118,6 +118,8 @@ Added 2026-10:
 - Full card page in the desktop app (`&card=1`), release-date sorting for sets, 29 more
   set logos, rebuilt Collector Hub and Placeholder Library
 - Sealed Deals pack counts corrected for cases, UPCs and Super-Premium Collections
+- Nightly jobs wait for DNS after a reboot; runbook covers recovering from a power cut
+- `data/sealed_pack_checklist.csv` lists every sealed product whose pack count is still a guess
 
 ## What's next
 

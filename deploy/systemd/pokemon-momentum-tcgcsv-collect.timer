@@ -1,0 +1,11 @@
+[Unit]
+Description=Run the Pokemon Momentum other-games archive once per day
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 UTC
+# Catch up after the machine was off at 03:30 (cron would skip that day).
+Persistent=true
+Unit=pokemon-momentum-tcgcsv-collect.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,14 @@
+[Unit]
+Description=Pokemon Momentum collect-only TCGCSV archive (Magic, Yu-Gi-Oh, One Piece, Lorcana)
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/pokemon-momentum
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/opt/pokemon-momentum/scripts/pipeline/run_tcgcsv_collect_host.sh
+# Runs as adam (not root) so data/tcgcsv_archive and logs/tcgcsv_collect.log keep their owner.
+User=adam
+Group=adam

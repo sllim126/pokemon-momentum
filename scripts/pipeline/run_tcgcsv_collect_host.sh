@@ -31,6 +31,8 @@ trap notify EXIT
 
 {
   echo "[$STARTED_AT] Starting TCGCSV collect-only archive"
+  # Wait up to 10 minutes for DNS after a reboot (local check, nothing sent to TCGCSV).
+  for _ in $(seq 1 60); do getent hosts tcgcsv.com >/dev/null 2>&1 && break; sleep 10; done
   # Wait up to 4 hours for the Pokemon nightly update to finish (it holds this lock), then
   # let go of it straight away: holding it would make a Pokemon run that starts meanwhile
   # skip its day. The file is opened read-only because it belongs to root (the nightly
