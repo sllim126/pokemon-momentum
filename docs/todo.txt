@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-13 (milestone: more sealed pack counts)
+Last updated: 2026-10-15 (milestone: power-cut recovery, sealed checklist)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -39,40 +39,6 @@ Recently Completed
   nightly update (English + Japanese, PriceCharting) and the other-games archive were re-run
   by hand for 2026-10-14 (log: logs/daily_update_rerun_2026-10-15.log). Both nightly scripts
   now wait up to 10 minutes for DNS; runbook has an "After a power cut" section.
-- 2026-10-13 More sealed pack counts with the owner: booster bundle displays 60 (10
-  bundles), blister cases 72 / 48 (24 blisters), Build & Battle displays 40 (10 boxes),
-  Tech Sticker Collections 3, Ascended Heroes Erika/Larry 2, First Partner Illustration 2
-  with a hover note about its promo pack, hyphenated and spelled-out blister counts
-  ("3-Pack", "Three Pack"); booster box cases confirmed at 216.
-- 2026-10-13 Sealed Deals pack counts corrected with the owner: booster bundle cases 150
-  packs (25 bundles), ETB cases 4 Pokemon Center or 10 retail ETBs, sleeved booster cases
-  144, UPC cases 4 UPCs, Super-Premium Collections (Charizard ex 10, Prismatic 15, its case
-  60), Knock Out 2, First Partner Illustration 2 (its promo pack noted on hover, not counted); "Ultra-Premium" and curly-apostrophe
-  names now match their rules; case types are no longer hidden as low confidence.
-- 2026-10-13 Owner feedback, second part: Knock Out Collections count 2 packs and First
-  Partner Illustration Collections 2 (promo pack noted, not counted); "Ultra-Premium" spelled with a hyphen now counts as
-  an Ultra Premium Collection (16 packs, was 5); collection cases with unknown contents are
-  left out instead of counted as 5 packs; Market Stats sorts are newest/oldest era (the
-  duplicate "newest set release" is gone); a 2Y chart window; the chosen sort is kept when
-  returning to a list; Burger King Promos dated to 2008; pages, scripts and stylesheets are
-  served with Cache-Control: no-cache so browsers always pick up changes.
-- 2026-10-13 Collector Hub and Placeholder Library rebuilt as scrolling pages: plain
-  explanations, a three-step "how it works", resources as tiles or a downloads list by
-  audience, links that open in a new tab instead of an embedded preview.
-- 2026-10-13 Full card page in the desktop app: "Full data →" or double-clicking a card's
-  picture shows everything about the card on one page (`&card=1`), with every snapshot
-  number from the new `/card_details`, the lists it appears in and its other printings.
-- 2026-10-13 Owner feedback, first part: left menu in the header's order (Research before
-  My lists); list images 25% larger; "release date" sorts for Sets and Set values with each
-  set's date shown (hand-checked dates for re-published sets in
-  `data/set_release_dates.csv`); Market Stats keeps the Top 151 first as the overall market
-  and can sort by newest set release; 29 missing set logos added from the Pokemon TCG
-  developer API (Pitch Black, 30th Celebration x2, Call of Legends, POP, promo and
-  McDonald's sets).
-- 2026-10-13 Security tightening: sign-in sessions expire (30 days idle, 180 days max) and
-  are stored as hashes; live index rebuilds and live PSA lookups are admin-only; the
-  mobile Feedback form has size and rate limits; saved-list lookups are capped. Details
-  in `docs/operator_runbook.txt` ("Sign-in sessions", "Public endpoints with limits").
 
 High Priority
 -------------
