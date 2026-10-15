@@ -665,7 +665,7 @@ Daily behavior (02:00 UTC, systemd timer `pokemon-momentum-daily-update.timer`):
   [notify_discord.py](/opt/pokemon-momentum/scripts/pipeline/notify_discord.py), even when a
   step fails
 
-Collect-only archive for other games (03:30 UTC, user cron,
+Collect-only archive for other games (03:30 UTC, systemd timer pokemon-momentum-tcgcsv-collect,
 [run_tcgcsv_collect_host.sh](/opt/pokemon-momentum/scripts/pipeline/run_tcgcsv_collect_host.sh)):
 
 - waits until the Pokemon nightly update has released its lock, so the two never fetch

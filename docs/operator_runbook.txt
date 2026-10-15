@@ -607,8 +607,8 @@ If the update still failed or never ran:
 
 Other games archive (collect only)
 ----------------------------------
-Every night at 03:30 UTC (user `adam`'s crontab; a systemd timer that also catches up after
-downtime is ready in `deploy/systemd/pokemon-momentum-tcgcsv-collect.*`, see docs/todo.txt)
+Every night at 03:30 UTC (systemd timer `pokemon-momentum-tcgcsv-collect.timer`, runs as
+adam and catches up after downtime; unit files in `deploy/systemd/`)
 `scripts/pipeline/run_tcgcsv_collect_host.sh`
 saves one day of TCGCSV data for Magic (1), Yu-Gi-Oh (2), One Piece (68) and Lorcana (71)
 into `data/tcgcsv_archive/<date>/tcgcsv-<date>-<categoryId>.tar.gz`, exactly as served. It
