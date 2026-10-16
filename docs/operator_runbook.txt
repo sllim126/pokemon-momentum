@@ -848,6 +848,20 @@ UI checks:
 The mobile Support > Feedback form still saves into the same `/bug_reports` queue. Review it
 (and older bug reports) at the admin-only `/bug-reports` page.
 
+Discord reports are copied onto the server (since 2026-10-16): every 15 minutes (adam's
+crontab) `scripts/utilities/import_discord_bug_reports.py` runs in the container, reads new
+#bug-reports messages through the "Poke6s Control" bot (`POKE6S_DISCORD_BOT_TOKEN` in .env),
+saves each as a bug report with the author, text, attachment links and a link back to the
+message, and reacts with ✅. It skips bots, system messages and anything already saved.
+- log: `logs/discord_bug_import.log` (a failed run while the nightly update has the site
+  stopped is normal; the next run catches up)
+- preview without saving: `docker-compose exec -T pokemon-momentum python
+  scripts/utilities/import_discord_bug_reports.py --dry-run`
+- bot permissions: View Channels, Read Message History, Add Reactions, Send Messages (+ in
+  threads), Create Public Threads, Embed Links, Attach Files, Use Application Commands;
+  Message Content intent on. No Administrator or moderation permissions.
+- the admin page escapes all report text, so a message can't run code in an admin session
+
 
 Set explorer checks
 -------------------

@@ -35,6 +35,9 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-16 Discord bug reports are copied onto the server every 15 minutes
+  (`import_discord_bug_reports.py`, "Poke6s Control" bot) and marked ✅; the admin
+  /bug-reports page now escapes report text (it was a stored-XSS risk via the Feedback form).
 - 2026-10-15 Other-games archive moved from cron to the systemd timer
   `pokemon-momentum-tcgcsv-collect.timer` (03:30 UTC, catches up after downtime); the cron
   line was removed.
@@ -54,15 +57,6 @@ High Priority
   and the 09:15 Squarespace sync, and /health says `latest` = 2026-10-15.
 - [waiting] Delete `data/processed/tracking.sqlite3.bak-2026-10-13` (the sign-in database
   before tokens were hashed) once the owner is happy that sign-ins work.
-- [waiting] Copy Discord bug reports onto the server (owner, 2026-10-12). Plan: a small
-  scheduled job pulls new messages from `#bug-reports` (channel 1489120381993357464) through
-  the Discord API, using the last message ID it saw, and saves each one into the existing
-  `bug_reports` table so it shows on the admin `/bug-reports` page, with author, text,
-  screenshot links and a link back to the message; optionally adds a ✅ reaction once saved.
-  Pulling is simpler than pushing: Discord can't post channel messages to our server
-  without an always-running bot or a public endpoint. Waiting on the owner to create a
-  Discord bot (Read Message History, Add Reactions, Message Content intent), invite it to
-  the server, and put its token in `.env` as `POKE6S_DISCORD_BOT_TOKEN`.
 - [planned] Retire the older research dashboard (decided 2026-10-12). Since 2026-10-13 the
   app's full card page replaces "Full data →", so nothing links to `/dashboard-classic`
   any more. Check nothing else needs it, then remove the route and `dashboard.html`
