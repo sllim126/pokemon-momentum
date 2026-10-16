@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Nightly collect-only archive of other games' TCGCSV prices (cron, 03:30 UTC, as user adam).
+# Nightly collect-only archive of other games' TCGCSV prices (systemd timer
+# pokemon-momentum-tcgcsv-collect.timer, 03:30 UTC, as user adam; catches up after downtime).
 #
 # Runs scripts/download/collect_tcgcsv_categories.py in a one-off container. It saves
 # Magic, Yu-Gi-Oh, One Piece and Lorcana prices to data/tcgcsv_archive/ and never touches

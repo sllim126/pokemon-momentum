@@ -595,6 +595,15 @@ Check (the morning after):
 - Discord: a green "Nightly market update" and "Other games price archive" for the day
 - `curl -s localhost:8001/health?category_id=3` and `...=85`: `latest` should be yesterday
 
+Check the public address too: the ISP can hand out a new public IP after a power cut
+(2026-10-16). If `curl -s https://api.ipify.org` differs from `dig +short market.poke6s.com`,
+update the `market` A record in Squarespace Domains (poke6s.com → DNS) to the new IP. The
+site itself is fine meanwhile (`curl localhost:8001/health?category_id=3`).
+To see what the internet sees, ask over HTTPS:
+`curl -s "https://dns.google/resolve?name=market.poke6s.com&type=A"`. Plain `dig` from this
+network, even `@ns-cloud-d1.googledomains.com`, is answered by a cache on the way out and keeps
+showing the old IP until its TTL runs out (seen 2026-10-16).
+
 If the update still failed or never ran:
 - easiest: `sudo systemctl start pokemon-momentum-daily-update.service` (logs to
   `logs/daily_update.log`, posts to Discord). It only fetches TCGCSV's current day, so a
@@ -607,8 +616,8 @@ If the update still failed or never ran:
 
 Other games archive (collect only)
 ----------------------------------
-Every night at 03:30 UTC (user `adam`'s crontab; a systemd timer that also catches up after
-downtime is ready in `deploy/systemd/pokemon-momentum-tcgcsv-collect.*`, see docs/todo.txt)
+Every night at 03:30 UTC (systemd timer `pokemon-momentum-tcgcsv-collect.timer`, runs as
+adam and catches up after downtime; unit files in `deploy/systemd/`)
 `scripts/pipeline/run_tcgcsv_collect_host.sh`
 saves one day of TCGCSV data for Magic (1), Yu-Gi-Oh (2), One Piece (68) and Lorcana (71)
 into `data/tcgcsv_archive/<date>/tcgcsv-<date>-<categoryId>.tar.gz`, exactly as served. It
@@ -847,6 +856,20 @@ UI checks:
 
 The mobile Support > Feedback form still saves into the same `/bug_reports` queue. Review it
 (and older bug reports) at the admin-only `/bug-reports` page.
+
+Discord reports are copied onto the server (since 2026-10-16): every 15 minutes (adam's
+crontab) `scripts/utilities/import_discord_bug_reports.py` runs in the container, reads new
+#bug-reports messages through the "Poke6s Control" bot (`POKE6S_DISCORD_BOT_TOKEN` in .env),
+saves each as a bug report with the author, text, attachment links and a link back to the
+message, and reacts with ✅. It skips bots, system messages and anything already saved.
+- log: `logs/discord_bug_import.log` (a failed run while the nightly update has the site
+  stopped is normal; the next run catches up)
+- preview without saving: `docker-compose exec -T pokemon-momentum python
+  scripts/utilities/import_discord_bug_reports.py --dry-run`
+- bot permissions: View Channels, Read Message History, Add Reactions, Send Messages (+ in
+  threads), Create Public Threads, Embed Links, Attach Files, Use Application Commands;
+  Message Content intent on. No Administrator or moderation permissions.
+- the admin page escapes all report text, so a message can't run code in an admin session
 
 
 Set explorer checks

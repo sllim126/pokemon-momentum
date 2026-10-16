@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-15 (milestone: power-cut recovery, sealed checklist)
+Last updated: 2026-10-16 (milestone: Discord bot, checklist page, DNS fix)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -35,10 +35,21 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
-- 2026-10-15 Recovered from the power cut: the boot-time catch-up run failed on DNS, so the
-  nightly update (English + Japanese, PriceCharting) and the other-games archive were re-run
-  by hand for 2026-10-14 (log: logs/daily_update_rerun_2026-10-15.log). Both nightly scripts
-  now wait up to 10 minutes for DNS; runbook has an "After a power cut" section.
+- 2026-10-16 Local page for filling in the sealed checklist one product at a time
+  (`scripts/utilities/sealed_checklist_server.py`, port 8099; saves to
+  `data/sealed_pack_checklist.csv`, new `your_notes` column).
+- 2026-10-16 Public site back after the IP change: the owner pointed the `market` A record at
+  136.38.242.146; Google and Cloudflare DNS serve it (runbook: check over HTTPS, since plain
+  dig from the home network is answered by a cache).
+- 2026-10-16 The "Poke6s Control" bot posted a first message in every Poke6s Discord channel
+  (welcome, rules, channel guide, market picks, market snapshot, Pitch Black set breakdown,
+  Base Set Charizard spotlight, feature/feedback prompts, October site update).
+- 2026-10-16 Discord bug reports are copied onto the server every 15 minutes
+  (`import_discord_bug_reports.py`, "Poke6s Control" bot) and marked ✅; the admin
+  /bug-reports page now escapes report text (it was a stored-XSS risk via the Feedback form).
+- 2026-10-15 Other-games archive moved from cron to the systemd timer
+  `pokemon-momentum-tcgcsv-collect.timer` (03:30 UTC, catches up after downtime); the cron
+  line was removed.
 
 High Priority
 -------------
@@ -46,20 +57,11 @@ High Priority
 - [planned] Speed follow-ups: Sealed Deals takes ~0.5 s (it works out pack prices for every
   sealed product per request; could be a nightly snapshot), Set Strength ~0.12 s, and Under
   the Radar ~3 s while the feed is short after the data gap (ends on its own).
-- [waiting] Install the other-games archive as a systemd timer so it catches up after a power
-  cut (cron skipped 2026-10-15). Needs sudo, so the owner runs:
-    sudo cp deploy/systemd/pokemon-momentum-tcgcsv-collect.{service,timer} /etc/systemd/system/
-    sudo systemctl daemon-reload && sudo systemctl enable --now pokemon-momentum-tcgcsv-collect.timer
-  then remove the 03:30 line from `crontab -e` (adam) so it doesn't run twice.
-- [waiting] Copy Discord bug reports onto the server (owner, 2026-10-12). Plan: a small
-  scheduled job pulls new messages from `#bug-reports` (channel 1489120381993357464) through
-  the Discord API, using the last message ID it saw, and saves each one into the existing
-  `bug_reports` table so it shows on the admin `/bug-reports` page, with author, text,
-  screenshot links and a link back to the message; optionally adds a ✅ reaction once saved.
-  Pulling is simpler than pushing: Discord can't post channel messages to our server
-  without an always-running bot or a public endpoint. Waiting on the owner to create a
-  Discord bot (Read Message History, Add Reactions, Message Content intent), invite it to
-  the server, and put its token in `.env` as `POKE6S_DISCORD_BOT_TOKEN`.
+- [planned] 2026-10-16: check the first nights after the power cut: Discord shows green for
+  the 02:00 nightly update, the 03:30 other-games archive (first run on its systemd timer)
+  and the 09:15 Squarespace sync, and /health says `latest` = 2026-10-15.
+- [waiting] Delete `data/processed/tracking.sqlite3.bak-2026-10-13` (the sign-in database
+  before tokens were hashed) once the owner is happy that sign-ins work.
 - [planned] Retire the older research dashboard (decided 2026-10-12). Since 2026-10-13 the
   app's full card page replaces "Full data →", so nothing links to `/dashboard-classic`
   any more. Check nothing else needs it, then remove the route and `dashboard.html`
@@ -67,6 +69,20 @@ High Priority
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
+- [planned] Stop the site going dark when the home IP changes. On 2026-10-16, after the
+  power cut, the ISP gave a new public IP (136.38.8.95 -> 136.38.242.146) and
+  market.poke6s.com pointed at the old one until the owner edited the `market` A record in
+  Squarespace Domains (DNS: ns-cloud-d*.googledomains.com). Options: Cloudflare Tunnel
+  (recommended; no public IP or port-forward needed) or dynamic DNS (needs a DNS provider
+  with an API; Squarespace Domains has none). Until then: after any outage, compare
+  `curl -s https://api.ipify.org` with the answer from
+  `https://dns.google/resolve?name=market.poke6s.com&type=A` (local dig is cached).
+- [waiting] Discord: automate #what-should-i-buy (and maybe #set-breakdowns / #card-spotlight)
+  posts from the site's data. Owner to choose how often (weekly suggested), which sections
+  (Pullbacks, Sealed Deals vs loose, Budget Builder, ...) and English only or English +
+  Japanese. The first hand-made posts went out 2026-10-16; their message ids are in
+  `data/discord_posts.json`, so the bot can edit them (e.g. keep #how-to-use-this-server
+  current). Skip vintage spikes until the spike filter exists.
 - [waiting] Black Friday pull lists: the owner will supply the sets and a minimum price.
 
 - [waiting] Backfill history if TCGCSV brings its daily archive back (owner hears it may
@@ -123,6 +139,8 @@ Desktop App Follow-up
     Everything still on a guess is listed in `data/sealed_pack_checklist.csv` (2026-10-13:
     A 7 open questions, B 9 UPCs on 16, C 33 older ETBs on 9, D 45 Scarlet & Violet / Mega
     collections and E 202 older ones on the 5-pack guess). The owner fills `your_pack_count`;
+    Fill it in one item at a time at http://<server>:8099 by running
+    `python3 scripts/utilities/sealed_checklist_server.py` (adds a `your_notes` column; 2026-10-16);
     then load the answers as overrides in `api.py` and regenerate the file.
     Build & Battle displays: 10 boxes x 4 packs = 40 (owner, 2026-10-13: Destined Rivals; applied to all).
     Booster box cases: 6 boxes x 36 packs = 216 (owner-confirmed 2026-10-13; already counted so).

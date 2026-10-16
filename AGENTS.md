@@ -18,7 +18,7 @@ coding agent. Read this first, then `docs/todo.txt`.
 
 ## Ground rules
 
-- **Secrets** live in `.env` (Squarespace, Discord webhook, PriceCharting, Google, PSA).
+- **Secrets** live in `.env` (Squarespace, Discord webhook and bot token, PriceCharting, Google, PSA).
   Never print, paste, log or commit them. When you need to show `.env`, list names only.
   Never log the PriceCharting download URL; it contains the token.
 - **Data files are not commits.** Don't commit changes under `data/` or exported CSVs
