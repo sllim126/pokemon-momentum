@@ -599,6 +599,10 @@ Check the public address too: the ISP can hand out a new public IP after a power
 (2026-10-16). If `curl -s https://api.ipify.org` differs from `dig +short market.poke6s.com`,
 update the `market` A record in Squarespace Domains (poke6s.com → DNS) to the new IP. The
 site itself is fine meanwhile (`curl localhost:8001/health?category_id=3`).
+To see what the internet sees, ask over HTTPS:
+`curl -s "https://dns.google/resolve?name=market.poke6s.com&type=A"`. Plain `dig` from this
+network, even `@ns-cloud-d1.googledomains.com`, is answered by a cache on the way out and keeps
+showing the old IP until its TTL runs out (seen 2026-10-16).
 
 If the update still failed or never ran:
 - easiest: `sudo systemctl start pokemon-momentum-daily-update.service` (logs to
