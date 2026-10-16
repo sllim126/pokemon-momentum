@@ -194,6 +194,12 @@ Active Queue
   observation count.
 - [planned] Sealed Squarespace listing intake and creation scripts (in progress before
   the desktop app work; check `scripts/` for the current state before continuing).
+- [waiting] Squarespace listing clean-up (owner, when there's time to work through the
+  listings). `ENG-BORING-PACK` is not an official product and will be retired; then remove its
+  rule from `data/store_price_rules.csv` (and `data/store_price_audit_expectations.csv`) so the
+  09:15 price sync stops warning "missing from Squarespace export". The sync also skips
+  listings 117847-holofoil and 264283-holofoil because they're missing from the latest
+  export; check them at the same time. Both warnings are harmless meanwhile.
 - [planned] Replace the remaining full-catalog browser loads with paged server-side search.
 - [planned] Keep profiling custom-window `breakouts` (the default 90-day request already uses
   the product-signal snapshot: about 2.0 s down to 0.5 s warm).
