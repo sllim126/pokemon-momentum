@@ -595,6 +595,11 @@ Check (the morning after):
 - Discord: a green "Nightly market update" and "Other games price archive" for the day
 - `curl -s localhost:8001/health?category_id=3` and `...=85`: `latest` should be yesterday
 
+Check the public address too: the ISP can hand out a new public IP after a power cut
+(2026-10-16). If `curl -s https://api.ipify.org` differs from `dig +short market.poke6s.com`,
+update the `market` A record in Squarespace Domains (poke6s.com → DNS) to the new IP. The
+site itself is fine meanwhile (`curl localhost:8001/health?category_id=3`).
+
 If the update still failed or never ran:
 - easiest: `sudo systemctl start pokemon-momentum-daily-update.service` (logs to
   `logs/daily_update.log`, posts to Discord). It only fetches TCGCSV's current day, so a

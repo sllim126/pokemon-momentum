@@ -67,6 +67,13 @@ High Priority
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
+- [planned] Stop the site going dark when the home IP changes. On 2026-10-16, after the
+  power cut, the ISP gave a new public IP (136.38.8.95 -> 136.38.242.146) and
+  market.poke6s.com pointed at the old one until the owner edited the `market` A record in
+  Squarespace Domains (DNS: ns-cloud-d*.googledomains.com). Options: Cloudflare Tunnel
+  (recommended; no public IP or port-forward needed) or dynamic DNS (needs a DNS provider
+  with an API; Squarespace Domains has none). Until then: after any outage, compare
+  `curl -s https://api.ipify.org` with `dig +short market.poke6s.com`.
 - [waiting] Discord: automate #what-should-i-buy (and maybe #set-breakdowns / #card-spotlight)
   posts from the site's data. Owner to choose how often (weekly suggested), which sections
   (Pullbacks, Sealed Deals vs loose, Budget Builder, ...) and English only or English +
