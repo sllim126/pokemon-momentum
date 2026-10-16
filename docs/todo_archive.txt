@@ -7,6 +7,11 @@ Archived Completed Work
 October 2026 (archived 2026-10-12, when todo.txt was rewritten as the main action list)
 ----------------------------------------------------------------------------------------
 
+- Completed and archived at the 2026-10-16 milestone:
+  - 2026-10-15 Recovered from the power cut: the boot-time catch-up run failed on DNS, so the
+    nightly update and the other-games archive were re-run by hand for 2026-10-14 (log:
+    logs/daily_update_rerun_2026-10-15.log). Both nightly scripts now wait up to 10 minutes
+    for DNS; runbook has an "After a power cut" section.
 - Completed and archived at the 2026-10-15 milestone:
   - 2026-10-13 More sealed pack counts with the owner: booster bundle displays 60 (10
     bundles), blister cases 72 / 48 (24 blisters), Build & Battle displays 40 (10 boxes),

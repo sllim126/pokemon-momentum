@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-10-15
+Last reviewed: 2026-10-16
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -119,6 +119,8 @@ Added 2026-10:
   set logos, rebuilt Collector Hub and Placeholder Library
 - Sealed Deals pack counts corrected for cases, UPCs and Super-Premium Collections
 - Nightly jobs wait for DNS after a reboot; runbook covers recovering from a power cut
+- Discord #bug-reports messages are copied into the admin bug list every 15 minutes by the
+  "Poke6s Control" bot (marked ✅); the admin bug page escapes report text
 - `data/sealed_pack_checklist.csv` lists every sealed product whose pack count is still a guess;
   `scripts/utilities/sealed_checklist_server.py` serves a one-item-at-a-time page (port 8099) to fill it in
 

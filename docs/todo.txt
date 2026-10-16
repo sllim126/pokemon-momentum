@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-15 (milestone: power-cut recovery, sealed checklist)
+Last updated: 2026-10-16 (milestone: Discord bot, checklist page, DNS fix)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -35,6 +35,12 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-16 Local page for filling in the sealed checklist one product at a time
+  (`scripts/utilities/sealed_checklist_server.py`, port 8099; saves to
+  `data/sealed_pack_checklist.csv`, new `your_notes` column).
+- 2026-10-16 Public site back after the IP change: the owner pointed the `market` A record at
+  136.38.242.146; Google and Cloudflare DNS serve it (runbook: check over HTTPS, since plain
+  dig from the home network is answered by a cache).
 - 2026-10-16 The "Poke6s Control" bot posted a first message in every Poke6s Discord channel
   (welcome, rules, channel guide, market picks, market snapshot, Pitch Black set breakdown,
   Base Set Charizard spotlight, feature/feedback prompts, October site update).
@@ -44,10 +50,6 @@ Recently Completed
 - 2026-10-15 Other-games archive moved from cron to the systemd timer
   `pokemon-momentum-tcgcsv-collect.timer` (03:30 UTC, catches up after downtime); the cron
   line was removed.
-- 2026-10-15 Recovered from the power cut: the boot-time catch-up run failed on DNS, so the
-  nightly update (English + Japanese, PriceCharting) and the other-games archive were re-run
-  by hand for 2026-10-14 (log: logs/daily_update_rerun_2026-10-15.log). Both nightly scripts
-  now wait up to 10 minutes for DNS; runbook has an "After a power cut" section.
 
 High Priority
 -------------
@@ -73,7 +75,8 @@ High Priority
   Squarespace Domains (DNS: ns-cloud-d*.googledomains.com). Options: Cloudflare Tunnel
   (recommended; no public IP or port-forward needed) or dynamic DNS (needs a DNS provider
   with an API; Squarespace Domains has none). Until then: after any outage, compare
-  `curl -s https://api.ipify.org` with `dig +short market.poke6s.com`.
+  `curl -s https://api.ipify.org` with the answer from
+  `https://dns.google/resolve?name=market.poke6s.com&type=A` (local dig is cached).
 - [waiting] Discord: automate #what-should-i-buy (and maybe #set-breakdowns / #card-spotlight)
   posts from the site's data. Owner to choose how often (weekly suggested), which sections
   (Pullbacks, Sealed Deals vs loose, Budget Builder, ...) and English only or English +
