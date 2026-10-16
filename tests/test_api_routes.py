@@ -28,12 +28,16 @@ class ApiRouteTests(unittest.TestCase):
         feed_patch.start()
         self.addCleanup(feed_patch.stop)
 
-    def test_dashboard_route_serves_html(self):
-        # The older research dashboard now lives at /dashboard-classic.
-        response = self.client.get("/dashboard-classic")
-
+    def test_retired_dashboard_forwards_desktop_and_still_serves_phones(self):
+        # Desktop: the older dashboard's addresses forward to the desktop app.
+        for path in ("/dashboard-classic", "/dashboard-dev"):
+            response = self.client.get(f"{path}?product=42382%7C%7CHolofoil", follow_redirects=False)
+            self.assertEqual(response.status_code, 302, path)
+            self.assertEqual(response.headers["location"], "/?product=42382%7C%7CHolofoil")
+        # Phones: Browse Set still opens dashboard.html (the mobile page has no such view).
+        phone = {"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148"}
+        response = self.client.get("/dashboard?tab=group_products", headers=phone)
         self.assertEqual(response.status_code, 200)
-        self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Market Signals", response.text)
 
     def test_public_market_data_is_browser_cacheable_but_account_data_is_not(self):

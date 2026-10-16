@@ -289,7 +289,6 @@ Main dashboard URLs:
 
 - `http://localhost:8001/` - on desktop, the desktop app (Buy, Discover, Research, Track,
   Learn in one page); see docs/desktop_app.md. Phones get the mobile page.
-- `http://localhost:8001/dashboard-classic` - the older research dashboard (until retired)
 - `http://localhost:8001/mobile` - the mobile page
 - `http://localhost:8001/admin` - admin tools index (admins only)
 
@@ -818,7 +817,7 @@ Account settings:
 
 Current scope:
 
-- `/dashboard-classic`, `/mobile`, the desktop app (`/`) and `/account-settings` use the
+- `/mobile`, the desktop app (`/`) and `/account-settings` use the
   tracking account; lists saved before signing in are merged into the account on sign-in
 - price targets (buy-below / sell-above) stay in each browser and do not sync
 - `/embed` and `/set-explorer` are not wired to tracking

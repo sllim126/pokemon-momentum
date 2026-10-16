@@ -35,6 +35,12 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-16 Retired the older research dashboard on desktop: `/dashboard-classic` and
+  `/dashboard-dev` now forward to the app like `/dashboard`. `dashboard.html` was kept: phones
+  open it from the mobile menu (Browse Set, Browse Pokémon, Set Strength), and mobile is frozen.
+- 2026-10-16 First nights after the power cut checked: the 02:00 nightly update and the 03:30
+  other-games archive (first run on its systemd timer) both succeeded; /health latest =
+  2026-10-15 for English and Japanese.
 - 2026-10-16 Local page for filling in the sealed checklist one product at a time
   (`scripts/utilities/sealed_checklist_server.py`, port 8099; saves to
   `data/sealed_pack_checklist.csv`, new `your_notes` column).
@@ -57,15 +63,8 @@ High Priority
 - [planned] Speed follow-ups: Sealed Deals takes ~0.5 s (it works out pack prices for every
   sealed product per request; could be a nightly snapshot), Set Strength ~0.12 s, and Under
   the Radar ~3 s while the feed is short after the data gap (ends on its own).
-- [planned] 2026-10-16: check the first nights after the power cut: Discord shows green for
-  the 02:00 nightly update, the 03:30 other-games archive (first run on its systemd timer)
-  and the 09:15 Squarespace sync, and /health says `latest` = 2026-10-15.
 - [waiting] Delete `data/processed/tracking.sqlite3.bak-2026-10-13` (the sign-in database
   before tokens were hashed) once the owner is happy that sign-ins work.
-- [planned] Retire the older research dashboard (decided 2026-10-12). Since 2026-10-13 the
-  app's full card page replaces "Full data →", so nothing links to `/dashboard-classic`
-  any more. Check nothing else needs it, then remove the route and `dashboard.html`
-  (phones use `mobile_dashboard.html`, not this file).
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
@@ -309,6 +308,8 @@ start these without asking. Mobile background: `docs/mobile_redesign_notes.txt`.
     `productId||subTypeName`
   - mobile flows for Browse Set, Browse Species, Set Strength, Set Explorer, Sealed Deals and
     the index pages
+    (once Browse Set, Browse Species and Set Strength exist on mobile, delete `dashboard.html`
+    and its test `tests/test_dashboard_frontend.py`: phones are its last users)
   - Alerts & Targets (hidden for now): daily rules for target hits, watchlist movement,
     breakouts, pullbacks, stale items and sell-above targets; decide account sync versus
     browser storage, and in-site inbox before email, Discord or push

@@ -602,10 +602,11 @@ DESKTOP_ONLY_TABS = {"group_products", "group_signals", "time_to_buy", "browse_s
 
 
 def dashboard_response_for_request(request: Request) -> FileResponse:
-    """Phones get the mobile page; desktops get the older research dashboard.
+    """Phones get the mobile page, or the older research dashboard (dashboard.html) for the
+    tabs the mobile page has no view for (DESKTOP_ONLY_TABS: the mobile menu's Browse Set,
+    Browse Pokemon and Set Strength). That is why dashboard.html is still kept.
 
-    Used by / and /dashboard for phones (desktop visitors are sent to the desktop app by
-    forward_desktop_to_app below) and by /dashboard-classic for everyone.
+    Desktop visitors never get here: forward_desktop_to_app sends them to the desktop app.
     """
     if is_mobile_request(request) and request.query_params.get("tab") not in DESKTOP_ONLY_TABS:
         return FileResponse(MOBILE_DASHBOARD_HTML)
@@ -619,8 +620,9 @@ def dashboard_response_for_request(request: Request) -> FileResponse:
 # the shared header's menu links keep working. Phones and tablets are never forwarded:
 # they keep the mobile page and the older pages exactly as before.
 #
-# The older research dashboard stays reachable at /dashboard-classic (the app's
-# "Full data ->" button) until it is retired; see docs/todo.txt.
+# The older research dashboard was retired for desktop on 2026-10-16: its addresses
+# (/dashboard, /dashboard-classic, /dashboard-dev) forward to the app like the rest.
+# dashboard.html itself stays for phones (see dashboard_response_for_request).
 
 # Old dashboard ?tab= values -> desktop app ?list= views.
 OLD_TAB_TO_APP_LIST = {
@@ -650,6 +652,8 @@ OLD_PAGE_TO_APP_LIST = {
 }
 # Old index detail pages, e.g. /index-overview-sv100 or /index-overview-jp-pokemon100.
 OLD_INDEX_PAGE = re.compile(r"/index-overview-((?:jp-)?[a-z]+\d+)")
+# Addresses of the older research dashboard.
+OLD_DASHBOARD_PATHS = {"/dashboard", "/dashboard-classic", "/dashboard-dev"}
 # Query parameters only the old dashboard uses; on / they mean an old-style link.
 OLD_DASHBOARD_PARAMS = {"tab", "segment", "group_id", "category_id", "chart_mode", "days", "mode"}
 
@@ -687,7 +691,7 @@ def desktop_app_redirect(request: Request) -> str | None:
     if path == "/mobile" and params.get("mode") == "tracked":
         tag = params.get("tracked_tag") or "all"
         return _app_url(f"track_{tag}", market=market)
-    if path == "/dashboard" or (path == "/" and OLD_DASHBOARD_PARAMS & set(params)):
+    if path in OLD_DASHBOARD_PATHS or (path == "/" and OLD_DASHBOARD_PARAMS & set(params)):
         tab = params.get("tab", "")
         list_key = OLD_TAB_TO_APP_LIST.get(tab)
         group_id = params.get("group_id")
@@ -768,9 +772,9 @@ def dashboard_alias(request: Request):
 
 
 @app.get("/dashboard-classic")
-def dashboard_classic():
-    """The older research dashboard, kept for the app's "Full data ->" button until retired."""
-    return FileResponse(DASHBOARD_HTML)
+def dashboard_classic(request: Request):
+    """Retired 2026-10-16; kept so old links work. Phones: as /dashboard. Desktop: forwarded."""
+    return dashboard_response_for_request(request)
 
 
 @app.get("/mobile")
@@ -839,9 +843,9 @@ def account_settings():
 
 
 @app.get("/dashboard-dev")
-def dashboard_dev():
-    """Serve the desktop dashboard directly for compatibility and operator checks."""
-    return FileResponse(DASHBOARD_HTML)
+def dashboard_dev(request: Request):
+    """Retired 2026-10-16; kept so old links work. Phones: as /dashboard. Desktop: forwarded."""
+    return dashboard_response_for_request(request)
 
 
 @app.get("/eod-dashboard")

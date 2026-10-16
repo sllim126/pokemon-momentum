@@ -34,7 +34,7 @@ PriceCharting download and Squarespace price sync were running.
 | --- | --- | --- |
 | `/` | Desktop: the desktop app (all five areas in one page). Phones: the mobile page | Live; desktop app since 2026-10-12 |
 | `/dashboard` | Phones: the mobile page. Desktop: forwards to the desktop app | Live |
-| `/dashboard-classic` | The older research dashboard ("Full data →" on a card) | Live until retired |
+| `/dashboard-classic`, `/dashboard-dev` | The older research dashboard's desktop addresses | Retired 2026-10-16; forward like `/dashboard` |
 | `/home-preview` | The desktop app's former preview address | Forwards to `/` on desktop |
 | `/buy`, `/discover`, `/research`, `/track`, `/learn` | Area landing pages from the shared header menu | Live on phones; desktop forwards to the app |
 | `/mobile` | Direct mobile decision dashboard | Live |
@@ -108,7 +108,8 @@ Added 2026-10:
 - Collector Hub, Placeholder Library and Account restyled on a shared desktop stylesheet
 - Index snapshots now build after the parquet export, so indexes are no longer a day behind
 - The desktop app is the desktop home page at `/`; older desktop addresses forward to it
-  (phones unchanged), and the older dashboard is at `/dashboard-classic`
+  (phones unchanged); the older research dashboard is retired on desktop (2026-10-16) and
+  `dashboard.html` now serves only the mobile menu's Browse Set, Browse Pokémon and Set Strength
 - Card views answer in about 0.01-0.05 s: cached table checks, one shared DuckDB
   connection, a weekly long-history snapshot for "All" and the 6-Month Hold, browser caching
 - Discover lists scale their activity thresholds to feed gaps
