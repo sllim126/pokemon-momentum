@@ -35,6 +35,9 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-16 The "Poke6s Control" bot posted a first message in every Poke6s Discord channel
+  (welcome, rules, channel guide, market picks, market snapshot, Pitch Black set breakdown,
+  Base Set Charizard spotlight, feature/feedback prompts, October site update).
 - 2026-10-16 Discord bug reports are copied onto the server every 15 minutes
   (`import_discord_bug_reports.py`, "Poke6s Control" bot) and marked ✅; the admin
   /bug-reports page now escapes report text (it was a stored-XSS risk via the Feedback form).
@@ -64,6 +67,12 @@ High Priority
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
+- [waiting] Discord: automate #what-should-i-buy (and maybe #set-breakdowns / #card-spotlight)
+  posts from the site's data. Owner to choose how often (weekly suggested), which sections
+  (Pullbacks, Sealed Deals vs loose, Budget Builder, ...) and English only or English +
+  Japanese. The first hand-made posts went out 2026-10-16; their message ids are in
+  `data/discord_posts.json`, so the bot can edit them (e.g. keep #how-to-use-this-server
+  current). Skip vintage spikes until the spike filter exists.
 - [waiting] Black Friday pull lists: the owner will supply the sets and a minimum price.
 
 - [waiting] Backfill history if TCGCSV brings its daily archive back (owner hears it may
