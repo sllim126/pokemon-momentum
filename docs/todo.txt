@@ -136,6 +136,8 @@ Desktop App Follow-up
     Everything still on a guess is listed in `data/sealed_pack_checklist.csv` (2026-10-13:
     A 7 open questions, B 9 UPCs on 16, C 33 older ETBs on 9, D 45 Scarlet & Violet / Mega
     collections and E 202 older ones on the 5-pack guess). The owner fills `your_pack_count`;
+    Fill it in one item at a time at http://<server>:8099 by running
+    `python3 scripts/utilities/sealed_checklist_server.py` (adds a `your_notes` column; 2026-10-16);
     then load the answers as overrides in `api.py` and regenerate the file.
     Build & Battle displays: 10 boxes x 4 packs = 40 (owner, 2026-10-13: Destined Rivals; applied to all).
     Booster box cases: 6 boxes x 36 packs = 216 (owner-confirmed 2026-10-13; already counted so).

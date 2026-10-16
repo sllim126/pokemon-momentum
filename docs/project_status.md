@@ -119,7 +119,8 @@ Added 2026-10:
   set logos, rebuilt Collector Hub and Placeholder Library
 - Sealed Deals pack counts corrected for cases, UPCs and Super-Premium Collections
 - Nightly jobs wait for DNS after a reboot; runbook covers recovering from a power cut
-- `data/sealed_pack_checklist.csv` lists every sealed product whose pack count is still a guess
+- `data/sealed_pack_checklist.csv` lists every sealed product whose pack count is still a guess;
+  `scripts/utilities/sealed_checklist_server.py` serves a one-item-at-a-time page (port 8099) to fill it in
 
 ## What's next
 
