@@ -120,6 +120,9 @@ Added 2026-10:
   set logos, rebuilt Collector Hub and Placeholder Library
 - Sealed Deals pack counts corrected for cases, UPCs and Super-Premium Collections
 - Nightly jobs wait for DNS after a reboot; runbook covers recovering from a power cut
+- Pullbacks redefined (2026-10-17, trial week): cards 10%+ below their 90-day high for a week,
+  well behind cards of a similar price and their own set, still up over the year; cards whose
+  whole set is falling are listed as Whole-set Dips (`/set_dips`)
 - Discord #bug-reports messages are copied into the admin bug list every 15 minutes by the
   "Poke6s Control" bot (marked ✅); the admin bug page escapes report text
 - `data/sealed_pack_checklist.csv` lists every sealed product whose pack count is still a guess;

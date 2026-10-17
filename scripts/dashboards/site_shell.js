@@ -34,7 +34,7 @@
       label: "Discover",
       question: "What's moving right now?",
       tools: [
-        { label: "Pullbacks", href: "/dashboard?tab=good_buys", text: "Premium cards that have dipped and may be good entries." },
+        { label: "Pullbacks", href: "/dashboard?tab=good_buys", text: "Cards going down while the market around them isn't." },
         { label: "Early Movers", href: "/dashboard?tab=early_uptrends", text: "Cards just starting to trend up." },
         { label: "Breakouts", href: "/dashboard?tab=breakouts", text: "Cards breaking above their 90-day high with real activity." },
         { label: "Top Movers", href: "/dashboard?tab=top_movers", text: "The biggest steady gains over the last 30 days." },

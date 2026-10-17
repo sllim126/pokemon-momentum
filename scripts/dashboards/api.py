@@ -49,6 +49,8 @@ from scripts.dashboards.query_support import (
     add_release_dates,
     set_release_dates,
     build_premium_rarity_filter,
+    build_pullback_sql,
+    PULLBACK_MIN_PRICE,
     build_set_basket_filter,
     category_config,
     group_signal_from,
@@ -725,7 +727,7 @@ PUBLIC_DATA_PATHS = frozenset({
     "/browse_species", "/group_products", "/group_signals", "/group_series", "/set_baskets",
     "/product_signals", "/sealed_deals", "/budget_builder",
     "/top_movers", "/confirmed_uptrends", "/sma30_holds", "/early_uptrends",
-    "/under_the_radar", "/breakouts", "/good_buys", "/time_to_buy",
+    "/under_the_radar", "/breakouts", "/good_buys", "/set_dips", "/time_to_buy",
 })
 
 
@@ -5556,324 +5558,77 @@ def budget_builder_recommendations(
     }
 
 
+PULLBACK_COLUMNS = """
+          latest_date, groupId, groupName, productId, productName, imageUrl, rarity, number,
+          productClass, productKind, subTypeName, latest_price, high_90d,
+          roc_7d_pct, roc_30d_pct, roc_90d_pct, roc_365d_pct, recent_distinct_prices_30d,
+          price_vs_sma30_pct, price_vs_sma90_pct, trend_score,
+          off_high_pct, sma7_off_high_pct, band_median_30d_pct, vs_band_pts,
+          set_median_30d_pct, vs_set_pts, pullback_kind
+"""
+
+
+def pullback_rows(
+    dip: str,
+    limit: int,
+    min_price: float,
+    max_price: float | None,
+    exclude_prize_packs: bool,
+    product_kind: str | None,
+    category_id: int,
+) -> dict:
+    """Pullbacks of one kind (dip='own' or 'set'), worst first; rules in
+    query_support.build_pullback_sql. Reads the day's product signal snapshot."""
+    limit = max(1, min(limit, 5000))
+    min_price = max(0.0, min_price)
+    price_filter = f"AND latest_price >= {min_price}"
+    if max_price is not None:
+        price_filter += f" AND latest_price <= {max(0.0, max_price)}"
+    if exclude_prize_packs:
+        price_filter += " AND lower(COALESCE(groupName, '')) NOT LIKE '%prize pack%'"
+    category = category_config(category_id)
+    source = product_signal_from(category.category_id)
+    day = f"""(SELECT * FROM {source}
+             WHERE categoryId = {category.category_id}
+               AND latest_date = (SELECT MAX(latest_date) FROM {source} WHERE categoryId = {category.category_id}))"""
+    pullbacks = build_pullback_sql(day, "sealed" if product_kind == "sealed" else "card")
+    sql = f"""
+        SELECT {PULLBACK_COLUMNS}
+        FROM ({pullbacks}) pb
+        WHERE pullback_kind = '{'set' if dip == 'set' else 'own'}'
+          {price_filter}
+        ORDER BY vs_band_pts ASC, latest_price DESC
+        LIMIT {limit}
+    """
+    cols, rows = q(sql)
+    return {"columns": cols, "rows": rows}
+
+
 @app.get("/good_buys")
 def good_buys(
     limit: int = 250,
-    min_price: float = 5.0,
+    min_price: float = PULLBACK_MIN_PRICE,
     max_price: float | None = None,
-    max_30d_pct: float = 0.0,
-    max_90d_pct: float = 20.0,
-    max_365d_pct: float = 120.0,
-    max_7d_pct: float = 6.0,
-    max_price_vs_sma90_pct: float = 20.0,
-    min_recent_distinct_prices_30d: int = 10,
-    floor_days: int = 7,
-    min_floor_observations: int = 5,
-    max_floor_variance_pct: float = 10.0,
-    premium_pullback_min_price: float = 80.0,
-    premium_pullback_max_30d_pct: float = 0.0,
-    premium_pullback_max_90d_pct: float = 35.0,
-    premium_pullback_max_7d_pct: float = 2.0,
-    premium_pullback_min_price_vs_sma30_pct: float = -12.0,
-    premium_pullback_max_price_vs_sma30_pct: float = 2.5,
     exclude_prize_packs: bool = False,
     product_kind: str | None = None,
     category_id: int = 3,
 ):
-    limit = max(1, min(limit, 5000))
-    min_price = max(0.0, min_price)
-    max_price_filter = ""
-    if max_price is not None:
-        max_price = max(0.0, max_price)
-        if max_price < min_price:
-            min_price, max_price = max_price, min_price
-        max_price_filter = f"AND latest_price <= {max_price}"
-    min_recent_distinct_prices_30d = max(2, min(min_recent_distinct_prices_30d, 30))
-    floor_days = max(5, min(floor_days, 10))
-    min_floor_observations = max(3, min(min_floor_observations, floor_days))
-    category = category_config(category_id)
-    # Lower the activity bars when the feed has missing days (see gap_scaled_threshold).
-    min_recent_distinct_prices_30d = gap_scaled_threshold(min_recent_distinct_prices_30d, 30, category.category_id)
-    min_floor_observations = gap_scaled_threshold(min_floor_observations, floor_days, category.category_id, floor=3)
-    signal_source = product_signal_from(category.category_id)
-    price_source = prices_from(category.category_id)
-    premium_rarity_filter = build_premium_rarity_filter("rarity")
-    prize_pack_filter = ""
-    product_kind_filter = "AND productKind = 'card'"
-    rarity_filter = f"AND {premium_rarity_filter}"
-    if product_kind == "sealed":
-        product_kind_filter = "AND productKind = 'sealed'"
-        rarity_filter = ""
-    elif product_kind == "card":
-        product_kind_filter = "AND productKind = 'card'"
-        rarity_filter = f"AND {premium_rarity_filter}"
-    if exclude_prize_packs:
-        prize_pack_filter = "AND lower(COALESCE(groupName, '')) NOT LIKE '%prize pack%'"
-    use_snapshot = floor_days == 7
+    """Pullbacks: cards dropping on their own while the market around them isn't
+    (query_support.build_pullback_sql). Cards whose whole set is falling are in /set_dips."""
+    return pullback_rows("own", limit, min_price, max_price, exclude_prize_packs, product_kind, category_id)
 
-    if use_snapshot:
-        try:
-            source = screener_snapshot_from(category.category_id)
-        except HTTPException:
-            source = ""
-        if source:
-            sql = f"""
-        SELECT
-          latest_date,
-          groupId,
-          groupName,
-          productId,
-          productName,
-          imageUrl,
-          rarity,
-          number,
-          productClass,
-          productKind,
-          subTypeName,
-          latest_price,
-          roc_7d_pct,
-          roc_30d_pct,
-          roc_90d_pct,
-          roc_365d_pct,
-          recent_distinct_prices_30d,
-          price_vs_sma30_pct,
-          price_vs_sma90_pct,
-          trend_score
-        FROM {source}
-        WHERE categoryId = {category.category_id}
-          AND latest_date = (SELECT MAX(latest_date) FROM {source})
-          AND latest_price >= {min_price}
-          {max_price_filter}
-          {product_kind_filter}
-          {rarity_filter}
-          AND COALESCE(recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
-          AND COALESCE(roc_365d_pct, 0) <= {max_365d_pct}
-          AND COALESCE(price_vs_sma90_pct, 0) <= {max_price_vs_sma90_pct}
-          AND (
-            (
-              COALESCE(roc_30d_pct, 0) <= {max_30d_pct}
-              AND COALESCE(roc_90d_pct, 0) <= {max_90d_pct}
-              AND COALESCE(roc_90d_pct, 0) < 0
-              AND COALESCE(roc_7d_pct, 0) <= {max_7d_pct}
-              AND (
-                (
-                  recent_price_points >= 3
-                  AND latest_price_1d < latest_price_2d
-                  AND latest_price_2d < latest_price_3d
-                )
-                OR (
-                  floor_observations_7d >= {min_floor_observations}
-                  AND COALESCE(floor_variance_to_current_pct_7d, 999999.0) <= {max_floor_variance_pct}
-                )
-              )
-            )
-            OR (
-              latest_price >= {premium_pullback_min_price}
-              AND floor_observations_7d >= {min_floor_observations}
-              AND COALESCE(floor_variance_to_current_pct_7d, 999999.0) <= {max_floor_variance_pct}
-              AND COALESCE(roc_30d_pct, 0) <= {premium_pullback_max_30d_pct}
-              AND COALESCE(roc_90d_pct, 0) <= {premium_pullback_max_90d_pct}
-              AND COALESCE(roc_7d_pct, 0) <= {premium_pullback_max_7d_pct}
-              AND COALESCE(price_vs_sma30_pct, 0) >= {premium_pullback_min_price_vs_sma30_pct}
-              AND COALESCE(price_vs_sma30_pct, 0) <= {premium_pullback_max_price_vs_sma30_pct}
-              AND (
-                COALESCE(roc_7d_pct, 0) < 0
-                OR COALESCE(price_vs_sma30_pct, 0) <= 0
-              )
-            )
-          )
-          {prize_pack_filter}
-        ORDER BY
-          CASE
-            WHEN floor_observations_7d >= {min_floor_observations}
-             AND COALESCE(floor_variance_to_current_pct_7d, 999999.0) <= {max_floor_variance_pct}
-            THEN 0 ELSE 1
-          END ASC,
-          COALESCE(floor_variance_to_current_pct_7d, 999999.0) ASC,
-          ABS(COALESCE(roc_7d_pct, 0) + 6.0) ASC,
-          ABS(COALESCE(price_vs_sma30_pct, 0) + 4.0) ASC,
-          COALESCE(recent_distinct_prices_30d, 0) DESC,
-          roc_7d_pct ASC,
-          roc_30d_pct ASC,
-          price_vs_sma30_pct ASC,
-          latest_price DESC
-        LIMIT {limit}
-        """
-            cols, rows = q(sql)
-            return {"columns": cols, "rows": rows}
 
-    sql = f"""
-    WITH latest_signal AS (
-      SELECT
-        latest_date,
-        categoryId,
-        groupId,
-        groupName,
-        productId,
-        productName,
-        imageUrl,
-        rarity,
-        number,
-        productClass,
-        productKind,
-        subTypeName,
-        latest_price,
-        roc_7d_pct,
-        roc_30d_pct,
-        roc_90d_pct,
-        roc_365d_pct,
-        recent_distinct_prices_30d,
-        price_vs_sma30_pct,
-        price_vs_sma90_pct,
-        trend_score
-      FROM {signal_source}
-      WHERE categoryId = {category.category_id}
-        AND latest_date = (SELECT MAX(latest_date) FROM {signal_source})
-    ),
-    recent_prices AS (
-      SELECT
-        productId,
-        groupId,
-        subTypeName,
-        date,
-        marketPrice,
-        ROW_NUMBER() OVER (
-          PARTITION BY productId, groupId, subTypeName
-          ORDER BY date DESC
-        ) AS rn
-      FROM {price_source}
-      WHERE categoryId = {category.category_id}
-        AND marketPrice IS NOT NULL
-    ),
-    floor_window AS (
-      SELECT
-        rp.productId,
-        rp.groupId,
-        rp.subTypeName,
-        COUNT(*) AS floor_observations,
-        MIN(rp.marketPrice) AS floor_low,
-        MAX(rp.marketPrice) AS floor_high,
-        AVG(rp.marketPrice) AS floor_avg
-      FROM recent_prices rp
-      JOIN latest_signal s
-        ON s.productId = rp.productId
-       AND s.groupId = rp.groupId
-       AND s.subTypeName = rp.subTypeName
-      WHERE rp.date >= s.latest_date - INTERVAL {floor_days} DAY
-      GROUP BY rp.productId, rp.groupId, rp.subTypeName
-    ),
-    recent_lift AS (
-      SELECT
-        productId,
-        groupId,
-        subTypeName,
-        MAX(CASE WHEN rn = 1 THEN marketPrice END) AS latest_price_1d,
-        MAX(CASE WHEN rn = 2 THEN marketPrice END) AS latest_price_2d,
-        MAX(CASE WHEN rn = 3 THEN marketPrice END) AS latest_price_3d,
-        COUNT(*) FILTER (WHERE rn <= 3) AS recent_price_points
-      FROM recent_prices
-      WHERE rn <= 3
-      GROUP BY productId, groupId, subTypeName
-    )
-    SELECT
-      s.latest_date,
-      s.groupId,
-      s.groupName,
-      s.productId,
-      s.productName,
-      s.imageUrl,
-      s.rarity,
-      s.number,
-      s.productClass,
-      s.productKind,
-      s.subTypeName,
-      s.latest_price,
-      s.roc_7d_pct,
-      s.roc_30d_pct,
-      s.roc_90d_pct,
-      s.recent_distinct_prices_30d,
-      s.price_vs_sma30_pct,
-      s.trend_score
-    FROM latest_signal s
-    JOIN floor_window fw
-      ON fw.productId = s.productId
-     AND fw.groupId = s.groupId
-     AND fw.subTypeName = s.subTypeName
-    JOIN recent_lift rl
-      ON rl.productId = s.productId
-     AND rl.groupId = s.groupId
-     AND rl.subTypeName = s.subTypeName
-    WHERE latest_price >= {min_price}
-      {max_price_filter}
-      {product_kind_filter}
-      {rarity_filter}
-      AND COALESCE(recent_distinct_prices_30d, 0) >= {min_recent_distinct_prices_30d}
-      AND COALESCE(roc_365d_pct, 0) <= {max_365d_pct}
-      AND COALESCE(price_vs_sma90_pct, 0) <= {max_price_vs_sma90_pct}
-      AND (
-        (
-          COALESCE(roc_30d_pct, 0) <= {max_30d_pct}
-          AND COALESCE(roc_90d_pct, 0) <= {max_90d_pct}
-          AND COALESCE(roc_90d_pct, 0) < 0
-          AND COALESCE(roc_7d_pct, 0) <= {max_7d_pct}
-          AND (
-            (
-              rl.recent_price_points >= 3
-              AND rl.latest_price_1d < rl.latest_price_2d
-              AND rl.latest_price_2d < rl.latest_price_3d
-            )
-            OR (
-              fw.floor_observations >= {min_floor_observations}
-              AND GREATEST(
-                ABS(((fw.floor_high / NULLIF(latest_price, 0)) - 1) * 100.0),
-                ABS(((fw.floor_low / NULLIF(latest_price, 0)) - 1) * 100.0)
-              ) <= {max_floor_variance_pct}
-            )
-          )
-        )
-        OR (
-          latest_price >= {premium_pullback_min_price}
-          AND fw.floor_observations >= {min_floor_observations}
-          AND GREATEST(
-            ABS(((fw.floor_high / NULLIF(latest_price, 0)) - 1) * 100.0),
-            ABS(((fw.floor_low / NULLIF(latest_price, 0)) - 1) * 100.0)
-          ) <= {max_floor_variance_pct}
-          AND COALESCE(roc_30d_pct, 0) <= {premium_pullback_max_30d_pct}
-          AND COALESCE(roc_90d_pct, 0) <= {premium_pullback_max_90d_pct}
-          AND COALESCE(roc_7d_pct, 0) <= {premium_pullback_max_7d_pct}
-          AND COALESCE(price_vs_sma30_pct, 0) >= {premium_pullback_min_price_vs_sma30_pct}
-          AND COALESCE(price_vs_sma30_pct, 0) <= {premium_pullback_max_price_vs_sma30_pct}
-          AND (
-            COALESCE(roc_7d_pct, 0) < 0
-            OR COALESCE(price_vs_sma30_pct, 0) <= 0
-          )
-        )
-      )
-      {prize_pack_filter}
-    ORDER BY
-      CASE
-        WHEN fw.floor_observations >= {min_floor_observations}
-         AND GREATEST(
-           ABS(((fw.floor_high / NULLIF(latest_price, 0)) - 1) * 100.0),
-           ABS(((fw.floor_low / NULLIF(latest_price, 0)) - 1) * 100.0)
-         ) <= {max_floor_variance_pct}
-        THEN 0 ELSE 1
-      END ASC,
-      GREATEST(
-        ABS(((fw.floor_high / NULLIF(latest_price, 0)) - 1) * 100.0),
-        ABS(((fw.floor_low / NULLIF(latest_price, 0)) - 1) * 100.0)
-      ) ASC,
-      ABS(COALESCE(roc_7d_pct, 0) + 6.0) ASC,
-      ABS(COALESCE(price_vs_sma30_pct, 0) + 4.0) ASC,
-      COALESCE(recent_distinct_prices_30d, 0) DESC,
-      roc_7d_pct ASC,
-      roc_30d_pct ASC,
-      price_vs_sma30_pct ASC,
-      latest_price DESC
-    LIMIT {limit}
-    """
-    cols, rows = q(sql)
-    return {"columns": cols, "rows": rows}
+@app.get("/set_dips")
+def set_dips(
+    limit: int = 250,
+    min_price: float = PULLBACK_MIN_PRICE,
+    max_price: float | None = None,
+    exclude_prize_packs: bool = False,
+    product_kind: str | None = None,
+    category_id: int = 3,
+):
+    """Whole-set dips: cards that pass the Pullbacks rules but whose set is falling with them."""
+    return pullback_rows("set", limit, min_price, max_price, exclude_prize_packs, product_kind, category_id)
 
 
 @app.get("/time_to_buy")

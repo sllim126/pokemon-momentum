@@ -60,19 +60,19 @@ Recently Completed
 High Priority
 -------------
 
-- [in progress] Redefine Pullbacks: "what's going down when everything is going up".
-  Today's rules let near-high cards in (Darkrai & Cresselia Legend, 3.8% off its high, +61%
-  in a year) and the activity bar drops to 3 price changes during the data gap. Trial run
-  2026-10-17 (scratchpad only, nothing on the site) with: premium cards $5+ (owner prefers
-  $5); >=10% below the 90-day high; 7-day average >=8% below it; >=10 points behind the
-  median 30-day change of its price band ($5-20, 20-50, 50-100, 100-250, 250+; comparing to
-  the Top 151 failed: that index is high-end cards); <=40% below the high; up over the year;
-  >=6 price changes in 30 days. Cards also >=10 points behind their own set's median are
-  "own dips" (59 on 2026-10-16); the rest are set-wide dips (107, mostly Scarlet & Violet
-  sets down 6-15%), to show separately or under Set Strength. Next: owner signs off, then
-  build it into `good_buys` and the snapshot's `good_buys_default_flag` (the Budget Builder
-  "Pullback entry" tag uses a looser old copy of the rules today); recheck the numbers once
-  the feed has a full month without gaps (mid-November).
+- [in progress] Pullbacks trial week (live 2026-10-17; review with the owner ~2026-10-24).
+  New rules in `query_support.build_pullback_sql` (constants PULLBACK_*), used by /good_buys,
+  the new /set_dips ("Whole-set Dips" in the desktop app) and the screener snapshot's
+  `good_buys_default_flag` (Budget Builder's "Pullback entry" tag), so they always agree:
+  premium cards $5+; >=10% below the 90-day high; 7-day average >=8% below it; 30-day change
+  >=10 points behind the median of its price band ($5-20, 20-50, 50-100, 100-250, 250+);
+  <=40% below the high; up over the year; >=6 price changes in 30 days (not gap-scaled).
+  "Own" dips are also >=10 points behind their set's median (sets with 5+ pool cards);
+  the rest are Whole-set Dips. First day: 59 Pullbacks, 107 Whole-set Dips (English).
+  Open: Japanese is empty (a typical Japanese premium card changes price about once a month,
+  so the 6-changes bar removes nearly all of them): owner to decide on a lower bar for
+  Japanese. Recheck all numbers once the feed has a full month without gaps (mid-November).
+  The mobile Pullbacks list reads /good_buys too, so phones got the new rules (layout unchanged).
 - [planned] Speed follow-ups: Sealed Deals takes ~0.5 s (it works out pack prices for every
   sealed product per request; could be a nightly snapshot), Set Strength ~0.12 s, and Under
   the Radar ~3 s while the feed is short after the data gap (ends on its own).
