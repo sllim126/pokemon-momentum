@@ -60,6 +60,19 @@ Recently Completed
 High Priority
 -------------
 
+- [in progress] Redefine Pullbacks: "what's going down when everything is going up".
+  Today's rules let near-high cards in (Darkrai & Cresselia Legend, 3.8% off its high, +61%
+  in a year) and the activity bar drops to 3 price changes during the data gap. Trial run
+  2026-10-17 (scratchpad only, nothing on the site) with: premium cards $5+ (owner prefers
+  $5); >=10% below the 90-day high; 7-day average >=8% below it; >=10 points behind the
+  median 30-day change of its price band ($5-20, 20-50, 50-100, 100-250, 250+; comparing to
+  the Top 151 failed: that index is high-end cards); <=40% below the high; up over the year;
+  >=6 price changes in 30 days. Cards also >=10 points behind their own set's median are
+  "own dips" (59 on 2026-10-16); the rest are set-wide dips (107, mostly Scarlet & Violet
+  sets down 6-15%), to show separately or under Set Strength. Next: owner signs off, then
+  build it into `good_buys` and the snapshot's `good_buys_default_flag` (the Budget Builder
+  "Pullback entry" tag uses a looser old copy of the rules today); recheck the numbers once
+  the feed has a full month without gaps (mid-November).
 - [planned] Speed follow-ups: Sealed Deals takes ~0.5 s (it works out pack prices for every
   sealed product per request; could be a nightly snapshot), Set Strength ~0.12 s, and Under
   the Radar ~3 s while the feed is short after the data gap (ends on its own).
