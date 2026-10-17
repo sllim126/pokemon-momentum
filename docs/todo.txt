@@ -205,6 +205,12 @@ Active Queue
   single-observation moves greater than about 25% up or down as likely manipulation, bad
   data or buyout noise. Make the threshold configurable later by price band, liquidity and
   observation count.
+  Concrete case (2026-10-17): Entei Star, EX Unseen Forces 113/115. A 99-cent sale on
+  2026-05-06 set TCGplayer's market price to $0.99 until 2026-08-02 while the lowest listing
+  was $1,600; the market price is an average of recent sales, so today's $1,067 is still
+  (1600 + 1600 + 0.99) / 3, and the 90-day change shows +107,678%. A first rule: ignore days
+  whose marketPrice is under 10% of lowPrice (lowPrice $20+): 136 items today, 1,244 in the
+  last 180 days.
 - [planned] Sealed Squarespace listing intake and creation scripts (in progress before
   the desktop app work; check `scripts/` for the current state before continuing).
 - [waiting] Squarespace listing clean-up (owner, when there's time to work through the
