@@ -201,16 +201,24 @@ Active Queue
 - [planned] Search ranking can put a promo above the main printing (example: "charizard 199").
 - [waiting] Confirm the fee and shipping numbers marked ESTIMATE in
   `scripts/common/selling_costs.py` against real invoices (owner has the invoices).
-- [planned] Spike/dip suppression for price-history indicators: for cards over $200, ignore
-  single-observation moves greater than about 25% up or down as likely manipulation, bad
-  data or buyout noise. Make the threshold configurable later by price band, liquidity and
-  observation count.
-  Concrete case (2026-10-17): Entei Star, EX Unseen Forces 113/115. A 99-cent sale on
-  2026-05-06 set TCGplayer's market price to $0.99 until 2026-08-02 while the lowest listing
-  was $1,600; the market price is an average of recent sales, so today's $1,067 is still
-  (1600 + 1600 + 0.99) / 3, and the 90-day change shows +107,678%. A first rule: ignore days
-  whose marketPrice is under 10% of lowPrice (lowPrice $20+): 136 items today, 1,244 in the
-  last 180 days.
+- [planned] Ignore single odd sales in changes and lists (agreed 2026-10-17; start after the
+  Pullbacks review ~2026-10-24, ideally once the feed gap is behind us, mid-November).
+  Problem: TCGplayer's market price averages recent sales, so one junk sale (damaged copy,
+  fake, or a graded card sold as raw) can hold it far off for months on rarely sold cards.
+  Venusaur 1st Ed. (Base Shadowless 015/102): a ~$72 sale on 2025-08-14 held the price at
+  $72-75 until 2026-07-31 (listings $750+), so it shows +1,246% over 90 days. Entei Star (EX
+  Unseen Forces 113/115): a 99-cent sale held it at $0.99 2026-05-06 to 08-01 (listing $1,600);
+  +107,678% over 90 days, and today's $1,067 still averages the 99 cents in.
+  Rule tested 2026-10-17 (scratchpad trial, two years of English prices): a new price level is
+  ignored (hold the last good price) when it is under 40% or over 250% of the card's normal
+  price (median of its last 10 accepted levels) AND listings don't back it on at least half
+  its days (drop: lowPrice <= 2x the level; spike: midPrice >= half the level). Do not use
+  "the next level confirms it": averaged wobbles around the junk price fooled that.
+  Result: 1,705 items affected in the last year (77 at $100+), 324 today (58 at $20+);
+  no store-priced SKU affected.
+  Owner's choice: keep showing TCGplayer's price as is; use the cleaned series only for the
+  % changes, indicators, lists and the 6-Month Hold. Build it as a nightly step before the
+  snapshots, keep the raw prices, show Venusaur's and Entei's charts before/after first.
 - [planned] Sealed Squarespace listing intake and creation scripts (in progress before
   the desktop app work; check `scripts/` for the current state before continuing).
 - [waiting] Squarespace listing clean-up (owner, when there's time to work through the
