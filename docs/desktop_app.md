@@ -1,6 +1,6 @@
 # Desktop App: Maintainer Guide
 
-Last reviewed: 2026-10-12
+Last reviewed: 2026-10-16
 
 The desktop app is one page that holds the site's five areas (Buy, Discover, Research,
 Track, Learn) in a single three-column layout built for 1080p screens. Since 2026-10-12 it
@@ -25,8 +25,9 @@ tablets are never forwarded and still get the older pages.
 | `/buy`, `/discover`, `/research`, `/track`, `/learn` | Sealed Deals, Top Movers, Sets, All saved, How it works |
 | `/mobile?mode=tracked&tracked_tag=<tag>` | that saved list |
 
-The older research dashboard is still reachable at `/dashboard-classic`, but nothing in the
-app links to it since the full card page replaced "Full data →" (2026-10-13).
+The older research dashboard was retired on desktop on 2026-10-16: `/dashboard-classic` and
+`/dashboard-dev` forward to the app like `/dashboard`. `dashboard.html` stays because phones
+open it for the mobile menu's Browse Set, Browse Pokémon and Set Strength.
 - Shared header: `scripts/dashboards/site_shell.js`
 
 The top of the page's `<script>` has an overview comment with the same essentials as this
@@ -57,7 +58,7 @@ Every view is one entry in the `LISTS` array; its fields are documented above th
 | --- | --- | --- |
 | Buy | Sealed Deals (`sealed_deals`) | `/sealed_deals` (all products, no price limits) |
 | Buy | Budget Builder (`budget`) | `/budget_builder` |
-| Discover | Top Movers, Confirmed Movers, Consistent Movers, Early Movers, Under the Radar, Breakouts, Pullbacks | `/<key>` (for example `/top_movers`) |
+| Discover | Top Movers, Confirmed Movers, Consistent Movers, Early Movers, Under the Radar, Breakouts, Pullbacks, Whole-set Dips | `/<key>` (for example `/top_movers`; Pullbacks is `/good_buys`, Whole-set Dips `/set_dips`; rules in `query_support.build_pullback_sql`) |
 | Track | All saved, Buy List, Watchlist, Favorites, Needs Review (`track_*`) | `/tracking/items/resolve`, with tags from browser storage or `/tracking/tags` |
 | Research | Sets (`sets`) → one set (`set`) | `/group_signals` → `/group_products` |
 | Research | Pokémon (`species`) | `/browse_species` |

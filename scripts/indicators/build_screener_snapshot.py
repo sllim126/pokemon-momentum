@@ -16,7 +16,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.common.category_config import get_category_config
-from scripts.dashboards.query_support import build_premium_rarity_filter
+from scripts.dashboards.query_support import build_pullback_sql
 
 
 EXTRACTED_DIR = "/app/data/extracted"
@@ -43,7 +43,7 @@ def main() -> int:
     out_csv = f"{EXTRACTED_DIR}/{category.screener_snapshot_csv}"
     table_name = category.screener_snapshot_table
     product_signal_table = category.product_signal_table
-    premium_rarity_filter = build_premium_rarity_filter("s.rarity")
+    pullback_sql = build_pullback_sql("enriched")
 
     con = duckdb.connect(DB_PATH)
     tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
@@ -145,60 +145,15 @@ def main() -> int:
              AND fw.subTypeName = s.subTypeName
         ),
         good_buys_ranked AS (
+            -- Pullbacks dropping on their own (same rules as /good_buys:
+            -- query_support.build_pullback_sql), ranked like that list.
             SELECT
-                s.productId,
-                s.groupId,
-                s.subTypeName,
-                ROW_NUMBER() OVER (
-                    ORDER BY
-                        CASE
-                            WHEN s.floor_observations_7d >= 4
-                             AND COALESCE(s.floor_variance_to_current_pct_7d, 999999.0) <= 12.0
-                            THEN 0 ELSE 1
-                        END ASC,
-                        COALESCE(s.floor_variance_to_current_pct_7d, 999999.0) ASC,
-                        s.roc_30d_pct ASC,
-                        s.price_vs_sma30_pct ASC,
-                        s.latest_price DESC
-                ) AS good_buys_default_rank
-            FROM enriched s
-            WHERE s.latest_price >= 5.0
-              AND s.productKind = 'card'
-              AND {premium_rarity_filter}
-              AND COALESCE(s.recent_distinct_prices_30d, 0) >= 10
-              AND (
-                (
-                  COALESCE(s.roc_30d_pct, 0) <= 0.0
-                  AND COALESCE(s.roc_90d_pct, 0) <= 20.0
-                  AND COALESCE(s.roc_90d_pct, 0) < 0
-                  AND COALESCE(s.roc_7d_pct, 0) <= 6.0
-                  AND (
-                    (
-                      s.recent_price_points >= 3
-                      AND s.latest_price_1d < s.latest_price_2d
-                      AND s.latest_price_2d < s.latest_price_3d
-                    )
-                    OR (
-                      s.floor_observations_7d >= 4
-                      AND COALESCE(s.floor_variance_to_current_pct_7d, 999999.0) <= 12.0
-                    )
-                  )
-                )
-                OR (
-                  s.latest_price >= 80.0
-                  AND s.floor_observations_7d >= 4
-                  AND COALESCE(s.floor_variance_to_current_pct_7d, 999999.0) <= 12.0
-                  AND COALESCE(s.roc_30d_pct, 0) <= 12.0
-                  AND COALESCE(s.roc_90d_pct, 0) <= 35.0
-                  AND COALESCE(s.roc_7d_pct, 0) <= 2.5
-                  AND COALESCE(s.price_vs_sma30_pct, 0) >= -12.0
-                  AND COALESCE(s.price_vs_sma30_pct, 0) <= 4.0
-                  AND (
-                    COALESCE(s.roc_7d_pct, 0) < 0
-                    OR COALESCE(s.price_vs_sma30_pct, 0) <= 0
-                  )
-                )
-              )
+                productId,
+                groupId,
+                subTypeName,
+                ROW_NUMBER() OVER (ORDER BY vs_band_pts ASC, latest_price DESC) AS good_buys_default_rank
+            FROM ({pullback_sql}) pb
+            WHERE pullback_kind = 'own'
         ),
         early_uptrends_ranked AS (
             SELECT

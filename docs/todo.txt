@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-16 (milestone: Discord bot, checklist page, DNS fix)
+Last updated: 2026-10-18 (milestone: ATLA and KPDH binder planners)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -35,6 +35,22 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-18 Deployed the standalone ATLA Binder planner at `/atla/` in a read-only nginx
+  container on port 8090; Caddy redirects the slashless path and proxies the prefixed route.
+  Local and public HTTP/security checks pass; final real-browser interaction check remains.
+- 2026-10-18 Deployed the standalone KPDH Binder planner at `/kpdh/` in a read-only nginx
+  container on port 8091; Caddy redirects the slashless path and proxies the prefixed route.
+  Planner/card-image/security checks pass publicly; final real-browser interaction check remains.
+- 2026-10-18 Reviewed and optimized ATLA Binder: removed four failed image probes per card,
+  corrected mixed-category ranges and foil-price fallbacks, added daily paced Scryfall
+  refreshes, collection Export/Import, clear-page confirmation and public zstd/gzip compression
+  (55,023 bytes down to 15,616 in the verification request).
+- 2026-10-16 Retired the older research dashboard on desktop: `/dashboard-classic` and
+  `/dashboard-dev` now forward to the app like `/dashboard`. `dashboard.html` was kept: phones
+  open it from the mobile menu (Browse Set, Browse Pokémon, Set Strength), and mobile is frozen.
+- 2026-10-16 First nights after the power cut checked: the 02:00 nightly update and the 03:30
+  other-games archive (first run on its systemd timer) both succeeded; /health latest =
+  2026-10-15 for English and Japanese.
 - 2026-10-16 Local page for filling in the sealed checklist one product at a time
   (`scripts/utilities/sealed_checklist_server.py`, port 8099; saves to
   `data/sealed_pack_checklist.csv`, new `your_notes` column).
@@ -47,25 +63,27 @@ Recently Completed
 - 2026-10-16 Discord bug reports are copied onto the server every 15 minutes
   (`import_discord_bug_reports.py`, "Poke6s Control" bot) and marked ✅; the admin
   /bug-reports page now escapes report text (it was a stored-XSS risk via the Feedback form).
-- 2026-10-15 Other-games archive moved from cron to the systemd timer
-  `pokemon-momentum-tcgcsv-collect.timer` (03:30 UTC, catches up after downtime); the cron
-  line was removed.
-
 High Priority
 -------------
 
+- [in progress] Pullbacks trial week (live 2026-10-17; review with the owner ~2026-10-24).
+  New rules in `query_support.build_pullback_sql` (constants PULLBACK_*), used by /good_buys,
+  the new /set_dips ("Whole-set Dips" in the desktop app) and the screener snapshot's
+  `good_buys_default_flag` (Budget Builder's "Pullback entry" tag), so they always agree:
+  premium cards $5+; >=10% below the 90-day high; 7-day average >=8% below it; 30-day change
+  >=10 points behind the median of its price band ($5-20, 20-50, 50-100, 100-250, 250+);
+  <=40% below the high; up over the year; >=6 price changes in 30 days (not gap-scaled).
+  "Own" dips are also >=10 points behind their set's median (sets with 5+ pool cards);
+  the rest are Whole-set Dips. First day: 59 Pullbacks, 107 Whole-set Dips (English).
+  Open: Japanese is empty (a typical Japanese premium card changes price about once a month,
+  so the 6-changes bar removes nearly all of them): owner to decide on a lower bar for
+  Japanese. Recheck all numbers once the feed has a full month without gaps (mid-November).
+  The mobile Pullbacks list reads /good_buys too, so phones got the new rules (layout unchanged).
 - [planned] Speed follow-ups: Sealed Deals takes ~0.5 s (it works out pack prices for every
   sealed product per request; could be a nightly snapshot), Set Strength ~0.12 s, and Under
   the Radar ~3 s while the feed is short after the data gap (ends on its own).
-- [planned] 2026-10-16: check the first nights after the power cut: Discord shows green for
-  the 02:00 nightly update, the 03:30 other-games archive (first run on its systemd timer)
-  and the 09:15 Squarespace sync, and /health says `latest` = 2026-10-15.
 - [waiting] Delete `data/processed/tracking.sqlite3.bak-2026-10-13` (the sign-in database
   before tokens were hashed) once the owner is happy that sign-ins work.
-- [planned] Retire the older research dashboard (decided 2026-10-12). Since 2026-10-13 the
-  app's full card page replaces "Full data →", so nothing links to `/dashboard-classic`
-  any more. Check nothing else needs it, then remove the route and `dashboard.html`
-  (phones use `mobile_dashboard.html`, not this file).
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
@@ -189,12 +207,32 @@ Active Queue
 - [planned] Search ranking can put a promo above the main printing (example: "charizard 199").
 - [waiting] Confirm the fee and shipping numbers marked ESTIMATE in
   `scripts/common/selling_costs.py` against real invoices (owner has the invoices).
-- [planned] Spike/dip suppression for price-history indicators: for cards over $200, ignore
-  single-observation moves greater than about 25% up or down as likely manipulation, bad
-  data or buyout noise. Make the threshold configurable later by price band, liquidity and
-  observation count.
+- [planned] Ignore single odd sales in changes and lists (agreed 2026-10-17; start after the
+  Pullbacks review ~2026-10-24, ideally once the feed gap is behind us, mid-November).
+  Problem: TCGplayer's market price averages recent sales, so one junk sale (damaged copy,
+  fake, or a graded card sold as raw) can hold it far off for months on rarely sold cards.
+  Venusaur 1st Ed. (Base Shadowless 015/102): a ~$72 sale on 2025-08-14 held the price at
+  $72-75 until 2026-07-31 (listings $750+), so it shows +1,246% over 90 days. Entei Star (EX
+  Unseen Forces 113/115): a 99-cent sale held it at $0.99 2026-05-06 to 08-01 (listing $1,600);
+  +107,678% over 90 days, and today's $1,067 still averages the 99 cents in.
+  Rule tested 2026-10-17 (scratchpad trial, two years of English prices): a new price level is
+  ignored (hold the last good price) when it is under 40% or over 250% of the card's normal
+  price (median of its last 10 accepted levels) AND listings don't back it on at least half
+  its days (drop: lowPrice <= 2x the level; spike: midPrice >= half the level). Do not use
+  "the next level confirms it": averaged wobbles around the junk price fooled that.
+  Result: 1,705 items affected in the last year (77 at $100+), 324 today (58 at $20+);
+  no store-priced SKU affected.
+  Owner's choice: keep showing TCGplayer's price as is; use the cleaned series only for the
+  % changes, indicators, lists and the 6-Month Hold. Build it as a nightly step before the
+  snapshots, keep the raw prices, show Venusaur's and Entei's charts before/after first.
 - [planned] Sealed Squarespace listing intake and creation scripts (in progress before
   the desktop app work; check `scripts/` for the current state before continuing).
+- [waiting] Squarespace listing clean-up (owner, when there's time to work through the
+  listings). `ENG-BORING-PACK` is not an official product and will be retired; then remove its
+  rule from `data/store_price_rules.csv` (and `data/store_price_audit_expectations.csv`) so the
+  09:15 price sync stops warning "missing from Squarespace export". The sync also skips
+  listings 117847-holofoil and 264283-holofoil because they're missing from the latest
+  export; check them at the same time. Both warnings are harmless meanwhile.
 - [planned] Replace the remaining full-catalog browser loads with paged server-side search.
 - [planned] Keep profiling custom-window `breakouts` (the default 90-day request already uses
   the product-signal snapshot: about 2.0 s down to 0.5 s warm).
@@ -309,6 +347,8 @@ start these without asking. Mobile background: `docs/mobile_redesign_notes.txt`.
     `productId||subTypeName`
   - mobile flows for Browse Set, Browse Species, Set Strength, Set Explorer, Sealed Deals and
     the index pages
+    (once Browse Set, Browse Species and Set Strength exist on mobile, delete `dashboard.html`
+    and its test `tests/test_dashboard_frontend.py`: phones are its last users)
   - Alerts & Targets (hidden for now): daily rules for target hits, watchlist movement,
     breakouts, pullbacks, stale items and sell-above targets; decide account sync versus
     browser storage, and in-site inbox before email, Discord or push

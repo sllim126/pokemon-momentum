@@ -28,12 +28,16 @@ class ApiRouteTests(unittest.TestCase):
         feed_patch.start()
         self.addCleanup(feed_patch.stop)
 
-    def test_dashboard_route_serves_html(self):
-        # The older research dashboard now lives at /dashboard-classic.
-        response = self.client.get("/dashboard-classic")
-
+    def test_retired_dashboard_forwards_desktop_and_still_serves_phones(self):
+        # Desktop: the older dashboard's addresses forward to the desktop app.
+        for path in ("/dashboard-classic", "/dashboard-dev"):
+            response = self.client.get(f"{path}?product=42382%7C%7CHolofoil", follow_redirects=False)
+            self.assertEqual(response.status_code, 302, path)
+            self.assertEqual(response.headers["location"], "/?product=42382%7C%7CHolofoil")
+        # Phones: Browse Set still opens dashboard.html (the mobile page has no such view).
+        phone = {"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148"}
+        response = self.client.get("/dashboard?tab=group_products", headers=phone)
         self.assertEqual(response.status_code, 200)
-        self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Market Signals", response.text)
 
     def test_public_market_data_is_browser_cacheable_but_account_data_is_not(self):
@@ -1218,86 +1222,23 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.json(), {"ok": True})
         delete_saved_view_mock.assert_called_once_with(9, 12)
 
-    def test_good_buys_defaults_to_premium_cards(self):
+    def test_good_buys_reads_own_dips_and_set_dips_reads_whole_set_dips(self):
         with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
-            api, "screener_snapshot_from", return_value="screener_snapshot"
-        ), patch.object(
-            api, "category_config", return_value=api.category_config(3)
-        ):
-            api.good_buys(category_id=3)
-
-        sql = q_mock.call_args[0][0]
-        self.assertIn("AND productKind = 'card'", sql)
-        self.assertIn("ultra rare", sql.lower())
-        self.assertIn("COALESCE(roc_30d_pct, 0) <= 0.0", sql)
-        self.assertIn("COALESCE(roc_90d_pct, 0) <= 20.0", sql)
-        self.assertIn("COALESCE(roc_365d_pct, 0) <= 120.0", sql)
-        self.assertIn("COALESCE(roc_7d_pct, 0) <= 6.0", sql)
-        self.assertIn("COALESCE(price_vs_sma90_pct, 0) <= 20.0", sql)
-        self.assertIn("recent_price_points >= 3", sql)
-        self.assertIn("floor_observations_7d >= 5", sql)
-        self.assertIn("<= 10.0", sql)
-        self.assertIn("latest_price >= 80.0", sql)
-        self.assertIn("COALESCE(price_vs_sma30_pct, 0) >= -12.0", sql)
-        self.assertIn("COALESCE(price_vs_sma30_pct, 0) <= 2.5", sql)
-        self.assertIn("FROM screener_snapshot", sql)
-        self.assertIn("ORDER BY", sql)
-        self.assertIn("COALESCE(recent_distinct_prices_30d, 0) DESC", sql)
-
-    def test_good_buys_keeps_premium_pullbacks_near_support(self):
-        with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
-            api, "screener_snapshot_from", return_value="screener_snapshot"
-        ), patch.object(
-            api, "category_config", return_value=api.category_config(3)
-        ):
-            api.good_buys(category_id=3)
-
-        sql = q_mock.call_args[0][0]
-        self.assertIn("latest_price >= 80.0", sql)
-        self.assertIn("COALESCE(roc_30d_pct, 0) <= 0.0", sql)
-        self.assertIn("COALESCE(roc_90d_pct, 0) <= 35.0", sql)
-        self.assertIn("COALESCE(roc_365d_pct, 0) <= 120.0", sql)
-        self.assertIn("COALESCE(roc_7d_pct, 0) <= 2.0", sql)
-        self.assertIn("COALESCE(price_vs_sma90_pct, 0) <= 20.0", sql)
-        self.assertIn("COALESCE(price_vs_sma30_pct, 0) >= -12.0", sql)
-        self.assertIn("COALESCE(price_vs_sma30_pct, 0) <= 2.5", sql)
-        self.assertIn("COALESCE(roc_7d_pct, 0) < 0", sql)
-
-    def test_good_buys_can_switch_to_sealed(self):
-        with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
-            api, "screener_snapshot_from", return_value="screener_snapshot"
-        ), patch.object(
-            api, "category_config", return_value=api.category_config(85)
-        ):
-            api.good_buys(product_kind="sealed", category_id=85)
-
-        sql = q_mock.call_args[0][0]
-        self.assertIn("AND productKind = 'sealed'", sql)
-        self.assertNotIn("ultra rare", sql.lower())
-
-    def test_good_buys_can_apply_a_max_price_filter(self):
-        with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
-            api, "screener_snapshot_from", return_value="screener_snapshot"
-        ), patch.object(
-            api, "category_config", return_value=api.category_config(3)
+            api, "product_signal_from", return_value="signal_snapshot"
         ):
             api.good_buys(category_id=3, min_price=25, max_price=80)
+            own_sql = q_mock.call_args[0][0]
+            api.set_dips(category_id=3, product_kind="sealed")
+            set_sql = q_mock.call_args[0][0]
 
-        sql = q_mock.call_args[0][0]
-        self.assertIn("AND latest_price >= 25", sql)
-        self.assertIn("AND latest_price <= 80", sql)
+        self.assertIn("pullback_kind = 'own'", own_sql)
+        self.assertIn("AND latest_price >= 25", own_sql)
+        self.assertIn("AND latest_price <= 80", own_sql)
+        self.assertIn("ultra rare", own_sql.lower())
+        self.assertIn("pullback_kind = 'set'", set_sql)
+        self.assertIn("productKind = 'sealed'", set_sql)
+        self.assertNotIn("ultra rare", set_sql.lower())
 
-    def test_good_buys_can_fallback_to_live_history_for_non_default_floor_window(self):
-        with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
-            api, "product_signal_from", return_value="product_signal_snapshot"
-        ), patch.object(api, "prices_from", return_value="prices_source"), patch.object(
-            api, "category_config", return_value=api.category_config(3)
-        ):
-            api.good_buys(category_id=3, floor_days=9)
-
-        sql = q_mock.call_args[0][0]
-        self.assertIn("FROM prices_source", sql)
-        self.assertIn("fw.floor_observations", sql)
 
     def test_top_movers_defaults_require_stronger_recent_activity(self):
         with patch.object(api, "q", return_value=(["productId"], [])) as q_mock, patch.object(

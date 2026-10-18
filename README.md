@@ -26,8 +26,9 @@ The goal is simple: make it easier to spot what is moving, what may be starting 
     pages, `/home-preview`...) forward to the matching view; phones are never forwarded
 - `/dashboard`
   - phones: the mobile decision dashboard; desktop: forwards to the desktop app
-- `/dashboard-classic`
-  - the older research dashboard, opened by a card's "Full data →" until it is retired
+- `/dashboard-classic`, `/dashboard-dev`
+  - the older research dashboard's former desktop addresses (retired 2026-10-16); they forward
+    like `/dashboard`. Phones still get `dashboard.html` for Browse Set, Browse Pokémon and Set Strength
 - `/mobile`
   - direct access to the mobile decision dashboard
 - `/buy`, `/discover`, `/research`, `/track`, `/learn`

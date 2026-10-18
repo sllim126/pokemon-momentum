@@ -65,6 +65,77 @@ It answers:
 - what the common recovery steps are
 
 
+ATLA Binder planner
+-------------------
+
+The standalone static planner is served at `https://market.poke6s.com/atla/`.
+
+- Source/deployment folder: `/opt/pokemon-momentum/ATLA Binder` (always quote this path)
+- Compose project: `atla-binder`
+- Container: `atla-binder-planner`
+- Local endpoint: `http://192.168.1.240:8090/`
+- Public proxy: Caddy container `caddy-caddy-1` on `192.168.1.30`
+- Caddy site file: `/home/dillan/caddy/docker_config/caddy/sites/isislc.com.caddy`
+- Caddy upstream: `192.168.1.240:8090`; `/atla` redirects to `/atla/`, then
+  `handle_path` strips the prefix; Caddy applies `encode zstd gzip` to the route
+
+Rebuild after copying updated planner files:
+
+```bash
+cd "/opt/pokemon-momentum/ATLA Binder"
+docker compose up -d --build
+```
+
+Basic checks:
+
+```bash
+curl -sI http://127.0.0.1:8090/
+curl -sI https://market.poke6s.com/atla/
+curl -s -o /dev/null -w '%{http_code}\n' https://market.poke6s.com/
+```
+
+The container is intentionally read-only and sends `X-Robots-Tag: noindex, nofollow`.
+Port 8090 must not be forwarded publicly. Collection progress and cached valuations live
+only in each visitor's browser; use Export and Import to back it up or move it. The image
+build generates `cards/image-manifest.js` from actual local scans, and Scryfall price data
+refreshes at most once per 24 hours with paced sequential requests. Before any Caddy change,
+back up the site file; validate the full configuration before reloading `caddy-caddy-1`.
+
+
+KPDH Binder planner
+-------------------
+
+The standalone Kayou KPop Demon Hunters planner is served at
+`https://market.poke6s.com/kpdh/`.
+
+- Source/deployment folder: `/opt/pokemon-momentum/kpdh-binder`
+- Compose service and container: `kpdh-binder-planner`
+- Local endpoint: `http://192.168.1.240:8091/`
+- Public proxy and Caddy site file: the same as the ATLA planner above
+- Caddy upstream: `192.168.1.240:8091`; `/kpdh` redirects to `/kpdh/`, then
+  `handle_path` strips the prefix
+
+Rebuild after copying updated planner or card files:
+
+```bash
+cd /opt/pokemon-momentum/kpdh-binder
+docker compose up -d --build
+```
+
+Basic checks:
+
+```bash
+curl -sI http://127.0.0.1:8091/my_card_planner.html
+curl -sI https://market.poke6s.com/kpdh/
+curl -s -o /dev/null -w '%{http_code}\n' https://market.poke6s.com/
+```
+
+The container is intentionally read-only and sends `X-Robots-Tag: noindex, nofollow`.
+Port 8091 must not be forwarded publicly. Collection progress lives only in each visitor's
+browser; use the planner's Export and Import controls to move it between browser origins
+or devices.
+
+
 Store Pricing Ops
 -----------------
 The store pricing workflow now has three admin pages that work together:
@@ -289,7 +360,6 @@ Main dashboard URLs:
 
 - `http://localhost:8001/` - on desktop, the desktop app (Buy, Discover, Research, Track,
   Learn in one page); see docs/desktop_app.md. Phones get the mobile page.
-- `http://localhost:8001/dashboard-classic` - the older research dashboard (until retired)
 - `http://localhost:8001/mobile` - the mobile page
 - `http://localhost:8001/admin` - admin tools index (admins only)
 
@@ -818,7 +888,7 @@ Account settings:
 
 Current scope:
 
-- `/dashboard-classic`, `/mobile`, the desktop app (`/`) and `/account-settings` use the
+- `/mobile`, the desktop app (`/`) and `/account-settings` use the
   tracking account; lists saved before signing in are merged into the account on sign-in
 - price targets (buy-below / sell-above) stay in each browser and do not sync
 - `/embed` and `/set-explorer` are not wired to tracking

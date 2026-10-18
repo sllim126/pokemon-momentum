@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-10-16
+Last reviewed: 2026-10-18
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -23,6 +23,8 @@ the other files under `docs/`.
 - Accounts: Google-backed lightweight tracking accounts with saved tags and views
 - Commerce: Squarespace storefront linking, price synchronization, listing intake, and supplier-profitability workflows
 - Collector resources: generated placeholder libraries, checklists, print pages, review queues, and downloads
+- Standalone binder planners: ATLA and KPDH are served by separate read-only nginx
+  containers at `/atla/` and `/kpdh/`; collection state stays in each visitor's browser
 
 At the 2026-10-12 review, the health snapshot reported 39,285,648 English and 13,660,254
 Japanese price rows, both with latest data dated 2026-10-11. The daily pipeline,
@@ -34,7 +36,7 @@ PriceCharting download and Squarespace price sync were running.
 | --- | --- | --- |
 | `/` | Desktop: the desktop app (all five areas in one page). Phones: the mobile page | Live; desktop app since 2026-10-12 |
 | `/dashboard` | Phones: the mobile page. Desktop: forwards to the desktop app | Live |
-| `/dashboard-classic` | The older research dashboard ("Full data →" on a card) | Live until retired |
+| `/dashboard-classic`, `/dashboard-dev` | The older research dashboard's desktop addresses | Retired 2026-10-16; forward like `/dashboard` |
 | `/home-preview` | The desktop app's former preview address | Forwards to `/` on desktop |
 | `/buy`, `/discover`, `/research`, `/track`, `/learn` | Area landing pages from the shared header menu | Live on phones; desktop forwards to the app |
 | `/mobile` | Direct mobile decision dashboard | Live |
@@ -48,6 +50,8 @@ PriceCharting download and Squarespace price sync were running.
 | `/placeholders` | Placeholder/checklist downloads | Live; restyled 2026-10 |
 | `/index-overview` | Market-index hub | Live; covered by desktop app Market Stats → Indexes |
 | `/index-overview-*` | English/Japanese and era index detail pages | Live; all routes use one configured detail template |
+| `/atla/` | Static ATLA binder layout, collection tracking and browser-side valuation | Live; separate nginx container, unlisted/noindex |
+| `/kpdh/` | Static Kayou KPop Demon Hunters master-binder planner | Live; separate nginx container, unlisted/noindex |
 
 Current index detail routes are:
 
@@ -108,7 +112,8 @@ Added 2026-10:
 - Collector Hub, Placeholder Library and Account restyled on a shared desktop stylesheet
 - Index snapshots now build after the parquet export, so indexes are no longer a day behind
 - The desktop app is the desktop home page at `/`; older desktop addresses forward to it
-  (phones unchanged), and the older dashboard is at `/dashboard-classic`
+  (phones unchanged); the older research dashboard is retired on desktop (2026-10-16) and
+  `dashboard.html` now serves only the mobile menu's Browse Set, Browse Pokémon and Set Strength
 - Card views answer in about 0.01-0.05 s: cached table checks, one shared DuckDB
   connection, a weekly long-history snapshot for "All" and the 6-Month Hold, browser caching
 - Discover lists scale their activity thresholds to feed gaps
@@ -119,10 +124,21 @@ Added 2026-10:
   set logos, rebuilt Collector Hub and Placeholder Library
 - Sealed Deals pack counts corrected for cases, UPCs and Super-Premium Collections
 - Nightly jobs wait for DNS after a reboot; runbook covers recovering from a power cut
+- Pullbacks redefined (2026-10-17, trial week): cards 10%+ below their 90-day high for a week,
+  well behind cards of a similar price and their own set, still up over the year; cards whose
+  whole set is falling are listed as Whole-set Dips (`/set_dips`)
 - Discord #bug-reports messages are copied into the admin bug list every 15 minutes by the
   "Poke6s Control" bot (marked ✅); the admin bug page escapes report text
 - `data/sealed_pack_checklist.csv` lists every sealed product whose pack count is still a guess;
   `scripts/utilities/sealed_checklist_server.py` serves a one-item-at-a-time page (port 8099) to fill it in
+- ATLA Binder planner at `/atla/`, isolated in a read-only nginx container on host port
+  8090 and reached through the Caddy proxy on `192.168.1.30`
+- ATLA follow-up: generated local-scan manifest avoids failed image probes, mixed-category
+  ranges name both categories, missing foil quotes stay unpriced, Scryfall refreshes are
+  daily and paced, collection JSON can be exported/imported, destructive page clears ask
+  first, and Caddy compresses the public page with zstd/gzip
+- KPDH Binder planner at `/kpdh/`, isolated in a read-only nginx container on host port
+  8091 and reached through the same Caddy proxy
 
 ## What's next
 

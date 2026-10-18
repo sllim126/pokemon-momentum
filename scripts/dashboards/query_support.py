@@ -504,6 +504,82 @@ def build_premium_rarity_filter(column: str = "rarity") -> str:
     )"""
 
 
+# ---- Pullbacks: "what's going down when everything is going up" -----------------------
+#
+# Agreed with the owner 2026-10-17 (trial in docs/todo.txt), live for a trial week. A card is
+# a pullback when it has dropped a real amount from its recent high, the drop has lasted,
+# and it is doing clearly worse than cards in its price band, while it is not collapsing and
+# is still up over the year. Comparing with cards of a similar price (not the Top 151 index)
+# matters: the index is high-end cards, and cheap cards would all look "behind" it.
+# A pullback is "own" when the card is also well behind its own set; otherwise the whole set
+# is falling ("set"), which is shown as a separate list. Used by /good_buys, /set_dips and the
+# screener snapshot's good_buys_default_flag (Budget Builder's "Pullback entry" tag).
+PULLBACK_MIN_PRICE = 5.0
+PULLBACK_MIN_OFF_HIGH_PCT = 10.0  # price at least this far below the 90-day high
+PULLBACK_MIN_SMA7_OFF_HIGH_PCT = 8.0  # the 7-day average too, so a one-day dip doesn't count
+PULLBACK_MAX_OFF_HIGH_PCT = 40.0  # further down is a collapse (or bad data), not a dip
+PULLBACK_MIN_BEHIND_PTS = 10.0  # 30-day change at least this many points behind the peers
+PULLBACK_MIN_PRICE_CHANGES_30D = 6  # fixed: not lowered for feed gaps
+PULLBACK_MIN_SET_PEERS = 5  # fewer pool cards in a set: too few to judge the set's move
+PULLBACK_PRICE_BANDS = (20, 50, 100, 250)  # band edges in dollars: $5-20, 20-50, ..., 250+
+
+
+def build_pullback_sql(source: str, product_kind: str = "card") -> str:
+    """SQL selecting the pullbacks from `source`, a product signal or screener snapshot
+    (table or CTE) for one category and day. Returns every source column plus:
+
+    off_high_pct / sma7_off_high_pct  how far the price / 7-day average sit below the 90-day high
+    band_median_30d_pct, vs_band_pts  the price band's median 30-day change, and the card's gap to it
+    set_median_30d_pct, vs_set_pts    the same for the card's set (NULL when the set is too small)
+    pullback_kind                     'own' (behind its set too) or 'set' (the whole set is falling)
+
+    The peer medians are taken over the whole pool (premium cards, or sealed products, at
+    PULLBACK_MIN_PRICE and up), before any price filter a caller adds.
+    """
+    if product_kind == "sealed":
+        pool_filter = "productKind = 'sealed'"
+    else:
+        pool_filter = f"productKind = 'card' AND {build_premium_rarity_filter('rarity')}"
+    band_case = "CASE " + " ".join(
+        f"WHEN latest_price < {edge} THEN {i}" for i, edge in enumerate(PULLBACK_PRICE_BANDS)
+    ) + f" ELSE {len(PULLBACK_PRICE_BANDS)} END"
+    high = "NULLIF(GREATEST(high_90d, latest_price), 0)"
+    return f"""
+    WITH pullback_pool AS (
+      SELECT *,
+        {band_case} AS pullback_band,
+        (1 - latest_price / {high}) * 100 AS off_high_pct,
+        (1 - latest_sma7 / {high}) * 100 AS sma7_off_high_pct
+      FROM {source}
+      WHERE {pool_filter} AND latest_price >= {PULLBACK_MIN_PRICE}
+    ),
+    pullback_peers AS (
+      SELECT *,
+        MEDIAN(roc_30d_pct) OVER (PARTITION BY pullback_band) AS band_median_30d_pct,
+        MEDIAN(roc_30d_pct) OVER (PARTITION BY groupId) AS set_median_all_30d_pct,
+        COUNT(*) OVER (PARTITION BY groupId) AS set_peer_count
+      FROM pullback_pool
+    ),
+    pullback_scored AS (
+      SELECT *,
+        roc_30d_pct - band_median_30d_pct AS vs_band_pts,
+        CASE WHEN set_peer_count >= {PULLBACK_MIN_SET_PEERS} THEN set_median_all_30d_pct END AS set_median_30d_pct
+      FROM pullback_peers
+    )
+    SELECT * EXCLUDE (set_median_all_30d_pct, set_peer_count),
+      roc_30d_pct - set_median_30d_pct AS vs_set_pts,
+      CASE WHEN set_median_30d_pct IS NULL OR roc_30d_pct - set_median_30d_pct <= -{PULLBACK_MIN_BEHIND_PTS}
+           THEN 'own' ELSE 'set' END AS pullback_kind
+    FROM pullback_scored
+    WHERE off_high_pct >= {PULLBACK_MIN_OFF_HIGH_PCT}
+      AND off_high_pct <= {PULLBACK_MAX_OFF_HIGH_PCT}
+      AND sma7_off_high_pct >= {PULLBACK_MIN_SMA7_OFF_HIGH_PCT}
+      AND vs_band_pts <= -{PULLBACK_MIN_BEHIND_PTS}
+      AND roc_365d_pct > 0
+      AND COALESCE(recent_distinct_prices_30d, 0) >= {PULLBACK_MIN_PRICE_CHANGES_30D}
+    """
+
+
 def build_set_basket_filter(
     filters: list[str],
     rarity_column: str = "rarity",

@@ -818,7 +818,7 @@ Desktop app (planned to replace the main dashboard on desktop):
 - [desktop_home.html](/opt/pokemon-momentum/scripts/dashboards/desktop_home.html), served at
   `/` (desktop); its data sources per view are listed in docs/desktop_app.md
 
-Main dashboard:
+Older research dashboard (phones only since 2026-10-16: Browse Set, Browse Pokémon, Set Strength):
 
 - [dashboard.html](/opt/pokemon-momentum/scripts/dashboards/dashboard.html)
 

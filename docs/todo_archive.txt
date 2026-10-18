@@ -7,6 +7,10 @@ Archived Completed Work
 October 2026 (archived 2026-10-12, when todo.txt was rewritten as the main action list)
 ----------------------------------------------------------------------------------------
 
+- Completed and archived at the 2026-10-18 milestone:
+  - 2026-10-15 Other-games archive moved from cron to the systemd timer
+    `pokemon-momentum-tcgcsv-collect.timer` (03:30 UTC, catches up after downtime); the cron
+    line was removed.
 - Completed and archived at the 2026-10-16 milestone:
   - 2026-10-15 Recovered from the power cut: the boot-time catch-up run failed on DNS, so the
     nightly update and the other-games archive were re-run by hand for 2026-10-14 (log:

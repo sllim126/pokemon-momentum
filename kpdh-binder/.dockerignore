@@ -1,0 +1,20 @@
+# Allowlist: only what the website serves goes into the build context.
+*
+!Dockerfile
+!nginx/
+!index.html
+!my_card_planner.html
+!robots.txt
+!cards/image-sources.js
+!cards/thumbs/
+!cards/energy/*.png
+!cards/mini/*.png
+# Classic-only cards. Shared Classic cards are byte-identical to the Energy
+# copies and the planner always loads the Energy files.
+!cards/classic/kpdh01-cr-*.png
+!cards/classic/kpdh01-zr-*.png
+!cards/classic/kpdh01-r-*.png
+# Local scans for cards without bundled art.
+!cards/promo/*.png
+!cards/promo/*.jpg
+!cards/*/*.jpg
