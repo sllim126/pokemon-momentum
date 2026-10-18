@@ -1,0 +1,1569 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>ATLA Binder Layout Planner</title>
+    <style>
+      :root {
+        --bg: #f3efe4;
+        --panel: rgba(255, 252, 247, 0.94);
+        --panel-strong: #fffdf8;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --line: #d6d3d1;
+        --accent: #205375;
+        --accent-soft: #d9ebf4;
+        --shadow: 0 20px 45px rgba(31, 41, 55, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(255, 216, 168, 0.5), transparent 30%),
+          radial-gradient(circle at top right, rgba(146, 195, 255, 0.32), transparent 26%),
+          linear-gradient(180deg, #f9f5ec 0%, #efe9db 100%);
+      }
+
+      .shell {
+        width: min(1440px, calc(100vw - 32px));
+        margin: 20px auto 40px;
+      }
+
+      .hero,
+      .panel {
+        background: var(--panel);
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(16px);
+        border-radius: 28px;
+        box-shadow: var(--shadow);
+      }
+
+      .hero {
+        padding: 28px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .eyebrow {
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      .hero h1 {
+        margin-top: 10px;
+        font-size: clamp(32px, 4vw, 54px);
+        line-height: 0.98;
+        max-width: 11ch;
+      }
+
+      .hero p {
+        margin-top: 14px;
+        max-width: 74ch;
+        color: #48525f;
+        line-height: 1.5;
+      }
+
+      .summary-grid {
+        margin-top: 24px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+      }
+
+      .summary-card {
+        background: rgba(255, 255, 255, 0.66);
+        border: 1px solid rgba(214, 211, 209, 0.9);
+        border-radius: 18px;
+        padding: 14px 16px;
+      }
+
+      .summary-card span {
+        display: block;
+      }
+
+      .summary-card .label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+      }
+
+      .summary-card .value {
+        margin-top: 6px;
+        font-weight: 700;
+        font-size: 16px;
+      }
+
+      .summary-card .subvalue {
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .price-panel {
+        margin-top: 16px;
+        border: 1px solid rgba(214, 211, 209, 0.9);
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.7);
+        padding: 16px;
+      }
+
+      .price-grid {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+      }
+
+      .price-card {
+        border: 1px solid rgba(214, 211, 209, 0.9);
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.75);
+        padding: 12px 14px;
+      }
+
+      .price-card .label {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+      }
+
+      .price-card .value {
+        display: block;
+        margin-top: 6px;
+        font-weight: 800;
+        font-size: 20px;
+      }
+
+      .price-card .subvalue {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .layout {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: 320px minmax(0, 1fr);
+        gap: 18px;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .sidebar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .sidebar-header p,
+      .meta-strip,
+      .helper,
+      .path-text {
+        color: var(--muted);
+      }
+
+      .page-list {
+        position: relative;
+        max-height: 70vh;
+        overflow: auto;
+        display: grid;
+        gap: 10px;
+        padding-right: 4px;
+      }
+
+      .page-button {
+        width: 100%;
+        text-align: left;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--panel-strong);
+        color: inherit;
+        padding: 14px;
+        cursor: pointer;
+        transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+      }
+
+      .page-button:hover {
+        transform: translateY(-1px);
+        border-color: #8ca5ba;
+      }
+
+      .page-button.active {
+        background: linear-gradient(135deg, #205375 0%, #307ba8 100%);
+        color: white;
+        border-color: transparent;
+      }
+
+      .page-button .minor {
+        margin-top: 4px;
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .viewer-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 16px;
+      }
+
+      .viewer-head p {
+        color: var(--muted);
+        margin-top: 8px;
+      }
+
+      .grid {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .slot {
+        /* Standard MTG card proportions (63mm x 88mm). */
+        aspect-ratio: 63 / 88;
+        width: 100%;
+        padding: 0;
+        border-radius: 18px;
+        border: 1px solid #cfc9be;
+        background: #fcfaf5;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        overflow: hidden;
+        position: relative;
+        cursor: pointer;
+      }
+
+      .slot:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+      }
+
+      .slot.empty {
+        cursor: default;
+        border-style: dashed;
+        display: grid;
+        place-items: center;
+        color: #b0aa9f;
+        font-size: 12px;
+        background: rgba(255, 255, 255, 0.45);
+      }
+
+      .slot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .slot-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 8px;
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.1) 0%, rgba(15, 23, 42, 0.55) 100%);
+        color: white;
+      }
+
+      .slot-tag,
+      .slot-number,
+      .slot-label {
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+      }
+
+      .slot-status {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        background: rgba(15, 23, 42, 0.28);
+        color: white;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 800;
+        backdrop-filter: blur(6px);
+      }
+
+      .slot-tag {
+        align-self: flex-start;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border-radius: 999px;
+        padding: 4px 7px;
+        background: rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(6px);
+      }
+
+      .slot-number {
+        font-size: 19px;
+        font-weight: 800;
+      }
+
+      .slot-label {
+        font-size: 10px;
+        line-height: 1.25;
+        opacity: 0.94;
+      }
+
+      .slot.placeholder {
+        background: linear-gradient(135deg, rgba(32, 83, 117, 0.12), rgba(255, 255, 255, 0.96));
+      }
+
+      .slot.placeholder .slot-overlay {
+        background: linear-gradient(180deg, rgba(32, 83, 117, 0.12) 0%, rgba(32, 83, 117, 0.82) 100%);
+      }
+
+      .slot.collected {
+        border-color: #8dbf88;
+        box-shadow: inset 0 0 0 2px rgba(130, 189, 114, 0.55);
+      }
+
+      .slot.collected .slot-overlay {
+        background: linear-gradient(180deg, rgba(20, 83, 45, 0.08) 0%, rgba(20, 83, 45, 0.72) 100%);
+      }
+
+      .meta-strip {
+        margin-top: 18px;
+        font-size: 14px;
+      }
+
+      .legend {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+      }
+
+      .legend-card {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.72);
+        padding: 14px;
+      }
+
+      .legend-card h3 {
+        font-size: 15px;
+        margin-bottom: 6px;
+      }
+
+      .legend-card p {
+        color: var(--muted);
+        line-height: 1.45;
+        font-size: 14px;
+      }
+
+      .helper {
+        margin-top: 18px;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .controls {
+        margin-top: 18px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .control-button {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.75);
+        color: var(--text);
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .control-button:hover {
+        border-color: #8ca5ba;
+      }
+
+      .page-nav {
+        margin-top: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .nav-button {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 12px 18px;
+        background: rgba(255, 255, 255, 0.84);
+        color: var(--text);
+        font-weight: 700;
+        cursor: pointer;
+        min-width: 110px;
+      }
+
+      .nav-button:hover:not(:disabled) {
+        border-color: #8ca5ba;
+      }
+
+      .nav-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+
+      .path-box {
+        margin-top: 12px;
+        background: rgba(32, 83, 117, 0.08);
+        border: 1px dashed rgba(32, 83, 117, 0.3);
+        padding: 12px 14px;
+        border-radius: 16px;
+      }
+
+      .path-box code {
+        display: block;
+        font-size: 13px;
+        color: #17374e;
+        line-height: 1.55;
+      }
+
+      .finish-nf {
+        color: #dff4ff;
+      }
+
+      .finish-foil {
+        color: #fff0b3;
+      }
+
+      .section-chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        margin-top: 10px;
+        background: var(--accent-soft);
+        color: #184766;
+      }
+
+      @media (max-width: 1080px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .page-list {
+          max-height: 300px;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .shell {
+          width: min(100vw - 18px, 100%);
+          margin-top: 10px;
+        }
+
+        .hero,
+        .panel {
+          border-radius: 22px;
+          padding: 16px;
+        }
+
+        .viewer-head {
+          flex-direction: column;
+          align-items: start;
+        }
+
+        .grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <section class="hero">
+        <div class="eyebrow">Avatar x Magic</div>
+        <h1>ATLA Binder Layout Planner</h1>
+        <p>
+          Master-set planner for a 6 x 6 pocket binder. Cards are grouped as side-by-side pairs with non-foil on the
+          left and foil on the right, starting with TLA and then moving through TLE, promos, tokens, and inserts.
+          Only officially confirmed printings and finishes reserve space. If a card image exists locally, the slot will
+          show it. If not, the slot stays as a clean numbered placeholder.
+        </p>
+        <div class="summary-grid" id="summary"></div>
+        <div class="price-panel">
+          <div class="eyebrow">Valuation</div>
+          <p style="margin-top: 8px; color: #48525f;">
+            Live collection value uses Scryfall price fields for confirmed numbered TLA and TLE cards. Promo and insert
+            categories remain unpriced unless we add a manual price map later.
+          </p>
+          <div class="price-grid" id="priceSummary"></div>
+          <div class="controls" style="margin-top: 12px">
+            <button class="control-button" id="refreshPrices">Refresh prices</button>
+          </div>
+        </div>
+        <p style="margin-top: 16px; font-size: 14px;">
+          This official-count version removes estimated promo and insert totals. It maps confirmed printings only, so
+          some event or accessory items may be intentionally omitted until Wizards publishes exact unique counts.
+        </p>
+      </section>
+
+      <section class="layout">
+        <aside class="panel">
+          <div class="sidebar-header">
+            <div>
+              <h2>Pages</h2>
+              <p>Choose a binder page to preview its exact pocket layout.</p>
+            </div>
+          </div>
+          <div class="page-list" id="pageList"></div>
+        </aside>
+
+        <main class="panel">
+          <div class="viewer-head">
+            <div>
+              <h2 id="pageTitle">Page 1</h2>
+              <p id="pageSubtitle"></p>
+              <div class="section-chip" id="pageChip"></div>
+            </div>
+            <div class="path-text" id="pageRange"></div>
+          </div>
+
+          <div class="grid" id="pageGrid"></div>
+
+          <div class="meta-strip" id="pageMeta"></div>
+
+          <div class="page-nav">
+            <button class="nav-button" id="prevPage">Previous</button>
+            <button class="nav-button" id="nextPage">Next</button>
+          </div>
+
+          <div class="controls">
+            <button class="control-button" id="markPageOwned">Mark page collected</button>
+            <button class="control-button" id="clearPageOwned">Clear page collected</button>
+            <button class="control-button" id="exportCollection">Export collection</button>
+            <button class="control-button" id="importCollection">Import collection</button>
+            <input id="importCollectionFile" type="file" accept="application/json" hidden />
+            <button class="control-button" id="clearAllOwned">Reset all tracking</button>
+          </div>
+
+          <div class="legend">
+            <div class="legend-card">
+              <h3>How images work</h3>
+              <p>
+                Use one local image per card number. The planner reuses that same image for both non-foil and foil,
+                then adds a small finish tag on top so the slots stay distinct. TLA and TLE can also fall back to the
+                Scrydex image URLs automatically.
+              </p>
+            </div>
+            <div class="legend-card">
+              <h3>Collection tracking</h3>
+              <p>
+                Click any filled pocket to toggle whether you own that exact slot. Non-foil and foil are tracked
+                separately when both actually exist, and your progress is saved in this browser.
+              </p>
+            </div>
+            <div class="legend-card">
+              <h3>Double-faced cards</h3>
+              <p>
+                The page uses the lower set number first, as requested. If you buy separate copies for each side, this
+                layout still keeps the numbered slot order stable.
+              </p>
+            </div>
+            <div class="legend-card">
+              <h3>Compact sections</h3>
+              <p>
+                Sections that are entirely single-finish can be packed tightly with no blank partner pocket. Mixed
+                sections still preserve left/right non-foil and foil pairing where that helps readability.
+              </p>
+            </div>
+            <div class="legend-card">
+              <h3>Missing scans</h3>
+              <p>
+                If an image file is not present yet, the slot falls back to a readable placeholder with the set number,
+                finish, and section label so the binder map still works immediately.
+              </p>
+            </div>
+            <div class="legend-card">
+              <h3>Official-only counts</h3>
+              <p>
+                This planner intentionally omits categories where Wizards has not published an exact unique-card total,
+                such as the full prerelease stamped pool and some token or art-card breakdowns.
+              </p>
+            </div>
+          </div>
+
+          <div class="helper">
+            Image sources:
+            <div class="path-box">
+              <code>Online: https://images.scrydex.com/magicthegathering/TLA-1/medium</code>
+              <code>Online: https://images.scrydex.com/magicthegathering/TLE-317/medium</code>
+              <code>Local override: cards/tla/001.jpg</code>
+              <code>Local override: cards/tle/317.jpg</code>
+              <code>Local-only extras: cards/promo/secret-lair-001.jpg</code>
+              <code>Local-only extras: cards/other/jumpstart-theme-inserts-001.jpg</code>
+            </div>
+            <div style="margin-top: 10px">
+              The planner tries a local image first, then falls back to the Scrydex online image pattern automatically.
+            </div>
+            <div class="path-box" style="margin-top: 12px">
+              <code>cards/tla/001.jpg</code>
+              <code>cards/tla/207.jpg</code>
+              <code>cards/tla/359.jpg</code>
+              <code>cards/tle/001.jpg</code>
+              <code>cards/tle/317.jpg</code>
+              <code>cards/promo/secret-lair-001.jpg</code>
+              <code>cards/promo/wpn-event-promos-001.jpg</code>
+              <code>cards/other/tokens-non-foil-001.jpg</code>
+              <code>cards/other/bundle-reference-cards-001.jpg</code>
+            </div>
+            <div style="margin-top: 10px">
+              Accepted extensions: <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, <code>.webp</code>.
+            </div>
+          </div>
+        </main>
+      </section>
+    </div>
+
+    <script src="./cards/image-manifest.js"></script>
+    <script>
+      // Layout constants:
+      // - PAGE_SIZE is the total binder pockets shown on one 6x6 page.
+      // - PAIRS_PER_PAGE is how many card-number groups fit when each group may
+      //   consume up to two pockets (non-foil on the left, foil on the right).
+      const PAGE_SIZE = 36;
+      const PAIRS_PER_PAGE = PAGE_SIZE / 2;
+      const NUMBERED_SETS = new Set(["tla", "tle"]);
+      const LOCAL_IMAGES = window.ATLA_LOCAL_IMAGES instanceof Set ? window.ATLA_LOCAL_IMAGES : new Set();
+
+      // localStorage keys used to persist tracking, prices, and the last viewed page.
+      const STORAGE_KEY = "atla-binder-owned-v1";
+      const PRICE_STORAGE_KEY = "atla-binder-prices-v1";
+      const PAGE_STORAGE_KEY = "atla-binder-page-v1";
+
+      // One refresh per day is enough for this planner. Pagination is also paced
+      // so a visitor never bursts requests at Scryfall.
+      const PRICE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+      const PRICE_REQUEST_DELAY_MS = 125;
+
+      // TLE Beginner Box numbers that Scryfall lists as foil-only.
+      const TLE_BEGINNER_BOX_FOIL_ONLY = [210, 211, 214, 215, 218, 219, 220, 221, 234, 238, 239, 240, 244, 245, 246, 247, 249];
+
+      const pad3 = (number) => String(number).padStart(3, "0");
+      const finishText = (finish) => (finish === "foil" ? "Foil" : "Non-Foil");
+      const finishClass = (finish) => (finish === "foil" ? "finish-foil" : "finish-nf");
+
+      // Storage access can throw (private mode, blocked site data, quota), so every
+      // read and write goes through these guards.
+      function readStorage(key, fallback) {
+        try {
+          const raw = window.localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : fallback;
+        } catch (error) {
+          return fallback;
+        }
+      }
+
+      function writeStorage(key, value) {
+        try {
+          window.localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+          // Tracking keeps working in memory for this visit.
+        }
+      }
+
+      // Converts a human-readable label into a filename-safe slug.
+      // Input: "Commander Bundle Promo"
+      // Output: "commander-bundle-promo"
+      function slugify(value) {
+        return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+      }
+
+      // Creates a contiguous block of numbered entries for one binder section.
+      //
+      // Inputs:
+      // - setCode: source bucket such as "tla", "tle", "promo", or "other"
+      // - start/end: inclusive numbering range for the entries in this section
+      // - label: human-readable category shown in the UI
+      // - options: finish availability and metadata overrides
+      //   (foilOnly: card numbers inside the range that have no non-foil printing)
+      //
+      // Output:
+      // - an array of normalized entry objects used everywhere else in the app
+      //
+      // Each returned entry represents one logical card/item number before it is
+      // expanded into actual binder pockets.
+      function makeEntries(setCode, start, end, label, options = {}) {
+        const entries = [];
+        const labelSlug = slugify(options.localLabel || label);
+        const foilOnly = new Set(options.foilOnly || []);
+        for (let number = start; number <= end; number += 1) {
+          const padded = pad3(number);
+          entries.push({
+            setCode,
+            number,
+            label,
+            assetId: NUMBERED_SETS.has(setCode) ? padded : `${labelSlug}-${padded}`,
+            nf: foilOnly.has(number) ? false : options.nf ?? true,
+            foil: options.foil ?? true,
+            doubleFaced: options.doubleFaced ?? false,
+          });
+        }
+        return entries;
+      }
+
+      // Convenience wrapper for categories where we only know "count" rather than
+      // a published numbered range. This still produces 1..count internally.
+      function makeCountEntries(setCode, count, label, options = {}) {
+        return makeEntries(setCode, 1, count, label, options);
+      }
+
+      // Master data model for the binder.
+      //
+      // Each section becomes one or more binder pages. The entries arrays below
+      // are the authoritative input for page generation, progress tracking, and
+      // image resolution.
+      //
+      // Finish flags matter:
+      // - nf: whether a non-foil pocket should exist
+      // - foil: whether a foil pocket should exist
+      //
+      // This file intentionally reserves space only for printings/finishes we
+      // decided to keep in the planner.
+      const sections = [
+        {
+          title: "TLA Main Set",
+          layoutMode: "paired",
+          entries: makeEntries("tla", 1, 286, "TLA Base"),
+        },
+        {
+          title: "TLA Variants",
+          layoutMode: "paired",
+          entries: [
+            ...makeEntries("tla", 287, 291, "TLA Appa Full Art Lands"),
+            ...makeEntries("tla", 292, 296, "TLA Avatar Journey Lands"),
+            ...makeEntries("tla", 297, 315, "TLA Borderless Scene Cards"),
+            ...makeEntries("tla", 316, 330, "TLA Field Notes"),
+            ...makeEntries("tla", 331, 335, "TLA Borderless Battle Pose"),
+            ...makeEntries("tla", 336, 353, "TLA Elemental Frame"),
+            ...makeEntries("tla", 354, 358, "TLA Borderless Double Face", { doubleFaced: true }),
+            ...makeEntries("tla", 359, 362, "TLA Neon / Battle Pose", { nf: false, foil: true }),
+            ...makeEntries("tla", 363, 363, "TLA Headliner", { nf: false, foil: true }),
+            ...makeEntries("tla", 364, 392, "TLA Extended Art Rares"),
+            ...makeEntries("tla", 393, 394, "TLA Foil Promo Slots", { nf: false, foil: true }),
+          ],
+        },
+        {
+          title: "TLE Main + Supplemental",
+          layoutMode: "mixed",
+          entries: [
+            ...makeEntries("tle", 1, 61, "TLE Source Material / Reprint"),
+            ...makeEntries("tle", 62, 73, "TLE Scene Box Exclusive"),
+            ...makeEntries("tle", 74, 170, "TLE Jumpstart"),
+            ...makeEntries("tle", 171, 209, "TLE Jumpstart Extended Art"),
+            ...makeEntries("tle", 210, 264, "TLE Beginner Box", { foilOnly: TLE_BEGINNER_BOX_FOIL_ONLY }),
+            ...makeEntries("tle", 265, 304, "TLE Exclusive Beginner Box Tutorial Reprints", { foil: false }),
+            ...makeEntries("tle", 305, 317, "TLE Commander Bundle Promo Exclusives", { foil: false }),
+          ],
+        },
+        {
+          title: "Promos + Secret Lair",
+          layoutMode: "mixed",
+          entries: [
+            ...makeCountEntries("promo", 24, "Secret Lair", { nf: true, foil: true }),
+            ...makeCountEntries("promo", 1, "Secret Lair Spend Promo", { nf: false, foil: true }),
+            ...makeCountEntries("promo", 2, "WPN Event Promos", { nf: true, foil: true }),
+            ...makeCountEntries("promo", 1, "Buy-a-Box Promo", { nf: false, foil: true }),
+            ...makeCountEntries("promo", 1, "Bundle Exclusive Promo", { nf: false, foil: true }),
+            ...makeCountEntries("promo", 13, "Commander Bundle Promo", { nf: true, foil: false }),
+          ],
+        },
+        {
+          title: "Tokens + Other Inserts",
+          layoutMode: "compact",
+          entries: [
+            ...makeCountEntries("other", 5, "Tokens Non-Foil", { nf: true, foil: false }),
+            ...makeCountEntries("other", 46, "Jumpstart Theme Inserts", { nf: true, foil: false }),
+            ...makeCountEntries("other", 2, "Bundle Reference Cards", { nf: true, foil: false }),
+          ],
+        },
+      ];
+
+      // Fields every pocket inherits from its logical entry.
+      function slotBase(entry) {
+        return {
+          setCode: entry.setCode,
+          number: entry.number,
+          label: entry.label,
+          assetId: entry.assetId,
+          doubleFaced: entry.doubleFaced,
+        };
+      }
+
+      // Expands one logical entry into exactly two binder pockets in display order:
+      // [non-foil slot, foil slot]. A finish that does not exist becomes an unfilled
+      // pocket so the left/right pairing stays aligned.
+      function pairToSlots(entry) {
+        const base = slotBase(entry);
+        return [
+          { ...base, filled: entry.nf, finish: "nf" },
+          { ...base, filled: entry.foil, finish: "foil" },
+        ];
+      }
+
+      // Expands one logical entry into only the real pockets that exist.
+      // Example:
+      // - NF-only entry => one slot
+      // - foil-only entry => one slot
+      // - NF + foil entry => two slots
+      function compactEntryToSlots(entry) {
+        const base = { ...slotBase(entry), filled: true };
+        const slots = [];
+        if (entry.nf) slots.push({ ...base, finish: "nf" });
+        if (entry.foil) slots.push({ ...base, finish: "foil" });
+        return slots;
+      }
+
+      // Builds the full binder page list from the section data.
+      //
+      // Output shape per page:
+      // - pageNumber: 1-based page index
+      // - section: section title used in the sidebar and header
+      // - setCode: source bucket shared by every entry in the section
+      // - layoutMode: copied from the section so the UI can describe the page
+      // - rangeStart/rangeEnd: entry numbers represented on that page
+      // - entries: original entry objects on the page
+      // - slots: exactly 36 pocket objects for rendering
+      //
+      // Paired and mixed sections always expand to two pockets per entry, so
+      // packing a page greedily is equivalent to slicing 18 entries at a time.
+      // Pages are padded with explicit empty pockets so the renderer can always
+      // draw a stable 6x6 grid.
+      function buildPages() {
+        const pages = [];
+
+        for (const section of sections) {
+          const slotExpander = section.layoutMode === "compact" ? compactEntryToSlots : pairToSlots;
+          let entryIndex = 0;
+
+          while (entryIndex < section.entries.length) {
+            const entries = [];
+            const slots = [];
+
+            while (entryIndex < section.entries.length) {
+              const entry = section.entries[entryIndex];
+              const expandedSlots = slotExpander(entry);
+              if (slots.length > 0 && slots.length + expandedSlots.length > PAGE_SIZE) break;
+              entries.push(entry);
+              slots.push(...expandedSlots);
+              entryIndex += 1;
+            }
+
+            while (slots.length < PAGE_SIZE) {
+              slots.push({ filled: false, finish: "empty" });
+            }
+
+            pages.push({
+              pageNumber: pages.length + 1,
+              section: section.title,
+              setCode: entries[0].setCode,
+              layoutMode: section.layoutMode,
+              rangeStart: entries[0].number,
+              rangeEnd: entries[entries.length - 1].number,
+              rangeStartLabel: entries[0].label,
+              rangeEndLabel: entries[entries.length - 1].label,
+              entries,
+              slots,
+            });
+          }
+        }
+
+        return pages;
+      }
+
+      // Returns candidate image paths for a rendered pocket.
+      //
+      // Resolution order:
+      // 1. Local file override in /cards/<setCode>/
+      // 2. Scrydex URL fallback for TLA/TLE numbered cards
+      //
+      // Promo/other sections are local-only because they do not share the same
+      // predictable public URL pattern as TLA/TLE.
+      function imageCandidates(slot) {
+        const localPrefix = `cards/${slot.setCode}/${slot.assetId}.`;
+        const localCandidate = [...LOCAL_IMAGES].find((path) => path.startsWith(localPrefix));
+        const candidates = localCandidate ? [localCandidate] : [];
+        if (NUMBERED_SETS.has(slot.setCode)) {
+          const remoteCandidate = `https://images.scrydex.com/magicthegathering/${slot.setCode.toUpperCase()}-${slot.number}/medium`;
+          candidates.push(remoteCandidate);
+        }
+        return candidates;
+      }
+
+      // Resolves the first image candidate that loads, or null if none do.
+      //
+      // Results are cached per card (not per finish), so the non-foil and foil
+      // pockets share one lookup and revisiting a page never repeats the chain of
+      // missing local-file requests.
+      const imageCache = new Map();
+
+      function resolveImage(slot) {
+        const cacheKey = `${slot.setCode}/${slot.assetId}`;
+        if (!imageCache.has(cacheKey)) {
+          const candidates = imageCandidates(slot);
+          imageCache.set(
+            cacheKey,
+            new Promise((resolve) => {
+              let index = 0;
+              const attempt = () => {
+                if (index >= candidates.length) {
+                  resolve(null);
+                  return;
+                }
+                const src = candidates[index];
+                const img = new Image();
+                img.onload = () => resolve(src);
+                img.onerror = () => {
+                  index += 1;
+                  attempt();
+                };
+                img.src = src;
+              };
+              attempt();
+            }),
+          );
+        }
+        return imageCache.get(cacheKey);
+      }
+
+      // User-facing title/tooltip text for a specific pocket.
+      function slotTitle(slot) {
+        return `${slot.setCode.toUpperCase()} ${pad3(slot.number)} ${finishText(slot.finish)}`;
+      }
+
+      // Build all pages once at startup; the planner is data-driven after this.
+      const pages = buildPages();
+      const totalPlannedPockets = pages.length * PAGE_SIZE;
+      const trackableSlots = pages.flatMap((page) => page.slots).filter((slot) => slot.filled);
+      const pricedSlots = trackableSlots.filter((slot) => NUMBERED_SETS.has(slot.setCode));
+      const knownSlotKeys = new Set(trackableSlots.map(slotKey));
+
+      // Groups filled pockets and page spans per set for the summary cards.
+      const setGroups = new Map();
+      pages.forEach((page) => {
+        if (!setGroups.has(page.setCode)) {
+          setGroups.set(page.setCode, { firstPage: page.pageNumber, lastPage: page.pageNumber, slots: [] });
+        }
+        const group = setGroups.get(page.setCode);
+        group.lastPage = page.pageNumber;
+        group.slots.push(...page.slots.filter((slot) => slot.filled));
+      });
+
+      let ownedMap = loadOwnedMap();
+      let priceState = loadPriceState();
+      let selectedPage = clampPage(Number(readStorage(PAGE_STORAGE_KEY, 1)));
+
+      function clampPage(value) {
+        return Number.isInteger(value) && value >= 1 && value <= pages.length ? value : 1;
+      }
+
+      // Reads persisted collection progress from localStorage.
+      // Output: object map keyed by `slotKey(slot)` -> true
+      function loadOwnedMap() {
+        const stored = readStorage(STORAGE_KEY, {});
+        if (!stored || typeof stored !== "object" || Array.isArray(stored)) return {};
+        return Object.fromEntries(Object.entries(stored).filter(([key, value]) => knownSlotKeys.has(key) && value === true));
+      }
+
+      // Writes the in-memory owned map back to localStorage.
+      function saveOwnedMap() {
+        writeStorage(STORAGE_KEY, ownedMap);
+      }
+
+      // Reads cached pricing data so the page can keep showing values between sessions
+      // even before the next live refresh completes.
+      function loadPriceState() {
+        const stored = readStorage(PRICE_STORAGE_KEY, null) || {};
+        return {
+          status: "idle",
+          prices: stored.prices || {},
+          updatedAt: stored.updatedAt || null,
+          error: null,
+        };
+      }
+
+      function savePriceState() {
+        writeStorage(PRICE_STORAGE_KEY, {
+          prices: priceState.prices,
+          updatedAt: priceState.updatedAt,
+        });
+      }
+
+      // Creates the unique tracking key for one rendered pocket.
+      //
+      // Important:
+      // We use assetId instead of just number so promo/other categories with
+      // overlapping numbers (001, 002, etc.) do not collide with each other.
+      function slotKey(slot) {
+        return `${slot.setCode}-${slot.assetId}-${slot.finish}`;
+      }
+
+      function priceKey(setCode, number) {
+        return `${setCode}-${pad3(number)}`;
+      }
+
+      // Ownership lookup helper for one pocket.
+      function isOwned(slot) {
+        return Boolean(ownedMap[slotKey(slot)]);
+      }
+
+      // Counts how many filled slots in a list have been marked owned.
+      function countOwned(slots) {
+        let owned = 0;
+        for (const slot of slots) {
+          if (slot.filled && isOwned(slot)) owned += 1;
+        }
+        return owned;
+      }
+
+      // Formats a progress percentage for summary/page meta displays.
+      function completionText(owned, total) {
+        if (!total) return "0%";
+        return `${Math.round((owned / total) * 100)}%`;
+      }
+
+      const currencyFormatter = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+      });
+
+      function formatCurrency(value) {
+        return currencyFormatter.format(value || 0);
+      }
+
+      // A missing foil quote stays unpriced; substituting the non-foil value would
+      // make the collection totals look more complete and precise than they are.
+      function getSlotPrice(slot) {
+        if (!NUMBERED_SETS.has(slot.setCode)) return null;
+        const record = priceState.prices[priceKey(slot.setCode, slot.number)];
+        if (!record) return null;
+
+        if (slot.finish === "foil") {
+          return record.usd_foil ?? null;
+        }
+        return record.usd ?? null;
+      }
+
+      function computePriceMetrics() {
+        const metrics = {
+          ownedValue: 0,
+          missingValue: 0,
+          pricedOwnedCount: 0,
+          pricedMissingCount: 0,
+          unpricedCount: 0,
+        };
+
+        pricedSlots.forEach((slot) => {
+          const value = getSlotPrice(slot);
+          if (value == null) {
+            metrics.unpricedCount += 1;
+          } else if (isOwned(slot)) {
+            metrics.ownedValue += value;
+            metrics.pricedOwnedCount += 1;
+          } else {
+            metrics.missingValue += value;
+            metrics.pricedMissingCount += 1;
+          }
+        });
+
+        metrics.fullValue = metrics.ownedValue + metrics.missingValue;
+        return metrics;
+      }
+
+      const summaryEl = document.getElementById("summary");
+      const pageListEl = document.getElementById("pageList");
+      const pageGridEl = document.getElementById("pageGrid");
+      const pageTitleEl = document.getElementById("pageTitle");
+      const pageSubtitleEl = document.getElementById("pageSubtitle");
+      const pageRangeEl = document.getElementById("pageRange");
+      const pageMetaEl = document.getElementById("pageMeta");
+      const pageChipEl = document.getElementById("pageChip");
+      const priceSummaryEl = document.getElementById("priceSummary");
+      const refreshPricesEl = document.getElementById("refreshPrices");
+      const prevPageEl = document.getElementById("prevPage");
+      const nextPageEl = document.getElementById("nextPage");
+      const markPageOwnedEl = document.getElementById("markPageOwned");
+      const clearPageOwnedEl = document.getElementById("clearPageOwned");
+      const exportCollectionEl = document.getElementById("exportCollection");
+      const importCollectionEl = document.getElementById("importCollection");
+      const importCollectionFileEl = document.getElementById("importCollectionFile");
+      const clearAllOwnedEl = document.getElementById("clearAllOwned");
+
+      function cardHtml(className, item) {
+        return `
+          <div class="${className}">
+            <span class="label">${item.label}</span>
+            <span class="value"${item.valueStyle ? ` style="${item.valueStyle}"` : ""}>${item.value}</span>
+            <span class="subvalue">${item.subvalue || ""}</span>
+          </div>
+        `;
+      }
+
+      // Recomputes and renders the top summary cards from the current ownership map.
+      function renderSummary() {
+        const ownedTotal = countOwned(trackableSlots);
+        const setLabels = { tla: "TLA", tle: "TLE", promo: "Promos", other: "Other" };
+
+        const summaryItems = [
+          {
+            label: "Overall progress",
+            value: `${ownedTotal} / ${trackableSlots.length}`,
+            subvalue: `${completionText(ownedTotal, trackableSlots.length)} complete`,
+          },
+          ...[...setGroups].map(([setCode, group]) => {
+            const owned = countOwned(group.slots);
+            const pageSpan =
+              group.firstPage === group.lastPage ? `page ${group.firstPage}` : `pages ${group.firstPage}-${group.lastPage}`;
+            return {
+              label: `${setLabels[setCode] || setCode.toUpperCase()} tracked`,
+              value: `${owned} / ${group.slots.length}`,
+              subvalue: `${completionText(owned, group.slots.length)} complete · ${pageSpan}`,
+            };
+          }),
+          {
+            label: "Planned pages",
+            value: String(pages.length),
+            subvalue: `${totalPlannedPockets} binder pockets mapped`,
+          },
+        ];
+
+        summaryEl.innerHTML = summaryItems.map((item) => cardHtml("summary-card", item)).join("");
+      }
+
+      function renderPriceSummary() {
+        const metrics = computePriceMetrics();
+        const pricedCoverage = metrics.pricedOwnedCount + metrics.pricedMissingCount;
+
+        const statusText =
+          priceState.status === "loading"
+            ? "Refreshing live prices..."
+            : priceState.error
+              ? `Price refresh failed: ${priceState.error}`
+              : priceState.updatedAt
+                ? `Last updated ${new Date(priceState.updatedAt).toLocaleString()}`
+                : "No live price refresh yet";
+
+        const cards = [
+          {
+            label: "Owned value",
+            value: formatCurrency(metrics.ownedValue),
+            subvalue: `${metrics.pricedOwnedCount} priced owned slots`,
+          },
+          {
+            label: "Missing value",
+            value: formatCurrency(metrics.missingValue),
+            subvalue: `${metrics.pricedMissingCount} priced missing slots`,
+          },
+          {
+            label: "Full priced total",
+            value: formatCurrency(metrics.fullValue),
+            subvalue: `${pricedCoverage} TLA/TLE slots priced`,
+          },
+          {
+            label: "Coverage",
+            value: `${pricedCoverage} / ${pricedSlots.length}`,
+            subvalue: `${metrics.unpricedCount} TLA/TLE slots still unpriced`,
+          },
+          {
+            label: "Price status",
+            value: statusText,
+            valueStyle: "font-size:14px; line-height:1.4;",
+            subvalue: "Uses Scryfall price fields for numbered TLA/TLE cards only.",
+          },
+        ];
+
+        priceSummaryEl.innerHTML = cards.map((item) => cardHtml("price-card", item)).join("");
+        const current = !pricesAreStale();
+        refreshPricesEl.disabled = priceState.status === "loading" || current;
+        refreshPricesEl.textContent = priceState.status === "loading" ? "Refreshing prices..." : current ? "Prices current" : "Refresh prices";
+      }
+
+      function renderStats() {
+        renderSummary();
+        renderPriceSummary();
+      }
+
+      // Renders the sidebar page list once; navigation only moves the active class.
+      function renderPageButtons() {
+        pageListEl.innerHTML = pages
+          .map(
+            (page) => `
+              <button class="page-button" data-page="${page.pageNumber}">
+                <div><strong>Page ${page.pageNumber}</strong></div>
+                <div class="minor">${page.section}</div>
+                <div class="minor">${pageRangeText(page)}</div>
+              </button>
+            `,
+          )
+          .join("");
+      }
+
+      function updateActivePageButton() {
+        pageListEl.querySelectorAll("[data-page]").forEach((button) => {
+          const active = Number(button.dataset.page) === selectedPage;
+          button.classList.toggle("active", active);
+          if (active) {
+            button.setAttribute("aria-current", "page");
+            scrollPageListTo(button);
+          } else {
+            button.removeAttribute("aria-current");
+          }
+        });
+      }
+
+      // Keeps the active button visible inside the sidebar list only;
+      // scrollIntoView would also scroll the window.
+      function scrollPageListTo(button) {
+        const top = button.offsetTop;
+        const bottom = top + button.offsetHeight;
+        if (top < pageListEl.scrollTop) {
+          pageListEl.scrollTop = top;
+        } else if (bottom > pageListEl.scrollTop + pageListEl.clientHeight) {
+          pageListEl.scrollTop = bottom - pageListEl.clientHeight;
+        }
+      }
+
+      function currentPage() {
+        return pages[selectedPage - 1];
+      }
+
+      // Numeric counters restart inside promo/insert sections. Include category
+      // names when a page crosses one of those boundaries instead of displaying
+      // a confusing backward range such as 019 - 007.
+      function pageRangeText(page) {
+        if (page.rangeStartLabel === page.rangeEndLabel) {
+          return `${pad3(page.rangeStart)} - ${pad3(page.rangeEnd)}`;
+        }
+        return `${page.rangeStartLabel} ${pad3(page.rangeStart)} - ${page.rangeEndLabel} ${pad3(page.rangeEnd)}`;
+      }
+
+      function goToPage(pageNumber) {
+        const target = clampPage(pageNumber);
+        if (target === selectedPage) return;
+        selectedPage = target;
+        writeStorage(PAGE_STORAGE_KEY, selectedPage);
+        updateActivePageButton();
+        renderSelectedPage();
+      }
+
+      // Produces the HTML shell for one pocket.
+      //
+      // The image (if any) is inserted later by `renderSelectedPage`; the overlay
+      // markup is the same with or without it.
+      function renderSlot(slot, index) {
+        if (!slot.filled) {
+          return `<div class="slot empty">Empty</div>`;
+        }
+
+        const owned = isOwned(slot);
+        const extra = slot.doubleFaced ? " • DFC" : "";
+
+        return `
+          <button type="button" class="slot placeholder${owned ? " collected" : ""}" data-index="${index}" title="${slotTitle(slot)}" aria-pressed="${owned}">
+            <div class="slot-overlay">
+              <div class="slot-tag ${finishClass(slot.finish)}">${finishText(slot.finish)}</div>
+              <div class="slot-status">${owned ? "✓" : ""}</div>
+              <div>
+                <div class="slot-number">${slot.setCode.toUpperCase()} ${pad3(slot.number)}</div>
+                <div class="slot-label">${slot.label}${extra}</div>
+              </div>
+            </div>
+          </button>
+        `;
+      }
+
+      // Syncs one rendered pocket with the ownership map without rebuilding it,
+      // so loaded card images do not flicker on every click.
+      function updateSlotElement(el, slot) {
+        const owned = isOwned(slot);
+        el.classList.toggle("collected", owned);
+        el.setAttribute("aria-pressed", String(owned));
+        el.querySelector(".slot-status").textContent = owned ? "✓" : "";
+      }
+
+      function renderPageMeta(page) {
+        const filledCount = page.slots.filter((slot) => slot.filled).length;
+        const emptyCount = PAGE_SIZE - filledCount;
+        const ownedCount = countOwned(page.slots);
+        const layoutNote =
+          page.layoutMode === "compact"
+            ? "Single-finish items are packed with no partner pocket."
+            : "Non-foil always sits left of foil within each card pair.";
+        pageMetaEl.textContent = `${ownedCount} of ${filledCount} tracked on this page (${completionText(ownedCount, filledCount)}). ${emptyCount} empty pockets remain. ${layoutNote}`;
+      }
+
+      // Updates every pocket on the visible page plus the summaries after an
+      // ownership change.
+      function refreshOwnership() {
+        const page = currentPage();
+        pageGridEl.querySelectorAll("[data-index]").forEach((el) => {
+          updateSlotElement(el, page.slots[Number(el.dataset.index)]);
+        });
+        renderPageMeta(page);
+        renderStats();
+      }
+
+      // Renders the currently selected binder page into the main viewer.
+      //
+      // Responsibilities:
+      // - update page header/meta text
+      // - update prev/next button enabled state
+      // - render the 36 grid pockets
+      // - kick off async (cached) image loading for filled pockets
+      function renderSelectedPage() {
+        const page = currentPage();
+        const unit = page.layoutMode === "compact" ? "numbered items" : "numbered pairs";
+
+        pageTitleEl.textContent = `Page ${page.pageNumber}`;
+        pageSubtitleEl.textContent = page.section;
+        pageChipEl.textContent = `${page.entries.length} ${unit} on this page`;
+        pageRangeEl.textContent = `Card range: ${pageRangeText(page)}`;
+        renderPageMeta(page);
+        prevPageEl.disabled = page.pageNumber === 1;
+        nextPageEl.disabled = page.pageNumber === pages.length;
+
+        pageGridEl.innerHTML = page.slots.map(renderSlot).join("");
+
+        pageGridEl.querySelectorAll("[data-index]").forEach((el) => {
+          const slot = page.slots[Number(el.dataset.index)];
+          resolveImage(slot).then((src) => {
+            // Skip pockets that were replaced by navigating away before the image resolved.
+            if (!src || !el.isConnected) return;
+            const img = document.createElement("img");
+            img.src = src;
+            img.alt = slotTitle(slot);
+            img.decoding = "async";
+            el.prepend(img);
+            el.classList.remove("placeholder");
+          });
+        });
+      }
+
+      // Toggles one pocket between owned/not-owned and refreshes dependent UI.
+      function toggleOwned(slot) {
+        const key = slotKey(slot);
+        if (ownedMap[key]) {
+          delete ownedMap[key];
+        } else {
+          ownedMap[key] = true;
+        }
+        saveOwnedMap();
+        refreshOwnership();
+      }
+
+      // Bulk operation for the visible page.
+      // Input: true to mark every filled pocket on the page owned, false to clear.
+      function setPageOwned(value) {
+        currentPage()
+          .slots.filter((slot) => slot.filled)
+          .forEach((slot) => {
+            const key = slotKey(slot);
+            if (value) {
+              ownedMap[key] = true;
+            } else {
+              delete ownedMap[key];
+            }
+          });
+        saveOwnedMap();
+        refreshOwnership();
+      }
+
+      async function fetchSetPrices(setCode) {
+        let nextUrl = `https://api.scryfall.com/cards/search?order=set&q=e%3A${setCode}&unique=prints`;
+        const records = {};
+
+        while (nextUrl) {
+          const response = await fetch(nextUrl, {
+            headers: {
+              Accept: "application/json",
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`${setCode.toUpperCase()} price request returned ${response.status}`);
+          }
+
+          const payload = await response.json();
+          payload.data.forEach((card) => {
+            if (!/^\d+$/.test(card.collector_number || "")) return;
+
+            records[priceKey(setCode, Number(card.collector_number))] = {
+              usd: card.prices?.usd ? Number(card.prices.usd) : null,
+              usd_foil: card.prices?.usd_foil ? Number(card.prices.usd_foil) : null,
+            };
+          });
+
+          nextUrl = payload.has_more ? payload.next_page : null;
+          if (nextUrl) await new Promise((resolve) => window.setTimeout(resolve, PRICE_REQUEST_DELAY_MS));
+        }
+
+        return records;
+      }
+
+      async function refreshPrices() {
+        if (priceState.status === "loading" || !pricesAreStale()) return;
+        priceState = {
+          ...priceState,
+          status: "loading",
+          error: null,
+        };
+        renderPriceSummary();
+
+        try {
+          const tlaPrices = await fetchSetPrices("tla");
+          await new Promise((resolve) => window.setTimeout(resolve, PRICE_REQUEST_DELAY_MS));
+          const tlePrices = await fetchSetPrices("tle");
+          priceState = {
+            status: "ready",
+            prices: {
+              ...tlaPrices,
+              ...tlePrices,
+            },
+            updatedAt: new Date().toISOString(),
+            error: null,
+          };
+          savePriceState();
+        } catch (error) {
+          priceState = {
+            ...priceState,
+            status: "error",
+            error: error.message || "Unknown error",
+          };
+        }
+
+        renderPriceSummary();
+      }
+
+      function pricesAreStale() {
+        const updated = Date.parse(priceState.updatedAt);
+        return Number.isNaN(updated) || Date.now() - updated > PRICE_MAX_AGE_MS;
+      }
+
+      function exportCollection() {
+        const payload = {
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          owned: ownedMap,
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `atla-binder-collection-${new Date().toISOString().slice(0, 10)}.json`;
+        link.click();
+        window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+      }
+
+      async function importCollection(file) {
+        const parsed = JSON.parse(await file.text());
+        if (!parsed || parsed.version !== 1 || !parsed.owned || typeof parsed.owned !== "object" || Array.isArray(parsed.owned)) {
+          throw new Error("This is not a valid ATLA Binder collection backup.");
+        }
+
+        const imported = Object.fromEntries(
+          Object.entries(parsed.owned).filter(([key, value]) => knownSlotKeys.has(key) && value === true),
+        );
+        const importedCount = Object.keys(imported).length;
+        if (!window.confirm(`Replace this browser's collection with ${importedCount} tracked pockets from the backup?`)) return;
+
+        ownedMap = imported;
+        saveOwnedMap();
+        refreshOwnership();
+      }
+
+      pageListEl.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-page]");
+        if (button) goToPage(Number(button.dataset.page));
+      });
+
+      // One delegated handler covers every pocket on every page.
+      pageGridEl.addEventListener("click", (event) => {
+        const el = event.target.closest("[data-index]");
+        if (el) toggleOwned(currentPage().slots[Number(el.dataset.index)]);
+      });
+
+      prevPageEl.addEventListener("click", () => goToPage(selectedPage - 1));
+      nextPageEl.addEventListener("click", () => goToPage(selectedPage + 1));
+
+      // Left/right arrow keys flip pages unless focus is in a form field.
+      document.addEventListener("keydown", (event) => {
+        if (event.altKey || event.ctrlKey || event.metaKey) return;
+        if (event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable]")) return;
+        if (event.key === "ArrowLeft") goToPage(selectedPage - 1);
+        if (event.key === "ArrowRight") goToPage(selectedPage + 1);
+      });
+
+      markPageOwnedEl.addEventListener("click", () => setPageOwned(true));
+      clearPageOwnedEl.addEventListener("click", () => {
+        const ownedCount = countOwned(currentPage().slots);
+        if (!ownedCount) return;
+        if (window.confirm(`Clear ${ownedCount} collected pockets from this page?`)) setPageOwned(false);
+      });
+      exportCollectionEl.addEventListener("click", exportCollection);
+      importCollectionEl.addEventListener("click", () => importCollectionFileEl.click());
+      importCollectionFileEl.addEventListener("change", async () => {
+        const [file] = importCollectionFileEl.files;
+        importCollectionFileEl.value = "";
+        if (!file) return;
+        try {
+          await importCollection(file);
+        } catch (error) {
+          window.alert(error.message || "The collection backup could not be imported.");
+        }
+      });
+      clearAllOwnedEl.addEventListener("click", () => {
+        const ownedCount = countOwned(trackableSlots);
+        if (!ownedCount) return;
+        if (!window.confirm(`Clear all ${ownedCount} collected pockets? This cannot be undone.`)) return;
+        ownedMap = {};
+        saveOwnedMap();
+        refreshOwnership();
+      });
+      refreshPricesEl.addEventListener("click", refreshPrices);
+
+      // Initial render bootstraps the static summary/sidebar and the saved page view.
+      renderStats();
+      renderPageButtons();
+      updateActivePageButton();
+      renderSelectedPage();
+      if (pricesAreStale()) refreshPrices();
+    </script>
+  </body>
+</html>

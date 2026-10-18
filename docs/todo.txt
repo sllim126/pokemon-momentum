@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-16 (milestone: Discord bot, checklist page, DNS fix)
+Last updated: 2026-10-18 (milestone: ATLA and KPDH binder planners)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -35,6 +35,16 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-18 Deployed the standalone ATLA Binder planner at `/atla/` in a read-only nginx
+  container on port 8090; Caddy redirects the slashless path and proxies the prefixed route.
+  Local and public HTTP/security checks pass; final real-browser interaction check remains.
+- 2026-10-18 Deployed the standalone KPDH Binder planner at `/kpdh/` in a read-only nginx
+  container on port 8091; Caddy redirects the slashless path and proxies the prefixed route.
+  Planner/card-image/security checks pass publicly; final real-browser interaction check remains.
+- 2026-10-18 Reviewed and optimized ATLA Binder: removed four failed image probes per card,
+  corrected mixed-category ranges and foil-price fallbacks, added daily paced Scryfall
+  refreshes, collection Export/Import, clear-page confirmation and public zstd/gzip compression
+  (55,023 bytes down to 15,616 in the verification request).
 - 2026-10-16 Retired the older research dashboard on desktop: `/dashboard-classic` and
   `/dashboard-dev` now forward to the app like `/dashboard`. `dashboard.html` was kept: phones
   open it from the mobile menu (Browse Set, Browse Pokémon, Set Strength), and mobile is frozen.
@@ -53,10 +63,6 @@ Recently Completed
 - 2026-10-16 Discord bug reports are copied onto the server every 15 minutes
   (`import_discord_bug_reports.py`, "Poke6s Control" bot) and marked ✅; the admin
   /bug-reports page now escapes report text (it was a stored-XSS risk via the Feedback form).
-- 2026-10-15 Other-games archive moved from cron to the systemd timer
-  `pokemon-momentum-tcgcsv-collect.timer` (03:30 UTC, catches up after downtime); the cron
-  line was removed.
-
 High Priority
 -------------
 

@@ -1,0 +1,15 @@
+name: atla-binder
+
+services:
+  atla-binder-planner:
+    build: .
+    image: atla-binder-planner:latest
+    container_name: atla-binder-planner
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    ports:
+      # Caddy proxies to this port. Do not forward 8090 on the router.
+      - "8090:80"
