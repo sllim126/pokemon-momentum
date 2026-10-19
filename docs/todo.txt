@@ -127,6 +127,13 @@ High Priority
      next to the normal ~1,900, keeping the 10,000/day limit, 150 ms spacing, stop on 403/429.
   5. Ongoing: if confirmed, switch daily prices to the one archive file per day (lighter on
      TCGCSV than ~1,900 per-group requests); refresh the catalogue weekly.
+  Priority order (owner, 2026-10-19), for unpacking/backfill and for the catalogue nights:
+  (a) Pokemon English history and the gap, (b) Pokemon Japanese, (c) the games already
+  collected (Magic, Yu-Gi-Oh, One Piece, Lorcana), (d) every other game. Each archive file holds
+  all games at once, so the history download itself is one step; the order applies to what is
+  unpacked and loaded first, and to the catalogue fetch. Aim for ~5,500 extra requests a night
+  (total with the normal ~1,900 stays under 10,000); night 1 starts with categories + groups
+  (~95 requests) to get the exact count and plan the remaining nights.
   Ask TCGCSV (their Discord) before any bulk download beyond this plan.
 - [idea] Help TCGCSV by seeding a torrent of the price archive (owner offered in the TCGCSV
   Discord #development, 2026-10-19; CptSpaceToaster can't torrent and said "hopefully some
