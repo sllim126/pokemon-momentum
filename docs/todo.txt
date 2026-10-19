@@ -167,10 +167,8 @@ Desktop App Follow-up
     wins over the hand entries there). Loading means turning each answer's notes into a pack
     mix ("4x Lost Origin; 1x Vivid Voltage", set names as the loose booster packs are listed;
     "Unknown" when the set isn't known) and checking each mix adds up to the count.
-    First load 2026-10-19: 148 products (66 with a pack mix), about half the checklist; the
-    owner is working through the rest. Two notes don't add up, so only their counts were used:
-    Sword & Shield UPC: Charizard (count 16, notes list 10: 1 DA, 1 VV, 3 ES, 3 FS, 2 BS) and
-    Armarouge ex Premium Collection (count 6, notes list 5: 1 TF, 2 OF, 2 PR). Collections
+    First load 2026-10-19: 148 products (68 with a pack mix), about half the checklist; the
+    owner is working through the rest. Collections
     answered with a count only (pin and poster collections, binders, ...) get no loose-pack
     comparison until their pack sets are added. Paldean Fates Booster Bundle Display Case
     (360) has no market price on TCGplayer right now, so it isn't listed.
