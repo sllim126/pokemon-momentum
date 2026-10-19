@@ -50,6 +50,9 @@ class JapaneseBoxSizeTests(unittest.TestCase):
             ("Black Bolt Deluxe Booster Box", "SV11B: Black Bolt"): 4,
             ("25th Anniversary Collection Booster Box", "S8a: 25th Anniversary Collection"): 16,
             ("MEGA Expansion 30th Celebration Booster Box", "M6a: MEGA Expansion 30th Celebration"): 20,
+            ("Dark Phantasma Booster Box", "S10a: Dark Phantasma"): 20,
+            ("Pokemon GO Booster Box", "S10b: Pokemon GO"): 20,
+            ("Battle Region Booster Box", "S9a: Battle Region"): 10,
             ("Inferno X Booster Box", "M2: Inferno X"): 30,
         }
         for (name, group), packs in cases.items():

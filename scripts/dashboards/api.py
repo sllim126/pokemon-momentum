@@ -2273,6 +2273,10 @@ _JP_DELUXE_SET_KEYS = (
 _JP_SPECIAL_BOX_SIZES = {
     "25th anniversary collection": (16, 297.0),  # 16 packs of 5 cards, box ¥4,752
     "mega expansion 30th celebration": (20, 360.0),  # 20 packs of 6 cards (English: 5), box ¥7,200
+    # Retail price per pack not confirmed for these yet; the regular ¥180 is used meanwhile.
+    "dark phantasma": (20, 180.0),  # S10a: 20 packs of 6 cards
+    "pokemon go": (20, 180.0),  # S10b: 20 packs of 6 cards (one is a code card)
+    "battle region": (10, 180.0),  # S9a: 10 packs of 10 cards
 }
 _JPY_TO_USD_RATE = 1.0 / 159.48
 _JPY_PER_USD_FX_CACHE_TTL = timedelta(hours=6)
