@@ -130,7 +130,9 @@ High Priority
   Priority order (owner, 2026-10-19), for unpacking/backfill and for the catalogue nights:
   (a) Pokemon English history and the gap, (b) Pokemon Japanese, (c) the games already
   collected (Magic, Yu-Gi-Oh, One Piece, Lorcana), (d) every other game. Each archive file holds
-  all games at once, so the history download itself is one step; the order applies to what is
+  all games at once, so the history download itself is one step (no separate history download
+  is ever needed for Magic, Yu-Gi-Oh, One Piece, Lorcana or any other game; the other-games
+  collector keeps running until the daily archive file replaces it); the order applies to what is
   unpacked and loaded first, and to the catalogue fetch. Aim for ~5,500 extra requests a night
   (total with the normal ~1,900 stays under 10,000); night 1 starts with categories + groups
   (~95 requests) to get the exact count and plan the remaining nights.
