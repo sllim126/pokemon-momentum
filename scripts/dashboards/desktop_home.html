@@ -1128,8 +1128,9 @@
     function packBreakdown(item, prices) {
       if (item.productType === "Booster Pack" || !item.pack_mix) return { vs_loose_pct: null };
       // Collection boxes and tins often hold packs from other sets; unless their mix was listed by hand
-      // (several sets, comma-separated), the guess from the product's own set isn't reliable enough.
-      const handListed = String(item.pack_mix).includes(",");
+      // (pack_mix_listed: the owner's checklist or a hand entry in api.py), the guess from the product's
+      // own set isn't reliable enough.
+      const handListed = Boolean(item.pack_mix_listed) || String(item.pack_mix).includes(",");
       if (!handListed && !SAME_SET_PACK_TYPES.has(item.productType)) return { vs_loose_pct: null };
       const parts = String(item.pack_mix).split(",").map((part) => /^(\d+)x (.+)$/.exec(part.trim()));
       if (parts.some((m) => !m || !prices.has(m[2].trim()))) return { vs_loose_pct: null };

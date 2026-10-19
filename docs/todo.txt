@@ -35,6 +35,10 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-19 Sealed Deals uses the owner's checked pack counts (148 products from the
+  checklist) and prices collection boxes against the actual packs inside when the mix is
+  known: 92 of them now have a "vs loose packs" comparison. Counts without a listed mix
+  assume the product's own set (priced only for boxes, ETBs, bundles and similar).
 - 2026-10-18 Deployed the standalone ATLA Binder planner at `/atla/` in a read-only nginx
   container on port 8090; Caddy redirects the slashless path and proxies the prefixed route.
   Local and public HTTP/security checks pass; final real-browser interaction check remains.
@@ -159,7 +163,17 @@ Desktop App Follow-up
     collections and E 202 older ones on the 5-pack guess). The owner fills `your_pack_count`;
     Fill it in one item at a time at http://<server>:8099 by running
     `python3 scripts/utilities/sealed_checklist_server.py` (adds a `your_notes` column; 2026-10-16);
-    then load the answers as overrides in `api.py` and regenerate the file.
+    then load the answers into `scripts/dashboards/sealed_pack_overrides.csv` (read by api.py;
+    wins over the hand entries there). Loading means turning each answer's notes into a pack
+    mix ("4x Lost Origin; 1x Vivid Voltage", set names as the loose booster packs are listed;
+    "Unknown" when the set isn't known) and checking each mix adds up to the count.
+    First load 2026-10-19: 148 products (66 with a pack mix), about half the checklist; the
+    owner is working through the rest. Two notes don't add up, so only their counts were used:
+    Sword & Shield UPC: Charizard (count 16, notes list 10: 1 DA, 1 VV, 3 ES, 3 FS, 2 BS) and
+    Armarouge ex Premium Collection (count 6, notes list 5: 1 TF, 2 OF, 2 PR). Collections
+    answered with a count only (pin and poster collections, binders, ...) get no loose-pack
+    comparison until their pack sets are added. Paldean Fates Booster Bundle Display Case
+    (360) has no market price on TCGplayer right now, so it isn't listed.
     Build & Battle displays: 10 boxes x 4 packs = 40 (owner, 2026-10-13: Destined Rivals; applied to all).
     Booster box cases: 6 boxes x 36 packs = 216 (owner-confirmed 2026-10-13; already counted so).
     Booster bundle displays: 10 bundles (60 packs); blister cases: 24 blisters (3-pack 72,

@@ -1937,12 +1937,15 @@ _SEALED_PACK_COMPOSITION_OVERRIDES = [
         ],
         "product_type": "Ultra Premium Collection Case",
     },
-    # One Celebrations UPC, per the owner's earlier note on the case.
+    # One Celebrations UPC: 3 Vivid Voltage, 3 Chilling Reign, 2 Darkness Ablaze and 17
+    # Celebrations (4-card) packs (owner, 2026-10-19).
     {
         "match": ["celebrations ultra premium collection"],
         "packs": [
-            {"set": "SWSH Random", "count": 8},
-            {"set": "Celebrations (4-card packs)", "count": 17},
+            {"set": "Vivid Voltage", "count": 3},
+            {"set": "Chilling Reign", "count": 3},
+            {"set": "Darkness Ablaze", "count": 2},
+            {"set": "Celebrations", "count": 17},
         ],
         "product_type": "Ultra Premium Collection",
     },
@@ -1977,7 +1980,7 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID = {
     248124: {"pack_count": 216},
     190325: {"pack_count": 3},
     513409: {"pack_count": 360},
-    635609: {"pack_count": 260},
+    635609: {"pack_count": 360},  # 6 displays x 10 bundles x 6 packs (owner, 2026-10-19)
     247655: {"pack_count": 216},
     506640: {"pack_count": 90},
     528030: {"pack_count": 44},
@@ -2031,24 +2034,61 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID = {
     591211: {"pack_count": 120, "product_type": "Mini Pack Bundle"},
     566954: {"pack_count": 80, "product_type": "Mini Pack Bundle"},
     # Mixed sealed layouts supplied by user notes.
-    # Celebrations UPC case: 4 UPCs (owner, 2026-10-13) of 8 SWSH random + 17 Celebrations packs.
+    # Celebrations UPC case: 4 UPCs (owner, 2026-10-13), each 3 Vivid Voltage, 3 Chilling Reign,
+    # 2 Darkness Ablaze and 17 Celebrations packs (owner, 2026-10-19).
     518638: {
         "pack_count": 100,
         "packs": [
-            {"set": "SWSH Random", "count": 32},
-            {"set": "Celebrations (4-card packs)", "count": 68},
+            {"set": "Vivid Voltage", "count": 12},
+            {"set": "Chilling Reign", "count": 12},
+            {"set": "Darkness Ablaze", "count": 8},
+            {"set": "Celebrations", "count": 68},
         ],
         "product_type": "Ultra Premium Collection Case",
     },
     251895: {
         "pack_count": 150,
         "packs": [
-            {"set": "Celebrations (4-card packs)", "count": 100},
+            {"set": "Celebrations", "count": 100},
             {"set": "SWSH Random", "count": 50},
         ],
         "product_type": "Elite Trainer Box Case",
     },
 }
+
+# Pack counts and pack mixes the owner checked product by product (the sealed pack checklist,
+# 2026-10-19), kept in sealed_pack_overrides.csv next to this file: product_id, product,
+# pack_count, packs ("4x Lost Origin; 1x Vivid Voltage"), source. They win over the entries
+# above. Set names in `packs` must match a loose "<Set> Booster Pack" listing's set name
+# (see loosePackPrices in desktop_home.html) for the app to price those packs; "Unknown"
+# marks packs whose set isn't known, so the product gets no loose-pack comparison.
+SEALED_PACK_OVERRIDES_CSV = SCRIPT_DIR / "sealed_pack_overrides.csv"
+
+
+def _load_sealed_pack_overrides_csv(path: Path = SEALED_PACK_OVERRIDES_CSV) -> dict[int, dict]:
+    overrides: dict[int, dict] = {}
+    if not path.exists():
+        return overrides
+    with path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            try:
+                product_id = int(row["product_id"])
+                pack_count = int(row["pack_count"])
+            except (KeyError, TypeError, ValueError):
+                continue  # a bad line is skipped, not fatal
+            override: dict = {"pack_count": pack_count}
+            packs = []
+            for part in (row.get("packs") or "").split(";"):
+                match = re.fullmatch(r"\s*(\d+)x\s+(.+?)\s*", part)
+                if match:
+                    packs.append({"set": match.group(2), "count": int(match.group(1))})
+            if packs:
+                override["packs"] = packs
+            overrides[product_id] = override
+    return overrides
+
+
+_SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID.update(_load_sealed_pack_overrides_csv())
 
 _SEALED_PACK_COUNT_OVERRIDES_BY_NAME = [
     # Ascended Heroes Collection - Erika / Larry: 2 booster packs, a foil promo and a coin
@@ -6123,6 +6163,10 @@ def sealed_deals(
             pack_count = _infer_pack_count(name, product_class, category.category_id, str(row.get("groupName") or ""))
             pack_set = str(row.get("groupName") or "Unknown Set")
             packs = [{"set": pack_set, "count": _pack_number(pack_count or 0)}] if pack_count else []
+        if not packs and pack_count:
+            # A count without a listed mix: assume the product's own set, like the inferred
+            # counts above. The app prices that guess only for same-set types (boxes, ETBs, ...).
+            packs = [{"set": str(row.get("groupName") or "Unknown Set"), "count": _pack_number(pack_count)}]
         if pack_count is None or pack_count <= 0:
             continue
 
@@ -6210,6 +6254,12 @@ def sealed_deals(
                 "latest_price": round(latest_price, 2),
                 "pack_count": _pack_number(pack_count),
                 "pack_mix": _pack_mix_text(packs),
+                # True when the packs inside were listed by hand (not guessed from the set),
+                # so the app can price them against loose packs even for collection boxes.
+                "pack_mix_listed": bool(
+                    (pack_count_override and pack_count_override.get("packs"))
+                    or (composition_override and composition_override.get("packs"))
+                ),
                 "pack_sets": [str(pack.get("set")) for pack in packs if pack.get("set")],
                 "price_per_pack": round(price_per_pack, 3),
                 "retail_per_pack": round(retail_per_pack, 3) if retail_per_pack is not None else None,
