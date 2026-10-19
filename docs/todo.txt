@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-18 (milestone: ATLA and KPDH binder planners)
+Last updated: 2026-10-19 (milestone: sealed pack counts, Japanese box sizes, Black Friday plan)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -35,34 +35,15 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
-- 2026-10-18 Deployed the standalone ATLA Binder planner at `/atla/` in a read-only nginx
-  container on port 8090; Caddy redirects the slashless path and proxies the prefixed route.
-  Local and public HTTP/security checks pass; final real-browser interaction check remains.
-- 2026-10-18 Deployed the standalone KPDH Binder planner at `/kpdh/` in a read-only nginx
-  container on port 8091; Caddy redirects the slashless path and proxies the prefixed route.
-  Planner/card-image/security checks pass publicly; final real-browser interaction check remains.
-- 2026-10-18 Reviewed and optimized ATLA Binder: removed four failed image probes per card,
-  corrected mixed-category ranges and foil-price fallbacks, added daily paced Scryfall
-  refreshes, collection Export/Import, clear-page confirmation and public zstd/gzip compression
-  (55,023 bytes down to 15,616 in the verification request).
-- 2026-10-16 Retired the older research dashboard on desktop: `/dashboard-classic` and
-  `/dashboard-dev` now forward to the app like `/dashboard`. `dashboard.html` was kept: phones
-  open it from the mobile menu (Browse Set, Browse Pokémon, Set Strength), and mobile is frozen.
-- 2026-10-16 First nights after the power cut checked: the 02:00 nightly update and the 03:30
-  other-games archive (first run on its systemd timer) both succeeded; /health latest =
-  2026-10-15 for English and Japanese.
-- 2026-10-16 Local page for filling in the sealed checklist one product at a time
-  (`scripts/utilities/sealed_checklist_server.py`, port 8099; saves to
-  `data/sealed_pack_checklist.csv`, new `your_notes` column).
-- 2026-10-16 Public site back after the IP change: the owner pointed the `market` A record at
-  136.38.242.146; Google and Cloudflare DNS serve it (runbook: check over HTTPS, since plain
-  dig from the home network is answered by a cache).
-- 2026-10-16 The "Poke6s Control" bot posted a first message in every Poke6s Discord channel
-  (welcome, rules, channel guide, market picks, market snapshot, Pitch Black set breakdown,
-  Base Set Charizard spotlight, feature/feedback prompts, October site update).
-- 2026-10-16 Discord bug reports are copied onto the server every 15 minutes
-  (`import_discord_bug_reports.py`, "Poke6s Control" bot) and marked ✅; the admin
-  /bug-reports page now escapes report text (it was a stored-XSS risk via the Feedback form).
+- 2026-10-19 Japanese Sealed Deals box sizes confirmed with the owner: specialty (High Class)
+  sets 10 packs (Terastal Fest ex, VMAX Climax, Shiny Star V and Tag All Stars were
+  miscounted as 30; GX Ultra Shiny added too), 25th Anniversary Collection 16 (¥297/pack), MEGA
+  Expansion 30th Celebration 20 (¥360/pack), Dark Phantasma and Pokemon GO 20, Battle Region 10.
+- 2026-10-19 Sealed Deals uses the owner's checked pack counts (148 products from the
+  checklist) and prices collection boxes against the actual packs inside when the mix is
+  known: 92 of them now have a "vs loose packs" comparison. Counts without a listed mix
+  assume the product's own set (priced only for boxes, ETBs, bundles and similar).
+
 High Priority
 -------------
 
@@ -101,13 +82,51 @@ High Priority
   Japanese. The first hand-made posts went out 2026-10-16; their message ids are in
   `data/discord_posts.json`, so the bot can edit them (e.g. keep #how-to-use-this-server
   current). Skip vintage spikes until the spike filter exists.
-- [waiting] Black Friday pull lists: the owner will supply the sets and a minimum price.
+- [waiting] Confirm the remaining Japanese special-set box sizes (all counted as 30 packs):
+  S3a Legendary Heartbeat, S5a Peerless Fighters, S6a Eevee Heroes, S11a Incandescent Arcana,
+  SM5+ Ultra Force, SM7b Fairy Rise, SM8a Dark Order, SM10a GG End, SM10b Sky Legend, SM11a
+  Remix Bout, SM11b Dream League; SV1a/3a/5a/6a/7a/9a believed 30. Also the retail yen per pack
+  for Dark Phantasma, Pokemon GO and Battle Region (¥180 assumed). Rule: _jp_pricing_profile.
+- [in progress] Black Friday on TCGplayer (sale ~Nov 25 - Dec 1). Owner's sale list (2026-10-18
+  export, 120 lines) split into data/black_friday/ (not committed): for_sale_101826_upload.csv
+  (109 cards to list; the two delta reverse holos left for the owner to price),
+  grading_psa_101826.csv (resale cards that pay even at a PSA 9, plus Garchomp C Lv.X for
+  authentication; the owner will pull personal-collection keepers for TAG), hold_101826.csv
+  (8 falling cards kept in the binder). MassPrice plan given to the owner: three rules with
+  Price Filter on "My Current Price" (<$1 market, min $0.10; $1-49.99 market +5%, sale week
+  -5%, floor market -10%; $50+ market +5%, floor TCG Low Price Without Shipping, skip drops
+  over 25%), Update Products "My Inventory Only", old "5% Under market" rule (really +5%)
+  unscheduled. Inventory audit done 2026-10-19 (6,810 cards in stock, $1,096 at market, 94% of
+  cards under $0.25; 22 sale-list cards were already listed, moved to already_listed_101826.csv).
+  Owner hid all inventory on 2026-10-19 and holds the upload until sale week. Timeline (Black
+  Friday = 2026-11-27): owner sends the unlisted-cards spreadsheet for a gem check (list $0.50+,
+  rest to bulk lots); recheck hold/sell with full price history after the Nov 1 archive backfill;
+  ~Nov 18-19 re-price the upload file with fresh prices; ~Nov 20-22 upload it and un-hide the
+  22 already-listed cards and the $0.50+ inventory; ~Nov 25 set MassPrice Rule 2 to -10%;
+  after Cyber Monday (Dec 1) set it back to +0%. Six overpriced cards need a manual price (the
+  skip-big-drops guard blocks the rules): Pikachu TG05 LP, Mawile EX MP, Klefki, Arven MP,
+  Comfey GG14, Spewpa; three Japanese cards have no market price.
+- [idea] Bulk pricing on TCGplayer (owner, 2026-10-19): the owner's bulk isn't selling. Other
+  sellers list bulk at $0.01-0.05 and make their margin on the shipping charge (shipping costs
+  them less than they charge), and buyers rarely pay for widely available bulk after the
+  shipping increases. Look into the owner's shipping settings, what bulk actually sells for
+  (sold prices, not market), and whether bulk is better sold as lots. The MassPrice under-$1
+  rule (market, min $0.10) is probably too high for this.
 
-- [waiting] Backfill history if TCGCSV brings its daily archive back (owner hears it may
-  return around November 2026). Then download the missing days for Pokemon (the
+- [waiting] Backfill history when TCGCSV brings its daily archive back (CptSpaceToaster in the
+  TCGCSV Discord, 2026-10-17: plan on November 1; archive syncs are "one and no more": pull the
+  archive once, never again after 24 hours). Then download the missing days for Pokemon (the
   2026-09-16 to 10-07 gap) and as far back as is useful for the collected games. A full
   1-to-1 copy of TCGCSV is possible but large (94 categories); ask TCGCSV (their Discord)
   before any bulk download, keep the 150 ms spacing, and stop on 403/429.
+- [idea] Help TCGCSV by seeding a torrent of the price archive (owner offered in the TCGCSV
+  Discord #development, 2026-10-19; CptSpaceToaster can't torrent and said "hopefully some
+  enterprising folks" would). Archive is about 1 GB, all categories, prices only. Before
+  committing: get CptSpaceToaster's OK on terms (TCGCSV shares TCGplayer data with TCGplayer's
+  permission; a mirror should stay within that), check upload caps on the home connection, and
+  note the home IP can change after outages. Our own daily TCGCSV load is ~1,900 requests
+  (Pokemon 220 + Japanese 461 groups, Magic 456, Yu-Gi-Oh 658, One Piece 87, Lorcana 21), well
+  under the 10,000/day limit in the new usage guidelines.
 - [planned] Check the size of `data/tcgcsv_archive/` after a month and decide how many
   games to keep collecting.
 - [idea] Sites for other games (magic6s, yugi6s, lorcana6s...) once 6-12 months of history
@@ -159,7 +178,15 @@ Desktop App Follow-up
     collections and E 202 older ones on the 5-pack guess). The owner fills `your_pack_count`;
     Fill it in one item at a time at http://<server>:8099 by running
     `python3 scripts/utilities/sealed_checklist_server.py` (adds a `your_notes` column; 2026-10-16);
-    then load the answers as overrides in `api.py` and regenerate the file.
+    then load the answers into `scripts/dashboards/sealed_pack_overrides.csv` (read by api.py;
+    wins over the hand entries there). Loading means turning each answer's notes into a pack
+    mix ("4x Lost Origin; 1x Vivid Voltage", set names as the loose booster packs are listed;
+    "Unknown" when the set isn't known) and checking each mix adds up to the count.
+    First load 2026-10-19: 148 products (68 with a pack mix), about half the checklist; the
+    owner is working through the rest. Collections
+    answered with a count only (pin and poster collections, binders, ...) get no loose-pack
+    comparison until their pack sets are added. Paldean Fates Booster Bundle Display Case
+    (360) has no market price on TCGplayer right now, so it isn't listed.
     Build & Battle displays: 10 boxes x 4 packs = 40 (owner, 2026-10-13: Destined Rivals; applied to all).
     Booster box cases: 6 boxes x 36 packs = 216 (owner-confirmed 2026-10-13; already counted so).
     Booster bundle displays: 10 bundles (60 packs); blister cases: 24 blisters (3-pack 72,

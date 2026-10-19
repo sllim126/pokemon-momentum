@@ -1937,12 +1937,15 @@ _SEALED_PACK_COMPOSITION_OVERRIDES = [
         ],
         "product_type": "Ultra Premium Collection Case",
     },
-    # One Celebrations UPC, per the owner's earlier note on the case.
+    # One Celebrations UPC: 3 Vivid Voltage, 3 Chilling Reign, 2 Darkness Ablaze and 17
+    # Celebrations (4-card) packs (owner, 2026-10-19).
     {
         "match": ["celebrations ultra premium collection"],
         "packs": [
-            {"set": "SWSH Random", "count": 8},
-            {"set": "Celebrations (4-card packs)", "count": 17},
+            {"set": "Vivid Voltage", "count": 3},
+            {"set": "Chilling Reign", "count": 3},
+            {"set": "Darkness Ablaze", "count": 2},
+            {"set": "Celebrations", "count": 17},
         ],
         "product_type": "Ultra Premium Collection",
     },
@@ -1977,7 +1980,7 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID = {
     248124: {"pack_count": 216},
     190325: {"pack_count": 3},
     513409: {"pack_count": 360},
-    635609: {"pack_count": 260},
+    635609: {"pack_count": 360},  # 6 displays x 10 bundles x 6 packs (owner, 2026-10-19)
     247655: {"pack_count": 216},
     506640: {"pack_count": 90},
     528030: {"pack_count": 44},
@@ -2031,24 +2034,61 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID = {
     591211: {"pack_count": 120, "product_type": "Mini Pack Bundle"},
     566954: {"pack_count": 80, "product_type": "Mini Pack Bundle"},
     # Mixed sealed layouts supplied by user notes.
-    # Celebrations UPC case: 4 UPCs (owner, 2026-10-13) of 8 SWSH random + 17 Celebrations packs.
+    # Celebrations UPC case: 4 UPCs (owner, 2026-10-13), each 3 Vivid Voltage, 3 Chilling Reign,
+    # 2 Darkness Ablaze and 17 Celebrations packs (owner, 2026-10-19).
     518638: {
         "pack_count": 100,
         "packs": [
-            {"set": "SWSH Random", "count": 32},
-            {"set": "Celebrations (4-card packs)", "count": 68},
+            {"set": "Vivid Voltage", "count": 12},
+            {"set": "Chilling Reign", "count": 12},
+            {"set": "Darkness Ablaze", "count": 8},
+            {"set": "Celebrations", "count": 68},
         ],
         "product_type": "Ultra Premium Collection Case",
     },
     251895: {
         "pack_count": 150,
         "packs": [
-            {"set": "Celebrations (4-card packs)", "count": 100},
+            {"set": "Celebrations", "count": 100},
             {"set": "SWSH Random", "count": 50},
         ],
         "product_type": "Elite Trainer Box Case",
     },
 }
+
+# Pack counts and pack mixes the owner checked product by product (the sealed pack checklist,
+# 2026-10-19), kept in sealed_pack_overrides.csv next to this file: product_id, product,
+# pack_count, packs ("4x Lost Origin; 1x Vivid Voltage"), source. They win over the entries
+# above. Set names in `packs` must match a loose "<Set> Booster Pack" listing's set name
+# (see loosePackPrices in desktop_home.html) for the app to price those packs; "Unknown"
+# marks packs whose set isn't known, so the product gets no loose-pack comparison.
+SEALED_PACK_OVERRIDES_CSV = SCRIPT_DIR / "sealed_pack_overrides.csv"
+
+
+def _load_sealed_pack_overrides_csv(path: Path = SEALED_PACK_OVERRIDES_CSV) -> dict[int, dict]:
+    overrides: dict[int, dict] = {}
+    if not path.exists():
+        return overrides
+    with path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            try:
+                product_id = int(row["product_id"])
+                pack_count = int(row["pack_count"])
+            except (KeyError, TypeError, ValueError):
+                continue  # a bad line is skipped, not fatal
+            override: dict = {"pack_count": pack_count}
+            packs = []
+            for part in (row.get("packs") or "").split(";"):
+                match = re.fullmatch(r"\s*(\d+)x\s+(.+?)\s*", part)
+                if match:
+                    packs.append({"set": match.group(2), "count": int(match.group(1))})
+            if packs:
+                override["packs"] = packs
+            overrides[product_id] = override
+    return overrides
+
+
+_SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID.update(_load_sealed_pack_overrides_csv())
 
 _SEALED_PACK_COUNT_OVERRIDES_BY_NAME = [
     # Ascended Heroes Collection - Erika / Larry: 2 booster packs, a foil promo and a coin
@@ -2206,10 +2246,18 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_NAME = [
 # - Black Bolt / White Flare deluxe boxes: 4 deluxe packs/box. We price each deluxe
 #   pack as 5 regular packs because each deluxe pack contains 35 cards vs 7 cards
 #   in the regular format, so the MSRP baseline becomes ¥1450 per deluxe pack.
+# Specialty ("High Class") sets: 10 packs of 10 cards per box (owner, 2026-10-19). Keys are
+# matched against TCGplayer's product and group names, so use their spelling ("Terastal Fest
+# ex", not "Terastal Festival"); a box name that says "High Class" is caught regardless.
 _JP_HIGH_CLASS_SET_KEYS = (
-    "terastal festival",
+    "terastal fest",
     "vstar universe",
-    "shiny treasures",
+    "shiny treasure",
+    "vmax climax",
+    "shiny star v",
+    "tag all stars",
+    "gx ultra shiny",
+    "mega dream",
 )
 _JP_TWENTY_PACK_SET_KEYS = (
     "151",
@@ -2220,6 +2268,16 @@ _JP_DELUXE_SET_KEYS = (
     "black bolt deluxe",
     "white flare deluxe",
 )
+# Special sets with their own box size and retail price (owner, 2026-10-19):
+# key -> (packs per box, JPY retail per pack).
+_JP_SPECIAL_BOX_SIZES = {
+    "25th anniversary collection": (16, 297.0),  # 16 packs of 5 cards, box ¥4,752
+    "mega expansion 30th celebration": (20, 360.0),  # 20 packs of 6 cards (English: 5), box ¥7,200
+    # Retail price per pack not confirmed for these yet; the regular ¥180 is used meanwhile.
+    "dark phantasma": (20, 180.0),  # S10a: 20 packs of 6 cards
+    "pokemon go": (20, 180.0),  # S10b: 20 packs of 6 cards (one is a code card)
+    "battle region": (10, 180.0),  # S9a: 10 packs of 10 cards
+}
 _JPY_TO_USD_RATE = 1.0 / 159.48
 _JPY_PER_USD_FX_CACHE_TTL = timedelta(hours=6)
 _JPY_PER_USD_FX_CACHE: dict[str, object] = {
@@ -2342,6 +2400,9 @@ def _jp_pricing_profile(name_raw: str, group_name_raw: str) -> tuple[int, float]
     haystack = _normalize_match_text(f"{name_raw} {group_name_raw}")
     if any(_normalize_match_text(key) in haystack for key in _JP_DELUXE_SET_KEYS):
         return 4, 1450.0
+    for key, (packs, yen_per_pack) in _JP_SPECIAL_BOX_SIZES.items():
+        if _normalize_match_text(key) in haystack:
+            return packs, yen_per_pack
     if any(_normalize_match_text(key) in haystack for key in _JP_TWENTY_PACK_SET_KEYS):
         return 20, 290.0
     if "high class" in haystack:
@@ -6123,6 +6184,10 @@ def sealed_deals(
             pack_count = _infer_pack_count(name, product_class, category.category_id, str(row.get("groupName") or ""))
             pack_set = str(row.get("groupName") or "Unknown Set")
             packs = [{"set": pack_set, "count": _pack_number(pack_count or 0)}] if pack_count else []
+        if not packs and pack_count:
+            # A count without a listed mix: assume the product's own set, like the inferred
+            # counts above. The app prices that guess only for same-set types (boxes, ETBs, ...).
+            packs = [{"set": str(row.get("groupName") or "Unknown Set"), "count": _pack_number(pack_count)}]
         if pack_count is None or pack_count <= 0:
             continue
 
@@ -6210,6 +6275,12 @@ def sealed_deals(
                 "latest_price": round(latest_price, 2),
                 "pack_count": _pack_number(pack_count),
                 "pack_mix": _pack_mix_text(packs),
+                # True when the packs inside were listed by hand (not guessed from the set),
+                # so the app can price them against loose packs even for collection boxes.
+                "pack_mix_listed": bool(
+                    (pack_count_override and pack_count_override.get("packs"))
+                    or (composition_override and composition_override.get("packs"))
+                ),
                 "pack_sets": [str(pack.get("set")) for pack in packs if pack.get("set")],
                 "price_per_pack": round(price_per_pack, 3),
                 "retail_per_pack": round(retail_per_pack, 3) if retail_per_pack is not None else None,
