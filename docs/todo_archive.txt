@@ -11,6 +11,35 @@ October 2026 (archived 2026-10-12, when todo.txt was rewritten as the main actio
   - 2026-10-15 Other-games archive moved from cron to the systemd timer
     `pokemon-momentum-tcgcsv-collect.timer` (03:30 UTC, catches up after downtime); the cron
     line was removed.
+- Completed and archived at the 2026-10-19 milestone:
+  - 2026-10-18 Deployed the standalone ATLA Binder planner at `/atla/` in a read-only nginx
+    container on port 8090; Caddy redirects the slashless path and proxies the prefixed route.
+    Local and public HTTP/security checks pass; final real-browser interaction check remains.
+  - 2026-10-18 Deployed the standalone KPDH Binder planner at `/kpdh/` in a read-only nginx
+    container on port 8091; Caddy redirects the slashless path and proxies the prefixed route.
+    Planner/card-image/security checks pass publicly; final real-browser interaction check remains.
+  - 2026-10-18 Reviewed and optimized ATLA Binder: removed four failed image probes per card,
+    corrected mixed-category ranges and foil-price fallbacks, added daily paced Scryfall
+    refreshes, collection Export/Import, clear-page confirmation and public zstd/gzip compression
+    (55,023 bytes down to 15,616 in the verification request).
+  - 2026-10-16 Retired the older research dashboard on desktop: `/dashboard-classic` and
+    `/dashboard-dev` now forward to the app like `/dashboard`. `dashboard.html` was kept: phones
+    open it from the mobile menu (Browse Set, Browse Pokémon, Set Strength), and mobile is frozen.
+  - 2026-10-16 First nights after the power cut checked: the 02:00 nightly update and the 03:30
+    other-games archive (first run on its systemd timer) both succeeded; /health latest =
+    2026-10-15 for English and Japanese.
+  - 2026-10-16 Local page for filling in the sealed checklist one product at a time
+    (`scripts/utilities/sealed_checklist_server.py`, port 8099; saves to
+    `data/sealed_pack_checklist.csv`, new `your_notes` column).
+  - 2026-10-16 Public site back after the IP change: the owner pointed the `market` A record at
+    136.38.242.146; Google and Cloudflare DNS serve it (runbook: check over HTTPS, since plain
+    dig from the home network is answered by a cache).
+  - 2026-10-16 The "Poke6s Control" bot posted a first message in every Poke6s Discord channel
+    (welcome, rules, channel guide, market picks, market snapshot, Pitch Black set breakdown,
+    Base Set Charizard spotlight, feature/feedback prompts, October site update).
+  - 2026-10-16 Discord bug reports are copied onto the server every 15 minutes
+    (`import_discord_bug_reports.py`, "Poke6s Control" bot) and marked ✅; the admin
+    /bug-reports page now escapes report text (it was a stored-XSS risk via the Feedback form).
 - Completed and archived at the 2026-10-16 milestone:
   - 2026-10-15 Recovered from the power cut: the boot-time catch-up run failed on DNS, so the
     nightly update and the other-games archive were re-run by hand for 2026-10-14 (log:

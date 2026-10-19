@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-10-18
+Last reviewed: 2026-10-19
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -129,6 +129,8 @@ Added 2026-10:
   whole set is falling are listed as Whole-set Dips (`/set_dips`)
 - Discord #bug-reports messages are copied into the admin bug list every 15 minutes by the
   "Poke6s Control" bot (marked ✅); the admin bug page escapes report text
+- Japanese Sealed Deals box sizes confirmed with the owner (specialty sets 10 packs, 151 / Black
+  Bolt / White Flare / 30th Celebration / Dark Phantasma / Pokemon GO 20, 25th Anniversary 16)
 - Sealed Deals reads the owner's checked pack counts and pack mixes from
   `scripts/dashboards/sealed_pack_overrides.csv` and prices collections by the packs inside
 - `data/sealed_pack_checklist.csv` lists every sealed product whose pack count is still a guess;

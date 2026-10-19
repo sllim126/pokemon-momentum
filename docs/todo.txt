@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-18 (milestone: ATLA and KPDH binder planners)
+Last updated: 2026-10-19 (milestone: sealed pack counts, Japanese box sizes, Black Friday plan)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -35,38 +35,15 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-19 Japanese Sealed Deals box sizes confirmed with the owner: specialty (High Class)
+  sets 10 packs (Terastal Fest ex, VMAX Climax, Shiny Star V and Tag All Stars were
+  miscounted as 30; GX Ultra Shiny added too), 25th Anniversary Collection 16 (¥297/pack), MEGA
+  Expansion 30th Celebration 20 (¥360/pack), Dark Phantasma and Pokemon GO 20, Battle Region 10.
 - 2026-10-19 Sealed Deals uses the owner's checked pack counts (148 products from the
   checklist) and prices collection boxes against the actual packs inside when the mix is
   known: 92 of them now have a "vs loose packs" comparison. Counts without a listed mix
   assume the product's own set (priced only for boxes, ETBs, bundles and similar).
-- 2026-10-18 Deployed the standalone ATLA Binder planner at `/atla/` in a read-only nginx
-  container on port 8090; Caddy redirects the slashless path and proxies the prefixed route.
-  Local and public HTTP/security checks pass; final real-browser interaction check remains.
-- 2026-10-18 Deployed the standalone KPDH Binder planner at `/kpdh/` in a read-only nginx
-  container on port 8091; Caddy redirects the slashless path and proxies the prefixed route.
-  Planner/card-image/security checks pass publicly; final real-browser interaction check remains.
-- 2026-10-18 Reviewed and optimized ATLA Binder: removed four failed image probes per card,
-  corrected mixed-category ranges and foil-price fallbacks, added daily paced Scryfall
-  refreshes, collection Export/Import, clear-page confirmation and public zstd/gzip compression
-  (55,023 bytes down to 15,616 in the verification request).
-- 2026-10-16 Retired the older research dashboard on desktop: `/dashboard-classic` and
-  `/dashboard-dev` now forward to the app like `/dashboard`. `dashboard.html` was kept: phones
-  open it from the mobile menu (Browse Set, Browse Pokémon, Set Strength), and mobile is frozen.
-- 2026-10-16 First nights after the power cut checked: the 02:00 nightly update and the 03:30
-  other-games archive (first run on its systemd timer) both succeeded; /health latest =
-  2026-10-15 for English and Japanese.
-- 2026-10-16 Local page for filling in the sealed checklist one product at a time
-  (`scripts/utilities/sealed_checklist_server.py`, port 8099; saves to
-  `data/sealed_pack_checklist.csv`, new `your_notes` column).
-- 2026-10-16 Public site back after the IP change: the owner pointed the `market` A record at
-  136.38.242.146; Google and Cloudflare DNS serve it (runbook: check over HTTPS, since plain
-  dig from the home network is answered by a cache).
-- 2026-10-16 The "Poke6s Control" bot posted a first message in every Poke6s Discord channel
-  (welcome, rules, channel guide, market picks, market snapshot, Pitch Black set breakdown,
-  Base Set Charizard spotlight, feature/feedback prompts, October site update).
-- 2026-10-16 Discord bug reports are copied onto the server every 15 minutes
-  (`import_discord_bug_reports.py`, "Poke6s Control" bot) and marked ✅; the admin
-  /bug-reports page now escapes report text (it was a stored-XSS risk via the Feedback form).
+
 High Priority
 -------------
 
@@ -105,6 +82,11 @@ High Priority
   Japanese. The first hand-made posts went out 2026-10-16; their message ids are in
   `data/discord_posts.json`, so the bot can edit them (e.g. keep #how-to-use-this-server
   current). Skip vintage spikes until the spike filter exists.
+- [waiting] Confirm the remaining Japanese special-set box sizes (all counted as 30 packs):
+  S3a Legendary Heartbeat, S5a Peerless Fighters, S6a Eevee Heroes, S11a Incandescent Arcana,
+  SM5+ Ultra Force, SM7b Fairy Rise, SM8a Dark Order, SM10a GG End, SM10b Sky Legend, SM11a
+  Remix Bout, SM11b Dream League; SV1a/3a/5a/6a/7a/9a believed 30. Also the retail yen per pack
+  for Dark Phantasma, Pokemon GO and Battle Region (¥180 assumed). Rule: _jp_pricing_profile.
 - [in progress] Black Friday on TCGplayer (sale ~Nov 25 - Dec 1). Owner's sale list (2026-10-18
   export, 120 lines) split into data/black_friday/ (not committed): for_sale_101826_upload.csv
   (109 cards to list; the two delta reverse holos left for the owner to price),
