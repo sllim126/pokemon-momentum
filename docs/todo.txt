@@ -105,7 +105,23 @@ High Priority
   Japanese. The first hand-made posts went out 2026-10-16; their message ids are in
   `data/discord_posts.json`, so the bot can edit them (e.g. keep #how-to-use-this-server
   current). Skip vintage spikes until the spike filter exists.
-- [waiting] Black Friday pull lists: the owner will supply the sets and a minimum price.
+- [in progress] Black Friday on TCGplayer (sale ~Nov 25 - Dec 1). Owner's sale list (2026-10-18
+  export, 120 lines) split into data/black_friday/ (not committed): for_sale_101826_upload.csv
+  (109 cards to list; the two delta reverse holos left for the owner to price),
+  grading_psa_101826.csv (resale cards that pay even at a PSA 9, plus Garchomp C Lv.X for
+  authentication; the owner will pull personal-collection keepers for TAG), hold_101826.csv
+  (8 falling cards kept in the binder). MassPrice plan given to the owner: three rules with
+  Price Filter on "My Current Price" (<$1 market, min $0.10; $1-49.99 market +5%, sale week
+  -5%, floor market -10%; $50+ market +5%, floor TCG Low Price Without Shipping, skip drops
+  over 25%), Update Products "My Inventory Only", old "5% Under market" rule (really +5%)
+  unscheduled. Next: owner exports the full Seller Portal inventory for an audit (sold-out
+  cards still priced, stale listings), then set the upload prices to match the rules.
+- [idea] Bulk pricing on TCGplayer (owner, 2026-10-19): the owner's bulk isn't selling. Other
+  sellers list bulk at $0.01-0.05 and make their margin on the shipping charge (shipping costs
+  them less than they charge), and buyers rarely pay for widely available bulk after the
+  shipping increases. Look into the owner's shipping settings, what bulk actually sells for
+  (sold prices, not market), and whether bulk is better sold as lots. The MassPrice under-$1
+  rule (market, min $0.10) is probably too high for this.
 
 - [waiting] Backfill history if TCGCSV brings its daily archive back (owner hears it may
   return around November 2026). Then download the missing days for Pokemon (the
