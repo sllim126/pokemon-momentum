@@ -114,8 +114,16 @@ High Priority
   Price Filter on "My Current Price" (<$1 market, min $0.10; $1-49.99 market +5%, sale week
   -5%, floor market -10%; $50+ market +5%, floor TCG Low Price Without Shipping, skip drops
   over 25%), Update Products "My Inventory Only", old "5% Under market" rule (really +5%)
-  unscheduled. Next: owner exports the full Seller Portal inventory for an audit (sold-out
-  cards still priced, stale listings), then set the upload prices to match the rules.
+  unscheduled. Inventory audit done 2026-10-19 (6,810 cards in stock, $1,096 at market, 94% of
+  cards under $0.25; 22 sale-list cards were already listed, moved to already_listed_101826.csv).
+  Owner hid all inventory on 2026-10-19 and holds the upload until sale week. Timeline (Black
+  Friday = 2026-11-27): owner sends the unlisted-cards spreadsheet for a gem check (list $0.50+,
+  rest to bulk lots); recheck hold/sell with full price history after the Nov 1 archive backfill;
+  ~Nov 18-19 re-price the upload file with fresh prices; ~Nov 20-22 upload it and un-hide the
+  22 already-listed cards and the $0.50+ inventory; ~Nov 25 set MassPrice Rule 2 to -10%;
+  after Cyber Monday (Dec 1) set it back to +0%. Six overpriced cards need a manual price (the
+  skip-big-drops guard blocks the rules): Pikachu TG05 LP, Mawile EX MP, Klefki, Arven MP,
+  Comfey GG14, Spewpa; three Japanese cards have no market price.
 - [idea] Bulk pricing on TCGplayer (owner, 2026-10-19): the owner's bulk isn't selling. Other
   sellers list bulk at $0.01-0.05 and make their margin on the shipping charge (shipping costs
   them less than they charge), and buyers rarely pay for widely available bulk after the
