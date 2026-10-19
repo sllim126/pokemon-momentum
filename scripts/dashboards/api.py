@@ -2271,8 +2271,8 @@ _JP_DELUXE_SET_KEYS = (
 # Special sets with their own box size and retail price (owner, 2026-10-19):
 # key -> (packs per box, JPY retail per pack).
 _JP_SPECIAL_BOX_SIZES = {
-    "25th anniversary collection": (16, 297.0),  # box ¥4,752
-    "mega expansion 30th celebration": (20, 360.0),  # box ¥7,200
+    "25th anniversary collection": (16, 297.0),  # 16 packs of 5 cards, box ¥4,752
+    "mega expansion 30th celebration": (20, 360.0),  # 20 packs of 6 cards (English: 5), box ¥7,200
 }
 _JPY_TO_USD_RATE = 1.0 / 159.48
 _JPY_PER_USD_FX_CACHE_TTL = timedelta(hours=6)
