@@ -38,5 +38,21 @@ class SealedPackOverridesCsvTests(unittest.TestCase):
         self.assertEqual(api._find_pack_count_override(635609)["pack_count"], 360)
 
 
+class JapaneseBoxSizeTests(unittest.TestCase):
+    def test_specialty_sets_are_ten_packs_and_regular_sets_thirty(self):
+        cases = {
+            ("Terastal Fest ex Booster Box", "SV8a: Terastal Fest ex"): 10,
+            ("VMAX Climax Booster Box", "S8b: VMAX Climax"): 10,
+            ("Shiny Star V Booster Box", "S4a: Shiny Star V"): 10,
+            ("TAG TEAM GX: Tag All Stars Booster Box", "SM12a: TAG TEAM GX: Tag All Stars"): 10,
+            ("Mega Dream ex Booster Box", "M2a: High Class Pack: MEGA Dream ex"): 10,
+            ("Pokemon Card 151 Booster Box", "SV2a: Pokemon Card 151"): 20,
+            ("Black Bolt Deluxe Booster Box", "SV11B: Black Bolt"): 4,
+            ("Inferno X Booster Box", "M2: Inferno X"): 30,
+        }
+        for (name, group), packs in cases.items():
+            self.assertEqual(api._jp_pricing_profile(name, group)[0], packs, name)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -2246,10 +2246,18 @@ _SEALED_PACK_COUNT_OVERRIDES_BY_NAME = [
 # - Black Bolt / White Flare deluxe boxes: 4 deluxe packs/box. We price each deluxe
 #   pack as 5 regular packs because each deluxe pack contains 35 cards vs 7 cards
 #   in the regular format, so the MSRP baseline becomes ¥1450 per deluxe pack.
+# Specialty ("High Class") sets: 10 packs of 10 cards per box (owner, 2026-10-19). Keys are
+# matched against TCGplayer's product and group names, so use their spelling ("Terastal Fest
+# ex", not "Terastal Festival"); a box name that says "High Class" is caught regardless.
 _JP_HIGH_CLASS_SET_KEYS = (
-    "terastal festival",
+    "terastal fest",
     "vstar universe",
-    "shiny treasures",
+    "shiny treasure",
+    "vmax climax",
+    "shiny star v",
+    "tag all stars",
+    "gx ultra shiny",
+    "mega dream",
 )
 _JP_TWENTY_PACK_SET_KEYS = (
     "151",
