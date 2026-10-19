@@ -123,11 +123,20 @@ High Priority
   (sold prices, not market), and whether bulk is better sold as lots. The MassPrice under-$1
   rule (market, min $0.10) is probably too high for this.
 
-- [waiting] Backfill history if TCGCSV brings its daily archive back (owner hears it may
-  return around November 2026). Then download the missing days for Pokemon (the
+- [waiting] Backfill history when TCGCSV brings its daily archive back (CptSpaceToaster in the
+  TCGCSV Discord, 2026-10-17: plan on November 1; archive syncs are "one and no more": pull the
+  archive once, never again after 24 hours). Then download the missing days for Pokemon (the
   2026-09-16 to 10-07 gap) and as far back as is useful for the collected games. A full
   1-to-1 copy of TCGCSV is possible but large (94 categories); ask TCGCSV (their Discord)
   before any bulk download, keep the 150 ms spacing, and stop on 403/429.
+- [idea] Help TCGCSV by seeding a torrent of the price archive (owner offered in the TCGCSV
+  Discord #development, 2026-10-19; CptSpaceToaster can't torrent and said "hopefully some
+  enterprising folks" would). Archive is about 1 GB, all categories, prices only. Before
+  committing: get CptSpaceToaster's OK on terms (TCGCSV shares TCGplayer data with TCGplayer's
+  permission; a mirror should stay within that), check upload caps on the home connection, and
+  note the home IP can change after outages. Our own daily TCGCSV load is ~1,900 requests
+  (Pokemon 220 + Japanese 461 groups, Magic 456, Yu-Gi-Oh 658, One Piece 87, Lorcana 21), well
+  under the 10,000/day limit in the new usage guidelines.
 - [planned] Check the size of `data/tcgcsv_archive/` after a month and decide how many
   games to keep collecting.
 - [idea] Sites for other games (magic6s, yugi6s, lorcana6s...) once 6-12 months of history
