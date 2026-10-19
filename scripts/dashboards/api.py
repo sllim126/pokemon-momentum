@@ -2268,11 +2268,11 @@ _JP_DELUXE_SET_KEYS = (
     "black bolt deluxe",
     "white flare deluxe",
 )
-# Special sets with their own box size (owner, 2026-10-19): key -> packs per box. Their retail
-# price per pack is not confirmed yet, so they use the regular ¥180 for the MSRP comparison.
+# Special sets with their own box size and retail price (owner, 2026-10-19):
+# key -> (packs per box, JPY retail per pack).
 _JP_SPECIAL_BOX_SIZES = {
-    "25th anniversary collection": 16,  # 16 packs of 5 cards
-    "mega expansion 30th celebration": 20,  # 20 packs of 5 cards
+    "25th anniversary collection": (16, 297.0),  # box ¥4,752
+    "mega expansion 30th celebration": (20, 360.0),  # box ¥7,200
 }
 _JPY_TO_USD_RATE = 1.0 / 159.48
 _JPY_PER_USD_FX_CACHE_TTL = timedelta(hours=6)
@@ -2396,9 +2396,9 @@ def _jp_pricing_profile(name_raw: str, group_name_raw: str) -> tuple[int, float]
     haystack = _normalize_match_text(f"{name_raw} {group_name_raw}")
     if any(_normalize_match_text(key) in haystack for key in _JP_DELUXE_SET_KEYS):
         return 4, 1450.0
-    for key, packs in _JP_SPECIAL_BOX_SIZES.items():
+    for key, (packs, yen_per_pack) in _JP_SPECIAL_BOX_SIZES.items():
         if _normalize_match_text(key) in haystack:
-            return packs, 180.0
+            return packs, yen_per_pack
     if any(_normalize_match_text(key) in haystack for key in _JP_TWENTY_PACK_SET_KEYS):
         return 20, 290.0
     if "high class" in haystack:
