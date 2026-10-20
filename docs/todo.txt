@@ -35,6 +35,10 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-20 Weekly Discord posts every Friday 15:00 UTC (`post_weekly_discord.py`, adam's
+  crontab): #what-should-i-buy, #market-talk, #set-breakdowns, #card-spotlight, built from the
+  site's live data (owner chose the channels and Friday mornings).
+- 2026-10-20 Pullbacks and Whole-set Dips pages and How it works explain how the two lists differ.
 - 2026-10-19 Japanese Sealed Deals box sizes confirmed with the owner: specialty (High Class)
   sets 10 packs (Terastal Fest ex, VMAX Climax, Shiny Star V and Tag All Stars were
   miscounted as 30; GX Ultra Shiny added too), 25th Anniversary Collection 16 (¥297/pack), MEGA
@@ -76,12 +80,9 @@ High Priority
   with an API; Squarespace Domains has none). Until then: after any outage, compare
   `curl -s https://api.ipify.org` with the answer from
   `https://dns.google/resolve?name=market.poke6s.com&type=A` (local dig is cached).
-- [waiting] Discord: automate #what-should-i-buy (and maybe #set-breakdowns / #card-spotlight)
-  posts from the site's data. Owner to choose how often (weekly suggested), which sections
-  (Pullbacks, Sealed Deals vs loose, Budget Builder, ...) and English only or English +
-  Japanese. The first hand-made posts went out 2026-10-16; their message ids are in
-  `data/discord_posts.json`, so the bot can edit them (e.g. keep #how-to-use-this-server
-  current). Skip vintage spikes until the spike filter exists.
+- [idea] Weekly Discord posts follow-ups: Japanese picks too; group Whole-set Dips by set; skip
+  odd-sale spikes once the odd-sale cleanup exists (today the spotlight needs 6+ price changes
+  and under +100% in 30 days, and skips sealed product and Energy cards).
 - [waiting] Confirm the remaining Japanese special-set box sizes (all counted as 30 packs):
   S3a Legendary Heartbeat, S5a Peerless Fighters, S6a Eevee Heroes, S11a Incandescent Arcana,
   SM5+ Ultra Force, SM7b Fairy Rise, SM8a Dark Order, SM10a GG End, SM10b Sky Legend, SM11a

@@ -129,6 +129,7 @@ Added 2026-10:
   whole set is falling are listed as Whole-set Dips (`/set_dips`)
 - Discord #bug-reports messages are copied into the admin bug list every 15 minutes by the
   "Poke6s Control" bot (marked ✅); the admin bug page escapes report text
+- Weekly Discord posts (Fridays): buy picks, market snapshot, set of the week, card of the week
 - Japanese Sealed Deals box sizes confirmed with the owner (specialty sets 10 packs, 151 / Black
   Bolt / White Flare / 30th Celebration / Dark Phantasma / Pokemon GO 20, 25th Anniversary 16)
 - Sealed Deals reads the owner's checked pack counts and pack mixes from
