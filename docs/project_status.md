@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-10-19
+Last reviewed: 2026-10-21
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -48,6 +48,7 @@ PriceCharting download and Squarespace price sync were running.
 | `/account-settings` | Google sign-in, synced lists, saved views, account deletion | Live; restyled 2026-10 |
 | `/collector-hub` | Collector resources with live preview | Live; restyled 2026-10 |
 | `/placeholders` | Placeholder/checklist downloads | Live; restyled 2026-10 |
+| `/binder-art` | Binder Art Maker: free tool that cuts one image into card-size pieces for a binder page (PDF or PNGs, optional set logo); runs in the browser | Live 2026-10-21 |
 | `/index-overview` | Market-index hub | Live; covered by desktop app Market Stats → Indexes |
 | `/index-overview-*` | English/Japanese and era index detail pages | Live; all routes use one configured detail template |
 | `/atla/` | Static ATLA binder layout, collection tracking and browser-side valuation | Live; separate nginx container, unlisted/noindex |

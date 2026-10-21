@@ -1,6 +1,6 @@
 # Desktop App: Maintainer Guide
 
-Last reviewed: 2026-10-16
+Last reviewed: 2026-10-21
 
 The desktop app is one page that holds the site's five areas (Buy, Discover, Research,
 Track, Learn) in a single three-column layout built for 1080p screens. Since 2026-10-12 it
@@ -150,6 +150,18 @@ nothing is embedded. Its color tokens copy the `:root` block in `desktop_home.ht
 change both together.
 
 Account links each saved list to `/?list=track_<tag>` through its `APP` constant.
+
+Binder Art Maker (`binder_art.html`, route `/binder-art`, linked from Learn and Collector Hub)
+also uses `desktop_theme.css` and fills the window like the app: settings on the left (they
+scroll on their own), the preview on the right. It is a free tool that cuts one image into
+63 × 88 mm pieces for a 2×2 to 5×5 binder page or two-page spread, leaving out the strips
+behind the pocket seams so the picture lines up. Everything happens in the visitor's browser
+(the image is never uploaded); downloads are a print PDF with cut marks (jsPDF) or a ZIP of
+300 DPI PNGs (JSZip), both loaded from cdnjs. The set-logo dropdown comes from
+`/binder-art/logos.json`, built from `images/logos/` (identical files that
+`sync_set_logos.py` copied to several groupIds become one entry; POP, Black Star and
+McDonald's badges are listed last under family names, see `BINDER_ART_LOGO_FAMILIES` in
+`api.py`). A new logo shows up there once it's added with `sync_set_logos.py`.
 
 ## Testing
 

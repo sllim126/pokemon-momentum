@@ -35,6 +35,10 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-21 Binder Art Maker at /binder-art (Learn menu, Collector Hub): free tool that cuts one
+  picture into Pokémon-card-size pieces for a 2×2 to 4×4 binder page (or a two-page spread),
+  with an optional set logo from the site's logo files; print PDF with cut marks or PNGs.
+  Started from a Discord request (MaxDosage, 2026-10-20).
 - 2026-10-21 PriceCharting download fixed (the .env token had an extra character; failed
   2026-10-16 to 10-20, those days can't be recovered) and the nightly Discord message now turns
   orange and pings when a step fails without stopping the run.
@@ -110,6 +114,8 @@ High Priority
   after Cyber Monday (Dec 1) set it back to +0%. Six overpriced cards need a manual price (the
   skip-big-drops guard blocks the rules): Pikachu TG05 LP, Mawile EX MP, Klefki, Arven MP,
   Comfey GG14, Spewpa; three Japanese cards have no market price.
+- [idea] Binder Art Maker follow-ups: let visitors upload their own logo or text; a card-back
+  design; post the tool in Discord. Japanese set logos aren't in images/logos yet.
 - [idea] Bulk pricing on TCGplayer (owner, 2026-10-19): the owner's bulk isn't selling. Other
   sellers list bulk at $0.01-0.05 and make their margin on the shipping charge (shipping costs
   them less than they charge), and buyers rarely pay for widely available bulk after the

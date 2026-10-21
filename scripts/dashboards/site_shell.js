@@ -74,6 +74,7 @@
       tools: [
         { label: "Collector Hub", href: "/collector-hub", text: "Checklists, print tools, and collection workflows." },
         { label: "Placeholder Library", href: "/placeholders", text: "Printable binder placeholders and checklist downloads." },
+        { label: "Binder Art Maker", href: "/binder-art", text: "Free: cut one picture into card-size pieces for a full binder page." },
       ],
     },
   ];
@@ -96,7 +97,7 @@
     [/^\/discover\b/, "discover"],
     [/^\/(research|set-explorer|index-overview)/, "research"],
     [/^\/(track|account-settings)\b/, "track"],
-    [/^\/(learn|collector-hub|placeholders)\b/, "learn"],
+    [/^\/(learn|collector-hub|placeholders|binder-art)\b/, "learn"],
   ];
 
   const CSS = `

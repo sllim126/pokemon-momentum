@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Poke6s Binder Art Maker</title>
+  <meta name="description" content="Free tool: cut one image into Pokémon-card-size pieces for a 2×2 to 4×4 binder page, with an optional set logo. Print-ready PDF with cut marks, or card PNGs." />
+  <link rel="icon" type="image/png" href="/images/Favidon.png" />
+  <link rel="stylesheet" href="/desktop-theme.css" />
+  <style>
+    /* Two columns that fill the window on desktop: settings on the left (scrolls on its own
+       when the window is short), the preview on the right. Phones stack and the page scrolls
+       (the theme's 900px rules). Colors come from desktop-theme.css. */
+    .ba-layout { flex: 1; min-height: 0; display: grid; grid-template-columns: 350px minmax(0, 1fr); gap: 16px; }
+    .ba-rail { overflow-y: auto; }
+    .ba-group { display: flex; flex-direction: column; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+    .ba-group:last-child { border-bottom: 0; }
+    .ba-group h2 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .ba-hint { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+    .ba-presets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+    .ba-preset { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 7px 6px 7px 8px; border-radius: 10px;
+      border: 1px solid var(--line-strong); background: var(--panel-2); cursor: pointer; }
+    .ba-preset b { font-variant-numeric: tabular-nums; }
+    .ba-preset small { color: var(--muted); font-size: 11px; white-space: nowrap; }
+    .ba-preset[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+    .ba-field { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; }
+    .ba-field input[type=number], .ba-rail select { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--panel-3); }
+    .ba-field input[type=number] { width: 76px; text-align: right; font-variant-numeric: tabular-nums; }
+    .ba-rail select { width: 100%; }
+    .ba-field select { width: auto; max-width: 190px; }
+    .ba-rail .segment { display: flex; }
+    .ba-rail .segment button { flex: 1; }
+    input[type=range] { width: 100%; accent-color: var(--accent); }
+    .ba-file { position: relative; overflow: hidden; }
+    .ba-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .ba-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .ba-check { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+    .ba-stage { position: relative; }
+    .ba-toolbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+    .ba-facts { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--muted); }
+    .ba-facts b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .ba-pill { padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid currentColor; }
+    .ba-pill.good { color: var(--good); } .ba-pill.warn { color: var(--warn); } .ba-pill.bad { color: var(--bad); }
+    #stage { flex: 1; min-height: 0; width: 100%; display: block; background: var(--panel-3); touch-action: none; cursor: grab; }
+    #stage.drag { cursor: grabbing; }
+    #stage.over { outline: 3px dashed var(--accent); outline-offset: -8px; }
+    #status { margin: 0; min-height: 1.4em; font-size: 13px; color: var(--muted); }
+    #status.good { color: var(--good); } #status.bad { color: var(--bad); }
+    .ba-tips summary { cursor: pointer; font-weight: 600; }
+    .ba-tips ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; display: grid; gap: 6px; }
+    .ba-free { color: var(--good); font-weight: 600; }
+    @media (max-width: 900px) {
+      .ba-layout { grid-template-columns: minmax(0, 1fr); }
+      .ba-stage { order: -1; }
+      #stage { flex: none; height: 62vh; min-height: 320px; }
+    }
+  </style>
+</head>
+<body data-area="learn">
+  <div id="site-shell"></div>
+
+  <main class="page">
+    <div class="page-head">
+      <div>
+        <h1>Binder Art Maker</h1>
+        <p><span class="ba-free">Free.</span> Turn one picture into a full binder page of card-size pieces (63 × 88 mm, the size of a
+          Pokémon card). The strips that fall behind the pocket seams are left out, so the picture lines up across the pockets.
+          Your image stays on your computer; nothing is uploaded.</p>
+      </div>
+    </div>
+
+    <div class="ba-layout">
+      <div class="panel ba-rail">
+        <section class="ba-group" aria-labelledby="h-img">
+          <h2 id="h-img">Image</h2>
+          <div class="ba-row">
+            <label class="btn primary ba-file">Choose image<input id="file" type="file" accept="image/*" /></label>
+            <span id="imgname" class="muted" style="font-size:13px">sample art</span>
+          </div>
+          <p class="ba-hint">You can also drop an image on the preview or paste one. <span id="sampleNote">The sunset is sample art.</span></p>
+        </section>
+
+        <section class="ba-group" aria-labelledby="h-layout">
+          <h2 id="h-layout">Binder page</h2>
+          <div class="ba-presets" id="presets">
+            <button class="ba-preset" data-c="2" data-r="2"><b>2 × 2</b><small>4-pocket</small></button>
+            <button class="ba-preset" data-c="3" data-r="3"><b>3 × 3</b><small>9-pocket</small></button>
+            <button class="ba-preset" data-c="4" data-r="3"><b>4 × 3</b><small>12-pocket</small></button>
+            <button class="ba-preset" data-c="4" data-r="4"><b>4 × 4</b><small>16 cards</small></button>
+          </div>
+          <div class="ba-field"><label for="cols">Columns</label><input id="cols" type="number" min="1" max="5" value="3" /></div>
+          <div class="ba-field"><label for="rows">Rows</label><input id="rows" type="number" min="1" max="5" value="3" /></div>
+          <div class="segment" role="group" aria-label="Pages across">
+            <button id="p1" aria-pressed="true">Single page</button>
+            <button id="p2" aria-pressed="false">2-page spread</button>
+          </div>
+        </section>
+
+        <section class="ba-group" aria-labelledby="h-fit">
+          <h2 id="h-fit">Position</h2>
+          <div class="ba-field"><label for="zoom">Zoom</label><span id="zoomval">100%</span></div>
+          <input id="zoom" type="range" min="100" max="500" value="100" />
+          <div class="ba-row"><p class="ba-hint" style="flex:1">Drag the preview to move the picture. Scroll to zoom.</p><button class="btn" id="reset">Center</button></div>
+        </section>
+
+        <section class="ba-group" aria-labelledby="h-logo">
+          <h2 id="h-logo">Set logo</h2>
+          <select id="logo" aria-label="Set logo"><option value="-1">No logo</option></select>
+          <div id="logoOpts" hidden style="display:flex;flex-direction:column;gap:10px">
+            <div class="ba-field"><label for="logoCard">On card</label><select id="logoCard"></select></div>
+            <div class="ba-field"><label for="logoPos">Position</label>
+              <select id="logoPos">
+                <option value="br">Bottom right</option><option value="bc">Bottom center</option><option value="bl">Bottom left</option>
+                <option value="tr">Top right</option><option value="tl">Top left</option>
+              </select></div>
+            <div class="ba-field"><label for="logoW">Width</label><span id="logoWval">36 mm</span></div>
+            <input id="logoW" type="range" min="15" max="55" value="36" aria-label="Logo width" />
+            <label class="ba-check"><input id="logoShadow" type="checkbox" checked /> Soft shadow behind the logo</label>
+          </div>
+          <p class="ba-hint">For your own binder. Set logos are trademarks of The Pokémon Company, and many print shops won't print them.</p>
+        </section>
+
+        <section class="ba-group" aria-labelledby="h-seam">
+          <h2 id="h-seam">Pocket seams</h2>
+          <p class="ba-hint">The gap between two sleeved cards in neighboring pockets. Measure your own pages; 5 mm suits most 9-pocket pages.</p>
+          <div class="ba-field"><label for="gx">Side-to-side gap (mm)</label><input id="gx" type="number" min="0" max="30" step="0.5" value="5" /></div>
+          <div class="ba-field"><label for="gy">Top-to-bottom gap (mm)</label><input id="gy" type="number" min="0" max="30" step="0.5" value="5" /></div>
+          <div class="ba-field" id="spreadField" hidden><label for="gs">Gap between the two pages (mm)</label><input id="gs" type="number" min="0" max="120" step="1" value="30" /></div>
+        </section>
+
+        <section class="ba-group" aria-labelledby="h-print">
+          <h2 id="h-print">Print</h2>
+          <div class="ba-field"><label for="paper">Paper</label>
+            <select id="paper"><option value="letter">US Letter</option><option value="a4">A4</option></select></div>
+          <div class="ba-field"><span>Bleed</span><span class="ba-hint">extra picture past the cut line</span></div>
+          <div class="segment" role="group" aria-label="Bleed" id="bleed">
+            <button data-b="0" aria-pressed="true">0 mm</button><button data-b="1" aria-pressed="false">1 mm</button>
+            <button data-b="2" aria-pressed="false">2 mm</button><button data-b="3" aria-pressed="false">3 mm</button>
+          </div>
+          <p class="ba-hint">Use 0 mm when you print and cut at home: one cut between cards. Print shops usually ask for 3 mm.</p>
+          <div class="ba-facts" id="sheetFacts"></div>
+          <button class="btn primary" id="pdf" style="justify-content:center">Download print PDF</button>
+          <button class="btn" id="zip" style="justify-content:center">Download card images (.zip)</button>
+          <p id="status" role="status"></p>
+          <details class="ba-tips">
+            <summary>Printing tips</summary>
+            <ul>
+              <li>Print at 100% or "Actual size". "Fit to page" shrinks the cards. One card should measure 63 × 88 mm.</li>
+              <li>Matte cardstock around 250–300 gsm (90–110 lb) feels close to a real card and slides into a sleeve.</li>
+              <li>Cut on the marks with a paper trimmer, sleeve each card, then fill the pockets row by row, left to right.</li>
+              <li>Below 150 DPI the print looks soft. Zooming in lowers the DPI.</li>
+            </ul>
+          </details>
+        </section>
+      </div>
+
+      <div class="panel ba-stage">
+        <div class="ba-toolbar">
+          <div class="segment" role="group" aria-label="Preview">
+            <button id="vBinder" aria-pressed="true">In the binder</button>
+            <button id="vFull" aria-pressed="false">Cut lines on the picture</button>
+          </div>
+          <div class="ba-facts" id="facts"></div>
+        </div>
+        <canvas id="stage" aria-label="Preview of the binder page"></canvas>
+      </div>
+    </div>
+  </main>
+  <footer class="legal">Pokémon names, logos and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company; Poke6s Market is independent and not affiliated with or endorsed by them. This tool is free and for personal use.</footer>
+
+  <script src="/site-shell.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script>
+  /*
+   * Binder Art Maker: cuts one image into card-size pieces (63 × 88 mm) for a binder page and
+   * exports them as a print PDF (jsPDF) or a ZIP of PNGs (JSZip). Everything runs in the
+   * browser; the image is never sent to the server.
+   *
+   * Geometry is in millimetres. "Art space" has its origin at the top-left of the first card's
+   * trim; the pocket seams (and the gap between pages of a spread) are real space in it, so the
+   * picture is laid across the whole page and each card shows only its own window of it. That
+   * is what keeps lines straight across the pockets.
+   *
+   * Set logos come from /binder-art/logos.json (the site's /images/logos files, one entry per
+   * distinct logo) and are drawn on one chosen card, kept LOGO_INSET mm inside the cut line.
+   */
+  (function () {
+    "use strict";
+    const CARD_W = 63, CARD_H = 88, DPI = 300;
+    const PAPER = { letter: { w: 215.9, h: 279.4, name: "Letter", fmt: "letter" }, a4: { w: 210, h: 297, name: "A4", fmt: "a4" } };
+    const S = { cols: 3, rows: 3, pages: 1, gapX: 5, gapY: 5, spreadGap: 30, bleed: 0, paper: "letter", zoom: 1, panX: 0, panY: 0, view: "binder" };
+    // Logo overlay. r/c null = the bottom-right card of whatever layout is chosen.
+    const L = { list: [], idx: -1, im: null, r: null, c: null, pos: "br", w: 36, shadow: true };
+    const LOGO_INSET = 4; // mm kept clear of the trim so cutting can't clip the logo
+    let img = null, imgName = "sample-art", view = { vs: 1 };
+    const $ = (s) => document.querySelector(s);
+    const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+    // ---------- geometry ----------
+    function geom() {
+      const tc = S.cols * S.pages, xs = [], ys = [];
+      for (let c = 0; c < tc; c++) { const p = Math.floor(c / S.cols); xs.push(c * (CARD_W + S.gapX) + p * (S.spreadGap - S.gapX)); }
+      for (let r = 0; r < S.rows; r++) ys.push(r * (CARD_H + S.gapY));
+      const artW = xs[tc - 1] + CARD_W, artH = ys[S.rows - 1] + CARD_H, b = S.bleed;
+      const boxW = artW + 2 * b, boxH = artH + 2 * b;
+      // k = mm per source pixel. At zoom 1 the picture just covers the art box including bleed.
+      const k = Math.max(boxW / img.width, boxH / img.height) * S.zoom;
+      const dispW = img.width * k, dispH = img.height * k;
+      const maxX = (dispW - boxW) / 2, maxY = (dispH - boxH) / 2;
+      S.panX = clamp(S.panX, -maxX, maxX); S.panY = clamp(S.panY, -maxY, maxY);
+      const ix = -b + (boxW - dispW) / 2 + S.panX, iy = -b + (boxH - dispH) / 2 + S.panY;
+      return { tc, xs, ys, artW, artH, b, boxW, boxH, k, ix, iy, dispW, dispH };
+    }
+    // Source-pixel rectangle for an art-space rectangle, nudged inside the image (float rounding).
+    function src(g, x, y, w, h) {
+      let sx = (x - g.ix) / g.k, sy = (y - g.iy) / g.k; const sw = w / g.k, sh = h / g.k;
+      sx = clamp(sx, 0, Math.max(0, img.width - sw)); sy = clamp(sy, 0, Math.max(0, img.height - sh));
+      return [sx, sy, sw, sh];
+    }
+    function logoCell(g) {
+      return [L.r == null ? S.rows - 1 : Math.min(L.r, S.rows - 1), L.c == null ? g.tc - 1 : Math.min(L.c, g.tc - 1)];
+    }
+    // Logo rectangle in art space, or null when no logo is chosen or it hasn't loaded yet.
+    function logoRect(g) {
+      if (!L.im) return null;
+      const [r, c] = logoCell(g);
+      let w = Math.min(L.w, CARD_W - 2 * LOGO_INSET), h = w * L.im.naturalHeight / L.im.naturalWidth;
+      const maxH = CARD_H * 0.4; if (h > maxH) { w *= maxH / h; h = maxH; }
+      const x0 = g.xs[c], y0 = g.ys[r];
+      const x = L.pos.endsWith("l") ? x0 + LOGO_INSET : L.pos.endsWith("r") ? x0 + CARD_W - LOGO_INSET - w : x0 + (CARD_W - w) / 2;
+      const y = L.pos.startsWith("t") ? y0 + LOGO_INSET : y0 + CARD_H - LOGO_INSET - h;
+      return { r, c, x, y, w, h };
+    }
+    // Draw the logo with an art-space -> canvas mapping (px per mm, and the art-space point at canvas 0,0).
+    function drawLogo(ctx, lr, scale, ox, oy) {
+      ctx.save();
+      if (L.shadow) { ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 1.6 * scale; ctx.shadowOffsetY = 0.4 * scale; }
+      ctx.drawImage(L.im, (lr.x - ox) * scale, (lr.y - oy) * scale, lr.w * scale, lr.h * scale);
+      ctx.restore();
+    }
+    // How many cards fit on one sheet (6 mm margins), trying both orientations.
+    function sheetFit() {
+      const p = PAPER[S.paper], m = 6, tw = CARD_W + 2 * S.bleed, th = CARD_H + 2 * S.bleed;
+      const po = { nx: Math.floor((p.w - 2 * m) / tw), ny: Math.floor((p.h - 2 * m) / th), orient: "portrait" };
+      const la = { nx: Math.floor((p.h - 2 * m) / tw), ny: Math.floor((p.w - 2 * m) / th), orient: "landscape" };
+      const best = la.nx * la.ny > po.nx * po.ny ? la : po;
+      best.per = best.nx * best.ny; best.tw = tw; best.th = th;
+      const total = S.cols * S.pages * S.rows;
+      best.sheets = best.per ? Math.ceil(total / best.per) : 0;
+      return best;
+    }
+
+    // ---------- preview ----------
+    function rr(ctx, x, y, w, h, r) {
+      ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+    }
+    function draw() {
+      if (!img) return;
+      const cv = $("#stage"), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+      if (!W || !H) return;
+      if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+      const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const css = getComputedStyle(document.documentElement), tok = (n) => css.getPropertyValue(n).trim();
+      ctx.fillStyle = tok("--panel-3"); ctx.fillRect(0, 0, W, H);
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+      const g = geom(), pm = 7, lr = logoRect(g);
+      const reg = S.view === "binder" ? [-pm, -pm, g.artW + 2 * pm, g.artH + 2 * pm] : [g.ix, g.iy, g.dispW, g.dispH];
+      const pad = 22, vs = Math.min((W - 2 * pad) / reg[2], (H - 2 * pad) / reg[3]);
+      const ox = (W - reg[2] * vs) / 2 - reg[0] * vs, oy = (H - reg[3] * vs) / 2 - reg[1] * vs;
+      view = { vs };
+      const X = (v) => ox + v * vs, Y = (v) => oy + v * vs;
+
+      if (S.view === "binder") {
+        for (let p = 0; p < S.pages; p++) {   // binder pages
+          const c0 = p * S.cols, c1 = c0 + S.cols - 1, px = g.xs[c0] - pm, pw = g.xs[c1] + CARD_W + pm - px;
+          ctx.beginPath(); rr(ctx, X(px), Y(-pm), pw * vs, (g.artH + 2 * pm) * vs, 4 * vs);
+          ctx.fillStyle = "#04080f"; ctx.fill();
+          ctx.strokeStyle = tok("--line-strong"); ctx.lineWidth = 1; ctx.stroke();
+        }
+        for (let r = 0; r < S.rows; r++) for (let c = 0; c < g.tc; c++) {
+          const dx = X(g.xs[c]), dy = Y(g.ys[r]), dw = CARD_W * vs, dh = CARD_H * vs;
+          ctx.save(); ctx.beginPath(); rr(ctx, dx, dy, dw, dh, 3 * vs); ctx.clip();
+          ctx.drawImage(img, ...src(g, g.xs[c], g.ys[r], CARD_W, CARD_H), dx, dy, dw, dh);
+          if (lr && lr.r === r && lr.c === c) drawLogo(ctx, lr, vs, -ox / vs, -oy / vs);
+          const gl = ctx.createLinearGradient(dx, dy, dx + dw, dy + dh);   // sleeve shine
+          gl.addColorStop(0, "rgba(255,255,255,.18)"); gl.addColorStop(.35, "rgba(255,255,255,0)");
+          ctx.fillStyle = gl; ctx.fillRect(dx, dy, dw, dh); ctx.restore();
+          ctx.beginPath(); rr(ctx, dx + .5, dy + .5, dw - 1, dh - 1, 3 * vs);
+          ctx.strokeStyle = "rgba(255,255,255,.2)"; ctx.lineWidth = 1; ctx.stroke();
+        }
+      } else {
+        ctx.globalAlpha = .3; ctx.drawImage(img, X(g.ix), Y(g.iy), g.dispW * vs, g.dispH * vs); ctx.globalAlpha = 1;
+        ctx.save(); ctx.beginPath(); ctx.rect(X(-g.b), Y(-g.b), g.boxW * vs, g.boxH * vs); ctx.clip();
+        ctx.drawImage(img, X(g.ix), Y(g.iy), g.dispW * vs, g.dispH * vs);
+        // Dim everything inside the art box that isn't a card face: seams and bleed get cut away.
+        ctx.beginPath(); ctx.rect(X(-g.b), Y(-g.b), g.boxW * vs, g.boxH * vs);
+        for (let r = 0; r < S.rows; r++) for (let c = 0; c < g.tc; c++) ctx.rect(X(g.xs[c]), Y(g.ys[r]), CARD_W * vs, CARD_H * vs);
+        ctx.fillStyle = "rgba(4,8,15,.65)"; ctx.fill("evenodd"); ctx.restore();
+        if (lr) drawLogo(ctx, lr, vs, -ox / vs, -oy / vs);
+        ctx.lineWidth = 1.25;
+        for (let r = 0; r < S.rows; r++) for (let c = 0; c < g.tc; c++) {
+          ctx.strokeStyle = tok("--accent"); ctx.setLineDash([]);
+          ctx.strokeRect(X(g.xs[c]), Y(g.ys[r]), CARD_W * vs, CARD_H * vs);
+          if (g.b > 0) {
+            ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.setLineDash([4, 3]);
+            ctx.strokeRect(X(g.xs[c] - g.b), Y(g.ys[r] - g.b), (CARD_W + 2 * g.b) * vs, (CARD_H + 2 * g.b) * vs);
+          }
+        }
+        ctx.setLineDash([]);
+      }
+      facts(g);
+    }
+    function facts(g) {
+      const dpi = Math.round(25.4 / g.k);
+      const [cls, word] = dpi >= 300 ? ["good", "sharp"] : dpi >= 200 ? ["good", "good"] : dpi >= 150 ? ["warn", "okay"] : ["bad", "soft"];
+      $("#facts").innerHTML = `<span><b>${g.tc * S.rows}</b> cards</span>` +
+        `<span>picture <b>${g.artW.toFixed(0)} × ${g.artH.toFixed(0)} mm</b></span>` +
+        `<span class="ba-pill ${cls}">${dpi} DPI · ${word}</span>`;
+      const f = sheetFit(), p = PAPER[S.paper];
+      $("#sheetFacts").innerHTML = f.per
+        ? `<span><b>${f.per}</b> cards per ${p.name} sheet${f.orient === "landscape" ? " (landscape)" : ""}</span><span><b>${f.sheets}</b> sheet${f.sheets > 1 ? "s" : ""} to print</span>`
+        : `<span>The cards don't fit on this paper.</span>`;
+      $("#zoomval").textContent = Math.round(S.zoom * 100) + "%";
+    }
+
+    // ---------- print-size cards ----------
+    function tileCanvas(g, r, c) {
+      const tw = CARD_W + 2 * g.b, th = CARD_H + 2 * g.b;
+      const cv = document.createElement("canvas");
+      cv.width = Math.round(tw / 25.4 * DPI); cv.height = Math.round(th / 25.4 * DPI);
+      const ctx = cv.getContext("2d"); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, ...src(g, g.xs[c] - g.b, g.ys[r] - g.b, tw, th), 0, 0, cv.width, cv.height);
+      const lr = logoRect(g);
+      if (lr && lr.r === r && lr.c === c) drawLogo(ctx, lr, cv.width / tw, g.xs[c] - g.b, g.ys[r] - g.b);
+      return cv;
+    }
+    const tick = () => new Promise((r) => requestAnimationFrame(() => r()));
+    const baseName = () => (imgName.replace(/\.[^.]+$/, "").replace(/[^a-z0-9_-]+/gi, "-").replace(/^-|-$/g, "") || "binder-art");
+    const layoutTag = () => `${S.cols * S.pages}x${S.rows}`;
+    function setStatus(msg, cls = "") { const el = $("#status"); el.textContent = msg; el.className = cls; }
+    function busy(on) { $("#pdf").disabled = on; $("#zip").disabled = on; }
+    function saveFile(filename, blob) {
+      const a = document.createElement("a"), url = URL.createObjectURL(blob);
+      a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      setStatus("Downloaded " + filename + ".", "good");
+    }
+
+    async function makePDF() {
+      const f = sheetFit();
+      if (!f.per) { setStatus("The cards don't fit on this paper with this bleed.", "bad"); return; }
+      if (!window.jspdf) { setStatus("The PDF maker didn't load. Reload the page and try again.", "bad"); return; }
+      busy(true);
+      try {
+        const g = geom(), p = PAPER[S.paper];
+        const doc = new window.jspdf.jsPDF({ orientation: f.orient, unit: "mm", format: p.fmt });
+        const PW = doc.internal.pageSize.getWidth(), PH = doc.internal.pageSize.getHeight();
+        const cells = []; for (let r = 0; r < S.rows; r++) for (let c = 0; c < g.tc; c++) cells.push([r, c]);
+        for (let s = 0; s < f.sheets; s++) {
+          if (s) doc.addPage(p.fmt, f.orient);
+          const chunk = cells.slice(s * f.per, (s + 1) * f.per);
+          const usedX = Math.min(f.nx, chunk.length), usedY = Math.ceil(chunk.length / f.nx);
+          const bw = usedX * f.tw, bh = usedY * f.th, x0 = (PW - bw) / 2, y0 = (PH - bh) / 2;
+          for (let i = 0; i < chunk.length; i++) {
+            setStatus(`Making sheet ${s + 1} of ${f.sheets}, card ${i + 1} of ${chunk.length}…`); await tick();
+            const [r, c] = chunk[i], cv = tileCanvas(g, r, c);
+            doc.addImage(cv.toDataURL("image/jpeg", 0.93), "JPEG", x0 + (i % f.nx) * f.tw, y0 + Math.floor(i / f.nx) * f.th, f.tw, f.th, undefined, "FAST");
+          }
+          // Cut marks in the margins at every trim line (shared lines when bleed is 0).
+          doc.setLineWidth(0.15); doc.setDrawColor(40);
+          const tx = new Set(), ty = new Set();
+          for (let i = 0; i < usedX; i++) { tx.add(+(x0 + i * f.tw + g.b).toFixed(3)); tx.add(+(x0 + (i + 1) * f.tw - g.b).toFixed(3)); }
+          for (let j = 0; j < usedY; j++) { ty.add(+(y0 + j * f.th + g.b).toFixed(3)); ty.add(+(y0 + (j + 1) * f.th - g.b).toFixed(3)); }
+          const Lv = Math.max(0, Math.min(5, y0 - 2.5)), Lh = Math.max(0, Math.min(5, x0 - 2.5));
+          if (Lv > 0.5) tx.forEach((x) => { doc.line(x, y0 - 1, x, y0 - 1 - Lv); doc.line(x, y0 + bh + 1, x, y0 + bh + 1 + Lv); });
+          if (Lh > 0.5) ty.forEach((y) => { doc.line(x0 - 1, y, x0 - 1 - Lh, y); doc.line(x0 + bw + 1, y, x0 + bw + 1 + Lh, y); });
+          const first = chunk[0], last = chunk[chunk.length - 1];
+          doc.setFontSize(6); doc.setTextColor(110);
+          doc.text(`${baseName()} · ${layoutTag()} · sheet ${s + 1}/${f.sheets} · cards R${first[0] + 1}C${first[1] + 1}–R${last[0] + 1}C${last[1] + 1}, row by row · print at 100% · market.poke6s.com/binder-art`, PW / 2, PH - 1.6, { align: "center" });
+        }
+        setStatus("Finishing the PDF…"); await tick();
+        saveFile(`${baseName()}_${layoutTag()}_${p.name.toLowerCase()}.pdf`, doc.output("blob"));
+      } catch (e) { setStatus("The PDF couldn't be made: " + ((e && e.message) || e), "bad"); }
+      finally { busy(false); }
+    }
+
+    async function makeZip() {
+      if (!window.JSZip) { setStatus("The ZIP maker didn't load. Reload the page and try again.", "bad"); return; }
+      busy(true);
+      try {
+        const g = geom(), zip = new JSZip(), n = g.tc * S.rows; let i = 0;
+        for (let r = 0; r < S.rows; r++) for (let c = 0; c < g.tc; c++) {
+          setStatus(`Making card ${++i} of ${n}…`); await tick();
+          const blob = await new Promise((res) => tileCanvas(g, r, c).toBlob(res, "image/png"));
+          zip.file(`${baseName()}_r${r + 1}c${c + 1}.png`, blob);
+        }
+        zip.file("README.txt", `${n} cards, ${DPI} DPI, ${CARD_W} x ${CARD_H} mm trim with ${g.b} mm bleed on each side.\n` +
+          `rXcY = row X, column Y as they sit in the binder (${S.pages === 2 ? "columns run across both pages of the spread" : "one page"}).\n` +
+          `Made with the free Binder Art Maker at https://market.poke6s.com/binder-art\n`);
+        setStatus("Zipping…"); await tick();
+        saveFile(`${baseName()}_${layoutTag()}_cards.zip`, await zip.generateAsync({ type: "blob" }));
+      } catch (e) { setStatus("The ZIP couldn't be made: " + ((e && e.message) || e), "bad"); }
+      finally { busy(false); }
+    }
+
+    // ---------- images ----------
+    function sampleArt() {
+      // A drawn sunset so the page opens in a working state; any upload replaces it.
+      const cv = document.createElement("canvas"); cv.width = 2400; cv.height = 2600;
+      const x = cv.getContext("2d"), W = cv.width, H = cv.height;
+      const sky = x.createLinearGradient(0, 0, 0, H * .7);
+      sky.addColorStop(0, "#0d1b3d"); sky.addColorStop(.45, "#3b4f9a"); sky.addColorStop(.8, "#e0866a"); sky.addColorStop(1, "#ffd27a");
+      x.fillStyle = sky; x.fillRect(0, 0, W, H);
+      let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      x.fillStyle = "rgba(255,255,255,.8)";
+      for (let i = 0; i < 260; i++) { const s = rnd() * 3 + 1; x.fillRect(rnd() * W, rnd() * H * .35, s, s); }
+      const sun = x.createRadialGradient(W * .62, H * .52, 10, W * .62, H * .52, 420);
+      sun.addColorStop(0, "#fff3c4"); sun.addColorStop(.45, "#ffd36b"); sun.addColorStop(1, "rgba(255,200,90,0)");
+      x.fillStyle = sun; x.fillRect(0, 0, W, H);
+      [["#3a3f78", .52, 160], ["#272c5c", .60, 210], ["#181c40", .70, 260], ["#0a0e24", .82, 220]].forEach(([col, base, amp], li) => {
+        x.beginPath(); x.moveTo(0, H);
+        for (let px = 0; px <= W; px += 12) {
+          x.lineTo(px, H * base - amp * (Math.sin(px / 310 + li * 1.7) * .55 + Math.sin(px / 97 + li) * .2 + Math.sin(px / 41 + li * 3) * .06 + .4));
+        }
+        x.lineTo(W, H); x.closePath(); x.fillStyle = col; x.fill();
+      });
+      return cv;
+    }
+    function useImage(source, name, sample) {
+      img = source; imgName = name;
+      S.zoom = 1; S.panX = S.panY = 0; $("#zoom").value = 100;
+      $("#imgname").textContent = sample ? "sample art" : `${name} · ${source.width}×${source.height}px`;
+      $("#sampleNote").hidden = !sample; setStatus(""); draw();
+    }
+    function loadFile(file) {
+      if (!file || !/^image\//.test(file.type)) { setStatus("That file isn't a picture. Use a JPG, PNG or WebP.", "bad"); return; }
+      const url = URL.createObjectURL(file), im = new Image();
+      im.onload = () => useImage(im, file.name || "pasted-image", false);
+      im.onerror = () => setStatus("That picture couldn't be read. Try saving it as JPG or PNG.", "bad");
+      im.src = url;
+    }
+    function chooseLogo(i) {
+      L.idx = i; L.im = null; $("#logoOpts").hidden = i < 0;
+      if (i < 0) { draw(); return; }
+      const im = new Image();
+      im.onload = () => { if (L.idx === i) { L.im = im; draw(); } };
+      im.onerror = () => setStatus("That logo didn't load. Pick it again or reload the page.", "bad");
+      im.src = L.list[i].url;
+    }
+
+    // ---------- controls ----------
+    function syncControls() {
+      $("#cols").value = S.cols; $("#rows").value = S.rows;
+      document.querySelectorAll("#presets .ba-preset").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.c === S.cols && +b.dataset.r === S.rows)));
+      $("#p1").setAttribute("aria-pressed", String(S.pages === 1)); $("#p2").setAttribute("aria-pressed", String(S.pages === 2));
+      $("#spreadField").hidden = S.pages !== 2;
+      document.querySelectorAll("#bleed button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.b === S.bleed)));
+      $("#vBinder").setAttribute("aria-pressed", String(S.view === "binder")); $("#vFull").setAttribute("aria-pressed", String(S.view !== "binder"));
+      // Card choices follow the layout; "bottom right" stays the default whatever the grid.
+      const tc = S.cols * S.pages, opts = ['<option value="">Bottom-right card</option>'];
+      for (let r = 0; r < S.rows; r++) for (let c = 0; c < tc; c++) opts.push(`<option value="${r},${c}">Row ${r + 1}, column ${c + 1}</option>`);
+      $("#logoCard").innerHTML = opts.join("");
+      $("#logoCard").value = L.r == null ? "" : `${Math.min(L.r, S.rows - 1)},${Math.min(L.c, tc - 1)}`;
+      draw();
+    }
+    const num = (el, lo, hi, fb) => { const v = parseFloat(el.value); return isFinite(v) ? clamp(v, lo, hi) : fb; };
+    document.querySelectorAll("#presets .ba-preset").forEach((b) => b.onclick = () => { S.cols = +b.dataset.c; S.rows = +b.dataset.r; syncControls(); });
+    $("#cols").oninput = () => { S.cols = Math.round(num($("#cols"), 1, 5, S.cols)); syncControls(); };
+    $("#rows").oninput = () => { S.rows = Math.round(num($("#rows"), 1, 5, S.rows)); syncControls(); };
+    $("#p1").onclick = () => { S.pages = 1; syncControls(); };
+    $("#p2").onclick = () => { S.pages = 2; syncControls(); };
+    $("#gx").oninput = () => { S.gapX = num($("#gx"), 0, 30, S.gapX); draw(); };
+    $("#gy").oninput = () => { S.gapY = num($("#gy"), 0, 30, S.gapY); draw(); };
+    $("#gs").oninput = () => { S.spreadGap = num($("#gs"), 0, 120, S.spreadGap); draw(); };
+    $("#paper").onchange = () => { S.paper = $("#paper").value; draw(); };
+    document.querySelectorAll("#bleed button").forEach((b) => b.onclick = () => { S.bleed = +b.dataset.b; syncControls(); });
+    $("#vBinder").onclick = () => { S.view = "binder"; syncControls(); };
+    $("#vFull").onclick = () => { S.view = "full"; syncControls(); };
+    $("#zoom").oninput = () => { S.zoom = $("#zoom").value / 100; draw(); };
+    $("#reset").onclick = () => { S.zoom = 1; S.panX = S.panY = 0; $("#zoom").value = 100; draw(); };
+    $("#file").onchange = (e) => loadFile(e.target.files[0]);
+    $("#pdf").onclick = makePDF; $("#zip").onclick = makeZip;
+    $("#logo").onchange = () => chooseLogo(+$("#logo").value);
+    $("#logoCard").onchange = () => { const v = $("#logoCard").value; [L.r, L.c] = v ? v.split(",").map(Number) : [null, null]; draw(); };
+    $("#logoPos").onchange = () => { L.pos = $("#logoPos").value; draw(); };
+    $("#logoW").oninput = () => { L.w = +$("#logoW").value; $("#logoWval").textContent = L.w + " mm"; draw(); };
+    $("#logoShadow").onchange = () => { L.shadow = $("#logoShadow").checked; draw(); };
+
+    const cv = $("#stage"); let drag = null;
+    cv.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); cv.classList.add("drag"); });
+    cv.addEventListener("pointermove", (e) => {
+      if (!drag) return;
+      S.panX += (e.clientX - drag.x) / view.vs; S.panY += (e.clientY - drag.y) / view.vs;
+      drag = { x: e.clientX, y: e.clientY }; draw();
+    });
+    const endDrag = () => { drag = null; cv.classList.remove("drag"); };
+    cv.addEventListener("pointerup", endDrag); cv.addEventListener("pointercancel", endDrag);
+    cv.addEventListener("wheel", (e) => { e.preventDefault(); S.zoom = clamp(S.zoom * Math.exp(-e.deltaY * 0.0015), 1, 5); $("#zoom").value = Math.round(S.zoom * 100); draw(); }, { passive: false });
+    cv.addEventListener("dragover", (e) => { e.preventDefault(); cv.classList.add("over"); });
+    cv.addEventListener("dragleave", () => cv.classList.remove("over"));
+    cv.addEventListener("drop", (e) => { e.preventDefault(); cv.classList.remove("over"); loadFile(e.dataTransfer.files[0]); });
+    window.addEventListener("paste", (e) => { const f = [...((e.clipboardData && e.clipboardData.files) || [])].find((f) => /^image\//.test(f.type)); if (f) loadFile(f); });
+    new ResizeObserver(() => draw()).observe(cv);
+
+    fetch("/binder-art/logos.json").then((r) => r.ok ? r.json() : Promise.reject(r.status)).then((data) => {
+      L.list = data.logos || [];
+      const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+      $("#logo").insertAdjacentHTML("beforeend", L.list.map((x, i) => `<option value="${i}">${esc(x.name)}${x.year ? ` (${x.year})` : ""}</option>`).join(""));
+    }).catch(() => { $("#logo").disabled = true; $("#logo").options[0].textContent = "Set logos couldn't load"; });
+
+    useImage(sampleArt(), "sample-art", true);
+    syncControls();
+  })();
+  </script>
+</body>
+</html>
