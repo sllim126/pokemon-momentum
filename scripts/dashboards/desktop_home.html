@@ -767,7 +767,7 @@
       }
       if (state.selected) url.searchParams.set("product", state.selected.key);
       if (state.fullCard && state.selected) url.searchParams.set("card", "1");
-      history.replaceState(null, "", url);
+      history.replaceState(history.state, "", url);  // keep the full-card marker (see setFullCard)
     }
     // Most endpoints answer {columns, rows}; turn that into one object per row.
     function rowObjects(payload) {
@@ -1585,16 +1585,16 @@
           el("td", { class: "right num", text: String(r.card_count ?? "—") }),
           el("td", { class: "right num", text: money(Number(r.total_set_cost)) }),
           el("td", { class: "right num", text: `${money(Number(r.avg_card_price))} / ${money(Number(r.median_card_price))}` }),
-          el("td", { class: r.top_hit_product_id ? "hit-link" : "", title: r.top_hit_product_id ? "Open this card" : "" }, el("div", { class: "hit-cell" }, hitImage, el("div", { style: "min-width:0" },
+          el("td", { class: r.top_hit_product_id ? "hit-link" : "", title: r.top_hit_product_id ? "Show this card" : "" }, el("div", { class: "hit-cell" }, hitImage, el("div", { style: "min-width:0" },
             el("div", { class: "card-name", text: r.top_hit_name || "—", title: r.top_hit_name || "" }),
             el("div", { class: "card-meta", text: `${money(Number(r.top_hit_price))} · ${share(r.top_hit_share_pct)} of the set` })))),
           el("td", { class: "right num", text: share(r.top3_share_pct) }),
           el("td", { class: "right num", title: "Higher means the value is spread across more cards instead of a few chase cards.", text: Number.isFinite(Number(r.depth_score)) ? String(Math.round(r.depth_score)) : "—" }));
-        // Clicking the top hit opens that card's full page; anywhere else in the row opens the set.
-        tr.addEventListener("click", async (event) => {
+        // Clicking the top hit shows that card in the right-hand pane; anywhere else in the row
+        // opens the set.
+        tr.addEventListener("click", (event) => {
           if (r.top_hit_product_id && event.target.closest(".hit-link")) {
-            await loadCardByKey(`${r.top_hit_product_id}||${r.top_hit_sub_type || ""}`);
-            if (state.selected) setFullCard(true);
+            loadCardByKey(`${r.top_hit_product_id}||${r.top_hit_sub_type || ""}`);
             return;
           }
           openSet(r.groupId, r.groupName, "set_values");
@@ -2114,7 +2114,11 @@
 
     // ---------- full card page ----------
     // Switch the card panel between its normal column and the full page (&card=1).
+    // Opening the full card page adds a browser history entry, so the browser's Back button
+    // (and our "← Back" button and Escape, which go through history.back()) return to the list
+    // instead of leaving the site. syncUrl then fills that entry in with the &card=1 address.
     function setFullCard(on) {
+      if (on && state.selected && !state.fullCard) history.pushState({ poke6sFullCard: true }, "", location.href);
       state.fullCard = Boolean(on && state.selected);
       syncUrl();
       if (state.selected) renderDetail(); // applies the layout, redraws the chart at its new size, fills #fullExtra
@@ -2134,9 +2138,13 @@
       event.preventDefault();
       setFullCard(true);
     });
-    $("fullBackBtn").addEventListener("click", () => setFullCard(false));
+    const closeFullCard = () => (history.state?.poke6sFullCard ? history.back() : setFullCard(false));
+    $("fullBackBtn").addEventListener("click", closeFullCard);
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && state.fullCard && !event.target.closest("input, select, textarea")) setFullCard(false);
+      if (event.key === "Escape" && state.fullCard && !event.target.closest("input, select, textarea")) closeFullCard();
+    });
+    window.addEventListener("popstate", () => {
+      if (state.fullCard && !new URLSearchParams(location.search).has("card")) setFullCard(false);
     });
     // Double-clicking a card's picture opens its full page (the first click already selected it).
     document.addEventListener("dblclick", (event) => {
