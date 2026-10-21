@@ -586,6 +586,7 @@
     //   hidden        not listed in the nav; reached from another view (parent / navParent)
     //   extra         header of an extra column (Sealed Deals: loose-pack price)
     //   days          field with how many days a card has been in the list (shown in the extra column)
+    //   extraField    a percentage field shown as-is in the extra column (Small Dips: below the 90-day high)
     //   track / tag   a saved list, and the tag it shows ("all" = every saved item)
     const LISTS = [
       { key: "sealed_deals", group: "Buy", buy: true, kindless: true, label: "Sealed Deals", desc: "Boxes, ETBs, tins and bundles compared with buying the same booster packs loose. Negative means the sealed product is the cheaper way to get those packs.", price: "latest_price", change: "vs_loose_pct", changeLabel: "vs loose packs", changeHeader: "Vs loose packs", lowerIsBetter: true, extra: "Packs bought loose" },
@@ -597,6 +598,7 @@
       { key: "under_the_radar", group: "Starting to move", label: "Under the Radar", desc: "Quiet risers emerging from a flat base.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
       { key: "breakouts", group: "Starting to move", label: "Breakouts", desc: "Breaking above their 90-day high with recent activity.", price: "latest_price", change: "breakout_pct", changeLabel: "above 90-day high" },
       { key: "good_buys", group: "Dipped", label: "Pullbacks", desc: "Cards falling faster than their own set: something specific to the card, so a possible bargain worth a closer look. Each is 10%+ below its 90-day high for a week, behind cards of a similar price and behind its set, yet still up over the year. Cards falling only as much as their set are in Whole-set Dips.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
+      { key: "small_dips", group: "Dipped", label: "Small Dips", desc: "Strong cards taking a short breather: up 15%+ over 90 days and up over the year, now 3-12% below their 90-day high, back near their 30-day average and down this week. Unlike Pullbacks, these are leading the market, just paused.", price: "latest_price", change: "roc_90d_pct", changeLabel: "90 days", extra: "Below high", extraField: "off_high_pct" },
       { key: "set_dips", group: "Dipped", label: "Whole-set Dips", desc: "Cards on sale because their whole set is cooling off: they dropped like Pullbacks (10%+ below their 90-day high for a week), but about as much as their set did. A shopping list for sets you like; the set may keep sliding, so there is rarely a rush. Cards falling faster than their set are in Pullbacks.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
       { key: "sets", group: "Research", research: true, label: "Sets", desc: "Every set ranked by how broadly its cards are rising. Pick one to see its cards." },
       { key: "set", group: "Research", research: true, hidden: true, label: "Set", desc: "" },
@@ -838,10 +840,20 @@
     let searchActive = -1;
     const searchInput = $("searchInput");
     const searchResults = $("searchResults");
+    let searchShownFor = "";  // query + market of the results currently in the dropdown
     searchInput.addEventListener("input", () => {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(runSearch, 220);
     });
+    // Clicking back into the box reopens the results for what's typed there: the last results
+    // if they match the text and market, otherwise a fresh search.
+    const reopenSearch = () => {
+      if (searchInput.value.trim().length < 2 || !searchResults.hidden) return;
+      if (searchResults.childElementCount && searchShownFor === `${categoryId()}:${searchInput.value.trim()}`) searchResults.hidden = false;
+      else runSearch();
+    };
+    searchInput.addEventListener("focus", reopenSearch);
+    searchInput.addEventListener("click", reopenSearch);
     searchInput.addEventListener("keydown", (event) => {
       if (searchResults.hidden) return;
       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
@@ -891,6 +903,7 @@
           return button;
         }) : [el("div", { class: "search-empty", text: data.did_you_mean?.length ? `No exact match. Did you mean ${data.did_you_mean[0]}?` : "No matches." })]));
         searchResults.hidden = false;
+        searchShownFor = `${categoryId()}:${query}`;
         renderSearchActive();
       } catch (_err) {
         searchResults.hidden = true;
@@ -1657,6 +1670,7 @@
           ["Under the Radar", "Quiet risers coming off a flat price."],
           ["Breakouts", "Cards pushing above their highest price of the last 90 days."],
           ["Pullbacks", "Cards falling faster than their own set, while still up over the year: at least 10% below their 90-day high for a week or more, and clearly behind both cards of a similar price and the rest of their set. Something is specific to the card, so it may be a bargain (or a card-specific problem) worth a closer look."],
+          ["Small Dips", "Strong cards taking a short breather: up at least 15% over 90 days and up over the year, still above their 90-day average, but now 3-12% below their recent high, back near their 30-day average and down this week. A pause like this resets the streak on Confirmed and Consistent Movers, so this is where those cards show up."],
           ["Whole-set Dips", "Cards that dipped the same way, but only about as much as their whole set: the set is cooling off (a reprint, fading hype), not the card. Use it as a shopping list for sets you like; the set may keep falling, so waiting usually costs nothing. Cards in a falling set that are not listed are holding their price, too cheap, or traded too rarely to judge."],
         ]),
         section("Checks on every card", "", [
@@ -1819,6 +1833,10 @@
         return el("span", { class: "target-text", title: detail, text: r.loose_value ? `${money(r.loose_value)} for ${packs(r.pack_count)}${star}` : r.pack_count ? `${packs(r.pack_count)}${star}` : "—" });
       }
       if (list.key === "budget") return el("span", { class: "target-text", text: Number.isFinite(row.raw.budget_share_pct) ? `${Math.round(row.raw.budget_share_pct)}%` : "—" });
+      if (list.extraField) {
+        const value = Number(row.raw[list.extraField]);
+        return el("span", { class: "target-text", text: Number.isFinite(value) ? `${value.toFixed(1)}%` : "—" });
+      }
       if (list.days) {
         // How long the card has qualified: Confirmed Movers' bullish streak, Consistent Movers'
         // days above the 30-day average (since cross_date, shown on hover).

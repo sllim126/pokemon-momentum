@@ -36,6 +36,10 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-21 Small Dips list (`/small_dips`, Discover > Dipped): cards up 15%+ over 90 days and
+  over the year, still above their 90-day average, now 3-12% below their 90-day high, near their
+  30-day average and down this week (20 English cards on the first day). Rules: SMALL_DIP_* in
+  api.py. Also: clicking back into the desktop search box reopens its results.
 - 2026-10-21 Confirmed Movers and Consistent Movers show how many days each card has been in
   the list again (bullish streak / days above the 30-day average, with the start date on
   hover) and can sort by it.

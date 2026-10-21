@@ -58,7 +58,7 @@ Every view is one entry in the `LISTS` array; its fields are documented above th
 | --- | --- | --- |
 | Buy | Sealed Deals (`sealed_deals`) | `/sealed_deals` (all products, no price limits) |
 | Buy | Budget Builder (`budget`) | `/budget_builder` |
-| Discover | Top Movers, Confirmed Movers, Consistent Movers, Early Movers, Under the Radar, Breakouts, Pullbacks, Whole-set Dips | `/<key>` (for example `/top_movers`; Pullbacks is `/good_buys`, Whole-set Dips `/set_dips`; rules in `query_support.build_pullback_sql`) |
+| Discover | Top Movers, Confirmed Movers, Consistent Movers, Early Movers, Under the Radar, Breakouts, Pullbacks, Small Dips, Whole-set Dips | `/<key>` (for example `/top_movers`; Pullbacks is `/good_buys`, Whole-set Dips `/set_dips`, Small Dips `/small_dips`; rules in `query_support.build_pullback_sql`) |
 | Track | All saved, Buy List, Watchlist, Favorites, Needs Review (`track_*`) | `/tracking/items/resolve`, with tags from browser storage or `/tracking/tags` |
 | Research | Sets (`sets`) → one set (`set`) | `/group_signals` → `/group_products` |
 | Research | Pokémon (`species`) | `/browse_species` |

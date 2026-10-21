@@ -1245,6 +1245,19 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.json(), {"ok": True})
         delete_saved_view_mock.assert_called_once_with(9, 12)
 
+    def test_small_dips_rules(self):
+        with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
+            api, "product_signal_from", return_value="signal_snapshot"
+        ):
+            api.small_dips(category_id=3, max_price=80)
+        sql = q_mock.call_args[0][0]
+        self.assertIn("roc_90d_pct >= 15.0", sql)
+        self.assertIn("off_high_pct BETWEEN 3.0 AND 12.0", sql)
+        self.assertIn("price_vs_sma30_pct BETWEEN -6.0 AND 1.0", sql)
+        self.assertIn("roc_7d_pct <= 0", sql)
+        self.assertIn("productKind = 'card'", sql)
+        self.assertIn("AND latest_price <= 80", sql)
+
     def test_good_buys_reads_own_dips_and_set_dips_reads_whole_set_dips(self):
         with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
             api, "product_signal_from", return_value="signal_snapshot"

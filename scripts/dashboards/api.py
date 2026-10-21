@@ -729,7 +729,7 @@ PUBLIC_DATA_PATHS = frozenset({
     "/browse_species", "/group_products", "/group_signals", "/group_series", "/set_baskets",
     "/product_signals", "/sealed_deals", "/budget_builder",
     "/top_movers", "/confirmed_uptrends", "/sma30_holds", "/early_uptrends",
-    "/under_the_radar", "/breakouts", "/good_buys", "/set_dips", "/time_to_buy",
+    "/under_the_radar", "/breakouts", "/good_buys", "/set_dips", "/small_dips", "/time_to_buy",
 })
 
 
@@ -5745,6 +5745,66 @@ def good_buys(
     """Pullbacks: cards dropping on their own while the market around them isn't
     (query_support.build_pullback_sql). Cards whose whole set is falling are in /set_dips."""
     return pullback_rows("own", limit, min_price, max_price, exclude_prize_packs, product_kind, category_id)
+
+
+# ---- Small Dips: a short pause in a strong uptrend --------------------------------------
+#
+# Agreed with the owner 2026-10-21. A card that has risen for months and pauses for a few days
+# drops off the streak lists (one day below its 30-day average resets them) and is too strong
+# for Pullbacks, so this list catches it: clearly rising over 90 days and up over the year,
+# still above its 90-day average, but now a little below its recent high, back near its 30-day
+# average and down this week.
+SMALL_DIP_MIN_PRICE = 5.0
+SMALL_DIP_MIN_90D_PCT = 15.0  # the uptrend: at least +15% over 90 days
+SMALL_DIP_OFF_HIGH_PCT = (3.0, 12.0)  # a small dip: 3-12% below the 90-day high
+SMALL_DIP_VS_SMA30_PCT = (-6.0, 1.0)  # back near its 30-day average
+SMALL_DIP_MIN_PRICE_CHANGES_30D = 6
+
+
+@app.get("/small_dips")
+def small_dips(
+    limit: int = 250,
+    min_price: float = SMALL_DIP_MIN_PRICE,
+    max_price: float | None = None,
+    product_kind: str | None = None,
+    category_id: int = 3,
+):
+    """Cards in a strong uptrend that have pulled back a little (see the comment above)."""
+    limit = max(1, min(limit, 5000))
+    kind = "sealed" if product_kind == "sealed" else "card"
+    price_filter = f"AND latest_price >= {max(0.0, min_price)}"
+    if max_price is not None:
+        price_filter += f" AND latest_price <= {max(0.0, max_price)}"
+    category = category_config(category_id)
+    source = product_signal_from(category.category_id)
+    off_lo, off_hi = SMALL_DIP_OFF_HIGH_PCT
+    sma_lo, sma_hi = SMALL_DIP_VS_SMA30_PCT
+    sql = f"""
+        WITH day AS (
+          SELECT *, (1 - latest_price / NULLIF(GREATEST(high_90d, latest_price), 0)) * 100 AS off_high_pct
+          FROM {source}
+          WHERE categoryId = {category.category_id}
+            AND latest_date = (SELECT MAX(latest_date) FROM {source} WHERE categoryId = {category.category_id})
+            AND productKind = '{kind}'
+        )
+        SELECT latest_date, groupId, groupName, productId, productName, imageUrl, rarity, number,
+               productClass, productKind, subTypeName, latest_price, high_90d, off_high_pct,
+               roc_7d_pct, roc_30d_pct, roc_90d_pct, roc_365d_pct, price_vs_sma30_pct,
+               price_vs_sma90_pct, recent_distinct_prices_30d, trend_score
+        FROM day
+        WHERE roc_90d_pct >= {SMALL_DIP_MIN_90D_PCT}
+          AND roc_365d_pct > 0
+          AND price_vs_sma90_pct > 0
+          AND off_high_pct BETWEEN {off_lo} AND {off_hi}
+          AND price_vs_sma30_pct BETWEEN {sma_lo} AND {sma_hi}
+          AND roc_7d_pct <= 0
+          AND COALESCE(recent_distinct_prices_30d, 0) >= {SMALL_DIP_MIN_PRICE_CHANGES_30D}
+          {price_filter}
+        ORDER BY roc_90d_pct DESC
+        LIMIT {limit}
+    """
+    cols, rows = q(sql)
+    return {"columns": cols, "rows": rows}
 
 
 @app.get("/set_dips")
