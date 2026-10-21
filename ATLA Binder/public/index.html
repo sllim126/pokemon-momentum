@@ -522,10 +522,16 @@
         .hero h1 { font-size: 28px; margin: 4px 0 10px; }
         .layout { margin-top: 10px; gap: 10px; }
         .page-list { display: flex; gap: 8px; overflow-x: auto; max-height: none; padding-bottom: 6px; scroll-snap-type: x proximity; }
-        .page-button { flex: 0 0 auto; min-width: 128px; scroll-snap-align: start; margin: 0; }
+        .layout .page-button { flex: 0 0 150px; width: 150px; min-height: 0; padding: 10px 12px; scroll-snap-align: start; margin: 0; }
+        .layout .page-button > * { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .viewer-head h2 { margin: 0; }
         .legend { display: none; }
+        .layout .swipe-hint { display: flex; }
       }
+      .swipe-hint { display: none; justify-content: flex-end; align-items: center; gap: 6px; margin-bottom: 6px; font-size: 12px; font-weight: 700; color: var(--muted); }
+      .swipe-hint span { font-size: 16px; animation: swipe-nudge 1.4s ease-in-out infinite; }
+      @keyframes swipe-nudge { 50% { transform: translateX(4px); } }
+      @media (prefers-reduced-motion: reduce) { .swipe-hint span { animation: none; } }
       .size-picker { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
       .size-picker select { font: inherit; padding: 4px 8px; border-radius: 8px; }
     </style>
@@ -567,6 +573,8 @@
               <p>Choose a binder page to preview its exact pocket layout.</p>
             </div>
           </div>
+          <!-- Phones only: the page list becomes a sideways strip, so say so. -->
+          <div class="swipe-hint" aria-hidden="true">Swipe for more pages <span>&rarr;</span></div>
           <div class="page-list" id="pageList"></div>
         </aside>
 
