@@ -585,13 +585,14 @@
     //   kindless      the Singles/Sealed switch doesn't apply here, so it is hidden
     //   hidden        not listed in the nav; reached from another view (parent / navParent)
     //   extra         header of an extra column (Sealed Deals: loose-pack price)
+    //   days          field with how many days a card has been in the list (shown in the extra column)
     //   track / tag   a saved list, and the tag it shows ("all" = every saved item)
     const LISTS = [
       { key: "sealed_deals", group: "Buy", buy: true, kindless: true, label: "Sealed Deals", desc: "Boxes, ETBs, tins and bundles compared with buying the same booster packs loose. Negative means the sealed product is the cheaper way to get those packs.", price: "latest_price", change: "vs_loose_pct", changeLabel: "vs loose packs", changeHeader: "Vs loose packs", lowerIsBetter: true, extra: "Packs bought loose" },
       { key: "budget", group: "Buy", buy: true, kindless: true, label: "Budget Builder", desc: "Don't know what to buy? Pick a budget and get a spread of the strongest actively traded hits that fit it.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
       { key: "top_movers", group: "Rising", label: "Top Movers", desc: "Biggest steady 30-day gains with real trading activity.", price: "p_now", change: "roc_pct", changeLabel: "30 days" },
-      { key: "confirmed_uptrends", group: "Rising", label: "Confirmed Movers", desc: "Uptrends confirmed by moving averages and a bullish streak.", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg" },
-      { key: "sma30_holds", group: "Rising", label: "Consistent Movers", desc: "Held above their 30-day average for 30 straight days.", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg" },
+      { key: "confirmed_uptrends", group: "Rising", label: "Confirmed Movers", desc: "Uptrends confirmed by moving averages and a bullish streak.", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg", extra: "Streak", days: "bullish_streak" },
+      { key: "sma30_holds", group: "Rising", label: "Consistent Movers", desc: "Held above their 30-day average for 30 straight days.", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg", extra: "Days above avg", days: "hold_days" },
       { key: "early_uptrends", group: "Starting to move", label: "Early Movers", desc: "Just starting to trend up, still close to their base.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
       { key: "under_the_radar", group: "Starting to move", label: "Under the Radar", desc: "Quiet risers emerging from a flat base.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
       { key: "breakouts", group: "Starting to move", label: "Breakouts", desc: "Breaking above their 90-day high with recent activity.", price: "latest_price", change: "breakout_pct", changeLabel: "above 90-day high" },
@@ -618,6 +619,8 @@
     // Sort menu per kind of view. "signal" keeps the order the API returned.
     const SORTS = {
       market: [["signal", "signal strength"], ["change", "biggest change"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"]],
+      confirmed_uptrends: [["signal", "signal strength"], ["days", "most days"], ["days_short", "fewest days"], ["change", "biggest change"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"]],
+      sma30_holds: [["signal", "signal strength"], ["days", "most days"], ["days_short", "fewest days"], ["change", "biggest change"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"]],
       track: [["signal", "saved order"], ["target", "closest to buy target"], ["change", "biggest change"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"]],
       set: [["signal", "card number"], ["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
       species: [["price_desc", "price, high to low"], ["price_asc", "price, low to high"], ["change", "biggest change"], ["signal", "set"]],
@@ -1707,6 +1710,9 @@
       if (sort === "price_asc") rows = [...rows].sort((a, b) => (a.price || 0) - (b.price || 0));
       if (sort === "change_asc") rows = [...rows].sort((a, b) => (Number.isFinite(a.change) ? a.change : Infinity) - (Number.isFinite(b.change) ? b.change : Infinity));
       if (sort === "per_pack") rows = [...rows].sort((a, b) => (a.raw.price_per_pack ?? Infinity) - (b.raw.price_per_pack ?? Infinity));
+      const daysField = (LISTS.find((l) => l.key === state.list) || {}).days;
+      if (daysField && sort === "days") rows = [...rows].sort((a, b) => (b.raw[daysField] ?? -1) - (a.raw[daysField] ?? -1));
+      if (daysField && sort === "days_short") rows = [...rows].sort((a, b) => (a.raw[daysField] ?? Infinity) - (b.raw[daysField] ?? Infinity));
       if (sort === "target") {
         const gap = (row) => { const { buy } = targetFor(row); return buy && row.price > 0 ? row.price / buy : Infinity; };
         rows = [...rows].sort((a, b) => gap(a) - gap(b));
@@ -1813,6 +1819,13 @@
         return el("span", { class: "target-text", title: detail, text: r.loose_value ? `${money(r.loose_value)} for ${packs(r.pack_count)}${star}` : r.pack_count ? `${packs(r.pack_count)}${star}` : "—" });
       }
       if (list.key === "budget") return el("span", { class: "target-text", text: Number.isFinite(row.raw.budget_share_pct) ? `${Math.round(row.raw.budget_share_pct)}%` : "—" });
+      if (list.days) {
+        // How long the card has qualified: Confirmed Movers' bullish streak, Consistent Movers'
+        // days above the 30-day average (since cross_date, shown on hover).
+        const days = Number(row.raw[list.days]);
+        const since = row.raw.cross_date ? `Above its 30-day average since ${row.raw.cross_date}` : "";
+        return el("span", { class: "target-text", title: since, text: Number.isFinite(days) ? `${days} day${days === 1 ? "" : "s"}` : "—" });
+      }
       return el("span", { text: "" });
     }
     // ---------- sealed deals and budget builder controls ----------

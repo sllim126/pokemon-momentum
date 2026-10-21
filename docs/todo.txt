@@ -36,6 +36,9 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-21 Confirmed Movers and Consistent Movers show how many days each card has been in
+  the list again (bullish streak / days above the 30-day average, with the start date on
+  hover) and can sort by it.
 - 2026-10-21 Binder Art Maker at /binder-art (Learn menu, Collector Hub): free tool that cuts one
   picture into Pokémon-card-size pieces for a 2×2 to 4×4 binder page (or a two-page spread),
   with an optional set logo from the site's logo files; print PDF with cut marks or PNGs.
