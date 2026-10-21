@@ -239,7 +239,7 @@
       .grid {
         margin-top: 18px;
         display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
+        grid-template-columns: repeat(var(--cols, 6), minmax(0, 1fr));
         gap: 10px;
       }
 
@@ -501,10 +501,33 @@
           align-items: start;
         }
 
-        .grid {
+        /* Phones: a 6 x 6 page shows 3 pockets per row (smaller pages keep their own columns),
+           the header shrinks and the page list becomes one strip you swipe sideways, so the
+           cards start near the top. */
+        .grid[data-size="36"] {
           grid-template-columns: repeat(3, minmax(0, 1fr));
         }
+        .hero > p, .price-panel > p, .sidebar-header { display: none; }
+        /* Keep three numbers on phones: overall progress, owned value, missing value. */
+        .layout > * { min-width: 0; }
+        .hero { padding: 14px; }
+        .summary-grid { grid-template-columns: 1fr; gap: 8px; margin-top: 0; }
+        .summary-grid > :not(:first-child),
+        .price-grid > :nth-child(n + 3),
+        .price-panel > .eyebrow,
+        .price-panel > .controls,
+        .summary-card .subvalue { display: none; }
+        .price-panel { margin-top: 8px; padding: 0; border: 0; background: none; }
+        .price-grid { grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 0; }
+        .hero h1 { font-size: 28px; margin: 4px 0 10px; }
+        .layout { margin-top: 10px; gap: 10px; }
+        .page-list { display: flex; gap: 8px; overflow-x: auto; max-height: none; padding-bottom: 6px; scroll-snap-type: x proximity; }
+        .page-button { flex: 0 0 auto; min-width: 128px; scroll-snap-align: start; margin: 0; }
+        .viewer-head h2 { margin: 0; }
+        .legend { display: none; }
       }
+      .size-picker { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+      .size-picker select { font: inherit; padding: 4px 8px; border-radius: 8px; }
     </style>
   </head>
   <body>
@@ -513,7 +536,7 @@
         <div class="eyebrow">Avatar x Magic</div>
         <h1>ATLA Binder Layout Planner</h1>
         <p>
-          Master-set planner for a 6 x 6 pocket binder. Cards are grouped as side-by-side pairs with non-foil on the
+          Master-set planner for a pocket binder (6 x 6 by default; 4 x 4, 4 x 3 or 3 x 3 from the menu). Cards are grouped as side-by-side pairs with non-foil on the
           left and foil on the right, starting with TLA and then moving through TLE, promos, tokens, and inserts.
           Only officially confirmed printings and finishes reserve space. If a card image exists locally, the slot will
           show it. If not, the slot stays as a clean numbered placeholder.
@@ -554,7 +577,17 @@
               <p id="pageSubtitle"></p>
               <div class="section-chip" id="pageChip"></div>
             </div>
-            <div class="path-text" id="pageRange"></div>
+            <div>
+              <label class="size-picker">Binder page
+                <select id="pageSize">
+                  <option value="36">6 × 6</option>
+                  <option value="16">4 × 4</option>
+                  <option value="12">4 × 3</option>
+                  <option value="9">3 × 3</option>
+                </select>
+              </label>
+              <div class="path-text" id="pageRange"></div>
+            </div>
           </div>
 
           <div class="grid" id="pageGrid"></div>
@@ -656,11 +689,24 @@
     <script src="./cards/image-manifest.js"></script>
     <script>
       // Layout constants:
-      // - PAGE_SIZE is the total binder pockets shown on one 6x6 page.
-      // - PAIRS_PER_PAGE is how many card-number groups fit when each group may
-      //   consume up to two pockets (non-foil on the left, foil on the right).
-      const PAGE_SIZE = 36;
-      const PAIRS_PER_PAGE = PAGE_SIZE / 2;
+      // - PAGE_SIZE is the binder pockets on one page: 6 x 6 (36, the default), 4 x 4 (16),
+      //   4 x 3 (12) or 3 x 3 (9), chosen with the "Binder page" menu and saved in this browser.
+      //   Changing it rebuilds the pages (owned cards are tracked per card, not per pocket, so
+      //   nothing is lost). PAGE_COLUMNS gives the pockets per row for each size.
+      // - Each card number takes up to two pockets (non-foil, then foil); with 3 columns a pair
+      //   can wrap onto the next row, but the order never changes.
+      const PAGE_SIZES = [36, 16, 12, 9];
+      const PAGE_COLUMNS = { 36: 6, 16: 4, 12: 4, 9: 3 };
+      const SIZE_STORAGE_KEY = "atla-binder-size-v1";
+      const JUMP_STORAGE_KEY = "atla-binder-jump-v1";
+      const PAGE_SIZE = (() => {
+        try {
+          const saved = Number(JSON.parse(window.localStorage.getItem(SIZE_STORAGE_KEY)));
+          return PAGE_SIZES.includes(saved) ? saved : 36;
+        } catch {
+          return 36;
+        }
+      })();
       const NUMBERED_SETS = new Set(["tla", "tle"]);
       const LOCAL_IMAGES = window.ATLA_LOCAL_IMAGES instanceof Set ? window.ATLA_LOCAL_IMAGES : new Set();
 
@@ -861,12 +907,12 @@
       // - layoutMode: copied from the section so the UI can describe the page
       // - rangeStart/rangeEnd: entry numbers represented on that page
       // - entries: original entry objects on the page
-      // - slots: exactly 36 pocket objects for rendering
+      // - slots: exactly PAGE_SIZE pocket objects for rendering
       //
       // Paired and mixed sections always expand to two pockets per entry, so
       // packing a page greedily is equivalent to slicing 18 entries at a time.
       // Pages are padded with explicit empty pockets so the renderer can always
-      // draw a stable 6x6 grid.
+      // draw a stable grid at the chosen page size.
       function buildPages() {
         const pages = [];
 
@@ -990,6 +1036,13 @@
       let ownedMap = loadOwnedMap();
       let priceState = loadPriceState();
       let selectedPage = clampPage(Number(readStorage(PAGE_STORAGE_KEY, 1)));
+      // After a page-size change, open the page holding the card that was first on screen.
+      const jumpKey = readStorage(JUMP_STORAGE_KEY, null);
+      if (jumpKey) {
+        const found = pages.find((page) => page.slots.some((slot) => slot.filled && slotKey(slot) === jumpKey));
+        if (found) selectedPage = found.pageNumber;
+        writeStorage(JUMP_STORAGE_KEY, null);
+      }
 
       function clampPage(value) {
         return Number.isInteger(value) && value >= 1 && value <= pages.length ? value : 1;
@@ -1251,7 +1304,12 @@
 
       // Keeps the active button visible inside the sidebar list only;
       // scrollIntoView would also scroll the window.
+      // Keeps the active page button visible: sideways in the phone strip, up/down otherwise.
       function scrollPageListTo(button) {
+        if (pageListEl.scrollWidth > pageListEl.clientWidth) {
+          button.scrollIntoView({ block: "nearest", inline: "nearest" });
+          return;
+        }
         const top = button.offsetTop;
         const bottom = top + button.offsetHeight;
         if (top < pageListEl.scrollTop) {
@@ -1346,7 +1404,7 @@
       // Responsibilities:
       // - update page header/meta text
       // - update prev/next button enabled state
-      // - render the 36 grid pockets
+      // - render the page's pockets (PAGE_SIZE of them)
       // - kick off async (cached) image loading for filled pockets
       function renderSelectedPage() {
         const page = currentPage();
@@ -1360,6 +1418,8 @@
         prevPageEl.disabled = page.pageNumber === 1;
         nextPageEl.disabled = page.pageNumber === pages.length;
 
+        pageGridEl.dataset.size = String(PAGE_SIZE);
+        pageGridEl.style.setProperty("--cols", String(PAGE_COLUMNS[PAGE_SIZE]));
         pageGridEl.innerHTML = page.slots.map(renderSlot).join("");
 
         pageGridEl.querySelectorAll("[data-index]").forEach((el) => {
@@ -1508,9 +1568,24 @@
         refreshOwnership();
       }
 
+      // Binder page size: save it, remember the first card on screen, and rebuild.
+      const pageSizeEl = document.getElementById("pageSize");
+      pageSizeEl.value = String(PAGE_SIZE);
+      pageSizeEl.addEventListener("change", () => {
+        const first = currentPage().slots.find((slot) => slot.filled);
+        writeStorage(JUMP_STORAGE_KEY, first ? slotKey(first) : null);
+        writeStorage(SIZE_STORAGE_KEY, Number(pageSizeEl.value));
+        window.location.reload();
+      });
+
       pageListEl.addEventListener("click", (event) => {
         const button = event.target.closest("[data-page]");
-        if (button) goToPage(Number(button.dataset.page));
+        if (!button) return;
+        goToPage(Number(button.dataset.page));
+        // On phones the grid sits below the strip; bring it into view after a tap.
+        if (window.matchMedia("(max-width: 760px)").matches) {
+          pageGridEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
       });
 
       // One delegated handler covers every pocket on every page.
