@@ -255,6 +255,8 @@
     .layout.full-card .detail-head img { width: 150px; height: 209px; cursor: default; }
     .layout.full-card .chart { height: 320px; }
     @media (max-width: 1500px) { .layout.full-card { grid-template-columns: 200px minmax(0, 1fr); } }
+    td.hit-link { cursor: zoom-in; }
+    td.hit-link:hover .card-name { text-decoration: underline; }
     .full-extra { border-top: 1px solid var(--line); padding: 14px 18px; display: grid; gap: 16px; }
     .full-extra[hidden] { display: none; }
     .full-extra h3 { margin: 0 0 8px; font-size: 14px; }
@@ -1583,12 +1585,20 @@
           el("td", { class: "right num", text: String(r.card_count ?? "—") }),
           el("td", { class: "right num", text: money(Number(r.total_set_cost)) }),
           el("td", { class: "right num", text: `${money(Number(r.avg_card_price))} / ${money(Number(r.median_card_price))}` }),
-          el("td", {}, el("div", { class: "hit-cell" }, hitImage, el("div", { style: "min-width:0" },
+          el("td", { class: r.top_hit_product_id ? "hit-link" : "", title: r.top_hit_product_id ? "Open this card" : "" }, el("div", { class: "hit-cell" }, hitImage, el("div", { style: "min-width:0" },
             el("div", { class: "card-name", text: r.top_hit_name || "—", title: r.top_hit_name || "" }),
             el("div", { class: "card-meta", text: `${money(Number(r.top_hit_price))} · ${share(r.top_hit_share_pct)} of the set` })))),
           el("td", { class: "right num", text: share(r.top3_share_pct) }),
           el("td", { class: "right num", title: "Higher means the value is spread across more cards instead of a few chase cards.", text: Number.isFinite(Number(r.depth_score)) ? String(Math.round(r.depth_score)) : "—" }));
-        tr.addEventListener("click", () => openSet(r.groupId, r.groupName, "set_values"));
+        // Clicking the top hit opens that card's full page; anywhere else in the row opens the set.
+        tr.addEventListener("click", async (event) => {
+          if (r.top_hit_product_id && event.target.closest(".hit-link")) {
+            await loadCardByKey(`${r.top_hit_product_id}||${r.top_hit_sub_type || ""}`);
+            if (state.selected) setFullCard(true);
+            return;
+          }
+          openSet(r.groupId, r.groupName, "set_values");
+        });
         return tr;
       }));
       const empty = $("resultsEmpty");

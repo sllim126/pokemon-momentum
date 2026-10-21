@@ -6184,6 +6184,8 @@ def set_baskets(
             MAX(CASE WHEN r.rn = 1 THEN r.productName END) AS top_hit_name,
             MAX(CASE WHEN r.rn = 1 THEN r.imageUrl END) AS top_hit_image,
             MAX(CASE WHEN r.rn = 1 THEN r.latest_price END) AS top_hit_price,
+            MAX(CASE WHEN r.rn = 1 THEN r.productId END) AS top_hit_product_id,
+            MAX(CASE WHEN r.rn = 1 THEN r.subTypeName END) AS top_hit_sub_type,
             SUM(CASE WHEN r.rn <= 3 THEN r.latest_price ELSE 0 END) AS top3_price
         FROM ranked r
         GROUP BY r.groupId
@@ -6199,6 +6201,8 @@ def set_baskets(
         a.top_hit_name,
         a.top_hit_image,
         a.top_hit_price,
+        a.top_hit_product_id,
+        a.top_hit_sub_type,
         (a.top_hit_price / NULLIF(a.total_set_cost, 0)) * 100.0 AS top_hit_share_pct,
         (a.top3_price / NULLIF(a.total_set_cost, 0)) * 100.0 AS top3_share_pct,
         -- Lower concentration means the set's value is spread more broadly across the checklist.
