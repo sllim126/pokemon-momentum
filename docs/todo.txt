@@ -105,6 +105,14 @@ High Priority
   with an API; Squarespace Domains has none). Until then: after any outage, compare
   `curl -s https://api.ipify.org` with the answer from
   `https://dns.google/resolve?name=market.poke6s.com&type=A` (local dig is cached).
+- [idea] User testing of the desktop app, including touch screens (owner, 2026-10-21). Touch
+  laptops get the desktop app (phones and tablets get the mobile page), and several things there
+  rely on a mouse: double-click a picture for the full card page (the "Full data" button is the
+  touch alternative), hover-only details (loose-pack breakdown on Sealed Deals, cross date on
+  Consistent Movers, set-value tips). Ask a few Discord members to try set tasks ("find a card's
+  graded price", "compare a box with loose packs") and note where they get stuck. Open question
+  from the same chat: should browser Back also step through lists and sets (today only the full
+  card page adds a history entry)? Decide after testing.
 - [idea] Weekly Discord posts follow-ups: Japanese picks too; group Whole-set Dips by set; skip
   odd-sale spikes once the odd-sale cleanup exists (today the spotlight needs 6+ price changes
   and under +100% in 30 days, and skips sealed product and Energy cards).
