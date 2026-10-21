@@ -17,6 +17,7 @@ Status tags used below:
   [planned]      agreed, not started
   [parked]       on hold on purpose; do not start without asking the owner
   [idea]         not agreed yet; raise it with the owner before building
+  [watching]     live; no work planned, but watch #bug-reports and fix what comes in
 
 When you finish an item, move it to Recently Completed with the date and commit, then
 archive older Recently Completed entries at the next milestone.
@@ -50,6 +51,24 @@ Recently Completed
 High Priority
 -------------
 
+- [next] Touchscreen and iPad pass (owner, 2026-10-21; before the Nov 1 launch). Use the
+  desktop app and the desktop pages on an iPad (1024 and 1180 px wide, portrait and landscape)
+  and a touchscreen laptop: things that only work on hover (tooltips, menus, chart readouts),
+  tap targets under ~40 px, drag and pinch (Binder Art preview, charts), and whether iPads
+  should get the desktop app or the mobile page (today they get mobile; see "iPad: a
+  dedicated analysis layout" under Parked). Write each finding here as its own item.
+- [next] Mobile interface testing (owner, 2026-10-21): run `docs/responsive_qa.md` at 390 and
+  768 px on real phones, link by link, and list what's broken. Testing only: the mobile
+  layout stays frozen, so each fix needs the owner's go-ahead (known issues are under
+  "Parked: Mobile and Admin").
+- [planned] Card scanning (owner, 2026-10-21; was "Camera / photo card lookup" under Deferred):
+  take a photo or use the camera to identify a card and open it in the app. Agree the approach
+  with the owner before building. Likely first version: read the collector number (e.g.
+  "123/191") and the name at the bottom of the card with OCR in the browser (tesseract.js is
+  already used on /supplier-pricing), match against the card catalogue, and show the top
+  matches to pick from. Image matching against the cached card images is a later step if OCR
+  isn't reliable enough. Camera access needs HTTPS (the site has it) and a photo-upload
+  fallback.
 - [in progress] Pullbacks trial week (live 2026-10-17; review with the owner ~2026-10-24).
   New rules in `query_support.build_pullback_sql` (constants PULLBACK_*), used by /good_buys,
   the new /set_dips ("Whole-set Dips" in the desktop app) and the screener snapshot's
@@ -106,8 +125,9 @@ High Priority
   after Cyber Monday (Dec 1) set it back to +0%. Six overpriced cards need a manual price (the
   skip-big-drops guard blocks the rules): Pikachu TG05 LP, Mawile EX MP, Klefki, Arven MP,
   Comfey GG14, Spewpa; three Japanese cards have no market price.
-- [idea] Binder Art Maker follow-ups: let visitors upload their own logo or text; a card-back
-  design; post the tool in Discord. Japanese set logos aren't in images/logos yet.
+- [watching] Binder Art Maker (/binder-art, live 2026-10-21). Fix bug reports as they come in.
+  Ideas if visitors ask: upload their own logo or text; a card-back design. Japanese set logos
+  aren't in images/logos yet.
 - [idea] Bulk pricing on TCGplayer (owner, 2026-10-19): the owner's bulk isn't selling. Other
   sellers list bulk at $0.01-0.05 and make their margin on the shipping charge (shipping costs
   them less than they charge), and buyers rarely pay for widely available bulk after the
@@ -419,7 +439,6 @@ Deferred / Not Now
 ------------------
 
 - High-resolution image support, until the fast-loading image flow isn't enough.
-- Camera / photo card lookup, after the main phone workflow settles.
 
 Profiling Notes (April 2026)
 ----------------------------
