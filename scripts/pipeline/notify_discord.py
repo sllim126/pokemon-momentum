@@ -121,11 +121,27 @@ def daily_update_summary(args: argparse.Namespace, lines: list[str]) -> tuple[st
     if any("store pricing coverage audit reported" in line for line in lines):
         fields.append({"name": "Store audit", "value": "⚠️ missing_unexpected SKUs (see log)", "inline": False})
 
+    # Steps that failed without stopping the run ("Warning: <step> failed (exit N); continuing"),
+    # e.g. the PriceCharting download: the run still exits 0, so flag them here or they go
+    # unnoticed (the expired PriceCharting token did, 2026-10-16 to 10-20). The step's own error
+    # line is shown too; download scripts never print URLs, so no token can leak into Discord.
+    failed_steps = []
+    for index, line in enumerate(lines):
+        match = re.match(r"^Warning: (.+?) failed \(exit \d+\)", line.strip())
+        if match:
+            reason = next((l.strip() for l in reversed(lines[max(0, index - 4):index])
+                           if "failed" in l.lower() and not l.startswith("---")), "")
+            failed_steps.append(f"• {match.group(1)}" + (f": {reason[:150]}" if reason else ""))
+    if failed_steps:
+        fields.append({"name": "Steps that failed (run continued)", "value": "\n".join(failed_steps)[:1000], "inline": False})
+
     if args.exit_code != 0:
         fields.append(error_field(lines))
         return f"❌ FAILED (exit {args.exit_code})", RED, fields
     if stale:
         return "⚠️ finished, but data is stale", ORANGE, fields
+    if failed_steps:
+        return "⚠️ finished, but a step failed", ORANGE, fields
     return "✅ succeeded", GREEN, fields
 
 

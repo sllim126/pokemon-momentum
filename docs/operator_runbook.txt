@@ -641,7 +641,8 @@ What the colors mean:
 
 - green: succeeded
 - orange: finished, but needs a look (nightly: a market's newest price is more than 2 days
-  old; price sync: some store updates were rejected)
+  old, or a step failed without stopping the run, such as the PriceCharting download, listed
+  with its error line; price sync: some store updates were rejected)
 - red: the job failed; the message quotes the last error lines from the log
 
 Orange and red messages mention `POKE6S_DISCORD_MENTION` (default `@everyone`; set it to

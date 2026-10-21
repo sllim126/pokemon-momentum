@@ -35,6 +35,9 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
+- 2026-10-21 PriceCharting download fixed (the .env token had an extra character; failed
+  2026-10-16 to 10-20, those days can't be recovered) and the nightly Discord message now turns
+  orange and pings when a step fails without stopping the run.
 - 2026-10-20 Weekly Discord posts every Friday 15:00 UTC (`post_weekly_discord.py`, adam's
   crontab): #what-should-i-buy, #market-talk, #set-breakdowns, #card-spotlight, built from the
   site's live data (owner chose the channels and Friday mornings).
