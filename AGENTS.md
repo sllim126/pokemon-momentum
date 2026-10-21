@@ -30,8 +30,9 @@ coding agent. Read this first, then `docs/todo.txt`.
     150 ms), and stop on HTTP 403 or 429.
   - PriceCharting: one CSV download a day, and every price shown links back to
     PriceCharting.
-- **Mobile is frozen.** Don't change the mobile layout (`/mobile` and the mobile handling
-  on `/`) without the owner's go-ahead.
+- **The old mobile page is frozen.** Don't change `/mobile` or the mobile handling on `/`
+  without the owner's go-ahead. Its replacement, the new mobile app at `/m-next`
+  (`docs/mobile_app_plan.md`), is being built with the owner's go-ahead (2026-10-21).
 - **Bug reports go to Discord** (`#bug-reports`). Don't add on-site bug forms to new pages.
 - **Documentation is part of the job.** A human must be able to review the code: comment
   the non-obvious parts and update the docs a change affects, in the same commit.

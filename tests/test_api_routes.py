@@ -221,6 +221,27 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Deal Checker", response.text)
 
+    def test_new_mobile_app_preview_opens_on_any_device(self):
+        # /m-next is the new mobile app's preview (docs/mobile_app_plan.md); it is not routed
+        # by user agent, so desktop and phone browsers both get it.
+        for agent in ("Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile"):
+            response = self.client.get("/m-next", headers={"user-agent": agent}, follow_redirects=False)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("text/html", response.headers["content-type"])
+            self.assertIn("mobile_app_plan.md", response.text)
+            self.assertIn("not financial advice", response.text)
+
+    def test_new_mobile_app_lists_match_desktop_lists(self):
+        # The phone lists reuse the desktop app's list keys (and so their API routes).
+        import re
+        dashboards = Path(__file__).resolve().parents[1] / "scripts" / "dashboards"
+        mobile = (dashboards / "mobile_app.html").read_text(encoding="utf-8")
+        desktop = (dashboards / "desktop_home.html").read_text(encoding="utf-8")
+        mobile_keys = re.findall(r'\{ key: "([a-z_0-9]+)", group:', mobile)
+        desktop_keys = set(re.findall(r'\{ key: "([a-z_0-9]+)", group:', desktop))
+        self.assertGreaterEqual(len(mobile_keys), 9)
+        self.assertEqual([k for k in mobile_keys if k not in desktop_keys], [])
+
     def test_sealed_deals_page_serves_html(self):
         response = self.client.get("/sealed-deals")
 

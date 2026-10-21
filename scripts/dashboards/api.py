@@ -118,6 +118,8 @@ SINGLE_LISTINGS_UPLOAD_HTML = SCRIPT_DIR / "single_listings_upload.html"
 SUPPLIER_PRICING_HTML = SCRIPT_DIR / "supplier_pricing.html"
 SUPPLIER_PROFITABILITY_HTML = SCRIPT_DIR / "supplier_profitability.html"
 MOBILE_DASHBOARD_HTML = SCRIPT_DIR / "mobile_dashboard.html"
+# New mobile app (plan: docs/mobile_app_plan.md), previewed at /m-next until it replaces /mobile.
+MOBILE_APP_HTML = SCRIPT_DIR / "mobile_app.html"
 MOBILE_REBUILD_HTML = SCRIPT_DIR / "mobile_rebuild_mockup.html"
 INDEX_OVERVIEW_HUB_HTML = SCRIPT_DIR / "index_overview_hub.html"
 INDEX_OVERVIEW_DETAIL_HTML = SCRIPT_DIR / "index_overview_detail.html"
@@ -961,6 +963,15 @@ def supplier_pricing_page(authorization: str | None = Header(default=None), trac
 def supplier_profitability_page(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
     require_admin_user(authorization=authorization, tracking_token=tracking_token)
     return FileResponse(SUPPLIER_PROFITABILITY_HTML)
+
+
+@app.get("/m-next")
+def mobile_app_preview():
+    """Preview of the new mobile app (docs/mobile_app_plan.md). Opens on any device, so it is
+    not routed by user agent; phones keep /mobile until the switch."""
+    response = FileResponse(MOBILE_APP_HTML)
+    response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 @app.get("/mobile-rebuild")

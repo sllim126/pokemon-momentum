@@ -28,8 +28,9 @@ Current Focus (2026-10-12)
 - Desktop: the single-page desktop app at `/` (desktop home since 2026-10-12) holds all five areas (Buy,
   Discover, Research, Track, Learn). Guide: `docs/desktop_app.md`. Collector Hub,
   Placeholder Library and Account share its style through `desktop_theme.css`.
-- Mobile (`/mobile` and the mobile handling on `/`) and the admin pages are parked. The
-  mobile layout must not change without the owner's go-ahead.
+- Mobile: a new mobile app is being built at `/m-next` (owner, 2026-10-21; plan, decisions and
+  inventory in `docs/mobile_app_plan.md`; work items under "New mobile app" below). The old
+  `/mobile` page stays frozen until the switch. Admin pages stay parked.
 - Bug reports go to the Discord `#bug-reports` channel. New pages get no on-site bug form.
 - Project map: `docs/project_status.md`. Operating steps: `docs/operator_runbook.txt`.
 
@@ -58,16 +59,45 @@ Recently Completed
 High Priority
 -------------
 
+New mobile app (owner, 2026-10-21). Plan: `docs/mobile_app_plan.md`. Built at `/m-next`
+(`scripts/dashboards/mobile_app.html`) next to the old `/mobile`, in the desktop app's look,
+fluid from phone portrait to tablet landscape. Stages: 1 rebuild (steps 1.1-1.6), 2 bigger
+screens, 3 refine, 4 camera/OCR.
+
+- [waiting] Owner: answer decisions 1-6 in `docs/mobile_app_plan.md` (feedback form, Alerts &
+  Targets, Time to Buy, Set Explorer, iPads, switch date), and try `/m-next` on the phone in
+  portrait and landscape after each step.
+- [in progress] 1.1 Framework (2026-10-21): header, search (cards only), English/Japanese,
+  Singles/Sealed, menu (sheet under 1100 px, rail above), the nine Discover lists with filter
+  and sort, card view with price, chart (30D/90D/1Y/All, touch readout) and TCGplayer link;
+  phone Back closes the card and the menu. Checked with Playwright on iPhone 13 Pro Max
+  (portrait/landscape) and iPad Pro 11 (both ways). Waiting on the owner's phone check.
+- [next] 1.2 Card view in full: Deal Checker, 6-Month Hold, Graded (PriceCharting link),
+  Stats, Targets, Save, Our store. Reuse desktop_home.html's code for each.
+- [planned] 1.3 My lists and sign-in; bottom tab bar on phones (Discover / Search / My lists /
+  Menu) once My lists exists.
+- [planned] 1.4 Research: Sets → one set (search results for sets open it), Pokémon, Market
+  Stats (indexes, set values).
+- [planned] 1.5 Buy (Sealed Deals, Budget Builder) and Learn (How it works).
+- [planned] 1.6 Switch: phones get the new app at `/` and `/mobile`; old page at
+  `/mobile-classic` for a few weeks, then delete it, `dashboard.html`,
+  `tests/test_dashboard_frontend.py` and `/mobile-rebuild`.
+- [planned] Stage 2: tune two-pane layouts for phone landscape (fold the scope bar into the
+  header to save height) and tablets; decide iPad routing.
+- [idea] Share the list definitions (LISTS) between desktop_home.html and mobile_app.html in
+  one script file, so a new list only needs adding once. Today they are copied; a test
+  (`test_new_mobile_app_lists_match_desktop_lists`) checks the phone keys exist on desktop.
+
 - [next] Touchscreen and iPad pass (owner, 2026-10-21; before the Nov 1 launch). Use the
   desktop app and the desktop pages on an iPad (1024 and 1180 px wide, portrait and landscape)
   and a touchscreen laptop: things that only work on hover (tooltips, menus, chart readouts),
   tap targets under ~40 px, drag and pinch (Binder Art preview, charts), and whether iPads
   should get the desktop app or the mobile page (today they get mobile; see "iPad: a
   dedicated analysis layout" under Parked). Write each finding here as its own item.
-- [next] Mobile interface testing (owner, 2026-10-21): run `docs/responsive_qa.md` at 390 and
-  768 px on real phones, link by link, and list what's broken. Testing only: the mobile
-  layout stays frozen, so each fix needs the owner's go-ahead (known issues are under
-  "Parked: Mobile and Admin").
+- [planned] Mobile interface testing (owner, 2026-10-21): now part of the new mobile app
+  (see "New mobile app" above). Test `/m-next` on real phones after each step instead of the
+  old `/mobile`, which is being replaced; known old-page issues are under "Parked: Mobile
+  and Admin".
 - [planned] Card scanning (owner, 2026-10-21; was "Camera / photo card lookup" under Deferred):
   take a photo or use the camera to identify a card and open it in the app. Agree the approach
   with the owner before building. Likely first version: read the collector number (e.g.
