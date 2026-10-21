@@ -284,6 +284,29 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Placeholder Library", response.text)
 
+    def test_binder_art_page_serves_html(self):
+        response = self.client.get("/binder-art")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/html", response.headers["content-type"])
+        self.assertIn("<h1>Binder Art Maker</h1>", response.text)
+
+    def test_binder_art_logos_merge_shared_files_and_point_at_real_images(self):
+        response = self.client.get("/binder-art/logos.json")
+
+        self.assertEqual(response.status_code, 200)
+        logos = response.json()["logos"]
+        if not logos:
+            self.skipTest("no set logos in images/logos")
+        names = [logo["name"] for logo in logos]
+        self.assertEqual(len(names), len(set(names)))
+        # POP Series 1-9 share one badge: one entry under the family name, after the dated sets.
+        self.assertIn("POP Series", names)
+        self.assertEqual(logos[-1]["year"], "")
+        dated_years = [logo["year"] for logo in logos if logo["year"]]
+        self.assertEqual(dated_years, sorted(dated_years, reverse=True))
+        self.assertEqual(self.client.get(logos[0]["url"]).status_code, 200)
+
     def test_collector_manifest_lists_resources(self):
         response = self.client.get("/collector-manifest")
 

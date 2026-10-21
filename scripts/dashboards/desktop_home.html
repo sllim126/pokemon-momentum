@@ -595,8 +595,8 @@
       { key: "early_uptrends", group: "Starting to move", label: "Early Movers", desc: "Just starting to trend up, still close to their base.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
       { key: "under_the_radar", group: "Starting to move", label: "Under the Radar", desc: "Quiet risers emerging from a flat base.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
       { key: "breakouts", group: "Starting to move", label: "Breakouts", desc: "Breaking above their 90-day high with recent activity.", price: "latest_price", change: "breakout_pct", changeLabel: "above 90-day high" },
-      { key: "good_buys", group: "Dipped", label: "Pullbacks", desc: "Going down while the market around them isn't: at least 10% below their 90-day high for a week or more, well behind cards of a similar price and behind their own set, yet still up over the year.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
-      { key: "set_dips", group: "Dipped", label: "Whole-set Dips", desc: "Cards that dipped like Pullbacks, but their whole set is falling with them: the set is cooling off, not just the card.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
+      { key: "good_buys", group: "Dipped", label: "Pullbacks", desc: "Cards falling faster than their own set: something specific to the card, so a possible bargain worth a closer look. Each is 10%+ below its 90-day high for a week, behind cards of a similar price and behind its set, yet still up over the year. Cards falling only as much as their set are in Whole-set Dips.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
+      { key: "set_dips", group: "Dipped", label: "Whole-set Dips", desc: "Cards on sale because their whole set is cooling off: they dropped like Pullbacks (10%+ below their 90-day high for a week), but about as much as their set did. A shopping list for sets you like; the set may keep sliding, so there is rarely a rush. Cards falling faster than their set are in Pullbacks.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
       { key: "sets", group: "Research", research: true, label: "Sets", desc: "Every set ranked by how broadly its cards are rising. Pick one to see its cards." },
       { key: "set", group: "Research", research: true, hidden: true, label: "Set", desc: "" },
       { key: "species", group: "Research", research: true, label: "Pokémon", desc: "Every printing of a Pokémon across all sets." },
@@ -643,7 +643,7 @@
     };
     const SPECIES_SUGGESTIONS = ["Charizard", "Pikachu", "Umbreon", "Gengar", "Mew", "Rayquaza", "Lugia", "Eevee"];
     const GROUP_LINKS = {
-      Learn: [["Collector Hub", "/collector-hub"], ["Placeholder Library", "/placeholders"]],
+      Learn: [["Collector Hub", "/collector-hub"], ["Placeholder Library", "/placeholders"], ["Binder Art Maker", "/binder-art"]],
     };
     // The Top 151 indexes stand for the overall Pokémon market: pinned first in Market Stats.
     const OVERALL_INDEXES = new Set(["pokemon100", "jp_pokemon100"]);
@@ -1653,8 +1653,8 @@
           ["Early Movers", "Cards just starting to trend up, still close to where they started."],
           ["Under the Radar", "Quiet risers coming off a flat price."],
           ["Breakouts", "Cards pushing above their highest price of the last 90 days."],
-          ["Pullbacks", "What's going down while everything else goes up: cards at least 10% below their 90-day high for a week or more, doing clearly worse than cards of a similar price and than their own set, but still up over the year."],
-          ["Whole-set Dips", "Cards that dipped the same way, but their whole set is falling too, so it's the set cooling off rather than the card."],
+          ["Pullbacks", "Cards falling faster than their own set, while still up over the year: at least 10% below their 90-day high for a week or more, and clearly behind both cards of a similar price and the rest of their set. Something is specific to the card, so it may be a bargain (or a card-specific problem) worth a closer look."],
+          ["Whole-set Dips", "Cards that dipped the same way, but only about as much as their whole set: the set is cooling off (a reprint, fading hype), not the card. Use it as a shopping list for sets you like; the set may keep falling, so waiting usually costs nothing. Cards in a falling set that are not listed are holding their price, too cheap, or traded too rarely to judge."],
         ]),
         section("Checks on every card", "", [
           ["6-Month Hold", "Would buying today and selling in six months make money after fees? It adds TCGplayer's cut (about 13.25% + $0.30) and shipping ($1.25 under $35, tracked over $35, signature over $50), then looks at the trend and at every past six-month stretch. “Likely”, “Risky” or “Not a flip”. Type your own buy price to recheck it."],

@@ -641,7 +641,8 @@ What the colors mean:
 
 - green: succeeded
 - orange: finished, but needs a look (nightly: a market's newest price is more than 2 days
-  old; price sync: some store updates were rejected)
+  old, or a step failed without stopping the run, such as the PriceCharting download, listed
+  with its error line; price sync: some store updates were rejected)
 - red: the job failed; the message quotes the last error lines from the log
 
 Orange and red messages mention `POKE6S_DISCORD_MENTION` (default `@everyone`; set it to
@@ -940,6 +941,17 @@ message, and reacts with ✅. It skips bots, system messages and anything alread
   threads), Create Public Threads, Embed Links, Attach Files, Use Application Commands;
   Message Content intent on. No Administrator or moderation permissions.
 - the admin page escapes all report text, so a message can't run code in an admin session
+
+Weekly Discord posts (since 2026-10-20): every Friday at 15:00 UTC (adam's crontab, on the host)
+`scripts/utilities/post_weekly_discord.py` builds four posts from the site's own API
+(localhost:8001) and the bot posts them: #what-should-i-buy (sealed vs loose packs, top
+Pullbacks, $100 budget pull), #market-talk (indexes, sets cooling off, a question),
+#set-breakdowns (set of the week, rotating the 8 newest English sets) and #card-spotlight (card
+of the week, alternating Top Movers and Pullbacks, $50+, at least 6 price changes in 30 days,
+with PriceCharting graded prices linked back and the 6-Month Hold).
+- log: `logs/discord_weekly.log`; it posts once per ISO week (`data/discord_weekly_state.json`)
+- preview: `python3 scripts/utilities/post_weekly_discord.py --dry-run`; post again: `--force`
+- one post failing to build doesn't stop the others; the log says which
 
 
 Set explorer checks

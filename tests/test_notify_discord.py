@@ -23,3 +23,37 @@ class CollectSummaryTests(unittest.TestCase):
         self.assertIn("FAILED", status)
         self.assertEqual(color, notify_discord.RED)
         self.assertIn("ERROR 1: boom", fields[-1]["value"])
+
+
+class DailyUpdateWarningTests(unittest.TestCase):
+    """A step that fails without stopping the run turns the message orange (which pings)."""
+
+    def test_failed_step_is_flagged(self):
+        from datetime import datetime, timezone
+        from unittest.mock import patch
+
+        today = datetime.now(timezone.utc).date().isoformat()
+        lines = [
+            "=== Download PriceCharting graded prices ===",
+            "python scripts/download/fetch_pricecharting.py",
+            "PriceCharting download failed: HTTP 404, 21 bytes",
+            "--- exit=1 elapsed=2.3s ---",
+            "Warning: Download PriceCharting graded prices failed (exit 1); continuing with the last known metadata snapshot",
+            "Pipeline finished with warnings:",
+        ]
+        with patch.object(notify_discord, "read_health", return_value={"latest": today, "rows": "100"}):
+            status, color, fields = notify_discord.daily_update_summary(argparse.Namespace(exit_code=0), lines)
+        self.assertEqual(color, notify_discord.ORANGE)
+        self.assertIn("step failed", status)
+        flagged = next(f for f in fields if f["name"].startswith("Steps that failed"))
+        self.assertIn("Download PriceCharting graded prices", flagged["value"])
+        self.assertIn("HTTP 404", flagged["value"])
+
+    def test_clean_run_stays_green(self):
+        from datetime import datetime, timezone
+        from unittest.mock import patch
+
+        today = datetime.now(timezone.utc).date().isoformat()
+        with patch.object(notify_discord, "read_health", return_value={"latest": today, "rows": "100"}):
+            status, color, _ = notify_discord.daily_update_summary(argparse.Namespace(exit_code=0), ["Pipeline finished successfully."])
+        self.assertEqual(color, notify_discord.GREEN)

@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-19 (milestone: sealed pack counts, Japanese box sizes, Black Friday plan)
+Last updated: 2026-10-21 (milestone: Binder Art Maker)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -35,14 +35,17 @@ Current Focus (2026-10-12)
 Recently Completed
 ------------------
 
-- 2026-10-19 Japanese Sealed Deals box sizes confirmed with the owner: specialty (High Class)
-  sets 10 packs (Terastal Fest ex, VMAX Climax, Shiny Star V and Tag All Stars were
-  miscounted as 30; GX Ultra Shiny added too), 25th Anniversary Collection 16 (¥297/pack), MEGA
-  Expansion 30th Celebration 20 (¥360/pack), Dark Phantasma and Pokemon GO 20, Battle Region 10.
-- 2026-10-19 Sealed Deals uses the owner's checked pack counts (148 products from the
-  checklist) and prices collection boxes against the actual packs inside when the mix is
-  known: 92 of them now have a "vs loose packs" comparison. Counts without a listed mix
-  assume the product's own set (priced only for boxes, ETBs, bundles and similar).
+- 2026-10-21 Binder Art Maker at /binder-art (Learn menu, Collector Hub): free tool that cuts one
+  picture into Pokémon-card-size pieces for a 2×2 to 4×4 binder page (or a two-page spread),
+  with an optional set logo from the site's logo files; print PDF with cut marks or PNGs.
+  Started from a Discord request (MaxDosage, 2026-10-20).
+- 2026-10-21 PriceCharting download fixed (the .env token had an extra character; failed
+  2026-10-16 to 10-20, those days can't be recovered) and the nightly Discord message now turns
+  orange and pings when a step fails without stopping the run.
+- 2026-10-20 Weekly Discord posts every Friday 15:00 UTC (`post_weekly_discord.py`, adam's
+  crontab): #what-should-i-buy, #market-talk, #set-breakdowns, #card-spotlight, built from the
+  site's live data (owner chose the channels and Friday mornings).
+- 2026-10-20 Pullbacks and Whole-set Dips pages and How it works explain how the two lists differ.
 
 High Priority
 -------------
@@ -76,12 +79,9 @@ High Priority
   with an API; Squarespace Domains has none). Until then: after any outage, compare
   `curl -s https://api.ipify.org` with the answer from
   `https://dns.google/resolve?name=market.poke6s.com&type=A` (local dig is cached).
-- [waiting] Discord: automate #what-should-i-buy (and maybe #set-breakdowns / #card-spotlight)
-  posts from the site's data. Owner to choose how often (weekly suggested), which sections
-  (Pullbacks, Sealed Deals vs loose, Budget Builder, ...) and English only or English +
-  Japanese. The first hand-made posts went out 2026-10-16; their message ids are in
-  `data/discord_posts.json`, so the bot can edit them (e.g. keep #how-to-use-this-server
-  current). Skip vintage spikes until the spike filter exists.
+- [idea] Weekly Discord posts follow-ups: Japanese picks too; group Whole-set Dips by set; skip
+  odd-sale spikes once the odd-sale cleanup exists (today the spotlight needs 6+ price changes
+  and under +100% in 30 days, and skips sealed product and Energy cards).
 - [waiting] Confirm the remaining Japanese special-set box sizes (all counted as 30 packs):
   S3a Legendary Heartbeat, S5a Peerless Fighters, S6a Eevee Heroes, S11a Incandescent Arcana,
   SM5+ Ultra Force, SM7b Fairy Rise, SM8a Dark Order, SM10a GG End, SM10b Sky Legend, SM11a
@@ -106,6 +106,8 @@ High Priority
   after Cyber Monday (Dec 1) set it back to +0%. Six overpriced cards need a manual price (the
   skip-big-drops guard blocks the rules): Pikachu TG05 LP, Mawile EX MP, Klefki, Arven MP,
   Comfey GG14, Spewpa; three Japanese cards have no market price.
+- [idea] Binder Art Maker follow-ups: let visitors upload their own logo or text; a card-back
+  design; post the tool in Discord. Japanese set logos aren't in images/logos yet.
 - [idea] Bulk pricing on TCGplayer (owner, 2026-10-19): the owner's bulk isn't selling. Other
   sellers list bulk at $0.01-0.05 and make their margin on the shipping charge (shipping costs
   them less than they charge), and buyers rarely pay for widely available bulk after the
@@ -113,12 +115,30 @@ High Priority
   (sold prices, not market), and whether bulk is better sold as lots. The MassPrice under-$1
   rule (market, min $0.10) is probably too high for this.
 
-- [waiting] Backfill history when TCGCSV brings its daily archive back (CptSpaceToaster in the
-  TCGCSV Discord, 2026-10-17: plan on November 1; archive syncs are "one and no more": pull the
-  archive once, never again after 24 hours). Then download the missing days for Pokemon (the
-  2026-09-16 to 10-07 gap) and as far back as is useful for the collected games. A full
-  1-to-1 copy of TCGCSV is possible but large (94 categories); ask TCGCSV (their Discord)
-  before any bulk download, keep the 150 ms spacing, and stop on 403/429.
+- [planned] Nov 1, 2026: full offsite copy of TCGCSV when the price archive returns (owner,
+  2026-10-19; storage is not a constraint, more can be added or a network share used).
+  CptSpaceToaster plans the archive for Nov 1; archive syncs are "one and no more".
+  1. Tell CptSpaceToaster first (it is effectively a mirror; ties in with the owner's torrent
+     offer) and confirm a daily single-file archive pull is fine.
+  2. Day 1: download every daily archive file since Feb 2024 once (~1,000 files, ~1 GB, all
+     games, prices only); keep them compressed, verify each, never re-pull the set.
+  3. Backfill Pokemon (English + Japanese) from it, including the 2026-09-16 to 10-07 gap; other
+     games stay compressed until needed. Then build the odd-sale cleanup on the full history.
+  4. Catalogue for all ~94 games (groups + products + current prices; not in the archive):
+     ~6,000-10,000 groups, ~12,000-20,000 requests, so spread over 2-4 nights at ~5,000 a night
+     next to the normal ~1,900, keeping the 10,000/day limit, 150 ms spacing, stop on 403/429.
+  5. Ongoing: if confirmed, switch daily prices to the one archive file per day (lighter on
+     TCGCSV than ~1,900 per-group requests); refresh the catalogue weekly.
+  Priority order (owner, 2026-10-19), for unpacking/backfill and for the catalogue nights:
+  (a) Pokemon English history and the gap, (b) Pokemon Japanese, (c) the games already
+  collected (Magic, Yu-Gi-Oh, One Piece, Lorcana), (d) every other game. Each archive file holds
+  all games at once, so the history download itself is one step (no separate history download
+  is ever needed for Magic, Yu-Gi-Oh, One Piece, Lorcana or any other game; the other-games
+  collector keeps running until the daily archive file replaces it); the order applies to what is
+  unpacked and loaded first, and to the catalogue fetch. Aim for ~5,500 extra requests a night
+  (total with the normal ~1,900 stays under 10,000); night 1 starts with categories + groups
+  (~95 requests) to get the exact count and plan the remaining nights.
+  Ask TCGCSV (their Discord) before any bulk download beyond this plan.
 - [idea] Help TCGCSV by seeding a torrent of the price archive (owner offered in the TCGCSV
   Discord #development, 2026-10-19; CptSpaceToaster can't torrent and said "hopefully some
   enterprising folks" would). Archive is about 1 GB, all categories, prices only. Before
