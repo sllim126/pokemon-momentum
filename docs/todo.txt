@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-19 (milestone: sealed pack counts, Japanese box sizes, Black Friday plan)
+Last updated: 2026-10-21 (milestone: Binder Art Maker)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -46,14 +46,6 @@ Recently Completed
   crontab): #what-should-i-buy, #market-talk, #set-breakdowns, #card-spotlight, built from the
   site's live data (owner chose the channels and Friday mornings).
 - 2026-10-20 Pullbacks and Whole-set Dips pages and How it works explain how the two lists differ.
-- 2026-10-19 Japanese Sealed Deals box sizes confirmed with the owner: specialty (High Class)
-  sets 10 packs (Terastal Fest ex, VMAX Climax, Shiny Star V and Tag All Stars were
-  miscounted as 30; GX Ultra Shiny added too), 25th Anniversary Collection 16 (¥297/pack), MEGA
-  Expansion 30th Celebration 20 (¥360/pack), Dark Phantasma and Pokemon GO 20, Battle Region 10.
-- 2026-10-19 Sealed Deals uses the owner's checked pack counts (148 products from the
-  checklist) and prices collection boxes against the actual packs inside when the mix is
-  known: 92 of them now have a "vs loose packs" comparison. Counts without a listed mix
-  assume the product's own set (priced only for boxes, ETBs, bundles and similar).
 
 High Priority
 -------------

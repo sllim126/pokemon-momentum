@@ -7,6 +7,15 @@ Archived Completed Work
 October 2026 (archived 2026-10-12, when todo.txt was rewritten as the main action list)
 ----------------------------------------------------------------------------------------
 
+- Completed and archived at the 2026-10-21 milestone:
+  - 2026-10-19 Japanese Sealed Deals box sizes confirmed with the owner: specialty (High Class)
+    sets 10 packs (Terastal Fest ex, VMAX Climax, Shiny Star V and Tag All Stars were
+    miscounted as 30; GX Ultra Shiny added too), 25th Anniversary Collection 16 (¥297/pack), MEGA
+    Expansion 30th Celebration 20 (¥360/pack), Dark Phantasma and Pokemon GO 20, Battle Region 10.
+  - 2026-10-19 Sealed Deals uses the owner's checked pack counts (148 products from the
+    checklist) and prices collection boxes against the actual packs inside when the mix is
+    known: 92 of them now have a "vs loose packs" comparison. Counts without a listed mix
+    assume the product's own set (priced only for boxes, ETBs, bundles and similar).
 - Completed and archived at the 2026-10-18 milestone:
   - 2026-10-15 Other-games archive moved from cron to the systemd timer
     `pokemon-momentum-tcgcsv-collect.timer` (03:30 UTC, catches up after downtime); the cron
