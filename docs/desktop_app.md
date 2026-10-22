@@ -49,6 +49,9 @@ loaded underneath. See `setFullCard()` and `loadFullExtra()`.
 
 The page itself never scrolls; each column scrolls on its own. It is checked at 1920×1080,
 1366×768 and 1280×720. Below 1500 px wide the trend column hides and spacing tightens.
+Below 1100 px wide (an iPad in portrait) the left column folds into a "☰ Lists" button in the
+toolbar that opens it as a panel over the page; the price date and the "/" hint hide, card
+names wrap to two lines, and the card's buttons wrap. Checked at 768×1024 and 820×1180.
 
 ## Views
 
