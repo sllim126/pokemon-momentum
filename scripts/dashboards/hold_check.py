@@ -175,6 +175,10 @@ def hold_check(history, buy_price: float | None, channel: Channel, horizon: int 
         "buy_price": round(buy, 2),
         "break_even_price": round(be, 2),
         "break_even_pct": round((be / buy - 1) * 100, 1),
+        # Selling today instead of holding: what a sale at market leaves after fees and
+        # shipping, and the profit (or loss) on the buy price. The phone Deal Checker uses these.
+        "net_at_market": round(net_proceeds(latest_price, channel), 2),
+        "profit_now": round(net_proceeds(latest_price, channel) - buy, 2),
         "trend_points": trend["points"] if trend else 0,
         "trend_pct_per_30d": round(trend["pct_per_30d"], 1) if trend else None,
         "trend_fit_r2": round(trend["r2"], 2) if trend else None,

@@ -110,6 +110,8 @@
     .search-item small { color: var(--muted); }
     .search-item .num { flex: 0 0 auto; font-weight: 700; }
     .search-empty { padding: 12px; color: var(--muted); }
+    /* One pane on the home screen: its own big search box replaces the header's. */
+    @media (max-width: 699px) { body.on-home:not(.card-open) .top .search { visibility: hidden; } }
     /* On narrow phones the name hides so the search box gets the room. */
     @media (max-width: 479px) { .brand .name { display: none; } }
 
@@ -266,6 +268,58 @@
     .soon { margin-top: 18px; padding: 12px 14px; border: 1px dashed var(--line-strong); border-radius: 12px; color: var(--muted); font-size: 13px; }
     .empty-card { padding: 40px 20px; text-align: center; color: var(--muted); }
 
+    /* ---------- home: check a card ---------- */
+    .home { padding: 16px 14px calc(20px + var(--safe-b)); }
+    .home h1 { margin: 0; font-size: 24px; }
+    .home > p { margin: 4px 0 14px; color: var(--muted); }
+    .home .big-search input {
+      width: 100%;
+      height: 54px;
+      border-radius: 14px;
+      border: 1px solid rgba(77, 163, 255, 0.55);
+      background: var(--panel);
+      padding: 0 16px;
+      font-size: 17px;
+    }
+    .home .big-search input::placeholder { color: var(--faint); }
+    .home .hint { color: var(--faint); font-size: 12.5px; margin-top: 6px; }
+    .home h3 { margin: 22px 0 6px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+    .inline-results { margin-top: 8px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .inline-results:empty { display: none; }
+    .home .rows .row:first-child { border-top: 0; }
+    .home .recent { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .browse { display: flex; flex-wrap: wrap; gap: 8px; }
+    .browse button { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 8px 14px; min-height: 40px; }
+
+    /* ---------- deal box ---------- */
+    .printings { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .printings button { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 4px 10px; font-size: 12.5px; color: var(--muted); }
+    .printings button[aria-pressed="true"] { color: var(--text); border-color: rgba(77, 163, 255, 0.55); background: var(--accent-soft); }
+    .trust { margin-top: 6px; font-size: 12.5px; color: var(--muted); }
+    .trust.thin { color: var(--warn); }
+    .deal { margin-top: 16px; border: 1px solid var(--line-strong); border-radius: 16px; background: var(--panel); padding: 14px; }
+    .deal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .deal-head h3 { margin: 0; font-size: 16px; }
+    .ask { display: flex; align-items: center; margin-top: 12px; border: 1px solid rgba(77, 163, 255, 0.55); border-radius: 12px; background: var(--panel-3); padding: 0 14px; }
+    .ask span { font-size: 22px; color: var(--muted); }
+    .ask input { flex: 1; min-width: 0; height: 54px; border: 0; background: none; font-size: 24px; font-weight: 700; padding-left: 6px; outline: none; }
+    .ask input::placeholder { color: var(--faint); font-weight: 500; font-size: 18px; }
+    .verdict { margin-top: 12px; border-radius: 12px; padding: 12px 14px; background: var(--panel-2); }
+    .verdict strong { display: block; font-size: 20px; }
+    .verdict .offer { margin-top: 2px; font-size: 14px; color: var(--muted); }
+    .verdict .offer b { color: var(--text); font-size: 16px; }
+    .verdict.good { background: var(--good-soft); box-shadow: inset 0 0 0 1px rgba(61, 220, 151, 0.4); }
+    .verdict.good strong { color: var(--good); }
+    .verdict.fair { background: rgba(245, 185, 74, 0.12); box-shadow: inset 0 0 0 1px rgba(245, 185, 74, 0.4); }
+    .verdict.fair strong { color: var(--warn); }
+    .verdict.bad { background: var(--bad-soft); box-shadow: inset 0 0 0 1px rgba(255, 125, 125, 0.4); }
+    .verdict.bad strong { color: var(--bad); }
+    .reasons { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; }
+    .reasons li + li { margin-top: 4px; }
+    .reasons li.warn { color: var(--warn); }
+    .section-title { margin: 22px 0 4px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+    .hold-head { font-weight: 700; }
+
     /* ---------- footer ---------- */
     .legal {
       padding: 6px calc(12px + var(--safe-r)) calc(6px + var(--safe-b)) calc(12px + var(--safe-l));
@@ -290,7 +344,7 @@
     <button type="button" class="icon-btn" id="menuBtn" aria-label="Open menu" aria-controls="menu" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
     </button>
-    <a class="brand" href="/m-next"><img src="/images/Favidon.png" alt="" /><span class="name">Poke6s</span><span class="preview">Preview</span></a>
+    <a class="brand" href="/m-next" id="brandLink"><img src="/images/Favidon.png" alt="" /><span class="name">Poke6s</span><span class="preview">Preview</span></a>
     <div class="search">
       <input id="searchInput" type="search" placeholder="Search cards, sets, numbers" autocomplete="off" enterkeyhint="search" aria-label="Search" />
       <div class="search-results" id="searchResults" hidden></div>
@@ -312,6 +366,22 @@
   <div class="main">
     <nav class="menu" id="menu" aria-label="Lists"></nav>
     <section class="pane list-pane" aria-label="List">
+      <div class="home" id="homeView" hidden>
+        <h1>Check a card</h1>
+        <p>Search the card in front of you, then type the asking price.</p>
+        <div class="big-search">
+          <input id="homeSearch" type="search" placeholder="Name, set or number (e.g. 4/102)" autocomplete="off" enterkeyhint="search" aria-label="Search for the card" />
+        </div>
+        <div class="hint" id="homeHint">English singles. Switch market or Sealed above.</div>
+        <ul class="rows inline-results" id="homeResults"></ul>
+        <div id="recentWrap" hidden>
+          <h3>Recently checked</h3>
+          <ul class="rows recent" id="recentRows"></ul>
+        </div>
+        <h3>Or browse the market</h3>
+        <div class="browse" id="browseLinks"></div>
+      </div>
+      <div id="listView">
       <div class="list-head">
         <h1 id="listTitle">Top Movers <small id="listCount"></small></h1>
         <p id="listDesc"></p>
@@ -326,6 +396,7 @@
         </select>
       </div>
       <ul class="rows" id="rows"></ul>
+      </div>
     </section>
     <section class="pane card-pane" id="cardPane" aria-label="Selected card"></section>
   </div>
@@ -341,9 +412,11 @@
      * Poke6s Market, new mobile app (preview at /m-next). Plan, stages and the inventory of
      * the old phone page: docs/mobile_app_plan.md.
      *
-     * Step 1.1 (this version): menu, search, English/Japanese and Singles/Sealed, the Discover
-     * lists and a basic card view (price, chart, TCGplayer link). Later steps add the Deal
-     * Checker, 6-Month Hold, Graded, Save, My lists, Research, Buy and Learn views.
+     * The home screen is "Check a card" (the phone's main job: a card in front of you, is it a
+     * good buy?): a big search box and recently checked cards. The card screen leads with the
+     * Deal Checker (asking price → verdict and "pay up to"), then the price chart and the
+     * 6-Month Hold. The nine Discover lists are in the menu. Later steps add Graded, Save,
+     * My lists, Research, Buy and Learn.
      *
      * Layout follows the screen width, not the device (CSS above): one pane under 700px, list
      * and card side by side from 700px, plus a menu rail from 1100px.
@@ -351,10 +424,10 @@
      * History: on one-pane screens opening the card or the menu adds a history entry
      * ({m: "card"} / {m: "menu"}), so the phone's Back gesture closes it instead of leaving
      * the site. Everything else only rewrites the address (replaceState), so a link can be
-     * shared: ?list=, market=JP, kind=sealed, product=<productId||subType>.
+     * shared: ?list= (no list = Check a card), market=JP, kind=sealed, product=<productId||subType>.
      *
      * Data comes from the same endpoints as the desktop app (desktop_home.html):
-     * /<list key> ({columns, rows}), /search, /series, /health.
+     * /<list key> ({columns, rows}), /search, /series, /health, /card_details, /hold_check.
      */
 
     // Market lists. Same keys, fields and wording as LISTS in desktop_home.html; the API path
@@ -381,12 +454,29 @@
     ];
     const TCGPLAYER_AFFILIATE_BASE = "https://partner.tcgplayer.com/jR1OJb";
     const WINDOWS = [[30, "30D"], [90, "90D"], [365, "1Y"], [5000, "All"]];
+    // Deal Checker rules (see judgeDeal). Percentages compare the asking price with market.
+    const DEAL = {
+      keepBuyPct: 10,       // To keep: 10%+ under market is a buy...
+      keepFairPct: -5,      // ...up to 5% over market is fair; more is a pass
+      keepOfferPct: 0.9,    // "pay up to" for keeping: 90% of market
+      flipBuyMargin: 0.2,   // To resell: 20%+ profit after fees and shipping is a buy; 0-20% is thin
+      spikeVsAvgPct: 40,    // 40%+ above the 30-day average counts as a spike
+      fallingPct: -10,      // down 10%+ over 30 days counts as falling
+      thinDistinct: 3,      // under 3 different prices in 30 days: the market price is a rough guide
+      staleDays: 30,        // no price change for 30+ days: same
+    };
+    const RECENT_KEY = "pokemon-momentum-m-recent";  // last cards checked on this phone
+    const MODE_KEY = "pokemon-momentum-m-deal-mode";  // "keep" or "resell"
+    const readStore = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch (_err) { return fallback; } };
+    const writeStore = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch (_err) { /* private mode: fine */ } };
 
     const params = new URLSearchParams(location.search);
     const state = {
       market: params.get("market") === "JP" ? "JP" : "EN",
       kind: params.get("kind") === "sealed" ? "sealed" : "singles",
-      list: LISTS.some((l) => l.key === params.get("list")) ? params.get("list") : "top_movers",
+      // "check" is the home screen (Check a card); the rest are LISTS keys.
+      list: LISTS.some((l) => l.key === params.get("list")) ? params.get("list") : "check",
+      mode: readStore(MODE_KEY, "keep") === "resell" ? "resell" : "keep",
       productKey: params.get("product"),  // card to open once the list loads
       selected: null,
       days: 90,
@@ -458,7 +548,7 @@
       url.search = "";
       if (state.market !== "EN") url.searchParams.set("market", state.market);
       if (state.kind !== "singles") url.searchParams.set("kind", state.kind);
-      if (state.list !== "top_movers") url.searchParams.set("list", state.list);
+      if (state.list !== "check") url.searchParams.set("list", state.list);
       if (state.selected) url.searchParams.set("product", state.selected.key);
       history.replaceState(history.state, "", url);
     }
@@ -470,7 +560,9 @@
       $("cardPane").scrollTop = 0;
     }
     function closeCardScreen() {
+      if (!document.body.classList.contains("card-open")) return;
       document.body.classList.remove("card-open");
+      if (state.list === "check") renderHome();  // refresh "Recently checked"
     }
     function openMenu() {
       if (railMenu.matches) return;
@@ -511,7 +603,12 @@
     // ---------- menu ----------
     function renderMenu() {
       const groups = [...new Set(LISTS.map((l) => l.group))];
-      const nodes = [];
+      const check = el("button", { type: "button", "data-list": "check", "aria-current": String(state.list === "check") }, el("span", { text: "Check a card" }));
+      check.addEventListener("click", () => {
+        if (document.body.classList.contains("menu-open")) goBackFrom("menu", () => openList("check"));
+        else openList("check");
+      });
+      const nodes = [el("h4", { text: "At the table" }), check];
       for (const group of groups) {
         nodes.push(el("h4", { text: group }));
         for (const list of LISTS.filter((l) => l.group === group)) {
@@ -599,8 +696,18 @@
       loadList();
     }
     async function loadList() {
-      const list = currentList();
       const seq = ++listSeq;
+      const home = state.list === "check";
+      document.body.classList.toggle("on-home", home);
+      $("homeView").hidden = !home;
+      $("listView").hidden = home;
+      if (home) {
+        renderHome();
+        syncUrl();
+        if (state.productKey) openProductFromLink(state.productKey);
+        return;
+      }
+      const list = currentList();
       $("listTitle").firstChild.textContent = `${list.label} `;
       $("listCount").textContent = "";
       renderDesc(list, false);
@@ -622,6 +729,61 @@
         $("rows").replaceChildren(el("li", { class: "note", text: "Couldn't load this list. Check your connection and try again." }));
       }
     }
+    // A shared link on the home screen names a product but no list: look it up by id.
+    async function openProductFromLink(key) {
+      state.productKey = null;
+      const [productId, subTypeName] = key.split("||");
+      try {
+        const data = await getJson(`/card_details?${new URLSearchParams({ productId, subTypeName, category_id: String(categoryId()) })}`);
+        const c = data.card;
+        if (!c) return;
+        selectCard({ key, productId: c.productId, subTypeName: c.subTypeName || "", name: c.productName, set: c.groupName || "", number: c.number || "",
+          rarity: c.rarity || "", imageUrl: c.imageUrl || "", productKind: c.productKind || productKind(), price: Number(c.latest_price), change: NaN }, { open: true });
+      } catch (_err) { /* bad or old link: stay on the home screen */ }
+    }
+    // ---------- home: check a card ----------
+    function renderHome() {
+      $("homeHint").textContent = `${state.market === "JP" ? "Japanese" : "English"} ${state.kind === "sealed" ? "sealed products" : "singles"}. Switch above to search the others.`;
+      const recent = readStore(RECENT_KEY, []).filter((c) => c.market === state.market);
+      $("recentWrap").hidden = !recent.length;
+      $("recentRows").replaceChildren(...recent.map((c) => cardRow(c, () => selectCard(c, { open: true }))));
+      $("browseLinks").replaceChildren(...LISTS.slice(0, 9).map((l) => {
+        const button = el("button", { type: "button", text: l.label });
+        button.addEventListener("click", () => openList(l.key));
+        return button;
+      }));
+      if (!twoPane.matches) return;
+      if (!state.selected) renderCard();
+    }
+    function rememberRecent(card) {
+      const entry = { key: card.key, productId: card.productId, subTypeName: card.subTypeName, name: card.name, set: card.set, number: card.number,
+        rarity: card.rarity, imageUrl: card.imageUrl, productKind: card.productKind, price: card.price, change: NaN, market: state.market };
+      const list = readStore(RECENT_KEY, []).filter((c) => !(c.key === card.key && c.market === state.market));
+      writeStore(RECENT_KEY, [entry, ...list].slice(0, 12));
+    }
+    let homeTimer = null;
+    let homeSeq = 0;
+    $("homeSearch").addEventListener("input", () => {
+      clearTimeout(homeTimer);
+      homeTimer = setTimeout(async () => {
+        const query = $("homeSearch").value.trim();
+        const seq = ++homeSeq;
+        if (query.length < 2) { $("homeResults").replaceChildren(); return; }
+        try {
+          const data = await searchProducts(query);
+          if (seq !== homeSeq) return;
+          $("homeResults").replaceChildren(...(data.items.length
+            ? data.items.map((item) => cardRow(searchItemCard(item), () => { $("homeSearch").blur(); selectCard(searchItemCard(item), { open: true }); }))
+            : [el("li", { class: "note", text: data.didYouMean ? `No exact match. Did you mean ${data.didYouMean}?` : "No matches. Try the set name or the card number." })]));
+        } catch (_err) {
+          if (seq === homeSeq) $("homeResults").replaceChildren(el("li", { class: "note", text: "Search failed. Check your connection." }));
+        }
+      }, 220);
+    });
+    $("homeSearch").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") { event.preventDefault(); $("homeResults").querySelector(".row")?.click(); }
+    });
+
     // Long descriptions show their first sentence, with "More" for the rest.
     function renderDesc(list, expanded) {
       const desc = list.desc;
@@ -653,19 +815,21 @@
         return;
       }
       // Rows are drawn in batches so a 200-card list doesn't hold up the first paint.
-      const make = (row) => {
-        const image = row.imageUrl ? el("img", { src: row.imageUrl, alt: "", loading: "lazy", decoding: "async" }) : el("div", { class: "ph" });
-        const meta = [row.set, row.number, row.subTypeName].filter(Boolean).join(" · ");
-        const button = el("button", { type: "button", class: "row", "data-key": row.key, "aria-current": String(state.selected?.key === row.key) },
-          image,
-          el("span", {}, el("span", { class: "name", text: row.name }), el("span", { class: "meta", text: meta })),
-          el("span", { class: "nums" }, el("span", { class: "price", text: money(row.price) }), changePill(row.change)));
-        button.addEventListener("click", () => selectCard(row, { open: true }));
-        return el("li", {}, button);
-      };
+      const make = (row) => cardRow(row, () => selectCard(row, { open: true }));
       $("rows").replaceChildren(...rows.slice(0, 60).map(make));
       if (rows.length > 60) requestAnimationFrame(() => $("rows").append(...rows.slice(60).map(make)));
       $("rows").title = `Change: ${list.changeLabel}`;
+    }
+    // One card as a tappable row (lists, search results on the home screen, recent checks).
+    function cardRow(row, onTap) {
+      const image = row.imageUrl ? el("img", { src: row.imageUrl, alt: "", loading: "lazy", decoding: "async" }) : el("div", { class: "ph" });
+      const meta = [row.set, row.number, row.subTypeName].filter(Boolean).join(" · ");
+      const button = el("button", { type: "button", class: "row", "data-key": row.key, "aria-current": String(state.selected?.key === row.key) },
+        image,
+        el("span", {}, el("span", { class: "name", text: row.name }), el("span", { class: "meta", text: meta })),
+        el("span", { class: "nums" }, el("span", { class: "price", text: money(row.price) }), Number.isFinite(row.change) ? changePill(row.change) : null));
+      button.addEventListener("click", onTap);
+      return el("li", {}, button);
     }
     $("filterInput").addEventListener("input", renderRows);
     $("sortSelect").addEventListener("change", renderRows);
@@ -698,10 +862,8 @@
         return;
       }
       try {
-        const data = await getJson(`/search?${new URLSearchParams({ query, limit: "12", category_id: String(categoryId()) })}`);
+        const { items, didYouMean } = await searchProducts(query);
         if (seq !== searchSeq) return;
-        // Sets open once the Sets view exists (step 1.4); for now only products are listed.
-        const items = (data.items || []).filter((item) => item.kind === "product").slice(0, 12);
         searchResults.replaceChildren(...(items.length ? items.map((item) => {
           const image = item.imageUrl ? el("img", { src: item.imageUrl, alt: "", loading: "lazy" }) : el("div", { class: "ph" });
           const meta = [item.groupName, item.number, item.subTypeName].filter(Boolean).join(" · ");
@@ -711,16 +873,26 @@
             el("span", { class: "num", text: money(Number(item.latest_price)) }));
           button.addEventListener("click", () => chooseSearchItem(item));
           return button;
-        }) : [el("div", { class: "search-empty", text: data.did_you_mean?.length ? `No exact match. Did you mean ${data.did_you_mean[0]}?` : "No matches." })]));
+        }) : [el("div", { class: "search-empty", text: didYouMean ? `No exact match. Did you mean ${didYouMean}?` : "No matches." })]));
         searchResults.hidden = false;
       } catch (_err) {
         searchResults.hidden = true;
       }
     }
+    // Products matching a search in the current market and product type. Sets open once the
+    // Sets view exists (step 1.4); for now only products are listed.
+    async function searchProducts(query) {
+      const data = await getJson(`/search?${new URLSearchParams({ query, limit: "20", category_id: String(categoryId()) })}`);
+      const items = (data.items || []).filter((item) => item.kind === "product" && (item.productKind || "card") === productKind()).slice(0, 12);
+      return { items, didYouMean: data.did_you_mean?.[0] || "" };
+    }
     function chooseSearchItem(item) {
       searchResults.hidden = true;
       searchInput.blur();
-      selectCard({
+      selectCard(searchItemCard(item), { open: true });
+    }
+    function searchItemCard(item) {
+      return {
         key: keyOf(item.productId, item.subTypeName),
         productId: item.productId,
         subTypeName: item.subTypeName || "",
@@ -732,12 +904,13 @@
         productKind: item.productKind || productKind(),
         price: Number(item.latest_price),
         change: NaN,
-      }, { open: true });
+      };
     }
 
     // ---------- card ----------
     function selectCard(card, { open }) {
       state.selected = card;
+      rememberRecent(card);
       document.querySelectorAll("#rows .row").forEach((b) => b.setAttribute("aria-current", String(b.dataset.key === card.key)));
       renderCard();
       // Push the card screen first, so the product lands in the new history entry and Back
@@ -761,11 +934,13 @@
       const card = state.selected;
       const pane = $("cardPane");
       if (!card) {
-        pane.replaceChildren(el("div", { class: "empty-card", text: "Pick a card from the list or search for one." }));
+        pane.replaceChildren(el("div", { class: "empty-card", text: "Search for the card in front of you, or pick one from a list." }));
         return;
       }
       const seq = ++cardSeq;
-      const back = el("button", { type: "button", class: "back-btn", text: "← Back to list" });
+      // What the Deal Checker knows so far; details and hold arrive from the server.
+      deal = { card, seq, details: null, hold: null, ask: NaN };
+      const back = el("button", { type: "button", class: "back-btn", text: "← Back" });
       back.addEventListener("click", () => goBackFrom("card"));
       const image = card.imageUrl ? el("img", { src: card.imageUrl.replace("_200w", "_400w"), alt: card.name }) : el("div", { class: "ph" });
       const windows = el("div", { class: "windows", role: "group", "aria-label": "Chart range" },
@@ -778,6 +953,24 @@
           });
           return button;
         }));
+      const modes = el("div", { class: "switch", role: "group", "aria-label": "Buying to" },
+        ...[["keep", "To keep"], ["resell", "To resell"]].map(([mode, label]) => {
+          const button = el("button", { type: "button", "data-mode": mode, "aria-pressed": String(state.mode === mode), text: label });
+          button.addEventListener("click", () => {
+            state.mode = mode;
+            writeStore(MODE_KEY, mode);
+            modes.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
+            renderVerdict();
+          });
+          return button;
+        }));
+      const askInput = el("input", { id: "askInput", type: "text", inputmode: "decimal", enterkeyhint: "done", placeholder: "Asking price", autocomplete: "off", "aria-label": "Asking price in dollars" });
+      askInput.addEventListener("input", () => {
+        deal.ask = Number.parseFloat(askInput.value.replace(/[^0-9.]/g, ""));
+        renderVerdict();
+        scheduleHold();
+      });
+      askInput.addEventListener("keydown", (event) => { if (event.key === "Enter") askInput.blur(); });
       pane.replaceChildren(el("div", { class: "card" },
         back,
         el("div", { class: "card-top" },
@@ -785,14 +978,149 @@
           el("div", {},
             el("h2", { text: card.name }),
             el("div", { class: "meta", text: [card.set, card.number && `#${card.number}`, card.subTypeName, card.rarity].filter(Boolean).join(" · ") }),
-            el("div", { class: "card-price" }, el("strong", { id: "cardPrice", text: money(card.price) }), el("span", { id: "cardChange" })))),
+            el("div", { class: "card-price" }, el("strong", { id: "cardPrice", text: money(card.price) }), el("span", { id: "cardChange" })),
+            el("div", { class: "trust", id: "trust" }))),
+        el("div", { class: "printings", id: "printings" }),
+        el("div", { class: "deal" },
+          el("div", { class: "deal-head" }, el("h3", { text: "Is it a good buy?" }), modes),
+          el("label", { class: "ask" }, el("span", { text: "$" }), askInput),
+          el("div", { class: "verdict", id: "verdict" }),
+          el("ul", { class: "reasons", id: "reasons" })),
+        el("div", { class: "section-title", text: "Price history" }),
         windows,
         el("div", { class: "chart", id: "chart" }),
         el("div", { class: "caption", id: "chartCaption" }),
+        el("div", { class: "section-title", text: "Hold for 6 months?" }),
+        el("div", { id: "hold" }, el("div", { class: "caption", text: "Working it out…" })),
         el("div", { class: "actions" },
           el("a", { class: "primary", href: tcgplayerUrl(card), target: "_blank", rel: "noopener sponsored", text: "TCGplayer ↗" })),
-        el("div", { class: "soon", text: "Coming in the next step: Deal Checker, 6-Month Hold, Graded prices, Stats, Targets and Save." })));
+        el("div", { class: "soon", text: "Coming next: Graded prices, Save to your lists, and Our store." })));
+      renderVerdict();
       loadChart(card, seq);
+      loadDetails(card, seq);
+      loadHold(seq);
+    }
+
+    // ---------- Deal Checker ----------
+    let deal = null;
+    // The nightly snapshot for this card: 30-day average, changes, how often its price moved,
+    // and its other printings (so you can check you have the right one).
+    async function loadDetails(card, seq) {
+      try {
+        const data = await getJson(`/card_details?${new URLSearchParams({ productId: card.productId, subTypeName: card.subTypeName, category_id: String(categoryId()) })}`);
+        if (seq !== cardSeq) return;
+        deal.details = data.card || null;
+        const c = deal.details;
+        if (c && !(card.price > 0) && c.latest_price > 0) {
+          card.price = Number(c.latest_price);
+          $("cardPrice").textContent = money(card.price);
+        }
+        if (c) {
+          const distinct = Number(c.recent_distinct_prices_30d) || 0;
+          const thin = isThin(c);
+          $("trust").className = `trust${thin ? " thin" : ""}`;
+          $("trust").textContent = thin
+            ? `Few sales: ${distinct} different price${distinct === 1 ? "" : "s"} in 30 days, last change ${c.last_change_date ? fmtDate(String(c.last_change_date).slice(0, 10)) : "unknown"}.`
+            : `Active: ${distinct} different prices in 30 days.`;
+        }
+        const others = data.other_printings || [];
+        if (others.length) {
+          const chip = (sub, price, current) => {
+            const button = el("button", { type: "button", "aria-pressed": String(current), text: `${sub || "Normal"} ${money(Number(price))}` });
+            if (!current) button.addEventListener("click", () => selectCard({ ...card, key: keyOf(card.productId, sub), subTypeName: sub, price: Number(price), change: NaN }, { open: false }));
+            return button;
+          };
+          $("printings").replaceChildren(el("span", { class: "caption", text: "Right printing?" }),
+            chip(card.subTypeName, card.price, true), ...others.map((o) => chip(o.subTypeName, o.latest_price, false)));
+        }
+        renderVerdict();
+      } catch (_err) { /* the verdict works from the market price alone */ }
+    }
+    // /hold_check: fees and shipping (net_at_market, for "To resell") and the 6-month outlook
+    // for the typed price. Re-asked shortly after the price stops changing.
+    let holdTimer = null;
+    function scheduleHold() {
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(() => loadHold(cardSeq), 450);
+    }
+    async function loadHold(seq) {
+      const card = deal.card;
+      const query = new URLSearchParams({ productId: card.productId, subTypeName: card.subTypeName, category_id: String(categoryId()) });
+      if (deal.ask > 0) query.set("buy_price", String(deal.ask));
+      try {
+        const hold = await getJson(`/hold_check?${query}`);
+        if (seq !== cardSeq) return;
+        deal.hold = hold;
+        const node = $("hold");
+        if (!hold.reasons) {
+          node.replaceChildren(el("div", { class: "caption", text: hold.headline || "No price history for this item." }));
+        } else {
+          node.replaceChildren(
+            el("div", { class: "hold-head", text: `${hold.headline}${deal.ask > 0 ? "" : " (at market price; type a price above to check yours)"}` }),
+            el("ul", { class: "reasons" }, ...hold.reasons.map((r) => el("li", { text: r }))));
+        }
+        renderVerdict();
+      } catch (_err) {
+        if (seq === cardSeq) $("hold").replaceChildren(el("div", { class: "caption", text: "Couldn't load the hold check." }));
+      }
+    }
+    function isThin(c) {
+      const days = c.last_change_date ? (Date.now() - Date.parse(`${String(c.last_change_date).slice(0, 10)}T00:00:00Z`)) / 86400000 : Infinity;
+      return (Number(c.recent_distinct_prices_30d) || 0) < DEAL.thinDistinct || days > DEAL.staleDays;
+    }
+    // The verdict for the typed asking price. Pure: everything it needs is passed in.
+    //   To keep:   compare with market (DEAL.keep*). "Pay up to" is 90% of market.
+    //   To resell: what a sale at market leaves after TCGplayer fees and shipping
+    //              (hold.net_at_market) minus the asking price. "Pay up to" leaves a 20% profit.
+    // A spike (well above the 30-day average) or a falling price turns a "buy" into "Careful: …",
+    // and on a spike "pay up to" is worked out from the 30-day average instead of today's price.
+    function judgeDeal({ ask, market, mode, details, hold }) {
+      const notes = [];
+      if (!(market > 0)) return { tone: "", title: "No market price for this one", offer: null, notes: ["Check recent sales on TCGplayer before buying."] };
+      const avg30 = Number(details?.latest_sma30);
+      const vsAvg = avg30 > 0 ? (market / avg30 - 1) * 100 : NaN;
+      const change30 = Number(details?.roc_30d_pct);
+      const spike = vsAvg >= DEAL.spikeVsAvgPct;
+      const falling = change30 <= DEAL.fallingPct;
+      // On a spike, base "pay up to" on the 30-day average (capped at market).
+      const basis = spike ? Math.min(market, avg30) : market;
+      if (spike) notes.push({ warn: true, text: `Price jumped: ${pct(vsAvg)} above its 30-day average (${money(avg30)}). Spikes often fall back, so "pay up to" uses the average.` });
+      if (falling) notes.push({ warn: true, text: `Falling: ${pct(change30)} over 30 days. It may get cheaper if you wait.` });
+      if (details && isThin(details)) notes.push({ warn: true, text: "Few recent sales, so the market price is only a rough guide. Check sold listings." });
+      let offer, tone, title;
+      if (mode === "resell") {
+        const net = Number(hold?.net_at_market);
+        if (!Number.isFinite(net)) return { tone: "", title: "Working out fees…", offer: null, notes };
+        const netBasis = spike && market > 0 ? net * (basis / market) : net;
+        offer = netBasis / (1 + DEAL.flipBuyMargin);
+        if (!(ask > 0)) return { tone: "", title: "Type the asking price", offer, notes: [{ text: `Sold at market (${money(market)}) you'd keep about ${money(net)} after TCGplayer fees and shipping.` }, ...notes] };
+        const profit = net - ask;
+        const margin = profit / ask;
+        notes.unshift({ text: `Sold at market you'd keep about ${money(net)} after fees and shipping: ${profit >= 0 ? `${money(profit)} profit` : `a ${money(-profit)} loss`} (${pct(margin * 100)}).` });
+        if (margin >= DEAL.flipBuyMargin) [tone, title] = ["good", "Good flip"];
+        else if (margin >= 0) [tone, title] = ["fair", "Thin profit"];
+        else [tone, title] = ["bad", "Loss if resold now"];
+      } else {
+        offer = basis * DEAL.keepOfferPct;
+        if (!(ask > 0)) return { tone: "", title: "Type the asking price", offer, notes };
+        const edge = (market - ask) / market * 100;
+        notes.unshift({ text: `${Math.abs(edge).toFixed(0)}% ${edge >= 0 ? "under" : "over"} market (${money(market)}).` });
+        if (edge >= DEAL.keepBuyPct) [tone, title] = ["good", "Good buy"];
+        else if (edge >= DEAL.keepFairPct) [tone, title] = ["fair", "Fair price"];
+        else [tone, title] = ["bad", "Overpriced"];
+      }
+      // A "buy" on a spiking or falling card leads with the warning instead.
+      if (tone === "good" && spike) [tone, title] = ["fair", "Careful: the price just spiked"];
+      else if (tone === "good" && falling) [tone, title] = ["fair", "Careful: the price is falling"];
+      return { tone, title, offer, notes };
+    }
+    function renderVerdict() {
+      if (!deal || !$("verdict")) return;
+      const result = judgeDeal({ ask: deal.ask, market: deal.card.price, mode: state.mode, details: deal.details, hold: deal.hold });
+      $("verdict").className = `verdict${result.tone ? ` ${result.tone}` : ""}`;
+      $("verdict").replaceChildren(el("strong", { text: result.title }),
+        result.offer > 0 ? el("div", { class: "offer" }, `${state.mode === "resell" ? "To make 20%, pay up to " : "Pay up to "}`, el("b", { text: money(result.offer) })) : null);
+      $("reasons").replaceChildren(...result.notes.map((n) => el("li", { class: n.warn ? "warn" : null, text: n.text })));
     }
     async function loadChart(card, seq) {
       const chart = $("chart");

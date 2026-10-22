@@ -67,13 +67,16 @@ screens, 3 refine, 4 camera/OCR.
 - [waiting] Owner: answer decisions 1-6 in `docs/mobile_app_plan.md` (feedback form, Alerts &
   Targets, Time to Buy, Set Explorer, iPads, switch date), and try `/m-next` on the phone in
   portrait and landscape after each step.
-- [in progress] 1.1 Framework (2026-10-21): header, search (cards only), English/Japanese,
-  Singles/Sealed, menu (sheet under 1100 px, rail above), the nine Discover lists with filter
-  and sort, card view with price, chart (30D/90D/1Y/All, touch readout) and TCGplayer link;
-  phone Back closes the card and the menu. Checked with Playwright on iPhone 13 Pro Max
-  (portrait/landscape) and iPad Pro 11 (both ways). Waiting on the owner's phone check.
-- [next] 1.2 Card view in full: Deal Checker, 6-Month Hold, Graded (PriceCharting link),
-  Stats, Targets, Save, Our store. Reuse desktop_home.html's code for each.
+- [in progress] 1.1 Framework and Deal Checker (2026-10-21/22): "Check a card" home screen
+  (big search, recently checked on this phone), Deal Checker on the card screen (asking price,
+  To keep / To resell, verdict, "pay up to", spike / falling / few-sales warnings, other
+  printings), chart, 6-Month Hold for the typed price, TCGplayer link; menu with the nine
+  Discover lists; phone Back closes the card and the menu. Rules in
+  `docs/mobile_app_plan.md`. Checked with Playwright on iPhone 13 Pro Max and iPad Pro 11.
+  Waiting on the owner's phone check (owner said 2026-10-22 that the first version didn't
+  answer "is this a good buy?"; this one leads with that).
+- [next] 1.2 Rest of the card view: Graded (PriceCharting link), Stats, Targets, Save, Our
+  store. Reuse desktop_home.html's code for each.
 - [planned] 1.3 My lists and sign-in; bottom tab bar on phones (Discover / Search / My lists /
   Menu) once My lists exists.
 - [planned] 1.4 Research: Sets → one set (search results for sets open it), Pokémon, Market

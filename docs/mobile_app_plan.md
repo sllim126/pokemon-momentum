@@ -46,13 +46,32 @@ phone the site is a quick "is this a good deal?" tool at a card table, not a res
 
 ## Stages
 
+**Owner feedback, 2026-10-22:** step 1.1 looked right but didn't answer the phone's real
+question, "I have a card in front of me: is it a good buy?". So the Deal Checker moved
+ahead of everything else: the home screen is now "Check a card" (search, then type the
+asking price), and the browsing lists moved to the menu.
+
+### The Deal Checker (in `mobile_app.html`, `judgeDeal()`; numbers in `DEAL`)
+
+- **To keep:** 10%+ under market is a "Good buy", up to 5% over is "Fair price", more is
+  "Overpriced". "Pay up to" is 90% of market.
+- **To resell:** what a sale at market leaves after TCGplayer fees and shipping
+  (`/hold_check`'s `net_at_market`, from `scripts/common/selling_costs.py`) minus the asking
+  price. 20%+ profit is a "Good flip", 0-20% "Thin profit", below that "Loss if resold now".
+  "Pay up to" leaves a 20% profit.
+- **Warnings:** a card 40%+ above its 30-day average has "just spiked" ("pay up to" then
+  uses the average); one down 10%+ in 30 days "is falling". Either turns a buy into
+  "Careful: …". Fewer than 3 different prices in 30 days, or no change for 30 days, adds "few
+  recent sales, the market price is a rough guide".
+- Under the card name: how active its price is, and buttons for its other printings
+  (Holofoil, Reverse Holofoil, …), so you can check you have the right one.
+- Below: the price chart and the 6-Month Hold for the typed price.
+
 1. **Rebuild the phone site in the new design (fluid from the start).** Steps, each one usable
    on `/m-next` before the next starts:
-   1. Framework: header, search, English/Japanese and Singles/Sealed switches, menu, the
-      Discover lists (Rising, Starting to move, Dipped), and a basic card view (picture,
-      price, change, chart, TCGplayer link).
-   2. Card view in full: Deal Checker (seller price, edge vs market, suggested offer),
-      6-Month Hold, Graded prices, Stats, Targets, Save, Our store, full data.
+   1. Framework and the Deal Checker: "Check a card" home screen with recent checks, the
+      Deal Checker, 6-Month Hold, chart, menu with the Discover lists. (Done 2026-10-22.)
+   2. Rest of the card view: Graded prices, Stats, Targets, Save, Our store.
    3. My lists (All saved, Buy List, Watchlist, Favorites, Needs Review) and sign-in.
    4. Research: Sets → one set, Pokémon, Market Stats (indexes and set values).
    5. Buy: Sealed Deals, Budget Builder. Learn: How it works.
