@@ -7,6 +7,18 @@ Archived Completed Work
 October 2026 (archived 2026-10-12, when todo.txt was rewritten as the main action list)
 ----------------------------------------------------------------------------------------
 
+- Completed and archived at the 2026-10-23 milestone:
+  - 2026-10-21 Binder Art Maker at /binder-art (Learn menu, Collector Hub): free tool that cuts one
+    picture into Pokémon-card-size pieces for a 2×2 to 4×4 binder page (or a two-page spread),
+    with an optional set logo from the site's logo files; print PDF with cut marks or PNGs.
+    Started from a Discord request (MaxDosage, 2026-10-20).
+  - 2026-10-21 PriceCharting download fixed (the .env token had an extra character; failed
+    2026-10-16 to 10-20, those days can't be recovered) and the nightly Discord message now turns
+    orange and pings when a step fails without stopping the run.
+  - 2026-10-20 Weekly Discord posts every Friday 15:00 UTC (`post_weekly_discord.py`, adam's
+    crontab): #what-should-i-buy, #market-talk, #set-breakdowns, #card-spotlight, built from the
+    site's live data (owner chose the channels and Friday mornings).
+  - 2026-10-20 Pullbacks and Whole-set Dips pages and How it works explain how the two lists differ.
 - Completed and archived at the 2026-10-21 milestone:
   - 2026-10-19 Japanese Sealed Deals box sizes confirmed with the owner: specialty (High Class)
     sets 10 packs (Terastal Fest ex, VMAX Climax, Shiny Star V and Tag All Stars were

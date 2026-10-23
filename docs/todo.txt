@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-21 (milestone: Binder Art Maker)
+Last updated: 2026-10-23 (milestone: Mobile app preview and Placeholder sync)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -43,6 +43,16 @@ Recently Completed
   the set catalog and 30 promos (new 30th Celebration page). Product names for those promos
   need the owner's check (see High Priority).
 
+- 2026-10-23 How it works (the header's Learn) credits TCGCSV with a support link
+  (cpt.tcgcsv.com) and no longer shows an empty card column.
+- 2026-10-22 Desktop app on iPad-portrait widths (<1100 px): the list menu folds into a
+  "☰ Lists" button, card names wrap, the toolbar and card buttons make room.
+- 2026-10-22 New mobile app preview at /m-next leads with "Check a card" and the Deal Checker
+  (owner's feedback: the first version didn't answer "is this a good buy?").
+- 2026-10-21 Binder planners on phones: KPDH and ATLA put the cards near the top with a
+  sideways page strip and a "Swipe for more pages" hint; ATLA offers 6x6/4x4/4x3/3x3 pages.
+- 2026-10-21 Market Stats > Set values: the top-hit card opens in the side pane; browser Back
+  closes the full card page instead of leaving the site.
 - 2026-10-21 Small Dips list (`/small_dips`, Discover > Dipped): cards up 15%+ over 90 days and
   over the year, still above their 90-day average, now 3-12% below their 90-day high, near their
   30-day average and down this week (20 English cards on the first day). Rules: SMALL_DIP_* in
@@ -50,17 +60,6 @@ Recently Completed
 - 2026-10-21 Confirmed Movers and Consistent Movers show how many days each card has been in
   the list again (bullish streak / days above the 30-day average, with the start date on
   hover) and can sort by it.
-- 2026-10-21 Binder Art Maker at /binder-art (Learn menu, Collector Hub): free tool that cuts one
-  picture into Pokémon-card-size pieces for a 2×2 to 4×4 binder page (or a two-page spread),
-  with an optional set logo from the site's logo files; print PDF with cut marks or PNGs.
-  Started from a Discord request (MaxDosage, 2026-10-20).
-- 2026-10-21 PriceCharting download fixed (the .env token had an extra character; failed
-  2026-10-16 to 10-20, those days can't be recovered) and the nightly Discord message now turns
-  orange and pings when a step fails without stopping the run.
-- 2026-10-20 Weekly Discord posts every Friday 15:00 UTC (`post_weekly_discord.py`, adam's
-  crontab): #what-should-i-buy, #market-talk, #set-breakdowns, #card-spotlight, built from the
-  site's live data (owner chose the channels and Friday mornings).
-- 2026-10-20 Pullbacks and Whole-set Dips pages and How it works explain how the two lists differ.
 
 High Priority
 -------------

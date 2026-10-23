@@ -1,6 +1,6 @@
 # New mobile app: plan
 
-Last reviewed: 2026-10-21
+Last reviewed: 2026-10-23
 
 The owner asked on 2026-10-21 for a full rebuild of the phone site: same features as today,
 in the desktop app's look, and a layout that fills any screen from a phone in portrait to a

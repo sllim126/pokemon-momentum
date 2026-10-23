@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-10-21
+Last reviewed: 2026-10-23
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -147,6 +147,17 @@ Added 2026-10:
   first, and Caddy compresses the public page with zstd/gzip
 - KPDH Binder planner at `/kpdh/`, isolated in a read-only nginx container on host port
   8091 and reached through the same Caddy proxy
+- Confirmed and Consistent Movers show how many days each card has been in the list (sortable);
+  Set values' top-hit card opens in the side pane; browser Back closes the full card page
+- Binder planners on phones (2026-10-21/22): cards near the top, sideways page strip with a
+  swipe hint; ATLA also offers 6x6, 4x4, 4x3 and 3x3 pages
+- New mobile app preview at `/m-next` (2026-10-21/22; plan `docs/mobile_app_plan.md`): "Check a
+  card" home screen and Deal Checker (asking price, To keep / To resell, verdict, "pay up to",
+  spike/falling/few-sales warnings); `/hold_check` gained `net_at_market` and `profit_now`
+- Desktop app on iPad-portrait widths (<1100 px): the list menu folds into a "☰ Lists" button
+- How it works credits TCGCSV with a support link and drops the empty card column
+- Placeholder Library sync (2026-10-23): `scripts/utilities/sync_placeholder_library.py`, daily
+  04:30 UTC, adds new Mega-era sets and promos from the catalog and rebuilds the library
 
 ## What's next
 
