@@ -17,6 +17,9 @@ MEP,MEP,Stamped Cards,Delphox,MEP074,Black Star Promo,US/UK,,,,,,Chaos Rising - 
 MEP,MEP,Stamped Cards,Ampharos,MEP075,Black Star Promo,US/UK,,,,,,Chaos Rising - Chaos Rising Build & Battle Box,mega_placeholders.csv:115
 MEP,MEP,Stamped Cards,Crobat,MEP076,Black Star Promo,US/UK,,,,,,Chaos Rising - Chaos Rising Build & Battle Box,mega_placeholders.csv:116
 MEP,MEP,Stamped Cards,Goodra,MEP077,Black Star Promo,US/UK,,,,,,Chaos Rising - Chaos Rising Build & Battle Box,mega_placeholders.csv:117
+MEP,MEP,Stamped Cards,Miraidon,MEP082,Pitch Black Stamp,US/UK,,,,,,Pitch Black - Not confirmed yet,auto_mega_promos.csv:3
+MEP,MEP,Stamped Cards,Slowbro,MEP083,Pitch Black Stamp,US/UK,,,,,,Pitch Black - Not confirmed yet,auto_mega_promos.csv:5
+MEP,MEP,Stamped Cards,Bastiodon,MEP085,Pitch Black Stamp,US/UK,,,,,,Pitch Black - Not confirmed yet,auto_mega_promos.csv:9
 PFL,PFL,Stamped Cards,Reshiram,PFL017,Phantasmal Flames Stamp,US,,,,,,Phantasmal Flames - Retailer Gift With Purchase,mega_placeholders.csv:185
 PFL,PFL,Stamped Cards,Suicune,PFL026,EB Games Stamp,Canada/Australia/New Zealand,,,,,,Phantasmal Flames - Retailer Gift With Purchase,mega_placeholders.csv:184
 PFL,PFL,Stamped Cards,Suicune,PFL026,GameStop Stamp,US,,,,,,Phantasmal Flames - Retailer Gift With Purchase,mega_placeholders.csv:183
@@ -33,6 +36,10 @@ WHT,WHT,Stamped Cards,Archeops,WHT051,Excavator Pikachu Stamp,US/UK,,,,,,Black B
 ,,Stamped Cards,Keldeo,,Chaos Rising Stamp,US,,,,,,Chaos Rising - Retailer Gift With Purchase,mega_placeholders.csv:193
 ,,Stamped Cards,Yveltal,,EB Games Stamp,Canada/Australia/New Zealand,,,,,,Mega Evolution - Retailer Gift With Purchase,mega_placeholders.csv:182
 ,,Stamped Cards,Yveltal,,GameStop Stamp,US,,,,,,Mega Evolution - Retailer Gift With Purchase,mega_placeholders.csv:181
+MEP,MEP,Staff Cards,Miraidon,MEP082,Staff Stamp,US/UK,,,,,,Pitch Black - Not confirmed yet,auto_mega_promos.csv:4
+MEP,MEP,Staff Cards,Slowbro,MEP083,Staff Stamp,US/UK,,,,,,Pitch Black - Not confirmed yet,auto_mega_promos.csv:6
+MEP,MEP,Staff Cards,Dhelmise,MEP084,Staff Stamp,US/UK,,,,,,Pitch Black - Not confirmed yet,auto_mega_promos.csv:8
+MEP,MEP,Staff Cards,Bastiodon,MEP085,Staff Stamp,US/UK,,,,,,Pitch Black - Not confirmed yet,auto_mega_promos.csv:10
 SVP,SVP,Promo Cards,Black Belt's Training,SVP219,Black Star Promo,US/UK,,,,,,Mega Evolution - Trainer's Toolkit 2025,mega_placeholders.csv:29
 SVP,SVP,Promo Cards,Black Belt's Training,SVP220,Black Star Promo,US/UK,,,,,,Mega Evolution - Trainer's Toolkit 2025,mega_placeholders.csv:30
 SVP,SVP,Promo Cards,Professor's Research [Professor Birch],SVP221,Black Star Promo,US/UK,,,,,,Mega Evolution - Trainer's Toolkit 2025,mega_placeholders.csv:31
@@ -102,6 +109,7 @@ MEP,MEP,MCAP Cards,Slowpoke,MEP086,Smooth Cosmos Holo,US/UK,,,,,,Pitch Black - P
 MEP,MEP,MCAP Cards,Binacle,MEP087,Smooth Cosmos Holo,US/UK,,,,,,Pitch Black - Pitch Black Blisters,mega_placeholders.csv:147
 MEP,MEP,MCAP Cards,Zarude,MEP088,Black Star Promo,US/UK,,,,,,Pitch Black - Pitch Black Elite Trainer Box,mega_placeholders.csv:158
 MEP,MEP,MCAP Cards,Zarude,MEP088,Pokemon Center Stamp,US/UK,,,,,,Pitch Black - Pitch Black Elite Trainer Box,mega_placeholders.csv:159
+MEP,MEP,MCAP Cards,Victini,MEP102,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:23
 PAL,PAL,MCAP Cards,Boss's Orders [Ghetsis],PAL172,Non Holo,US/UK,,,,,,Mega Evolution - Trainer's Toolkit 2025,mega_placeholders.csv:34
 PBL,PBL,MCAP Cards,Zarude,PBL056,Pixel Cosmos Holo,US/UK,,,,,,Pitch Black - Zarude Two Pack Blister,mega_placeholders.csv:179
 PFL,PFL,MCAP Cards,Oddish,PFL001,Pixel Cosmos Holo,US/UK,,,,,,Phantasmal Flames - Enhanced 2-Pack Blister: Oddish Gloom & Vileplume,mega_placeholders.csv:107
@@ -217,6 +225,7 @@ MEP,MEP,League and Championship Cards,Pikachu,MEP093,Play Pokemon Winner Stamp,U
 MEP,MEP,Other Cards,Mega Lucario ex,MEP012,Black Star Promo,US/UK,,,,,,Mega Evolution - Mega Lucario ex Figure Collection,mega_placeholders.csv:37
 MEP,MEP,Other Cards,Meloetta,MEP026,Black Star Promo,US/UK,,,,,,Mega Evolution - Mega Battle Deck Mega Diancie ex,mega_placeholders.csv:36
 MEP,MEP,Other Cards,Haunter,MEP027,Black Star Promo,US/UK,,,,,,Mega Evolution - Mega Battle Deck Mega Gengar ex,mega_placeholders.csv:35
+MEP,MEP,Other Cards,Celebratory Fanfare,MEP028,Black Star Promo,US/UK,,,,,,Mega Evolution - Not confirmed yet,auto_mega_promos.csv:2
 MEP,MEP,Other Cards,Mega Gardevoir ex,MEP032,Black Star Promo,US/UK,,,,,,Ascended Heroes - Ascended Heroes Premium Poster Collection,mega_placeholders.csv:75
 MEP,MEP,Other Cards,Mega Lucario ex,MEP033,Black Star Promo,US/UK,,,,,,Ascended Heroes - Ascended Heroes Premium Poster Collection,mega_placeholders.csv:76
 MEP,MEP,Other Cards,Bulbasaur,MEP037,Black Star Promo,US/UK,,,,,,Mega Evolution - First Partner Illustration Collection Series 1,mega_placeholders.csv:80
@@ -246,3 +255,24 @@ MEP,MEP,Other Cards,Froakie,MEP060,Black Star Promo,US/UK,,,,,,Mega Evolution - 
 MEP,MEP,Other Cards,Sprigatito,MEP061,Black Star Promo,US/UK,,,,,,Mega Evolution - First Partner Illustration Collection Series 3,mega_placeholders.csv:166
 MEP,MEP,Other Cards,Fuecoco,MEP062,Black Star Promo,US/UK,,,,,,Mega Evolution - First Partner Illustration Collection Series 3,mega_placeholders.csv:167
 MEP,MEP,Other Cards,Quaxly,MEP063,Black Star Promo,US/UK,,,,,,Mega Evolution - First Partner Illustration Collection Series 3,mega_placeholders.csv:168
+MEP,MEP,Other Cards,Dhelmise,MEP084,Black Star Promo,US/UK,,,,,,Pitch Black - Not confirmed yet,auto_mega_promos.csv:7
+MEP,MEP,Other Cards,Mega Zeraora ex,MEP089,Black Star Promo,US/UK,,,,,,Pitch Black - Not confirmed yet,auto_mega_promos.csv:11
+MEP,MEP,Other Cards,Mega Darkrai ex,MEP090,Black Star Promo,US/UK,,,,,,Pitch Black - Not confirmed yet,auto_mega_promos.csv:12
+MEP,MEP,Other Cards,Mega Dragonite ex,MEP091,Black Star Promo,US/UK,,,,,,Pitch Black - Not confirmed yet,auto_mega_promos.csv:13
+MEP,MEP,Other Cards,Alolan Exeggutor,MEP094,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:14
+MEP,MEP,Other Cards,Lucario,MEP095,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:15
+MEP,MEP,Other Cards,Moltres,MEP096,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:16
+MEP,MEP,Other Cards,Articuno,MEP097,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:17
+MEP,MEP,Other Cards,Zapdos,MEP098,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:18
+MEP,MEP,Other Cards,Greninja ex,MEP099,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:19
+MEP,MEP,Other Cards,Sylveon ex,MEP100,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:20
+MEP,MEP,Other Cards,Nidorina,MEP101,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:21
+MEP,MEP,Other Cards,Nidorina,MEP101,Pokemon Center Stamp,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:22
+MEP,MEP,Other Cards,Zeraora,MEP103,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:24
+MEP,MEP,Other Cards,Mewtwo,MEP104,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:25
+MEP,MEP,Other Cards,Mew,MEP105,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:26
+MEP,MEP,Other Cards,Ditto,MEP106,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:27
+MEP,MEP,Other Cards,Pikachu ex,MEP107,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:28
+MEP,MEP,Other Cards,Espeon ex,MEP108,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:29
+MEP,MEP,Other Cards,Pikachu ex,MEP109,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:30
+MEP,MEP,Other Cards,Umbreon ex,MEP110,Black Star Promo,US/UK,,,,,,30th Celebration - Not confirmed yet,auto_mega_promos.csv:31

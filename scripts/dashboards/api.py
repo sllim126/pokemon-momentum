@@ -145,6 +145,8 @@ COLLECTOR_PUBLIC_BUCKETS = {
 PLACEHOLDER_DOWNLOAD_FILES = {
     "sv-source-csv": TCG_PLACEHOLDERS_DIR / "placeholders.csv",
     "mega-source-csv": TCG_PLACEHOLDERS_DIR / "mega_placeholders.csv",
+    # Promos found in the catalog but not yet in mega_placeholders.csv (sync_placeholder_library.py).
+    "mega-auto-promos-csv": TCG_PLACEHOLDERS_DIR / "auto_mega_promos.csv",
     "prize-pack-series7-csv": TCG_PLACEHOLDERS_DIR / "prize_pack_series7.csv",
     "prize-pack-series8-csv": TCG_PLACEHOLDERS_DIR / "prize_pack_series8.csv",
     "combined-normalized-csv": TCG_PLACEHOLDERS_DIR / "output_combined" / "placeholders.normalized.csv",
@@ -468,6 +470,15 @@ def placeholder_download_manifest() -> dict:
             "href": "/placeholder-downloads/mega-source-csv",
             "kind": "download",
             "tags": ["Mega", "Source", "CSV"],
+        },
+        {
+            "id": "mega-auto-promos-csv",
+            "section": "Source CSVs",
+            "title": "New Mega Promos (not confirmed yet)",
+            "summary": "Promos found in the TCGplayer catalog that the hand-edited list doesn't have yet. Already in the print pages; the product each came in still needs checking.",
+            "href": "/placeholder-downloads/mega-auto-promos-csv",
+            "kind": "download",
+            "tags": ["Mega", "Auto", "CSV"],
         },
         {
             "id": "prize-pack-series7-csv",

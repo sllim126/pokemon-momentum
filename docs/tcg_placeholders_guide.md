@@ -190,6 +190,27 @@ Why it is wired this way:
 - it avoids database work for static collector tools
 - it makes the imported side project usable immediately in the main site
 
+## Automatic sync with the catalog (since 2026-10-23)
+
+`scripts/utilities/sync_placeholder_library.py` runs every day at 04:30 UTC (adam's crontab,
+log `logs/placeholder_sync.log`) inside the site container. It compares the TCGplayer catalog
+with the hand-edited Mega-era files and:
+
+- appends new Mega-era sets to `data/set_release_dates.csv` (code and release date);
+- writes every catalog promo missing from `mega_placeholders.csv` to
+  `TCG Placeholders/auto_mega_promos.csv` (generated; don't edit it). The release set and
+  variant come from the catalog name ("(30th Celebration)", "(Pitch Black Stamped)",
+  "[Staff]", "(Pokemon Center Exclusive)"), or from the neighbouring promo numbers when the
+  name doesn't say. Product and Product Type read "Not confirmed yet" / "Needs review",
+  because the catalog doesn't say which product a promo came in;
+- rebuilds the Mega checklists and the Mega and combined print hubs with those rows included;
+- posts to the owner's Discord channel when it found something new.
+
+**Confirming a promo:** copy its row from `auto_mega_promos.csv` into `mega_placeholders.csv`
+with the real Product and Product Type. The next run drops it from the generated file.
+Still by hand: Prize Pack series (their lists come as PDFs), Scarlet & Violet, and corrections
+in `data/checklist_mega_overrides.csv`. Run it yourself with `--dry-run` to see what it would do.
+
 ## Expected Operator Flow
 
 When source data changes:

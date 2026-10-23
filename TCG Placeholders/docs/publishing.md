@@ -36,14 +36,18 @@ treated as admin tools because they help produce correction CSVs.
 
 ## Update Workflow
 
+The Mega-era files are kept up to date automatically every day by
+`scripts/utilities/sync_placeholder_library.py` (new sets and promos from the catalog, then the
+three Mega builds below). See `docs/tcg_placeholders_guide.md` in the repo root.
+
 1. Edit source CSVs or correction files in `data/`.
 2. Regenerate outputs:
 
 ```powershell
 python tools\build_checklists.py
-python tools\build_checklists.py --era "Mega Evolution" --input mega_placeholders.csv --input prize_pack_series8.csv --output-dir checklists_mega --overrides data\checklist_mega_overrides.csv --additions data\checklist_mega_additions.csv
-python tools\build_placeholders.py --input placeholders.csv --extra-input mega_placeholders.csv --extra-input prize_pack_series7.csv --extra-input prize_pack_series8.csv --output-dir output_combined
-python tools\build_placeholders.py --input mega_placeholders.csv --extra-input prize_pack_series8.csv --output-dir output_mega
+python tools\build_checklists.py --era "Mega Evolution" --input mega_placeholders.csv --input auto_mega_promos.csv --input prize_pack_series8.csv --output-dir checklists_mega --overrides data\checklist_mega_overrides.csv --additions data\checklist_mega_additions.csv
+python tools\build_placeholders.py --input placeholders.csv --extra-input mega_placeholders.csv --extra-input auto_mega_promos.csv --extra-input prize_pack_series7.csv --extra-input prize_pack_series8.csv --output-dir output_combined
+python tools\build_placeholders.py --input mega_placeholders.csv --extra-input auto_mega_promos.csv --extra-input prize_pack_series8.csv --output-dir output_mega
 ```
 
 3. Upload the public files/folders again.
