@@ -405,6 +405,10 @@ Normal expectation:
 - the weekly placeholder cleanup runs Monday at `11:00 UTC`, 24 hours later
 - the placeholder cleanup only reruns product metadata + product signal snapshot so stale
   `Product <id>` rows get another chance to resolve
+- not to be confused with the Placeholder Library sync (printable binder placeholders):
+  `scripts/utilities/sync_placeholder_library.py`, daily 04:30 UTC from adam's crontab, log
+  `logs/placeholder_sync.log`. It adds new Mega-era sets and promos from the catalog and
+  rebuilds the library; see `docs/tcg_placeholders_guide.md`
 
 
 Quick health checklist

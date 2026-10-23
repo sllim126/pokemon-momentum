@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-21 (milestone: Binder Art Maker)
+Last updated: 2026-10-23 (milestone: Mobile app preview and Placeholder sync)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -17,6 +17,7 @@ Status tags used below:
   [planned]      agreed, not started
   [parked]       on hold on purpose; do not start without asking the owner
   [idea]         not agreed yet; raise it with the owner before building
+  [watching]     live; no work planned, but watch #bug-reports and fix what comes in
 
 When you finish an item, move it to Recently Completed with the date and commit, then
 archive older Recently Completed entries at the next milestone.
@@ -27,29 +28,92 @@ Current Focus (2026-10-12)
 - Desktop: the single-page desktop app at `/` (desktop home since 2026-10-12) holds all five areas (Buy,
   Discover, Research, Track, Learn). Guide: `docs/desktop_app.md`. Collector Hub,
   Placeholder Library and Account share its style through `desktop_theme.css`.
-- Mobile (`/mobile` and the mobile handling on `/`) and the admin pages are parked. The
-  mobile layout must not change without the owner's go-ahead.
+- Mobile: a new mobile app is being built at `/m-next` (owner, 2026-10-21; plan, decisions and
+  inventory in `docs/mobile_app_plan.md`; work items under "New mobile app" below). The old
+  `/mobile` page stays frozen until the switch. Admin pages stay parked.
 - Bug reports go to the Discord `#bug-reports` channel. New pages get no on-site bug form.
 - Project map: `docs/project_status.md`. Operating steps: `docs/operator_runbook.txt`.
 
 Recently Completed
 ------------------
 
-- 2026-10-21 Binder Art Maker at /binder-art (Learn menu, Collector Hub): free tool that cuts one
-  picture into Pokémon-card-size pieces for a 2×2 to 4×4 binder page (or a two-page spread),
-  with an optional set logo from the site's logo files; print PDF with cut marks or PNGs.
-  Started from a Discord request (MaxDosage, 2026-10-20).
-- 2026-10-21 PriceCharting download fixed (the .env token had an extra character; failed
-  2026-10-16 to 10-20, those days can't be recovered) and the nightly Discord message now turns
-  orange and pings when a step fails without stopping the run.
-- 2026-10-20 Weekly Discord posts every Friday 15:00 UTC (`post_weekly_discord.py`, adam's
-  crontab): #what-should-i-buy, #market-talk, #set-breakdowns, #card-spotlight, built from the
-  site's live data (owner chose the channels and Friday mornings).
-- 2026-10-20 Pullbacks and Whole-set Dips pages and How it works explain how the two lists differ.
+- 2026-10-23 Placeholder Library updates itself: `sync_placeholder_library.py` (daily 04:30 UTC)
+  adds new Mega-era sets and promos from the TCGplayer catalog and rebuilds the print and
+  checklist pages. First run added 30th Celebration, its Classic Collection and Delta Reign to
+  the set catalog and 30 promos (new 30th Celebration page). Product names for those promos
+  need the owner's check (see High Priority).
+
+- 2026-10-23 How it works (the header's Learn) credits TCGCSV with a support link
+  (cpt.tcgcsv.com) and no longer shows an empty card column.
+- 2026-10-22 Desktop app on iPad-portrait widths (<1100 px): the list menu folds into a
+  "☰ Lists" button, card names wrap, the toolbar and card buttons make room.
+- 2026-10-22 New mobile app preview at /m-next leads with "Check a card" and the Deal Checker
+  (owner's feedback: the first version didn't answer "is this a good buy?").
+- 2026-10-21 Binder planners on phones: KPDH and ATLA put the cards near the top with a
+  sideways page strip and a "Swipe for more pages" hint; ATLA offers 6x6/4x4/4x3/3x3 pages.
+- 2026-10-21 Market Stats > Set values: the top-hit card opens in the side pane; browser Back
+  closes the full card page instead of leaving the site.
+- 2026-10-21 Small Dips list (`/small_dips`, Discover > Dipped): cards up 15%+ over 90 days and
+  over the year, still above their 90-day average, now 3-12% below their 90-day high, near their
+  30-day average and down this week (20 English cards on the first day). Rules: SMALL_DIP_* in
+  api.py. Also: clicking back into the desktop search box reopens its results.
+- 2026-10-21 Confirmed Movers and Consistent Movers show how many days each card has been in
+  the list again (bullish streak / days above the 30-day average, with the start date on
+  hover) and can sort by it.
 
 High Priority
 -------------
 
+New mobile app (owner, 2026-10-21). Plan: `docs/mobile_app_plan.md`. Built at `/m-next`
+(`scripts/dashboards/mobile_app.html`) next to the old `/mobile`, in the desktop app's look,
+fluid from phone portrait to tablet landscape. Stages: 1 rebuild (steps 1.1-1.6), 2 bigger
+screens, 3 refine, 4 camera/OCR.
+
+- [waiting] Owner: answer decisions 1-6 in `docs/mobile_app_plan.md` (feedback form, Alerts &
+  Targets, Time to Buy, Set Explorer, iPads, switch date), and try `/m-next` on the phone in
+  portrait and landscape after each step.
+- [in progress] 1.1 Framework and Deal Checker (2026-10-21/22): "Check a card" home screen
+  (big search, recently checked on this phone), Deal Checker on the card screen (asking price,
+  To keep / To resell, verdict, "pay up to", spike / falling / few-sales warnings, other
+  printings), chart, 6-Month Hold for the typed price, TCGplayer link; menu with the nine
+  Discover lists; phone Back closes the card and the menu. Rules in
+  `docs/mobile_app_plan.md`. Checked with Playwright on iPhone 13 Pro Max and iPad Pro 11.
+  Waiting on the owner's phone check (owner said 2026-10-22 that the first version didn't
+  answer "is this a good buy?"; this one leads with that).
+- [next] 1.2 Rest of the card view: Graded (PriceCharting link), Stats, Targets, Save, Our
+  store. Reuse desktop_home.html's code for each.
+- [planned] 1.3 My lists and sign-in; bottom tab bar on phones (Discover / Search / My lists /
+  Menu) once My lists exists.
+- [planned] 1.4 Research: Sets → one set (search results for sets open it), Pokémon, Market
+  Stats (indexes, set values).
+- [planned] 1.5 Buy (Sealed Deals, Budget Builder) and Learn (How it works).
+- [planned] 1.6 Switch: phones get the new app at `/` and `/mobile`; old page at
+  `/mobile-classic` for a few weeks, then delete it, `dashboard.html`,
+  `tests/test_dashboard_frontend.py` and `/mobile-rebuild`.
+- [planned] Stage 2: tune two-pane layouts for phone landscape (fold the scope bar into the
+  header to save height) and tablets; decide iPad routing.
+- [idea] Share the list definitions (LISTS) between desktop_home.html and mobile_app.html in
+  one script file, so a new list only needs adding once. Today they are copied; a test
+  (`test_new_mobile_app_lists_match_desktop_lists`) checks the phone keys exist on desktop.
+
+- [next] Touchscreen and iPad pass (owner, 2026-10-21; before the Nov 1 launch). Use the
+  desktop app and the desktop pages on an iPad (1024 and 1180 px wide, portrait and landscape)
+  and a touchscreen laptop: things that only work on hover (tooltips, menus, chart readouts),
+  tap targets under ~40 px, drag and pinch (Binder Art preview, charts), and whether iPads
+  should get the desktop app or the mobile page (today they get mobile; see "iPad: a
+  dedicated analysis layout" under Parked). Write each finding here as its own item.
+- [planned] Mobile interface testing (owner, 2026-10-21): now part of the new mobile app
+  (see "New mobile app" above). Test `/m-next` on real phones after each step instead of the
+  old `/mobile`, which is being replaced; known old-page issues are under "Parked: Mobile
+  and Admin".
+- [planned] Card scanning (owner, 2026-10-21; was "Camera / photo card lookup" under Deferred):
+  take a photo or use the camera to identify a card and open it in the app. Agree the approach
+  with the owner before building. Likely first version: read the collector number (e.g.
+  "123/191") and the name at the bottom of the card with OCR in the browser (tesseract.js is
+  already used on /supplier-pricing), match against the card catalogue, and show the top
+  matches to pick from. Image matching against the cached card images is a later step if OCR
+  isn't reliable enough. Camera access needs HTTPS (the site has it) and a photo-upload
+  fallback.
 - [in progress] Pullbacks trial week (live 2026-10-17; review with the owner ~2026-10-24).
   New rules in `query_support.build_pullback_sql` (constants PULLBACK_*), used by /good_buys,
   the new /set_dips ("Whole-set Dips" in the desktop app) and the screener snapshot's
@@ -79,6 +143,14 @@ High Priority
   with an API; Squarespace Domains has none). Until then: after any outage, compare
   `curl -s https://api.ipify.org` with the answer from
   `https://dns.google/resolve?name=market.poke6s.com&type=A` (local dig is cached).
+- [idea] User testing of the desktop app, including touch screens (owner, 2026-10-21). Touch
+  laptops get the desktop app (phones and tablets get the mobile page), and several things there
+  rely on a mouse: double-click a picture for the full card page (the "Full data" button is the
+  touch alternative), hover-only details (loose-pack breakdown on Sealed Deals, cross date on
+  Consistent Movers, set-value tips). Ask a few Discord members to try set tasks ("find a card's
+  graded price", "compare a box with loose packs") and note where they get stuck. Open question
+  from the same chat: should browser Back also step through lists and sets (today only the full
+  card page adds a history entry)? Decide after testing.
 - [idea] Weekly Discord posts follow-ups: Japanese picks too; group Whole-set Dips by set; skip
   odd-sale spikes once the odd-sale cleanup exists (today the spotlight needs 6+ price changes
   and under +100% in 30 days, and skips sealed product and Energy cards).
@@ -106,8 +178,9 @@ High Priority
   after Cyber Monday (Dec 1) set it back to +0%. Six overpriced cards need a manual price (the
   skip-big-drops guard blocks the rules): Pikachu TG05 LP, Mawile EX MP, Klefki, Arven MP,
   Comfey GG14, Spewpa; three Japanese cards have no market price.
-- [idea] Binder Art Maker follow-ups: let visitors upload their own logo or text; a card-back
-  design; post the tool in Discord. Japanese set logos aren't in images/logos yet.
+- [watching] Binder Art Maker (/binder-art, live 2026-10-21). Fix bug reports as they come in.
+  Ideas if visitors ask: upload their own logo or text; a card-back design. Japanese set logos
+  aren't in images/logos yet.
 - [idea] Bulk pricing on TCGplayer (owner, 2026-10-19): the owner's bulk isn't selling. Other
   sellers list bulk at $0.01-0.05 and make their margin on the shipping charge (shipping costs
   them less than they charge), and buyers rarely pay for widely available bulk after the
@@ -419,7 +492,6 @@ Deferred / Not Now
 ------------------
 
 - High-resolution image support, until the fast-loading image flow isn't enough.
-- Camera / photo card lookup, after the main phone workflow settles.
 
 Profiling Notes (April 2026)
 ----------------------------
@@ -446,6 +518,38 @@ Needs Decisions
 
 Future Ideas
 ------------
+
+Learn and collector tools (owner, 2026-10-23; "nothing tonight"):
+
+- [idea] Learn as its own landing page: "How to use this site" plus the detail on every
+  screener (today's How it works), and cards linking to Collector Hub, Placeholder Library and
+  Binder Art Maker.
+- [idea] Collector Hub review: the owner wants it looked at and revised.
+- [waiting] Owner: confirm the product for the 30 Mega promos the sync added on 2026-10-23
+  (`TCG Placeholders/auto_mega_promos.csv`, also on the Placeholder Library downloads page):
+  the 30th Celebration promos (MEP094-110), Pitch Black stamped, Staff and prerelease copies
+  (MEP082-085), Mega Zeraora/Darkrai/Dragonite ex (MEP089-091), Celebratory Fanfare (MEP028).
+  Move each confirmed row into `mega_placeholders.csv` with its Product and Product Type.
+- [planned] Placeholder Library follow-ups: Prize Pack Series 9 (in the set catalog, no card
+  list yet; comes as a PDF); placeholders and title cards for whole sets (every card of a
+  master set, from the catalog), not only promos and variants; check Delta Reign's promos
+  appear after its 2026-11-06 release.
+- [idea] Next big project (owner, 2026-10-23): a Pokémon binder planner, built from the ATLA
+  planner (`ATLA Binder/public/index.html`: page sizes 3x3/4x3/4x4/6x6, owned-card tracking,
+  collection value). For Pokémon it would read the set's cards and printings from the catalog
+  and price them with our own nightly prices instead of Scryfall, so any set works without
+  hand-made card lists. Fits with the master set guide pages below.
+- [idea] Card images: TCGplayer already serves every image at up to 1000x1000 (`_in_1000x1000`
+  instead of `_200w`, ~150 KB each), so the card views could look sharper without hosting
+  anything. Hosting our own copies (owner, 2026-10-23) would mean a download job and storage:
+  roughly 10-15 GB for Pokémon English and Japanese at that size, far more for every game
+  (69 GB free on the server today).
+- [idea] Master set guide pages, one per set, like PokeCottage's
+  (https://pokecottage.com/pitch-black-master-set-guide: card counts, binder size and layout,
+  placeholders, checklist, FAQ). Ours would differ with things only this site has: live
+  full-set cost and its history (Market Stats > Set values), the set's top hits and movers,
+  placeholders plus title cards, a binder planner at 3x3 / 3x4 / 4x4 / 6x6 (as in the
+  KPDH/ATLA planners), and the owner's own custom binders where they suggest Vault X.
 
 - Keep moving expensive live SQL into precomputed snapshots.
 - Load independent sections in parallel where it actually improves perceived speed.

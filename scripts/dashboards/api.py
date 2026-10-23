@@ -118,6 +118,8 @@ SINGLE_LISTINGS_UPLOAD_HTML = SCRIPT_DIR / "single_listings_upload.html"
 SUPPLIER_PRICING_HTML = SCRIPT_DIR / "supplier_pricing.html"
 SUPPLIER_PROFITABILITY_HTML = SCRIPT_DIR / "supplier_profitability.html"
 MOBILE_DASHBOARD_HTML = SCRIPT_DIR / "mobile_dashboard.html"
+# New mobile app (plan: docs/mobile_app_plan.md), previewed at /m-next until it replaces /mobile.
+MOBILE_APP_HTML = SCRIPT_DIR / "mobile_app.html"
 MOBILE_REBUILD_HTML = SCRIPT_DIR / "mobile_rebuild_mockup.html"
 INDEX_OVERVIEW_HUB_HTML = SCRIPT_DIR / "index_overview_hub.html"
 INDEX_OVERVIEW_DETAIL_HTML = SCRIPT_DIR / "index_overview_detail.html"
@@ -143,6 +145,8 @@ COLLECTOR_PUBLIC_BUCKETS = {
 PLACEHOLDER_DOWNLOAD_FILES = {
     "sv-source-csv": TCG_PLACEHOLDERS_DIR / "placeholders.csv",
     "mega-source-csv": TCG_PLACEHOLDERS_DIR / "mega_placeholders.csv",
+    # Promos found in the catalog but not yet in mega_placeholders.csv (sync_placeholder_library.py).
+    "mega-auto-promos-csv": TCG_PLACEHOLDERS_DIR / "auto_mega_promos.csv",
     "prize-pack-series7-csv": TCG_PLACEHOLDERS_DIR / "prize_pack_series7.csv",
     "prize-pack-series8-csv": TCG_PLACEHOLDERS_DIR / "prize_pack_series8.csv",
     "combined-normalized-csv": TCG_PLACEHOLDERS_DIR / "output_combined" / "placeholders.normalized.csv",
@@ -468,6 +472,15 @@ def placeholder_download_manifest() -> dict:
             "tags": ["Mega", "Source", "CSV"],
         },
         {
+            "id": "mega-auto-promos-csv",
+            "section": "Source CSVs",
+            "title": "New Mega Promos (not confirmed yet)",
+            "summary": "Promos found in the TCGplayer catalog that the hand-edited list doesn't have yet. Already in the print pages; the product each came in still needs checking.",
+            "href": "/placeholder-downloads/mega-auto-promos-csv",
+            "kind": "download",
+            "tags": ["Mega", "Auto", "CSV"],
+        },
+        {
             "id": "prize-pack-series7-csv",
             "section": "Source CSVs",
             "title": "Prize Pack Series 7 Source CSV",
@@ -729,7 +742,7 @@ PUBLIC_DATA_PATHS = frozenset({
     "/browse_species", "/group_products", "/group_signals", "/group_series", "/set_baskets",
     "/product_signals", "/sealed_deals", "/budget_builder",
     "/top_movers", "/confirmed_uptrends", "/sma30_holds", "/early_uptrends",
-    "/under_the_radar", "/breakouts", "/good_buys", "/set_dips", "/time_to_buy",
+    "/under_the_radar", "/breakouts", "/good_buys", "/set_dips", "/small_dips", "/time_to_buy",
 })
 
 
@@ -961,6 +974,15 @@ def supplier_pricing_page(authorization: str | None = Header(default=None), trac
 def supplier_profitability_page(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
     require_admin_user(authorization=authorization, tracking_token=tracking_token)
     return FileResponse(SUPPLIER_PROFITABILITY_HTML)
+
+
+@app.get("/m-next")
+def mobile_app_preview():
+    """Preview of the new mobile app (docs/mobile_app_plan.md). Opens on any device, so it is
+    not routed by user agent; phones keep /mobile until the switch."""
+    response = FileResponse(MOBILE_APP_HTML)
+    response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 @app.get("/mobile-rebuild")
@@ -5747,6 +5769,66 @@ def good_buys(
     return pullback_rows("own", limit, min_price, max_price, exclude_prize_packs, product_kind, category_id)
 
 
+# ---- Small Dips: a short pause in a strong uptrend --------------------------------------
+#
+# Agreed with the owner 2026-10-21. A card that has risen for months and pauses for a few days
+# drops off the streak lists (one day below its 30-day average resets them) and is too strong
+# for Pullbacks, so this list catches it: clearly rising over 90 days and up over the year,
+# still above its 90-day average, but now a little below its recent high, back near its 30-day
+# average and down this week.
+SMALL_DIP_MIN_PRICE = 5.0
+SMALL_DIP_MIN_90D_PCT = 15.0  # the uptrend: at least +15% over 90 days
+SMALL_DIP_OFF_HIGH_PCT = (3.0, 12.0)  # a small dip: 3-12% below the 90-day high
+SMALL_DIP_VS_SMA30_PCT = (-6.0, 1.0)  # back near its 30-day average
+SMALL_DIP_MIN_PRICE_CHANGES_30D = 6
+
+
+@app.get("/small_dips")
+def small_dips(
+    limit: int = 250,
+    min_price: float = SMALL_DIP_MIN_PRICE,
+    max_price: float | None = None,
+    product_kind: str | None = None,
+    category_id: int = 3,
+):
+    """Cards in a strong uptrend that have pulled back a little (see the comment above)."""
+    limit = max(1, min(limit, 5000))
+    kind = "sealed" if product_kind == "sealed" else "card"
+    price_filter = f"AND latest_price >= {max(0.0, min_price)}"
+    if max_price is not None:
+        price_filter += f" AND latest_price <= {max(0.0, max_price)}"
+    category = category_config(category_id)
+    source = product_signal_from(category.category_id)
+    off_lo, off_hi = SMALL_DIP_OFF_HIGH_PCT
+    sma_lo, sma_hi = SMALL_DIP_VS_SMA30_PCT
+    sql = f"""
+        WITH day AS (
+          SELECT *, (1 - latest_price / NULLIF(GREATEST(high_90d, latest_price), 0)) * 100 AS off_high_pct
+          FROM {source}
+          WHERE categoryId = {category.category_id}
+            AND latest_date = (SELECT MAX(latest_date) FROM {source} WHERE categoryId = {category.category_id})
+            AND productKind = '{kind}'
+        )
+        SELECT latest_date, groupId, groupName, productId, productName, imageUrl, rarity, number,
+               productClass, productKind, subTypeName, latest_price, high_90d, off_high_pct,
+               roc_7d_pct, roc_30d_pct, roc_90d_pct, roc_365d_pct, price_vs_sma30_pct,
+               price_vs_sma90_pct, recent_distinct_prices_30d, trend_score
+        FROM day
+        WHERE roc_90d_pct >= {SMALL_DIP_MIN_90D_PCT}
+          AND roc_365d_pct > 0
+          AND price_vs_sma90_pct > 0
+          AND off_high_pct BETWEEN {off_lo} AND {off_hi}
+          AND price_vs_sma30_pct BETWEEN {sma_lo} AND {sma_hi}
+          AND roc_7d_pct <= 0
+          AND COALESCE(recent_distinct_prices_30d, 0) >= {SMALL_DIP_MIN_PRICE_CHANGES_30D}
+          {price_filter}
+        ORDER BY roc_90d_pct DESC
+        LIMIT {limit}
+    """
+    cols, rows = q(sql)
+    return {"columns": cols, "rows": rows}
+
+
 @app.get("/set_dips")
 def set_dips(
     limit: int = 250,
@@ -6124,6 +6206,8 @@ def set_baskets(
             MAX(CASE WHEN r.rn = 1 THEN r.productName END) AS top_hit_name,
             MAX(CASE WHEN r.rn = 1 THEN r.imageUrl END) AS top_hit_image,
             MAX(CASE WHEN r.rn = 1 THEN r.latest_price END) AS top_hit_price,
+            MAX(CASE WHEN r.rn = 1 THEN r.productId END) AS top_hit_product_id,
+            MAX(CASE WHEN r.rn = 1 THEN r.subTypeName END) AS top_hit_sub_type,
             SUM(CASE WHEN r.rn <= 3 THEN r.latest_price ELSE 0 END) AS top3_price
         FROM ranked r
         GROUP BY r.groupId
@@ -6139,6 +6223,8 @@ def set_baskets(
         a.top_hit_name,
         a.top_hit_image,
         a.top_hit_price,
+        a.top_hit_product_id,
+        a.top_hit_sub_type,
         (a.top_hit_price / NULLIF(a.total_set_cost, 0)) * 100.0 AS top_hit_share_pct,
         (a.top3_price / NULLIF(a.total_set_cost, 0)) * 100.0 AS top3_share_pct,
         -- Lower concentration means the set's value is spread more broadly across the checklist.

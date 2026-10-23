@@ -1,0 +1,1224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#08111d" />
+  <title>Poke6s Market</title>
+  <link rel="icon" type="image/png" href="/images/Favidon.png" />
+  <style>
+    /* New mobile app (plan: docs/mobile_app_plan.md). Same tokens as desktop_home.html. */
+    :root {
+      --bg: #08111d;
+      --panel: #0e1828;
+      --panel-2: #132036;
+      --panel-3: #0a1322;
+      --line: rgba(136, 162, 205, 0.16);
+      --line-strong: rgba(136, 162, 205, 0.3);
+      --text: #eaf1ff;
+      --muted: #93a6c8;
+      --faint: #6f82a6;
+      --accent: #4da3ff;
+      --accent-soft: rgba(77, 163, 255, 0.16);
+      --good: #3ddc97;
+      --good-soft: rgba(61, 220, 151, 0.14);
+      --bad: #ff7d7d;
+      --bad-soft: rgba(255, 125, 125, 0.14);
+      --warn: #f5b94a;
+      --radius: 14px;
+      --font: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+      /* Notches and the home indicator. */
+      --safe-l: env(safe-area-inset-left, 0px);
+      --safe-r: env(safe-area-inset-right, 0px);
+      --safe-b: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html, body { height: 100%; }
+    /* App shell: header, scope bar, the panes (which scroll on their own), footer.
+       100dvh follows the phone's real visible height as its address bar shows and hides. */
+    body {
+      margin: 0;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.45 var(--font);
+      -webkit-text-size-adjust: 100%;
+      overflow: hidden;
+    }
+    button, input, select { font: inherit; color: inherit; }
+    /* Header, scope bar and footer keep their height; only the panes shrink and scroll. */
+    .top, .scope, .legal { flex: 0 0 auto; }
+    button { cursor: pointer; }
+    a { color: var(--accent); }
+
+    /* ---------- header ---------- */
+    .top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px calc(12px + var(--safe-r)) 8px calc(12px + var(--safe-l));
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-3);
+      position: relative;
+      z-index: 20;
+    }
+    .icon-btn {
+      flex: 0 0 auto;
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      display: grid;
+      place-items: center;
+      padding: 0;
+    }
+    .icon-btn svg { width: 20px; height: 20px; }
+    .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); font-weight: 700; flex: 0 0 auto; }
+    .brand img { width: 28px; height: 28px; }
+    .brand .preview { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--warn); border: 1px solid rgba(245, 185, 74, 0.4); border-radius: 6px; padding: 1px 5px; }
+    .search { position: relative; flex: 1 1 auto; min-width: 0; }
+    .search input {
+      width: 100%;
+      height: 42px;
+      border-radius: 12px;
+      border: 1px solid var(--line-strong);
+      background: var(--panel);
+      padding: 0 12px;
+      font-size: 16px; /* 16px stops iPhone Safari zooming in on focus */
+    }
+    .search input::placeholder { color: var(--faint); }
+    .search-results {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      max-height: 60dvh;
+      overflow-y: auto;
+      background: var(--panel-2);
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+    }
+    .search-item { display: flex; gap: 10px; align-items: center; width: 100%; padding: 8px 10px; border: 0; border-bottom: 1px solid var(--line); background: none; text-align: left; }
+    .search-item img, .search-item .ph { width: 36px; height: 50px; object-fit: contain; border-radius: 4px; background: var(--panel-3); flex: 0 0 auto; }
+    .search-item span { min-width: 0; flex: 1; }
+    .search-item strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .search-item small { color: var(--muted); }
+    .search-item .num { flex: 0 0 auto; font-weight: 700; }
+    .search-empty { padding: 12px; color: var(--muted); }
+    /* One pane on the home screen: its own big search box replaces the header's. */
+    @media (max-width: 699px) { body.on-home:not(.card-open) .top .search { visibility: hidden; } }
+    /* On narrow phones the name hides so the search box gets the room. */
+    @media (max-width: 479px) { .brand .name { display: none; } }
+
+    /* ---------- scope bar: English/Japanese, Singles/Sealed, price date ---------- */
+    .scope {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px calc(12px + var(--safe-r)) 8px calc(12px + var(--safe-l));
+      border-bottom: 1px solid var(--line);
+      overflow-x: auto;
+    }
+    .switch { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; padding: 3px; background: var(--panel); flex: 0 0 auto; }
+    .switch button { border: 0; background: none; padding: 6px 12px; border-radius: 7px; color: var(--muted); font-weight: 600; font-size: 14px; }
+    .switch button[aria-pressed="true"] { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 0 0 1px rgba(77, 163, 255, 0.45); }
+    .freshness { margin-left: auto; color: var(--faint); font-size: 12px; white-space: nowrap; padding-left: 8px; }
+
+    /* ---------- panes ----------
+       Under 700px: one pane (the list, or the card on its own screen).
+       700px and up: list and card side by side. 1100px and up: the menu is a rail on the left. */
+    .main {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      padding-left: var(--safe-l);
+      padding-right: var(--safe-r);
+    }
+    .pane { min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+    .card-pane { display: none; }
+    body.card-open .list-pane { display: none; }
+    body.card-open .card-pane { display: block; }
+    @media (min-width: 700px) {
+      .main { grid-template-columns: minmax(300px, 1fr) minmax(340px, 1.1fr); }
+      .list-pane, body.card-open .list-pane { display: block; border-right: 1px solid var(--line); }
+      .card-pane { display: block; }
+      .back-btn { display: none !important; }
+    }
+    @media (min-width: 1100px) {
+      .main { grid-template-columns: 230px minmax(320px, 1fr) minmax(380px, 1.1fr); }
+      #menuBtn { display: none; }
+    }
+
+    /* ---------- menu: a sheet from the left below 1100px, a rail from 1100px ---------- */
+    .menu {
+      background: var(--panel-3);
+      padding: 10px 10px calc(16px + var(--safe-b));
+      overflow-y: auto;
+    }
+    .menu h4 { margin: 14px 8px 4px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+    .menu h4:first-child { margin-top: 4px; }
+    .menu button, .menu a {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      min-height: 44px;
+      padding: 8px 10px;
+      border: 0;
+      border-radius: 10px;
+      background: none;
+      text-align: left;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 15px;
+    }
+    .menu button[aria-current="true"] { background: var(--accent-soft); font-weight: 700; }
+    .menu .count { color: var(--faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .menu .old { color: var(--muted); font-size: 13px; }
+    @media (max-width: 1099px) {
+      .menu {
+        position: fixed;
+        z-index: 40;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: min(320px, 86vw);
+        padding-top: calc(12px + env(safe-area-inset-top, 0px));
+        padding-left: calc(10px + var(--safe-l));
+        transform: translateX(-102%);
+        transition: transform 180ms ease;
+        border-right: 1px solid var(--line-strong);
+      }
+      body.menu-open .menu { transform: none; }
+      .scrim { position: fixed; inset: 0; z-index: 30; background: rgba(3, 7, 14, 0.6); }
+    }
+    @media (min-width: 1100px) {
+      .menu { border-right: 1px solid var(--line); }
+      .scrim { display: none !important; }
+    }
+
+    /* ---------- list ---------- */
+    .list-head { padding: 14px 14px 8px; }
+    .list-head h1 { margin: 0; font-size: 21px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .list-head h1 small { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .list-head p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    .list-head .more { border: 0; background: none; color: var(--accent); padding: 0; font-size: 13px; }
+    .tools { display: flex; gap: 8px; padding: 0 14px 10px; }
+    .tools input, .tools select {
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      padding: 0 10px;
+      font-size: 16px;
+      min-width: 0;
+    }
+    .tools input { flex: 1 1 auto; }
+    .tools select { flex: 0 1 auto; max-width: 48%; }
+    .rows { list-style: none; margin: 0; padding: 0 0 calc(12px + var(--safe-b)); }
+    .row {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      width: 100%;
+      padding: 9px 14px;
+      border: 0;
+      border-top: 1px solid var(--line);
+      background: none;
+      text-align: left;
+    }
+    .row[aria-current="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+    .row img, .row .ph { width: 44px; height: 61px; object-fit: contain; border-radius: 4px; background: var(--panel); }
+    .row .name { font-weight: 650; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+    .row .meta { display: block; color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .row .nums { text-align: right; display: grid; gap: 4px; justify-items: end; }
+    .row .price { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .pill.up { color: var(--good); background: var(--good-soft); }
+    .pill.down { color: var(--bad); background: var(--bad-soft); }
+    .pill.flat { color: var(--muted); background: var(--panel-2); }
+    .note { padding: 18px 14px; color: var(--muted); }
+
+    /* ---------- card ---------- */
+    .card { padding: 12px 14px calc(20px + var(--safe-b)); }
+    .back-btn { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; min-height: 40px; }
+    .card-top { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 14px; align-items: start; }
+    .card-top img, .card-top .ph { width: 112px; height: 156px; object-fit: contain; border-radius: 8px; background: var(--panel); }
+    .card-top h2 { margin: 0; font-size: 19px; line-height: 1.25; }
+    .card-top .meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .card-price { margin-top: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .card-price strong { font-size: 28px; font-variant-numeric: tabular-nums; }
+    .windows { display: flex; gap: 6px; margin: 16px 0 6px; }
+    .windows button { flex: 1; min-height: 38px; border: 1px solid var(--line); background: var(--panel); border-radius: 9px; color: var(--muted); font-weight: 600; }
+    .windows button[aria-pressed="true"] { color: var(--text); background: var(--accent-soft); border-color: rgba(77, 163, 255, 0.45); }
+    .chart { position: relative; height: 210px; touch-action: pan-y; }
+    .chart svg { width: 100%; height: 100%; display: block; }
+    .chart .tip { position: absolute; transform: translate(-50%, -130%); background: var(--panel-2); border: 1px solid var(--line-strong); border-radius: 8px; padding: 3px 8px; font-size: 12px; white-space: nowrap; pointer-events: none; }
+    .caption { color: var(--faint); font-size: 12px; margin-top: 4px; }
+    .actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+    .actions a { flex: 1 1 140px; min-height: 44px; display: grid; place-items: center; border-radius: 11px; font-weight: 700; text-decoration: none; }
+    .actions .primary { background: var(--accent); color: #04101f; }
+    .soon { margin-top: 18px; padding: 12px 14px; border: 1px dashed var(--line-strong); border-radius: 12px; color: var(--muted); font-size: 13px; }
+    .empty-card { padding: 40px 20px; text-align: center; color: var(--muted); }
+
+    /* ---------- home: check a card ---------- */
+    .home { padding: 16px 14px calc(20px + var(--safe-b)); }
+    .home h1 { margin: 0; font-size: 24px; }
+    .home > p { margin: 4px 0 14px; color: var(--muted); }
+    .home .big-search input {
+      width: 100%;
+      height: 54px;
+      border-radius: 14px;
+      border: 1px solid rgba(77, 163, 255, 0.55);
+      background: var(--panel);
+      padding: 0 16px;
+      font-size: 17px;
+    }
+    .home .big-search input::placeholder { color: var(--faint); }
+    .home .hint { color: var(--faint); font-size: 12.5px; margin-top: 6px; }
+    .home h3 { margin: 22px 0 6px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+    .inline-results { margin-top: 8px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .inline-results:empty { display: none; }
+    .home .rows .row:first-child { border-top: 0; }
+    .home .recent { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+    .browse { display: flex; flex-wrap: wrap; gap: 8px; }
+    .browse button { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 8px 14px; min-height: 40px; }
+
+    /* ---------- deal box ---------- */
+    .printings { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+    .printings button { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 4px 10px; font-size: 12.5px; color: var(--muted); }
+    .printings button[aria-pressed="true"] { color: var(--text); border-color: rgba(77, 163, 255, 0.55); background: var(--accent-soft); }
+    .trust { margin-top: 6px; font-size: 12.5px; color: var(--muted); }
+    .trust.thin { color: var(--warn); }
+    .deal { margin-top: 16px; border: 1px solid var(--line-strong); border-radius: 16px; background: var(--panel); padding: 14px; }
+    .deal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .deal-head h3 { margin: 0; font-size: 16px; }
+    .ask { display: flex; align-items: center; margin-top: 12px; border: 1px solid rgba(77, 163, 255, 0.55); border-radius: 12px; background: var(--panel-3); padding: 0 14px; }
+    .ask span { font-size: 22px; color: var(--muted); }
+    .ask input { flex: 1; min-width: 0; height: 54px; border: 0; background: none; font-size: 24px; font-weight: 700; padding-left: 6px; outline: none; }
+    .ask input::placeholder { color: var(--faint); font-weight: 500; font-size: 18px; }
+    .verdict { margin-top: 12px; border-radius: 12px; padding: 12px 14px; background: var(--panel-2); }
+    .verdict strong { display: block; font-size: 20px; }
+    .verdict .offer { margin-top: 2px; font-size: 14px; color: var(--muted); }
+    .verdict .offer b { color: var(--text); font-size: 16px; }
+    .verdict.good { background: var(--good-soft); box-shadow: inset 0 0 0 1px rgba(61, 220, 151, 0.4); }
+    .verdict.good strong { color: var(--good); }
+    .verdict.fair { background: rgba(245, 185, 74, 0.12); box-shadow: inset 0 0 0 1px rgba(245, 185, 74, 0.4); }
+    .verdict.fair strong { color: var(--warn); }
+    .verdict.bad { background: var(--bad-soft); box-shadow: inset 0 0 0 1px rgba(255, 125, 125, 0.4); }
+    .verdict.bad strong { color: var(--bad); }
+    .reasons { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; }
+    .reasons li + li { margin-top: 4px; }
+    .reasons li.warn { color: var(--warn); }
+    .section-title { margin: 22px 0 4px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+    .hold-head { font-weight: 700; }
+
+    /* ---------- footer ---------- */
+    .legal {
+      padding: 6px calc(12px + var(--safe-r)) calc(6px + var(--safe-b)) calc(12px + var(--safe-l));
+      border-top: 1px solid var(--line);
+      color: var(--faint);
+      font-size: 10.5px;
+      line-height: 1.35;
+    }
+    /* Phones get the short legal line (the full text is the footer's tooltip and on wider screens). */
+    .legal .short { display: none; }
+    @media (max-width: 699px) { .legal .long { display: none; } .legal .short { display: inline; } }
+    /* Phones in landscape are short: keep the footer to one line there. */
+    @media (max-height: 500px) {
+      .legal { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .top { padding-top: 6px; padding-bottom: 6px; }
+      .scope { padding-top: 5px; padding-bottom: 5px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <button type="button" class="icon-btn" id="menuBtn" aria-label="Open menu" aria-controls="menu" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+    </button>
+    <a class="brand" href="/m-next" id="brandLink"><img src="/images/Favidon.png" alt="" /><span class="name">Poke6s</span><span class="preview">Preview</span></a>
+    <div class="search">
+      <input id="searchInput" type="search" placeholder="Search cards, sets, numbers" autocomplete="off" enterkeyhint="search" aria-label="Search" />
+      <div class="search-results" id="searchResults" hidden></div>
+    </div>
+  </header>
+
+  <div class="scope">
+    <div class="switch" id="marketSwitch" role="group" aria-label="Market">
+      <button type="button" data-market="EN">English</button>
+      <button type="button" data-market="JP">Japanese</button>
+    </div>
+    <div class="switch" id="kindSwitch" role="group" aria-label="Product type">
+      <button type="button" data-kind="singles">Singles</button>
+      <button type="button" data-kind="sealed">Sealed</button>
+    </div>
+    <span class="freshness" id="freshness"></span>
+  </div>
+
+  <div class="main">
+    <nav class="menu" id="menu" aria-label="Lists"></nav>
+    <section class="pane list-pane" aria-label="List">
+      <div class="home" id="homeView" hidden>
+        <h1>Check a card</h1>
+        <p>Search the card in front of you, then type the asking price.</p>
+        <div class="big-search">
+          <input id="homeSearch" type="search" placeholder="Name, set or number (e.g. 4/102)" autocomplete="off" enterkeyhint="search" aria-label="Search for the card" />
+        </div>
+        <div class="hint" id="homeHint">English singles. Switch market or Sealed above.</div>
+        <ul class="rows inline-results" id="homeResults"></ul>
+        <div id="recentWrap" hidden>
+          <h3>Recently checked</h3>
+          <ul class="rows recent" id="recentRows"></ul>
+        </div>
+        <h3>Or browse the market</h3>
+        <div class="browse" id="browseLinks"></div>
+      </div>
+      <div id="listView">
+      <div class="list-head">
+        <h1 id="listTitle">Top Movers <small id="listCount"></small></h1>
+        <p id="listDesc"></p>
+      </div>
+      <div class="tools">
+        <input id="filterInput" type="search" placeholder="Filter by name or set" autocomplete="off" aria-label="Filter this list" />
+        <select id="sortSelect" aria-label="Sort">
+          <option value="signal">Signal strength</option>
+          <option value="change">Biggest change</option>
+          <option value="price_desc">Price, high to low</option>
+          <option value="price_asc">Price, low to high</option>
+        </select>
+      </div>
+      <ul class="rows" id="rows"></ul>
+      </div>
+    </section>
+    <section class="pane card-pane" id="cardPane" aria-label="Selected card"></section>
+  </div>
+  <div class="scrim" id="scrim" hidden></div>
+
+  <footer class="legal" title="Poke6s Market is a research tool, not financial or pricing advice, and no guarantee of future prices. Pokémon names, characters, logos and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company / The Pokémon Company International. Poke6s Market is independent and not affiliated with or endorsed by them. Market prices from TCGplayer; graded prices from PriceCharting. TCGplayer links are affiliate links.">
+    <span class="long">Research tool, not financial advice. Pokémon names and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company; Poke6s Market is independent and not affiliated with them. Prices from TCGplayer and PriceCharting. TCGplayer links are affiliate links.</span>
+    <span class="short">Not financial advice. Pokémon trademarks belong to Nintendo, Creatures, GAME FREAK and The Pokémon Company; we're not affiliated. Prices: TCGplayer (affiliate links) and PriceCharting.</span>
+  </footer>
+
+  <script>
+    /*
+     * Poke6s Market, new mobile app (preview at /m-next). Plan, stages and the inventory of
+     * the old phone page: docs/mobile_app_plan.md.
+     *
+     * The home screen is "Check a card" (the phone's main job: a card in front of you, is it a
+     * good buy?): a big search box and recently checked cards. The card screen leads with the
+     * Deal Checker (asking price → verdict and "pay up to"), then the price chart and the
+     * 6-Month Hold. The nine Discover lists are in the menu. Later steps add Graded, Save,
+     * My lists, Research, Buy and Learn.
+     *
+     * Layout follows the screen width, not the device (CSS above): one pane under 700px, list
+     * and card side by side from 700px, plus a menu rail from 1100px.
+     *
+     * History: on one-pane screens opening the card or the menu adds a history entry
+     * ({m: "card"} / {m: "menu"}), so the phone's Back gesture closes it instead of leaving
+     * the site. Everything else only rewrites the address (replaceState), so a link can be
+     * shared: ?list= (no list = Check a card), market=JP, kind=sealed, product=<productId||subType>.
+     *
+     * Data comes from the same endpoints as the desktop app (desktop_home.html):
+     * /<list key> ({columns, rows}), /search, /series, /health, /card_details, /hold_check.
+     */
+
+    // Market lists. Same keys, fields and wording as LISTS in desktop_home.html; the API path
+    // is /<key>. price/change name the row fields; changeLabel words the change figure.
+    const LISTS = [
+      { key: "top_movers", group: "Rising", label: "Top Movers", price: "p_now", change: "roc_pct", changeLabel: "30 days",
+        desc: "Biggest steady 30-day gains with real trading activity." },
+      { key: "confirmed_uptrends", group: "Rising", label: "Confirmed Movers", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg",
+        desc: "Uptrends confirmed by moving averages and a bullish streak." },
+      { key: "sma30_holds", group: "Rising", label: "Consistent Movers", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg",
+        desc: "Held above their 30-day average for 30 straight days." },
+      { key: "early_uptrends", group: "Starting to move", label: "Early Movers", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days",
+        desc: "Just starting to trend up, still close to their base." },
+      { key: "under_the_radar", group: "Starting to move", label: "Under the Radar", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days",
+        desc: "Quiet risers emerging from a flat base." },
+      { key: "breakouts", group: "Starting to move", label: "Breakouts", price: "latest_price", change: "breakout_pct", changeLabel: "above 90-day high",
+        desc: "Breaking above their 90-day high with recent activity." },
+      { key: "good_buys", group: "Dipped", label: "Pullbacks", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days",
+        desc: "Cards falling faster than their own set: something specific to the card, so a possible bargain worth a closer look. Each is 10%+ below its 90-day high for a week, behind cards of a similar price and behind its set, yet still up over the year. Cards falling only as much as their set are in Whole-set Dips." },
+      { key: "small_dips", group: "Dipped", label: "Small Dips", price: "latest_price", change: "roc_90d_pct", changeLabel: "90 days",
+        desc: "Strong cards taking a short breather: up 15%+ over 90 days and up over the year, now 3-12% below their 90-day high, back near their 30-day average and down this week. Unlike Pullbacks, these are leading the market, just paused." },
+      { key: "set_dips", group: "Dipped", label: "Whole-set Dips", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days",
+        desc: "Cards on sale because their whole set is cooling off: they dropped like Pullbacks (10%+ below their 90-day high for a week), but about as much as their set did. A shopping list for sets you like; the set may keep sliding, so there is rarely a rush. Cards falling faster than their set are in Pullbacks." },
+    ];
+    const TCGPLAYER_AFFILIATE_BASE = "https://partner.tcgplayer.com/jR1OJb";
+    const WINDOWS = [[30, "30D"], [90, "90D"], [365, "1Y"], [5000, "All"]];
+    // Deal Checker rules (see judgeDeal). Percentages compare the asking price with market.
+    const DEAL = {
+      keepBuyPct: 10,       // To keep: 10%+ under market is a buy...
+      keepFairPct: -5,      // ...up to 5% over market is fair; more is a pass
+      keepOfferPct: 0.9,    // "pay up to" for keeping: 90% of market
+      flipBuyMargin: 0.2,   // To resell: 20%+ profit after fees and shipping is a buy; 0-20% is thin
+      spikeVsAvgPct: 40,    // 40%+ above the 30-day average counts as a spike
+      fallingPct: -10,      // down 10%+ over 30 days counts as falling
+      thinDistinct: 3,      // under 3 different prices in 30 days: the market price is a rough guide
+      staleDays: 30,        // no price change for 30+ days: same
+    };
+    const RECENT_KEY = "pokemon-momentum-m-recent";  // last cards checked on this phone
+    const MODE_KEY = "pokemon-momentum-m-deal-mode";  // "keep" or "resell"
+    const readStore = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch (_err) { return fallback; } };
+    const writeStore = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch (_err) { /* private mode: fine */ } };
+
+    const params = new URLSearchParams(location.search);
+    const state = {
+      market: params.get("market") === "JP" ? "JP" : "EN",
+      kind: params.get("kind") === "sealed" ? "sealed" : "singles",
+      // "check" is the home screen (Check a card); the rest are LISTS keys.
+      list: LISTS.some((l) => l.key === params.get("list")) ? params.get("list") : "check",
+      mode: readStore(MODE_KEY, "keep") === "resell" ? "resell" : "keep",
+      productKey: params.get("product"),  // card to open once the list loads
+      selected: null,
+      days: 90,
+      rows: [],
+    };
+    const listCache = new Map();
+    // Bumped on every request; an answer whose number is no longer current is dropped.
+    let listSeq = 0;
+    let cardSeq = 0;
+
+    const $ = (id) => document.getElementById(id);
+    const twoPane = window.matchMedia("(min-width: 700px)");
+    const railMenu = window.matchMedia("(min-width: 1100px)");
+    const categoryId = () => (state.market === "JP" ? 85 : 3);
+    const productKind = () => (state.kind === "sealed" ? "sealed" : "card");
+    const currentList = () => LISTS.find((l) => l.key === state.list);
+    const keyOf = (productId, subTypeName) => `${productId}||${subTypeName || ""}`;
+    const money = (value) => (Number.isFinite(value) && value > 0
+      ? `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—");
+    const pct = (value) => (Number.isFinite(value) ? `${value >= 0 ? "+" : ""}${value.toFixed(1)}%` : "—");
+    const fmtDate = (iso) => new Date(`${iso}T00:00:00Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+    const el = (tag, attrs = {}, ...children) => {
+      const node = document.createElement(tag);
+      for (const [k, v] of Object.entries(attrs)) {
+        if (v === undefined || v === null || v === false) continue;
+        if (k === "class") node.className = v;
+        else if (k === "text") node.textContent = v;
+        else node.setAttribute(k, v === true ? "" : v);
+      }
+      node.append(...children.filter((c) => c !== null && c !== undefined));
+      return node;
+    };
+    const changePill = (value, label) => el("span", {
+      class: `pill ${!Number.isFinite(value) ? "flat" : value >= 0 ? "up" : "down"}`,
+      text: label ? `${pct(value)} ${label}` : pct(value),
+    });
+    async function getJson(path) {
+      const response = await fetch(path);
+      if (!response.ok) throw new Error(`${response.status} ${path}`);
+      return response.json();
+    }
+    // Most endpoints answer {columns, rows}; turn that into one object per row.
+    function rowObjects(payload) {
+      const cols = payload.columns || [];
+      return (payload.rows || []).map((row) => Object.fromEntries(cols.map((c, i) => [c, row[i]])));
+    }
+    // The shape every list row uses (same as normalizeRow in desktop_home.html).
+    function normalizeRow(raw, list) {
+      const price = Number(raw[list.price] ?? raw.latest_price ?? raw.p_now);
+      const change = raw[list.change];
+      return {
+        key: keyOf(raw.productId, raw.subTypeName),
+        productId: raw.productId,
+        subTypeName: raw.subTypeName || "",
+        name: raw.productName || `Product ${raw.productId}`,
+        set: raw.groupName || "",
+        number: raw.number || "",
+        rarity: raw.rarity || "",
+        imageUrl: raw.imageUrl || "",
+        productKind: raw.productKind || productKind(),
+        price: Number.isFinite(price) ? price : null,
+        change: change === null || change === undefined || change === "" ? NaN : Number(change),
+      };
+    }
+
+    // ---------- address bar and history ----------
+    function syncUrl() {
+      const url = new URL(location.href);
+      url.search = "";
+      if (state.market !== "EN") url.searchParams.set("market", state.market);
+      if (state.kind !== "singles") url.searchParams.set("kind", state.kind);
+      if (state.list !== "check") url.searchParams.set("list", state.list);
+      if (state.selected) url.searchParams.set("product", state.selected.key);
+      history.replaceState(history.state, "", url);
+    }
+    // One-pane screens: show the card on its own screen, with a history entry for Back.
+    function openCardScreen() {
+      if (twoPane.matches || document.body.classList.contains("card-open")) return;
+      document.body.classList.add("card-open");
+      history.pushState({ m: "card" }, "", location.href);
+      $("cardPane").scrollTop = 0;
+    }
+    function closeCardScreen() {
+      if (!document.body.classList.contains("card-open")) return;
+      document.body.classList.remove("card-open");
+      if (state.list === "check") renderHome();  // refresh "Recently checked"
+    }
+    function openMenu() {
+      if (railMenu.matches) return;
+      document.body.classList.add("menu-open");
+      $("scrim").hidden = false;
+      $("menuBtn").setAttribute("aria-expanded", "true");
+      history.pushState({ m: "menu" }, "", location.href);
+    }
+    function closeMenu() {
+      document.body.classList.remove("menu-open");
+      $("scrim").hidden = true;
+      $("menuBtn").setAttribute("aria-expanded", "false");
+    }
+    // Leave a pushed screen the way Back would, so the history stays in step. `then` runs once
+    // the browser has gone back (history.back() is asynchronous); anything that rewrites the
+    // address must wait for that, or it would write onto the entry being left.
+    let afterBack = null;
+    function goBackFrom(kind, then) {
+      if (history.state?.m === kind) {
+        afterBack = then || null;
+        history.back();
+        return;
+      }
+      if (kind === "menu") closeMenu();
+      else closeCardScreen();
+      if (then) then();
+    }
+    window.addEventListener("popstate", () => {
+      if (history.state?.m !== "menu") closeMenu();
+      if (history.state?.m !== "card") closeCardScreen();
+      const then = afterBack;
+      afterBack = null;
+      if (then) then();
+    });
+    $("menuBtn").addEventListener("click", openMenu);
+    $("scrim").addEventListener("click", () => goBackFrom("menu"));
+
+    // ---------- menu ----------
+    function renderMenu() {
+      const groups = [...new Set(LISTS.map((l) => l.group))];
+      const check = el("button", { type: "button", "data-list": "check", "aria-current": String(state.list === "check") }, el("span", { text: "Check a card" }));
+      check.addEventListener("click", () => {
+        if (document.body.classList.contains("menu-open")) goBackFrom("menu", () => openList("check"));
+        else openList("check");
+      });
+      const nodes = [el("h4", { text: "At the table" }), check];
+      for (const group of groups) {
+        nodes.push(el("h4", { text: group }));
+        for (const list of LISTS.filter((l) => l.group === group)) {
+          const button = el("button", { type: "button", "data-list": list.key, "aria-current": String(list.key === state.list) },
+            el("span", { text: list.label }), el("span", { class: "count", "data-count": list.key }));
+          button.addEventListener("click", () => {
+            if (document.body.classList.contains("menu-open")) goBackFrom("menu", () => openList(list.key));
+            else openList(list.key);
+          });
+          nodes.push(button);
+        }
+      }
+      // Until the later steps are built, the old phone page is one tap away.
+      nodes.push(el("h4", { text: "Not built yet" }),
+        el("a", { href: "/mobile", class: "old" }, el("span", { text: "Sets, Pokémon, My lists… on the old phone page" }), el("span", { text: "↗" })));
+      $("menu").replaceChildren(...nodes);
+    }
+    // Card counts next to each list, loaded in the background (shares the list cache).
+    function loadCounts() {
+      for (const list of LISTS) {
+        const node = document.querySelector(`[data-count="${list.key}"]`);
+        if (node) node.textContent = "";
+        fetchList(list).then((rows) => {
+          const target = document.querySelector(`[data-count="${list.key}"]`);
+          if (target) target.textContent = rows.length >= 200 ? "200+" : String(rows.length);
+        }).catch(() => {});
+      }
+    }
+
+    // ---------- scope switches ----------
+    function renderSwitches() {
+      document.querySelectorAll("#marketSwitch button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.market === state.market)));
+      document.querySelectorAll("#kindSwitch button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.kind === state.kind)));
+    }
+    $("marketSwitch").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-market]");
+      if (!button || button.dataset.market === state.market) return;
+      state.market = button.dataset.market;
+      afterScopeChange();
+    });
+    $("kindSwitch").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-kind]");
+      if (!button || button.dataset.kind === state.kind) return;
+      state.kind = button.dataset.kind;
+      afterScopeChange();
+    });
+    function afterScopeChange() {
+      renderSwitches();
+      state.selected = null;
+      state.productKey = null;
+      if (document.body.classList.contains("card-open")) goBackFrom("card");
+      renderCard();
+      loadFreshness();
+      loadCounts();
+      loadList();
+    }
+    async function loadFreshness() {
+      try {
+        const health = await getJson(`/health?category_id=${categoryId()}`);
+        $("freshness").textContent = `Prices as of ${new Date(`${health.latest}T00:00:00Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" })}`;
+      } catch (_err) {
+        $("freshness").textContent = "";
+      }
+    }
+
+    // ---------- lists ----------
+    function fetchList(list) {
+      const cacheKey = `${list.key}:${state.market}:${state.kind}`;
+      if (!listCache.has(cacheKey)) {
+        const query = new URLSearchParams({ product_kind: productKind(), category_id: String(categoryId()) });
+        const request = getJson(`/${list.key}?${query}`).then((payload) => rowObjects(payload).map((raw) => normalizeRow(raw, list)));
+        listCache.set(cacheKey, request);
+        request.catch(() => listCache.delete(cacheKey));
+      }
+      return listCache.get(cacheKey);
+    }
+    function openList(key) {
+      if (key === state.list) return;
+      state.list = key;
+      // One pane: a new list starts with no card open (two panes keep the card beside it).
+      if (!twoPane.matches) state.selected = null;
+      $("filterInput").value = "";
+      $("sortSelect").value = "signal";
+      document.querySelectorAll("#menu [data-list]").forEach((b) => b.setAttribute("aria-current", String(b.dataset.list === key)));
+      loadList();
+    }
+    async function loadList() {
+      const seq = ++listSeq;
+      const home = state.list === "check";
+      document.body.classList.toggle("on-home", home);
+      $("homeView").hidden = !home;
+      $("listView").hidden = home;
+      if (home) {
+        renderHome();
+        syncUrl();
+        if (state.productKey) openProductFromLink(state.productKey);
+        return;
+      }
+      const list = currentList();
+      $("listTitle").firstChild.textContent = `${list.label} `;
+      $("listCount").textContent = "";
+      renderDesc(list, false);
+      $("rows").replaceChildren(el("li", { class: "note", text: "Loading…" }));
+      syncUrl();
+      try {
+        const rows = await fetchList(list);
+        if (seq !== listSeq) return;
+        state.rows = rows;
+        renderRows();
+        // Opening a shared link: select the card it names. Two-pane screens otherwise show the
+        // first card so the right side is never empty.
+        const wanted = state.productKey && rows.find((r) => r.key === state.productKey);
+        state.productKey = null;
+        if (wanted) selectCard(wanted, { open: true });
+        else if (twoPane.matches && rows.length && !state.selected) selectCard(rows[0], { open: false });
+      } catch (_err) {
+        if (seq !== listSeq) return;
+        $("rows").replaceChildren(el("li", { class: "note", text: "Couldn't load this list. Check your connection and try again." }));
+      }
+    }
+    // A shared link on the home screen names a product but no list: look it up by id.
+    async function openProductFromLink(key) {
+      state.productKey = null;
+      const [productId, subTypeName] = key.split("||");
+      try {
+        const data = await getJson(`/card_details?${new URLSearchParams({ productId, subTypeName, category_id: String(categoryId()) })}`);
+        const c = data.card;
+        if (!c) return;
+        selectCard({ key, productId: c.productId, subTypeName: c.subTypeName || "", name: c.productName, set: c.groupName || "", number: c.number || "",
+          rarity: c.rarity || "", imageUrl: c.imageUrl || "", productKind: c.productKind || productKind(), price: Number(c.latest_price), change: NaN }, { open: true });
+      } catch (_err) { /* bad or old link: stay on the home screen */ }
+    }
+    // ---------- home: check a card ----------
+    function renderHome() {
+      $("homeHint").textContent = `${state.market === "JP" ? "Japanese" : "English"} ${state.kind === "sealed" ? "sealed products" : "singles"}. Switch above to search the others.`;
+      const recent = readStore(RECENT_KEY, []).filter((c) => c.market === state.market);
+      $("recentWrap").hidden = !recent.length;
+      $("recentRows").replaceChildren(...recent.map((c) => cardRow(c, () => selectCard(c, { open: true }))));
+      $("browseLinks").replaceChildren(...LISTS.slice(0, 9).map((l) => {
+        const button = el("button", { type: "button", text: l.label });
+        button.addEventListener("click", () => openList(l.key));
+        return button;
+      }));
+      if (!twoPane.matches) return;
+      if (!state.selected) renderCard();
+    }
+    function rememberRecent(card) {
+      const entry = { key: card.key, productId: card.productId, subTypeName: card.subTypeName, name: card.name, set: card.set, number: card.number,
+        rarity: card.rarity, imageUrl: card.imageUrl, productKind: card.productKind, price: card.price, change: NaN, market: state.market };
+      const list = readStore(RECENT_KEY, []).filter((c) => !(c.key === card.key && c.market === state.market));
+      writeStore(RECENT_KEY, [entry, ...list].slice(0, 12));
+    }
+    let homeTimer = null;
+    let homeSeq = 0;
+    $("homeSearch").addEventListener("input", () => {
+      clearTimeout(homeTimer);
+      homeTimer = setTimeout(async () => {
+        const query = $("homeSearch").value.trim();
+        const seq = ++homeSeq;
+        if (query.length < 2) { $("homeResults").replaceChildren(); return; }
+        try {
+          const data = await searchProducts(query);
+          if (seq !== homeSeq) return;
+          $("homeResults").replaceChildren(...(data.items.length
+            ? data.items.map((item) => cardRow(searchItemCard(item), () => { $("homeSearch").blur(); selectCard(searchItemCard(item), { open: true }); }))
+            : [el("li", { class: "note", text: data.didYouMean ? `No exact match. Did you mean ${data.didYouMean}?` : "No matches. Try the set name or the card number." })]));
+        } catch (_err) {
+          if (seq === homeSeq) $("homeResults").replaceChildren(el("li", { class: "note", text: "Search failed. Check your connection." }));
+        }
+      }, 220);
+    });
+    $("homeSearch").addEventListener("keydown", (event) => {
+      if (event.key === "Enter") { event.preventDefault(); $("homeResults").querySelector(".row")?.click(); }
+    });
+
+    // Long descriptions show their first sentence, with "More" for the rest.
+    function renderDesc(list, expanded) {
+      const desc = list.desc;
+      const cut = desc.indexOf(". ");
+      if (expanded || cut < 0 || cut > desc.length - 3) {
+        $("listDesc").replaceChildren(desc);
+        return;
+      }
+      const more = el("button", { type: "button", class: "more", text: "More" });
+      more.addEventListener("click", () => renderDesc(list, true));
+      $("listDesc").replaceChildren(`${desc.slice(0, cut + 1)} `, more);
+    }
+    function visibleRows() {
+      const query = $("filterInput").value.trim().toLowerCase();
+      let rows = query ? state.rows.filter((r) => `${r.name} ${r.set} ${r.number}`.toLowerCase().includes(query)) : [...state.rows];
+      const sort = $("sortSelect").value;
+      const num = (v) => (Number.isFinite(v) ? v : -Infinity);
+      if (sort === "change") rows.sort((a, b) => num(b.change) - num(a.change));
+      if (sort === "price_desc") rows.sort((a, b) => num(b.price) - num(a.price));
+      if (sort === "price_asc") rows.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+      return rows;
+    }
+    function renderRows() {
+      const list = currentList();
+      const rows = visibleRows();
+      $("listCount").textContent = `${state.rows.length} ${state.kind === "sealed" ? "products" : "cards"}`;
+      if (!rows.length) {
+        $("rows").replaceChildren(el("li", { class: "note", text: state.rows.length ? "Nothing matches that filter." : "No cards in this list today. Try another list or market." }));
+        return;
+      }
+      // Rows are drawn in batches so a 200-card list doesn't hold up the first paint.
+      const make = (row) => cardRow(row, () => selectCard(row, { open: true }));
+      $("rows").replaceChildren(...rows.slice(0, 60).map(make));
+      if (rows.length > 60) requestAnimationFrame(() => $("rows").append(...rows.slice(60).map(make)));
+      $("rows").title = `Change: ${list.changeLabel}`;
+    }
+    // One card as a tappable row (lists, search results on the home screen, recent checks).
+    function cardRow(row, onTap) {
+      const image = row.imageUrl ? el("img", { src: row.imageUrl, alt: "", loading: "lazy", decoding: "async" }) : el("div", { class: "ph" });
+      const meta = [row.set, row.number, row.subTypeName].filter(Boolean).join(" · ");
+      const button = el("button", { type: "button", class: "row", "data-key": row.key, "aria-current": String(state.selected?.key === row.key) },
+        image,
+        el("span", {}, el("span", { class: "name", text: row.name }), el("span", { class: "meta", text: meta })),
+        el("span", { class: "nums" }, el("span", { class: "price", text: money(row.price) }), Number.isFinite(row.change) ? changePill(row.change) : null));
+      button.addEventListener("click", onTap);
+      return el("li", {}, button);
+    }
+    $("filterInput").addEventListener("input", renderRows);
+    $("sortSelect").addEventListener("change", renderRows);
+
+    // ---------- search ----------
+    let searchTimer = null;
+    let searchSeq = 0;
+    const searchInput = $("searchInput");
+    const searchResults = $("searchResults");
+    searchInput.addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(runSearch, 220);
+    });
+    searchInput.addEventListener("focus", () => { if (searchInput.value.trim().length >= 2) runSearch(); });
+    searchInput.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") { searchResults.hidden = true; searchInput.blur(); }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        searchResults.querySelector(".search-item")?.click();
+      }
+    });
+    document.addEventListener("pointerdown", (event) => {
+      if (!event.target.closest(".search")) searchResults.hidden = true;
+    });
+    async function runSearch() {
+      const query = searchInput.value.trim();
+      const seq = ++searchSeq;
+      if (query.length < 2) {
+        searchResults.hidden = true;
+        return;
+      }
+      try {
+        const { items, didYouMean } = await searchProducts(query);
+        if (seq !== searchSeq) return;
+        searchResults.replaceChildren(...(items.length ? items.map((item) => {
+          const image = item.imageUrl ? el("img", { src: item.imageUrl, alt: "", loading: "lazy" }) : el("div", { class: "ph" });
+          const meta = [item.groupName, item.number, item.subTypeName].filter(Boolean).join(" · ");
+          const button = el("button", { type: "button", class: "search-item" },
+            image,
+            el("span", {}, el("strong", { text: item.title || item.productName }), el("small", { text: meta })),
+            el("span", { class: "num", text: money(Number(item.latest_price)) }));
+          button.addEventListener("click", () => chooseSearchItem(item));
+          return button;
+        }) : [el("div", { class: "search-empty", text: didYouMean ? `No exact match. Did you mean ${didYouMean}?` : "No matches." })]));
+        searchResults.hidden = false;
+      } catch (_err) {
+        searchResults.hidden = true;
+      }
+    }
+    // Products matching a search in the current market and product type. Sets open once the
+    // Sets view exists (step 1.4); for now only products are listed.
+    async function searchProducts(query) {
+      const data = await getJson(`/search?${new URLSearchParams({ query, limit: "20", category_id: String(categoryId()) })}`);
+      const items = (data.items || []).filter((item) => item.kind === "product" && (item.productKind || "card") === productKind()).slice(0, 12);
+      return { items, didYouMean: data.did_you_mean?.[0] || "" };
+    }
+    function chooseSearchItem(item) {
+      searchResults.hidden = true;
+      searchInput.blur();
+      selectCard(searchItemCard(item), { open: true });
+    }
+    function searchItemCard(item) {
+      return {
+        key: keyOf(item.productId, item.subTypeName),
+        productId: item.productId,
+        subTypeName: item.subTypeName || "",
+        name: item.productName || item.title,
+        set: item.groupName || "",
+        number: item.number || "",
+        rarity: item.rarity || "",
+        imageUrl: item.imageUrl || "",
+        productKind: item.productKind || productKind(),
+        price: Number(item.latest_price),
+        change: NaN,
+      };
+    }
+
+    // ---------- card ----------
+    function selectCard(card, { open }) {
+      state.selected = card;
+      rememberRecent(card);
+      document.querySelectorAll("#rows .row").forEach((b) => b.setAttribute("aria-current", String(b.dataset.key === card.key)));
+      renderCard();
+      // Push the card screen first, so the product lands in the new history entry and Back
+      // returns to the list's own address.
+      if (open) openCardScreen();
+      syncUrl();
+    }
+    // TCGplayer product link (language and printing preselected), wrapped in the affiliate link.
+    function tcgplayerUrl(card) {
+      const target = new URL(`https://www.tcgplayer.com/product/${card.productId}`);
+      if (card.productKind !== "sealed") {
+        target.searchParams.set("Language", state.market === "JP" ? "Japanese" : "English");
+        const printing = { "reverse holofoil": "Reverse Holofoil", "1st edition": "1st Edition", "unlimited holofoil": "Unlimited Holofoil", "1st edition holofoil": "1st Edition Holofoil" }[card.subTypeName.toLowerCase()];
+        if (printing) target.searchParams.set("Printing", printing);
+      }
+      const affiliate = new URL(TCGPLAYER_AFFILIATE_BASE);
+      affiliate.searchParams.set("u", target.toString());
+      return affiliate.toString();
+    }
+    function renderCard() {
+      const card = state.selected;
+      const pane = $("cardPane");
+      if (!card) {
+        pane.replaceChildren(el("div", { class: "empty-card", text: "Search for the card in front of you, or pick one from a list." }));
+        return;
+      }
+      const seq = ++cardSeq;
+      // What the Deal Checker knows so far; details and hold arrive from the server.
+      deal = { card, seq, details: null, hold: null, ask: NaN };
+      const back = el("button", { type: "button", class: "back-btn", text: "← Back" });
+      back.addEventListener("click", () => goBackFrom("card"));
+      const image = card.imageUrl ? el("img", { src: card.imageUrl.replace("_200w", "_400w"), alt: card.name }) : el("div", { class: "ph" });
+      const windows = el("div", { class: "windows", role: "group", "aria-label": "Chart range" },
+        ...WINDOWS.map(([days, label]) => {
+          const button = el("button", { type: "button", "aria-pressed": String(days === state.days), text: label });
+          button.addEventListener("click", () => {
+            state.days = days;
+            windows.querySelectorAll("button").forEach((b, i) => b.setAttribute("aria-pressed", String(WINDOWS[i][0] === days)));
+            loadChart(card, cardSeq);
+          });
+          return button;
+        }));
+      const modes = el("div", { class: "switch", role: "group", "aria-label": "Buying to" },
+        ...[["keep", "To keep"], ["resell", "To resell"]].map(([mode, label]) => {
+          const button = el("button", { type: "button", "data-mode": mode, "aria-pressed": String(state.mode === mode), text: label });
+          button.addEventListener("click", () => {
+            state.mode = mode;
+            writeStore(MODE_KEY, mode);
+            modes.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
+            renderVerdict();
+          });
+          return button;
+        }));
+      const askInput = el("input", { id: "askInput", type: "text", inputmode: "decimal", enterkeyhint: "done", placeholder: "Asking price", autocomplete: "off", "aria-label": "Asking price in dollars" });
+      askInput.addEventListener("input", () => {
+        deal.ask = Number.parseFloat(askInput.value.replace(/[^0-9.]/g, ""));
+        renderVerdict();
+        scheduleHold();
+      });
+      askInput.addEventListener("keydown", (event) => { if (event.key === "Enter") askInput.blur(); });
+      pane.replaceChildren(el("div", { class: "card" },
+        back,
+        el("div", { class: "card-top" },
+          image,
+          el("div", {},
+            el("h2", { text: card.name }),
+            el("div", { class: "meta", text: [card.set, card.number && `#${card.number}`, card.subTypeName, card.rarity].filter(Boolean).join(" · ") }),
+            el("div", { class: "card-price" }, el("strong", { id: "cardPrice", text: money(card.price) }), el("span", { id: "cardChange" })),
+            el("div", { class: "trust", id: "trust" }))),
+        el("div", { class: "printings", id: "printings" }),
+        el("div", { class: "deal" },
+          el("div", { class: "deal-head" }, el("h3", { text: "Is it a good buy?" }), modes),
+          el("label", { class: "ask" }, el("span", { text: "$" }), askInput),
+          el("div", { class: "verdict", id: "verdict" }),
+          el("ul", { class: "reasons", id: "reasons" })),
+        el("div", { class: "section-title", text: "Price history" }),
+        windows,
+        el("div", { class: "chart", id: "chart" }),
+        el("div", { class: "caption", id: "chartCaption" }),
+        el("div", { class: "section-title", text: "Hold for 6 months?" }),
+        el("div", { id: "hold" }, el("div", { class: "caption", text: "Working it out…" })),
+        el("div", { class: "actions" },
+          el("a", { class: "primary", href: tcgplayerUrl(card), target: "_blank", rel: "noopener sponsored", text: "TCGplayer ↗" })),
+        el("div", { class: "soon", text: "Coming next: Graded prices, Save to your lists, and Our store." })));
+      renderVerdict();
+      loadChart(card, seq);
+      loadDetails(card, seq);
+      loadHold(seq);
+    }
+
+    // ---------- Deal Checker ----------
+    let deal = null;
+    // The nightly snapshot for this card: 30-day average, changes, how often its price moved,
+    // and its other printings (so you can check you have the right one).
+    async function loadDetails(card, seq) {
+      try {
+        const data = await getJson(`/card_details?${new URLSearchParams({ productId: card.productId, subTypeName: card.subTypeName, category_id: String(categoryId()) })}`);
+        if (seq !== cardSeq) return;
+        deal.details = data.card || null;
+        const c = deal.details;
+        if (c && !(card.price > 0) && c.latest_price > 0) {
+          card.price = Number(c.latest_price);
+          $("cardPrice").textContent = money(card.price);
+        }
+        if (c) {
+          const distinct = Number(c.recent_distinct_prices_30d) || 0;
+          const thin = isThin(c);
+          $("trust").className = `trust${thin ? " thin" : ""}`;
+          $("trust").textContent = thin
+            ? `Few sales: ${distinct} different price${distinct === 1 ? "" : "s"} in 30 days, last change ${c.last_change_date ? fmtDate(String(c.last_change_date).slice(0, 10)) : "unknown"}.`
+            : `Active: ${distinct} different prices in 30 days.`;
+        }
+        const others = data.other_printings || [];
+        if (others.length) {
+          const chip = (sub, price, current) => {
+            const button = el("button", { type: "button", "aria-pressed": String(current), text: `${sub || "Normal"} ${money(Number(price))}` });
+            if (!current) button.addEventListener("click", () => selectCard({ ...card, key: keyOf(card.productId, sub), subTypeName: sub, price: Number(price), change: NaN }, { open: false }));
+            return button;
+          };
+          $("printings").replaceChildren(el("span", { class: "caption", text: "Right printing?" }),
+            chip(card.subTypeName, card.price, true), ...others.map((o) => chip(o.subTypeName, o.latest_price, false)));
+        }
+        renderVerdict();
+      } catch (_err) { /* the verdict works from the market price alone */ }
+    }
+    // /hold_check: fees and shipping (net_at_market, for "To resell") and the 6-month outlook
+    // for the typed price. Re-asked shortly after the price stops changing.
+    let holdTimer = null;
+    function scheduleHold() {
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(() => loadHold(cardSeq), 450);
+    }
+    async function loadHold(seq) {
+      const card = deal.card;
+      const query = new URLSearchParams({ productId: card.productId, subTypeName: card.subTypeName, category_id: String(categoryId()) });
+      if (deal.ask > 0) query.set("buy_price", String(deal.ask));
+      try {
+        const hold = await getJson(`/hold_check?${query}`);
+        if (seq !== cardSeq) return;
+        deal.hold = hold;
+        const node = $("hold");
+        if (!hold.reasons) {
+          node.replaceChildren(el("div", { class: "caption", text: hold.headline || "No price history for this item." }));
+        } else {
+          node.replaceChildren(
+            el("div", { class: "hold-head", text: `${hold.headline}${deal.ask > 0 ? "" : " (at market price; type a price above to check yours)"}` }),
+            el("ul", { class: "reasons" }, ...hold.reasons.map((r) => el("li", { text: r }))));
+        }
+        renderVerdict();
+      } catch (_err) {
+        if (seq === cardSeq) $("hold").replaceChildren(el("div", { class: "caption", text: "Couldn't load the hold check." }));
+      }
+    }
+    function isThin(c) {
+      const days = c.last_change_date ? (Date.now() - Date.parse(`${String(c.last_change_date).slice(0, 10)}T00:00:00Z`)) / 86400000 : Infinity;
+      return (Number(c.recent_distinct_prices_30d) || 0) < DEAL.thinDistinct || days > DEAL.staleDays;
+    }
+    // The verdict for the typed asking price. Pure: everything it needs is passed in.
+    //   To keep:   compare with market (DEAL.keep*). "Pay up to" is 90% of market.
+    //   To resell: what a sale at market leaves after TCGplayer fees and shipping
+    //              (hold.net_at_market) minus the asking price. "Pay up to" leaves a 20% profit.
+    // A spike (well above the 30-day average) or a falling price turns a "buy" into "Careful: …",
+    // and on a spike "pay up to" is worked out from the 30-day average instead of today's price.
+    function judgeDeal({ ask, market, mode, details, hold }) {
+      const notes = [];
+      if (!(market > 0)) return { tone: "", title: "No market price for this one", offer: null, notes: ["Check recent sales on TCGplayer before buying."] };
+      const avg30 = Number(details?.latest_sma30);
+      const vsAvg = avg30 > 0 ? (market / avg30 - 1) * 100 : NaN;
+      const change30 = Number(details?.roc_30d_pct);
+      const spike = vsAvg >= DEAL.spikeVsAvgPct;
+      const falling = change30 <= DEAL.fallingPct;
+      // On a spike, base "pay up to" on the 30-day average (capped at market).
+      const basis = spike ? Math.min(market, avg30) : market;
+      if (spike) notes.push({ warn: true, text: `Price jumped: ${pct(vsAvg)} above its 30-day average (${money(avg30)}). Spikes often fall back, so "pay up to" uses the average.` });
+      if (falling) notes.push({ warn: true, text: `Falling: ${pct(change30)} over 30 days. It may get cheaper if you wait.` });
+      if (details && isThin(details)) notes.push({ warn: true, text: "Few recent sales, so the market price is only a rough guide. Check sold listings." });
+      let offer, tone, title;
+      if (mode === "resell") {
+        const net = Number(hold?.net_at_market);
+        if (!Number.isFinite(net)) return { tone: "", title: "Working out fees…", offer: null, notes };
+        const netBasis = spike && market > 0 ? net * (basis / market) : net;
+        offer = netBasis / (1 + DEAL.flipBuyMargin);
+        if (!(ask > 0)) return { tone: "", title: "Type the asking price", offer, notes: [{ text: `Sold at market (${money(market)}) you'd keep about ${money(net)} after TCGplayer fees and shipping.` }, ...notes] };
+        const profit = net - ask;
+        const margin = profit / ask;
+        notes.unshift({ text: `Sold at market you'd keep about ${money(net)} after fees and shipping: ${profit >= 0 ? `${money(profit)} profit` : `a ${money(-profit)} loss`} (${pct(margin * 100)}).` });
+        if (margin >= DEAL.flipBuyMargin) [tone, title] = ["good", "Good flip"];
+        else if (margin >= 0) [tone, title] = ["fair", "Thin profit"];
+        else [tone, title] = ["bad", "Loss if resold now"];
+      } else {
+        offer = basis * DEAL.keepOfferPct;
+        if (!(ask > 0)) return { tone: "", title: "Type the asking price", offer, notes };
+        const edge = (market - ask) / market * 100;
+        notes.unshift({ text: `${Math.abs(edge).toFixed(0)}% ${edge >= 0 ? "under" : "over"} market (${money(market)}).` });
+        if (edge >= DEAL.keepBuyPct) [tone, title] = ["good", "Good buy"];
+        else if (edge >= DEAL.keepFairPct) [tone, title] = ["fair", "Fair price"];
+        else [tone, title] = ["bad", "Overpriced"];
+      }
+      // A "buy" on a spiking or falling card leads with the warning instead.
+      if (tone === "good" && spike) [tone, title] = ["fair", "Careful: the price just spiked"];
+      else if (tone === "good" && falling) [tone, title] = ["fair", "Careful: the price is falling"];
+      return { tone, title, offer, notes };
+    }
+    function renderVerdict() {
+      if (!deal || !$("verdict")) return;
+      const result = judgeDeal({ ask: deal.ask, market: deal.card.price, mode: state.mode, details: deal.details, hold: deal.hold });
+      $("verdict").className = `verdict${result.tone ? ` ${result.tone}` : ""}`;
+      $("verdict").replaceChildren(el("strong", { text: result.title }),
+        result.offer > 0 ? el("div", { class: "offer" }, `${state.mode === "resell" ? "To make 20%, pay up to " : "Pay up to "}`, el("b", { text: money(result.offer) })) : null);
+      $("reasons").replaceChildren(...result.notes.map((n) => el("li", { class: n.warn ? "warn" : null, text: n.text })));
+    }
+    async function loadChart(card, seq) {
+      const chart = $("chart");
+      if (!chart) return;
+      try {
+        const data = await getJson(`/series?${new URLSearchParams({ productId: card.productId, subTypeName: card.subTypeName, days: String(state.days), category_id: String(categoryId()) })}`);
+        if (seq !== cardSeq) return;
+        const points = (data.rows || []).map((r) => ({ date: String(r[0]).slice(0, 10), price: Number(r[1]), sma30: Number(r[3]) })).filter((p) => p.price > 0);
+        drawChart(chart, points);
+        if (points.length > 1) {
+          const first = points[0].price, last = points[points.length - 1].price;
+          if (!(card.price > 0)) $("cardPrice").textContent = money(last);
+          const label = state.days >= 5000 ? "all time" : state.days >= 365 ? "1 year" : `${state.days} days`;
+          $("cardChange").replaceChildren(changePill((last / first - 1) * 100, label));
+          $("chartCaption").textContent = `${points.length} days with prices, ${fmtDate(points[0].date)} – ${fmtDate(points[points.length - 1].date)}. Dashed line: 30-day average.`;
+        } else {
+          $("chartCaption").textContent = "Not enough price history for a chart.";
+        }
+      } catch (_err) {
+        if (seq === cardSeq) $("chartCaption").textContent = "Couldn't load the price history.";
+      }
+    }
+    // Hand-drawn SVG line chart (as in desktop_home.html), read by touch or mouse: drag a
+    // finger along it to see each day's price. touch-action: pan-y keeps vertical scrolling.
+    function drawChart(container, points) {
+      container.replaceChildren();
+      if (points.length < 2) return;
+      const width = container.clientWidth || 360, height = container.clientHeight || 210;
+      const pad = { l: 42, r: 8, t: 8, b: 20 };
+      const t0 = Date.parse(points[0].date), t1 = Date.parse(points[points.length - 1].date) || t0 + 1;
+      const prices = points.flatMap((p) => [p.price, p.sma30]).filter(Number.isFinite);
+      let lo = Math.min(...prices), hi = Math.max(...prices);
+      const margin = (hi - lo) * 0.08 || hi * 0.05 || 1;
+      lo = Math.max(0, lo - margin); hi += margin;
+      const x = (iso) => pad.l + ((Date.parse(iso) - t0) / (t1 - t0 || 1)) * (width - pad.l - pad.r);
+      const y = (v) => pad.t + (1 - (v - lo) / (hi - lo)) * (height - pad.t - pad.b);
+      const path = (key) => points.filter((p) => Number.isFinite(p[key])).map((p, i) => `${i ? "L" : "M"}${x(p.date).toFixed(1)},${y(p[key]).toFixed(1)}`).join("");
+      const ticks = [0, 1, 2, 3].map((i) => lo + ((hi - lo) * i) / 3);
+      const dateTicks = [points[0], points[Math.floor(points.length / 2)], points[points.length - 1]];
+      const area = `${path("price")}L${x(points[points.length - 1].date)},${height - pad.b}L${x(points[0].date)},${height - pad.b}Z`;
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.innerHTML = `
+        <defs><linearGradient id="fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#4da3ff" stop-opacity="0.28"/><stop offset="1" stop-color="#4da3ff" stop-opacity="0"/></linearGradient></defs>
+        ${ticks.map((v) => `<line x1="${pad.l}" x2="${width - pad.r}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(136,162,205,0.12)"/><text x="${pad.l - 6}" y="${y(v) + 4}" fill="#6f82a6" font-size="11" text-anchor="end">${v >= 100 ? Math.round(v) : v.toFixed(2)}</text>`).join("")}
+        ${dateTicks.map((p, i) => `<text x="${x(p.date)}" y="${height - 4}" fill="#6f82a6" font-size="11" text-anchor="${["start", "middle", "end"][i]}">${new Date(`${p.date}T00:00:00Z`).toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" })}</text>`).join("")}
+        <path d="${area}" fill="url(#fill)"/>
+        <path d="${path("sma30")}" fill="none" stroke="#93a6c8" stroke-width="1.2" stroke-dasharray="4 3"/>
+        <path d="${path("price")}" fill="none" stroke="#4da3ff" stroke-width="2"/>
+        <line class="cursor" y1="${pad.t}" y2="${height - pad.b}" stroke="rgba(234,241,255,0.35)" visibility="hidden"/>
+        <circle class="dot" r="4" fill="#4da3ff" stroke="#08111d" stroke-width="2" visibility="hidden"/>`;
+      const tip = el("div", { class: "tip", hidden: true });
+      container.append(svg, tip);
+      const show = (event) => {
+        const box = svg.getBoundingClientRect();
+        const px = ((event.clientX - box.left) / box.width) * width;
+        let best = points[0];
+        for (const p of points) if (Math.abs(x(p.date) - px) < Math.abs(x(best.date) - px)) best = p;
+        const cx = x(best.date), cy = y(best.price);
+        const cursor = svg.querySelector(".cursor"), dot = svg.querySelector(".dot");
+        cursor.setAttribute("x1", cx); cursor.setAttribute("x2", cx); cursor.setAttribute("visibility", "visible");
+        dot.setAttribute("cx", cx); dot.setAttribute("cy", cy); dot.setAttribute("visibility", "visible");
+        tip.hidden = false;
+        tip.textContent = `${fmtDate(best.date)} · ${money(best.price)}`;
+        tip.style.left = `${Math.min(85, Math.max(15, (cx / width) * 100))}%`;
+        tip.style.top = `${(cy / height) * 100}%`;
+      };
+      const hide = () => {
+        tip.hidden = true;
+        svg.querySelector(".cursor").setAttribute("visibility", "hidden");
+        svg.querySelector(".dot").setAttribute("visibility", "hidden");
+      };
+      svg.addEventListener("pointerdown", show);
+      svg.addEventListener("pointermove", show);
+      svg.addEventListener("pointerleave", hide);
+      svg.addEventListener("pointercancel", hide);
+    }
+    // Redraw the chart when the screen size changes (rotating the phone, resizing a window).
+    let resizeTimer = null;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { if (state.selected) loadChart(state.selected, cardSeq); }, 150);
+    });
+    // Rotating a phone into two-pane width: the card is already beside the list, so drop the
+    // one-pane card screen (and its history entry) and make sure something is selected.
+    twoPane.addEventListener("change", () => {
+      if (twoPane.matches && document.body.classList.contains("card-open")) goBackFrom("card");
+      if (twoPane.matches && !state.selected && state.rows.length) selectCard(state.rows[0], { open: false });
+    });
+    railMenu.addEventListener("change", () => { if (railMenu.matches && document.body.classList.contains("menu-open")) goBackFrom("menu"); });
+
+    // ---------- start ----------
+    renderMenu();
+    renderSwitches();
+    renderCard();
+    loadFreshness();
+    loadList();
+    loadCounts();
+  </script>
+</body>
+</html>

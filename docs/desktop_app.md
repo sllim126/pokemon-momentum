@@ -1,6 +1,6 @@
 # Desktop App: Maintainer Guide
 
-Last reviewed: 2026-10-21
+Last reviewed: 2026-10-23
 
 The desktop app is one page that holds the site's five areas (Buy, Discover, Research,
 Track, Learn) in a single three-column layout built for 1080p screens. Since 2026-10-12 it
@@ -49,6 +49,9 @@ loaded underneath. See `setFullCard()` and `loadFullExtra()`.
 
 The page itself never scrolls; each column scrolls on its own. It is checked at 1920×1080,
 1366×768 and 1280×720. Below 1500 px wide the trend column hides and spacing tightens.
+Below 1100 px wide (an iPad in portrait) the left column folds into a "☰ Lists" button in the
+toolbar that opens it as a panel over the page; the price date and the "/" hint hide, card
+names wrap to two lines, and the card's buttons wrap. Checked at 768×1024 and 820×1180.
 
 ## Views
 
@@ -58,13 +61,13 @@ Every view is one entry in the `LISTS` array; its fields are documented above th
 | --- | --- | --- |
 | Buy | Sealed Deals (`sealed_deals`) | `/sealed_deals` (all products, no price limits) |
 | Buy | Budget Builder (`budget`) | `/budget_builder` |
-| Discover | Top Movers, Confirmed Movers, Consistent Movers, Early Movers, Under the Radar, Breakouts, Pullbacks, Whole-set Dips | `/<key>` (for example `/top_movers`; Pullbacks is `/good_buys`, Whole-set Dips `/set_dips`; rules in `query_support.build_pullback_sql`) |
+| Discover | Top Movers, Confirmed Movers, Consistent Movers, Early Movers, Under the Radar, Breakouts, Pullbacks, Small Dips, Whole-set Dips | `/<key>` (for example `/top_movers`; Pullbacks is `/good_buys`, Whole-set Dips `/set_dips`, Small Dips `/small_dips`; rules in `query_support.build_pullback_sql`) |
 | Track | All saved, Buy List, Watchlist, Favorites, Needs Review (`track_*`) | `/tracking/items/resolve`, with tags from browser storage or `/tracking/tags` |
 | Research | Sets (`sets`) → one set (`set`) | `/group_signals` → `/group_products` |
 | Research | Pokémon (`species`) | `/browse_species` |
 | Research | Market Stats → Indexes (`indexes`) → one index (`index`) | `/index-overview-data` |
 | Research | Market Stats → Set values (`set_values`) → one set with its chart | `/set_baskets`, then `/group_products` and `/group_series` |
-| Learn | How it works (`guide`) | Static text written by `renderGuide()` |
+| Learn | How it works (`guide`; the header's Learn opens it) | Static text written by `renderGuide()`, including the "Thanks to TCGCSV" support link. No card column (`.layout.no-detail`) |
 
 Other endpoints: `/search` (top search box), `/universe` (opening a card from a link),
 `/health` ("Prices as of"), `/series` (price chart), `/sparkline_batch` (trend column),

@@ -221,6 +221,27 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Deal Checker", response.text)
 
+    def test_new_mobile_app_preview_opens_on_any_device(self):
+        # /m-next is the new mobile app's preview (docs/mobile_app_plan.md); it is not routed
+        # by user agent, so desktop and phone browsers both get it.
+        for agent in ("Mozilla/5.0 (Windows NT 10.0; Win64; x64)", "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile"):
+            response = self.client.get("/m-next", headers={"user-agent": agent}, follow_redirects=False)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("text/html", response.headers["content-type"])
+            self.assertIn("mobile_app_plan.md", response.text)
+            self.assertIn("not financial advice", response.text)
+
+    def test_new_mobile_app_lists_match_desktop_lists(self):
+        # The phone lists reuse the desktop app's list keys (and so their API routes).
+        import re
+        dashboards = Path(__file__).resolve().parents[1] / "scripts" / "dashboards"
+        mobile = (dashboards / "mobile_app.html").read_text(encoding="utf-8")
+        desktop = (dashboards / "desktop_home.html").read_text(encoding="utf-8")
+        mobile_keys = re.findall(r'\{ key: "([a-z_0-9]+)", group:', mobile)
+        desktop_keys = set(re.findall(r'\{ key: "([a-z_0-9]+)", group:', desktop))
+        self.assertGreaterEqual(len(mobile_keys), 9)
+        self.assertEqual([k for k in mobile_keys if k not in desktop_keys], [])
+
     def test_sealed_deals_page_serves_html(self):
         response = self.client.get("/sealed-deals")
 
@@ -1244,6 +1265,19 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"ok": True})
         delete_saved_view_mock.assert_called_once_with(9, 12)
+
+    def test_small_dips_rules(self):
+        with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(
+            api, "product_signal_from", return_value="signal_snapshot"
+        ):
+            api.small_dips(category_id=3, max_price=80)
+        sql = q_mock.call_args[0][0]
+        self.assertIn("roc_90d_pct >= 15.0", sql)
+        self.assertIn("off_high_pct BETWEEN 3.0 AND 12.0", sql)
+        self.assertIn("price_vs_sma30_pct BETWEEN -6.0 AND 1.0", sql)
+        self.assertIn("roc_7d_pct <= 0", sql)
+        self.assertIn("productKind = 'card'", sql)
+        self.assertIn("AND latest_price <= 80", sql)
 
     def test_good_buys_reads_own_dips_and_set_dips_reads_whole_set_dips(self):
         with patch.object(api, "q", return_value=(["groupName"], [])) as q_mock, patch.object(

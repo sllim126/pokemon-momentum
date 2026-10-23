@@ -1,7 +1,7 @@
 # Placeholder Build Report
 
-Source: mega_placeholders.csv + prize_pack_series8.csv
-Rows exported: 283
+Source: mega_placeholders.csv + auto_mega_promos.csv + prize_pack_series8.csv
+Rows exported: 313
 Columns: Release Set, Release Date, Product, Product Type, Card Name, Card Number, Variant, Region, Notes
 
 ## Validation

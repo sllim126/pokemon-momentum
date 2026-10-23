@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-10-21
+Last reviewed: 2026-10-23
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -39,7 +39,8 @@ PriceCharting download and Squarespace price sync were running.
 | `/dashboard-classic`, `/dashboard-dev` | The older research dashboard's desktop addresses | Retired 2026-10-16; forward like `/dashboard` |
 | `/home-preview` | The desktop app's former preview address | Forwards to `/` on desktop |
 | `/buy`, `/discover`, `/research`, `/track`, `/learn` | Area landing pages from the shared header menu | Live on phones; desktop forwards to the app |
-| `/mobile` | Direct mobile decision dashboard | Live |
+| `/mobile` | Direct mobile decision dashboard | Live; frozen until the new mobile app replaces it |
+| `/m-next` | New mobile app (`mobile_app.html`; plan in `docs/mobile_app_plan.md`) | Preview, step 1.1; opens on any device |
 | `/dashboard-lab` | Desktop command-center reference | Development page; left public on purpose (decided 2026-10-12) |
 | `/mobile-rebuild` | Earlier mobile concept retained for comparison | Development page; left public on purpose (decided 2026-10-12) |
 | `/set-explorer` | Set cost, concentration, and depth | Live; covered by desktop app Market Stats → Set values |
@@ -130,6 +131,7 @@ Added 2026-10:
   whole set is falling are listed as Whole-set Dips (`/set_dips`)
 - Discord #bug-reports messages are copied into the admin bug list every 15 minutes by the
   "Poke6s Control" bot (marked ✅); the admin bug page escapes report text
+- Small Dips list (2026-10-21): strong cards (+15% over 90 days) pausing 3-12% below their high
 - Weekly Discord posts (Fridays): buy picks, market snapshot, set of the week, card of the week
 - Japanese Sealed Deals box sizes confirmed with the owner (specialty sets 10 packs, 151 / Black
   Bolt / White Flare / 30th Celebration / Dark Phantasma / Pokemon GO 20, 25th Anniversary 16)
@@ -145,6 +147,17 @@ Added 2026-10:
   first, and Caddy compresses the public page with zstd/gzip
 - KPDH Binder planner at `/kpdh/`, isolated in a read-only nginx container on host port
   8091 and reached through the same Caddy proxy
+- Confirmed and Consistent Movers show how many days each card has been in the list (sortable);
+  Set values' top-hit card opens in the side pane; browser Back closes the full card page
+- Binder planners on phones (2026-10-21/22): cards near the top, sideways page strip with a
+  swipe hint; ATLA also offers 6x6, 4x4, 4x3 and 3x3 pages
+- New mobile app preview at `/m-next` (2026-10-21/22; plan `docs/mobile_app_plan.md`): "Check a
+  card" home screen and Deal Checker (asking price, To keep / To resell, verdict, "pay up to",
+  spike/falling/few-sales warnings); `/hold_check` gained `net_at_market` and `profit_now`
+- Desktop app on iPad-portrait widths (<1100 px): the list menu folds into a "☰ Lists" button
+- How it works credits TCGCSV with a support link and drops the empty card column
+- Placeholder Library sync (2026-10-23): `scripts/utilities/sync_placeholder_library.py`, daily
+  04:30 UTC, adds new Mega-era sets and promos from the catalog and rebuilds the library
 
 ## What's next
 

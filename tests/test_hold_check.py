@@ -41,6 +41,13 @@ class HoldCheckTests(unittest.TestCase):
         self.assertEqual(result["cleared_break_even_pct"], 0)
         self.assertLess(result["projected_profit"], 0)
 
+    def test_sell_now_figures_use_fees_and_shipping(self):
+        # Flat at $20: a sale at market keeps $20 minus fees and the envelope.
+        result = hold_check(daily(20, 0.0, 400), 12, TCGPLAYER)
+
+        self.assertAlmostEqual(result["net_at_market"], round(net_proceeds(20, TCGPLAYER), 2))
+        self.assertAlmostEqual(result["profit_now"], round(net_proceeds(20, TCGPLAYER) - 12, 2))
+
     def test_short_history_says_so(self):
         result = hold_check(daily(20, 0.004, 60), None, TCGPLAYER)
 

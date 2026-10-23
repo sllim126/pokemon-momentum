@@ -110,6 +110,10 @@ Host-driven daily automation now runs that pipeline for both category `3` and ca
 sequentially, so Japanese snapshots are rebuilt during the same nightly maintenance window
 instead of depending on a separate manual pass.
 
+After the nightly run (04:30 UTC), `scripts/utilities/sync_placeholder_library.py` reads the
+refreshed catalog (`pokemon_groups`, `pokemon_products`) and feeds new Mega-era sets and
+promos into the Placeholder Library (`TCG Placeholders/`); see `docs/tcg_placeholders_guide.md`.
+
 
 Recent dashboard workflow additions
 ----------------------------------
