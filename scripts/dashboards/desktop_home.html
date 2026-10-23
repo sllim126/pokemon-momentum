@@ -243,6 +243,9 @@
        The card panel widens over the list and shows every tab's content at once, plus the
        sections in #fullExtra. The list stays loaded underneath for "Back". */
     .layout.full-card { grid-template-columns: 236px minmax(0, 1fr); }
+    /* How it works has no cards to select, so the card column is dropped (see loadList). */
+    .layout.no-detail { grid-template-columns: 236px minmax(0, 1fr); }
+    .layout.no-detail #detail { display: none; }
     .layout.full-card > section.panel { display: none; }
     .layout.full-card #detail .panel-scroll { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; }
     .layout.full-card #detail .detail-head,
@@ -335,6 +338,7 @@
 
     @media (max-width: 1500px) {
       .layout { grid-template-columns: 200px minmax(0, 1fr) minmax(400px, 440px); gap: 12px; padding: 12px 14px 6px; }
+      .layout.no-detail { grid-template-columns: 200px minmax(0, 1fr); }
       .legal { padding: 0 14px 6px; white-space: normal; }
       .spark { width: 72px; }
       .results-controls { gap: 8px; }
@@ -351,7 +355,7 @@
     .lists-btn, .nav-scrim { display: none; }
     @media (max-width: 1099px) {
       .layout { grid-template-columns: minmax(0, 1fr) minmax(320px, 360px); }
-      .layout.full-card { grid-template-columns: minmax(0, 1fr); }
+      .layout.full-card, .layout.no-detail { grid-template-columns: minmax(0, 1fr); }
       .lists-btn {
         display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto;
         height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line-strong);
@@ -1313,6 +1317,7 @@
       $("cardsTable").hidden = view !== "cards";
       $("valuesTable").hidden = view !== "set_values";
       $("resultsControls").hidden = view === "guide";
+      document.querySelector(".layout").classList.toggle("no-detail", list.key === "guide");
       const setChart = list.key === "set" && state.setFrom === "set_values";
       $("indexChart").hidden = list.key !== "index" && !setChart;
       if (!$("indexChart").hidden) $("indexChart").replaceChildren();
@@ -1707,6 +1712,12 @@
         items.length ? el("dl", {}, ...items.flatMap(([term, text]) => [el("dt", { text: term }), el("dd", { text })])) : null);
       guide.replaceChildren(
         section("Where the prices come from", "Every price is the TCGplayer market price, collected once a night. Lists compare today's price with the last 30, 90 and 180 days. Prices are missing from September 16 to October 7, 2026, so lists that need a week of steady readings will be thin until mid-October."),
+        // Credit for the free data source the nightly prices come through (owner, 2026-10-23).
+        el("section", {},
+          el("h3", { text: "Thanks to TCGCSV" }),
+          el("p", {}, "The nightly TCGplayer prices reach us through TCGCSV, a free service run by one person that much of the card-price community relies on. If this site helps you, you can support them by shopping on TCGplayer through their link: ",
+            el("a", { href: "https://cpt.tcgcsv.com/", target: "_blank", rel: "noopener sponsored", text: "cpt.tcgcsv.com ↗" }),
+            ". They earn a small commission at no extra cost to you.")),
         section("Buy", "", [
           ["Sealed Deals", "Boxes, ETBs, bundles and blisters compared with buying the same booster packs loose. A negative “vs loose packs” means the sealed product is the cheaper way to get those packs. Products whose packs can't all be priced show “—”."],
           ["Budget Builder", "Pick a budget and get a spread of the strongest actively traded hits that fit it, at most two per set by default. Already own one? “I have this, swap it” finds a replacement."],

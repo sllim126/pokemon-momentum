@@ -67,7 +67,7 @@ Every view is one entry in the `LISTS` array; its fields are documented above th
 | Research | Pokémon (`species`) | `/browse_species` |
 | Research | Market Stats → Indexes (`indexes`) → one index (`index`) | `/index-overview-data` |
 | Research | Market Stats → Set values (`set_values`) → one set with its chart | `/set_baskets`, then `/group_products` and `/group_series` |
-| Learn | How it works (`guide`) | Static text written by `renderGuide()` |
+| Learn | How it works (`guide`; the header's Learn opens it) | Static text written by `renderGuide()`, including the "Thanks to TCGCSV" support link. No card column (`.layout.no-detail`) |
 
 Other endpoints: `/search` (top search box), `/universe` (opening a card from a link),
 `/health` ("Prices as of"), `/series` (price chart), `/sparkline_batch` (trend column),
