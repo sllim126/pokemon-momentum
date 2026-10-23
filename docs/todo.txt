@@ -535,6 +535,16 @@ Learn and collector tools (owner, 2026-10-23; "nothing tonight"):
   list yet; comes as a PDF); placeholders and title cards for whole sets (every card of a
   master set, from the catalog), not only promos and variants; check Delta Reign's promos
   appear after its 2026-11-06 release.
+- [idea] Next big project (owner, 2026-10-23): a Pokémon binder planner, built from the ATLA
+  planner (`ATLA Binder/public/index.html`: page sizes 3x3/4x3/4x4/6x6, owned-card tracking,
+  collection value). For Pokémon it would read the set's cards and printings from the catalog
+  and price them with our own nightly prices instead of Scryfall, so any set works without
+  hand-made card lists. Fits with the master set guide pages below.
+- [idea] Card images: TCGplayer already serves every image at up to 1000x1000 (`_in_1000x1000`
+  instead of `_200w`, ~150 KB each), so the card views could look sharper without hosting
+  anything. Hosting our own copies (owner, 2026-10-23) would mean a download job and storage:
+  roughly 10-15 GB for Pokémon English and Japanese at that size, far more for every game
+  (69 GB free on the server today).
 - [idea] Master set guide pages, one per set, like PokeCottage's
   (https://pokecottage.com/pitch-black-master-set-guide: card counts, binder size and layout,
   placeholders, checklist, FAQ). Ours would differ with things only this site has: live
