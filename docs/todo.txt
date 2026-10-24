@@ -117,7 +117,9 @@ screens, 3 refine, 4 camera/OCR.
   matches to pick from. Image matching against the cached card images is a later step if OCR
   isn't reliable enough. Camera access needs HTTPS (the site has it) and a photo-upload
   fallback.
-- [in progress] Pullbacks trial week (live 2026-10-17; review with the owner ~2026-10-24).
+- [done 2026-10-24] Pullbacks trial week: the owner keeps the new rules ("doing well") and
+  asked for a comparison of the old list against the new one (see the next item).
+  Was: trial week (live 2026-10-17; review with the owner ~2026-10-24).
   New rules in `query_support.build_pullback_sql` (constants PULLBACK_*), used by /good_buys,
   the new /set_dips ("Whole-set Dips" in the desktop app) and the screener snapshot's
   `good_buys_default_flag` (Budget Builder's "Pullback entry" tag), so they always agree:
@@ -130,6 +132,7 @@ screens, 3 refine, 4 camera/OCR.
   so the 6-changes bar removes nearly all of them): owner to decide on a lower bar for
   Japanese. Recheck all numbers once the feed has a full month without gaps (mid-November).
   The mobile Pullbacks list reads /good_buys too, so phones got the new rules (layout unchanged).
+- [in progress] Pullbacks: old rules vs new rules comparison for the owner (2026-10-24).
 - [planned] Speed follow-ups: Sealed Deals takes ~0.5 s (it works out pack prices for every
   sealed product per request; could be a nightly snapshot), Set Strength ~0.12 s, and Under
   the Radar ~3 s while the feed is short after the data gap (ends on its own).
@@ -528,11 +531,13 @@ Learn and collector tools (owner, 2026-10-23; "nothing tonight"):
   screener (today's How it works), and cards linking to Collector Hub, Placeholder Library and
   Binder Art Maker.
 - [idea] Collector Hub review: the owner wants it looked at and revised.
-- [waiting] Owner: confirm the product for the 30 Mega promos the sync added on 2026-10-23
-  (`TCG Placeholders/auto_mega_promos.csv`, also on the Placeholder Library downloads page):
-  the 30th Celebration promos (MEP094-110), Pitch Black stamped, Staff and prerelease copies
-  (MEP082-085), Mega Zeraora/Darkrai/Dragonite ex (MEP089-091), Celebratory Fanfare (MEP028).
-  Move each confirmed row into `mega_placeholders.csv` with its Product and Product Type.
+- [waiting] Owner: how was MEP028 Celebratory Fanfare handed out (plain and "Ace Trainer"
+  versions; maybe a Play! Pokémon league prize)? It is the only promo left in
+  `TCG Placeholders/auto_mega_promos.csv`. The other 29 were confirmed with the owner on
+  2026-10-24 and moved into `mega_placeholders.csv` (Pitch Black Build & Battle Box and staff
+  copies, Mega Forces Tins, 30th Celebration collections, ETBs, Battle Decks and the Day/Night
+  Ultra-Premium Collections). Release dates marked "to confirm" there (Figure, Premium and
+  Ultra-Premium Collections, set as 2026-11-06) need checking when those ship.
 - [planned] Placeholder Library follow-ups: Prize Pack Series 9 (in the set catalog, no card
   list yet; comes as a PDF); placeholders and title cards for whole sets (every card of a
   master set, from the catalog), not only promos and variants; check Delta Reign's promos
