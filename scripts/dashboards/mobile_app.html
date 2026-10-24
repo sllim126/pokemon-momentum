@@ -622,6 +622,9 @@
         }
       }
       // Until the later steps are built, the old phone page is one tap away.
+      // Feedback and bug reports go to Discord only; no form on the page (owner, 2026-10-24).
+      nodes.push(el("h4", { text: "Help" }),
+        el("a", { href: "https://discord.gg/AejcWHkCG", target: "_blank", rel: "noopener" }, el("span", { text: "Feedback & bug reports (Discord)" }), el("span", { text: "↗" })));
       nodes.push(el("h4", { text: "Not built yet" }),
         el("a", { href: "/mobile", class: "old" }, el("span", { text: "Sets, Pokémon, My lists… on the old phone page" }), el("span", { text: "↗" })));
       $("menu").replaceChildren(...nodes);

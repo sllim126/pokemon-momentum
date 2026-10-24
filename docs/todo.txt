@@ -69,9 +69,12 @@ New mobile app (owner, 2026-10-21). Plan: `docs/mobile_app_plan.md`. Built at `/
 fluid from phone portrait to tablet landscape. Stages: 1 rebuild (steps 1.1-1.6), 2 bigger
 screens, 3 refine, 4 camera/OCR.
 
-- [waiting] Owner: answer decisions 1-6 in `docs/mobile_app_plan.md` (feedback form, Alerts &
-  Targets, Time to Buy, Set Explorer, iPads, switch date), and try `/m-next` on the phone in
-  portrait and landscape after each step.
+- Owner decisions (2026-10-24, details in `docs/mobile_app_plan.md`): no feedback form (Discord
+  only), no Alerts & Targets for now, Time to Buy and Set Explorer dropped on phones, iPads
+  still undecided, **switch on November 10** unless called earlier. So steps 1.2-1.5 need to
+  be done by about November 3 for a week of phone testing.
+- [waiting] Owner: try `/m-next` on the phone in portrait and landscape after each step; decide
+  iPad routing during stage 2.
 - [in progress] 1.1 Framework and Deal Checker (2026-10-21/22): "Check a card" home screen
   (big search, recently checked on this phone), Deal Checker on the card screen (asking price,
   To keep / To resell, verdict, "pay up to", spike / falling / few-sales warnings, other
@@ -87,7 +90,7 @@ screens, 3 refine, 4 camera/OCR.
 - [planned] 1.4 Research: Sets → one set (search results for sets open it), Pokémon, Market
   Stats (indexes, set values).
 - [planned] 1.5 Buy (Sealed Deals, Budget Builder) and Learn (How it works).
-- [planned] 1.6 Switch: phones get the new app at `/` and `/mobile`; old page at
+- [planned] 1.6 Switch on 2026-11-10: phones get the new app at `/` and `/mobile`; old page at
   `/mobile-classic` for a few weeks, then delete it, `dashboard.html`,
   `tests/test_dashboard_frontend.py` and `/mobile-rebuild`.
 - [planned] Stage 2: tune two-pane layouts for phone landscape (fold the scope bar into the
