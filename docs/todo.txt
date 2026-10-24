@@ -132,7 +132,18 @@ screens, 3 refine, 4 camera/OCR.
   so the 6-changes bar removes nearly all of them): owner to decide on a lower bar for
   Japanese. Recheck all numbers once the feed has a full month without gaps (mid-November).
   The mobile Pullbacks list reads /good_buys too, so phones got the new rules (layout unchanged).
-- [in progress] Pullbacks: old rules vs new rules comparison for the owner (2026-10-24).
+- [done 2026-10-24] Pullbacks: old rules vs new rules, run on 2026-10-23 English data (old
+  rules taken from build_screener_snapshot.py before f3d3595). Old: 770 cards (192 of them
+  down over the year). New: 80 Pullbacks + 141 Whole-set Dips, none down over the year.
+  Overlap: 57 old cards are in the new Pullbacks, 123 in Whole-set Dips; 590 dropped (192
+  falling over the year, 85 under a year old, 27 less than 10% off their high, 286 not behind
+  their price band or set).
+- [waiting] Owner: should Pullbacks and Whole-set Dips include cards under a year old? "Up over
+  the year" needs a year of prices, so every Ascended Heroes, Phantasmal Flames, Perfect
+  Order, Chaos Rising and Pitch Black card is left out (85 cards that the old rules listed,
+  e.g. Mega Gengar ex 284/217, -46% from its high). Option: use "up since release" for them.
+- [idea] Save each list's cards every night (a small table), so the next rule change can be
+  judged on how the listed cards actually moved, not just on today's data.
 - [planned] Speed follow-ups: Sealed Deals takes ~0.5 s (it works out pack prices for every
   sealed product per request; could be a nightly snapshot), Set Strength ~0.12 s, and Under
   the Radar ~3 s while the feed is short after the data gap (ends on its own).
