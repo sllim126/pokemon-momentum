@@ -180,6 +180,10 @@
         return url.protocol === "https:" && /(^|\.)(discord\.com|discordapp\.com|discordapp\.net)$/.test(url.hostname) ? url.toString() : "";
       } catch (_) { return ""; }
     }
+    function safeReviewAttachmentUrl(value) {
+      const path = String(value || "");
+      return /^\/m-next\/review-attachments\/[0-9a-f]{32}$/.test(path) ? path : "";
+    }
 
     function formatMeta(report) {
       const bits = [];
@@ -211,9 +215,9 @@
           : "";
         // Reports imported from Discord (scripts/utilities/import_discord_bug_reports.py).
         const discordUrl = safeDiscordUrl(context.discord_url);
-        const files = (context.attachments || []).map((a) => [safeDiscordUrl(a.url), a.filename || "file"]).filter(([url]) => url);
-        const discordBlock = discordUrl || files.length
-          ? `<div class="report-block"><div class="label">Discord</div><div>${discordUrl ? `<a href="${esc(discordUrl)}" target="_blank" rel="noopener noreferrer">Open the message in Discord ↗</a>` : ""}${files.map(([url, name]) => `<br><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(name)}</a>`).join("")}</div></div>`
+        const files = (context.attachments || []).map((a) => [safeReviewAttachmentUrl(a.url) || safeDiscordUrl(a.url), a.filename || "file"]).filter(([url]) => url);
+        const attachmentBlock = discordUrl || files.length
+          ? `<div class="report-block"><div class="label">Attachments</div><div>${discordUrl ? `<a href="${esc(discordUrl)}" target="_blank" rel="noopener noreferrer">Open the message in Discord ↗</a>` : ""}${files.map(([url, name]) => `<br><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(name)}</a>`).join("")}</div></div>`
           : "";
         card.innerHTML = `
           <div class="report-top">
@@ -233,7 +237,7 @@
               <div style="white-space:pre-wrap">${esc(report.details)}</div>
             </div>
             ${expectedBlock}
-            ${discordBlock}
+            ${attachmentBlock}
             <div class="report-block">
               <div class="label">Context</div>
               <pre>${esc(contextJson)}</pre>

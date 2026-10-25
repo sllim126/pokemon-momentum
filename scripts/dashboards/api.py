@@ -4,7 +4,9 @@ import hashlib
 import json
 import os
 import re
+import shutil
 import bisect
+import uuid
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import unquote, urlencode
@@ -113,6 +115,7 @@ ACCOUNT_SETTINGS_HTML = SCRIPT_DIR / "account_settings.html"
 EOD_DASHBOARD_HTML = SCRIPT_DIR / "eod_dashboard.html"
 EMBED_DASHBOARD_HTML = SCRIPT_DIR / "embed_dashboard.html"
 BUG_REPORTS_HTML = SCRIPT_DIR / "bug_reports.html"
+REVIEW_NOTE_ATTACHMENTS_DIR = REPO_ROOT / "data" / "review_note_attachments"
 PRICING_UPLOAD_HTML = SCRIPT_DIR / "pricing_upload.html"
 SINGLE_LISTINGS_UPLOAD_HTML = SCRIPT_DIR / "single_listings_upload.html"
 SUPPLIER_PRICING_HTML = SCRIPT_DIR / "supplier_pricing.html"
@@ -4170,8 +4173,11 @@ def tracking_google_session(payload: dict):
 
 
 @app.get("/tracking/session")
-def tracking_session_status(authorization: str | None = Header(default=None)):
-    session_user = require_tracking_user(authorization)
+def tracking_session_status(
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    session_user = require_tracking_user_from_request(authorization=authorization, tracking_token=tracking_token)
     return {"user": admin_user_payload(session_user)}
 
 
@@ -4497,6 +4503,97 @@ def submit_bug_report(payload: dict, request: Request):
         }
     )
     return {"ok": True, "id": bug_report_id}
+
+
+@app.post("/m-next/review-notes")
+async def submit_mobile_review_note(
+    request: Request,
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    """Save one owner's in-place /m-next review note and any attached files.
+
+    This intentionally has none of the anonymous feedback endpoint's frequency or file-type
+    limits: access is restricted to the exact configured admin account. Stored filenames are
+    random, and downloads are forced through an admin-only route rather than served publicly.
+    """
+    admin_user = require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    # The owner asked to avoid app-level count/type/size limits during this private review.
+    # Infrastructure in front of the app may still enforce its own maximum request size.
+    form = await request.form(max_files=float("inf"), max_fields=float("inf"), max_part_size=sys.maxsize)
+    details = str(form.get("details") or "").strip()
+    if not details:
+        raise HTTPException(status_code=400, detail="Write a note before submitting.")
+
+    try:
+        context = json.loads(str(form.get("context") or "{}"))
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid review context.") from None
+    if not isinstance(context, dict):
+        raise HTTPException(status_code=400, detail="Invalid review context.")
+
+    REVIEW_NOTE_ATTACHMENTS_DIR.mkdir(parents=True, exist_ok=True)
+    attachments = []
+    stored_paths = []
+    try:
+        for upload in form.getlist("files"):
+            # request.form() returns Starlette's UploadFile base class rather than always
+            # preserving FastAPI's subclass, so use the small file/filename protocol here.
+            if not hasattr(upload, "file") or not getattr(upload, "filename", ""):
+                continue
+            stored_name = uuid.uuid4().hex
+            target = REVIEW_NOTE_ATTACHMENTS_DIR / stored_name
+            with target.open("wb") as output:
+                shutil.copyfileobj(upload.file, output)
+            stored_paths.append(target)
+            attachments.append({
+                "filename": Path(upload.filename).name,
+                "content_type": upload.content_type or "application/octet-stream",
+                "url": f"/m-next/review-attachments/{stored_name}",
+            })
+
+        page_url = str(context.get("page_url") or "/m-next")
+        context.update({
+            "review_note": True,
+            "attachments": attachments,
+        })
+        report_id = create_bug_report({
+            "reporter_username": admin_user.username,
+            "page_path": "/m-next",
+            "page_url": page_url,
+            "category_id": context.get("category_id"),
+            "tab": context.get("list") or "check",
+            "segment": context.get("kind"),
+            "product_key": context.get("product_key"),
+            "search_query": context.get("search_query"),
+            "title": str(form.get("title") or "").strip() or "M-next review note",
+            "details": details,
+            "context_json": json.dumps(context, ensure_ascii=True),
+        })
+    except Exception:
+        for path in stored_paths:
+            path.unlink(missing_ok=True)
+        raise
+    return {"ok": True, "id": report_id, "attachments": len(attachments)}
+
+
+@app.get("/m-next/review-attachments/{stored_name}")
+def mobile_review_attachment(
+    stored_name: str,
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    """Download a review attachment after re-checking owner access."""
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    if not re.fullmatch(r"[0-9a-f]{32}", stored_name):
+        raise HTTPException(status_code=404, detail="Attachment not found")
+    path = REVIEW_NOTE_ATTACHMENTS_DIR / stored_name
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Attachment not found")
+    response = FileResponse(path, media_type="application/octet-stream")
+    response.headers["Content-Disposition"] = "attachment"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 @app.get("/bug_reports")

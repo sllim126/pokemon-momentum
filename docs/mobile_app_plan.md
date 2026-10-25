@@ -1,6 +1,6 @@
 # New mobile app: plan
 
-Last reviewed: 2026-10-23
+Last reviewed: 2026-10-25
 
 The owner asked on 2026-10-21 for a full rebuild of the phone site: same features as today,
 in the desktop app's look, and a layout that fills any screen from a phone in portrait to a
@@ -111,8 +111,11 @@ asking price), and the browsing lists moved to the menu.
 
 ## Decisions for the owner (answered 2026-10-24)
 
-1. **Feedback form: removed.** All feedback goes through Discord. The new app has a "Feedback &
-   bug reports" link to the Discord server in its menu, and no form on the page.
+1. **Public feedback form: removed.** Visitors send feedback through the Discord link in the
+   menu. The signed-in owner alone gets a floating review-note tab on `/m-next` (agreed
+   2026-10-25): it saves a note, automatic page/card/list context and optional files to the
+   internal `/bug-reports` queue, then collapses so mobile review can continue uninterrupted.
+   Text drafts survive a close or reload; offline submission retry remains a possible follow-up.
 2. **Alerts & Targets: left out for now.** The card view gets the desktop Targets tab (your own
    buy and sell prices per card) in step 1.2; alerts may come back in stage 4.
 3. **Time to Buy: dropped** on phones (the desktop app had already dropped it).
@@ -125,7 +128,8 @@ asking price), and the browsing lists moved to the menu.
 
 ## What the owner does at each step
 
-- After each step: open `market.poke6s.com/m-next` on the phone, in portrait and landscape,
-  and post anything wrong in Discord `#bug-reports` (or tell Claude directly).
+- After each step: open `market.poke6s.com/m-next` while signed in as the owner, in portrait and
+  landscape, and use the floating Note tab for anything wrong. Public testers use Discord
+  `#bug-reports`.
 - Decide decision 5 (iPads) during stage 2.
 - Before the switch: a last pass on the phone, then say "switch the mobile site".
