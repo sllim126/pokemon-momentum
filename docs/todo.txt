@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-23 (milestone: Mobile app preview and Placeholder sync)
+Last updated: 2026-10-25 (handover review; last milestone 2026-10-23)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -22,7 +22,7 @@ Status tags used below:
 When you finish an item, move it to Recently Completed with the date and commit, then
 archive older Recently Completed entries at the next milestone.
 
-Current Focus (2026-10-12)
+Current Focus (2026-10-25)
 --------------------------
 
 - Desktop: the single-page desktop app at `/` (desktop home since 2026-10-12) holds all five areas (Buy,
@@ -32,11 +32,31 @@ Current Focus (2026-10-12)
   inventory in `docs/mobile_app_plan.md`; work items under "New mobile app" below). The old
   `/mobile` page stays frozen until the switch. Admin pages stay parked.
 - Bug reports go to the Discord `#bug-reports` channel. New pages get no on-site bug form.
-- Project map: `docs/project_status.md`. Operating steps: `docs/operator_runbook.txt`.
+- Dates: Pokémon Black Friday on TCGplayer ~Nov 25 - Dec 1; new mobile app switch Nov 10
+  (steps 1.2-1.5 done by about Nov 3).
+- Project map: `docs/project_status.md`. Every server route: `docs/api_routes.md`. Operating
+  steps and the job schedule: `docs/operator_runbook.txt`.
 
 Recently Completed
 ------------------
 
+- 2026-10-25 Handover review for Codex or any other agent: `docs/api_routes.md` lists every
+  server route (a test fails when a new route isn't in it); the runbook opens with the whole
+  job schedule and `deploy/crontab.txt` keeps a copy of the crontab; AGENTS.md gained the
+  handover, public-repo, no-new-costs and graded-price rules; review-note attachments are
+  git-ignored and documented.
+- 2026-10-24 Pullbacks: the owner keeps the new rules after the trial week ("doing well").
+  Rules in `query_support.build_pullback_sql` (PULLBACK_*), shared by /good_buys, /set_dips
+  and Budget Builder's "Pullback entry" tag. Old vs new on 2026-10-23 English data: old rules
+  770 cards (192 down over the year); new 80 Pullbacks + 141 Whole-set Dips, none down over the
+  year; 590 old cards dropped (192 falling over the year, 85 under a year old, 27 less than 10%
+  off their high, 286 not behind their price band or set). Still open: Japanese lists are
+  empty (most Japanese cards change price about once a month, under the 6-changes bar), and
+  recheck the numbers mid-November once the feed has a full month without gaps.
+- 2026-10-25 `/m-next` has an owner-only floating review-note tab. It keeps the current app
+  screen in place, saves optional multiple file uploads plus card/list/search/device context to
+  the internal bug-report queue, preserves unsent text drafts and collapses after saving. Public
+  visitors still use Discord; offline retry remains a possible follow-up.
 - 2026-10-23 Placeholder Library updates itself: `sync_placeholder_library.py` (daily 04:30 UTC)
   adds new Mega-era sets and promos from the TCGplayer catalog and rebuilds the print and
   checklist pages. First run added 30th Celebration, its Classic Collection and Delta Reign to
@@ -69,10 +89,11 @@ New mobile app (owner, 2026-10-21). Plan: `docs/mobile_app_plan.md`. Built at `/
 fluid from phone portrait to tablet landscape. Stages: 1 rebuild (steps 1.1-1.6), 2 bigger
 screens, 3 refine, 4 camera/OCR.
 
-- Owner decisions (2026-10-24, details in `docs/mobile_app_plan.md`): no feedback form (Discord
-  only), no Alerts & Targets for now, Time to Buy and Set Explorer dropped on phones, iPads
-  still undecided, **switch on November 10** unless called earlier. So steps 1.2-1.5 need to
-  be done by about November 3 for a week of phone testing.
+- Owner decisions (2026-10-24/25, details in `docs/mobile_app_plan.md`): public feedback stays
+  on Discord while the owner has private in-app review notes; no Alerts & Targets for now; Time
+  to Buy and Set Explorer dropped on phones; iPads still undecided; **switch on November 10**
+  unless called earlier. So steps 1.2-1.5 need to be done by about November 3 for a week of
+  phone testing.
 - [waiting] Owner: try `/m-next` on the phone in portrait and landscape after each step; decide
   iPad routing during stage 2.
 - [in progress] 1.1 Framework and Deal Checker (2026-10-21/22): "Check a card" home screen
@@ -105,6 +126,7 @@ screens, 3 refine, 4 camera/OCR.
   tap targets under ~40 px, drag and pinch (Binder Art preview, charts), and whether iPads
   should get the desktop app or the mobile page (today they get mobile; see "iPad: a
   dedicated analysis layout" under Parked). Write each finding here as its own item.
+  Done so far: iPad-portrait widths fold the list menu into a "Lists" button (2026-10-22).
 - [planned] Mobile interface testing (owner, 2026-10-21): now part of the new mobile app
   (see "New mobile app" above). Test `/m-next` on real phones after each step instead of the
   old `/mobile`, which is being replaced; known old-page issues are under "Parked: Mobile
@@ -117,27 +139,11 @@ screens, 3 refine, 4 camera/OCR.
   matches to pick from. Image matching against the cached card images is a later step if OCR
   isn't reliable enough. Camera access needs HTTPS (the site has it) and a photo-upload
   fallback.
-- [done 2026-10-24] Pullbacks trial week: the owner keeps the new rules ("doing well") and
-  asked for a comparison of the old list against the new one (see the next item).
-  Was: trial week (live 2026-10-17; review with the owner ~2026-10-24).
-  New rules in `query_support.build_pullback_sql` (constants PULLBACK_*), used by /good_buys,
-  the new /set_dips ("Whole-set Dips" in the desktop app) and the screener snapshot's
-  `good_buys_default_flag` (Budget Builder's "Pullback entry" tag), so they always agree:
-  premium cards $5+; >=10% below the 90-day high; 7-day average >=8% below it; 30-day change
-  >=10 points behind the median of its price band ($5-20, 20-50, 50-100, 100-250, 250+);
-  <=40% below the high; up over the year; >=6 price changes in 30 days (not gap-scaled).
-  "Own" dips are also >=10 points behind their set's median (sets with 5+ pool cards);
-  the rest are Whole-set Dips. First day: 59 Pullbacks, 107 Whole-set Dips (English).
-  Open: Japanese is empty (a typical Japanese premium card changes price about once a month,
-  so the 6-changes bar removes nearly all of them): owner to decide on a lower bar for
-  Japanese. Recheck all numbers once the feed has a full month without gaps (mid-November).
-  The mobile Pullbacks list reads /good_buys too, so phones got the new rules (layout unchanged).
-- [done 2026-10-24] Pullbacks: old rules vs new rules, run on 2026-10-23 English data (old
-  rules taken from build_screener_snapshot.py before f3d3595). Old: 770 cards (192 of them
-  down over the year). New: 80 Pullbacks + 141 Whole-set Dips, none down over the year.
-  Overlap: 57 old cards are in the new Pullbacks, 123 in Whole-set Dips; 590 dropped (192
-  falling over the year, 85 under a year old, 27 less than 10% off their high, 286 not behind
-  their price band or set).
+- [waiting] Owner: a lower bar for Japanese Pullbacks? The Japanese lists are empty because a
+  typical Japanese premium card changes price about once a month and the rules need 6 price
+  changes in 30 days (PULLBACK_* in `query_support.py`).
+- [planned] Mid-November: recheck the Pullbacks numbers once the feed has a full month
+  without gaps.
 - [waiting] Owner: should Pullbacks and Whole-set Dips include cards under a year old? "Up over
   the year" needs a year of prices, so every Ascended Heroes, Phantasmal Flames, Perfect
   Order, Chaos Rising and Pitch Black card is left out (85 cards that the old rules listed,

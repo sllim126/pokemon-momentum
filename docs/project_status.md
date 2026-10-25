@@ -1,10 +1,11 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-10-23
+Last reviewed: 2026-10-25
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
-the other files under `docs/`.
+the other files under `docs/`: every server route is in `docs/api_routes.md`, and the job
+schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/todo.txt`.
 
 ## Current state
 
@@ -94,7 +95,8 @@ The following pages require a Google sign-in listed in `POKEMON_MOMENTUM_ADMIN_U
 - Desktop screening dashboard and mobile decision dashboard
 - Server-side search, paged pickers, product/set history, and saved URL state
 - Screeners for movers, pullbacks, breakouts, trend confirmation, early movement, set strength, and budget/value research
-- Google sign-in, synced tracking tags, saved views, and a mobile feedback form (bug reports go to Discord)
+- Google sign-in, synced tracking tags and saved views. Public bug reports go to Discord; the
+  signed-in owner has a private floating review-note tool on the `/m-next` preview.
 - English/Japanese market index family
 - Squarespace price sync and inventory audit
 - Singles listing workflow with cached, square-padded Scrydex artwork

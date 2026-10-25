@@ -13,11 +13,20 @@ coding agent. Read this first, then `docs/todo.txt`.
   new work, add it under the right section with a status tag (the tags are explained at
   the top of the file).
 - Finished items move to `docs/todo_archive.txt` at the next milestone (see below).
-- Project map: `docs/project_status.md`. Desktop app guide: `docs/desktop_app.md`.
-  Operating steps: `docs/operator_runbook.txt`. Data flow: `docs/data_flow.txt`.
+- Project map: `docs/project_status.md`. Every server route: `docs/api_routes.md`. Desktop
+  app guide: `docs/desktop_app.md`. New mobile app: `docs/mobile_app_plan.md`. Operating
+  steps and the job schedule: `docs/operator_runbook.txt`. Data flow: `docs/data_flow.txt`.
+- **Handing over between agents.** The owner switches between Claude Code, Codex and others.
+  A tool's own memory, skills or chat history are invisible to the next one, so anything
+  worth knowing goes in this file, the docs or `docs/todo.txt`. Commit work at the end of a
+  session, even partway (on a branch, with the todo item saying where it stopped), so the
+  next agent doesn't find unexplained uncommitted changes.
 
 ## Ground rules
 
+- **The GitHub repository is public.** Never commit secrets or the owner's personal,
+  business or financial plans. Identifiers already in the code, such as the default admin
+  sign-in address and the #bug-reports channel ID, are fine: they don't grant access.
 - **Secrets** live in `.env` (Squarespace, Discord webhook and bot token, PriceCharting, Google, PSA).
   Never print, paste, log or commit them. When you need to show `.env`, list names only.
   Never log the PriceCharting download URL; it contains the token.
@@ -29,7 +38,14 @@ coding agent. Read this first, then `docs/todo.txt`.
   - TCGCSV: one fetch per file per day, at least 100 ms between requests (the code uses
     150 ms), and stop on HTTP 403 or 429.
   - PriceCharting: one CSV download a day, and every price shown links back to
-    PriceCharting.
+    PriceCharting. Display is allowed by written permission (2026-10-09) on that condition.
+    Keep their data deletable in one step (`data/pricecharting/` and the
+    `pricecharting_prices` table), in case the plan is cancelled.
+- **No new costs.** Don't add paid services, APIs or subscriptions without the owner's OK;
+  the budget is tight and time is the main investment.
+- **Graded prices don't rise steadily with grade.** PSA 1s often sell above mid grades
+  because some collectors collect only 1s. Never treat that as an outlier or build checks
+  that assume higher grade means higher price.
 - **The old mobile page is frozen.** Don't change `/mobile` or the mobile handling on `/`
   without the owner's go-ahead. Its replacement, the new mobile app at `/m-next`
   (`docs/mobile_app_plan.md`), is being built with the owner's go-ahead (2026-10-21).

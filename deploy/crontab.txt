@@ -1,0 +1,9 @@
+# Copy of adam's crontab on the server (`crontab -l`), kept so the schedule is in the repo.
+# The live crontab is the source of truth; update this file when you change it.
+# Restore on a new server with: crontab deploy/crontab.txt  (this REPLACES the whole crontab;
+# compare with `crontab -l` first). What each job does: "Schedule at a glance" in
+# docs/operator_runbook.txt. Systemd timers are separate, in deploy/systemd/.
+15 9 * * * cd /opt/pokemon-momentum && /bin/bash scripts/run_squarespace_price_sync.sh >> logs/squarespace_price_sync_cron.log 2>&1
+*/15 * * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin docker-compose exec -T pokemon-momentum python scripts/utilities/import_discord_bug_reports.py >> logs/discord_bug_import.log 2>&1
+0 15 * * 5 cd /opt/pokemon-momentum && /usr/bin/python3 scripts/utilities/post_weekly_discord.py >> logs/discord_weekly.log 2>&1
+30 4 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin docker-compose exec -T pokemon-momentum python scripts/utilities/sync_placeholder_library.py >> logs/placeholder_sync.log 2>&1
