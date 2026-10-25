@@ -305,6 +305,21 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Placeholder Library", response.text)
 
+    def test_every_route_is_in_the_route_reference(self):
+        # docs/api_routes.md is the handover map of the server; a new route must be listed there.
+        doc = (Path(__file__).resolve().parents[1] / "docs" / "api_routes.md").read_text(encoding="utf-8")
+        missing = []
+        for route in api.app.routes:
+            path = getattr(route, "path", "")
+            if not path or path in ("/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"):
+                continue
+            base = path.split("{")[0]
+            if path.startswith("/index-overview-") and path != "/index-overview-data":
+                base = "/index-overview-<index>"
+            if base not in doc:
+                missing.append(path)
+        self.assertEqual(missing, [], "add these routes to docs/api_routes.md")
+
     def test_binder_art_page_serves_html(self):
         response = self.client.get("/binder-art")
 
@@ -1007,6 +1022,52 @@ class ApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("Details must be at least 10 characters", response.text)
+
+    def test_mobile_review_note_requires_admin(self):
+        response = self.client.post("/m-next/review-notes", data={"details": "A private review note"})
+        self.assertEqual(response.status_code, 401)
+
+    @patch.object(api, "create_bug_report", return_value=42)
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
+    def test_mobile_review_note_saves_context_and_multiple_files(self, _get_session_user_mock, create_mock):
+        with TemporaryDirectory() as tmpdir, patch.object(api, "REVIEW_NOTE_ATTACHMENTS_DIR", Path(tmpdir)):
+            response = self.client.post(
+                "/m-next/review-notes",
+                cookies={"pm_tracking_token": "token"},
+                data={
+                    "details": "The card buttons overlap here.",
+                    "context": '{"page_url":"https://market.poke6s.com/m-next?list=top_movers","list":"top_movers","product_key":"123||Normal"}',
+                },
+                files=[
+                    ("files", ("screen.png", b"png bytes", "image/png")),
+                    ("files", ("notes.txt", b"extra details", "text/plain")),
+                ],
+            )
+            saved_files = list(Path(tmpdir).iterdir())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"ok": True, "id": 42, "attachments": 2})
+        self.assertEqual(len(saved_files), 2)
+        payload = create_mock.call_args[0][0]
+        self.assertEqual(payload["reporter_username"], "sllim126@gmail.com")
+        self.assertEqual(payload["tab"], "top_movers")
+        self.assertEqual(payload["product_key"], "123||Normal")
+        context = __import__("json").loads(payload["context_json"])
+        self.assertTrue(context["review_note"])
+        self.assertEqual([item["filename"] for item in context["attachments"]], ["screen.png", "notes.txt"])
+
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
+    def test_mobile_review_attachment_download_is_admin_only(self, _get_session_user_mock):
+        stored_name = "a" * 32
+        with TemporaryDirectory() as tmpdir, patch.object(api, "REVIEW_NOTE_ATTACHMENTS_DIR", Path(tmpdir)):
+            (Path(tmpdir) / stored_name).write_bytes(b"private file")
+            response = self.client.get(
+                f"/m-next/review-attachments/{stored_name}",
+                cookies={"pm_tracking_token": "token"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"private file")
+        self.assertEqual(response.headers["x-content-type-options"], "nosniff")
 
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_pricing_upload_compare_saves_csv_and_returns_summary(self, _get_session_user_mock):

@@ -1,10 +1,33 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Recent Operational Notes (March 2026)
--------------------------------------
+Last reviewed: 2026-10-25
 
-These checks were added after a dashboard performance and UX pass.
+Schedule at a glance (all times UTC)
+------------------------------------
+
+Everything below runs on its own. Systemd units are in `deploy/systemd/`; cron lines are in
+adam's crontab (`crontab -l`), with a copy in `deploy/crontab.txt` (update it when the
+crontab changes). Each job is explained further down in this file.
+
+| When | Job | How it runs | Log |
+| --- | --- | --- | --- |
+| Daily 02:00 | Nightly market update: TCGCSV prices, metadata, snapshots, parquet, PriceCharting, indexes; restarts the app; Discord summary | `pokemon-momentum-daily-update.timer` | `logs/daily_update.log` |
+| Daily 03:30 | Other games price archive (collect only) | `pokemon-momentum-tcgcsv-collect.timer` | see "Other games archive" |
+| Daily 04:30 | Placeholder Library sync (new Mega-era sets and promos) | cron: `scripts/utilities/sync_placeholder_library.py` | `logs/placeholder_sync.log` |
+| Daily 09:15 | Squarespace price sync (reaches the live store) | cron: `scripts/run_squarespace_price_sync.sh` | `logs/squarespace_price_sync_cron.log` |
+| Every 15 min | Copy Discord #bug-reports into the review queue | cron: `scripts/utilities/import_discord_bug_reports.py` | `logs/discord_bug_import.log` |
+| Fri 15:00 | Weekly Discord posts | cron: `scripts/utilities/post_weekly_discord.py` | `logs/discord_weekly.log` |
+| Sun 11:00 | Weekly full metadata refresh | `pokemon-momentum-weekly-refresh.timer` | journal |
+| Mon 11:00 | Weekly placeholder-name cleanup (product metadata + snapshot) | `pokemon-momentum-weekly-placeholder-refresh.timer` | journal |
+
+Check timers with `systemctl list-timers | grep pokemon`.
+
+Older dashboard checks (March 2026)
+-----------------------------------
+
+These checks were added after a performance and UX pass on the older research dashboard
+(`/dashboard`, now used only by phones; desktop visitors get the desktop app at `/`).
 
 1. Verify no unintended full-universe browser fetch
 - In browser DevTools Network, normal tab/set switching should not repeatedly trigger large
@@ -931,6 +954,13 @@ UI checks:
 
 The mobile Support > Feedback form still saves into the same `/bug_reports` queue. Review it
 (and older bug reports) at the admin-only `/bug-reports` page.
+
+Owner review notes (since 2026-10-25): signed in as an admin, the new mobile app (`/m-next`)
+shows a floating Note tab. A note goes into the same queue with the screen's context (card,
+list, search, device). Attached files are saved under random names in
+`data/review_note_attachments/` (git-ignored, not served publicly) and open from the
+`/bug-reports` page through the admin-only `/m-next/review-attachments/<name>` route. There
+are no size or count limits on purpose (admin only), so check that folder's size now and then.
 
 Discord reports are copied onto the server (since 2026-10-16): every 15 minutes (adam's
 crontab) `scripts/utilities/import_discord_bug_reports.py` runs in the container, reads new

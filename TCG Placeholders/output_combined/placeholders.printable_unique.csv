@@ -36,9 +36,10 @@ Stamped Cards,Delphox,MEP074,Black Star Promo,US/UK,Chaos Rising - Chaos Rising 
 Stamped Cards,Ampharos,MEP075,Black Star Promo,US/UK,Chaos Rising - Chaos Rising Build & Battle Box,mega_placeholders.csv:115
 Stamped Cards,Crobat,MEP076,Black Star Promo,US/UK,Chaos Rising - Chaos Rising Build & Battle Box,mega_placeholders.csv:116
 Stamped Cards,Goodra,MEP077,Black Star Promo,US/UK,Chaos Rising - Chaos Rising Build & Battle Box,mega_placeholders.csv:117
-Stamped Cards,Miraidon,MEP082,Pitch Black Stamp,US/UK,Pitch Black - Not confirmed yet,auto_mega_promos.csv:3
-Stamped Cards,Slowbro,MEP083,Pitch Black Stamp,US/UK,Pitch Black - Not confirmed yet,auto_mega_promos.csv:5
-Stamped Cards,Bastiodon,MEP085,Pitch Black Stamp,US/UK,Pitch Black - Not confirmed yet,auto_mega_promos.csv:9
+Stamped Cards,Miraidon,MEP082,Black Star Promo,US/UK,Pitch Black - Pitch Black Build & Battle Box,mega_placeholders.csv:195
+Stamped Cards,Slowbro,MEP083,Black Star Promo,US/UK,Pitch Black - Pitch Black Build & Battle Box,mega_placeholders.csv:196
+Stamped Cards,Dhelmise,MEP084,Black Star Promo,US/UK,Pitch Black - Pitch Black Build & Battle Box,mega_placeholders.csv:197
+Stamped Cards,Bastiodon,MEP085,Black Star Promo,US/UK,Pitch Black - Pitch Black Build & Battle Box,mega_placeholders.csv:198
 Stamped Cards,Pikachu,MEW025,Cosmos Holo Snowflake Stamp,US/UK,Black Bolt & White Flare - Holiday Calendar 2025,placeholders.csv:708
 Stamped Cards,Eevee,MEW133,Cosmos Holo Snowflake Stamp,US/UK,Black Bolt & White Flare - Holiday Calendar 2025,placeholders.csv:709
 Stamped Cards,Eiscue ex,OBF042,Snowflake Stamp,US/UK,Shrouded Fable - Holiday Calendar 2024,placeholders.csv:446
@@ -151,10 +152,10 @@ Staff Cards,Ethan's Typhlosion,DRI034,Staff Stamp,US/UK,Destined Rivals - Build 
 Staff Cards,Misty's Gyarados,DRI049,Staff Stamp,US/UK,Destined Rivals - Build & Battle Box,placeholders.csv:664
 Staff Cards,Team Rocket's Mimikyu,DRI087,Staff Stamp,US/UK,Destined Rivals - Build & Battle Box,placeholders.csv:665
 Staff Cards,Team Rocket's Tyranitar,DRI096,Staff Stamp,US/UK,Destined Rivals - Build & Battle Box,placeholders.csv:666
-Staff Cards,Miraidon,MEP082,Staff Stamp,US/UK,Pitch Black - Not confirmed yet,auto_mega_promos.csv:4
-Staff Cards,Slowbro,MEP083,Staff Stamp,US/UK,Pitch Black - Not confirmed yet,auto_mega_promos.csv:6
-Staff Cards,Dhelmise,MEP084,Staff Stamp,US/UK,Pitch Black - Not confirmed yet,auto_mega_promos.csv:8
-Staff Cards,Bastiodon,MEP085,Staff Stamp,US/UK,Pitch Black - Not confirmed yet,auto_mega_promos.csv:10
+Staff Cards,Miraidon,MEP082,Staff Stamp,US/UK,Pitch Black - Pitch Black Prerelease (event staff),mega_placeholders.csv:199
+Staff Cards,Slowbro,MEP083,Staff Stamp,US/UK,Pitch Black - Pitch Black Prerelease (event staff),mega_placeholders.csv:200
+Staff Cards,Dhelmise,MEP084,Staff Stamp,US/UK,Pitch Black - Pitch Black Prerelease (event staff),mega_placeholders.csv:201
+Staff Cards,Bastiodon,MEP085,Staff Stamp,US/UK,Pitch Black - Pitch Black Prerelease (event staff),mega_placeholders.csv:202
 Staff Cards,Quaquaval,SVP005,Staff Stamp,US/UK,Scarlet & Violet - Build & Battle Box,placeholders.csv:20
 Staff Cards,Pawmot,SVP006,Staff Stamp,US/UK,Scarlet & Violet - Build & Battle Box,placeholders.csv:21
 Staff Cards,Hawlucha,SVP007,Staff Stamp,US/UK,Scarlet & Violet - Build & Battle Box,placeholders.csv:22
@@ -485,7 +486,18 @@ MCAP Cards,Slowpoke,MEP086,Smooth Cosmos Holo,US/UK,Pitch Black - Pitch Black Bl
 MCAP Cards,Binacle,MEP087,Smooth Cosmos Holo,US/UK,Pitch Black - Pitch Black Blisters,mega_placeholders.csv:147
 MCAP Cards,Zarude,MEP088,Black Star Promo,US/UK,Pitch Black - Pitch Black Elite Trainer Box,mega_placeholders.csv:158
 MCAP Cards,Zarude,MEP088,Pokemon Center Stamp,US/UK,Pitch Black - Pitch Black Elite Trainer Box,mega_placeholders.csv:159
-MCAP Cards,Victini,MEP102,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:23
+MCAP Cards,Mega Zeraora ex,MEP089,Black Star Promo,US/UK,Pitch Black - Mega Forces Tin (Mega Zeraora ex),mega_placeholders.csv:203
+MCAP Cards,Mega Darkrai ex,MEP090,Black Star Promo,US/UK,Pitch Black - Mega Forces Tin (Mega Darkrai ex),mega_placeholders.csv:204
+MCAP Cards,Mega Dragonite ex,MEP091,Black Star Promo,US/UK,Pitch Black - Mega Forces Tin (Mega Dragonite ex),mega_placeholders.csv:205
+MCAP Cards,Greninja ex,MEP099,Black Star Promo,US/UK,30th Celebration - 30th Celebration Pokemon ex Box (Greninja ex),mega_placeholders.csv:211
+MCAP Cards,Sylveon ex,MEP100,Black Star Promo,US/UK,30th Celebration - 30th Celebration Pokemon ex Box (Sylveon ex),mega_placeholders.csv:212
+MCAP Cards,Nidorina,MEP101,Black Star Promo,US/UK,30th Celebration - 30th Celebration Elite Trainer Box,mega_placeholders.csv:213
+MCAP Cards,Nidorina,MEP101,Pokemon Center Stamp,US/UK,30th Celebration - 30th Celebration Pokemon Center Elite Trainer Box,mega_placeholders.csv:214
+MCAP Cards,Ditto,MEP106,Black Star Promo,US/UK,30th Celebration - 30th Celebration Premium Collection,mega_placeholders.csv:219
+MCAP Cards,Pikachu ex,MEP107,Black Star Promo,US/UK,30th Celebration - 30th Celebration Ultra-Premium Collection (Day),mega_placeholders.csv:220
+MCAP Cards,Espeon ex,MEP108,Black Star Promo,US/UK,30th Celebration - 30th Celebration Ultra-Premium Collection (Day),mega_placeholders.csv:221
+MCAP Cards,Pikachu ex,MEP109,Black Star Promo,US/UK,30th Celebration - 30th Celebration Ultra-Premium Collection (Night),mega_placeholders.csv:222
+MCAP Cards,Umbreon ex,MEP110,Black Star Promo,US/UK,30th Celebration - 30th Celebration Ultra-Premium Collection (Night),mega_placeholders.csv:223
 MCAP Cards,Bulbasaur,MEW001,Cosmos Parallel Holo,US/UK,Stellar Crown - 151 Mini Tin 5-Pack,placeholders.csv:499
 MCAP Cards,Bulbasaur,MEW001,Parallel Holo,US/UK,Prismatic Evolutions - 151 Blooming Waters Premium Collection,placeholders.csv:606
 MCAP Cards,Venusaur ex,MEW003,Holo,US/UK,Prismatic Evolutions - 151 Blooming Waters Premium Collection,placeholders.csv:607
@@ -991,27 +1003,15 @@ Other Cards,Froakie,MEP060,Black Star Promo,US/UK,Mega Evolution - First Partner
 Other Cards,Sprigatito,MEP061,Black Star Promo,US/UK,Mega Evolution - First Partner Illustration Collection Series 3,mega_placeholders.csv:166
 Other Cards,Fuecoco,MEP062,Black Star Promo,US/UK,Mega Evolution - First Partner Illustration Collection Series 3,mega_placeholders.csv:167
 Other Cards,Quaxly,MEP063,Black Star Promo,US/UK,Mega Evolution - First Partner Illustration Collection Series 3,mega_placeholders.csv:168
-Other Cards,Dhelmise,MEP084,Black Star Promo,US/UK,Pitch Black - Not confirmed yet,auto_mega_promos.csv:7
-Other Cards,Mega Zeraora ex,MEP089,Black Star Promo,US/UK,Pitch Black - Not confirmed yet,auto_mega_promos.csv:11
-Other Cards,Mega Darkrai ex,MEP090,Black Star Promo,US/UK,Pitch Black - Not confirmed yet,auto_mega_promos.csv:12
-Other Cards,Mega Dragonite ex,MEP091,Black Star Promo,US/UK,Pitch Black - Not confirmed yet,auto_mega_promos.csv:13
-Other Cards,Alolan Exeggutor,MEP094,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:14
-Other Cards,Lucario,MEP095,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:15
-Other Cards,Moltres,MEP096,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:16
-Other Cards,Articuno,MEP097,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:17
-Other Cards,Zapdos,MEP098,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:18
-Other Cards,Greninja ex,MEP099,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:19
-Other Cards,Sylveon ex,MEP100,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:20
-Other Cards,Nidorina,MEP101,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:21
-Other Cards,Nidorina,MEP101,Pokemon Center Stamp,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:22
-Other Cards,Zeraora,MEP103,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:24
-Other Cards,Mewtwo,MEP104,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:25
-Other Cards,Mew,MEP105,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:26
-Other Cards,Ditto,MEP106,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:27
-Other Cards,Pikachu ex,MEP107,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:28
-Other Cards,Espeon ex,MEP108,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:29
-Other Cards,Pikachu ex,MEP109,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:30
-Other Cards,Umbreon ex,MEP110,Black Star Promo,US/UK,30th Celebration - Not confirmed yet,auto_mega_promos.csv:31
+Other Cards,Alolan Exeggutor,MEP094,Black Star Promo,US/UK,30th Celebration - 30th Celebration Tech Sticker Collection (Alolan Exeggutor),mega_placeholders.csv:206
+Other Cards,Lucario,MEP095,Black Star Promo,US/UK,30th Celebration - 30th Celebration Tech Sticker Collection (Lucario),mega_placeholders.csv:207
+Other Cards,Moltres,MEP096,Black Star Promo,US/UK,30th Celebration - 30th Celebration Poster Collection,mega_placeholders.csv:208
+Other Cards,Articuno,MEP097,Black Star Promo,US/UK,30th Celebration - 30th Celebration Poster Collection,mega_placeholders.csv:209
+Other Cards,Zapdos,MEP098,Black Star Promo,US/UK,30th Celebration - 30th Celebration Poster Collection,mega_placeholders.csv:210
+Other Cards,Victini,MEP102,Black Star Promo,US/UK,30th Celebration - Espeon ex Battle Deck,mega_placeholders.csv:215
+Other Cards,Zeraora,MEP103,Black Star Promo,US/UK,30th Celebration - Umbreon ex Battle Deck,mega_placeholders.csv:216
+Other Cards,Mewtwo,MEP104,Black Star Promo,US/UK,30th Celebration - 30th Celebration Figure Collection (Mewtwo),mega_placeholders.csv:217
+Other Cards,Mew,MEP105,Black Star Promo,US/UK,30th Celebration - 30th Celebration Figure Collection (Mew),mega_placeholders.csv:218
 Other Cards,Abra,MEW063,Pixel Cosmos,US/UK,151 - Alakazam ex Collection (Reprint),placeholders.csv:187
 Other Cards,Abra,MEW063,Smooth Cosmos,US/UK,151 - Alakazam ex Collection,placeholders.csv:186
 Other Cards,Kadabra,MEW064,Pixel Cosmos,US/UK,151 - Alakazam ex Collection,placeholders.csv:188

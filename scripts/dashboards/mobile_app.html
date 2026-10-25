@@ -337,6 +337,63 @@
       .top { padding-top: 6px; padding-bottom: 6px; }
       .scope { padding-top: 5px; padding-bottom: 5px; }
     }
+
+    /* Owner-only review notes. The server decides whether this appears; public visitors keep
+       the Discord-only feedback path. It sits above app panes without changing their layout. */
+    .review-tab {
+      position: fixed;
+      z-index: 70;
+      right: var(--safe-r);
+      top: 46%;
+      min-width: 44px;
+      min-height: 72px;
+      padding: 10px 7px;
+      border: 1px solid rgba(245, 185, 74, 0.55);
+      border-right: 0;
+      border-radius: 12px 0 0 12px;
+      background: #25334e;
+      color: #ffe0a3;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+      font-weight: 750;
+      writing-mode: vertical-rl;
+      letter-spacing: 0.04em;
+    }
+    .review-sheet {
+      position: fixed;
+      z-index: 80;
+      left: max(10px, var(--safe-l));
+      right: max(10px, var(--safe-r));
+      bottom: max(10px, var(--safe-b));
+      max-width: 540px;
+      max-height: calc(100dvh - 20px - var(--safe-b));
+      margin: 0 auto;
+      overflow-y: auto;
+      border: 1px solid var(--line-strong);
+      border-radius: 18px;
+      padding: 14px;
+      background: #101c30;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.68);
+    }
+    .review-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .review-head h2 { margin: 0; font-size: 18px; }
+    .review-close { border: 0; background: none; color: var(--muted); min-width: 44px; min-height: 44px; font-size: 24px; }
+    .review-sheet label { display: block; margin-top: 10px; color: var(--muted); font-size: 13px; }
+    .review-sheet input[type="text"], .review-sheet textarea {
+      width: 100%;
+      margin-top: 5px;
+      border: 1px solid var(--line-strong);
+      border-radius: 11px;
+      background: var(--panel-3);
+      padding: 10px 12px;
+      font-size: 16px;
+    }
+    .review-sheet textarea { min-height: 130px; resize: vertical; }
+    .review-file { display: block; width: 100%; margin-top: 6px; color: var(--text); font-size: 14px; }
+    .review-actions { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+    .review-submit { min-height: 44px; border: 0; border-radius: 11px; padding: 9px 18px; background: var(--accent); color: #04101f; font-weight: 750; }
+    .review-submit:disabled { opacity: 0.55; }
+    .review-status { flex: 1; color: var(--muted); font-size: 13px; }
+    .review-status.error { color: var(--bad); }
   </style>
 </head>
 <body>
@@ -401,6 +458,29 @@
     <section class="pane card-pane" id="cardPane" aria-label="Selected card"></section>
   </div>
   <div class="scrim" id="scrim" hidden></div>
+
+  <button type="button" class="review-tab" id="reviewTab" aria-controls="reviewSheet" aria-expanded="false" hidden>Note</button>
+  <section class="review-sheet" id="reviewSheet" role="dialog" aria-modal="false" aria-labelledby="reviewTitle" hidden>
+    <div class="review-head">
+      <h2 id="reviewTitle">Review note</h2>
+      <button type="button" class="review-close" id="reviewClose" aria-label="Close review note">×</button>
+    </div>
+    <form id="reviewForm">
+      <label>Short title (optional)
+        <input type="text" id="reviewNoteTitle" name="title" autocomplete="off" placeholder="M-next review note" />
+      </label>
+      <label>What did you notice?
+        <textarea id="reviewDetails" name="details" required placeholder="Type the note while this screen is still in front of you…"></textarea>
+      </label>
+      <label>Screenshot, photo, or other files (optional)
+        <input class="review-file" id="reviewFiles" name="files" type="file" multiple />
+      </label>
+      <div class="review-actions">
+        <button type="submit" class="review-submit" id="reviewSubmit">Save note</button>
+        <div class="review-status" id="reviewStatus" role="status"></div>
+      </div>
+    </form>
+  </section>
 
   <footer class="legal" title="Poke6s Market is a research tool, not financial or pricing advice, and no guarantee of future prices. Pokémon names, characters, logos and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company / The Pokémon Company International. Poke6s Market is independent and not affiliated with or endorsed by them. Market prices from TCGplayer; graded prices from PriceCharting. TCGplayer links are affiliate links.">
     <span class="long">Research tool, not financial advice. Pokémon names and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company; Poke6s Market is independent and not affiliated with them. Prices from TCGplayer and PriceCharting. TCGplayer links are affiliate links.</span>
@@ -467,6 +547,7 @@
     };
     const RECENT_KEY = "pokemon-momentum-m-recent";  // last cards checked on this phone
     const MODE_KEY = "pokemon-momentum-m-deal-mode";  // "keep" or "resell"
+    const REVIEW_DRAFT_KEY = "pokemon-momentum-m-review-draft";
     const readStore = (key, fallback) => { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch (_err) { return fallback; } };
     const writeStore = (key, value) => { try { localStorage.setItem(key, JSON.stringify(value)); } catch (_err) { /* private mode: fine */ } };
 
@@ -518,6 +599,99 @@
       if (!response.ok) throw new Error(`${response.status} ${path}`);
       return response.json();
     }
+
+    // ---------- owner review notes ----------
+    // This is deliberately separate from public feedback: the server reveals the tab only
+    // after the signed-in account is confirmed as the configured admin, and re-checks every
+    // save/download. Text drafts survive closing or reloading; browsers cannot retain selected
+    // local files, so those must be picked again after a reload.
+    function openReviewSheet() {
+      $("reviewSheet").hidden = false;
+      $("reviewTab").hidden = true;
+      $("reviewTab").setAttribute("aria-expanded", "true");
+      requestAnimationFrame(() => $("reviewDetails").focus());
+    }
+    function closeReviewSheet() {
+      $("reviewSheet").hidden = true;
+      $("reviewTab").hidden = false;
+      $("reviewTab").setAttribute("aria-expanded", "false");
+    }
+    function reviewContext() {
+      const search = state.list === "check" ? ($("homeSearch").value || $("searchInput").value) : $("filterInput").value;
+      return {
+        page_url: location.href,
+        category_id: categoryId(),
+        market: state.market,
+        kind: state.kind,
+        list: state.list,
+        product_key: state.selected?.key || null,
+        product_name: state.selected?.name || null,
+        set_name: state.selected?.set || null,
+        search_query: search || null,
+        deal_mode: state.mode,
+        asking_price: $("askInput")?.value || null,
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+        orientation: screen.orientation?.type || (innerWidth > innerHeight ? "landscape" : "portrait"),
+        list_scroll: document.querySelector(".list-pane")?.scrollTop || 0,
+        card_scroll: $("cardPane")?.scrollTop || 0,
+        user_agent: navigator.userAgent,
+        captured_at: new Date().toISOString(),
+      };
+    }
+    function saveReviewDraft() {
+      writeStore(REVIEW_DRAFT_KEY, { title: $("reviewNoteTitle").value, details: $("reviewDetails").value });
+    }
+    async function enableOwnerReviewNotes() {
+      try {
+        const response = await fetch("/tracking/session");
+        if (!response.ok) return;
+        const payload = await response.json();
+        if (!payload.user?.is_admin) return;
+        const draft = readStore(REVIEW_DRAFT_KEY, {});
+        $("reviewNoteTitle").value = draft.title || "";
+        $("reviewDetails").value = draft.details || "";
+        $("reviewTab").hidden = false;
+      } catch (_err) { /* Signed out or offline: leave the owner tool hidden. */ }
+    }
+    $("reviewTab").addEventListener("click", openReviewSheet);
+    $("reviewClose").addEventListener("click", closeReviewSheet);
+    $("reviewNoteTitle").addEventListener("input", saveReviewDraft);
+    $("reviewDetails").addEventListener("input", saveReviewDraft);
+    $("reviewForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const details = $("reviewDetails").value.trim();
+      if (!details) {
+        $("reviewStatus").textContent = "Write a note first.";
+        $("reviewStatus").classList.add("error");
+        $("reviewDetails").focus();
+        return;
+      }
+      const form = new FormData();
+      form.append("title", $("reviewNoteTitle").value.trim());
+      form.append("details", details);
+      form.append("context", JSON.stringify(reviewContext()));
+      for (const file of $("reviewFiles").files) form.append("files", file, file.name);
+      $("reviewSubmit").disabled = true;
+      $("reviewStatus").classList.remove("error");
+      $("reviewStatus").textContent = "Saving…";
+      try {
+        const response = await fetch("/m-next/review-notes", { method: "POST", body: form });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.detail || "Could not save this note.");
+        $("reviewNoteTitle").value = "";
+        $("reviewDetails").value = "";
+        $("reviewFiles").value = "";
+        writeStore(REVIEW_DRAFT_KEY, {});
+        $("reviewStatus").textContent = `Note #${payload.id} saved.`;
+        setTimeout(closeReviewSheet, 650);
+      } catch (error) {
+        $("reviewStatus").textContent = `${error.message || "Could not save."} Your draft is still here.`;
+        $("reviewStatus").classList.add("error");
+        saveReviewDraft();
+      } finally {
+        $("reviewSubmit").disabled = false;
+      }
+    });
     // Most endpoints answer {columns, rows}; turn that into one object per row.
     function rowObjects(payload) {
       const cols = payload.columns || [];
@@ -622,6 +796,9 @@
         }
       }
       // Until the later steps are built, the old phone page is one tap away.
+      // Feedback and bug reports go to Discord only; no form on the page (owner, 2026-10-24).
+      nodes.push(el("h4", { text: "Help" }),
+        el("a", { href: "https://discord.gg/AejcWHkCG", target: "_blank", rel: "noopener" }, el("span", { text: "Feedback & bug reports (Discord)" }), el("span", { text: "↗" })));
       nodes.push(el("h4", { text: "Not built yet" }),
         el("a", { href: "/mobile", class: "old" }, el("span", { text: "Sets, Pokémon, My lists… on the old phone page" }), el("span", { text: "↗" })));
       $("menu").replaceChildren(...nodes);
@@ -1219,6 +1396,7 @@
     loadFreshness();
     loadList();
     loadCounts();
+    enableOwnerReviewNotes();
   </script>
 </body>
 </html>

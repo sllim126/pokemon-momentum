@@ -1,6 +1,6 @@
 # New mobile app: plan
 
-Last reviewed: 2026-10-23
+Last reviewed: 2026-10-25
 
 The owner asked on 2026-10-21 for a full rebuild of the phone site: same features as today,
 in the desktop app's look, and a layout that fills any screen from a phone in portrait to a
@@ -109,27 +109,27 @@ asking price), and the browsing lists moved to the menu.
 | Feedback & Support: on-site feedback form, Discord bug link, Quick Guide | **Decision 1**; guide becomes How it works (1.5) |
 | Not on phones today: Budget Builder | Add (1.5) |
 
-## Decisions for the owner
+## Decisions for the owner (answered 2026-10-24)
 
-1. **Feedback form.** Today's phone page has an on-site feedback form. The rule is "bug
-   reports go to Discord, no on-site forms on new pages". Proposal: a "Report a bug / send
-   feedback" link to the Discord server, nothing on the page.
-2. **Alerts & Targets.** Hidden on today's page and never finished. Proposal: leave it out;
-   the card view gets the desktop Targets tab (your buy and sell prices per card). Alerts can
-   come back in stage 4.
-3. **Time to Buy.** Only the old research dashboard has it; the desktop app dropped it.
-   Proposal: drop it.
-4. **Set Explorer.** A separate page; the Sets view covers the same ground. Proposal: no
-   separate page on phones.
-5. **iPads (stage 2).** Today iPads in their default "desktop website" mode get the desktop
-   app, and iPads that report as mobile get the phone page. Proposal: decide after using
-   `/m-next` on the iPad in stage 2.
-6. **Switch date.** Proposal: switch after step 1.5 and a week of phone testing, ideally
-   before the Black Friday traffic (late November).
+1. **Public feedback form: removed.** Visitors send feedback through the Discord link in the
+   menu. The signed-in owner alone gets a floating review-note tab on `/m-next` (agreed
+   2026-10-25): it saves a note, automatic page/card/list context and optional files to the
+   internal `/bug-reports` queue, then collapses so mobile review can continue uninterrupted.
+   Text drafts survive a close or reload; offline submission retry remains a possible follow-up.
+2. **Alerts & Targets: left out for now.** The card view gets the desktop Targets tab (your own
+   buy and sell prices per card) in step 1.2; alerts may come back in stage 4.
+3. **Time to Buy: dropped** on phones (the desktop app had already dropped it).
+4. **Set Explorer: no separate page** on phones; the Sets view (step 1.4) covers it.
+5. **iPads: still deciding.** Today iPads in their default "desktop website" mode get the
+   desktop app (which fits portrait since 2026-10-22), and iPads that report as mobile get the
+   phone page. To be settled in stage 2.
+6. **Switch date: November 10, 2026**, unless the owner calls it earlier. Working back from
+   that: steps 1.2-1.5 done by about November 3, leaving a week of phone testing.
 
 ## What the owner does at each step
 
-- After each step: open `market.poke6s.com/m-next` on the phone, in portrait and landscape,
-  and post anything wrong in Discord `#bug-reports` (or tell Claude directly).
-- Answer the decisions above (one line each is enough).
+- After each step: open `market.poke6s.com/m-next` while signed in as the owner, in portrait and
+  landscape, and use the floating Note tab for anything wrong. Public testers use Discord
+  `#bug-reports`.
+- Decide decision 5 (iPads) during stage 2.
 - Before the switch: a last pass on the phone, then say "switch the mobile site".
