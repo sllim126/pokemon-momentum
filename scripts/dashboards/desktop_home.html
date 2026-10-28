@@ -218,6 +218,19 @@
     .info-table td, .info-table th { padding: 7px 10px; border-bottom: 1px solid rgba(136, 162, 205, 0.07); }
     .info-table tbody tr { cursor: default; }
     .index-chart { position: relative; height: 150px; margin: 0 0 10px; }
+    .trend-cell { display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end; }
+    .trend-cell .spark { width: 60px; height: 24px; }
+    /* Narrower screens: shorter breadth bars so the Sets table's trend column fits. */
+    @media (max-width: 1500px) { #setsTable .bar { width: 64px; } }
+    /* Set names wrap to two lines instead of "Nintendo …". */
+    /* Each breadth number sits right beside its bar, so it doesn't read as the 90-day column's. */
+    #setsTable .bar { margin-left: 0; }
+    #setsTable .card-name { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
+    /* Under 1400px the Items column goes (the card count is in each row's detail line). */
+    @media (max-width: 1400px) {
+      #setsTable th:nth-child(2), #setsTable td:nth-child(2) { display: none; }
+      #setsTable .bar { width: 48px; }
+    }
     .index-chart svg { width: 100%; height: 100%; display: block; }
     .guide { padding: 6px 18px 24px; max-width: 900px; }
     .guide section { padding: 14px 0; border-bottom: 1px solid var(--line); }
@@ -462,7 +475,7 @@
       <div class="panel-scroll" id="resultsScroll">
         <table id="setsTable" hidden>
           <thead>
-            <tr><th>Set</th><th class="right">Items</th><th class="right">30-day avg</th><th class="right">90-day avg</th><th class="right">Above 30-day avg</th><th class="right">Strength</th></tr>
+            <tr><th>Set</th><th class="right">Items</th><th class="right">30-day avg</th><th class="right">90-day avg</th><th class="right">Above 30-day avg</th><th class="right">90-day trend</th></tr>
           </thead>
           <tbody id="setsBody"></tbody>
         </table>
@@ -664,7 +677,7 @@
       indexes: [["era", "newest era"], ["era_old", "oldest era"], ["change30", "30-day change"], ["start", "change since start"], ["level", "level"]],
       index: [["signal", "rank"], ["price_asc", "price, low to high"], ["change", "biggest change"]],
       set_values: [["cost", "full set cost"], ["release", "release date, newest"], ["release_old", "release date, oldest"], ["avg", "average card"], ["top_share", "top hit share"], ["depth", "depth"], ["name", "name"]],
-      sets: [["strength", "strength"], ["release", "release date, newest"], ["release_old", "release date, oldest"], ["avg30", "30-day average"], ["avg90", "90-day average"], ["items", "most items"], ["name", "name"]],
+      sets: [["strength", "strength"], ["trend", "90-day trend"], ["release", "release date, newest"], ["release_old", "release date, oldest"], ["avg30", "30-day average"], ["avg90", "90-day average"], ["items", "most items"], ["name", "name"]],
     };
     const sortKind = (list) => (list.track ? "track" : SORTS[list.key] ? list.key : "market");
     const SET_FILTER_LABELS = {
@@ -1152,9 +1165,10 @@
     function fetchSetValues() {
       return cached(`set_values:${state.market}`, () => getJson(`/set_baskets?limit=2000&category_id=${categoryId()}`).then(rowObjects));
     }
-    // Whole-set price history (equal-weighted, starts at 100) for the set chart.
+    // Whole-set price history (equal-weighted, starts at 100 on the set's release day, so
+    // pre-sale prices don't dominate) for the set chart.
     function fetchSetSeries(groupId) {
-      return cached(`set_series:${state.market}:${groupId}`, () => getJson(`/group_series?groupId=${groupId}&days=5000&category_id=${categoryId()}`).then(rowObjects));
+      return cached(`set_series:${state.market}:${groupId}`, () => getJson(`/group_series?groupId=${groupId}&days=5000&since_release=true&category_id=${categoryId()}`).then(rowObjects));
     }
     // Every sealed product (no price limits, so loose packs are included for the comparison).
     function fetchSealedDeals() {
@@ -1318,7 +1332,9 @@
       $("valuesTable").hidden = view !== "set_values";
       $("resultsControls").hidden = view === "guide";
       document.querySelector(".layout").classList.toggle("no-detail", list.key === "guide");
-      const setChart = list.key === "set" && state.setFrom === "set_values";
+      // A set's own page shows its value chart (equal-weight index), whether it was opened from
+      // Sets or from Market Stats > Set values.
+      const setChart = list.key === "set";
       $("indexChart").hidden = list.key !== "index" && !setChart;
       if (!$("indexChart").hidden) $("indexChart").replaceChildren();
       $("statsTabs").hidden = !["indexes", "set_values"].includes(list.key);
@@ -1405,8 +1421,9 @@
     // ---------- sets ----------
     let setLogoIds = null;
     getJson("/set-logos.json").then((d) => { setLogoIds = new Set((d.groupIds || []).map(String)); if (state.list === "sets") renderSets(); }).catch(() => {});
-    // Sets view: the Set Strength table. "Strength" is the API's breadth_score, which has no
-    // fixed top, so its bars are scaled to the strongest set in the whole list.
+    // Sets view: the Set Strength table. "Strength" (the API's breadth_score) is still the
+    // default sort; the last column shows each set's 90-day trend instead (/group_sparklines:
+    // the same equal-weight index as the chart on a set's own page, for every set at once).
     async function loadSets(seq) {
       state.rows = [];
       $("resultsBody").replaceChildren();
@@ -1416,6 +1433,7 @@
         state.setRows = rows;
         renderEraFilter();
         renderSets();
+        fetchSetSparks().then(() => { if (seq === listRequestSeq && state.list === "sets") renderSets(); }).catch(() => {});
       } catch (_err) {
         if (seq !== listRequestSeq) return;
         state.setRows = [];
@@ -1441,6 +1459,17 @@
       const d = new Date(`${r.release_date}T12:00:00Z`);
       return `released ${d.toLocaleDateString(undefined, r.release_precision === "month" ? { month: "short", year: "numeric" } : { month: "short", day: "numeric", year: "numeric" })}`;
     }
+    // Every set's 90-day trend points, per market: {groupId: [index values]}.
+    function fetchSetSparks() {
+      return cached(`set_sparks:${state.market}`, () => getJson(`/group_sparklines?category_id=${categoryId()}`).then((d) => {
+        state.setSparks = { market: state.market, sets: d.sets || {} };
+      }));
+    }
+    // 90-day change of a set from its trend points (first to last), or NaN.
+    const setTrend = (groupId) => {
+      const pts = state.setSparks?.market === state.market ? state.setSparks.sets[String(groupId)] : null;
+      return pts && pts.length > 1 && pts[0] > 0 ? (pts[pts.length - 1] / pts[0] - 1) * 100 : NaN;
+    };
     function renderSets(errorText) {
       const text = $("filterInput").value.trim().toLowerCase();
       let rows = state.setRows.filter((r) => (!state.era || r.generation === state.era)
@@ -1449,10 +1478,17 @@
       const sort = $("sortSelect").value;
       const field = { strength: "breadth_score", avg30: "avg_30d_pct", avg90: "avg_90d_pct", items: "item_count" }[sort];
       rows = sort === "name" ? [...rows].sort((a, b) => String(a.groupName).localeCompare(String(b.groupName)))
+        : sort === "trend" ? [...rows].sort((a, b) => num(setTrend(b.groupId)) - num(setTrend(a.groupId)))
         : sort === "release" || sort === "release_old" ? sortByRelease(rows, sort === "release")
         : [...rows].sort((a, b) => num(b[field]) - num(a[field]));
       $("listCount").textContent = state.setRows.length ? `${rows.length}${rows.length !== state.setRows.length ? ` of ${state.setRows.length}` : ""} sets` : "";
-      const topStrength = Math.max(1, ...state.setRows.map((r) => Number(r.breadth_score) || 0));
+      // Trend column: the set's 90-day line and its change; "…" until /group_sparklines answers.
+      const trendCell = (groupId) => {
+        const pts = state.setSparks?.market === state.market ? state.setSparks.sets[String(groupId)] : null;
+        if (!state.setSparks || state.setSparks.market !== state.market) return el("span", { class: "card-meta", text: "…" });
+        if (!pts || pts.length < 2) return el("span", { class: "card-meta", text: "—" });
+        return el("div", { class: "trend-cell", title: "Equal-weight set index over 90 days" }, sparkSvg(pts), changePill(setTrend(groupId)));
+      };
       const bar = (value, label, scale = 100) => el("div", { class: "bar-cell" },
         el("span", { class: "num", text: label }),
         el("span", { class: "bar" }, el("i", { style: `width:${Math.max(0, Math.min(100, ((Number(value) || 0) / scale) * 100))}%` })));
@@ -1468,7 +1504,7 @@
           el("td", { class: "right" }, changePill(Number(r.avg_30d_pct ?? NaN))),
           el("td", { class: "right" }, changePill(Number(r.avg_90d_pct ?? NaN))),
           el("td", { class: "right" }, bar(r.pct_above_sma30, Number.isFinite(Number(r.pct_above_sma30)) ? `${Math.round(r.pct_above_sma30)}%` : "—")),
-          el("td", { class: "right" }, bar(r.breadth_score, Number.isFinite(Number(r.breadth_score)) ? String(Math.round(r.breadth_score)) : "—", topStrength)));
+          el("td", { class: "right" }, trendCell(r.groupId)));
         tr.addEventListener("click", () => openSet(r.groupId, r.groupName));
         return tr;
       }));

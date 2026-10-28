@@ -40,6 +40,12 @@ Current Focus (2026-10-25)
 Recently Completed
 ------------------
 
+- 2026-10-28 Research > Sets: a 90-day trend line per set replaces the Strength column (still a
+  sort; `/group_sparklines`, one cached call for every set), and every set page shows the set's
+  value chart starting at its release date (`/group_series?since_release=true`), not only sets
+  opened from Market Stats. Breadth numbers sit beside their bars; under 1400 px the Items
+  column hides and set names wrap.
+
 - 2026-10-25 Handover review for Codex or any other agent: `docs/api_routes.md` lists every
   server route (a test fails when a new route isn't in it); the runbook opens with the whole
   job schedule and `deploy/crontab.txt` keeps a copy of the crontab; AGENTS.md gained the
