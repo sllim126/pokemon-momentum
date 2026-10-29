@@ -509,7 +509,11 @@ def build_premium_rarity_filter(column: str = "rarity") -> str:
 # Agreed with the owner 2026-10-17 (trial in docs/todo.txt), live for a trial week. A card is
 # a pullback when it has dropped a real amount from its recent high, the drop has lasted,
 # and it is doing clearly worse than cards in its price band, while it is not collapsing and
-# is still up over the year. Comparing with cards of a similar price (not the Top 151 index)
+# is still up over the year. Cards without a year of prices (sets under a year old) skip the
+# "up over the year" test and only need to pass the rest (owner, 2026-10-29: new cards count
+# too). Requiring "up since release" instead was tried and let in almost none: most new cards
+# are below their release price after the usual post-release drop. roc_since_release_pct is
+# returned so the lists can show it. Comparing with cards of a similar price (not the Top 151 index)
 # matters: the index is high-end cards, and cheap cards would all look "behind" it.
 # A pullback is "own" when the card is also well behind its own set; otherwise the whole set
 # is falling ("set"), which is shown as a separate list. Used by /good_buys, /set_dips and the
@@ -575,7 +579,7 @@ def build_pullback_sql(source: str, product_kind: str = "card") -> str:
       AND off_high_pct <= {PULLBACK_MAX_OFF_HIGH_PCT}
       AND sma7_off_high_pct >= {PULLBACK_MIN_SMA7_OFF_HIGH_PCT}
       AND vs_band_pts <= -{PULLBACK_MIN_BEHIND_PTS}
-      AND roc_365d_pct > 0
+      AND (roc_365d_pct > 0 OR roc_365d_pct IS NULL)
       AND COALESCE(recent_distinct_prices_30d, 0) >= {PULLBACK_MIN_PRICE_CHANGES_30D}
     """
 

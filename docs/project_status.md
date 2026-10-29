@@ -130,7 +130,10 @@ Added 2026-10:
 - Nightly jobs wait for DNS after a reboot; runbook covers recovering from a power cut
 - Pullbacks redefined (2026-10-17, trial week): cards 10%+ below their 90-day high for a week,
   well behind cards of a similar price and their own set, still up over the year; cards whose
-  whole set is falling are listed as Whole-set Dips (`/set_dips`)
+  whole set is falling are listed as Whole-set Dips (`/set_dips`). Since 2026-10-29 cards under a
+  year old skip the "up over the year" test (they had been left out entirely)
+- Graded tab (2026-10-29): "Ungraded" is the TCGplayer market price; PriceCharting's ungraded
+  price moved to the note
 - Discord #bug-reports messages are copied into the admin bug list every 15 minutes by the
   "Poke6s Control" bot (marked ✅); the admin bug page escapes report text
 - Small Dips list (2026-10-21): strong cards (+15% over 90 days) pausing 3-12% below their high

@@ -85,7 +85,9 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
 ## Rules worth knowing
 
 - **Graded prices must link back.** PriceCharting allows display only if every price links to
-  its PriceCharting product page. The Graded tab hides the link only when no price is shown.
+  its PriceCharting product page. The Graded tab hides the link only when no price is shown. Its "Ungraded" box is our
+  TCGplayer market price (the card's main price); PriceCharting's ungraded price is in the note
+  below it (owner, 2026-10-29).
 - **Sealed pack counts** come from the product name (`_infer_pack_count` in `api.py`) unless
   entered by hand (`_SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID`,
   `_SEALED_PACK_COMPOSITION_OVERRIDES`); cases multiply their contents (ETB cases via

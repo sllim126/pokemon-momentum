@@ -5809,8 +5809,8 @@ def budget_builder_recommendations(
 PULLBACK_COLUMNS = """
           latest_date, groupId, groupName, productId, productName, imageUrl, rarity, number,
           productClass, productKind, subTypeName, latest_price, high_90d,
-          roc_7d_pct, roc_30d_pct, roc_90d_pct, roc_365d_pct, recent_distinct_prices_30d,
-          price_vs_sma30_pct, price_vs_sma90_pct, trend_score,
+          roc_7d_pct, roc_30d_pct, roc_90d_pct, roc_365d_pct, roc_since_release_pct,
+          recent_distinct_prices_30d, price_vs_sma30_pct, price_vs_sma90_pct, trend_score,
           off_high_pct, sma7_off_high_pct, band_median_30d_pct, vs_band_pts,
           set_median_30d_pct, vs_set_pts, pullback_kind
 """

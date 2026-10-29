@@ -40,6 +40,14 @@ Current Focus (2026-10-25)
 Recently Completed
 ------------------
 
+- 2026-10-29 Owner decisions: (1) Pullbacks and Whole-set Dips include cards under a year old:
+  they skip the "up over the year" test and must pass the rest (+13 English cards today: 1
+  Pullback, 12 Whole-set Dips). "Up since release" was tried first and let in 1 card, because
+  most new cards sit below their release price; the snapshot now has `roc_since_release_pct`
+  (first price on or after the set's release) for showing it later. (2) Graded tab: "Ungraded"
+  is our TCGplayer market price, PriceCharting's ungraded price moved to the note. (3) Deleted
+  `data/processed/tracking.sqlite3.bak-2026-10-13` (old sign-in database backup).
+
 - 2026-10-28 Research > Sets: a 90-day trend line per set replaces the Strength column (still a
   sort; `/group_sparklines`, one cached call for every set), and every set page shows the set's
   value chart starting at its release date (`/group_series?since_release=true`), not only sets
@@ -145,22 +153,19 @@ screens, 3 refine, 4 camera/OCR.
   matches to pick from. Image matching against the cached card images is a later step if OCR
   isn't reliable enough. Camera access needs HTTPS (the site has it) and a photo-upload
   fallback.
-- [waiting] Owner: a lower bar for Japanese Pullbacks? The Japanese lists are empty because a
-  typical Japanese premium card changes price about once a month and the rules need 6 price
-  changes in 30 days (PULLBACK_* in `query_support.py`).
+- [waiting] Owner: a lower bar for Japanese Pullbacks? Japanese premium cards change price far
+  less often (median 1 price change in 30 days, against 3 for English), and the rules need 6
+  (PULLBACK_* in `query_support.py`). Counted 2026-10-29: Japanese Pullbacks 4 at a bar of 6,
+  7 at 3, 11 at 1; Whole-set Dips stay at 0 at any bar (too few Japanese cards per set clear
+  the other rules). Suggested to the owner: 3 for Japanese (the Deal Checker's "few sales"
+  line), as a separate PULLBACK_MIN_PRICE_CHANGES_30D_JP.
 - [planned] Mid-November: recheck the Pullbacks numbers once the feed has a full month
   without gaps.
-- [waiting] Owner: should Pullbacks and Whole-set Dips include cards under a year old? "Up over
-  the year" needs a year of prices, so every Ascended Heroes, Phantasmal Flames, Perfect
-  Order, Chaos Rising and Pitch Black card is left out (85 cards that the old rules listed,
-  e.g. Mega Gengar ex 284/217, -46% from its high). Option: use "up since release" for them.
 - [idea] Save each list's cards every night (a small table), so the next rule change can be
   judged on how the listed cards actually moved, not just on today's data.
 - [planned] Speed follow-ups: Sealed Deals takes ~0.5 s (it works out pack prices for every
   sealed product per request; could be a nightly snapshot), Set Strength ~0.12 s, and Under
   the Radar ~3 s while the feed is short after the data gap (ends on its own).
-- [waiting] Delete `data/processed/tracking.sqlite3.bak-2026-10-13` (the sign-in database
-  before tokens were hashed) once the owner is happy that sign-ins work.
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
@@ -255,14 +260,10 @@ screens, 3 refine, 4 camera/OCR.
   exist. They would need their own rarity rules, set eras, sealed product types and
   screener tuning; PriceCharting graded prices would need a separate download and permission.
 
-- [waiting] Graded tab: which "ungraded" price to show (owner, 2026-10-12). The Graded tab
-  shows PriceCharting's ungraded price next to the PSA grades, while the rest of the card
-  uses the TCGplayer market price (via TCGCSV), and the two can disagree a lot. Example:
-  Pikachu, EX Power Keepers: TCGplayer 429.99 vs PriceCharting ungraded 100.81. Options:
-  (a) show our TCGplayer price as "Ungraded" in the Graded tab, (b) keep PriceCharting's
-  and label it clearly ("Ungraded (PriceCharting)"), or (c) show both with sources. Also
-  check whether the gap is a matching error (wrong printing or variant) before deciding.
-  Code: Graded tab in `scripts/dashboards/desktop_home.html`, `/graded_prices` in `api.py`.
+- [planned] Graded tab follow-up: where TCGplayer and PriceCharting's ungraded prices are far
+  apart (Pikachu, EX Power Keepers: TCGplayer 429.99 vs PriceCharting 100.81), check whether
+  it's a matching error (wrong printing or variant) in `/graded_prices`. The phone app's Graded
+  view (step 1.2) uses the same layout: TCGplayer first, PriceCharting in the note.
 
 - [planned] Graded vs raw history chart (owner, 2026-10-12: "NO ONE is doing that now").
   One chart per card comparing the raw TCGplayer price trend with graded trends (PSA 10,
