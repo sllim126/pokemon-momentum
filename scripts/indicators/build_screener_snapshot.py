@@ -43,7 +43,7 @@ def main() -> int:
     out_csv = f"{EXTRACTED_DIR}/{category.screener_snapshot_csv}"
     table_name = category.screener_snapshot_table
     product_signal_table = category.product_signal_table
-    pullback_sql = build_pullback_sql("enriched")
+    pullback_sql = build_pullback_sql("enriched", category_id=category.category_id)
 
     con = duckdb.connect(DB_PATH)
     tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}

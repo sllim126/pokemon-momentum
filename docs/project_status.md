@@ -132,6 +132,7 @@ Added 2026-10:
   well behind cards of a similar price and their own set, still up over the year; cards whose
   whole set is falling are listed as Whole-set Dips (`/set_dips`). Since 2026-10-29 cards under a
   year old skip the "up over the year" test (they had been left out entirely)
+  and Japanese cards need 3 price changes in 30 days instead of 6
 - Graded tab (2026-10-29): "Ungraded" is the TCGplayer market price; PriceCharting's ungraded
   price moved to the note
 - Discord #bug-reports messages are copied into the admin bug list every 15 minutes by the

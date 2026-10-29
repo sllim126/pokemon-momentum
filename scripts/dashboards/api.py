@@ -5839,7 +5839,7 @@ def pullback_rows(
     day = f"""(SELECT * FROM {source}
              WHERE categoryId = {category.category_id}
                AND latest_date = (SELECT MAX(latest_date) FROM {source} WHERE categoryId = {category.category_id}))"""
-    pullbacks = build_pullback_sql(day, "sealed" if product_kind == "sealed" else "card")
+    pullbacks = build_pullback_sql(day, "sealed" if product_kind == "sealed" else "card", category.category_id)
     sql = f"""
         SELECT {PULLBACK_COLUMNS}
         FROM ({pullbacks}) pb

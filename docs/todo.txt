@@ -47,6 +47,9 @@ Recently Completed
   (first price on or after the set's release) for showing it later. (2) Graded tab: "Ungraded"
   is our TCGplayer market price, PriceCharting's ungraded price moved to the note. (3) Deleted
   `data/processed/tracking.sqlite3.bak-2026-10-13` (old sign-in database backup).
+  (4) Japanese Pullbacks need 3 price changes in 30 days instead of 6
+  (PULLBACK_MIN_PRICE_CHANGES_30D_JP; Japanese cards change price far less often): 4 -> 8
+  Japanese Pullbacks today; Japanese Whole-set Dips stay empty (other rules).
 
 - 2026-10-28 Research > Sets: a 90-day trend line per set replaces the Strength column (still a
   sort; `/group_sparklines`, one cached call for every set), and every set page shows the set's
@@ -153,12 +156,6 @@ screens, 3 refine, 4 camera/OCR.
   matches to pick from. Image matching against the cached card images is a later step if OCR
   isn't reliable enough. Camera access needs HTTPS (the site has it) and a photo-upload
   fallback.
-- [waiting] Owner: a lower bar for Japanese Pullbacks? Japanese premium cards change price far
-  less often (median 1 price change in 30 days, against 3 for English), and the rules need 6
-  (PULLBACK_* in `query_support.py`). Counted 2026-10-29: Japanese Pullbacks 4 at a bar of 6,
-  7 at 3, 11 at 1; Whole-set Dips stay at 0 at any bar (too few Japanese cards per set clear
-  the other rules). Suggested to the owner: 3 for Japanese (the Deal Checker's "few sales"
-  line), as a separate PULLBACK_MIN_PRICE_CHANGES_30D_JP.
 - [planned] Mid-November: recheck the Pullbacks numbers once the feed has a full month
   without gaps.
 - [idea] Save each list's cards every night (a small table), so the next rule change can be
