@@ -546,6 +546,16 @@ Needs Decisions
 Future Ideas
 ------------
 
+- [planned] Review CollectiKit (collectikit.ai; iOS, Android and web), a free collector app
+  its maker shared on r/PokemonTCG (2026-10-28). The owner promised its maker a thorough review.
+  Features it claims: "K2" chat assistant (text or voice) that explains past and current TCG
+  trends, collection/portfolio tracker, card scanner, Deal-Builder, custom and normal master-set
+  tracking, social feed, vendor analytics ("Vendor Hub") and a map of US Pokémon vending
+  machines. Look at: how its scanner and deal tools compare with our Deal Checker and the
+  planned card scanning; how it tracks a collection (we have saved lists only); master-set
+  tracking (see the master set guide idea below); where its prices come from and how it
+  explains trends. Note what's worth borrowing, and send the maker honest feedback.
+
 Learn and collector tools (owner, 2026-10-23; "nothing tonight"):
 
 - [idea] Learn as its own landing page: "How to use this site" plus the detail on every
