@@ -236,6 +236,10 @@
           for (const tag of tags) items.push({ category_id: 3, product_id: Number(productId), sub_type_name: subTypeName, tag });
         }
         if (items.length) await api("/tracking/tags/merge", { method: "POST", body: JSON.stringify({ items }) }).catch(() => null);
+        // Pages that send people here to sign in (the phone app's menu) pass ?return=/path.
+        // Only same-site paths are followed, so the link can't bounce anyone to another site.
+        const back = new URLSearchParams(location.search).get("return") || "";
+        if (/^\/[A-Za-z0-9_\-\/]*$/.test(back) && !back.startsWith("//")) { location.href = back; return; }
         await showSignedIn();
       } catch (err) {
         note("status", `Couldn't sign in: ${err.message}`, true);

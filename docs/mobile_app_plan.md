@@ -1,6 +1,6 @@
 # New mobile app: plan
 
-Last reviewed: 2026-10-25
+Last reviewed: 2026-10-29
 
 The owner asked on 2026-10-21 for a full rebuild of the phone site: same features as today,
 in the desktop app's look, and a layout that fills any screen from a phone in portrait to a
@@ -54,13 +54,16 @@ asking price), and the browsing lists moved to the menu.
 ### The Deal Checker (in `mobile_app.html`, `judgeDeal()`; numbers in `DEAL`)
 
 - **To keep:** 10%+ under market is a "Good buy", up to 5% over is "Fair price", more is
-  "Overpriced". "Pay up to" is 90% of market.
+  "Overpriced".
 - **To resell:** what a sale at market leaves after TCGplayer fees and shipping
   (`/hold_check`'s `net_at_market`, from `scripts/common/selling_costs.py`) minus the asking
   price. 20%+ profit is a "Good flip", 0-20% "Thin profit", below that "Loss if resold now".
-  "Pay up to" leaves a 20% profit.
-- **Warnings:** a card 40%+ above its 30-day average has "just spiked" ("pay up to" then
-  uses the average); one down 10%+ in 30 days "is falling". Either turns a buy into
+- **Counter-offers** (owner, 2026-10-29, replacing "Pay up to"): a table of 95, 90, 85, 80, 75
+  and 70% of the asking price, each with its dollar amount and how it rates by the rules above
+  (% vs market to keep, profit after fees to resell), colored good / fair / bad. Example: market
+  $87.53, seller asks $90: 90% is $81.00, 7% under market.
+- **Warnings:** a card 40%+ above its 30-day average has "just spiked" (the counter-offers are
+  then rated against the average); one down 10%+ in 30 days "is falling". Either turns a buy into
   "Careful: …". Fewer than 3 different prices in 30 days, or no change for 30 days, adds "few
   recent sales, the market price is a rough guide".
 - Under the card name: how active its price is, and buttons for its other printings
@@ -128,7 +131,8 @@ asking price), and the browsing lists moved to the menu.
 
 ## What the owner does at each step
 
-- After each step: open `market.poke6s.com/m-next` while signed in as the owner, in portrait and
+- After each step: open `market.poke6s.com/m-next` while signed in as the owner (menu →
+  Account → Sign in; it returns to `/m-next`), in portrait and
   landscape, and use the floating Note tab for anything wrong. Public testers use Discord
   `#bug-reports`.
 - Decide decision 5 (iPads) during stage 2.

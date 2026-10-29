@@ -40,6 +40,12 @@ Current Focus (2026-10-25)
 Recently Completed
 ------------------
 
+- 2026-10-29 `/m-next` owner feedback: (1) the menu has Account → "Sign in / account", which
+  opens /account-settings and returns to /m-next after Google sign-in (`?return=`, same-site
+  paths only), so the owner's Note tab can appear; (2) "Pay up to" is replaced by counter-offers
+  at 95/90/85/80/75/70% of the asking price, each with its dollar amount and rating (vs market to
+  keep, profit after fees to resell; vs the 30-day average on a spike). The verdict box stays
+  hidden until a price is typed.
 - 2026-10-29 Owner decisions: (1) Pullbacks and Whole-set Dips include cards under a year old:
   they skip the "up over the year" test and must pass the rest (+13 English cards today: 1
   Pullback, 12 Whole-set Dips). "Up since release" was tried first and let in 1 card, because

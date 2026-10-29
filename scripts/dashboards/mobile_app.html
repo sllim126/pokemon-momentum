@@ -306,8 +306,15 @@
     .ask input::placeholder { color: var(--faint); font-weight: 500; font-size: 18px; }
     .verdict { margin-top: 12px; border-radius: 12px; padding: 12px 14px; background: var(--panel-2); }
     .verdict strong { display: block; font-size: 20px; }
-    .verdict .offer { margin-top: 2px; font-size: 14px; color: var(--muted); }
-    .verdict .offer b { color: var(--text); font-size: 16px; }
+    .offers { margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; font-size: 14px; }
+    .offers > div { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: center; padding: 7px 12px; }
+    .offers-head { color: var(--muted); font-size: 12px; background: var(--panel-2); }
+    .offer-row + .offer-row { border-top: 1px solid var(--line); }
+    .offer-row b { font-size: 15px; }
+    .offer-row .rate { text-align: right; }
+    .offer-row.good .rate { color: var(--good); }
+    .offer-row.fair .rate { color: var(--warn); }
+    .offer-row.bad .rate { color: var(--bad); }
     .verdict.good { background: var(--good-soft); box-shadow: inset 0 0 0 1px rgba(61, 220, 151, 0.4); }
     .verdict.good strong { color: var(--good); }
     .verdict.fair { background: rgba(245, 185, 74, 0.12); box-shadow: inset 0 0 0 1px rgba(245, 185, 74, 0.4); }
@@ -494,7 +501,7 @@
      *
      * The home screen is "Check a card" (the phone's main job: a card in front of you, is it a
      * good buy?): a big search box and recently checked cards. The card screen leads with the
-     * Deal Checker (asking price → verdict and "pay up to"), then the price chart and the
+     * Deal Checker (asking price → verdict and counter-offers at 95-70% of it), then the price chart and the
      * 6-Month Hold. The nine Discover lists are in the menu. Later steps add Graded, Save,
      * My lists, Research, Buy and Learn.
      *
@@ -538,7 +545,8 @@
     const DEAL = {
       keepBuyPct: 10,       // To keep: 10%+ under market is a buy...
       keepFairPct: -5,      // ...up to 5% over market is fair; more is a pass
-      keepOfferPct: 0.9,    // "pay up to" for keeping: 90% of market
+      // Counter-offers shown under the verdict, as a % of the seller's asking price (owner, 2026-10-29).
+      offerSteps: [95, 90, 85, 80, 75, 70],
       flipBuyMargin: 0.2,   // To resell: 20%+ profit after fees and shipping is a buy; 0-20% is thin
       spikeVsAvgPct: 40,    // 40%+ above the 30-day average counts as a spike
       fallingPct: -10,      // down 10%+ over 30 days counts as falling
@@ -797,6 +805,10 @@
       }
       // Until the later steps are built, the old phone page is one tap away.
       // Feedback and bug reports go to Discord only; no form on the page (owner, 2026-10-24).
+      // Sign-in lives on the Account page until My lists (step 1.3) brings it here; it comes
+      // back to /m-next afterwards. Signing in as the owner shows the review-note tab.
+      nodes.push(el("h4", { text: "Account" }),
+        el("a", { href: `/account-settings?return=${encodeURIComponent(location.pathname)}` }, el("span", { text: "Sign in / account" }), el("span", { text: "→" })));
       nodes.push(el("h4", { text: "Help" }),
         el("a", { href: "https://discord.gg/AejcWHkCG", target: "_blank", rel: "noopener" }, el("span", { text: "Feedback & bug reports (Discord)" }), el("span", { text: "↗" })));
       nodes.push(el("h4", { text: "Not built yet" }),
@@ -1162,7 +1174,8 @@
           el("div", { class: "deal-head" }, el("h3", { text: "Is it a good buy?" }), modes),
           el("label", { class: "ask" }, el("span", { text: "$" }), askInput),
           el("div", { class: "verdict", id: "verdict" }),
-          el("ul", { class: "reasons", id: "reasons" })),
+          el("ul", { class: "reasons", id: "reasons" }),
+          el("div", { class: "offers", id: "offers", hidden: true })),
         el("div", { class: "section-title", text: "Price history" }),
         windows,
         el("div", { class: "chart", id: "chart" }),
@@ -1246,31 +1259,37 @@
       return (Number(c.recent_distinct_prices_30d) || 0) < DEAL.thinDistinct || days > DEAL.staleDays;
     }
     // The verdict for the typed asking price. Pure: everything it needs is passed in.
-    //   To keep:   compare with market (DEAL.keep*). "Pay up to" is 90% of market.
+    //   To keep:   compare with market (DEAL.keep*).
     //   To resell: what a sale at market leaves after TCGplayer fees and shipping
-    //              (hold.net_at_market) minus the asking price. "Pay up to" leaves a 20% profit.
-    // A spike (well above the 30-day average) or a falling price turns a "buy" into "Careful: …",
-    // and on a spike "pay up to" is worked out from the 30-day average instead of today's price.
+    //              (hold.net_at_market) minus the asking price (DEAL.flipBuyMargin).
+    // A spike (well above the 30-day average) or a falling price turns a "buy" into "Careful: …".
+    // `offers` breaks the asking price down into counter-offers (DEAL.offerSteps), each rated
+    // the same way; on a spike they are rated against the 30-day average instead of market.
     function judgeDeal({ ask, market, mode, details, hold }) {
       const notes = [];
-      if (!(market > 0)) return { tone: "", title: "No market price for this one", offer: null, notes: ["Check recent sales on TCGplayer before buying."] };
+      if (!(market > 0)) return { tone: "", title: "No market price for this one", offers: [], notes: [{ text: "Check recent sales on TCGplayer before buying." }] };
       const avg30 = Number(details?.latest_sma30);
       const vsAvg = avg30 > 0 ? (market / avg30 - 1) * 100 : NaN;
       const change30 = Number(details?.roc_30d_pct);
       const spike = vsAvg >= DEAL.spikeVsAvgPct;
       const falling = change30 <= DEAL.fallingPct;
-      // On a spike, base "pay up to" on the 30-day average (capped at market).
+      // On a spike, rate the counter-offers against the 30-day average (capped at market).
       const basis = spike ? Math.min(market, avg30) : market;
-      if (spike) notes.push({ warn: true, text: `Price jumped: ${pct(vsAvg)} above its 30-day average (${money(avg30)}). Spikes often fall back, so "pay up to" uses the average.` });
+      if (spike) notes.push({ warn: true, text: `Price jumped: ${pct(vsAvg)} above its 30-day average (${money(avg30)}). Spikes often fall back, so the offers below are rated against the average.` });
       if (falling) notes.push({ warn: true, text: `Falling: ${pct(change30)} over 30 days. It may get cheaper if you wait.` });
       if (details && isThin(details)) notes.push({ warn: true, text: "Few recent sales, so the market price is only a rough guide. Check sold listings." });
-      let offer, tone, title;
+      let tone, title;
+      const steps = (rate) => DEAL.offerSteps.map((step) => ({ step, price: ask * step / 100, ...rate(ask * step / 100) }));
+      let offers = [];
       if (mode === "resell") {
         const net = Number(hold?.net_at_market);
-        if (!Number.isFinite(net)) return { tone: "", title: "Working out fees…", offer: null, notes };
-        const netBasis = spike && market > 0 ? net * (basis / market) : net;
-        offer = netBasis / (1 + DEAL.flipBuyMargin);
-        if (!(ask > 0)) return { tone: "", title: "Type the asking price", offer, notes: [{ text: `Sold at market (${money(market)}) you'd keep about ${money(net)} after TCGplayer fees and shipping.` }, ...notes] };
+        if (!Number.isFinite(net)) return { tone: "", title: "Working out fees…", offers, notes };
+        if (!(ask > 0)) return { tone: "", title: "", offers, notes: [{ text: `Sold at market (${money(market)}) you'd keep about ${money(net)} after TCGplayer fees and shipping.` }, ...notes] };
+        const netBasis = spike ? net * (basis / market) : net;
+        offers = steps((price) => {
+          const m = (netBasis - price) / price;
+          return { tone: m >= DEAL.flipBuyMargin ? "good" : m >= 0 ? "fair" : "bad", text: `${netBasis - price >= 0 ? "+" : "−"}${money(Math.abs(netBasis - price))} (${pct(m * 100)})` };
+        });
         const profit = net - ask;
         const margin = profit / ask;
         notes.unshift({ text: `Sold at market you'd keep about ${money(net)} after fees and shipping: ${profit >= 0 ? `${money(profit)} profit` : `a ${money(-profit)} loss`} (${pct(margin * 100)}).` });
@@ -1278,8 +1297,11 @@
         else if (margin >= 0) [tone, title] = ["fair", "Thin profit"];
         else [tone, title] = ["bad", "Loss if resold now"];
       } else {
-        offer = basis * DEAL.keepOfferPct;
-        if (!(ask > 0)) return { tone: "", title: "Type the asking price", offer, notes };
+        if (!(ask > 0)) return { tone: "", title: "", offers, notes };
+        offers = steps((price) => {
+          const e = (basis - price) / basis * 100;
+          return { tone: e >= DEAL.keepBuyPct ? "good" : e >= DEAL.keepFairPct ? "fair" : "bad", text: `${Math.abs(e).toFixed(0)}% ${e >= 0 ? "under" : "over"}` };
+        });
         const edge = (market - ask) / market * 100;
         notes.unshift({ text: `${Math.abs(edge).toFixed(0)}% ${edge >= 0 ? "under" : "over"} market (${money(market)}).` });
         if (edge >= DEAL.keepBuyPct) [tone, title] = ["good", "Good buy"];
@@ -1289,15 +1311,23 @@
       // A "buy" on a spiking or falling card leads with the warning instead.
       if (tone === "good" && spike) [tone, title] = ["fair", "Careful: the price just spiked"];
       else if (tone === "good" && falling) [tone, title] = ["fair", "Careful: the price is falling"];
-      return { tone, title, offer, notes };
+      return { tone, title, offers, notes, spike };
     }
     function renderVerdict() {
       if (!deal || !$("verdict")) return;
       const result = judgeDeal({ ask: deal.ask, market: deal.card.price, mode: state.mode, details: deal.details, hold: deal.hold });
       $("verdict").className = `verdict${result.tone ? ` ${result.tone}` : ""}`;
-      $("verdict").replaceChildren(el("strong", { text: result.title }),
-        result.offer > 0 ? el("div", { class: "offer" }, `${state.mode === "resell" ? "To make 20%, pay up to " : "Pay up to "}`, el("b", { text: money(result.offer) })) : null);
+      $("verdict").hidden = !result.title;  // nothing typed yet: the price box says what to do
+      $("verdict").replaceChildren(el("strong", { text: result.title }));
       $("reasons").replaceChildren(...result.notes.map((n) => el("li", { class: n.warn ? "warn" : null, text: n.text })));
+      // Counter-offers: each % of the asking price, its dollar amount and how it rates.
+      const resell = state.mode === "resell";
+      $("offers").hidden = !result.offers.length;
+      $("offers").replaceChildren(...(result.offers.length ? [
+        el("div", { class: "offers-head" }, el("span", { text: "Offer" }), el("span", { text: "Price" }), el("span", { text: resell ? "Profit if resold" : result.spike ? "Vs 30-day avg" : "Vs market" })),
+        ...result.offers.map((o) => el("div", { class: `offer-row ${o.tone}` },
+          el("span", { text: `${o.step}%` }), el("b", { text: money(o.price) }), el("span", { class: "rate", text: o.text }))),
+      ] : []));
     }
     async function loadChart(card, seq) {
       const chart = $("chart");
