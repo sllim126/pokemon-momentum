@@ -131,8 +131,8 @@ asking price), and the browsing lists moved to the menu.
 
 ## What the owner does at each step
 
-- After each step: open `market.poke6s.com/m-next` while signed in as the owner (menu →
-  Account → Sign in; it returns to `/m-next`), in portrait and
+- After each step: open `market.poke6s.com/m-next` while signed in as the owner ("Sign in"
+  at the top right; it returns to `/m-next`), in portrait and
   landscape, and use the floating Note tab for anything wrong. Public testers use Discord
   `#bug-reports`.
 - Decide decision 5 (iPads) during stage 2.

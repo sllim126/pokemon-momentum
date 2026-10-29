@@ -40,7 +40,8 @@ Current Focus (2026-10-25)
 Recently Completed
 ------------------
 
-- 2026-10-29 `/m-next` owner feedback: (1) the menu has Account → "Sign in / account", which
+- 2026-10-29 `/m-next` owner feedback: (1) a "Sign in" button at the right of the top bar (icon
+  only on phones; "Account" once signed in) and Account → "Sign in / account" in the menu, which
   opens /account-settings and returns to /m-next after Google sign-in (`?return=`, same-site
   paths only), so the owner's Note tab can appear; (2) "Pay up to" is replaced by counter-offers
   at 95/90/85/80/75/70% of the asking price, each with its dollar amount and rating (vs market to

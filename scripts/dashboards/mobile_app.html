@@ -77,6 +77,10 @@
       padding: 0;
     }
     .icon-btn svg { width: 20px; height: 20px; }
+    /* Sign-in button at the right of the top bar: icon only on phones, icon and label from 700 px. */
+    .account-btn { color: var(--text); text-decoration: none; }
+    .account-btn span { display: none; font-size: 14px; font-weight: 600; }
+    @media (min-width: 700px) { .account-btn { width: auto; display: flex; gap: 6px; padding: 0 12px; } .account-btn span { display: inline; } }
     .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); font-weight: 700; flex: 0 0 auto; }
     .brand img { width: 28px; height: 28px; }
     .brand .preview { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--warn); border: 1px solid rgba(245, 185, 74, 0.4); border-radius: 6px; padding: 1px 5px; }
@@ -413,6 +417,10 @@
       <input id="searchInput" type="search" placeholder="Search cards, sets, numbers" autocomplete="off" enterkeyhint="search" aria-label="Search" />
       <div class="search-results" id="searchResults" hidden></div>
     </div>
+    <a class="icon-btn account-btn" id="accountBtn" href="/account-settings?return=/m-next" aria-label="Sign in">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 4-6 8-6s8 2 8 6" /></svg>
+      <span id="accountLabel">Sign in</span>
+    </a>
   </header>
 
   <div class="scope">
@@ -654,6 +662,9 @@
         const response = await fetch("/tracking/session");
         if (!response.ok) return;
         const payload = await response.json();
+        // Signed in: the top-bar button becomes "Account" (same page, sign-out lives there).
+        $("accountLabel").textContent = "Account";
+        $("accountBtn").setAttribute("aria-label", "Account");
         if (!payload.user?.is_admin) return;
         const draft = readStore(REVIEW_DRAFT_KEY, {});
         $("reviewNoteTitle").value = draft.title || "";
