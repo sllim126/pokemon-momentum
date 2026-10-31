@@ -647,6 +647,28 @@ sudo systemctl start pokemon-momentum-weekly-placeholder-refresh.service
 ```
 
 
+Backfill missing TCGCSV archive days
+------------------------------------
+TCGCSV's daily archive (`prices-YYYY-MM-DD.ppmd.7z`, every game, one file a day) went
+offline on 2026-09-16. `data/raw` holds every file from 2024-02-08 to 2026-09-15.
+`scripts/download/backfill_tcgcsv_archive.py` fetches the days after the newest file held,
+once TCGCSV serves them again. It follows the TCGCSV rules (150 ms apart, stop on 403/429),
+asks for each file at most once a day (`data/raw/backfill_attempts.json`), tests each file
+with `7z t`, and extracts only days with no extracted folder yet (2026-09-16 to 10-07; later
+days already came from the per-group fetch). The site can stay up: it doesn't touch DuckDB.
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose exec -T pokemon-momentum python scripts/download/backfill_tcgcsv_archive.py --dry-run
+sudo docker-compose exec -T pokemon-momentum python scripts/download/backfill_tcgcsv_archive.py
+```
+
+- Exit 3 with TCGCSV's "temporarily removed" notice: the archive is still offline. That
+  was one request; try again another day.
+- After a successful run the next nightly update loads the new days into DuckDB for both
+  English and Japanese. To load at once, stop the site and run the daily pipeline with
+  `--skip-download` for categories 3 and 85 (below).
+
 Manual category runs inside Docker
 ----------------------------------
 Use these when testing a category-specific pipeline path directly.
