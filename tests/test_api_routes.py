@@ -34,11 +34,11 @@ class ApiRouteTests(unittest.TestCase):
             response = self.client.get(f"{path}?product=42382%7C%7CHolofoil", follow_redirects=False)
             self.assertEqual(response.status_code, 302, path)
             self.assertEqual(response.headers["location"], "/?product=42382%7C%7CHolofoil")
-        # Phones: Browse Set still opens dashboard.html (the mobile page has no such view).
+        # Phones: old Browse Set links open the mobile app, which has its own Sets view.
         phone = {"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148"}
         response = self.client.get("/dashboard?tab=group_products", headers=phone)
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Market Signals", response.text)
+        self.assertIn("mobile_app_plan.md", response.text)
 
     def test_public_market_data_is_browser_cacheable_but_account_data_is_not(self):
         public = self.client.get("/categories")
@@ -121,7 +121,9 @@ class ApiRouteTests(unittest.TestCase):
             self.assertIn("text/html", response.headers["content-type"])
             self.assertIn("mobile_app_plan.md", response.text, path)
 
-    def test_dashboard_route_serves_full_dashboard_for_desktop_only_tabs_on_mobile(self):
+    def test_old_research_tabs_open_the_mobile_app_on_phones(self):
+        # Step 1.4: Browse Set, Set Strength and Browse Pokémon have views in the app (OLD_TABS
+        # in mobile_app.html), so phones no longer get dashboard.html for them.
         for tab in ("group_products", "group_signals", "time_to_buy", "browse_species"):
             response = self.client.get(
                 f"/dashboard?tab={tab}",
@@ -129,7 +131,8 @@ class ApiRouteTests(unittest.TestCase):
             )
 
             self.assertEqual(response.status_code, 200, tab)
-            self.assertIn("Market Signals", response.text, tab)
+            self.assertIn("mobile_app_plan.md", response.text, tab)
+            self.assertIn(f"{tab}:", response.text, tab)
 
     @patch.object(api, "snapshot_history", return_value=None)  # snapshots not built: raw path
     @patch.object(api, "prices_from", return_value="prices")
@@ -1695,7 +1698,8 @@ class ApiRouteTests(unittest.TestCase):
                 "listed": True,
                 "sku": "637647",
                 "title": "Prism Energy",
-                "url": "https://www.poke6s.com/shop/p/prism-energy",
+                # Squarespace closes 2026-11-14: the button opens the TCGplayer Pro store instead.
+                "url": api.OUR_STORE_URL,
             },
         )
 
@@ -1733,6 +1737,7 @@ class ApiRouteTests(unittest.TestCase):
 
         self.assertTrue(result["listed"])
         self.assertEqual(result["sku"], "JP-MD-BOX")
+        self.assertEqual(result["url"], "https://poke6s.tcgplayerpro.com/")
 
     def test_load_tcgplayer_sku_mapping_supports_multiple_product_ids_per_sku(self):
         mapping_path = api.SCRIPT_DIR.parents[1] / "data" / "squarespace_tcgplayer_mapping.csv"

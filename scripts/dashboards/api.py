@@ -618,11 +618,6 @@ def is_mobile_request(request: Request) -> bool:
     return any(marker in user_agent for marker in mobile_markers)
 
 
-# Tabs the mobile page has no view for; phones get the full dashboard instead of an
-# unrelated feed.
-DESKTOP_ONLY_TABS = {"group_products", "group_signals", "time_to_buy", "browse_species"}
-
-
 def mobile_app_response() -> FileResponse:
     response = FileResponse(MOBILE_APP_HTML)
     response.headers["Cache-Control"] = "no-cache"
@@ -630,14 +625,14 @@ def mobile_app_response() -> FileResponse:
 
 
 def dashboard_response_for_request(request: Request) -> FileResponse:
-    """Phones get the mobile app, or the older research dashboard (dashboard.html) for the
-    old links to views the app doesn't have yet (DESKTOP_ONLY_TABS: Browse Set, Browse
-    Pokemon and Set Strength; the app gets Sets and Pokémon in step 1.4). That is why
-    dashboard.html is still kept.
+    """Phones get the mobile app, including old Browse Set / Browse Pokemon / Set Strength
+    links (?tab=group_products&group_id=..., browse_species, group_signals), which the app
+    opens in its own Sets and Pokémon views since step 1.4 (2026-10-31).
 
     Desktop visitors never get here: forward_desktop_to_app sends them to the desktop app.
+    dashboard.html is kept only until the 1.6 clean-up deletes it.
     """
-    if is_mobile_request(request) and request.query_params.get("tab") not in DESKTOP_ONLY_TABS:
+    if is_mobile_request(request):
         return mobile_app_response()
     return FileResponse(DASHBOARD_HTML)
 
@@ -4883,23 +4878,31 @@ def groups(limit: int = 1000, offset: int = 0, category_id: int = 3):
     return {"columns": cols, "rows": rows}
 
 
+# Where the "Our store" button sends buyers. The Squarespace store closes 2026-11-14, so the
+# owner chose (2026-10-31) to sell through the TCGplayer Pro store until the new storefront
+# launches; then this becomes the new store's product page. The Pro site blocks automated
+# requests, so product-level addresses there can't be checked: the button opens the store.
+OUR_STORE_URL = os.getenv("POKE6S_STORE_URL", "https://poke6s.tcgplayerpro.com/")
+
+
 @app.get("/store_link")
 def store_link(product_id: int, category_id: int = 3):
-    """Return the public Poke6s listing URL for a product when one exists and is in stock.
+    """Return the "Our store" link for a product we stock (listed and in stock).
 
-    Singles can resolve directly when the store SKU equals the TCGplayer product id.
-    Sealed products go through the explicit Squarespace/TCGplayer mapping file instead.
+    Whether we stock it still comes from the latest Squarespace export: singles resolve
+    directly when the store SKU equals the TCGplayer product id, sealed products through the
+    Squarespace/TCGplayer mapping file. The link itself is OUR_STORE_URL.
     """
     product_id_text = str(int(product_id))
     listing_by_sku = load_squarespace_listing_by_sku()
     direct_listing = listing_by_sku.get(product_id_text)
     if direct_listing is not None and _store_link_direct_match_allowed(product_id, category_id):
-        return {"listed": True, **direct_listing}
+        return {"listed": True, **direct_listing, "url": OUR_STORE_URL}
 
     mapped_sku = load_tcgplayer_sku_mapping().get(product_id_text, "")
     mapped_listing = listing_by_sku.get(mapped_sku) if mapped_sku else None
     if mapped_listing is not None:
-        return {"listed": True, **mapped_listing}
+        return {"listed": True, **mapped_listing, "url": OUR_STORE_URL}
 
     return {"listed": False}
 

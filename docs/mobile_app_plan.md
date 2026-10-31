@@ -129,9 +129,11 @@ asking price), and the browsing lists moved to the menu.
 6. **Switched early: 2026-10-31** (owner: "it has been working fine; we can still make
    changes"). Phones get the app at `/`, `/mobile` and `/dashboard`; `/m-next` stays as an
    address; the old page is at `/mobile-classic` for a few weeks. Steps 1.2 (Graded, targets, stats,
-   Save, Our store) and 1.3 (My lists, sign-in, tab bar) went live the same day; 1.4-1.5
-   continue on the live app. Old links to Browse Set, Browse Pokémon and Set Strength
-   (`?tab=group_products` etc.) still open `dashboard.html` until step 1.4.
+   Save, Our store) and 1.3 (My lists, sign-in, tab bar) and 1.4 (Sets → one set, Pokémon, Market
+   Stats → one index, Set values) and 1.5 (Sealed Deals, Budget Builder, How it works) went
+   live the same day. Old
+   links to Browse Set, Browse Pokémon and Set Strength (`?tab=group_products&group_id=…`
+   etc.) open the app's own views since 1.4, so phones no longer get `dashboard.html`.
 
 ## What the owner does at each step
 
@@ -141,4 +143,4 @@ asking price), and the browsing lists moved to the menu.
   `#bug-reports`.
 - Decide decision 5 (iPads) during stage 2.
 - The switch is done (2026-10-31). Deleting `/mobile-classic`, `mobile_dashboard.html`,
-  `dashboard.html` and `/mobile-rebuild` waits until steps 1.4-1.5 cover what they still do.
+  `dashboard.html` and `/mobile-rebuild` waits until step 1.5 covers what they still do.
