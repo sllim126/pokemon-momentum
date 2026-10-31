@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Poke6s Market</title>
+  <title>Poke6s Market Watch</title>
   <link rel="icon" type="image/png" href="/images/Favidon.png" />
   <style>
     :root {
@@ -46,7 +46,7 @@
         document.getElementById("areaQuestion").innerHTML = '<span class="missing">Area not found.</span>';
         return;
       }
-      document.title = `${area.label} · Poke6s Market`;
+      document.title = `${area.label} · Poke6s Market Watch`;
       document.getElementById("areaLabel").textContent = area.label;
       document.getElementById("areaQuestion").textContent = area.question;
       const grid = document.getElementById("areaTools");
