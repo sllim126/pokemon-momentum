@@ -356,6 +356,35 @@
     .section-title { margin: 22px 0 4px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
     .hold-head { font-weight: 700; }
 
+    /* ---------- My lists (step 1.3) ---------- */
+    .track-summary { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 0 14px 8px; color: var(--muted); font-size: 13px; }
+    .track-summary strong { color: var(--text); }
+    .pill.target { color: var(--muted); background: var(--panel-2); font-weight: 600; }
+    .pill.at-buy { color: var(--good); background: var(--good-soft); }
+    .pill.past-sell { color: var(--warn); background: rgba(245, 185, 74, 0.14); }
+    .account-line { padding: 4px 12px 8px; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+
+    /* ---------- tab bar (phones, one pane) ----------
+       Check / Discover / My lists / Menu at the bottom, where a thumb reaches. Hidden on the
+       card screen (it has its own Back) and from 700px, where the menu button or rail does
+       the job. */
+    .tabbar { display: none; }
+    @media (max-width: 699px) {
+      .tabbar {
+        flex: 0 0 auto;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        border-top: 1px solid var(--line);
+        background: var(--panel-3);
+        padding: 0 var(--safe-r) var(--safe-b) var(--safe-l);
+      }
+      body.card-open .tabbar, body.menu-open .tabbar { display: none; }
+      body:not(.card-open) .legal { padding-bottom: 6px; }
+    }
+    .tabbar button { min-height: 52px; border: 0; background: none; color: var(--faint); display: grid; place-items: center; gap: 2px; padding: 6px 0 4px; font-size: 11px; font-weight: 600; }
+    .tabbar svg { width: 22px; height: 22px; }
+    .tabbar button[aria-current="true"] { color: var(--accent); }
+
     /* ---------- footer ---------- */
     .legal {
       padding: 6px calc(12px + var(--safe-r)) calc(6px + var(--safe-b)) calc(12px + var(--safe-l));
@@ -462,7 +491,7 @@
 
   <div class="main">
     <nav class="menu" id="menu" aria-label="Lists"></nav>
-    <section class="pane list-pane" aria-label="List">
+    <section class="pane list-pane" id="listPane" aria-label="List">
       <div class="home" id="homeView" hidden>
         <h1>Check a card</h1>
         <p>Search the card in front of you, then type the asking price.</p>
@@ -492,6 +521,7 @@
           <option value="price_asc">Price, low to high</option>
         </select>
       </div>
+      <div class="track-summary" id="trackSummary" hidden></div>
       <ul class="rows" id="rows"></ul>
       </div>
     </section>
@@ -527,6 +557,13 @@
     <span class="short">Not financial advice. Pokémon trademarks belong to Nintendo, Creatures, GAME FREAK and The Pokémon Company; we're not affiliated. Prices: TCGplayer (affiliate links) and PriceCharting.</span>
   </footer>
 
+  <nav class="tabbar" id="tabbar" aria-label="Sections">
+    <button type="button" data-tab="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></svg>Check</button>
+    <button type="button" data-tab="discover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-9" /><path d="M15 7h5v5" /></svg>Discover</button>
+    <button type="button" data-tab="mine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" /></svg>My lists</button>
+    <button type="button" data-tab="menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>Menu</button>
+  </nav>
+
   <script>
     /*
      * Poke6s Market, new mobile app (preview at /m-next). Plan, stages and the inventory of
@@ -536,8 +573,9 @@
      * good buy?): a big search box and recently checked cards. The card screen leads with the
      * Deal Checker (asking price → verdict and counter-offers at 95-70% of it), then the price chart and the
      * 6-Month Hold, Graded prices (PriceCharting, linked back), Your targets, Stats, and the
-     * Save / TCGplayer / Our store buttons (step 1.2). The nine Discover lists are in the menu.
-     * Later steps add My lists, Research, Buy and Learn.
+     * Save / TCGplayer / Our store buttons (step 1.2). The nine Discover lists and My lists
+     * (saved cards, step 1.3) are in the menu; phones also get a bottom tab bar (Check /
+     * Discover / My lists / Menu). Later steps add Research, Buy and Learn.
      *
      * Layout follows the screen width, not the device (CSS above): one pane under 700px, list
      * and card side by side from 700px, plus a menu rail from 1100px.
@@ -573,6 +611,12 @@
         desc: "Strong cards taking a short breather: up 15%+ over 90 days and up over the year, now 3-12% below their 90-day high, back near their 30-day average and down this week. Unlike Pullbacks, these are leading the market, just paused." },
       { key: "set_dips", group: "Dipped", label: "Whole-set Dips", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days",
         desc: "Cards on sale because their whole set is cooling off: they dropped like Pullbacks (10%+ below their 90-day high for a week), but about as much as their set did. A shopping list for sets you like; the set may keep sliding, so there is rarely a rush. Cards falling faster than their set are in Pullbacks." },
+      // My lists (step 1.3): cards saved with ♡ Save. Same keys and wording as desktop_home.html.
+      { key: "track_all", group: "My lists", track: true, tag: "all", label: "All saved", desc: "Everything you've saved, with your price targets." },
+      { key: "track_owned", group: "My lists", track: true, tag: "owned", label: "Buy List", desc: "Cards and sealed products you plan to pick up." },
+      { key: "track_watchlist", group: "My lists", track: true, tag: "watchlist", label: "Watchlist", desc: "Items you're waiting on a price for." },
+      { key: "track_favorite", group: "My lists", track: true, tag: "favorite", label: "Favorites", desc: "Cards you've starred." },
+      { key: "track_research", group: "My lists", track: true, tag: "research", label: "Needs Review", desc: "Items you flagged to look into." },
     ];
     const TCGPLAYER_AFFILIATE_BASE = "https://partner.tcgplayer.com/jR1OJb";
     // Saved lists and price targets: the same storage and account sync as the desktop app
@@ -581,6 +625,8 @@
     const TOKEN_KEY = "pokemon-momentum-tracking-token";
     const LOCAL_TAGS_KEY = "pokemon-momentum-tags";
     const TARGETS_KEY = "pokemon-momentum-price-targets";
+    // The last Discover list opened, for the tab bar's Discover button.
+    const DISCOVER_KEY = "poke6s-mnext-discover-list";
     const WINDOWS = [[30, "30D"], [90, "90D"], [365, "1Y"], [5000, "All"]];
     // Deal Checker rules (see judgeDeal). Percentages compare the asking price with market.
     const DEAL = {
@@ -602,6 +648,7 @@
 
     const params = new URLSearchParams(location.search);
     const state = {
+      user: null,  // the signed-in account (/tracking/session), or null
       market: params.get("market") === "JP" ? "JP" : "EN",
       kind: params.get("kind") === "sealed" ? "sealed" : "singles",
       // "check" is the home screen (Check a card); the rest are LISTS keys.
@@ -696,6 +743,8 @@
         const response = await fetch("/tracking/session");
         if (!response.ok) return;
         const payload = await response.json();
+        state.user = payload.user || null;
+        renderMenu();
         // Signed in: the top-bar button becomes "Account" (same page, sign-out lives there).
         $("accountLabel").textContent = "Account";
         $("accountBtn").setAttribute("aria-label", "Account");
@@ -825,11 +874,27 @@
       if (then) then();
     });
     $("menuBtn").addEventListener("click", openMenu);
+    // Bottom tab bar (phones). Check = home search; Discover = the last market list opened;
+    // My lists = All saved; Menu = the full menu.
+    function renderTabbar() {
+      const list = currentList();
+      const active = state.list === "check" ? "check" : list?.track ? "mine" : "discover";
+      document.querySelectorAll("#tabbar button").forEach((b) => b.setAttribute("aria-current", String(b.dataset.tab === active)));
+    }
+    $("tabbar").addEventListener("click", (event) => {
+      const tab = event.target.closest("button[data-tab]")?.dataset.tab;
+      if (!tab) return;
+      if (tab === "menu") return openMenu();
+      const key = tab === "check" ? "check" : tab === "mine" ? "track_all" : readStore(DISCOVER_KEY, "top_movers");
+      openList(LISTS.some((l) => l.key === key) || key === "check" ? key : "top_movers");
+      $("listPane")?.scrollTo?.(0, 0);
+    });
     $("scrim").addEventListener("click", () => goBackFrom("menu"));
 
     // ---------- menu ----------
     function renderMenu() {
-      const groups = [...new Set(LISTS.map((l) => l.group))];
+      // My lists right under "Check a card", then the market lists.
+      const groups = [...new Set(["My lists", ...LISTS.map((l) => l.group)])];
       const check = el("button", { type: "button", "data-list": "check", "aria-current": String(state.list === "check") }, el("span", { text: "Check a card" }));
       check.addEventListener("click", () => {
         if (document.body.classList.contains("menu-open")) goBackFrom("menu", () => openList("check"));
@@ -850,14 +915,22 @@
       }
       // Until the later steps are built, the old phone page is one tap away.
       // Feedback and bug reports go to Discord only; no form on the page (owner, 2026-10-24).
-      // Sign-in lives on the Account page until My lists (step 1.3) brings it here; it comes
-      // back to /m-next afterwards. Signing in as the owner shows the review-note tab.
-      nodes.push(el("h4", { text: "Account" }),
-        el("a", { href: `/account-settings?return=${encodeURIComponent(location.pathname)}` }, el("span", { text: "Sign in / account" }), el("span", { text: "→" })));
+      // Signing in happens on the Account page (Google), which merges this phone's saved
+      // cards into the account and comes back here. Signing in as the owner shows the
+      // review-note tab.
+      const accountUrl = `/account-settings?return=${encodeURIComponent(location.pathname)}`;
+      nodes.push(el("h4", { text: "Account" }));
+      if (state.user) {
+        nodes.push(el("div", { class: "account-line", text: `Signed in as ${state.user.username}. Saved cards sync with the desktop site.` }),
+          el("a", { href: accountUrl }, el("span", { text: "Account settings / sign out" }), el("span", { text: "→" })));
+      } else {
+        nodes.push(el("div", { class: "account-line", text: "Saved cards stay on this phone. Sign in to keep them on your account." }),
+          el("a", { href: accountUrl }, el("span", { text: "Sign in with Google" }), el("span", { text: "→" })));
+      }
       nodes.push(el("h4", { text: "Help" }),
         el("a", { href: "https://discord.gg/AejcWHkCG", target: "_blank", rel: "noopener" }, el("span", { text: "Feedback & bug reports (Discord)" }), el("span", { text: "↗" })));
       nodes.push(el("h4", { text: "Not built yet" }),
-        el("a", { href: "/mobile-classic", class: "old" }, el("span", { text: "Sets, Pokémon, My lists… on the old phone page" }), el("span", { text: "↗" })));
+        el("a", { href: "/mobile-classic", class: "old" }, el("span", { text: "Sets, Pokémon… on the old phone page" }), el("span", { text: "↗" })));
       $("menu").replaceChildren(...nodes);
     }
     // Card counts next to each list, loaded in the background (shares the list cache).
@@ -910,6 +983,7 @@
 
     // ---------- lists ----------
     function fetchList(list) {
+      if (list.track) return fetchTracked().then((rows) => (list.tag === "all" ? rows : rows.filter((r) => tagsFor(r.key).has(list.tag))));
       const cacheKey = `${list.key}:${state.market}:${state.kind}`;
       if (!listCache.has(cacheKey)) {
         const query = new URLSearchParams({ product_kind: productKind(), category_id: String(categoryId()) });
@@ -918,6 +992,38 @@
         request.catch(() => listCache.delete(cacheKey));
       }
       return listCache.get(cacheKey);
+    }
+    // Saved cards for this market and product type, resolved once by the server
+    // (/tracking/items/resolve, as on desktop) and filtered per list. Waits for the account's
+    // saves when signed in.
+    let tagsReady = Promise.resolve();
+    function fetchTracked() {
+      const cacheKey = `track:${state.market}:${state.kind}`;
+      if (!listCache.has(cacheKey)) {
+        const request = tagsReady.then(async () => {
+          const items = [];
+          for (const [key, tags] of Object.entries(syncedTags || readLocalTags())) {
+            const [productId, subTypeName = ""] = key.split("||");
+            if (!(Number(productId) > 0)) continue;
+            for (const tag of tags) items.push({ category_id: categoryId(), product_id: Number(productId), sub_type_name: subTypeName, tag });
+          }
+          if (!items.length) return [];
+          const response = await fetch("/tracking/items/resolve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ category_id: categoryId(), segment: state.kind === "sealed" ? "sealed" : "cards", tracked_tag: "all", tracked_sort: "tags", items }),
+          });
+          if (!response.ok) throw new Error(`${response.status} /tracking/items/resolve`);
+          const all = LISTS.find((l) => l.key === "track_all");
+          return rowObjects(await response.json()).map((raw) => normalizeRow(raw, all));
+        });
+        listCache.set(cacheKey, request);
+        request.catch(() => listCache.delete(cacheKey));
+      }
+      return listCache.get(cacheKey);
+    }
+    function invalidateTracked() {
+      for (const key of [...listCache.keys()]) if (key.startsWith("track:")) listCache.delete(key);
     }
     function openList(key) {
       if (key === state.list) return;
@@ -936,13 +1042,19 @@
       $("homeView").hidden = !home;
       $("listView").hidden = home;
       if (home) {
+        renderTabbar();
         renderHome();
         syncUrl();
         if (state.productKey) openProductFromLink(state.productKey);
         return;
       }
       const list = currentList();
+      if (!list.track) writeStore(DISCOVER_KEY, list.key);
+      renderTabbar();
       $("listTitle").firstChild.textContent = `${list.label} `;
+      $("trackSummary").hidden = true;
+      // Saved lists keep the order things were saved in; market lists rank by signal.
+      $("sortSelect").options[0].textContent = list.track ? "Saved order" : "Signal strength";
       $("listCount").textContent = "";
       renderDesc(list, false);
       $("rows").replaceChildren(el("li", { class: "note", text: "Loading…" }));
@@ -1044,8 +1156,12 @@
       const list = currentList();
       const rows = visibleRows();
       $("listCount").textContent = `${state.rows.length} ${state.kind === "sealed" ? "products" : "cards"}`;
+      if (list.track) renderTrackSummary();
       if (!rows.length) {
-        $("rows").replaceChildren(el("li", { class: "note", text: state.rows.length ? "Nothing matches that filter." : "No cards in this list today. Try another list or market." }));
+        const empty = list.track
+          ? `Nothing saved here yet for ${state.market === "JP" ? "Japanese" : "English"} ${state.kind === "sealed" ? "sealed" : "singles"}. Open any card and tap ♡ Save.${syncedTags ? "" : " Saves stay on this phone until you sign in (Menu → Account)."}`
+          : "No cards in this list today. Try another list or market.";
+        $("rows").replaceChildren(el("li", { class: "note", text: state.rows.length ? "Nothing matches that filter." : empty }));
         return;
       }
       // Rows are drawn in batches so a 200-card list doesn't hold up the first paint.
@@ -1061,9 +1177,31 @@
       const button = el("button", { type: "button", class: "row", "data-key": row.key, "aria-current": String(state.selected?.key === row.key) },
         image,
         el("span", {}, el("span", { class: "name", text: row.name }), el("span", { class: "meta", text: meta })),
-        el("span", { class: "nums" }, el("span", { class: "price", text: money(row.price) }), Number.isFinite(row.change) ? changePill(row.change) : null));
+        el("span", { class: "nums" }, el("span", { class: "price", text: money(row.price) }),
+          currentList()?.track ? targetPill(row) : Number.isFinite(row.change) ? changePill(row.change) : null));
       button.addEventListener("click", onTap);
       return el("li", {}, button);
+    }
+    // My lists: where each saved card stands against your targets.
+    function targetPill(row) {
+      const { buy, sell } = targetFor(row);
+      const price = row.price;
+      if (price > 0 && buy && price <= buy) return el("span", { class: "pill at-buy", text: "At buy target" });
+      if (price > 0 && sell && price >= sell) return el("span", { class: "pill past-sell", text: "Past sell target" });
+      if (price > 0 && buy) return el("span", { class: "pill target", text: `${((price / buy - 1) * 100).toFixed(0)}% to buy` });
+      if (sell) return el("span", { class: "pill target", text: `Sell ≥ ${money(sell)}` });
+      return null;
+    }
+    function renderTrackSummary() {
+      const rows = state.rows;
+      const box = $("trackSummary");
+      box.hidden = !rows.length;
+      if (box.hidden) return;
+      const value = rows.reduce((sum, r) => sum + (r.price > 0 ? r.price : 0), 0);
+      const atBuy = rows.filter((r) => { const t = targetFor(r); return r.price > 0 && t.buy && r.price <= t.buy; }).length;
+      const pastSell = rows.filter((r) => { const t = targetFor(r); return r.price > 0 && t.sell && r.price >= t.sell; }).length;
+      const chip = (strong, text) => el("span", {}, el("strong", { text: strong }), ` ${text}`);
+      box.replaceChildren(chip(money(value), "market value"), chip(String(atBuy), "at buy target"), chip(String(pastSell), "past sell target"));
     }
     $("filterInput").addEventListener("input", renderRows);
     $("sortSelect").addEventListener("change", renderRows);
@@ -1547,6 +1685,15 @@
         writeStore(LOCAL_TAGS_KEY, tags);
       }
       if (state.selected?.key === card.key) renderSave();
+      // Saved lists change: drop their cache, refresh the menu counts, and redraw a saved list
+      // that's on screen (the card stays open, so it can be saved again).
+      invalidateTracked();
+      loadCounts();
+      if (currentList()?.track) {
+        const rows = await fetchList(currentList()).catch(() => state.rows);
+        state.rows = rows;
+        renderRows();
+      }
     }
 
     // "Our store": shown only when the card is listed and in stock in our store (/store_link).
@@ -1656,9 +1803,9 @@
     renderSwitches();
     renderCard();
     loadFreshness();
+    tagsReady = loadSyncedTags();  // My lists wait for the account's saves when signed in
     loadList();
     loadCounts();
-    loadSyncedTags();
     enableOwnerReviewNotes();
   </script>
 </body>
