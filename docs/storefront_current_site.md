@@ -21,6 +21,26 @@ domain stays registered at Squarespace Domains.
 - **Payments:** Squarespace Payments, paid out to the business bank account. Chargebacks are taken
   from future payouts or debited from the bank.
 
+## DNS records today (public lookup, 2026-10-31)
+
+Copy all of these into Cloudflare when DNS moves (plan Phase 0). DNSSEC is off (no DS record), so
+the nameservers can be changed without turning it off first.
+
+| Name | Type | Value | Purpose |
+|---|---|---|---|
+| `poke6s.com` | NS | `ns-cloud-d1..d4.googledomains.com` | Replaced by Cloudflare's two nameservers |
+| `poke6s.com` | A | 198.185.159.144, 198.185.159.145, 198.49.23.144, 198.49.23.145 | Squarespace website. Keep until 2026-11-14, then replace with forwarding (D5) or the tunnel |
+| `www` | CNAME | `ext-sq.squarespace.com` | Squarespace website. Same as above |
+| `market` | A | the home server's public IP | Market site. Becomes a Cloudflare Tunnel record |
+| `poke6s.com` | MX | `0 poke6s-com.mail.protection.outlook.com` | **Microsoft 365 mail** |
+| `poke6s.com` | TXT | `v=spf1 include:spf.protection.outlook.com -all` | **Mail sender check (SPF)** |
+| `poke6s.com` | TXT | `MS=ms28030294` | Microsoft 365 domain verification |
+| `autodiscover` | CNAME | `autodiscover.outlook.com` | Outlook setup |
+| `_dmarc` | TXT | `v=DMARC1; p=none` | Mail reporting policy |
+
+No DKIM records (`selector1._domainkey` / `selector2._domainkey`) were found. Turning DKIM on in
+Microsoft 365 (free) adds two CNAMEs and helps order emails reach inboxes. Do it after the DNS move.
+
 ## Site map (public pages)
 
 | Address | Page | Notes |
