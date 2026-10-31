@@ -1,0 +1,80 @@
+{#- Product page. Phase 1: no cart yet, so the buy box links to TCGplayer.
+    `market` is a market.MarketSummary or None; `below_market` is a whole percent or None. -#}
+{% extends "base.html" %}
+{% from "_macros.html" import product_grid %}
+{% block content %}
+<article class="product">
+  <div class="gallery">
+    {% if product.images %}
+      <a class="main-img" href="/media/1200/{{ product.images[0].file_name }}.webp" data-zoom>
+        <img src="/media/1200/{{ product.images[0].file_name }}.webp" alt="{{ product.images[0].alt_text or product.title }}" width="1200" height="1200">
+      </a>
+      {% if product.images | length > 1 %}
+      <ul class="thumbs">
+        {% for img in product.images %}
+        <li><a href="/media/1200/{{ img.file_name }}.webp" data-zoom data-swap><img src="/media/480/{{ img.file_name }}.webp" alt="{{ img.alt_text or product.title }} – photo {{ loop.index }}" loading="lazy" width="96" height="96"></a></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    {% else %}
+      <div class="main-img"><img src="/static/img/placeholder.svg" alt="" width="600" height="600"></div>
+    {% endif %}
+  </div>
+
+  <div class="buy">
+    <h1>{{ product.title }}</h1>
+    <p class="facts">
+      {% for fact in [product.language_label, product.type_label, product.set_name, product.card_number and '#' ~ product.card_number, product.condition] if fact %}<span>{{ fact }}</span>{% endfor %}
+    </p>
+    <p class="price">{{ product.price_cents | money }}{% if product.compare_at_cents %} <s>{{ product.compare_at_cents | money }}</s>{% endif %}</p>
+
+    {% if market %}
+    <div class="market">
+      <p><strong>Market price {{ market.price | dollars }}</strong>
+        {% if market.roc_30d_pct is not none %}<span class="pill {{ 'up' if market.roc_30d_pct >= 0 else 'down' }}">30 days {{ '%+.1f' % market.roc_30d_pct }}%</span>{% endif %}
+        {% if below_market %}<span class="pill good">{{ below_market }}% below market</span>{% endif %}
+      </p>
+      <p class="small muted">TCGplayer market price{% if market.averaged_over > 1 %}, averaged over {{ market.averaged_over }} designs{% endif %}{% if market.latest_date %}, {{ market.latest_date }}{% endif %}.
+        {% if market.url %}<a href="{{ market.url }}">Price history on market.poke6s.com</a>{% endif %}</p>
+    </div>
+    {% endif %}
+
+    <p class="stock">
+      {% if not product.in_stock %}<span class="out">Sold out</span>
+      {% elif not product.track_stock %}<span class="ok">Available</span>
+      {% elif product.stock <= 3 %}<span class="low">Only {{ product.stock }} left</span>
+      {% else %}<span class="ok">In stock</span>{% endif %}
+    </p>
+
+    <div class="buy-box">
+      <p><strong>Checkout on poke6s.com is coming soon.</strong> Until then, buy from our TCGplayer store or email us.</p>
+      <p><a class="btn primary" href="{{ buy_url }}">Buy on TCGplayer</a>
+         <a class="btn" href="mailto:{{ settings.contact_email }}?subject={{ ('Question about ' ~ product.title) | urlencode }}">Email us</a></p>
+    </div>
+
+    <dl class="specs">
+      <dt>SKU</dt><dd>{{ product.sku }}</dd>
+      <dt>Shipping</dt><dd>{{ ship_class_labels.get(product.ship_class, product.ship_class) }}. US only. <a href="/shipping">Shipping policy</a></dd>
+      <dt>Returns</dt><dd>Unopened in original wrap within 14 days. <a href="/returns">Returns policy</a></dd>
+    </dl>
+
+    {% if product.description_md %}
+    <section class="description" aria-labelledby="desc-h">
+      <h2 id="desc-h">Details</h2>
+      {{ product.description_md | markdown | safe }}
+    </section>
+    {% endif %}
+  </div>
+</article>
+
+{% if related %}
+<section aria-labelledby="related-h">
+  <h2 id="related-h">You might also like</h2>
+  {{ product_grid(related) }}
+</section>
+{% endif %}
+
+<dialog class="zoom" id="zoom" aria-label="Photo">
+  <form method="dialog"><button class="btn close" aria-label="Close photo">Close</button></form>
+</dialog>
+{% endblock %}

@@ -217,6 +217,8 @@ data/extracted/*
 data/processed/*
 data/staging/*
 data/pricecharting/
+# Storefront database, photos and market reference: business and customer data, never committed
+data/storefront/
 .locks/
 output/
 

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_macros.html" import product_grid %}
+{% block content %}
+<section class="hero">
+  <div>
+    <h1>Sealed Pokémon TCG, priced against the market</h1>
+    <p>Booster boxes, bundles and Elite Trainer Boxes in English and Japanese. Every product page shows the live market price next to ours, from <a href="{{ settings.market_base_url }}">market.poke6s.com</a>.</p>
+    <p class="hero-actions"><a class="btn primary" href="/shop">Shop now</a> <a class="btn" href="/sets">Browse by set</a></p>
+  </div>
+</section>
+
+{% if sections.featured %}
+<section aria-labelledby="featured-h">
+  <div class="section-head"><h2 id="featured-h">Featured</h2><a href="/shop">See everything</a></div>
+  {{ product_grid(sections.featured) }}
+</section>
+{% endif %}
+
+{% if sections.newest %}
+<section aria-labelledby="new-h">
+  <div class="section-head"><h2 id="new-h">New arrivals</h2><a href="/shop">See everything</a></div>
+  {{ product_grid(sections.newest) }}
+</section>
+{% endif %}
+
+{% if nav %}
+<section aria-labelledby="cats-h">
+  <h2 id="cats-h">Shop by category</h2>
+  <ul class="chips">{% for c in nav %}<li><a class="chip" href="/c/{{ c.slug }}">{{ c.name }} <span class="muted">{{ c.n }}</span></a></li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+{% if sets %}
+<section aria-labelledby="sets-h">
+  <div class="section-head"><h2 id="sets-h">Sets in stock</h2><a href="/sets">All sets</a></div>
+  <ul class="chips">{% for s in sets %}<li><a class="chip" href="/sets/{{ s.slug }}">{{ s.name }} <span class="muted">{{ s.n }}</span></a></li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+<section class="about-blurb" aria-labelledby="about-h">
+  <h2 id="about-h">About Poke6s</h2>
+  <p>We're a small Utah shop selling sealed Pokémon TCG product, and the people behind <a href="{{ settings.market_base_url }}">market.poke6s.com</a>, a free price-tracking site for collectors. Singles are sold through our <a href="{{ settings.tcgplayer_store_url }}">TCGplayer store</a>. <a href="/about">More about us</a>.</p>
+</section>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Browse by set</h1>
+{% if sets %}
+<ul class="set-list">
+  {% for s in sets %}
+  <li><a href="/sets/{{ s.slug }}"><strong>{{ s.name }}</strong>
+    <span class="muted">{{ s.n }} product{{ '' if s.n == 1 else 's' }}{% if s.language_names %} · {{ s.language_names | join(', ') }}{% endif %}</span></a></li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="muted">No sets in stock right now. <a href="/shop">See all products</a>.</p>
+{% endif %}
+{% endblock %}

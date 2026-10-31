@@ -16,3 +16,24 @@ services:
     stdin_open: true
     tty: true
     restart: unless-stopped
+
+  # The poke6s.com storefront (docs/storefront_plan.md, storefront/README.md). Its own
+  # container so a crash or heavy job in the market app can't take the shop down.
+  # It sees only its code, the data folder read-only, and its own data/storefront folder.
+  storefront:
+    build: ./storefront
+    container_name: poke6s-storefront
+    working_dir: /app
+    command: python -m uvicorn storefront.app.main:app --host 0.0.0.0 --port 8010
+    environment:
+      STOREFRONT_DATA_DIR: /app/data/storefront
+      # Local address until launch; robots stay blocked until STOREFRONT_ALLOW_INDEXING=1.
+      STOREFRONT_BASE_URL: ${STOREFRONT_BASE_URL:-http://localhost:8010}
+      STOREFRONT_ALLOW_INDEXING: ${STOREFRONT_ALLOW_INDEXING:-0}
+    ports:
+      - "8010:8010"
+    volumes:
+      - ./storefront:/app/storefront
+      - ./data:/app/data:ro
+      - ./data/storefront:/app/data/storefront
+    restart: unless-stopped

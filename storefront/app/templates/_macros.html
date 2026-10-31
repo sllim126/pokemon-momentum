@@ -1,0 +1,21 @@
+{#- Product card used on every listing. `p` is a row from catalog.py (_row). -#}
+{% macro product_card(p, eager=false) %}
+<li class="card">
+  <a href="/p/{{ p.slug }}">
+    <div class="card-img">
+      {% if p.image %}<img src="/media/480/{{ p.image }}.webp" alt="{{ p.title }}" {% if not eager %}loading="lazy"{% endif %} width="480" height="480">
+      {% else %}<img src="/static/img/placeholder.svg" alt="" width="480" height="480">{% endif %}
+      {% if not p.in_stock %}<span class="badge out">Sold out</span>{% elif p.compare_at_cents %}<span class="badge sale">Sale</span>{% endif %}
+    </div>
+    <div class="card-body">
+      <span class="card-title">{{ p.title }}</span>
+      <span class="card-meta">{{ [p.language_label, p.type_label] | select | join(' · ') }}</span>
+      <span class="card-price">{{ p.price_cents | money }}{% if p.compare_at_cents %} <s>{{ p.compare_at_cents | money }}</s>{% endif %}</span>
+    </div>
+  </a>
+</li>
+{% endmacro %}
+
+{% macro product_grid(products) %}
+<ul class="grid">{% for p in products %}{{ product_card(p, loop.index <= 4) }}{% endfor %}</ul>
+{% endmacro %}

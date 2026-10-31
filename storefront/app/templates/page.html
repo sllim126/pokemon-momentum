@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+<article class="text-page">
+  {% if page_data.draft %}<p class="draft-note">Draft: the owner reviews this text before launch.</p>{% endif %}
+  <h1>{{ page_data.title }}</h1>
+  {{ page_data.html | safe }}
+</article>
+{% endblock %}

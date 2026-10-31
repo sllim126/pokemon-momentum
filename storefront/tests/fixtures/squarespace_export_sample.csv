@@ -1,0 +1,11 @@
+Product ID [Non Editable],Variant ID [Non Editable],Product Type [Non Editable],Product Page,Product URL,Title,Description,SKU,GTIN,MPN,Option Name 1,Option Value 1,Option Name 2,Option Value 2,Option Name 3,Option Value 3,Option Name 4,Option Value 4,Option Name 5,Option Value 5,Option Name 6,Option Value 6,Price,Sale Price,On Sale,Stock,Categories,Tags,Weight,Length,Width,Height,Visible,Hosted Image URLs
+p1,v1,,shop,abyss-eye-booster-box,Pokemon Abyss Eye Booster Box - Japanese,<p>Sealed box of <strong>30 packs</strong>.</p><script>alert(1)</script>,JP-AE-BB,,,,,,,,,,,,,,,71.99,0.00,No,3,,"Japanese, Booster Box",0.875,,,,Yes,
+p2,v2,,shop,5svl6sjep9plwrs2tqi7988h0xrmhz,Black Bolt Booster Bundle - English,,ENG-BB-BB,,,,,,,,,,,,,,,93.99,79.99,Yes,1,"/scarlet-violet/black-bolt, /booster-bundle",English,,,,,Yes,
+p3,v3,,shop,pokemon-black-bolt-booster-box,Pokemon Black Bolt Booster Box - Japanese,,JP-BB-BOX,,,,,,,,,,,,,,,194.58,,,0,,Japanese,,,,,Yes,
+p4,v4,,shop,hidden-etb,Pokémon Surging Sparks Elite Trainer Box - English,,ENG-SS-ETB,,,,,,,,,,,,,,,117.99,,,5,,,,,,,No,
+p5,v5,,shop,play-mat,"TCG Desk Mat – Built for Hits, Binders & Bulk",,111,,,Size,"31.5"" × 15.5""",,,,,,,,,,,31.43,,,Unlimited,,,,,,,Yes,https://example.invalid/mat.jpg
+,v6,,,,,,222,,,Size,"23.6"" × 13.8""",,,,,,,,,,,22.57,,,Unlimited,,,,,,,,
+p7,v7,,shop,roaring-moon-sar,Roaring Moon ex SAR 218/187 Japanese,,602682,,,,,,,,,,,,,,,40.00,,,1,,Singles,,,,,Yes,
+p8,v8,,shop,g25-tin,Poke Ball Tin G25 - English,,ENG-G25-TIN,,,,,,,,,,,,,,,26.42,,,4,/other/tins,,,,,,Yes,
+p9,v9,,shop,same-title-a,Pokemon Booster Pack - Japanese,,JP-PACK-A,,,,,,,,,,,,,,,5.00,,,10,,,,,,,Yes,
+p10,v10,,shop,same-title-b,Pokemon Booster Pack - Japanese,,JP-PACK-B,,,,,,,,,,,,,,,6.00,,,10,,,,,,,Yes,

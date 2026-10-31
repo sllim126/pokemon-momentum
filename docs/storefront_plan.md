@@ -1,8 +1,9 @@
 # New storefront for poke6s.com: plan
 
 Last reviewed: 2026-10-31
-**Status: reviewed with the owner 2026-10-31. Codex may start Phase 1.** Phase 0 (accounts and DNS)
-runs alongside with the owner. See "Progress log" at the end.
+**Status: Phase 1 under way (local only), started 2026-10-31.** Cloudflare and all other online
+changes are paused by the owner (2026-10-31): build and run locally, Stripe test mode only.
+Developer guide for the code: `storefront/README.md`. See "Progress log" at the end.
 
 The owner decided on 2026-10-31 to replace the Squarespace store with our own storefront on
 `poke6s.com`, hosted on the owner's servers. This file is the whole plan:
@@ -170,7 +171,9 @@ Prices as published on 2026-10-31; check current pricing before relying on them.
   - Open Graph and Twitter card tags, so links shared on social media show the photo, title
     and price.
 - **301 redirects** from every old Squarespace address (`/shop/p/<slug>`, category pages,
-  `/faq-1`, `/new-page`, …) to the new ones, from a committed `storefront/redirects.csv`.
+  `/faq-1`, `/new-page`, …) to the new ones. Page and category addresses are in a committed
+  `storefront/redirects.csv`; product addresses are recorded by the importer in the
+  `product_redirects` table, so they follow a product's current slug.
 - **Google Merchant Center feed** (`/feeds/google.xml`) for free Shopping listings.
 - **Images:** originals kept, plus resized WebP versions for lists and pages. Served with long
   cache headers.
@@ -471,3 +474,4 @@ Reviewed with the owner on 2026-10-31. D2 waits for the 2026-11-02 Utah call.
 |---|---|---|---|
 | 2026-10-31 | Claude | Plan drafted with the owner; current site documented in `docs/storefront_current_site.md`; todo items added | Owner reviews this plan with Claude, then Codex starts Phase 1 |
 | 2026-10-31 | Claude | Owner review: D1 and D3–D9 decided (see "Owner decisions"); D2 waits for the Utah call | Codex: Phase 1. Owner + Claude: Phase 0 (Squarespace exports, D5 forwarding, Cloudflare DNS) |
+| 2026-10-31 | Claude | Phase 1 built and running locally on branch `storefront/phase1-catalog` (owner paused Cloudflare and other online changes): `storefront/` service on port 8010 (LAN), SQLite schema + migrations, importer (94 sealed/accessory products from the 2026-10-09 export, 30 visible, 151 photos copied from Squarespace's CDN as WebP), shop/search/category/set/product pages, market price + 30-day trend from `data/storefront/market_reference.json` (writer `scripts/build_storefront_market_reference.py`), sitemap, robots (blocked until launch), JSON-LD, Open Graph, 301 redirects, draft policy pages. 46 storefront tests + 3 writer tests pass; checked at 1920×1080, 1366×768 and phone with no console errors. **Stopped at:** Phase 1 done except the items in the next column | Owner: check the shop on a phone on the home network; review the draft pages in `storefront/content/pages/` (handling time in Shipping, tax-record years in Privacy). Then Phase 2 (cart + Stripe **test mode**). Not done: market reference in the daily job (cron, owner), re-import from the final pre-11-14 export, Google Merchant feed (Phase 4) |

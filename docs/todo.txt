@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-25 (handover review; last milestone 2026-10-23)
+Last updated: 2026-10-31 (storefront Phase 1 started; last milestone 2026-10-23)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -32,7 +32,8 @@ Current Focus (2026-10-25)
   inventory in `docs/mobile_app_plan.md`; work items under "New mobile app" below). The old
   `/mobile` page stays frozen until the switch. Admin pages stay parked.
 - Storefront: our own store on poke6s.com replaces Squarespace (plan ends 2026-11-14). Plan,
-  phases and progress log: `docs/storefront_plan.md`. Reviewed 2026-10-31; Phase 1 can start.
+  phases and progress log: `docs/storefront_plan.md`. Phase 1 running locally (2026-10-31);
+  online changes (Cloudflare, DNS) paused by the owner.
 - Bug reports go to the Discord `#bug-reports` channel. New pages get no on-site bug form.
 - Dates: Pokémon Black Friday on TCGplayer ~Nov 25 - Dec 1; new mobile app switch Nov 10
   (steps 1.2-1.5 done by about Nov 3).
@@ -119,11 +120,26 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   page text, images) and auto-renew off; domain forwarding stopgap (plan decision D5).
 - [waiting] Plan decision D2 (sales tax method) after the 2026-11-02 Utah call; D3 shipping
   amounts from the owner's Pirate Ship costs. D1, D4-D9 decided 2026-10-31.
-- [next] Phase 0 (owner + Claude): Cloudflare DNS move (copy the Microsoft 365 mail records
+- [parked] Phase 0 (owner + Claude), paused by the owner 2026-10-31 (no online changes for
+  now): Cloudflare DNS move (copy the Microsoft 365 mail records
   exactly), Tunnel (replaces the home-IP item below), Stripe test account.
-- [next] Phase 1 (Codex): `storefront/` service, SQLite catalog, import, browse/product
-  pages, SEO, redirects. Phase 2: cart + Stripe Checkout (test mode). Phase 3: LAN-only admin,
-  exports (Pirate Ship, sales tax, bookkeeping, TCGplayer reconciliation), backups.
+- [in progress] Phase 1: catalog site, local only (Claude, 2026-10-31, branch
+  `storefront/phase1-catalog`; guide `storefront/README.md`). Built and running on port 8010:
+  importer, shop/search/category/set/product pages, market price + trend, SEO, redirects,
+  draft policy pages, 46 tests. Cloudflare and other online changes paused by the owner.
+  Left before calling it done:
+  - [waiting] Owner: browse `http://<server>:8010` on a phone on the home network.
+  - [waiting] Owner: review the draft pages in `storefront/content/pages/` (fill in the
+    handling time in Shipping; confirm the tax-record years in Privacy), then remove `draft: true`.
+  - [waiting] Owner OK to add `scripts/build_storefront_market_reference.py` to the daily job
+    (cron change); run by hand until then.
+  - [planned] Re-run the importer (with --fetch-images) on the final Squarespace export
+    before 2026-11-14.
+  - [idea] JP products without a TCGplayer mapping (e.g. JP-AE-BB) show no market price;
+    add them to `data/squarespace_tcgplayer_mapping.csv`.
+- [next] Phase 2: cart + Stripe Checkout (test mode only), orders, webhooks, reconciliation.
+  Phase 3: LAN-only admin, exports (Pirate Ship, sales tax, bookkeeping, TCGplayer
+  reconciliation), backups.
 - [planned] After launch: retire `scripts/squarespace_price_sync.py` from cron
   (`deploy/crontab.txt`) and switch the market site's "Poke6s" buy button to the new store.
 

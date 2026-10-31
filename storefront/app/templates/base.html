@@ -1,0 +1,81 @@
+{#- Shared frame: header with search, category menu, footer. Every page extends this.
+    Context from main.page(): nav, path, canonical, og_image, plus the page's own values. -#}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if title %}{{ title }} · {% endif %}Poke6s</title>
+  {% if description %}<meta name="description" content="{{ description }}">{% endif %}
+  <link rel="canonical" href="{{ canonical }}">
+  {% if not settings.allow_indexing %}<meta name="robots" content="noindex, nofollow">{% endif %}
+  <meta property="og:site_name" content="Poke6s">
+  <meta property="og:type" content="{{ og_type or 'website' }}">
+  <meta property="og:title" content="{{ title or 'Poke6s' }}">
+  {% if description %}<meta property="og:description" content="{{ description }}">{% endif %}
+  <meta property="og:url" content="{{ canonical }}">
+  <meta property="og:image" content="{{ og_image }}">
+  <meta name="twitter:card" content="summary_large_image">
+  {% if product %}
+  <meta property="product:price:amount" content="{{ '%.2f' % (product.price_cents / 100) }}">
+  <meta property="product:price:currency" content="USD">
+  {% endif %}
+  <meta name="theme-color" content="#08111d">
+  <link rel="icon" href="/static/img/favicon.png" type="image/png">
+  <link rel="stylesheet" href="/static/store.css">
+  {% for block in jsonld or [] %}
+  <script type="application/ld+json">{{ block | jsonld | safe }}</script>
+  {% endfor %}
+  <script src="/static/store.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-head">
+    <div class="wrap head-row">
+      <a class="brand" href="/" aria-label="Poke6s home"><img src="/static/img/logo.png" alt="Poke6s" width="150" height="53"></a>
+      <form class="search" action="/shop" method="get" role="search">
+        <label class="sr-only" for="site-search">Search products</label>
+        <input id="site-search" type="search" name="q" placeholder="Search sets, boxes, Pokémon…" value="{{ filters.q if filters else '' }}">
+        <button type="submit" class="btn primary">Search</button>
+      </form>
+      <nav class="ext-links" aria-label="Other Poke6s sites">
+        <a href="{{ settings.market_base_url }}">Market prices</a>
+        <a href="{{ settings.tcgplayer_store_url }}">Singles on TCGplayer</a>
+      </nav>
+    </div>
+    <nav class="wrap cat-nav" aria-label="Categories">
+      <a href="/shop" {% if path == '/shop' %}aria-current="page"{% endif %}>Shop all</a>
+      {% for c in nav %}<a href="/c/{{ c.slug }}" {% if path == '/c/' ~ c.slug %}aria-current="page"{% endif %}>{{ c.name }}</a>{% endfor %}
+      <a href="/sets" {% if path.startswith('/sets') %}aria-current="page"{% endif %}>Sets</a>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap">
+    {% if crumbs %}
+    <nav class="crumbs" aria-label="Breadcrumb"><ol>
+      {% for name, href in crumbs %}<li>{% if loop.last %}<span aria-current="page">{{ name }}</span>{% else %}<a href="{{ href }}">{{ name }}</a>{% endif %}</li>{% endfor %}
+    </ol></nav>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-foot">
+    <div class="wrap foot-grid">
+      <div>
+        <img src="/static/img/logo.png" alt="" width="120" height="42">
+        <p class="muted">Sealed Pokémon TCG, English and Japanese, priced against the live market.</p>
+      </div>
+      <nav aria-label="Help">
+        <h2>Help</h2>
+        {% for slug in ['faq', 'shipping', 'returns', 'contact'] if slug in footer_pages %}<a href="/{{ slug }}">{{ footer_pages[slug].title }}</a>{% endfor %}
+      </nav>
+      <nav aria-label="About">
+        <h2>Poke6s</h2>
+        {% for slug in ['about', 'terms', 'privacy'] if slug in footer_pages %}<a href="/{{ slug }}">{{ footer_pages[slug].title }}</a>{% endfor %}
+        <a href="{{ settings.market_base_url }}">market.poke6s.com</a>
+      </nav>
+    </div>
+    <p class="wrap muted small">© {{ year }} Poke6s LLC. Pokémon and its trademarks are © Nintendo, Creatures and GAME FREAK; this shop is not affiliated with them.</p>
+  </footer>
+</body>
+</html>

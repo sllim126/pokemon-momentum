@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-10-25
+Last reviewed: 2026-10-31
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -218,6 +218,22 @@ Recommended operator flow when adding a new SKU:
 3. Upload the refreshed Squarespace export on `/pricing-upload`.
 4. Save the latest supplier quote on `/supplier-pricing` if you want profit-floor protection.
 5. Review `/supplier-profitability` before allowing auto-pricing to move the SKU.
+
+New storefront (poke6s.com, local only)
+---------------------------------------
+
+The replacement for Squarespace runs in its own container, `poke6s-storefront`, on port 8010
+(home network only; not published until launch). Details: `storefront/README.md`.
+
+- Start or restart: `docker-compose up -d storefront` / `docker-compose restart storefront`.
+- Health: `curl -s localhost:8010/healthz` (visible products, schema version, market date).
+- Refresh market prices on product pages (manual for now; not in cron yet):
+  `docker-compose exec -T pokemon-momentum python scripts/build_storefront_market_reference.py`
+- Reload products from the newest Squarespace export (preview with `--dry-run` first):
+  `docker-compose exec -T storefront python -m storefront.app.importer --fetch-images`
+- Tests: `make test-storefront`.
+- Data (never committed): `data/storefront/` holds `store.db`, `images/` and
+  `market_reference.json`. Backups arrive in Phase 3.
 
 Storefront linking (`Poke6s` button)
 ------------------------------------
