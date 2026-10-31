@@ -12,9 +12,6 @@ test-all:
 test-api:
 	$(DC) exec -T $(APP_SERVICE) python -m pytest -q tests/test_api_routes.py
 
-test-frontend:
-	$(DC) exec -T $(APP_SERVICE) python -m pytest -q tests/test_dashboard_frontend.py
-
 check-fastapi:
 	$(DC) exec -T $(APP_SERVICE) python -c "import fastapi; print(fastapi.__version__)"
 

@@ -103,7 +103,6 @@ from scripts.dashboards.tracking_store import (
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent.parent
-DASHBOARD_HTML = SCRIPT_DIR / "dashboard.html"
 ALT_DASHBOARD_HTML = SCRIPT_DIR / "dashboard_lab.html"
 COLLECTOR_HUB_HTML = SCRIPT_DIR / "collector_hub.html"
 PLACEHOLDER_LIBRARY_HTML = SCRIPT_DIR / "placeholder_library.html"
@@ -120,12 +119,9 @@ PRICING_UPLOAD_HTML = SCRIPT_DIR / "pricing_upload.html"
 SINGLE_LISTINGS_UPLOAD_HTML = SCRIPT_DIR / "single_listings_upload.html"
 SUPPLIER_PRICING_HTML = SCRIPT_DIR / "supplier_pricing.html"
 SUPPLIER_PROFITABILITY_HTML = SCRIPT_DIR / "supplier_profitability.html"
-# The old phone page, kept at /mobile-classic for a few weeks after the switch, then deleted.
-MOBILE_DASHBOARD_HTML = SCRIPT_DIR / "mobile_dashboard.html"
 # The mobile app (plan: docs/mobile_app_plan.md). Phones get it at /, /mobile and /dashboard
 # since the owner switched it on early, 2026-10-31; /m-next stays as an address for it.
 MOBILE_APP_HTML = SCRIPT_DIR / "mobile_app.html"
-MOBILE_REBUILD_HTML = SCRIPT_DIR / "mobile_rebuild_mockup.html"
 INDEX_OVERVIEW_HUB_HTML = SCRIPT_DIR / "index_overview_hub.html"
 INDEX_OVERVIEW_DETAIL_HTML = SCRIPT_DIR / "index_overview_detail.html"
 DASHBOARD_COMMON_JS = SCRIPT_DIR / "dashboard_common.js"
@@ -629,12 +625,13 @@ def dashboard_response_for_request(request: Request) -> FileResponse:
     links (?tab=group_products&group_id=..., browse_species, group_signals), which the app
     opens in its own Sets and Pokémon views since step 1.4 (2026-10-31).
 
-    Desktop visitors never get here: forward_desktop_to_app sends them to the desktop app.
-    dashboard.html is kept only until the 1.6 clean-up deletes it.
+    Desktop visitors are normally forwarded to the desktop app before they get here
+    (forward_desktop_to_app); any that aren't get the desktop app directly. The older research
+    dashboard (dashboard.html) was deleted in the mobile clean-up, 2026-10-31.
     """
     if is_mobile_request(request):
         return mobile_app_response()
-    return FileResponse(DASHBOARD_HTML)
+    return FileResponse(DESKTOP_HOME_HTML)
 
 
 # ---- Desktop app as the desktop home page --------------------------------------------
@@ -646,7 +643,7 @@ def dashboard_response_for_request(request: Request) -> FileResponse:
 #
 # The older research dashboard was retired for desktop on 2026-10-16: its addresses
 # (/dashboard, /dashboard-classic, /dashboard-dev) forward to the app like the rest.
-# dashboard.html itself stays for phones (see dashboard_response_for_request).
+# dashboard.html itself was deleted in the mobile clean-up (2026-10-31).
 
 # Old dashboard ?tab= values -> desktop app ?list= views.
 OLD_TAB_TO_APP_LIST = {
@@ -808,10 +805,12 @@ def mobile_dashboard_page():
 
 
 @app.get("/mobile-classic")
-def mobile_classic_page():
-    """The old phone page, kept for a few weeks after the switch (then deleted with
-    mobile_dashboard.html; see docs/todo.txt)."""
-    return FileResponse(MOBILE_DASHBOARD_HTML)
+@app.get("/mobile-rebuild")
+def retired_mobile_pages():
+    """The old phone page and the old mobile concept page were deleted in the mobile clean-up
+    (2026-10-31; restore from the git tag backup/before-mobile-cleanup-2026-10-31 if ever
+    needed). Their addresses forward to the mobile app so saved links keep working."""
+    return RedirectResponse("/mobile", status_code=301)
 
 
 @app.get("/dashboard-lab")
@@ -995,12 +994,6 @@ def mobile_app_preview():
     """The mobile app's address while it was built (docs/mobile_app_plan.md); kept so links
     and the owner's review notes (/m-next/review-notes) keep working. Opens on any device."""
     return mobile_app_response()
-
-
-@app.get("/mobile-rebuild")
-def mobile_rebuild_page():
-    """Serve a standalone mobile-first dashboard concept page."""
-    return FileResponse(MOBILE_REBUILD_HTML)
 
 
 @app.get("/index-overview")

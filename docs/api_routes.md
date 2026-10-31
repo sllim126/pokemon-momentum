@@ -16,13 +16,12 @@ or the `pm_tracking_token` cookie); **admin** = signed in with an address listed
 | Route | Page file | Access | What it is |
 | --- | --- | --- | --- |
 | `/` | `desktop_home.html` (desktop), `mobile_app.html` (phones/tablets) | public | Home. Desktop app guide: `docs/desktop_app.md` |
-| `/dashboard`, `/dashboard-classic`, `/dashboard-dev` | `dashboard.html` | public | Older research dashboard; desktop visitors are forwarded to `/` (see `docs/desktop_app.md`); phones get the mobile app (old Browse Set, Browse Pokémon and Set Strength links open its Sets and Pokémon views since 2026-10-31); nobody is served `dashboard.html` any more, and it is deleted in the mobile clean-up (1.6) |
+| `/dashboard`, `/dashboard-classic`, `/dashboard-dev` | `mobile_app.html` (phones) | public | Older research dashboard; desktop visitors are forwarded to `/` (see `docs/desktop_app.md`); phones get the mobile app (old Browse Set, Browse Pokémon and Set Strength links open its Sets and Pokémon views since 2026-10-31); nobody is served `dashboard.html` any more, and it is deleted in the mobile clean-up (1.6) |
 | `/buy`, `/discover`, `/research`, `/track`, `/learn` | `area_hub.html` | public | Landing page for each area (registered in a loop in `api.py`); desktop visitors are forwarded to the matching app view |
 | `/home-preview` | | public | Former preview address of the desktop app; forwards to `/` |
 | `/mobile` | `mobile_app.html` | public | The mobile app (switched on early by the owner, 2026-10-31; `docs/mobile_app_plan.md`) |
-| `/mobile-classic` | `mobile_dashboard.html` | public | The old phone page, kept a few weeks after the switch, then deleted |
+| `/mobile-classic`, `/mobile-rebuild` | 301 to `/mobile` | public | The old phone page and the old mobile concept page, deleted 2026-10-31 |
 | `/m-next` | `mobile_app.html` | public | The mobile app's address while it was built; kept for links and review notes |
-| `/mobile-rebuild` | `mobile_rebuild_mockup.html` | public | Old mobile concept page, linked from Admin only |
 | `/dashboard-lab` | `dashboard_lab.html` | public | Experimental dashboard, linked from Admin only |
 | `/collector-hub` | `collector_hub.html` | public | Collector resources (Learn) |
 | `/placeholders` | `placeholder_library.html` | public | Placeholder Library: print pages and downloads (Learn) |
@@ -61,7 +60,7 @@ or the `pm_tracking_token` cookie); **admin** = signed in with an address listed
 | `/categories` | market pickers | The markets the site covers |
 | `/search` | search boxes | Cards and sets matching a query (server-side search) |
 | `/product_picker` | pickers | One page of the catalogue |
-| `/universe` | desktop app, `dashboard.html` | The tradable card list for a market |
+| `/universe` | desktop app | The tradable card list for a market |
 | `/groups` | pickers | Sets with active products |
 | `/group_products` | Browse a Set | Every card in one set with prices and signals |
 | `/browse_species` | Browse a Pokémon | Every print of one Pokémon |
@@ -78,7 +77,7 @@ or the `pm_tracking_token` cookie); **admin** = signed in with an address listed
 | `/budget_builder` | Budget Builder | Cards that fit a budget, spread across sets |
 | `/top_movers`, `/breakouts`, `/sma30_holds`, `/confirmed_uptrends`, `/under_the_radar`, `/early_uptrends` | screener lists | One screener each: `{columns, rows}` |
 | `/good_buys`, `/small_dips`, `/set_dips` | Pullbacks, Small Dips, Whole-set Dips | Pullback screeners; rules in `query_support.build_pullback_sql` |
-| `/time_to_buy` | `dashboard.html` only | Older Time to Buy screener (dropped from the desktop app and the new mobile app) |
+| `/time_to_buy` | none (its page was deleted 2026-10-31) | Older Time to Buy screener, dropped from the desktop and mobile apps; the route remains for now |
 | `/product_signals` | no page today | Raw nightly signal rows; kept for scripts and checks |
 | `/index-overview-data` | Market Stats, index pages | Everything one market index page needs. Public; the rebuild option is admin-only |
 | `/api/psa/cert/{cert_number}` | card page | PSA cert details. Fresh cached results are public; a new lookup uses our PSA account and is admin-only |

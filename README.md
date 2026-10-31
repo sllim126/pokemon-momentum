@@ -20,17 +20,17 @@ The goal is simple: make it easier to spot what is moving, what may be starting 
 
 - `/`
   - desktop: the desktop app, every Buy, Discover, Research, Track and Learn view in one
-    three-column page (see `docs/desktop_app.md`); phones and tablets: the mobile
-    decision dashboard
+    three-column page (see `docs/desktop_app.md`); phones and tablets: the mobile app
+    (`mobile_app.html`, see `docs/mobile_app_plan.md`)
   - older desktop addresses (`/dashboard`, `/sealed-deals`, `/index-overview-*`, the area
     pages, `/home-preview`...) forward to the matching view; phones are never forwarded
 - `/dashboard`
-  - phones: the mobile decision dashboard; desktop: forwards to the desktop app
+  - phones: the mobile app; desktop: forwards to the desktop app
 - `/dashboard-classic`, `/dashboard-dev`
   - the older research dashboard's former desktop addresses (retired 2026-10-16); they forward
-    like `/dashboard`. Phones still get `dashboard.html` for Browse Set, Browse Pokémon and Set Strength
+    like `/dashboard`. `dashboard.html` itself was deleted on 2026-10-31 (the mobile app covers it)
 - `/mobile`
-  - direct access to the mobile decision dashboard
+  - the mobile app on any device (`/mobile-classic` and `/mobile-rebuild` forward here)
 - `/buy`, `/discover`, `/research`, `/track`, `/learn`
   - area landing pages built from the shared header's menu (`site_shell.js`)
 - `/dashboard-lab`
