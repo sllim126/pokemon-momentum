@@ -23,6 +23,7 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   app (`/` on desktop, `docs/desktop_app.md`) covers Buy, Discover, Research, Track and Learn
 - Accounts: Google-backed lightweight tracking accounts with saved tags and views
 - Commerce: Squarespace storefront linking, price synchronization, listing intake, and supplier-profitability workflows
+  (the Squarespace plan ends 2026-11-14; our own store replaces it: `docs/storefront_plan.md`)
 - Collector resources: generated placeholder libraries, checklists, print pages, review queues, and downloads
 - Standalone binder planners: ATLA and KPDH are served by separate read-only nginx
   containers at `/atla/` and `/kpdh/`; collection state stays in each visitor's browser
