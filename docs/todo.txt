@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-31 (milestone: storefront-phase1)
+Last updated: 2026-10-31 (mobile app switched on; storefront articles)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -43,6 +43,12 @@ Current Focus (2026-10-25)
 Recently Completed
 ------------------
 
+- 2026-10-31 Storefront footer "Community" column (Discord, YouTube, Instagram, Facebook, X,
+  Reddit); the same accounts are in the shop's Organization data for search engines.
+- 2026-10-31 Mobile app switched on early (owner): phones get `mobile_app.html` at `/`, `/mobile`
+  and `/dashboard` (old `?tab=` list links open the matching list); the old phone page moved
+  to `/mobile-classic`; the "Preview" badge is gone. AGENTS.md's frozen-page rule now covers
+  `/mobile-classic`.
 - 2026-10-31 Storefront market prices in cron (daily 03:00 UTC, owner OK);
   `deploy/crontab.txt` synced with the live crontab. `docs/chat_history/` added to .gitignore.
 - 2026-10-31 Storefront articles (owner asked to bring them forward from Phase 4): `/articles`
@@ -163,8 +169,9 @@ screens, 3 refine, 4 camera/OCR.
 - Owner decisions (2026-10-24/25, details in `docs/mobile_app_plan.md`): public feedback stays
   on Discord while the owner has private in-app review notes; no Alerts & Targets for now; Time
   to Buy and Set Explorer dropped on phones; iPads still undecided; **switch on November 10**
-  unless called earlier. So steps 1.2-1.5 need to be done by about November 3 for a week of
-  phone testing.
+  unless called earlier. **Switched early on 2026-10-31** (owner): phones get the app at `/`,
+  `/mobile` and `/dashboard`; the old page is at `/mobile-classic`. Steps 1.2-1.5 continue on the
+  live app.
 - [waiting] Owner: try `/m-next` on the phone in portrait and landscape after each step; decide
   iPad routing during stage 2.
 - [in progress] 1.1 Framework and Deal Checker (2026-10-21/22): "Check a card" home screen
@@ -182,9 +189,10 @@ screens, 3 refine, 4 camera/OCR.
 - [planned] 1.4 Research: Sets → one set (search results for sets open it), Pokémon, Market
   Stats (indexes, set values).
 - [planned] 1.5 Buy (Sealed Deals, Budget Builder) and Learn (How it works).
-- [planned] 1.6 Switch on 2026-11-10: phones get the new app at `/` and `/mobile`; old page at
-  `/mobile-classic` for a few weeks, then delete it, `dashboard.html`,
-  `tests/test_dashboard_frontend.py` and `/mobile-rebuild`.
+- [planned] 1.6 Clean-up after the switch (done early, 2026-10-31): once 1.4-1.5 cover Sets,
+  Pokémon and the rest, delete `/mobile-classic` (`mobile_dashboard.html`), `dashboard.html`,
+  `tests/test_dashboard_frontend.py` and `/mobile-rebuild`, and repoint the app menu's "old
+  phone page" link.
 - [planned] Stage 2: tune two-pane layouts for phone landscape (fold the scope bar into the
   header to save height) and tablets; decide iPad routing.
 - [idea] Share the list definitions (LISTS) between desktop_home.html and mobile_app.html in

@@ -1,6 +1,6 @@
 # New mobile app: plan
 
-Last reviewed: 2026-10-29
+Last reviewed: 2026-10-31
 
 The owner asked on 2026-10-21 for a full rebuild of the phone site: same features as today,
 in the desktop app's look, and a layout that fills any screen from a phone in portrait to a
@@ -126,8 +126,11 @@ asking price), and the browsing lists moved to the menu.
 5. **iPads: still deciding.** Today iPads in their default "desktop website" mode get the
    desktop app (which fits portrait since 2026-10-22), and iPads that report as mobile get the
    phone page. To be settled in stage 2.
-6. **Switch date: November 10, 2026**, unless the owner calls it earlier. Working back from
-   that: steps 1.2-1.5 done by about November 3, leaving a week of phone testing.
+6. **Switched early: 2026-10-31** (owner: "it has been working fine; we can still make
+   changes"). Phones get the app at `/`, `/mobile` and `/dashboard`; `/m-next` stays as an
+   address; the old page is at `/mobile-classic` for a few weeks. Steps 1.2-1.5 continue on
+   the live app. Old links to Browse Set, Browse Pokémon and Set Strength
+   (`?tab=group_products` etc.) still open `dashboard.html` until step 1.4.
 
 ## What the owner does at each step
 
@@ -136,4 +139,5 @@ asking price), and the browsing lists moved to the menu.
   landscape, and use the floating Note tab for anything wrong. Public testers use Discord
   `#bug-reports`.
 - Decide decision 5 (iPads) during stage 2.
-- Before the switch: a last pass on the phone, then say "switch the mobile site".
+- The switch is done (2026-10-31). Deleting `/mobile-classic`, `mobile_dashboard.html`,
+  `dashboard.html` and `/mobile-rebuild` waits until steps 1.4-1.5 cover what they still do.

@@ -47,9 +47,10 @@ coding agent. Read this first, then `docs/todo.txt`.
 - **Graded prices don't rise steadily with grade.** PSA 1s often sell above mid grades
   because some collectors collect only 1s. Never treat that as an outlier or build checks
   that assume higher grade means higher price.
-- **The old mobile page is frozen.** Don't change `/mobile` or the mobile handling on `/`
-  without the owner's go-ahead. Its replacement, the new mobile app at `/m-next`
-  (`docs/mobile_app_plan.md`), is being built with the owner's go-ahead (2026-10-21).
+- **The phone site is the mobile app** (`scripts/dashboards/mobile_app.html`, plan
+  `docs/mobile_app_plan.md`). The owner switched it on early, 2026-10-31: phones get it at `/`,
+  `/mobile` and `/m-next`, and it is still being finished (steps 1.2-1.5). The old phone page
+  is frozen at `/mobile-classic` until it is deleted; don't change it.
 - **Bug reports go to Discord** (`#bug-reports`). Don't add on-site bug forms to new pages.
 - **Documentation is part of the job.** A human must be able to review the code: comment
   the non-obvious parts and update the docs a change affects, in the same commit.

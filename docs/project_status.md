@@ -44,8 +44,9 @@ PriceCharting download and Squarespace price sync were running.
 | `/dashboard-classic`, `/dashboard-dev` | The older research dashboard's desktop addresses | Retired 2026-10-16; forward like `/dashboard` |
 | `/home-preview` | The desktop app's former preview address | Forwards to `/` on desktop |
 | `/buy`, `/discover`, `/research`, `/track`, `/learn` | Area landing pages from the shared header menu | Live on phones; desktop forwards to the app |
-| `/mobile` | Direct mobile decision dashboard | Live; frozen until the new mobile app replaces it |
-| `/m-next` | New mobile app (`mobile_app.html`; plan in `docs/mobile_app_plan.md`) | Preview, step 1.1; opens on any device |
+| `/mobile` | The mobile app (`mobile_app.html`), also what phones get at `/` | Live since 2026-10-31; steps 1.2-1.5 still being added |
+| `/mobile-classic` | The old phone page (`mobile_dashboard.html`) | Frozen; deleted a few weeks after the switch |
+| `/m-next` | The mobile app's build-time address (plan in `docs/mobile_app_plan.md`) | Same page as `/mobile`; kept for links and review notes |
 | `/dashboard-lab` | Desktop command-center reference | Development page; left public on purpose (decided 2026-10-12) |
 | `/mobile-rebuild` | Earlier mobile concept retained for comparison | Development page; left public on purpose (decided 2026-10-12) |
 | `/set-explorer` | Set cost, concentration, and depth | Live; covered by desktop app Market Stats → Set values |

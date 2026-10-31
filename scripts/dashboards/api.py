@@ -120,8 +120,10 @@ PRICING_UPLOAD_HTML = SCRIPT_DIR / "pricing_upload.html"
 SINGLE_LISTINGS_UPLOAD_HTML = SCRIPT_DIR / "single_listings_upload.html"
 SUPPLIER_PRICING_HTML = SCRIPT_DIR / "supplier_pricing.html"
 SUPPLIER_PROFITABILITY_HTML = SCRIPT_DIR / "supplier_profitability.html"
+# The old phone page, kept at /mobile-classic for a few weeks after the switch, then deleted.
 MOBILE_DASHBOARD_HTML = SCRIPT_DIR / "mobile_dashboard.html"
-# New mobile app (plan: docs/mobile_app_plan.md), previewed at /m-next until it replaces /mobile.
+# The mobile app (plan: docs/mobile_app_plan.md). Phones get it at /, /mobile and /dashboard
+# since the owner switched it on early, 2026-10-31; /m-next stays as an address for it.
 MOBILE_APP_HTML = SCRIPT_DIR / "mobile_app.html"
 MOBILE_REBUILD_HTML = SCRIPT_DIR / "mobile_rebuild_mockup.html"
 INDEX_OVERVIEW_HUB_HTML = SCRIPT_DIR / "index_overview_hub.html"
@@ -621,15 +623,22 @@ def is_mobile_request(request: Request) -> bool:
 DESKTOP_ONLY_TABS = {"group_products", "group_signals", "time_to_buy", "browse_species"}
 
 
+def mobile_app_response() -> FileResponse:
+    response = FileResponse(MOBILE_APP_HTML)
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 def dashboard_response_for_request(request: Request) -> FileResponse:
-    """Phones get the mobile page, or the older research dashboard (dashboard.html) for the
-    tabs the mobile page has no view for (DESKTOP_ONLY_TABS: the mobile menu's Browse Set,
-    Browse Pokemon and Set Strength). That is why dashboard.html is still kept.
+    """Phones get the mobile app, or the older research dashboard (dashboard.html) for the
+    old links to views the app doesn't have yet (DESKTOP_ONLY_TABS: Browse Set, Browse
+    Pokemon and Set Strength; the app gets Sets and Pokémon in step 1.4). That is why
+    dashboard.html is still kept.
 
     Desktop visitors never get here: forward_desktop_to_app sends them to the desktop app.
     """
     if is_mobile_request(request) and request.query_params.get("tab") not in DESKTOP_ONLY_TABS:
-        return FileResponse(MOBILE_DASHBOARD_HTML)
+        return mobile_app_response()
     return FileResponse(DASHBOARD_HTML)
 
 
@@ -799,7 +808,14 @@ def dashboard_classic(request: Request):
 
 @app.get("/mobile")
 def mobile_dashboard_page():
-    """Serve the live mobile-first decision dashboard directly."""
+    """The mobile app, on any device (switched from the old phone page 2026-10-31)."""
+    return mobile_app_response()
+
+
+@app.get("/mobile-classic")
+def mobile_classic_page():
+    """The old phone page, kept for a few weeks after the switch (then deleted with
+    mobile_dashboard.html; see docs/todo.txt)."""
     return FileResponse(MOBILE_DASHBOARD_HTML)
 
 
@@ -981,11 +997,9 @@ def supplier_profitability_page(authorization: str | None = Header(default=None)
 
 @app.get("/m-next")
 def mobile_app_preview():
-    """Preview of the new mobile app (docs/mobile_app_plan.md). Opens on any device, so it is
-    not routed by user agent; phones keep /mobile until the switch."""
-    response = FileResponse(MOBILE_APP_HTML)
-    response.headers["Cache-Control"] = "no-cache"
-    return response
+    """The mobile app's address while it was built (docs/mobile_app_plan.md); kept so links
+    and the owner's review notes (/m-next/review-notes) keep working. Opens on any device."""
+    return mobile_app_response()
 
 
 @app.get("/mobile-rebuild")
