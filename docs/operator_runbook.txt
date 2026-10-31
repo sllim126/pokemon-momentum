@@ -17,6 +17,7 @@ crontab changes). Each job is explained further down in this file.
 | Daily 03:30 | Other games price archive (collect only) | `pokemon-momentum-tcgcsv-collect.timer` | see "Other games archive" |
 | Daily 04:30 | Placeholder Library sync (new Mega-era sets and promos) | cron: `scripts/utilities/sync_placeholder_library.py` | `logs/placeholder_sync.log` |
 | Daily 09:15 | Squarespace price sync (reaches the live store) | cron: `scripts/run_squarespace_price_sync.sh` | `logs/squarespace_price_sync_cron.log` |
+| Daily 21:30 | TCGCSV archive backfill, from 2026-11-01 (one request a night while the archive is offline; downloads the gap when it returns; Discord summary) | cron: `scripts/pipeline/run_archive_backfill_host.sh` | `logs/archive_backfill.log` |
 | Every 15 min | Copy Discord #bug-reports into the review queue | cron: `scripts/utilities/import_discord_bug_reports.py` | `logs/discord_bug_import.log` |
 | Fri 15:00 | Weekly Discord posts | cron: `scripts/utilities/post_weekly_discord.py` | `logs/discord_weekly.log` |
 | Sun 11:00 | Weekly full metadata refresh | `pokemon-momentum-weekly-refresh.timer` | journal |
@@ -663,8 +664,13 @@ sudo docker-compose exec -T pokemon-momentum python scripts/download/backfill_tc
 sudo docker-compose exec -T pokemon-momentum python scripts/download/backfill_tcgcsv_archive.py
 ```
 
+- It runs by itself every night at 21:30 UTC from 2026-11-01 (`run_archive_backfill_host.sh`,
+  adam's crontab) and posts to Discord: grey "still offline" while TCGCSV answers 403 with its
+  "temporarily removed" notice (one request a night, no ping), green with the list of days
+  the night the archive returns, red with a ping on any other 403/429 or failure. Once the gap
+  is filled it fetches the one new day each night and stays quiet unless something fails.
 - Exit 3 with TCGCSV's "temporarily removed" notice: the archive is still offline. That
-  was one request; try again another day.
+  was one request; the cron tries again the next night.
 - After a successful run the next nightly update loads the new days into DuckDB for both
   English and Japanese. To load at once, stop the site and run the daily pipeline with
   `--skip-download` for categories 3 and 85 (below).

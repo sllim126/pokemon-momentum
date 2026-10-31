@@ -321,8 +321,8 @@ screens, 3 refine, 4 camera/OCR.
   3 GB), so step 2 is only the gap. Gap script built: `scripts/download/backfill_tcgcsv_archive.py`
   (runbook "Backfill missing TCGCSV archive days"). First run 2026-10-31: one request, 403
   "temporarily removed ... still being archived behind-the-scenes"; rerun on another day.
-  Next: run it daily (one request while offline) so the gap fills on its own when it returns;
-  then the catalogue crawl (step 4).
+  Runs nightly at 21:30 UTC from 2026-11-01 (owner: first run on the 1st, then until all the
+  data is in), with a Discord summary. Then the catalogue crawl (step 4).
   1. (done: owner has the OK) Tell CptSpaceToaster first (it is effectively a mirror; ties in with the owner's torrent
      offer) and confirm a daily single-file archive pull is fine.
   2. Day 1: download every daily archive file since Feb 2024 once (~1,000 files, ~1 GB, all
