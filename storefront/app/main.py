@@ -4,6 +4,7 @@ Run: `docker-compose up -d storefront` (port 8010). Plan: docs/storefront_plan.m
 Developer guide (routes, import, tests): storefront/README.md.
 
 Phase 1 is browse-only: products show "Buy on TCGplayer" until the Stripe checkout (Phase 2).
+Articles (the blog carried over from Squarespace's /resources) are Markdown files; see articles.py.
 The database is opened read-only per request; only the importer (and later the LAN-only
 admin) writes to it.
 """
@@ -25,6 +26,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import catalog, classify, images, redirects, seo
+from .articles import Articles
 from .db import connect, latest_migration, migrate
 from .market import MarketReference
 from .markdown import render, split_front_matter
@@ -32,6 +34,7 @@ from .settings import STOREFRONT_DIR, Settings, load_settings
 
 APP_DIR = Path(__file__).resolve().parent
 PAGES_DIR = STOREFRONT_DIR / "content" / "pages"
+ARTICLES_DIR = STOREFRONT_DIR / "content" / "articles"
 MEDIA_NAME = re.compile(r"^[a-z0-9-]+$")
 
 SECURITY_HEADERS = {
@@ -62,10 +65,11 @@ def load_pages() -> dict[str, dict]:
     return pages
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, articles_dir: Path | None = None) -> FastAPI:
     settings = settings or load_settings()
     market = MarketReference(settings.market_reference_path)
     pages = load_pages()
+    articles = Articles(articles_dir or ARTICLES_DIR)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
@@ -80,11 +84,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     env = templates.env
     env.globals.update(settings=settings, year=datetime.now(UTC).year, sort_labels=catalog.SORT_LABELS,
                        type_labels=classify.PRODUCT_TYPE_LABELS, language_labels=classify.LANGUAGE_LABELS,
-                       ship_class_labels=classify.SHIP_CLASS_LABELS, footer_pages=pages)
+                       ship_class_labels=classify.SHIP_CLASS_LABELS, footer_pages=pages,
+                       social_links=seo.SOCIAL_LINKS)
     env.filters["money"] = lambda cents: f"${(cents or 0) / 100:,.2f}"
     env.filters["dollars"] = lambda value: f"${value:,.2f}"
     env.filters["jsonld"] = seo.dump
     env.filters["markdown"] = render
+    env.filters["longdate"] = _long_date
 
     @contextmanager
     def db() -> Iterator[sqlite3.Connection]:
@@ -119,8 +125,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if exc.status_code != 404:
             return PlainTextResponse(str(exc.detail), status_code=exc.status_code)
         if request.method in {"GET", "HEAD"}:
-            target = redirects.lookup(request.url.path)
             path = request.url.path
+            # Old blog addresses (/resources/...) first: their targets depend on the articles.
+            target = articles.redirect_for(path) or redirects.lookup(path)
             if target is None and len(path) > 1 and path.endswith("/"):
                 query = f"?{request.url.query}" if request.url.query else ""
                 return RedirectResponse(path.rstrip("/") + query, status_code=301)
@@ -151,7 +158,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         with db() as conn:
             entries = catalog.sitemap_entries(conn)
         public_pages = [slug for slug, p in pages.items() if not p["draft"]]
-        return Response(seo.sitemap_xml(settings, entries, public_pages), media_type="application/xml")
+        return Response(seo.sitemap_xml(settings, entries, public_pages, articles.published()),
+                        media_type="application/xml")
 
     @app.get("/media/{width}/{name}.webp")
     def media(width: int, name: str):
@@ -171,7 +179,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         with db() as conn:
             sections = catalog.home_sections(conn)
             sets = catalog.list_sets(conn)[:8]
-        return page(request, "home.html", sections=sections, sets=sets,
+        return page(request, "home.html", sections=sections, sets=sets, latest_articles=articles.published()[:3],
                     jsonld=[seo.organization_jsonld(settings)],
                     description="Sealed Pokémon TCG booster boxes, bundles and ETBs, English and Japanese, "
                                 "priced against the live market.")
@@ -253,6 +261,31 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     description=description,
                     jsonld=[seo.product_jsonld(settings, item), seo.breadcrumbs_jsonld(settings, crumbs)])
 
+    # --- articles -----------------------------------------------------------------------
+
+    @app.get("/articles", response_class=HTMLResponse)
+    def article_list(request: Request, category: str = "", tag: str = ""):
+        found = articles.filtered(category=category.strip(), tag=tag.strip())
+        filter_name = category.strip() or tag.strip()
+        heading = f"Articles: {filter_name}" if filter_name else "Articles"
+        crumbs = [("Home", "/"), ("Articles", "/articles")]
+        return page(request, "articles.html", title=heading, heading=heading, items=found,
+                    categories=articles.categories(), category=category.strip(), tag=tag.strip(),
+                    crumbs=crumbs, canonical=f"{settings.base_url}/articles",
+                    jsonld=[seo.breadcrumbs_jsonld(settings, crumbs)],
+                    description="Notes on the Pokémon TCG market, sets, collecting and running a small card shop.")
+
+    @app.get("/articles/{slug}", response_class=HTMLResponse)
+    def article(request: Request, slug: str):
+        found = articles.get(slug)
+        if found is None:
+            raise HTTPException(404)
+        crumbs = [("Home", "/"), ("Articles", "/articles"), (found.title, f"/articles/{slug}")]
+        return page(request, "article.html", title=found.title, article=found,
+                    more=articles.more_like(found), crumbs=crumbs, og_type="article",
+                    og_image=seo.image_url(settings, found.cover), description=found.description,
+                    jsonld=[seo.article_jsonld(settings, found), seo.breadcrumbs_jsonld(settings, crumbs)])
+
     # --- text pages (registered last so they never shadow the routes above) --------------
 
     @app.get("/{slug}", response_class=HTMLResponse)
@@ -264,6 +297,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     description=found["description"])
 
     return app
+
+
+def _long_date(value: str) -> str:
+    """'2026-03-19' -> 'March 19, 2026' (left as it is if it isn't a date)."""
+    try:
+        day = datetime.strptime(value, "%Y-%m-%d")
+    except (TypeError, ValueError):
+        return value or ""
+    return f"{day:%B} {day.day}, {day.year}"
 
 
 def _page_number(request: Request) -> int:

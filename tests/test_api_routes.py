@@ -113,17 +113,13 @@ class ApiRouteTests(unittest.TestCase):
             type("R", (), {"method": "GET", "headers": desktop, "query_params": {},
                            "url": type("U", (), {"path": "/index-overview-data", "query": ""})()})()))
 
-    def test_dashboard_route_serves_mobile_page_for_mobile_user_agents(self):
-        response = self.client.get(
-            "/dashboard",
-            headers={
-                "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148"
-            },
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("text/html", response.headers["content-type"])
-        self.assertIn("Deal Checker", response.text)
+    def test_dashboard_route_serves_mobile_app_for_mobile_user_agents(self):
+        phone = {"user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) Mobile/15E148"}
+        for path in ("/", "/dashboard"):
+            response = self.client.get(path, headers=phone)
+            self.assertEqual(response.status_code, 200, path)
+            self.assertIn("text/html", response.headers["content-type"])
+            self.assertIn("mobile_app_plan.md", response.text, path)
 
     def test_dashboard_route_serves_full_dashboard_for_desktop_only_tabs_on_mobile(self):
         for tab in ("group_products", "group_signals", "time_to_buy", "browse_species"):
@@ -214,12 +210,15 @@ class ApiRouteTests(unittest.TestCase):
         self.assertNotIn("Charizard ex", response.text)
         self.assertNotIn("Pikachu Felt Hat", response.text)
 
-    def test_mobile_route_serves_mobile_dashboard(self):
+    def test_mobile_route_serves_mobile_app_and_classic_keeps_old_page(self):
+        # Switched 2026-10-31: /mobile is the new app; the old page lives at /mobile-classic.
         response = self.client.get("/mobile")
-
         self.assertEqual(response.status_code, 200)
-        self.assertIn("text/html", response.headers["content-type"])
-        self.assertIn("Deal Checker", response.text)
+        self.assertIn("mobile_app_plan.md", response.text)
+        classic = self.client.get("/mobile-classic")
+        self.assertEqual(classic.status_code, 200)
+        self.assertNotIn("mobile_app_plan.md", classic.text)
+        self.assertIn("Deal Checker", classic.text)
 
     def test_new_mobile_app_preview_opens_on_any_device(self):
         # /m-next is the new mobile app's preview (docs/mobile_app_plan.md); it is not routed

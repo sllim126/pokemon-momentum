@@ -50,20 +50,34 @@ Microsoft 365 (free) adds two CNAMEs and helps order emails reach inboxes. Do it
 | `/shop/booster-box`, `/shop/booster-box/japanese`, `/shop/booster-pack` | Category pages | Category tree: `docs/store_category_tree_proposal.md` |
 | `/shop/p/<slug>` | Product pages | e.g. `/shop/p/abyss-eye-booster-box`, `/shop/p/ninja-spinner-booster-box`, `/shop/p/perfect-order-art-set-4` |
 | `/browse-by-set` | Browse by set | |
-| `/resources` | Resources | |
+| `/resources`, `/resources/<slug>` | Resources (blog) | 10 posts, 2025-12-15 to 2026-03-19, with categories and tags (`/resources/category/...`, `/resources/tag/...`). Now `/articles` on the new store; every old address redirects |
 | `/about` | About / mission | |
 | `/faq-1` | FAQs | |
-| `/cancellation` | Cancellations | |
-| `/new-page` | Terms & Conditions | Placeholder-looking address |
+| `/cancellation` | Return and cancellation policy | No returns; damaged or wrong items made right by email; cancellation before shipping costs a 6% fee (covers card processing). D8 replaces the no-returns rule |
+| `/new-page` | Terms & Conditions | Placeholder-looking address. Effective 2026-04-07; also covers market.poke6s.com |
+| `/new-page-1` | Reviews | Squarespace template testimonials ("Former Customer"), not real reviews. Not carried over |
+| `/pre-order-interest` | Pre-order interest | Heading and two images only |
+| `/home` | Copy of the home page | |
 | `/privacy-policy` | Privacy policy | |
 | `/contact` | Contact form | No email or phone shown |
 | `/newsletter-signup` | "Notify Me" email signup | Showed a storage-configuration message on 2026-10-31, so it may not be saving signups |
 | `/cart` | Cart | Squarespace checkout |
 
-There's no shipping or returns policy page, no blog, and no social links. The header links out to
+There's no shipping policy page and no social links. The header links out to
 **Shop on TCGplayer** (`https://poke6s.tcgplayerpro.com/`) and **Market**
 (`https://market.poke6s.com`). Footer: FAQs, Cancellations, Contact Us, Terms & Conditions,
 Privacy Policy, newsletter signup, "©2025 Poke6s LLC".
+
+## Saved copy of the site (2026-10-31)
+
+All public page text, the 10 blog posts and every image (pages, posts and the 238 product photo
+addresses in the export) were saved from the live site on 2026-10-31 by
+`storefront/tools/archive_squarespace_site.py`. The copy is kept with the owner's business
+records, outside this repo (it holds the products, orders and customer exports alongside). Each
+page and post is in Markdown and as served, plus the original images. The owner expects no site
+changes before the plan ends apart from the daily price sync, so no second copy is planned. One image was already broken on Squarespace (the Ninja Spinner
+banner in the 2026-02-09 post, missing from Squarespace's image store); the owner's original
+file was put into the saved copy and the new article instead.
 
 ## Catalog (export of 2026-10-09)
 

@@ -13,6 +13,7 @@ crontab changes). Each job is explained further down in this file.
 | When | Job | How it runs | Log |
 | --- | --- | --- | --- |
 | Daily 02:00 | Nightly market update: TCGCSV prices, metadata, snapshots, parquet, PriceCharting, indexes; restarts the app; Discord summary | `pokemon-momentum-daily-update.timer` | `logs/daily_update.log` |
+| Daily 03:00 | Storefront market prices (`data/storefront/market_reference.json`, read by the new shop's product pages) | cron: `scripts/build_storefront_market_reference.py` | `logs/storefront_market_reference.log` |
 | Daily 03:30 | Other games price archive (collect only) | `pokemon-momentum-tcgcsv-collect.timer` | see "Other games archive" |
 | Daily 04:30 | Placeholder Library sync (new Mega-era sets and promos) | cron: `scripts/utilities/sync_placeholder_library.py` | `logs/placeholder_sync.log` |
 | Daily 09:15 | Squarespace price sync (reaches the live store) | cron: `scripts/run_squarespace_price_sync.sh` | `logs/squarespace_price_sync_cron.log` |
@@ -227,11 +228,17 @@ The replacement for Squarespace runs in its own container, `poke6s-storefront`, 
 
 - Start or restart: `docker-compose up -d storefront` / `docker-compose restart storefront`.
 - Health: `curl -s localhost:8010/healthz` (visible products, schema version, market date).
-- Refresh market prices on product pages (manual for now; not in cron yet):
+- Market prices on product pages refresh daily at 03:00 UTC (cron, approved by the owner
+  2026-10-31). By hand:
   `docker-compose exec -T pokemon-momentum python scripts/build_storefront_market_reference.py`
 - Reload products from the newest Squarespace export (preview with `--dry-run` first):
   `docker-compose exec -T storefront python -m storefront.app.importer --fetch-images`
 - Tests: `make test-storefront`.
+- Copy of the old Squarespace site (pages, blog posts, images), saved 2026-10-31 (host, not
+  container; output goes outside the repo):
+  `python3 storefront/tools/archive_squarespace_site.py --out <folder> --products-csv <export>`.
+- Articles: Markdown files in `storefront/content/articles/`; restart the container after
+  adding or editing one. How to write one: `storefront/README.md` "Articles".
 - Data (never committed): `data/storefront/` holds `store.db`, `images/` and
   `market_reference.json`. Backups arrive in Phase 3.
 

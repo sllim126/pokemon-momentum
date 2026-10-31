@@ -1,7 +1,8 @@
 """Search-engine and social-sharing helpers: JSON-LD, sitemap, robots.
 
 Structured data follows schema.org as Google documents it for merchant listings: Product with
-an Offer (price, currency, availability, condition), BreadcrumbList, and Organization.
+an Offer (price, currency, availability, condition), BreadcrumbList, and Organization; articles
+get BlogPosting.
 """
 
 from __future__ import annotations
@@ -69,6 +70,41 @@ def breadcrumbs_jsonld(settings: Settings, crumbs: list[tuple[str, str]]) -> dic
     }
 
 
+def article_jsonld(settings: Settings, article) -> dict:
+    """BlogPosting for one article (articles.Article)."""
+    data = {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": article.title,
+        "url": f"{settings.base_url}/articles/{article.slug}",
+        "mainEntityOfPage": f"{settings.base_url}/articles/{article.slug}",
+        "image": [image_url(settings, article.cover)],
+        "publisher": {"@type": "Organization", "name": "Poke6s",
+                      "logo": {"@type": "ImageObject", "url": f"{settings.base_url}/static/img/logo.png"}},
+    }
+    if article.date:
+        data["datePublished"] = article.date
+    if article.author:
+        data["author"] = {"@type": "Person", "name": article.author}
+    if article.description:
+        data["description"] = article.description
+    if article.tags:
+        data["keywords"] = ", ".join(article.tags)
+    return data
+
+
+# Poke6s community and social accounts, shown in the footer and listed as the shop's other
+# profiles (Organization "sameAs"), which helps search engines connect them to the shop.
+SOCIAL_LINKS = (
+    ("Discord", "https://discord.gg/AejcWHkCG"),
+    ("YouTube", "https://www.youtube.com/@Poke6s_TCG"),
+    ("Instagram", "https://www.instagram.com/poke6s/"),
+    ("Facebook", "https://www.facebook.com/poke6s/"),
+    ("X", "https://x.com/poke6s"),
+    ("Reddit", "https://reddit.com/u/poke6s"),
+)
+
+
 def organization_jsonld(settings: Settings) -> dict:
     return {
         "@context": "https://schema.org",
@@ -78,7 +114,7 @@ def organization_jsonld(settings: Settings) -> dict:
         "url": settings.base_url + "/",
         "logo": f"{settings.base_url}/static/img/logo.png",
         "email": settings.contact_email,
-        "sameAs": [settings.market_base_url, settings.tcgplayer_store_url],
+        "sameAs": [settings.market_base_url, settings.tcgplayer_store_url] + [url for _name, url in SOCIAL_LINKS],
     }
 
 
@@ -88,8 +124,11 @@ def dump(data: dict) -> str:
     return json.dumps(data, ensure_ascii=False).replace("<", "\\u003c")
 
 
-def sitemap_xml(settings: Settings, entries: dict, page_slugs: list[str]) -> str:
+def sitemap_xml(settings: Settings, entries: dict, page_slugs: list[str], articles=()) -> str:
     urls: list[tuple[str, str | None]] = [("/", None), ("/shop", None), ("/sets", None)]
+    if articles:
+        urls.append(("/articles", None))
+        urls += [(f"/articles/{a.slug}", a.date or None) for a in articles]
     urls += [(f"/c/{c['slug']}", None) for c in entries["categories"]]
     urls += [(f"/sets/{s['slug']}", None) for s in entries["sets"]]
     urls += [(f"/p/{p['slug']}", p["updated_at"][:10]) for p in entries["products"]]

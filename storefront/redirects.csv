@@ -1,6 +1,7 @@
 # Old poke6s.com (Squarespace) addresses -> new storefront addresses, answered with a 301.
 # Product pages (/shop/p/<slug>) are not listed here: the importer records them in the
-# database (product_redirects). See storefront/app/redirects.py. Lines starting with # are notes.
+# database (product_redirects); old blog addresses (/resources/...) are answered from the
+# articles (storefront/app/articles.py). See storefront/app/redirects.py. Lines starting with # are notes.
 old_path,new_path
 /shop-1,/shop
 /shop/booster-box,/c/booster-boxes
@@ -26,7 +27,6 @@ old_path,new_path
 /shop/sword-shield,/sets
 /shop/sword-shield/crown-zenith,/sets/crown-zenith
 /browse-by-set,/sets
-/resources,/about
 /faq-1,/faq
 /cancellation,/returns
 /new-page,/terms
@@ -34,3 +34,5 @@ old_path,new_path
 /newsletter-signup,/
 /cart,/shop
 /home,/
+/new-page-1,/about
+/pre-order-interest,/contact

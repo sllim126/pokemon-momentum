@@ -83,7 +83,6 @@
     @media (min-width: 700px) { .account-btn { width: auto; display: flex; gap: 6px; padding: 0 12px; } .account-btn span { display: inline; } }
     .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); font-weight: 700; flex: 0 0 auto; }
     .brand img { width: 28px; height: 28px; }
-    .brand .preview { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--warn); border: 1px solid rgba(245, 185, 74, 0.4); border-radius: 6px; padding: 1px 5px; }
     .search { position: relative; flex: 1 1 auto; min-width: 0; }
     .search input {
       width: 100%;
@@ -412,7 +411,7 @@
     <button type="button" class="icon-btn" id="menuBtn" aria-label="Open menu" aria-controls="menu" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
     </button>
-    <a class="brand" href="/m-next" id="brandLink"><img src="/images/Favidon.png" alt="" /><span class="name">Poke6s</span><span class="preview">Preview</span></a>
+    <a class="brand" href="/" id="brandLink"><img src="/images/Favidon.png" alt="" /><span class="name">Poke6s</span></a>
     <div class="search">
       <input id="searchInput" type="search" placeholder="Search cards, sets, numbers" autocomplete="off" enterkeyhint="search" aria-label="Search" />
       <div class="search-results" id="searchResults" hidden></div>
@@ -572,7 +571,8 @@
       market: params.get("market") === "JP" ? "JP" : "EN",
       kind: params.get("kind") === "sealed" ? "sealed" : "singles",
       // "check" is the home screen (Check a card); the rest are LISTS keys.
-      list: LISTS.some((l) => l.key === params.get("list")) ? params.get("list") : "check",
+      // Old phone-page links used ?tab= with the same keys (e.g. /mobile?tab=top_movers).
+      list: LISTS.some((l) => l.key === (params.get("list") || params.get("tab"))) ? (params.get("list") || params.get("tab")) : "check",
       mode: readStore(MODE_KEY, "keep") === "resell" ? "resell" : "keep",
       productKey: params.get("product"),  // card to open once the list loads
       selected: null,
@@ -823,7 +823,7 @@
       nodes.push(el("h4", { text: "Help" }),
         el("a", { href: "https://discord.gg/AejcWHkCG", target: "_blank", rel: "noopener" }, el("span", { text: "Feedback & bug reports (Discord)" }), el("span", { text: "↗" })));
       nodes.push(el("h4", { text: "Not built yet" }),
-        el("a", { href: "/mobile", class: "old" }, el("span", { text: "Sets, Pokémon, My lists… on the old phone page" }), el("span", { text: "↗" })));
+        el("a", { href: "/mobile-classic", class: "old" }, el("span", { text: "Sets, Pokémon, My lists… on the old phone page" }), el("span", { text: "↗" })));
       $("menu").replaceChildren(...nodes);
     }
     // Card counts next to each list, loaded in the background (shares the list cache).

@@ -23,6 +23,9 @@ services:
   storefront:
     build: ./storefront
     container_name: poke6s-storefront
+    # Run as the host user, so the database, photos and article files the store and its
+    # importers write stay owned by (and editable for) the owner, not root.
+    user: "${STOREFRONT_UID:-1000}:${STOREFRONT_GID:-1000}"
     working_dir: /app
     command: python -m uvicorn storefront.app.main:app --host 0.0.0.0 --port 8010
     environment:

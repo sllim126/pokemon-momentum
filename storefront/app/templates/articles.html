@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_article_card.html" import article_card %}
+{% block content %}
+<div class="list-head">
+  <div>
+    <h1>{{ heading }}</h1>
+    <p class="muted">{{ items | length }} article{{ '' if items | length == 1 else 's' }}{% if category or tag %} · <a href="/articles">Show all</a>{% endif %}</p>
+  </div>
+</div>
+{% if categories %}
+<nav class="filters article-filters" aria-label="Article categories">
+  <ul>
+    <li><a href="/articles" {% if not category and not tag %}aria-current="page"{% endif %}>All</a></li>
+    {% for name, n in categories %}<li><a href="/articles?category={{ name | urlencode }}" {% if category | lower == name | lower %}aria-current="page"{% endif %}>{{ name }} <span class="muted">{{ n }}</span></a></li>{% endfor %}
+  </ul>
+</nav>
+{% endif %}
+{% if items %}
+<ul class="article-grid">{% for a in items %}{{ article_card(a, loop.index <= 3) }}{% endfor %}</ul>
+{% else %}
+<div class="empty"><p>No articles here yet.</p><p><a class="btn" href="/articles">All articles</a></p></div>
+{% endif %}
+{% endblock %}

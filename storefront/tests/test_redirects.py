@@ -37,7 +37,8 @@ def test_shop_tag_links(client):
 
 def test_every_csv_target_is_a_real_route():
     """Each redirect target must start with one of the app's address patterns."""
-    prefixes = ("/shop", "/c/", "/sets", "/p/", "/faq", "/terms", "/returns", "/privacy", "/about")
+    prefixes = ("/shop", "/c/", "/sets", "/p/", "/faq", "/terms", "/returns", "/privacy", "/about",
+                "/contact", "/shipping")
     for old, new in redirects.load().items():
         assert new == "/" or new.startswith(prefixes), (old, new)
         assert redirects.normalize(old) == old

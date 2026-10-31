@@ -1,6 +1,6 @@
 # Site routes
 
-Last reviewed: 2026-10-25
+Last reviewed: 2026-10-31
 
 Every route served by `scripts/dashboards/api.py` (FastAPI, port 8001 in the container,
 public at market.poke6s.com). `tests/test_api_routes.py::test_every_route_is_in_the_route_reference`
@@ -15,12 +15,13 @@ or the `pm_tracking_token` cookie); **admin** = signed in with an address listed
 
 | Route | Page file | Access | What it is |
 | --- | --- | --- | --- |
-| `/` | `desktop_home.html` (desktop), `mobile_dashboard.html` (phones/tablets) | public | Home. Desktop app guide: `docs/desktop_app.md` |
-| `/dashboard`, `/dashboard-classic`, `/dashboard-dev` | `dashboard.html` | public | Older research dashboard; desktop visitors are forwarded to `/` (see `docs/desktop_app.md`); phones still use it for Browse Set, Browse Pokémon and Set Strength |
+| `/` | `desktop_home.html` (desktop), `mobile_app.html` (phones/tablets) | public | Home. Desktop app guide: `docs/desktop_app.md` |
+| `/dashboard`, `/dashboard-classic`, `/dashboard-dev` | `dashboard.html` | public | Older research dashboard; desktop visitors are forwarded to `/` (see `docs/desktop_app.md`); phones get the mobile app, except old Browse Set, Browse Pokémon and Set Strength links, which still open it |
 | `/buy`, `/discover`, `/research`, `/track`, `/learn` | `area_hub.html` | public | Landing page for each area (registered in a loop in `api.py`); desktop visitors are forwarded to the matching app view |
 | `/home-preview` | | public | Former preview address of the desktop app; forwards to `/` |
-| `/mobile` | `mobile_dashboard.html` | public | Current phone site. **Frozen**: no changes without the owner's go-ahead |
-| `/m-next` | `mobile_app.html` | public | New mobile app being built to replace `/mobile` (`docs/mobile_app_plan.md`) |
+| `/mobile` | `mobile_app.html` | public | The mobile app (switched on early by the owner, 2026-10-31; `docs/mobile_app_plan.md`) |
+| `/mobile-classic` | `mobile_dashboard.html` | public | The old phone page, kept a few weeks after the switch, then deleted |
+| `/m-next` | `mobile_app.html` | public | The mobile app's address while it was built; kept for links and review notes |
 | `/mobile-rebuild` | `mobile_rebuild_mockup.html` | public | Old mobile concept page, linked from Admin only |
 | `/dashboard-lab` | `dashboard_lab.html` | public | Experimental dashboard, linked from Admin only |
 | `/collector-hub` | `collector_hub.html` | public | Collector resources (Learn) |
