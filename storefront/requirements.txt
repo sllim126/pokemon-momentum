@@ -1,0 +1,11 @@
+# Storefront service (poke6s.com). Kept separate from the market app's requirements so the
+# shop's image stays small and can move to another machine on its own.
+fastapi
+uvicorn
+jinja2
+markdown-it-py
+pillow
+requests
+python-multipart
+pytest
+httpx

@@ -14,10 +14,12 @@ def card(pid, group, price, high, sma7, roc30, roc365=20.0, changes=8, rarity="U
 
 
 class PullbackRulesTests(unittest.TestCase):
-    def run_rules(self, rows):
+    def run_rules(self, rows, category_id=3):
         con = duckdb.connect()
-        con.execute(f"CREATE TABLE snap AS SELECT * FROM (VALUES {', '.join(map(str, rows))}) t({COLUMNS})")
-        result = con.execute(f"SELECT productId, pullback_kind FROM ({build_pullback_sql('snap')}) ORDER BY productId").fetchall()
+        values = ", ".join("(" + ", ".join("NULL" if v is None else repr(v) for v in row) + ")" for row in rows)
+        con.execute(f"CREATE TABLE snap AS SELECT * FROM (VALUES {values}) t({COLUMNS})")
+        sql = build_pullback_sql('snap', category_id=category_id)
+        result = con.execute(f"SELECT productId, pullback_kind FROM ({sql}) ORDER BY productId").fetchall()
         return dict(result)
 
     def test_rules(self):
@@ -42,6 +44,17 @@ class PullbackRulesTests(unittest.TestCase):
         # Set 2's cards are 25% off their highs and behind the price band, but so is their set.
         self.assertEqual({kinds.get(200 + i) for i in range(6)}, {"set"})
         self.assertFalse(any(100 + i in kinds for i in range(20)))
+
+    def test_new_cards_and_japanese_bar(self):
+        steady = [card(100 + i, 1, 30.0, 30.0, 30.0, 0.0) for i in range(20)]
+        rows = steady + [
+            card(1, 1, 30.0, 40.0, 30.0, -20.0, roc365=None),  # under a year old: skips the yearly test
+            card(2, 1, 30.0, 40.0, 30.0, -20.0, changes=3),  # 3 price changes: Japanese bar only
+        ]
+        english = self.run_rules(rows)
+        self.assertEqual(english.get(1), "own")
+        self.assertNotIn(2, english)
+        self.assertEqual(self.run_rules(rows, category_id=85).get(2), "own")
 
 
 if __name__ == "__main__":

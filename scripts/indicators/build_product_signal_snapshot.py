@@ -389,6 +389,18 @@ prior_365 AS (
     )
     WHERE rn = 1
 ),
+prior_release AS (
+    -- First observation on or after the set's release date, used for "up since release" on
+    -- cards without a year of history (Pullbacks fall back to it when roc_365d_pct is NULL).
+    -- Starting at release skips the pre-sale prices, which usually crash at release.
+    SELECT b.groupId, b.productId, b.subTypeName,
+           arg_min(b.price, b.date) AS price_release
+    FROM base b
+    LEFT JOIN {category.groups_table} g ON g.groupId = b.groupId
+    WHERE g.publishedOn IS NULL
+       OR b.date >= CAST(CAST(g.publishedOn AS TIMESTAMP) AS DATE)
+    GROUP BY b.groupId, b.productId, b.subTypeName
+),
 enriched AS (
     -- Join in metadata and classify each product so downstream screens can split
     -- cards vs sealed vs MCAP without repeating this logic in the API.
@@ -411,6 +423,7 @@ enriched AS (
         p30.price_30d,
         p90.price_90d,
         p365.price_365d,
+        pr.price_release,
         ss.latest_sma3,
         ss.latest_sma7,
         ss.latest_sma30,
@@ -450,6 +463,10 @@ enriched AS (
       ON p365.groupId = l.groupId
      AND p365.productId = l.productId
      AND p365.subTypeName = l.subTypeName
+    LEFT JOIN prior_release pr
+      ON pr.groupId = l.groupId
+     AND pr.productId = l.productId
+     AND pr.subTypeName = l.subTypeName
     LEFT JOIN top_mover_activity tma
       ON tma.groupId = l.groupId
      AND tma.productId = l.productId
@@ -509,6 +526,8 @@ SELECT
     price_365d,
     CASE WHEN price_365d IS NULL OR price_365d = 0 THEN NULL
          ELSE ((latest_price / price_365d) - 1) * 100 END AS roc_365d_pct,
+    CASE WHEN price_release IS NULL OR price_release = 0 THEN NULL
+         ELSE ((latest_price / price_release) - 1) * 100 END AS roc_since_release_pct,
     top_mover_signal_days,
     top_mover_observed_changes,
     top_mover_recent_observations,

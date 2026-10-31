@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-25 (handover review; last milestone 2026-10-23)
+Last updated: 2026-10-31 (milestone: storefront-phase1)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -31,6 +31,9 @@ Current Focus (2026-10-25)
 - Mobile: a new mobile app is being built at `/m-next` (owner, 2026-10-21; plan, decisions and
   inventory in `docs/mobile_app_plan.md`; work items under "New mobile app" below). The old
   `/mobile` page stays frozen until the switch. Admin pages stay parked.
+- Storefront: our own store on poke6s.com replaces Squarespace (plan ends 2026-11-14). Plan,
+  phases and progress log: `docs/storefront_plan.md`. Phase 1 running locally (2026-10-31);
+  online changes (Cloudflare, DNS) paused by the owner.
 - Bug reports go to the Discord `#bug-reports` channel. New pages get no on-site bug form.
 - Dates: Pokémon Black Friday on TCGplayer ~Nov 25 - Dec 1; new mobile app switch Nov 10
   (steps 1.2-1.5 done by about Nov 3).
@@ -39,6 +42,39 @@ Current Focus (2026-10-25)
 
 Recently Completed
 ------------------
+
+- 2026-10-31 Storefront Phase 1 running locally (branch `storefront/phase1-catalog`): separate
+  `storefront` container on port 8010 (LAN only, search engines blocked), SQLite catalog with
+  migrations, importer from the Squarespace export (94 products, 30 visible, 151 photos copied
+  as WebP), shop/search/category/set/product pages with our market price and 30-day trend,
+  sitemap, JSON-LD, 301 redirects from old Squarespace addresses, draft policy pages; 46 tests.
+  Guide: `storefront/README.md`. Owner checks still open under "Own storefront" below.
+- 2026-10-31 Storefront plan written and reviewed with the owner (D1, D3-D9 decided; D2 after the
+  2026-11-02 Utah call); current Squarespace site and DNS records documented in
+  `docs/storefront_current_site.md`.
+- 2026-10-29 `/m-next` owner feedback: (1) a "Sign in" button at the right of the top bar (icon
+  only on phones; "Account" once signed in) and Account → "Sign in / account" in the menu, which
+  opens /account-settings and returns to /m-next after Google sign-in (`?return=`, same-site
+  paths only), so the owner's Note tab can appear; (2) "Pay up to" is replaced by counter-offers
+  at 95/90/85/80/75/70% of the asking price, each with its dollar amount and rating (vs market to
+  keep, profit after fees to resell; vs the 30-day average on a spike). The verdict box stays
+  hidden until a price is typed.
+- 2026-10-29 Owner decisions: (1) Pullbacks and Whole-set Dips include cards under a year old:
+  they skip the "up over the year" test and must pass the rest (+13 English cards today: 1
+  Pullback, 12 Whole-set Dips). "Up since release" was tried first and let in 1 card, because
+  most new cards sit below their release price; the snapshot now has `roc_since_release_pct`
+  (first price on or after the set's release) for showing it later. (2) Graded tab: "Ungraded"
+  is our TCGplayer market price, PriceCharting's ungraded price moved to the note. (3) Deleted
+  `data/processed/tracking.sqlite3.bak-2026-10-13` (old sign-in database backup).
+  (4) Japanese Pullbacks need 3 price changes in 30 days instead of 6
+  (PULLBACK_MIN_PRICE_CHANGES_30D_JP; Japanese cards change price far less often): 4 -> 8
+  Japanese Pullbacks today; Japanese Whole-set Dips stay empty (other rules).
+
+- 2026-10-28 Research > Sets: a 90-day trend line per set replaces the Strength column (still a
+  sort; `/group_sparklines`, one cached call for every set), and every set page shows the set's
+  value chart starting at its release date (`/group_series?since_release=true`), not only sets
+  opened from Market Stats. Breadth numbers sit beside their bars; under 1400 px the Items
+  column hides and set names wrap.
 
 - 2026-10-25 Handover review for Codex or any other agent: `docs/api_routes.md` lists every
   server route (a test fails when a new route isn't in it); the runbook opens with the whole
@@ -65,24 +101,41 @@ Recently Completed
 
 - 2026-10-23 How it works (the header's Learn) credits TCGCSV with a support link
   (cpt.tcgcsv.com) and no longer shows an empty card column.
-- 2026-10-22 Desktop app on iPad-portrait widths (<1100 px): the list menu folds into a
-  "☰ Lists" button, card names wrap, the toolbar and card buttons make room.
-- 2026-10-22 New mobile app preview at /m-next leads with "Check a card" and the Deal Checker
-  (owner's feedback: the first version didn't answer "is this a good buy?").
-- 2026-10-21 Binder planners on phones: KPDH and ATLA put the cards near the top with a
-  sideways page strip and a "Swipe for more pages" hint; ATLA offers 6x6/4x4/4x3/3x3 pages.
-- 2026-10-21 Market Stats > Set values: the top-hit card opens in the side pane; browser Back
-  closes the full card page instead of leaving the site.
-- 2026-10-21 Small Dips list (`/small_dips`, Discover > Dipped): cards up 15%+ over 90 days and
-  over the year, still above their 90-day average, now 3-12% below their 90-day high, near their
-  30-day average and down this week (20 English cards on the first day). Rules: SMALL_DIP_* in
-  api.py. Also: clicking back into the desktop search box reopens its results.
-- 2026-10-21 Confirmed Movers and Consistent Movers show how many days each card has been in
-  the list again (bullish streak / days above the 30-day average, with the start date on
-  hover) and can sort by it.
 
 High Priority
 -------------
+
+Own storefront on poke6s.com, replacing Squarespace (owner, 2026-10-31). Plan, costs, phases
+and open decisions: `docs/storefront_plan.md` (progress log at its end). What the Squarespace
+site has today: `docs/storefront_current_site.md`. Our own site, hosted on the owner's server
+behind Cloudflare Tunnel; Stripe hosted Checkout (approved by the owner 2026-10-31). The
+Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
+- [next] Owner, before 2026-11-14: Squarespace exports (products, customers, subscribers,
+  page text, images) and auto-renew off; domain forwarding stopgap (plan decision D5).
+- [waiting] Plan decision D2 (sales tax method) after the 2026-11-02 Utah call; D3 shipping
+  amounts from the owner's Pirate Ship costs. D1, D4-D9 decided 2026-10-31.
+- [parked] Phase 0 (owner + Claude), paused by the owner 2026-10-31 (no online changes for
+  now): Cloudflare DNS move (copy the Microsoft 365 mail records
+  exactly), Tunnel (replaces the home-IP item below), Stripe test account.
+- [in progress] Phase 1: catalog site, local only (Claude, 2026-10-31, branch
+  `storefront/phase1-catalog`; guide `storefront/README.md`). Built and running on port 8010:
+  importer, shop/search/category/set/product pages, market price + trend, SEO, redirects,
+  draft policy pages, 46 tests. Cloudflare and other online changes paused by the owner.
+  Left before calling it done:
+  - [waiting] Owner: browse `http://<server>:8010` on a phone on the home network.
+  - [waiting] Owner: review the draft pages in `storefront/content/pages/` (fill in the
+    handling time in Shipping; confirm the tax-record years in Privacy), then remove `draft: true`.
+  - [waiting] Owner OK to add `scripts/build_storefront_market_reference.py` to the daily job
+    (cron change); run by hand until then.
+  - [planned] Re-run the importer (with --fetch-images) on the final Squarespace export
+    before 2026-11-14.
+  - [idea] JP products without a TCGplayer mapping (e.g. JP-AE-BB) show no market price;
+    add them to `data/squarespace_tcgplayer_mapping.csv`.
+- [next] Phase 2: cart + Stripe Checkout (test mode only), orders, webhooks, reconciliation.
+  Phase 3: LAN-only admin, exports (Pirate Ship, sales tax, bookkeeping, TCGplayer
+  reconciliation), backups.
+- [planned] After launch: retire `scripts/squarespace_price_sync.py` from cron
+  (`deploy/crontab.txt`) and switch the market site's "Poke6s" buy button to the new store.
 
 New mobile app (owner, 2026-10-21). Plan: `docs/mobile_app_plan.md`. Built at `/m-next`
 (`scripts/dashboards/mobile_app.html`) next to the old `/mobile`, in the desktop app's look,
@@ -139,22 +192,13 @@ screens, 3 refine, 4 camera/OCR.
   matches to pick from. Image matching against the cached card images is a later step if OCR
   isn't reliable enough. Camera access needs HTTPS (the site has it) and a photo-upload
   fallback.
-- [waiting] Owner: a lower bar for Japanese Pullbacks? The Japanese lists are empty because a
-  typical Japanese premium card changes price about once a month and the rules need 6 price
-  changes in 30 days (PULLBACK_* in `query_support.py`).
 - [planned] Mid-November: recheck the Pullbacks numbers once the feed has a full month
   without gaps.
-- [waiting] Owner: should Pullbacks and Whole-set Dips include cards under a year old? "Up over
-  the year" needs a year of prices, so every Ascended Heroes, Phantasmal Flames, Perfect
-  Order, Chaos Rising and Pitch Black card is left out (85 cards that the old rules listed,
-  e.g. Mega Gengar ex 284/217, -46% from its high). Option: use "up since release" for them.
 - [idea] Save each list's cards every night (a small table), so the next rule change can be
   judged on how the listed cards actually moved, not just on today's data.
 - [planned] Speed follow-ups: Sealed Deals takes ~0.5 s (it works out pack prices for every
   sealed product per request; could be a nightly snapshot), Set Strength ~0.12 s, and Under
   the Radar ~3 s while the feed is short after the data gap (ends on its own).
-- [waiting] Delete `data/processed/tracking.sqlite3.bak-2026-10-13` (the sign-in database
-  before tokens were hashed) once the owner is happy that sign-ins work.
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
@@ -249,14 +293,10 @@ screens, 3 refine, 4 camera/OCR.
   exist. They would need their own rarity rules, set eras, sealed product types and
   screener tuning; PriceCharting graded prices would need a separate download and permission.
 
-- [waiting] Graded tab: which "ungraded" price to show (owner, 2026-10-12). The Graded tab
-  shows PriceCharting's ungraded price next to the PSA grades, while the rest of the card
-  uses the TCGplayer market price (via TCGCSV), and the two can disagree a lot. Example:
-  Pikachu, EX Power Keepers: TCGplayer 429.99 vs PriceCharting ungraded 100.81. Options:
-  (a) show our TCGplayer price as "Ungraded" in the Graded tab, (b) keep PriceCharting's
-  and label it clearly ("Ungraded (PriceCharting)"), or (c) show both with sources. Also
-  check whether the gap is a matching error (wrong printing or variant) before deciding.
-  Code: Graded tab in `scripts/dashboards/desktop_home.html`, `/graded_prices` in `api.py`.
+- [planned] Graded tab follow-up: where TCGplayer and PriceCharting's ungraded prices are far
+  apart (Pikachu, EX Power Keepers: TCGplayer 429.99 vs PriceCharting 100.81), check whether
+  it's a matching error (wrong printing or variant) in `/graded_prices`. The phone app's Graded
+  view (step 1.2) uses the same layout: TCGplayer first, PriceCharting in the note.
 
 - [planned] Graded vs raw history chart (owner, 2026-10-12: "NO ONE is doing that now").
   One chart per card comparing the raw TCGplayer price trend with graded trends (PSA 10,
@@ -541,6 +581,16 @@ Needs Decisions
 
 Future Ideas
 ------------
+
+- [planned] Review CollectiKit (collectikit.ai; iOS, Android and web), a free collector app
+  its maker shared on r/PokemonTCG (2026-10-28). The owner promised its maker a thorough review.
+  Features it claims: "K2" chat assistant (text or voice) that explains past and current TCG
+  trends, collection/portfolio tracker, card scanner, Deal-Builder, custom and normal master-set
+  tracking, social feed, vendor analytics ("Vendor Hub") and a map of US Pokémon vending
+  machines. Look at: how its scanner and deal tools compare with our Deal Checker and the
+  planned card scanning; how it tracks a collection (we have saved lists only); master-set
+  tracking (see the master set guide idea below); where its prices come from and how it
+  explains trends. Note what's worth borrowing, and send the maker honest feedback.
 
 Learn and collector tools (owner, 2026-10-23; "nothing tonight"):
 

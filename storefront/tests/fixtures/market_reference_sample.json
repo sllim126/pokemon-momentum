@@ -1,0 +1,7 @@
+{"generated_at": "2026-10-31T09:00:00Z", "latest_date": "2026-10-30", "source": "test",
+ "products": {
+  "630431": {"market": "EN", "name": "Black Bolt Booster Bundle", "group_name": "SV: Black Bolt", "number": "", "sub_type": "Normal", "kind": "sealed", "price": 100.0, "roc_30d_pct": 4.2, "url": "https://market.poke6s.com/?kind=sealed&product=630431%7C%7CNormal"},
+  "900001": {"market": "JP", "name": "Abyss Eye Booster Box", "group_name": "M5: Abyss Eye", "number": "", "sub_type": "Normal", "kind": "sealed", "price": 80.0, "roc_30d_pct": -2.0, "url": "https://market.poke6s.com/?market=JP&kind=sealed&product=900001%7C%7CNormal"},
+  "688965": {"market": "EN", "name": "Tin A", "group_name": "Miscellaneous Cards & Products", "number": "", "sub_type": "Normal", "kind": "sealed", "price": 20.0, "roc_30d_pct": 0.0, "url": "https://market.poke6s.com/?kind=sealed&product=688965%7C%7CNormal"},
+  "688966": {"market": "EN", "name": "Tin B", "group_name": "Miscellaneous Cards & Products", "number": "", "sub_type": "Normal", "kind": "sealed", "price": 30.0, "roc_30d_pct": 2.0, "url": "https://market.poke6s.com/?kind=sealed&product=688966%7C%7CNormal"}
+ }}

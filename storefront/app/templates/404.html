@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="empty">
+  <h1>Page not found</h1>
+  <p>That page isn't here. It may have moved when we left our old shop.</p>
+  <form action="/shop" method="get" class="search inline">
+    <label class="sr-only" for="nf-search">Search products</label>
+    <input id="nf-search" type="search" name="q" placeholder="Search products">
+    <button class="btn primary" type="submit">Search</button>
+  </form>
+  <p><a class="btn" href="/shop">Shop all</a> <a class="btn" href="/">Home</a></p>
+</section>
+{% endblock %}

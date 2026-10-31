@@ -63,7 +63,7 @@ Every view is one entry in the `LISTS` array; its fields are documented above th
 | Buy | Budget Builder (`budget`) | `/budget_builder` |
 | Discover | Top Movers, Confirmed Movers, Consistent Movers, Early Movers, Under the Radar, Breakouts, Pullbacks, Small Dips, Whole-set Dips | `/<key>` (for example `/top_movers`; Pullbacks is `/good_buys`, Whole-set Dips `/set_dips`, Small Dips `/small_dips`; rules in `query_support.build_pullback_sql`) |
 | Track | All saved, Buy List, Watchlist, Favorites, Needs Review (`track_*`) | `/tracking/items/resolve`, with tags from browser storage or `/tracking/tags` |
-| Research | Sets (`sets`) → one set (`set`) | `/group_signals` → `/group_products` |
+| Research | Sets (`sets`, with a 90-day trend line per set) → one set (`set`, with the set's value chart since release) | `/group_signals` and `/group_sparklines` → `/group_products` and `/group_series?since_release=true` |
 | Research | Pokémon (`species`) | `/browse_species` |
 | Research | Market Stats → Indexes (`indexes`) → one index (`index`) | `/index-overview-data` |
 | Research | Market Stats → Set values (`set_values`) → one set with its chart | `/set_baskets`, then `/group_products` and `/group_series` |
@@ -85,7 +85,9 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
 ## Rules worth knowing
 
 - **Graded prices must link back.** PriceCharting allows display only if every price links to
-  its PriceCharting product page. The Graded tab hides the link only when no price is shown.
+  its PriceCharting product page. The Graded tab hides the link only when no price is shown. Its "Ungraded" box is our
+  TCGplayer market price (the card's main price); PriceCharting's ungraded price is in the note
+  below it (owner, 2026-10-29).
 - **Sealed pack counts** come from the product name (`_infer_pack_count` in `api.py`) unless
   entered by hand (`_SEALED_PACK_COUNT_OVERRIDES_BY_PRODUCT_ID`,
   `_SEALED_PACK_COMPOSITION_OVERRIDES`); cases multiply their contents (ETB cases via

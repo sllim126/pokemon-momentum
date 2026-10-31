@@ -64,7 +64,8 @@ or the `pm_tracking_token` cookie); **admin** = signed in with an address listed
 | `/groups` | pickers | Sets with active products |
 | `/group_products` | Browse a Set | Every card in one set with prices and signals |
 | `/browse_species` | Browse a Pokémon | Every print of one Pokémon |
-| `/group_signals`, `/group_series` | Set Strength, set charts | Set-level signals and a set's price series |
+| `/group_signals`, `/group_series` | Set Strength, set charts | Set-level signals and a set's price series (`since_release=true` starts at the set's release date) |
+| `/group_sparklines` | Desktop Sets view, 90-day trend column | Every set's 90-day equal-weight index in one call (about 15 points each; sets released inside the window start at release); cached until the next night's prices |
 | `/set_baskets` | Market Stats > Set values | What a set costs and where its value sits |
 | `/series` | every chart | Price history for one product |
 | `/card_details` | desktop card page | Everything the nightly snapshot knows about one printing |

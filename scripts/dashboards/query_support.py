@@ -509,7 +509,11 @@ def build_premium_rarity_filter(column: str = "rarity") -> str:
 # Agreed with the owner 2026-10-17 (trial in docs/todo.txt), live for a trial week. A card is
 # a pullback when it has dropped a real amount from its recent high, the drop has lasted,
 # and it is doing clearly worse than cards in its price band, while it is not collapsing and
-# is still up over the year. Comparing with cards of a similar price (not the Top 151 index)
+# is still up over the year. Cards without a year of prices (sets under a year old) skip the
+# "up over the year" test and only need to pass the rest (owner, 2026-10-29: new cards count
+# too). Requiring "up since release" instead was tried and let in almost none: most new cards
+# are below their release price after the usual post-release drop. roc_since_release_pct is
+# returned so the lists can show it. Comparing with cards of a similar price (not the Top 151 index)
 # matters: the index is high-end cards, and cheap cards would all look "behind" it.
 # A pullback is "own" when the card is also well behind its own set; otherwise the whole set
 # is falling ("set"), which is shown as a separate list. Used by /good_buys, /set_dips and the
@@ -520,11 +524,14 @@ PULLBACK_MIN_SMA7_OFF_HIGH_PCT = 8.0  # the 7-day average too, so a one-day dip 
 PULLBACK_MAX_OFF_HIGH_PCT = 40.0  # further down is a collapse (or bad data), not a dip
 PULLBACK_MIN_BEHIND_PTS = 10.0  # 30-day change at least this many points behind the peers
 PULLBACK_MIN_PRICE_CHANGES_30D = 6  # fixed: not lowered for feed gaps
+# Japanese cards change price far less often (median 1 change in 30 days, English 3), so 6 left
+# the Japanese lists nearly empty. Owner chose 3 on 2026-10-29 (the Deal Checker's "few sales" line).
+PULLBACK_MIN_PRICE_CHANGES_30D_JP = 3
 PULLBACK_MIN_SET_PEERS = 5  # fewer pool cards in a set: too few to judge the set's move
 PULLBACK_PRICE_BANDS = (20, 50, 100, 250)  # band edges in dollars: $5-20, 20-50, ..., 250+
 
 
-def build_pullback_sql(source: str, product_kind: str = "card") -> str:
+def build_pullback_sql(source: str, product_kind: str = "card", category_id: int = 3) -> str:
     """SQL selecting the pullbacks from `source`, a product signal or screener snapshot
     (table or CTE) for one category and day. Returns every source column plus:
 
@@ -534,8 +541,10 @@ def build_pullback_sql(source: str, product_kind: str = "card") -> str:
     pullback_kind                     'own' (behind its set too) or 'set' (the whole set is falling)
 
     The peer medians are taken over the whole pool (premium cards, or sealed products, at
-    PULLBACK_MIN_PRICE and up), before any price filter a caller adds.
+    PULLBACK_MIN_PRICE and up), before any price filter a caller adds. category_id 85
+    (Japanese) uses the lower price-change bar, PULLBACK_MIN_PRICE_CHANGES_30D_JP.
     """
+    min_changes = PULLBACK_MIN_PRICE_CHANGES_30D_JP if category_id == 85 else PULLBACK_MIN_PRICE_CHANGES_30D
     if product_kind == "sealed":
         pool_filter = "productKind = 'sealed'"
     else:
@@ -575,8 +584,8 @@ def build_pullback_sql(source: str, product_kind: str = "card") -> str:
       AND off_high_pct <= {PULLBACK_MAX_OFF_HIGH_PCT}
       AND sma7_off_high_pct >= {PULLBACK_MIN_SMA7_OFF_HIGH_PCT}
       AND vs_band_pts <= -{PULLBACK_MIN_BEHIND_PTS}
-      AND roc_365d_pct > 0
-      AND COALESCE(recent_distinct_prices_30d, 0) >= {PULLBACK_MIN_PRICE_CHANGES_30D}
+      AND (roc_365d_pct > 0 OR roc_365d_pct IS NULL)
+      AND COALESCE(recent_distinct_prices_30d, 0) >= {min_changes}
     """
 
 

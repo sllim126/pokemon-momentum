@@ -742,7 +742,7 @@ PUBLIC_DATA_CACHE_SECONDS = 600
 PUBLIC_DATA_PATHS = frozenset({
     "/health", "/categories", "/universe", "/groups", "/search", "/store_link",
     "/series", "/hold_check", "/graded_prices", "/card_details", "/index-overview-data",
-    "/browse_species", "/group_products", "/group_signals", "/group_series", "/set_baskets",
+    "/browse_species", "/group_products", "/group_signals", "/group_series", "/group_sparklines", "/set_baskets",
     "/product_signals", "/sealed_deals", "/budget_builder",
     "/top_movers", "/confirmed_uptrends", "/sma30_holds", "/early_uptrends",
     "/under_the_radar", "/breakouts", "/good_buys", "/set_dips", "/small_dips", "/time_to_buy",
@@ -5809,8 +5809,8 @@ def budget_builder_recommendations(
 PULLBACK_COLUMNS = """
           latest_date, groupId, groupName, productId, productName, imageUrl, rarity, number,
           productClass, productKind, subTypeName, latest_price, high_90d,
-          roc_7d_pct, roc_30d_pct, roc_90d_pct, roc_365d_pct, recent_distinct_prices_30d,
-          price_vs_sma30_pct, price_vs_sma90_pct, trend_score,
+          roc_7d_pct, roc_30d_pct, roc_90d_pct, roc_365d_pct, roc_since_release_pct,
+          recent_distinct_prices_30d, price_vs_sma30_pct, price_vs_sma90_pct, trend_score,
           off_high_pct, sma7_off_high_pct, band_median_30d_pct, vs_band_pts,
           set_median_30d_pct, vs_set_pts, pullback_kind
 """
@@ -5839,7 +5839,7 @@ def pullback_rows(
     day = f"""(SELECT * FROM {source}
              WHERE categoryId = {category.category_id}
                AND latest_date = (SELECT MAX(latest_date) FROM {source} WHERE categoryId = {category.category_id}))"""
-    pullbacks = build_pullback_sql(day, "sealed" if product_kind == "sealed" else "card")
+    pullbacks = build_pullback_sql(day, "sealed" if product_kind == "sealed" else "card", category.category_id)
     sql = f"""
         SELECT {PULLBACK_COLUMNS}
         FROM ({pullbacks}) pb
@@ -6135,8 +6135,12 @@ def group_signals(limit: int = 500, min_items: int = 5, generation: str | None =
 
 
 @app.get("/group_series")
-def group_series(groupId: int, days: int = 365, category_id: int = 3):
-    """Return a set-level time series so groups can be graphed like individual products."""
+def group_series(groupId: int, days: int = 365, category_id: int = 3, since_release: bool = False):
+    """Return a set-level time series so groups can be graphed like individual products.
+
+    since_release: start no earlier than the set's release date (set_release_dates), so the
+    pre-sale prices that collapse at release don't dominate the chart.
+    """
     days = max(30, min(days, 5000))
     category = category_config(category_id)
     price_source = prices_from(category.category_id)
@@ -6154,6 +6158,10 @@ def group_series(groupId: int, days: int = 365, category_id: int = 3):
         raise HTTPException(status_code=404, detail="No rows for that groupId")
 
     start = latest - timedelta(days=days - 1)
+    if since_release:
+        released = _release_date_of(groupId, category.category_id)
+        if released and start < released <= latest:
+            start = released
     padded_start = start - timedelta(days=35)
 
     series_sql = f"""
@@ -6246,6 +6254,86 @@ def group_series(groupId: int, days: int = 365, category_id: int = 3):
         "category_id": category.category_id,
         "category": category.label,
     }
+
+
+def _release_date_of(group_id: int, category_id: int) -> date | None:
+    """A set's release date from set_release_dates(), or None when unknown."""
+    value = (set_release_dates(category_id).get(int(group_id)) or {}).get("release_date")
+    try:
+        return date.fromisoformat(str(value)[:10]) if value else None
+    except ValueError:
+        return None
+
+
+# Per-day cache for /group_sparklines: {(category_id, days): (latest price date, payload)}.
+_GROUP_SPARKLINE_CACHE: dict[tuple[int, int], tuple[str, dict]] = {}
+
+
+@app.get("/group_sparklines")
+def group_sparklines(days: int = 90, category_id: int = 3):
+    """Every set's recent trend in one call, for the trend column in the desktop app's Sets view.
+
+    Same equal-weight index as /group_series (each item rebased to 100 at its first price in
+    the window, then averaged across the set per day), but for all sets at once and thinned
+    to about 15 points per set. A set released inside the window starts at its release date. Computing it scans every set's prices, so the answer is kept
+    until the next night's prices arrive.
+    """
+    days = max(30, min(days, 365))
+    category = category_config(category_id)
+    price_source = prices_from(category.category_id)
+    _, latest_rows = q(f"SELECT MAX(date) FROM {price_source} WHERE categoryId = {category.category_id}")
+    latest = latest_rows[0][0] if latest_rows else None
+    if latest is None:
+        raise HTTPException(status_code=404, detail="No prices for that category")
+    cache_key = (category.category_id, days)
+    cached = _GROUP_SPARKLINE_CACHE.get(cache_key)
+    if cached and cached[0] == str(latest):
+        return cached[1]
+    start = latest - timedelta(days=days - 1)
+    step = max(1, days // 15)
+    # Sets released inside the window start at their release, not at their pre-sale prices.
+    release_rows = ", ".join(
+        f"({int(gid)}, DATE '{info['release_date'][:10]}')"
+        for gid, info in set_release_dates(category.category_id).items()
+        if info.get("release_date") and re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(info["release_date"])[:10])
+    ) or "(0, DATE '1900-01-01')"
+    _, rows = q(
+        f"""
+        WITH released(groupId, release_date) AS (VALUES {release_rows}),
+        win AS (
+            SELECT p.groupId, p.productId, p.subTypeName, p.date, p.marketPrice AS price
+            FROM {price_source} p
+            LEFT JOIN released r ON r.groupId = p.groupId
+            WHERE p.categoryId = {category.category_id}
+              AND p.marketPrice > 0
+              AND p.date >= GREATEST(DATE '{start}', COALESCE(r.release_date, DATE '{start}'))
+              AND p.date <= DATE '{latest}'
+        ),
+        base AS (
+            SELECT groupId, productId, subTypeName, arg_min(price, date) AS base_price
+            FROM win GROUP BY groupId, productId, subTypeName
+        ),
+        daily AS (
+            SELECT w.groupId, w.date, AVG(w.price / b.base_price * 100.0) AS idx,
+                   MIN(w.date) OVER (PARTITION BY w.groupId) AS first_day
+            FROM win w JOIN base b USING (groupId, productId, subTypeName)
+            GROUP BY w.groupId, w.date
+        )
+        -- Keep the first day (the 100 the change is measured from) and every {step}th day
+        -- counted back from the latest, so the last point is today.
+        SELECT groupId, list(round(idx, 2) ORDER BY date) AS points
+        FROM daily
+        WHERE date = first_day OR (DATE '{latest}' - date) % {step} = 0
+        GROUP BY groupId
+        """
+    )
+    payload = {
+        "latest": str(latest),
+        "days": days,
+        "sets": {str(group_id): points for group_id, points in rows},
+    }
+    _GROUP_SPARKLINE_CACHE[cache_key] = (str(latest), payload)
+    return payload
 
 
 @app.get("/set_baskets")

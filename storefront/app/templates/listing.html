@@ -1,0 +1,56 @@
+{#- Shop, search, category and set pages. Filters are plain links (no JavaScript needed);
+    query_for() builds each link from the current filters. -#}
+{% extends "base.html" %}
+{% from "_macros.html" import product_grid %}
+{% block content %}
+<div class="list-head">
+  <div>
+    <h1>{{ heading }}</h1>
+    {% if intro %}<p class="muted">{{ intro }}</p>{% endif %}
+    <p class="muted small">{{ result.total }} product{{ '' if result.total == 1 else 's' }}</p>
+  </div>
+  <form class="sort" method="get">
+    {% for key in ['q', 'lang', 'type', 'set'] if filters[key] and key not in fixed %}<input type="hidden" name="{{ key }}" value="{{ filters[key] }}">{% endfor %}
+    <label for="sort">Sort</label>
+    <select id="sort" name="sort" data-autosubmit>
+      {% for key, label in sort_labels.items() %}<option value="{{ key }}" {% if filters.sort == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <noscript><button class="btn" type="submit">Apply</button></noscript>
+  </form>
+</div>
+
+<div class="list-body">
+  <aside class="filters" aria-label="Filters">
+    {% set groups = [('lang', 'Language'), ('type', 'Type'), ('set', 'Set')] %}
+    {% for key, label in groups if key not in fixed and result.facets[key] %}
+    <section>
+      <h2>{{ label }}</h2>
+      <ul>
+        <li><a href="{{ query_for(**{key: ''}) }}" {% if not filters[key] %}aria-current="true"{% endif %}>All</a></li>
+        {% for o in result.facets[key] %}
+        <li><a href="{{ query_for(**{key: o.value}) }}" {% if filters[key] == o.value %}aria-current="true"{% endif %}>{{ o.name }} <span class="muted">{{ o.count }}</span></a></li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endfor %}
+  </aside>
+
+  <div class="results">
+    {% if result.products %}
+      {{ product_grid(result.products) }}
+      {% if result.pages > 1 %}
+      <nav class="pager" aria-label="Pages">
+        {% if result.page > 1 %}<a class="btn" href="{{ query_for(page=result.page - 1) }}" rel="prev">Previous</a>{% endif %}
+        <span class="muted">Page {{ result.page }} of {{ result.pages }}</span>
+        {% if result.page < result.pages %}<a class="btn" href="{{ query_for(page=result.page + 1) }}" rel="next">Next</a>{% endif %}
+      </nav>
+      {% endif %}
+    {% else %}
+      <div class="empty">
+        <p>Nothing matches{% if filters.q %} “{{ filters.q }}”{% endif %} right now.</p>
+        <p><a class="btn" href="/shop">See all products</a> <a class="btn" href="{{ settings.tcgplayer_store_url }}">Singles on TCGplayer</a></p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+# Old poke6s.com (Squarespace) addresses -> new storefront addresses, answered with a 301.
+# Product pages (/shop/p/<slug>) are not listed here: the importer records them in the
+# database (product_redirects). See storefront/app/redirects.py. Lines starting with # are notes.
+old_path,new_path
+/shop-1,/shop
+/shop/booster-box,/c/booster-boxes
+/shop/booster-box/japanese,/c/booster-boxes?lang=ja
+/shop/booster-box/english,/c/booster-boxes?lang=en
+/shop/booster-pack,/c/booster-packs
+/shop/booster-pack/english,/c/booster-packs?lang=en
+/shop/booster-pack/japanese,/c/booster-packs?lang=ja
+/shop/booster-bundle,/c/booster-bundles
+/shop/elite-trainer-box,/c/elite-trainer-boxes
+/shop/other,/shop
+/shop/other/collection-boxes,/c/collection-boxes
+/shop/other/tins,/c/tins
+/shop/other/other,/c/other
+/shop/mega-evolution,/sets
+/shop/mega-evolution/perfect-order,/sets/perfect-order
+/shop/mega-evolution/ascended-heroes,/sets/ascended-heroes
+/shop/mega-evolution/chaos-rising,/sets/chaos-rising
+/shop/mega-evolution/pitch-black,/sets/pitch-black
+/shop/scarlet-violet,/sets
+/shop/scarlet-violet/sv-151,/sets/scarlet-and-violet-151
+/shop/scarlet-violet/black-bolt,/sets/black-bolt
+/shop/sword-shield,/sets
+/shop/sword-shield/crown-zenith,/sets/crown-zenith
+/browse-by-set,/sets
+/resources,/about
+/faq-1,/faq
+/cancellation,/returns
+/new-page,/terms
+/privacy-policy,/privacy
+/newsletter-signup,/
+/cart,/shop
+/home,/

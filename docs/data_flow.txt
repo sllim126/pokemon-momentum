@@ -114,6 +114,15 @@ After the nightly run (04:30 UTC), `scripts/utilities/sync_placeholder_library.p
 refreshed catalog (`pokemon_groups`, `pokemon_products`) and feeds new Mega-era sets and
 promos into the Placeholder Library (`TCG Placeholders/`); see `docs/tcg_placeholders_guide.md`.
 
+New storefront (poke6s.com, Phase 1 since 2026-10-31, local only): the store never reads the
+market database. `scripts/build_storefront_market_reference.py` reads the English and Japanese
+product signal snapshots (step 5) and writes `data/storefront/market_reference.json` (TCGplayer
+product ID -> latest market price, 30-day change, market.poke6s.com link) for every sealed
+product plus the cards in the store's mapping and intake CSVs. The `storefront` container reads
+that file for product pages. It is run by hand for now; adding it after the nightly run needs
+the owner's OK (cron). Products themselves come from the Squarespace export via
+`storefront/app/importer.py` into `data/storefront/store.db`. See `storefront/README.md`.
+
 
 Recent dashboard workflow additions
 ----------------------------------
