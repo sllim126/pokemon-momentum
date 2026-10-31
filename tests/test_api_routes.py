@@ -241,6 +241,23 @@ class ApiRouteTests(unittest.TestCase):
         self.assertGreaterEqual(len(mobile_keys), 9)
         self.assertEqual([k for k in mobile_keys if k not in desktop_keys], [])
 
+    def test_mobile_app_shares_saved_lists_and_targets_with_desktop(self):
+        # Step 1.2: a card saved or given a target on one app must show on the other, so both
+        # use the same browser storage keys and list tags.
+        import re
+        dashboards = Path(__file__).resolve().parents[1] / "scripts" / "dashboards"
+        mobile = (dashboards / "mobile_app.html").read_text(encoding="utf-8")
+        desktop = (dashboards / "desktop_home.html").read_text(encoding="utf-8")
+        for name in ("SAVE_TAGS", "TOKEN_KEY", "LOCAL_TAGS_KEY", "TARGETS_KEY"):
+            pattern = rf"const {name} = (.+);"
+            self.assertEqual(re.search(pattern, mobile).group(1), re.search(pattern, desktop).group(1), name)
+        for route in ("/graded_prices", "/store_link", "/tracking/tags", "/tracking/items/resolve"):
+            self.assertIn(route, mobile)
+        # Step 1.3: the phone has the same five saved lists as desktop's My lists.
+        track = r'\{ key: "(track_[a-z]+)", group: "My lists", track: true, tag: "([a-z]+)"'
+        self.assertEqual(re.findall(track, mobile), re.findall(track, desktop))
+        self.assertEqual(len(re.findall(track, mobile)), 5)
+
     def test_sealed_deals_page_serves_html(self):
         response = self.client.get("/sealed-deals")
 

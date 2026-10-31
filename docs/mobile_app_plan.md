@@ -35,7 +35,7 @@ phone the site is a quick "is this a good deal?" tool at a card table, not a res
 
   | Screen width | Layout |
   | --- | --- |
-  | under 700 px (phone, portrait) | One pane. A list, or a card on its own screen. Menu button now; a tab bar at the bottom from step 1.3. |
+  | under 700 px (phone, portrait) | One pane. A list, or a card on its own screen. Menu button, plus a tab bar at the bottom (Check / Discover / My lists / Menu, since step 1.3). |
   | 700 px and up (phone landscape, tablet portrait) | Two panes: list on the left, card on the right. |
   | 1100 px and up (tablet landscape) | Two panes with the menu shown as a side rail. |
 
@@ -128,8 +128,9 @@ asking price), and the browsing lists moved to the menu.
    phone page. To be settled in stage 2.
 6. **Switched early: 2026-10-31** (owner: "it has been working fine; we can still make
    changes"). Phones get the app at `/`, `/mobile` and `/dashboard`; `/m-next` stays as an
-   address; the old page is at `/mobile-classic` for a few weeks. Steps 1.2-1.5 continue on
-   the live app. Old links to Browse Set, Browse Pokémon and Set Strength
+   address; the old page is at `/mobile-classic` for a few weeks. Steps 1.2 (Graded, targets, stats,
+   Save, Our store) and 1.3 (My lists, sign-in, tab bar) went live the same day; 1.4-1.5
+   continue on the live app. Old links to Browse Set, Browse Pokémon and Set Strength
    (`?tab=group_products` etc.) still open `dashboard.html` until step 1.4.
 
 ## What the owner does at each step
