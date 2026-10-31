@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_macros.html" import product_grid %}
+{% from "_article_card.html" import article_card %}
 {% block content %}
 <section class="hero">
   <div>
@@ -34,6 +35,13 @@
 <section aria-labelledby="sets-h">
   <div class="section-head"><h2 id="sets-h">Sets in stock</h2><a href="/sets">All sets</a></div>
   <ul class="chips">{% for s in sets %}<li><a class="chip" href="/sets/{{ s.slug }}">{{ s.name }} <span class="muted">{{ s.n }}</span></a></li>{% endfor %}</ul>
+</section>
+{% endif %}
+
+{% if latest_articles %}
+<section aria-labelledby="articles-h">
+  <div class="section-head"><h2 id="articles-h">Latest articles</h2><a href="/articles">All articles</a></div>
+  <ul class="article-grid">{% for a in latest_articles %}{{ article_card(a) }}{% endfor %}</ul>
 </section>
 {% endif %}
 

@@ -1,0 +1,16 @@
+{#- Article card for the list page and the home page. `a` is an articles.Article. -#}
+{% macro article_card(a, eager=false) %}
+<li class="article-card">
+  <a href="/articles/{{ a.slug }}">
+    <div class="article-img">
+      {% if a.cover %}<img src="/media/480/{{ a.cover }}.webp" alt="" {% if not eager %}loading="lazy"{% endif %} width="480" height="270">
+      {% else %}<img src="/static/img/og-default.png" alt="" width="480" height="270">{% endif %}
+    </div>
+    <div class="article-card-body">
+      <span class="card-meta"><time datetime="{{ a.date }}">{{ a.date | longdate }}</time> · {{ a.minutes }} min read</span>
+      <span class="article-card-title">{{ a.title }}</span>
+      {% if a.description %}<span class="article-card-text">{{ a.description }}</span>{% endif %}
+    </div>
+  </a>
+</li>
+{% endmacro %}

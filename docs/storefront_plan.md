@@ -212,7 +212,7 @@ Prices as published on 2026-10-31; check current pricing before relying on them.
 | `/sets/<set-slug>` | Everything we stock from one set |
 | `/p/<slug>` | Product page |
 | `/cart`, `/checkout` (POST), `/order/thanks`, `/order/status` | Buying |
-| `/articles`, `/articles/<slug>` | Articles (later) |
+| `/articles`, `/articles/<slug>` | Articles (built 2026-10-31; old `/resources/...` addresses redirect here) |
 | `/about`, `/faq`, `/shipping`, `/returns`, `/terms`, `/privacy`, `/contact` | Pages, from Markdown in `storefront/content/pages/` |
 | `/sitemap.xml`, `/robots.txt`, `/feeds/google.xml` | For search engines |
 | `/stripe/webhook` | Stripe events (signature checked) |
@@ -424,7 +424,8 @@ owner has reviewed this plan. **Phase 0 needs the owner** (accounts and DNS), so
 live test order, Search Console and Merchant Center, then the "After launch" steps above.
 
 **Phase 4: content and reach (Codex or Claude)**
-- Articles, social cards per article, Merchant Center feed checks. Newsletter only if the
+- Articles (the pages and the 10 old posts were brought forward and built 2026-10-31),
+  social cards per article, Merchant Center feed checks. Newsletter only if the
   owner asks for it then (D9).
 - Market site buy button switched to the new store.
 
@@ -476,3 +477,4 @@ Reviewed with the owner on 2026-10-31. D2 waits for the 2026-11-02 Utah call.
 | 2026-10-31 | Claude | Owner review: D1 and D3–D9 decided (see "Owner decisions"); D2 waits for the Utah call | Codex: Phase 1. Owner + Claude: Phase 0 (Squarespace exports, D5 forwarding, Cloudflare DNS) |
 | 2026-10-31 | Claude | Phase 1 built and running locally on branch `storefront/phase1-catalog` (owner paused Cloudflare and other online changes): `storefront/` service on port 8010 (LAN), SQLite schema + migrations, importer (94 sealed/accessory products from the 2026-10-09 export, 30 visible, 151 photos copied from Squarespace's CDN as WebP), shop/search/category/set/product pages, market price + 30-day trend from `data/storefront/market_reference.json` (writer `scripts/build_storefront_market_reference.py`), sitemap, robots (blocked until launch), JSON-LD, Open Graph, 301 redirects, draft policy pages. 46 storefront tests + 3 writer tests pass; checked at 1920×1080, 1366×768 and phone with no console errors. **Stopped at:** Phase 1 done except the items in the next column | Owner: check the shop on a phone on the home network; review the draft pages in `storefront/content/pages/` (handling time in Shipping, tax-record years in Privacy). Then Phase 2 (cart + Stripe **test mode**). Not done: market reference in the daily job (cron, owner), re-import from the final pre-11-14 export, Google Merchant feed (Phase 4) |
 | 2026-10-31 | Claude | Saved the old site before the plan ends (`storefront/tools/archive_squarespace_site.py`): page text, 10 Resources blog posts (missed in the first site survey) and 256 images, in the owner's records outside the repo. `docs/storefront_current_site.md` corrected; redirects added for `/new-page-1` and `/pre-order-interest` | Owner: where the blog posts go at launch (todo); compare draft policies with the old ones (6% cancellation fee). Re-run the script on the last day |
+| 2026-10-31 | Claude | Articles brought forward from Phase 4 (owner): `/articles` list with category and tag filters, `/articles/<slug>` pages with BlogPosting JSON-LD, home page "Latest articles", sitemap; the 10 Squarespace posts imported to `storefront/content/articles/` (`app/article_import.py`) with their pictures; every old `/resources/...` address 301s to its new one. Storefront container now runs as the host user. 52 tests pass | Owner: read through the imported articles. Full review of all policy pages, terms and FAQs (they were adapted from another shop's, with permission) |

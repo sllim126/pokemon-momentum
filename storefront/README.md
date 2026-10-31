@@ -25,7 +25,9 @@ The container (`poke6s-storefront`, port 8010) sees only:
 
 CSS and JavaScript changes need only a browser reload. Python, templates and the Markdown
 pages are read at start-up, so restart the container after changing them.
-Also restart it after switching git branches: a checkout that removes and recreates
+The container runs as the host user (uid/gid 1000, override with `STOREFRONT_UID` and
+`STOREFRONT_GID`), so the database, photos and article files it writes stay editable without
+sudo. Also restart it after switching git branches: a checkout that removes and recreates
 `storefront/` leaves the running container looking at the old, empty folder.
 
 ## Load the catalog
@@ -66,8 +68,27 @@ python3 storefront/tools/archive_squarespace_site.py --out <folder> --products-c
 
 It writes pages and the Resources blog posts as Markdown (posts with front matter: title,
 date, old address, tags, categories, cover image), the pages as served, the original images
-and `index.csv`/`images.csv`. Re-runs skip images already saved. The posts are ready for
-`content/articles/` when articles are built.
+and `index.csv`/`images.csv`. Re-runs skip images already saved.
+
+## Articles
+
+The blog lives at `/articles` (list, with category and tag filters) and `/articles/<slug>`.
+Each article is a Markdown file in `content/articles/<slug>.md`; the front matter is described
+in `app/articles.py`. To write a new one, copy an existing file, change the front matter and
+text, and restart the container. `draft: true` keeps it off the list, the home page and the
+sitemap while it can still be previewed at its address. Pictures go in like product photos
+(`images.store_original`) and are referenced as `/media/1200/<name>.webp`.
+
+The 10 posts from Squarespace were converted from the saved copy by `app/article_import.py`
+(slugs from the titles; old `/resources/...` addresses 301 to the new ones, including the old
+category and tag pages). The copy is outside the repo, so mount it:
+
+```sh
+docker-compose run --rm -v <copy folder>:/archive:ro storefront \
+    python -m storefront.app.article_import --from /archive
+```
+
+Existing article files are kept unless `--force` is given.
 
 ## Code map
 
@@ -84,6 +105,8 @@ and `index.csv`/`images.csv`. Re-runs skip images already saved. The posts are r
 | `app/redirects.py`, `redirects.csv` | 301s from old Squarespace addresses |
 | `app/markdown.py` | Markdown rendering (raw HTML escaped); Squarespace HTML → Markdown |
 | `app/templates/`, `app/static/` | Jinja2 pages, CSS (market site's colours, D4), small JS |
+| `app/articles.py`, `app/article_import.py` | Articles (Markdown, loaded at start-up); import of the old blog posts |
+| `content/articles/*.md` | The articles |
 | `tools/archive_squarespace_site.py` | One-off copy of the old site's pages, blog posts and images |
 | `content/pages/*.md` | About, FAQ, Shipping, Returns, Terms, Privacy, Contact |
 | `tests/` | pytest suite with synthetic fixtures |
@@ -123,4 +146,5 @@ reviews them before launch, then removes the line.
 ## Not yet (later phases)
 
 Cart, Stripe test-mode checkout, orders and webhooks (Phase 2); LAN-only admin, exports and
-backups (Phase 3); Google Merchant feed, articles (Phase 4). See the plan.
+backups (Phase 3); Google Merchant feed, per-article social cards, newsletter (Phase 4). See
+the plan.

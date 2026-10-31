@@ -50,7 +50,7 @@ Microsoft 365 (free) adds two CNAMEs and helps order emails reach inboxes. Do it
 | `/shop/booster-box`, `/shop/booster-box/japanese`, `/shop/booster-pack` | Category pages | Category tree: `docs/store_category_tree_proposal.md` |
 | `/shop/p/<slug>` | Product pages | e.g. `/shop/p/abyss-eye-booster-box`, `/shop/p/ninja-spinner-booster-box`, `/shop/p/perfect-order-art-set-4` |
 | `/browse-by-set` | Browse by set | |
-| `/resources`, `/resources/<slug>` | Resources (blog) | 10 posts, 2025-12-15 to 2026-03-19, with categories and tags (`/resources/category/...`, `/resources/tag/...`). No new home yet: see `docs/todo.txt` |
+| `/resources`, `/resources/<slug>` | Resources (blog) | 10 posts, 2025-12-15 to 2026-03-19, with categories and tags (`/resources/category/...`, `/resources/tag/...`). Now `/articles` on the new store; every old address redirects |
 | `/about` | About / mission | |
 | `/faq-1` | FAQs | |
 | `/cancellation` | Return and cancellation policy | No returns; damaged or wrong items made right by email; cancellation before shipping costs a 6% fee (covers card processing). D8 replaces the no-returns rule |
@@ -74,8 +74,8 @@ All public page text, the 10 blog posts and every image (pages, posts and the 23
 addresses in the export) were saved from the live site on 2026-10-31 by
 `storefront/tools/archive_squarespace_site.py`. The copy is kept with the owner's business
 records, outside this repo (it holds the products, orders and customer exports alongside). Each
-page and post is in Markdown and as served, plus the original images. Re-run the script just before
-2026-11-14 to pick up any late edits. One image was already broken on Squarespace (the Ninja Spinner
+page and post is in Markdown and as served, plus the original images. The owner expects no site
+changes before the plan ends apart from the daily price sync, so no second copy is planned. One image was already broken on Squarespace (the Ninja Spinner
 banner in the 2026-02-09 post) and couldn't be saved.
 
 ## Catalog (export of 2026-10-09)

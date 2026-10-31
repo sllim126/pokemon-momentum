@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "_article_card.html" import article_card %}
+{% block content %}
+<article class="text-page article">
+  {% if article.draft %}<p class="draft-note">Draft: not listed on the site yet.</p>{% endif %}
+  <header class="article-head">
+    {% if article.categories %}<p class="article-cats">{% for c in article.categories %}<a href="/articles?category={{ c | urlencode }}">{{ c }}</a>{% endfor %}</p>{% endif %}
+    <h1>{{ article.title }}</h1>
+    <p class="muted"><time datetime="{{ article.date }}">{{ article.date | longdate }}</time>{% if article.author %} · {{ article.author }}{% endif %} · {{ article.minutes }} min read</p>
+  </header>
+  {% if article.cover and not article.cover_in_body %}<img class="article-cover" src="/media/1200/{{ article.cover }}.webp" alt="" width="1200" height="675">{% endif %}
+  <div class="article-body">{{ article.html | safe }}</div>
+  {% if article.tags %}
+  <ul class="chips article-tags" aria-label="Tags">{% for t in article.tags %}<li><a class="chip" href="/articles?tag={{ t | urlencode }}">{{ t }}</a></li>{% endfor %}</ul>
+  {% endif %}
+</article>
+{% if more %}
+<section aria-labelledby="more-h">
+  <div class="section-head"><h2 id="more-h">More articles</h2><a href="/articles">All articles</a></div>
+  <ul class="article-grid">{% for a in more %}{{ article_card(a) }}{% endfor %}</ul>
+</section>
+{% endif %}
+{% endblock %}

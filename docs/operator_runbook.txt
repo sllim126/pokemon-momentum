@@ -232,9 +232,11 @@ The replacement for Squarespace runs in its own container, `poke6s-storefront`, 
 - Reload products from the newest Squarespace export (preview with `--dry-run` first):
   `docker-compose exec -T storefront python -m storefront.app.importer --fetch-images`
 - Tests: `make test-storefront`.
-- Before the Squarespace plan ends (2026-11-14), save a last copy of the old site's pages,
-  blog posts and images (host, not container; output goes outside the repo):
+- Copy of the old Squarespace site (pages, blog posts, images), saved 2026-10-31 (host, not
+  container; output goes outside the repo):
   `python3 storefront/tools/archive_squarespace_site.py --out <folder> --products-csv <export>`.
+- Articles: Markdown files in `storefront/content/articles/`; restart the container after
+  adding or editing one. How to write one: `storefront/README.md` "Articles".
 - Data (never committed): `data/storefront/` holds `store.db`, `images/` and
   `market_reference.json`. Backups arrive in Phase 3.
 

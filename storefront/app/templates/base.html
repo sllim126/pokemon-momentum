@@ -47,6 +47,7 @@
       <a href="/shop" {% if path == '/shop' %}aria-current="page"{% endif %}>Shop all</a>
       {% for c in nav %}<a href="/c/{{ c.slug }}" {% if path == '/c/' ~ c.slug %}aria-current="page"{% endif %}>{{ c.name }}</a>{% endfor %}
       <a href="/sets" {% if path.startswith('/sets') %}aria-current="page"{% endif %}>Sets</a>
+      <a href="/articles" {% if path.startswith('/articles') %}aria-current="page"{% endif %}>Articles</a>
     </nav>
   </header>
 
@@ -71,6 +72,7 @@
       </nav>
       <nav aria-label="About">
         <h2>Poke6s</h2>
+        <a href="/articles">Articles</a>
         {% for slug in ['about', 'terms', 'privacy'] if slug in footer_pages %}<a href="/{{ slug }}">{{ footer_pages[slug].title }}</a>{% endfor %}
         <a href="{{ settings.market_base_url }}">market.poke6s.com</a>
       </nav>

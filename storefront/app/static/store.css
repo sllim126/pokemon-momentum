@@ -194,3 +194,30 @@ main section { margin-top: 32px; }
   .grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .results .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+/* articles */
+.article-grid { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.article-card a { display: flex; flex-direction: column; height: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; color: var(--text); text-decoration: none; }
+.article-card a:hover { border-color: var(--line-strong); }
+.article-img { background: var(--panel-2); }
+/* The ratio sits on the image itself: on the box, a tall picture would stretch it. */
+.article-img img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; object-position: top; }
+.article-cover { display: block; width: 100%; height: auto; border-radius: var(--radius); margin: 8px 0 20px; }
+.article-card-body { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px 14px; }
+.article-card-title { font-weight: 700; line-height: 1.3; }
+.article-card-text { color: var(--muted); font-size: 0.9rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.article-filters { margin-bottom: 16px; }
+.article-head h1 { margin-bottom: 6px; }
+.article-cats { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 6px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.article-cats a { color: var(--accent); text-decoration: none; }
+.article-body img { max-width: 100%; height: auto; border-radius: 10px; margin: 8px 0; }
+.article-body blockquote { margin: 16px 0; padding: 4px 16px; border-left: 3px solid var(--accent); color: var(--muted); }
+.article-body a { overflow-wrap: anywhere; }
+.article-tags { margin: 28px 0 8px; }
+.article-tags .chip { font-weight: 500; font-size: 0.85rem; padding: 6px 12px; }
+@media (min-width: 640px) { .article-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 960px) { .article-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+/* The category filter on /articles stays a row of tabs at every width (the shop's filter
+   column rules above turn .filters into a sidebar from 960 px). */
+.article-filters, .article-filters ul { flex-direction: row; flex-wrap: wrap; position: static; gap: 6px; }
+.article-filters a { border: 1px solid var(--line); }
