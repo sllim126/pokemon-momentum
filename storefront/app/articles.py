@@ -61,7 +61,7 @@ class Article:
     categories: tuple[str, ...]
     tags: tuple[str, ...]
     cover: str | None              # image name, or None
-    cover_in_body: bool            # the cover is the body's first picture (so not shown twice)
+    cover_in_body: bool            # the cover also appears in the text (so not shown twice)
     old_path: str | None
     draft: bool
     html: str
@@ -82,11 +82,11 @@ def _list(value: str) -> tuple[str, ...]:
 def parse(slug: str, text: str) -> Article:
     meta, body = split_front_matter(text)
     cover = meta.get("cover", "").strip() or None
-    cover_in_body = False
     if cover is None:
         first = MEDIA_IMAGE.search(body)
         cover = first.group(1) if first else None
-        cover_in_body = cover is not None
+    # A cover that is also a picture in the text isn't repeated above it.
+    cover_in_body = cover is not None and cover in set(MEDIA_IMAGE.findall(body))
     words = len(re.findall(r"\w+", re.sub(r"!\[[^\]]*\]\([^)]*\)", "", body)))
     title = meta.get("title", slug.replace("-", " ").title())
     return Article(

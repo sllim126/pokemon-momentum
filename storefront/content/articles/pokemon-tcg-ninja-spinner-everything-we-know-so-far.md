@@ -5,7 +5,7 @@ description: Explore everything we know about Pokémon TCG’s Ninja Spinner and
 author: Adam Mills
 categories: Pokemon TCG News, Market Talk, Collector Commentary, Pokemon TCG
 tags: Pokémon TCG, Ninja Spinner, Mega Greninja, TCG Market Analysis, Scalping
-cover: 
+cover: pokemon-ninja-spinner-banner-41fe1e1756
 old_path: /resources/pokmon-tcg-ninja-spinner-everything-we-know-so-far
 draft: false
 ---
@@ -18,6 +18,8 @@ Here’s a clean, up-to-date breakdown of what’s confirmed, what’s strongly 
 **Ninja Spinner** is an upcoming Japanese expansion for the Pokémon Trading Card Game, headlined by **Mega Greninja ex**. The name itself was trademarked by Pokémon under the same classifications used for past TCG set names, which immediately set the community on fire.
 
 Thematically, Ninja Spinner lines up perfectly with Greninja’s signature Water Shuriken attacks and the ninja motif fans already associate with the Pokémon.
+
+![Pokémon TCG Ninja Spinner banner](/media/1200/pokemon-ninja-spinner-banner-41fe1e1756.webp)
 
 *Greninja’s Water Shuriken*
 

@@ -12,7 +12,8 @@ What changes on the way:
 - links to poke6s.com become site-relative (old /shop/p/... addresses redirect), and links to
   other posts point at their new /articles/<slug> address;
 - an image wrapped in a link to its own Squarespace CDN file is unwrapped;
-- an image missing from the copy (one was already broken on Squarespace) is dropped.
+- an image missing from the copy is dropped and listed in the report (the Ninja Spinner
+  banner was, until the owner's original file was added by hand on 2026-10-31).
 
 Existing article files are left alone unless --force is given, so later edits aren't lost.
 

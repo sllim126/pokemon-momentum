@@ -76,7 +76,8 @@ addresses in the export) were saved from the live site on 2026-10-31 by
 records, outside this repo (it holds the products, orders and customer exports alongside). Each
 page and post is in Markdown and as served, plus the original images. The owner expects no site
 changes before the plan ends apart from the daily price sync, so no second copy is planned. One image was already broken on Squarespace (the Ninja Spinner
-banner in the 2026-02-09 post) and couldn't be saved.
+banner in the 2026-02-09 post, missing from Squarespace's image store); the owner's original
+file was put into the saved copy and the new article instead.
 
 ## Catalog (export of 2026-10-09)
 

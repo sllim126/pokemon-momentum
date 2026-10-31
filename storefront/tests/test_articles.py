@@ -208,3 +208,9 @@ def test_import_posts(tmp_path: Path):
     assert (out / "lets-talk-about-master-sets.md").read_text() == "edited"
     article_import.run(archive, articles_dir=out, images_dir=images_dir, force=True)
     assert (out / "lets-talk-about-master-sets.md").read_text() != "edited"
+
+
+def test_cover_that_is_also_in_the_text_is_not_repeated():
+    text = OLDER.replace("Checklist text.", "Checklist text.\n\n![Banner](/media/1200/journey-abcdef0123.webp)")
+    assert parse("x", text).cover_in_body
+    assert not parse("x", OLDER).cover_in_body
