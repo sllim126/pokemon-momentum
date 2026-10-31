@@ -1,8 +1,8 @@
 # New storefront for poke6s.com: plan
 
 Last reviewed: 2026-10-31
-**Status: draft, waiting for the owner's review.** Don't start building until the owner has
-reviewed it (see "Progress log" at the end).
+**Status: reviewed with the owner 2026-10-31. Codex may start Phase 1.** Phase 0 (accounts and DNS)
+runs alongside with the owner. See "Progress log" at the end.
 
 The owner decided on 2026-10-31 to replace the Squarespace store with our own storefront on
 `poke6s.com`, hosted on the owner's servers. This file is the whole plan:
@@ -421,26 +421,28 @@ owner has reviewed this plan. **Phase 0 needs the owner** (accounts and DNS), so
 live test order, Search Console and Merchant Center, then the "After launch" steps above.
 
 **Phase 4: content and reach (Codex or Claude)**
-- Articles, newsletter sign-up (collect-only), social cards per article, Merchant Center feed
-  checks.
+- Articles, social cards per article, Merchant Center feed checks. Newsletter only if the
+  owner asks for it then (D9).
 - Market site buy button switched to the new store.
 
 **Phase 5: custom binders and accessories**
 - Product variants, pre-order and made-to-order flags, design gallery.
 
-## Decisions the owner still needs to make
+## Owner decisions
 
-| # | Decision | Proposed |
+Reviewed with the owner on 2026-10-31. D2 waits for the 2026-11-02 Utah call.
+
+| # | Decision | Answer |
 |---|---|---|
-| D1 | Which stock is listed here and which on TCGplayer | Here: sealed and accessories. TCGplayer: singles. Revisit after launch |
-| D2 | Sales tax method | Decide after the 2026-11-02 call. Stripe Tax for a fast launch, our own Utah table if the fee matters |
-| D3 | Shipping rates, free-shipping threshold, signature threshold | Owner to set from Pirate Ship costs |
-| D4 | Look and feel; logo files | Match market.poke6s.com |
-| D5 | What poke6s.com shows from 2026-11-14 until launch | Forward to `poke6s.tcgplayerpro.com` |
-| D6 | When to move DNS to Cloudflare | Before launch, on a quiet day, mail records double-checked |
-| D7 | How the owner reaches the admin away from home | LAN only at first; Cloudflare Access later |
-| D8 | Returns window, cancellation and dispute policy wording | Draft from the current FAQ and Cancellation pages for the owner to edit |
-| D9 | Newsletter at launch | Collect-only, with confirmation email |
+| D1 | Which stock is listed here and which on TCGplayer | **Decided:** our site lists sealed product and accessories; singles stay on TCGplayer. Revisit after launch |
+| D2 | Sales tax method | **Open:** decide after the 2026-11-02 call. Stripe Tax for a fast launch, our own Utah table if the fee matters. Build the tax step behind one interface so either can be plugged in |
+| D3 | Shipping | **Decided:** flat rate by shipping class, free shipping over a threshold. The owner sets the amounts from Pirate Ship costs; until then use settings with placeholder values (small sealed $5, large sealed $9, free over $100) |
+| D4 | Look and feel | **Decided:** match market.poke6s.com (`scripts/dashboards/desktop_theme.css`) |
+| D5 | poke6s.com from 2026-11-14 until launch | **Decided:** forward to `poke6s.tcgplayerpro.com` in the Squarespace Domains panel |
+| D6 | When to move DNS to Cloudflare | **Decided:** soon (within a week or two), with Claude walking the owner through it, mail records double-checked |
+| D7 | Admin access | **Decided:** home network only |
+| D8 | Returns | **Decided:** sealed product accepted back **unopened in original wrap within 14 days**. The refund is issued **after the owner inspects the returned item**. Buyer pays return shipping unless we made an error or it arrived damaged. The policy page must state the inspection step |
+| D9 | Newsletter | **Decided:** not in the first release; Phase 4 at the earliest |
 
 ## Rules for whoever builds this
 
@@ -468,3 +470,4 @@ live test order, Search Console and Merchant Center, then the "After launch" ste
 | Date | Who | What happened | Next |
 |---|---|---|---|
 | 2026-10-31 | Claude | Plan drafted with the owner; current site documented in `docs/storefront_current_site.md`; todo items added | Owner reviews this plan with Claude, then Codex starts Phase 1 |
+| 2026-10-31 | Claude | Owner review: D1 and D3–D9 decided (see "Owner decisions"); D2 waits for the Utah call | Codex: Phase 1. Owner + Claude: Phase 0 (Squarespace exports, D5 forwarding, Cloudflare DNS) |

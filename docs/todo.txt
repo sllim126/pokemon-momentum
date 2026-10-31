@@ -32,7 +32,7 @@ Current Focus (2026-10-25)
   inventory in `docs/mobile_app_plan.md`; work items under "New mobile app" below). The old
   `/mobile` page stays frozen until the switch. Admin pages stay parked.
 - Storefront: our own store on poke6s.com replaces Squarespace (plan ends 2026-11-14). Plan,
-  phases and progress log: `docs/storefront_plan.md`. Waiting on the owner's review.
+  phases and progress log: `docs/storefront_plan.md`. Reviewed 2026-10-31; Phase 1 can start.
 - Bug reports go to the Discord `#bug-reports` channel. New pages get no on-site bug form.
 - Dates: Pokémon Black Friday on TCGplayer ~Nov 25 - Dec 1; new mobile app switch Nov 10
   (steps 1.2-1.5 done by about Nov 3).
@@ -115,14 +115,13 @@ and open decisions: `docs/storefront_plan.md` (progress log at its end). What th
 site has today: `docs/storefront_current_site.md`. Our own site, hosted on the owner's server
 behind Cloudflare Tunnel; Stripe hosted Checkout (approved by the owner 2026-10-31). The
 Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
-- [waiting] Owner reviews `docs/storefront_plan.md` with Claude before Codex starts Phase 1.
 - [next] Owner, before 2026-11-14: Squarespace exports (products, customers, subscribers,
   page text, images) and auto-renew off; domain forwarding stopgap (plan decision D5).
-- [waiting] Owner decisions D1-D9 in the plan (stock split, sales tax method after the
-  2026-11-02 Utah call, shipping rates, look, admin access, policies, newsletter).
-- [planned] Phase 0 (owner + Claude): Cloudflare DNS move (copy the Microsoft 365 mail records
+- [waiting] Plan decision D2 (sales tax method) after the 2026-11-02 Utah call; D3 shipping
+  amounts from the owner's Pirate Ship costs. D1, D4-D9 decided 2026-10-31.
+- [next] Phase 0 (owner + Claude): Cloudflare DNS move (copy the Microsoft 365 mail records
   exactly), Tunnel (replaces the home-IP item below), Stripe test account.
-- [planned] Phase 1 (Codex): `storefront/` service, SQLite catalog, import, browse/product
+- [next] Phase 1 (Codex): `storefront/` service, SQLite catalog, import, browse/product
   pages, SEO, redirects. Phase 2: cart + Stripe Checkout (test mode). Phase 3: LAN-only admin,
   exports (Pirate Ship, sales tax, bookkeeping, TCGplayer reconciliation), backups.
 - [planned] After launch: retire `scripts/squarespace_price_sync.py` from cron
