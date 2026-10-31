@@ -130,7 +130,8 @@ asking price), and the browsing lists moved to the menu.
    changes"). Phones get the app at `/`, `/mobile` and `/dashboard`; `/m-next` stays as an
    address; the old page is at `/mobile-classic` for a few weeks. Steps 1.2 (Graded, targets, stats,
    Save, Our store) and 1.3 (My lists, sign-in, tab bar) and 1.4 (Sets → one set, Pokémon, Market
-   Stats → one index, Set values) went live the same day; 1.5 continues on the live app. Old
+   Stats → one index, Set values) and 1.5 (Sealed Deals, Budget Builder, How it works) went
+   live the same day. Old
    links to Browse Set, Browse Pokémon and Set Strength (`?tab=group_products&group_id=…`
    etc.) open the app's own views since 1.4, so phones no longer get `dashboard.html`.
 
