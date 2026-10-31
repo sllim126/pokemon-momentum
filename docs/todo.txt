@@ -43,6 +43,12 @@ Current Focus (2026-10-25)
 Recently Completed
 ------------------
 
+- 2026-10-31 Squarespace site saved before the plan ends: page text, the 10 Resources blog
+  posts and all images (256, including every product photo in the export), each page as
+  Markdown and as served, by `storefront/tools/archive_squarespace_site.py`; kept with the
+  owner's business records next to the products, orders and customer exports (not in this
+  repo). `docs/storefront_current_site.md` corrected: the site has a blog, a Reviews page and a
+  pre-order page; old policies summarized. Redirects added for /new-page-1 and /pre-order-interest.
 - 2026-10-31 Storefront Phase 1 running locally (branch `storefront/phase1-catalog`): separate
   `storefront` container on port 8010 (LAN only, search engines blocked), SQLite catalog with
   migrations, importer from the Squarespace export (94 products, 30 visible, 151 photos copied
@@ -110,8 +116,14 @@ and open decisions: `docs/storefront_plan.md` (progress log at its end). What th
 site has today: `docs/storefront_current_site.md`. Our own site, hosted on the owner's server
 behind Cloudflare Tunnel; Stripe hosted Checkout (approved by the owner 2026-10-31). The
 Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
-- [next] Owner, before 2026-11-14: Squarespace exports (products, customers, subscribers,
-  page text, images) and auto-renew off; domain forwarding stopgap (plan decision D5).
+- [next] Owner, before 2026-11-14: Squarespace auto-renew off; domain forwarding stopgap (plan
+  decision D5); one last products export just before the plan ends (for the importer re-run
+  below). Products, orders and customers/subscribers were exported 2026-10-31; page text, blog
+  posts and images were saved by script the same day (re-run it on the last day for late edits).
+- [waiting] Owner: where the 10 Resources blog posts (`/resources/<slug>`) go at launch. They
+  404 after the switch otherwise; articles are planned for Phase 4. Suggested: bring a simple
+  `/articles` page forward to launch (the posts are already saved as Markdown with front
+  matter) and 301 each old post address to it. Alternative: redirect them all to /about.
 - [waiting] Plan decision D2 (sales tax method) after the 2026-11-02 Utah call; D3 shipping
   amounts from the owner's Pirate Ship costs. D1, D4-D9 decided 2026-10-31.
 - [parked] Phase 0 (owner + Claude), paused by the owner 2026-10-31 (no online changes for
@@ -125,6 +137,10 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - [waiting] Owner: browse `http://<server>:8010` on a phone on the home network.
   - [waiting] Owner: review the draft pages in `storefront/content/pages/` (fill in the
     handling time in Shipping; confirm the tax-record years in Privacy), then remove `draft: true`.
+    Compare them with the old Squarespace pages in the saved copy: the old Terms (effective
+    2026-04-07, which also cover market.poke6s.com) and Privacy policy are fuller than the drafts,
+    and the old cancellation policy charged a 6% fee that the draft Returns page doesn't
+    (keep it or drop it?).
   - [waiting] Owner OK to add `scripts/build_storefront_market_reference.py` to the daily job
     (cron change); run by hand until then.
   - [planned] Re-run the importer (with --fetch-images) on the final Squarespace export

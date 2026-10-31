@@ -25,6 +25,8 @@ The container (`poke6s-storefront`, port 8010) sees only:
 
 CSS and JavaScript changes need only a browser reload. Python, templates and the Markdown
 pages are read at start-up, so restart the container after changing them.
+Also restart it after switching git branches: a checkout that removes and recreates
+`storefront/` leaves the running container looking at the old, empty folder.
 
 ## Load the catalog
 
@@ -51,6 +53,22 @@ Re-running updates existing SKUs but keeps their slugs. Once products are edited
 
 The market reference isn't in the daily job yet: adding it to cron is an owner step.
 
+## Save a copy of the old Squarespace site
+
+The Squarespace export has no page text, blog posts or images, so
+`tools/archive_squarespace_site.py` fetches them from the public site (read-only, 0.3 s
+apart, stops on 403/429). Run it on the host, not in the container (it needs `requests` and
+`beautifulsoup4`), and point `--out` at a folder **outside the repo**:
+
+```sh
+python3 storefront/tools/archive_squarespace_site.py --out <folder> --products-csv <products export.csv>
+```
+
+It writes pages and the Resources blog posts as Markdown (posts with front matter: title,
+date, old address, tags, categories, cover image), the pages as served, the original images
+and `index.csv`/`images.csv`. Re-runs skip images already saved. The posts are ready for
+`content/articles/` when articles are built.
+
 ## Code map
 
 | File | What it does |
@@ -66,6 +84,7 @@ The market reference isn't in the daily job yet: adding it to cron is an owner s
 | `app/redirects.py`, `redirects.csv` | 301s from old Squarespace addresses |
 | `app/markdown.py` | Markdown rendering (raw HTML escaped); Squarespace HTML → Markdown |
 | `app/templates/`, `app/static/` | Jinja2 pages, CSS (market site's colours, D4), small JS |
+| `tools/archive_squarespace_site.py` | One-off copy of the old site's pages, blog posts and images |
 | `content/pages/*.md` | About, FAQ, Shipping, Returns, Terms, Privacy, Contact |
 | `tests/` | pytest suite with synthetic fixtures |
 

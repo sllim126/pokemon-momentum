@@ -26,6 +26,7 @@ old_path,new_path
 /shop/sword-shield,/sets
 /shop/sword-shield/crown-zenith,/sets/crown-zenith
 /browse-by-set,/sets
+# Blog posts (/resources/<slug>, 10 of them) have no new home yet: see docs/todo.txt.
 /resources,/about
 /faq-1,/faq
 /cancellation,/returns
@@ -34,3 +35,5 @@ old_path,new_path
 /newsletter-signup,/
 /cart,/shop
 /home,/
+/new-page-1,/about
+/pre-order-interest,/contact
