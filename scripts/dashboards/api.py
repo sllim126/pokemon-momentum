@@ -618,11 +618,6 @@ def is_mobile_request(request: Request) -> bool:
     return any(marker in user_agent for marker in mobile_markers)
 
 
-# Tabs the mobile page has no view for; phones get the full dashboard instead of an
-# unrelated feed.
-DESKTOP_ONLY_TABS = {"group_products", "group_signals", "time_to_buy", "browse_species"}
-
-
 def mobile_app_response() -> FileResponse:
     response = FileResponse(MOBILE_APP_HTML)
     response.headers["Cache-Control"] = "no-cache"
@@ -630,14 +625,14 @@ def mobile_app_response() -> FileResponse:
 
 
 def dashboard_response_for_request(request: Request) -> FileResponse:
-    """Phones get the mobile app, or the older research dashboard (dashboard.html) for the
-    old links to views the app doesn't have yet (DESKTOP_ONLY_TABS: Browse Set, Browse
-    Pokemon and Set Strength; the app gets Sets and Pokémon in step 1.4). That is why
-    dashboard.html is still kept.
+    """Phones get the mobile app, including old Browse Set / Browse Pokemon / Set Strength
+    links (?tab=group_products&group_id=..., browse_species, group_signals), which the app
+    opens in its own Sets and Pokémon views since step 1.4 (2026-10-31).
 
     Desktop visitors never get here: forward_desktop_to_app sends them to the desktop app.
+    dashboard.html is kept only until the 1.6 clean-up deletes it.
     """
-    if is_mobile_request(request) and request.query_params.get("tab") not in DESKTOP_ONLY_TABS:
+    if is_mobile_request(request):
         return mobile_app_response()
     return FileResponse(DASHBOARD_HTML)
 

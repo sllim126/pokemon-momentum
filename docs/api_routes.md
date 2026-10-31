@@ -16,7 +16,7 @@ or the `pm_tracking_token` cookie); **admin** = signed in with an address listed
 | Route | Page file | Access | What it is |
 | --- | --- | --- | --- |
 | `/` | `desktop_home.html` (desktop), `mobile_app.html` (phones/tablets) | public | Home. Desktop app guide: `docs/desktop_app.md` |
-| `/dashboard`, `/dashboard-classic`, `/dashboard-dev` | `dashboard.html` | public | Older research dashboard; desktop visitors are forwarded to `/` (see `docs/desktop_app.md`); phones get the mobile app, except old Browse Set, Browse Pokémon and Set Strength links, which still open it |
+| `/dashboard`, `/dashboard-classic`, `/dashboard-dev` | `dashboard.html` | public | Older research dashboard; desktop visitors are forwarded to `/` (see `docs/desktop_app.md`); phones get the mobile app (old Browse Set, Browse Pokémon and Set Strength links open its Sets and Pokémon views since 2026-10-31); nobody is served `dashboard.html` any more, and it is deleted in the mobile clean-up (1.6) |
 | `/buy`, `/discover`, `/research`, `/track`, `/learn` | `area_hub.html` | public | Landing page for each area (registered in a loop in `api.py`); desktop visitors are forwarded to the matching app view |
 | `/home-preview` | | public | Former preview address of the desktop app; forwards to `/` |
 | `/mobile` | `mobile_app.html` | public | The mobile app (switched on early by the owner, 2026-10-31; `docs/mobile_app_plan.md`) |

@@ -43,6 +43,7 @@ Current Focus (2026-10-25)
 Recently Completed
 ------------------
 
+- 2026-10-31 Mobile app step 1.4: Sets, one set, Pokémon, Market Stats (indexes, set values).
 - 2026-10-31 Mobile app step 1.3: My lists, account in the menu, bottom tab bar on phones.
 - 2026-10-31 Mobile app step 1.2: Graded, Your targets, Stats, Save, Our store on the card
   screen (see the 1.2 item under "New mobile app").
@@ -200,11 +201,18 @@ screens, 3 refine, 4 camera/OCR.
   get a bottom tab bar (Check / Discover / My lists / Menu), hidden on the card screen and from
   700 px. Checked on iPhone 13 Pro Max, iPhone SE, phone landscape and iPad Pro 11. Waiting on
   the owner's phone check.
-- [planned] 1.4 Research: Sets → one set (search results for sets open it), Pokémon, Market
-  Stats (indexes, set values).
+- [waiting] 1.4 Research, built 2026-10-31 and live: Sets (filter, era, sort; set logos) → one
+  set (whole-set chart since release, rarity filter, cards), Pokémon (type a name: every
+  printing), Market Stats with Indexes → one index (chart, its cards) and Set values (full set
+  cost, top hit) → one set. A set or index has its own history entry, so the phone's Back
+  returns to the list; links use desktop's parameters (set=, filter=, q=, era=, index=). Old
+  `?tab=group_products&group_id=` / `browse_species` / `group_signals` links open these views,
+  so phones never get dashboard.html now. Waiting on the owner's phone check.
+- [idea] 1.4 follow-up: header search results for a set (if search ever returns sets) should
+  open the set view; today search returns products only.
 - [planned] 1.5 Buy (Sealed Deals, Budget Builder) and Learn (How it works).
 - [planned] 1.6 Clean-up after the switch (done early, 2026-10-31): once 1.4-1.5 cover Sets,
-  Pokémon and the rest, delete `/mobile-classic` (`mobile_dashboard.html`), `dashboard.html`,
+  Pokémon (done in 1.4) and the rest (1.5), delete `/mobile-classic` (`mobile_dashboard.html`), `dashboard.html`,
   `tests/test_dashboard_frontend.py` and `/mobile-rebuild`, and repoint the app menu's "old
   phone page" link.
 - [planned] Stage 2: tune two-pane layouts for phone landscape (fold the scope bar into the
