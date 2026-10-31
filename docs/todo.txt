@@ -43,6 +43,8 @@ Current Focus (2026-10-25)
 Recently Completed
 ------------------
 
+- 2026-10-31 Storefront market prices in cron (daily 03:00 UTC, owner OK);
+  `deploy/crontab.txt` synced with the live crontab. `docs/chat_history/` added to .gitignore.
 - 2026-10-31 Storefront articles (owner asked to bring them forward from Phase 4): `/articles`
   with category/tag filters, article pages, "Latest articles" on the home page, sitemap and
   BlogPosting JSON-LD; the 10 Squarespace posts imported with their pictures
@@ -121,8 +123,8 @@ and open decisions: `docs/storefront_plan.md` (progress log at its end). What th
 site has today: `docs/storefront_current_site.md`. Our own site, hosted on the owner's server
 behind Cloudflare Tunnel; Stripe hosted Checkout (approved by the owner 2026-10-31). The
 Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
-- [next] Owner, before 2026-11-14: Squarespace auto-renew off; domain forwarding stopgap (plan
-  decision D5); one last products export just before the plan ends (for the importer re-run
+- [next] Owner, before 2026-11-14: domain forwarding stopgap (plan decision D5) (the Squarespace
+  website plan is cancelled, ending 2026-11-14, confirmed 2026-10-31); one last products export just before the plan ends (for the importer re-run
   below). Products, orders and customers/subscribers were exported 2026-10-31; page text, blog
   posts and images were saved by script the same day. No site changes are expected before the
   plan ends other than the daily price sync (owner), so no second copy is needed.
@@ -143,8 +145,6 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     (with permission) and will be rewritten; the old cancellation fee (6%) is decided in that
     review. Old text for comparison is in the saved site copy. Remove `draft: true` when done.
   - [waiting] Owner: read through the 10 imported articles (`/articles`).
-  - [waiting] Owner OK to add `scripts/build_storefront_market_reference.py` to the daily job
-    (cron change); run by hand until then.
   - [planned] Re-run the importer (with --fetch-images) on the final Squarespace export
     before 2026-11-14.
   - [idea] JP products without a TCGplayer mapping (e.g. JP-AE-BB) show no market price;

@@ -253,3 +253,5 @@ data/tcgcsv_archive/
 
 # Owner review-note uploads from /m-next (private; stay on the server)
 data/review_note_attachments/
+# The owner's exported ChatGPT/Codex conversations: private business notes, never committed
+docs/chat_history/

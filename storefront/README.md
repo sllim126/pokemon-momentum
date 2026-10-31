@@ -53,7 +53,7 @@ The importer (`app/importer.py`, docstring has the full rules):
 Re-running updates existing SKUs but keeps their slugs. Once products are edited in the admin
 (Phase 3), use `--only-new`.
 
-The market reference isn't in the daily job yet: adding it to cron is an owner step.
+The market reference is rebuilt daily at 03:00 UTC by cron (after the 02:00 market update).
 
 ## Save a copy of the old Squarespace site
 
