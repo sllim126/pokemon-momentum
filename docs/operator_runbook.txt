@@ -36,9 +36,8 @@ These checks were added after a performance and UX pass on the older research da
   `universe?limit=...` calls.
 - If seen, hard refresh first (`Ctrl+Shift+R`) to clear stale frontend code.
 
-2. Verify Market Signals loading feedback
-- During slow screener calls, table area should show a spinner overlay with loading text.
-- If table appears frozen without spinner, check that latest `dashboard.html` is loaded.
+2. Verify loading feedback
+- During slow list calls, the desktop app and the mobile app show "Loading…" in the list.
 
 3. Placeholder name triage (`Product <id>`)
 - First check whether API now resolves names:

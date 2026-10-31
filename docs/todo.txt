@@ -45,6 +45,11 @@ Recently Completed
 
 - 2026-10-31 "Our store" button (desktop and phone) now opens the TCGplayer Pro store, so it keeps
   working after Squarespace closes on 2026-11-14 (owner's choice until the new store launches).
+- 2026-10-31 Mobile app clean-up (1.6): deleted the old phone page (`mobile_dashboard.html`), the
+  old research dashboard (`dashboard.html`), the mobile concept page and their tests;
+  `/mobile-classic` and `/mobile-rebuild` forward to `/mobile`. Backup: git tag
+  `backup/before-mobile-cleanup-2026-10-31`. `/time_to_buy` (data route) has no page now; remove
+  it later if nothing else uses it.
 - 2026-10-31 Mobile app step 1.5: Sealed Deals, Budget Builder, How it works.
 - 2026-10-31 Mobile app step 1.4: Sets, one set, Pokémon, Market Stats (indexes, set values).
 - 2026-10-31 Site name: "Poke6s Market" is now "Poke6s Market Watch" in the header, tab titles
@@ -221,10 +226,6 @@ screens, 3 refine, 4 camera/OCR.
   type filter, price per pack), Budget Builder (presets, amount, cards, per set, rarity, "I have
   this, swap it", spent/left summary), How it works (phone wording). Pokémon gets name
   suggestions. Waiting on the owner's phone check.
-- [planned] 1.6 Clean-up after the switch (done early, 2026-10-31): once 1.4-1.5 cover Sets,
-  Pokémon (done in 1.4) and the rest (1.5), delete `/mobile-classic` (`mobile_dashboard.html`), `dashboard.html`,
-  `tests/test_dashboard_frontend.py` and `/mobile-rebuild`, and repoint the app menu's "old
-  phone page" link.
 - [planned] Stage 2: tune two-pane layouts for phone landscape (fold the scope bar into the
   header to save height) and tablets; decide iPad routing.
 - [idea] Share the list definitions (LISTS) between desktop_home.html and mobile_app.html in
@@ -595,8 +596,6 @@ start these without asking. Mobile background: `docs/mobile_redesign_notes.txt`.
     `productId||subTypeName`
   - mobile flows for Browse Set, Browse Species, Set Strength, Set Explorer, Sealed Deals and
     the index pages
-    (once Browse Set, Browse Species and Set Strength exist on mobile, delete `dashboard.html`
-    and its test `tests/test_dashboard_frontend.py`: phones are its last users)
   - Alerts & Targets (hidden for now): daily rules for target hits, watchlist movement,
     breakouts, pullbacks, stale items and sell-above targets; decide account sync versus
     browser storage, and in-site inbox before email, Discord or push
@@ -641,8 +640,8 @@ Needs Decisions
 - Keep the lightweight tracking account long term, or join a broader site membership?
 - A future assistant: explainer, ranked recommender, or collection copilot? What guardrails
   and disclaimers does it need?
-- Development pages `/dashboard-lab`, `/dashboard-dev`, `/mobile-rebuild`: decided
-  2026-10-12 to leave them public for now.
+- Development pages `/dashboard-lab`, `/dashboard-dev`: decided 2026-10-12 to leave them public
+  for now (`/mobile-rebuild` was deleted 2026-10-31).
 
 Future Ideas
 ------------

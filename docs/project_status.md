@@ -44,11 +44,10 @@ PriceCharting download and Squarespace price sync were running.
 | `/dashboard-classic`, `/dashboard-dev` | The older research dashboard's desktop addresses | Retired 2026-10-16; forward like `/dashboard` |
 | `/home-preview` | The desktop app's former preview address | Forwards to `/` on desktop |
 | `/buy`, `/discover`, `/research`, `/track`, `/learn` | Area landing pages from the shared header menu | Live on phones; desktop forwards to the app |
-| `/mobile` | The mobile app (`mobile_app.html`), also what phones get at `/` | Live since 2026-10-31; steps 1.2-1.5 still being added |
-| `/mobile-classic` | The old phone page (`mobile_dashboard.html`) | Frozen; deleted a few weeks after the switch |
+| `/mobile` | The mobile app (`mobile_app.html`), also what phones get at `/` | Live since 2026-10-31 (steps 1.1-1.5 done) |
+| `/mobile-classic`, `/mobile-rebuild` | Forward to `/mobile` | The old phone page and the mobile concept page were deleted on 2026-10-31 |
 | `/m-next` | The mobile app's build-time address (plan in `docs/mobile_app_plan.md`) | Same page as `/mobile`; kept for links and review notes |
 | `/dashboard-lab` | Desktop command-center reference | Development page; left public on purpose (decided 2026-10-12) |
-| `/mobile-rebuild` | Earlier mobile concept retained for comparison | Development page; left public on purpose (decided 2026-10-12) |
 | `/set-explorer` | Set cost, concentration, and depth | Live; covered by desktop app Market Stats → Set values |
 | `/budget-builder` | Budget-based recommendation builder | Live; covered by desktop app Budget Builder |
 | `/sealed-deals` | Sealed price-per-pack/value screening | Live; covered by desktop app Sealed Deals |
@@ -122,7 +121,7 @@ Added 2026-10:
 - Index snapshots now build after the parquet export, so indexes are no longer a day behind
 - The desktop app is the desktop home page at `/`; older desktop addresses forward to it
   (phones unchanged); the older research dashboard is retired on desktop (2026-10-16) and
-  `dashboard.html` now serves only the mobile menu's Browse Set, Browse Pokémon and Set Strength
+  `dashboard.html` was deleted on 2026-10-31 once the mobile app covered its last views
 - Card views answer in about 0.01-0.05 s: cached table checks, one shared DuckDB
   connection, a weekly long-history snapshot for "All" and the 6-Month Hold, browser caching
 - Discover lists scale their activity thresholds to feed gaps

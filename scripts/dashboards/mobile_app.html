@@ -1080,7 +1080,6 @@
           nodes.push(button);
         }
       }
-      // Until the later steps are built, the old phone page is one tap away.
       // Feedback and bug reports go to Discord only; no form on the page (owner, 2026-10-24).
       // Signing in happens on the Account page (Google), which merges this phone's saved
       // cards into the account and comes back here. Signing in as the owner shows the
@@ -1096,8 +1095,6 @@
       }
       nodes.push(el("h4", { text: "Help" }),
         el("a", { href: "https://discord.gg/AejcWHkCG", target: "_blank", rel: "noopener" }, el("span", { text: "Feedback & bug reports (Discord)" }), el("span", { text: "↗" })));
-      nodes.push(el("h4", { text: "Not built yet" }),
-        el("a", { href: "/mobile-classic", class: "old" }, el("span", { text: "The old phone page" }), el("span", { text: "↗" })));
       $("menu").replaceChildren(...nodes);
     }
     // Card counts next to each list, loaded in the background (shares the list cache).
