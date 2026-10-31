@@ -1698,7 +1698,8 @@ class ApiRouteTests(unittest.TestCase):
                 "listed": True,
                 "sku": "637647",
                 "title": "Prism Energy",
-                "url": "https://www.poke6s.com/shop/p/prism-energy",
+                # Squarespace closes 2026-11-14: the button opens the TCGplayer Pro store instead.
+                "url": api.OUR_STORE_URL,
             },
         )
 
@@ -1736,6 +1737,7 @@ class ApiRouteTests(unittest.TestCase):
 
         self.assertTrue(result["listed"])
         self.assertEqual(result["sku"], "JP-MD-BOX")
+        self.assertEqual(result["url"], "https://poke6s.tcgplayerpro.com/")
 
     def test_load_tcgplayer_sku_mapping_supports_multiple_product_ids_per_sku(self):
         mapping_path = api.SCRIPT_DIR.parents[1] / "data" / "squarespace_tcgplayer_mapping.csv"

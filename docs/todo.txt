@@ -43,6 +43,8 @@ Current Focus (2026-10-25)
 Recently Completed
 ------------------
 
+- 2026-10-31 "Our store" button (desktop and phone) now opens the TCGplayer Pro store, so it keeps
+  working after Squarespace closes on 2026-11-14 (owner's choice until the new store launches).
 - 2026-10-31 Mobile app step 1.4: Sets, one set, Pokémon, Market Stats (indexes, set values).
 - 2026-10-31 Mobile app step 1.3: My lists, account in the menu, bottom tab bar on phones.
 - 2026-10-31 Mobile app step 1.2: Graded, Your targets, Stats, Save, Our store on the card
@@ -133,10 +135,11 @@ and open decisions: `docs/storefront_plan.md` (progress log at its end). What th
 site has today: `docs/storefront_current_site.md`. Our own site, hosted on the owner's server
 behind Cloudflare Tunnel; Stripe hosted Checkout (approved by the owner 2026-10-31). The
 Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
-- [next] Before 2026-11-14: the market site's "Our store" button (desktop and phone, from
-  `/store_link`) points at Squarespace product pages, which stop working when the plan ends.
-  Hide it from 2026-11-14 until the new store launches, then point it at the new store's
-  `/p/<slug>` pages (same item as the buy-button switch under "After launch").
+- [planned] At storefront launch: point the market site's "Our TCGplayer store" button
+  (`OUR_STORE_URL` in scripts/dashboards/api.py, used by /store_link on desktop and phone) at
+  the new store's `/p/<slug>` pages. Since 2026-10-31 it opens the TCGplayer Pro store (owner:
+  sell there until the new store launches, after Black Friday); which products show it still
+  comes from the last Squarespace export, so refresh that rule from the new store's stock then.
 - [next] Owner, before 2026-11-14: domain forwarding stopgap (plan decision D5) (the Squarespace
   website plan is cancelled, ending 2026-11-14, confirmed 2026-10-31); one last products export just before the plan ends (for the importer re-run
   below). Products, orders and customers/subscribers were exported 2026-10-31; page text, blog

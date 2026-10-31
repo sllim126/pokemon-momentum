@@ -4878,23 +4878,31 @@ def groups(limit: int = 1000, offset: int = 0, category_id: int = 3):
     return {"columns": cols, "rows": rows}
 
 
+# Where the "Our store" button sends buyers. The Squarespace store closes 2026-11-14, so the
+# owner chose (2026-10-31) to sell through the TCGplayer Pro store until the new storefront
+# launches; then this becomes the new store's product page. The Pro site blocks automated
+# requests, so product-level addresses there can't be checked: the button opens the store.
+OUR_STORE_URL = os.getenv("POKE6S_STORE_URL", "https://poke6s.tcgplayerpro.com/")
+
+
 @app.get("/store_link")
 def store_link(product_id: int, category_id: int = 3):
-    """Return the public Poke6s listing URL for a product when one exists and is in stock.
+    """Return the "Our store" link for a product we stock (listed and in stock).
 
-    Singles can resolve directly when the store SKU equals the TCGplayer product id.
-    Sealed products go through the explicit Squarespace/TCGplayer mapping file instead.
+    Whether we stock it still comes from the latest Squarespace export: singles resolve
+    directly when the store SKU equals the TCGplayer product id, sealed products through the
+    Squarespace/TCGplayer mapping file. The link itself is OUR_STORE_URL.
     """
     product_id_text = str(int(product_id))
     listing_by_sku = load_squarespace_listing_by_sku()
     direct_listing = listing_by_sku.get(product_id_text)
     if direct_listing is not None and _store_link_direct_match_allowed(product_id, category_id):
-        return {"listed": True, **direct_listing}
+        return {"listed": True, **direct_listing, "url": OUR_STORE_URL}
 
     mapped_sku = load_tcgplayer_sku_mapping().get(product_id_text, "")
     mapped_listing = listing_by_sku.get(mapped_sku) if mapped_sku else None
     if mapped_listing is not None:
-        return {"listed": True, **mapped_listing}
+        return {"listed": True, **mapped_listing, "url": OUR_STORE_URL}
 
     return {"listed": False}
 
