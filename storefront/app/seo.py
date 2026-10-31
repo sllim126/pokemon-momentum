@@ -93,6 +93,18 @@ def article_jsonld(settings: Settings, article) -> dict:
     return data
 
 
+# Poke6s community and social accounts, shown in the footer and listed as the shop's other
+# profiles (Organization "sameAs"), which helps search engines connect them to the shop.
+SOCIAL_LINKS = (
+    ("Discord", "https://discord.gg/AejcWHkCG"),
+    ("YouTube", "https://www.youtube.com/@Poke6s_TCG"),
+    ("Instagram", "https://www.instagram.com/poke6s/"),
+    ("Facebook", "https://www.facebook.com/poke6s/"),
+    ("X", "https://x.com/poke6s"),
+    ("Reddit", "https://reddit.com/u/poke6s"),
+)
+
+
 def organization_jsonld(settings: Settings) -> dict:
     return {
         "@context": "https://schema.org",
@@ -102,7 +114,7 @@ def organization_jsonld(settings: Settings) -> dict:
         "url": settings.base_url + "/",
         "logo": f"{settings.base_url}/static/img/logo.png",
         "email": settings.contact_email,
-        "sameAs": [settings.market_base_url, settings.tcgplayer_store_url],
+        "sameAs": [settings.market_base_url, settings.tcgplayer_store_url] + [url for _name, url in SOCIAL_LINKS],
     }
 
 

@@ -175,7 +175,7 @@ main section { margin-top: 32px; }
   .head-row { grid-template-columns: auto 1fr auto; }
   .search { grid-column: 2; grid-row: 1; max-width: 560px; }
   .ext-links { grid-column: 3; }
-  .foot-grid { grid-template-columns: 2fr 1fr 1fr; }
+  .foot-grid { grid-template-columns: 2fr 1fr 1fr 1fr; }
   .hero { padding: 40px 36px; }
 }
 @media (min-width: 960px) {

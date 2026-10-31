@@ -76,6 +76,10 @@
         {% for slug in ['about', 'terms', 'privacy'] if slug in footer_pages %}<a href="/{{ slug }}">{{ footer_pages[slug].title }}</a>{% endfor %}
         <a href="{{ settings.market_base_url }}">market.poke6s.com</a>
       </nav>
+      <nav aria-label="Community">
+        <h2>Community</h2>
+        {% for name, url in social_links %}<a href="{{ url }}" rel="noopener me">{{ name }}</a>{% endfor %}
+      </nav>
     </div>
     <p class="wrap muted small">© {{ year }} Poke6s LLC. Pokémon and its trademarks are © Nintendo, Creatures and GAME FREAK; this shop is not affiliated with them.</p>
   </footer>

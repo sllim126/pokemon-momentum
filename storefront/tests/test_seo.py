@@ -52,3 +52,9 @@ def test_canonical_and_open_graph(client):
 def test_jsonld_cannot_close_script_tag():
     from storefront.app.seo import dump
     assert "</script>" not in dump({"name": "</script><script>alert(1)</script>"})
+
+
+def test_footer_and_organization_list_the_social_accounts(client):
+    home = client.get("/").text
+    assert 'aria-label="Community"' in home and "https://discord.gg/AejcWHkCG" in home
+    assert '"sameAs": [' in home and "https://www.youtube.com/@Poke6s_TCG" in home

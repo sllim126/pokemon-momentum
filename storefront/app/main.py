@@ -84,7 +84,8 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     env = templates.env
     env.globals.update(settings=settings, year=datetime.now(UTC).year, sort_labels=catalog.SORT_LABELS,
                        type_labels=classify.PRODUCT_TYPE_LABELS, language_labels=classify.LANGUAGE_LABELS,
-                       ship_class_labels=classify.SHIP_CLASS_LABELS, footer_pages=pages)
+                       ship_class_labels=classify.SHIP_CLASS_LABELS, footer_pages=pages,
+                       social_links=seo.SOCIAL_LINKS)
     env.filters["money"] = lambda cents: f"${(cents or 0) / 100:,.2f}"
     env.filters["dollars"] = lambda value: f"${value:,.2f}"
     env.filters["jsonld"] = seo.dump
