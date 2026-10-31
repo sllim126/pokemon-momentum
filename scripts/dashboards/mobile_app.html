@@ -268,7 +268,33 @@
     .actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
     .actions a { flex: 1 1 140px; min-height: 44px; display: grid; place-items: center; border-radius: 11px; font-weight: 700; text-decoration: none; }
     .actions .primary { background: var(--accent); color: #04101f; }
-    .soon { margin-top: 18px; padding: 12px 14px; border: 1px dashed var(--line-strong); border-radius: 12px; color: var(--muted); font-size: 13px; }
+    .actions button { flex: 1 1 100px; min-height: 44px; border-radius: 11px; font-weight: 700; border: 1px solid var(--line-strong); background: var(--panel); color: var(--text); font: inherit; font-weight: 700; }
+    .actions .store { flex: 1 1 140px; border: 1px solid var(--line-strong); color: var(--text); }
+    .actions .store[hidden] { display: none; }
+    /* Save to a list (step 1.2): the four lists as toggles under the buttons. */
+    .save-panel { margin-top: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); display: grid; gap: 6px; }
+    .save-panel button { min-height: 44px; display: flex; justify-content: space-between; align-items: center; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--text); font: inherit; }
+    .save-panel button[aria-pressed="true"] { border-color: rgba(77, 163, 255, 0.55); background: var(--accent-soft); }
+    .save-panel button span:last-child { color: var(--faint); font-size: 13px; }
+    .save-panel button[aria-pressed="true"] span:last-child { color: var(--accent); font-weight: 700; }
+    .stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+    .stat { padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+    .stat span { display: block; color: var(--faint); font-size: 12px; }
+    .stat strong { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+    .source { display: inline-block; margin-top: 8px; color: var(--accent); font-size: 13px; text-decoration: none; }
+    /* Collapsible sections (Your targets, Stats) keep the card screen short. */
+    details.more { margin-top: 18px; border: 1px solid var(--line); border-radius: 12px; padding: 0 12px; }
+    details.more > summary { min-height: 44px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-weight: 700; list-style: none; }
+    details.more > summary::-webkit-details-marker { display: none; }
+    details.more > summary::after { content: "+"; color: var(--faint); font-size: 18px; }
+    details.more[open] > summary::after { content: "−"; }
+    details.more[open] { padding-bottom: 12px; }
+    .target-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .target-fields label { display: grid; gap: 4px; color: var(--faint); font-size: 12px; }
+    .target-fields input { width: 100%; min-width: 0; box-sizing: border-box; min-height: 44px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--bg); color: var(--text); padding: 0 10px; font: inherit; font-size: 16px; }
+    .target-status { margin-top: 8px; font-size: 13.5px; }
+    .target-status.buy { color: var(--good); }
+    .target-status.sell { color: var(--warn); }
     .empty-card { padding: 40px 20px; text-align: center; color: var(--muted); }
 
     /* ---------- home: check a card ---------- */
@@ -509,8 +535,9 @@
      * The home screen is "Check a card" (the phone's main job: a card in front of you, is it a
      * good buy?): a big search box and recently checked cards. The card screen leads with the
      * Deal Checker (asking price → verdict and counter-offers at 95-70% of it), then the price chart and the
-     * 6-Month Hold. The nine Discover lists are in the menu. Later steps add Graded, Save,
-     * My lists, Research, Buy and Learn.
+     * 6-Month Hold, Graded prices (PriceCharting, linked back), Your targets, Stats, and the
+     * Save / TCGplayer / Our store buttons (step 1.2). The nine Discover lists are in the menu.
+     * Later steps add My lists, Research, Buy and Learn.
      *
      * Layout follows the screen width, not the device (CSS above): one pane under 700px, list
      * and card side by side from 700px, plus a menu rail from 1100px.
@@ -521,7 +548,8 @@
      * shared: ?list= (no list = Check a card), market=JP, kind=sealed, product=<productId||subType>.
      *
      * Data comes from the same endpoints as the desktop app (desktop_home.html):
-     * /<list key> ({columns, rows}), /search, /series, /health, /card_details, /hold_check.
+     * /<list key> ({columns, rows}), /search, /series, /health, /card_details, /hold_check,
+     * /graded_prices, /store_link and /tracking/tags (saved lists, when signed in).
      */
 
     // Market lists. Same keys, fields and wording as LISTS in desktop_home.html; the API path
@@ -547,6 +575,12 @@
         desc: "Cards on sale because their whole set is cooling off: they dropped like Pullbacks (10%+ below their 90-day high for a week), but about as much as their set did. A shopping list for sets you like; the set may keep sliding, so there is rarely a rush. Cards falling faster than their set are in Pullbacks." },
     ];
     const TCGPLAYER_AFFILIATE_BASE = "https://partner.tcgplayer.com/jR1OJb";
+    // Saved lists and price targets: the same storage and account sync as the desktop app
+    // (desktop_home.html), so a card saved on one shows up on the other.
+    const SAVE_TAGS = [["favorite", "Favorite"], ["watchlist", "Watchlist"], ["research", "Needs Review"], ["owned", "Buy List"]];
+    const TOKEN_KEY = "pokemon-momentum-tracking-token";
+    const LOCAL_TAGS_KEY = "pokemon-momentum-tags";
+    const TARGETS_KEY = "pokemon-momentum-price-targets";
     const WINDOWS = [[30, "30D"], [90, "90D"], [365, "1Y"], [5000, "All"]];
     // Deal Checker rules (see judgeDeal). Percentages compare the asking price with market.
     const DEAL = {
@@ -1171,6 +1205,12 @@
         scheduleHold();
       });
       askInput.addEventListener("keydown", (event) => { if (event.key === "Enter") askInput.blur(); });
+      const saveButton = el("button", { type: "button", id: "saveBtn", "aria-expanded": "false", "aria-controls": "savePanel", text: "♡ Save" });
+      saveButton.addEventListener("click", () => {
+        const panel = $("savePanel");
+        panel.hidden = !panel.hidden;
+        saveButton.setAttribute("aria-expanded", String(!panel.hidden));
+      });
       pane.replaceChildren(el("div", { class: "card" },
         back,
         el("div", { class: "card-top" },
@@ -1193,13 +1233,22 @@
         el("div", { class: "caption", id: "chartCaption" }),
         el("div", { class: "section-title", text: "Hold for 6 months?" }),
         el("div", { id: "hold" }, el("div", { class: "caption", text: "Working it out…" })),
+        el("div", { class: "section-title", text: "Graded prices" }),
+        el("div", { id: "graded" }, el("div", { class: "caption", text: "Loading graded prices…" })),
+        targetsSection(card),
+        el("details", { class: "more" }, el("summary", { text: "Stats for this chart range" }), el("div", { class: "stat-grid", id: "statsGrid" })),
         el("div", { class: "actions" },
-          el("a", { class: "primary", href: tcgplayerUrl(card), target: "_blank", rel: "noopener sponsored", text: "TCGplayer ↗" })),
-        el("div", { class: "soon", text: "Coming next: Graded prices, Save to your lists, and Our store." })));
+          saveButton,
+          el("a", { class: "primary", href: tcgplayerUrl(card), target: "_blank", rel: "noopener sponsored", text: "TCGplayer ↗" }),
+          el("a", { class: "store", id: "storeLink", target: "_blank", rel: "noopener", hidden: true, text: "Our store ↗" })),
+        el("div", { class: "save-panel", id: "savePanel", hidden: true })));
       renderVerdict();
+      renderSave();
       loadChart(card, seq);
       loadDetails(card, seq);
       loadHold(seq);
+      loadGraded(card, seq);
+      loadStoreLink(card, seq);
     }
 
     // ---------- Deal Checker ----------
@@ -1340,6 +1389,177 @@
           el("span", { text: `${o.step}%` }), el("b", { text: money(o.price) }), el("span", { class: "rate", text: o.text }))),
       ] : []));
     }
+    // ---------- Graded, targets, stats, save, our store (step 1.2; as in desktop_home.html) ----------
+    // Graded prices from PriceCharting. Their terms require a link back on every price shown.
+    // Ungraded shows our TCGplayer market price, like the rest of the card (owner, 2026-10-29);
+    // PriceCharting's own ungraded price goes in the note.
+    async function loadGraded(card, seq) {
+      try {
+        const data = await getJson(`/graded_prices?${new URLSearchParams({ productId: card.productId, subTypeName: card.subTypeName })}`);
+        if (seq !== cardSeq) return;
+        if (!data.available) {
+          $("graded").replaceChildren(el("div", { class: "caption", text: "PriceCharting doesn't list graded prices for this printing." }));
+          return;
+        }
+        const market = card.price > 0 ? card.price : NaN;
+        const cells = [["Ungraded (TCGplayer)", market], ["PSA 9", data.prices.grade9], ["PSA 10", data.prices.psa10], ["CGC 10", data.prices.cgc10]];
+        const notes = [];
+        if (data.prices.ungraded) notes.push(`PriceCharting's ungraded price: ${money(data.prices.ungraded)}.`);
+        if (data.prices.psa10 && market) notes.push(`PSA 10 is ${(data.prices.psa10 / market).toFixed(1)}× the raw market price.`);
+        if (data.sales_volume) notes.push(`${data.sales_volume.toLocaleString()} sales a year.`);
+        $("graded").replaceChildren(
+          el("div", { class: "stat-grid" }, ...cells.map(([label, value]) => el("div", { class: "stat" }, el("span", { text: label }), el("strong", { text: money(value) })))),
+          notes.length ? el("div", { class: "caption", text: notes.join(" ") }) : null,
+          el("a", { class: "source", href: data.url, target: "_blank", rel: "noopener noreferrer", text: `Prices from PriceCharting (${data.snapshot_date}) ↗` }));
+      } catch (_err) {
+        if (seq === cardSeq) $("graded").replaceChildren(el("div", { class: "caption", text: "Graded prices aren't available right now." }));
+      }
+    }
+
+    // Your targets: a buy and a sell price per card, kept in this browser under the same key
+    // as the desktop app ("categoryId||productId||subType" -> {buy, sell, updatedAt}).
+    const targetKey = (card) => `${categoryId()}||${card.productId}||${card.subTypeName || ""}`;
+    const readTargets = () => readStore(TARGETS_KEY, {}) || {};
+    function targetFor(card) {
+      const raw = readTargets()[targetKey(card)] || {};
+      const buy = Number.parseFloat(raw.buy), sell = Number.parseFloat(raw.sell);
+      return { buy: buy > 0 ? buy : null, sell: sell > 0 ? sell : null };
+    }
+    function targetsSection(card) {
+      const { buy, sell } = targetFor(card);
+      const field = (id, label, value, example) => el("label", {}, el("span", { text: label }),
+        el("input", { id, type: "text", inputmode: "decimal", enterkeyhint: "done", autocomplete: "off", value: value ?? "",
+                      placeholder: card.price > 0 ? `e.g. ${example.toFixed(2)}` : "" }));
+      const box = el("details", { class: "more", open: Boolean(buy || sell) },
+        el("summary", { text: "Your targets" }),
+        el("div", { class: "target-fields" },
+          field("targetBuy", "Buy at or below", buy, card.price * 0.88),
+          field("targetSell", "Sell at or above", sell, card.price * 1.15)),
+        el("div", { class: "target-status", id: "targetStatus" }),
+        el("div", { class: "caption", text: "Saved in this browser and shared with the desktop site." }));
+      let timer = null;
+      box.addEventListener("input", () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          const targets = readTargets();
+          const clean = (id) => $(id).value.replace(/[^0-9.]/g, "");
+          const b = clean("targetBuy"), s = clean("targetSell");
+          if (b || s) targets[targetKey(card)] = { buy: b, sell: s, updatedAt: new Date().toISOString() };
+          else delete targets[targetKey(card)];
+          writeStore(TARGETS_KEY, targets);
+          renderTargetStatus(card);
+        }, 400);
+      });
+      queueMicrotask(() => renderTargetStatus(card));
+      return box;
+    }
+    function renderTargetStatus(card) {
+      const node = $("targetStatus");
+      if (!node) return;
+      const { buy, sell } = targetFor(card);
+      const price = card.price, market = money(price);
+      let kind = "", text = "Set a price you'd buy at, a price you'd sell at, or both.";
+      if (price > 0 && buy && price <= buy) [kind, text] = ["buy", `Market ${market} is at or under your buy target.`];
+      else if (price > 0 && sell && price >= sell) [kind, text] = ["sell", `Market ${market} is at or over your sell target.`];
+      else if (price > 0 && buy) text = `Market ${market} is ${((price / buy - 1) * 100).toFixed(0)}% above your buy target.`;
+      else if (price > 0 && sell) text = `Market ${market} hasn't reached your sell target yet.`;
+      node.className = `target-status${kind ? ` ${kind}` : ""}`;
+      node.textContent = text;
+    }
+
+    // Stats for the chart range on screen (redrawn with the chart).
+    function renderStats(card, points) {
+      const node = $("statsGrid");
+      if (!node) return;
+      const prices = points.map((p) => p.price);
+      const last = points[points.length - 1];
+      const stats = [
+        ["Market price", money(card.price > 0 ? card.price : last?.price)],
+        ["30-day average", money(last?.sma30)],
+        ["Range low", money(prices.length ? Math.min(...prices) : NaN)],
+        ["Range high", money(prices.length ? Math.max(...prices) : NaN)],
+        ["Vs 30-day average", last && last.sma30 ? pct((last.price / last.sma30 - 1) * 100) : "—"],
+        ["Printing", card.subTypeName || "—"],
+        ["Rarity", card.rarity || "—"],
+        ["Card number", card.number || "—"],
+      ];
+      node.replaceChildren(...stats.map(([label, value]) => el("div", { class: "stat" }, el("span", { text: label }), el("strong", { text: value }))));
+    }
+
+    // Save to a list. Signed in: the account's lists (/tracking/tags, synced everywhere).
+    // Signed out: this browser's local storage, the same key the desktop app uses.
+    function trackingToken() {
+      const stored = readStore(TOKEN_KEY, "");
+      if (stored) return stored;
+      try { const raw = localStorage.getItem(TOKEN_KEY); if (raw) return raw; } catch (_err) { /* storage blocked */ }
+      const match = document.cookie.match(/(?:^|;\s*)pm_tracking_token=([^;]+)/);
+      return match ? decodeURIComponent(match[1]) : "";
+    }
+    let syncedTags = null;  // {cardKey: [tag, ...]} from the account, or null when signed out
+    async function loadSyncedTags() {
+      const token = trackingToken();
+      if (!token) return;
+      try {
+        const response = await fetch("/tracking/tags", { headers: { Authorization: `Bearer ${token}` } });
+        if (!response.ok) return;
+        const data = await response.json();
+        syncedTags = {};
+        for (const item of data.items || []) (syncedTags[keyOf(item.product_id, item.sub_type_name)] ||= []).push(item.tag);
+        renderSave();
+      } catch (_err) { syncedTags = null; }
+    }
+    const readLocalTags = () => readStore(LOCAL_TAGS_KEY, {}) || {};
+    const tagsFor = (key) => new Set(((syncedTags || readLocalTags())[key]) || []);
+    function renderSave() {
+      const card = state.selected, button = $("saveBtn"), panel = $("savePanel");
+      if (!card || !button || !panel) return;
+      const current = tagsFor(card.key);
+      button.textContent = current.size ? "♥ Saved" : "♡ Save";
+      panel.replaceChildren(
+        ...SAVE_TAGS.map(([tag, label]) => {
+          const on = current.has(tag);
+          const toggle = el("button", { type: "button", "aria-pressed": String(on) }, el("span", { text: label }), el("span", { text: on ? "Saved ✓" : "Add" }));
+          toggle.addEventListener("click", () => toggleTag(card, tag, !on));
+          return toggle;
+        }),
+        el("div", { class: "caption", text: syncedTags ? "Synced to your account." : "Saved on this phone. Sign in (menu → Account) to sync with your account." }));
+    }
+    async function toggleTag(card, tag, enabled) {
+      const token = trackingToken();
+      if (token && syncedTags) {
+        try {
+          const response = await fetch("/tracking/tags", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ category_id: categoryId(), product_id: card.productId, sub_type_name: card.subTypeName, tag, enabled }),
+          });
+          if (response.ok) {
+            const list = new Set(syncedTags[card.key] || []);
+            enabled ? list.add(tag) : list.delete(tag);
+            syncedTags[card.key] = [...list];
+          }
+        } catch (_err) { /* leave as it was */ }
+      } else {
+        const tags = readLocalTags();
+        const list = new Set(tags[card.key] || []);
+        enabled ? list.add(tag) : list.delete(tag);
+        if (list.size) tags[card.key] = [...list]; else delete tags[card.key];
+        writeStore(LOCAL_TAGS_KEY, tags);
+      }
+      if (state.selected?.key === card.key) renderSave();
+    }
+
+    // "Our store": shown only when the card is listed and in stock in our store (/store_link).
+    async function loadStoreLink(card, seq) {
+      try {
+        const data = await getJson(`/store_link?product_id=${card.productId}&category_id=${categoryId()}`);
+        if (seq === cardSeq && data.listed && data.url && $("storeLink")) {
+          $("storeLink").href = data.url;
+          $("storeLink").hidden = false;
+        }
+      } catch (_err) { /* not in the store */ }
+    }
+
     async function loadChart(card, seq) {
       const chart = $("chart");
       if (!chart) return;
@@ -1348,6 +1568,7 @@
         if (seq !== cardSeq) return;
         const points = (data.rows || []).map((r) => ({ date: String(r[0]).slice(0, 10), price: Number(r[1]), sma30: Number(r[3]) })).filter((p) => p.price > 0);
         drawChart(chart, points);
+        renderStats(card, points);
         if (points.length > 1) {
           const first = points[0].price, last = points[points.length - 1].price;
           if (!(card.price > 0)) $("cardPrice").textContent = money(last);
@@ -1437,6 +1658,7 @@
     loadFreshness();
     loadList();
     loadCounts();
+    loadSyncedTags();
     enableOwnerReviewNotes();
   </script>
 </body>

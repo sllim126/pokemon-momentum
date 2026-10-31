@@ -128,8 +128,8 @@ asking price), and the browsing lists moved to the menu.
    phone page. To be settled in stage 2.
 6. **Switched early: 2026-10-31** (owner: "it has been working fine; we can still make
    changes"). Phones get the app at `/`, `/mobile` and `/dashboard`; `/m-next` stays as an
-   address; the old page is at `/mobile-classic` for a few weeks. Steps 1.2-1.5 continue on
-   the live app. Old links to Browse Set, Browse Pokémon and Set Strength
+   address; the old page is at `/mobile-classic` for a few weeks. Step 1.2 (Graded, targets, stats,
+   Save, Our store) went live the same day; 1.3-1.5 continue on the live app. Old links to Browse Set, Browse Pokémon and Set Strength
    (`?tab=group_products` etc.) still open `dashboard.html` until step 1.4.
 
 ## What the owner does at each step
