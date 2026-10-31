@@ -213,15 +213,16 @@ class ApiRouteTests(unittest.TestCase):
         self.assertNotIn("Charizard ex", response.text)
         self.assertNotIn("Pikachu Felt Hat", response.text)
 
-    def test_mobile_route_serves_mobile_app_and_classic_keeps_old_page(self):
-        # Switched 2026-10-31: /mobile is the new app; the old page lives at /mobile-classic.
+    def test_mobile_route_serves_mobile_app_and_retired_pages_forward(self):
+        # /mobile is the mobile app; the old phone page and concept page were deleted in the
+        # mobile clean-up (2026-10-31) and their addresses forward to /mobile.
         response = self.client.get("/mobile")
         self.assertEqual(response.status_code, 200)
         self.assertIn("mobile_app_plan.md", response.text)
-        classic = self.client.get("/mobile-classic")
-        self.assertEqual(classic.status_code, 200)
-        self.assertNotIn("mobile_app_plan.md", classic.text)
-        self.assertIn("Deal Checker", classic.text)
+        for path in ("/mobile-classic", "/mobile-rebuild"):
+            retired = self.client.get(path, follow_redirects=False)
+            self.assertEqual(retired.status_code, 301, path)
+            self.assertEqual(retired.headers["location"], "/mobile", path)
 
     def test_new_mobile_app_preview_opens_on_any_device(self):
         # /m-next is the new mobile app's preview (docs/mobile_app_plan.md); it is not routed

@@ -142,5 +142,7 @@ asking price), and the browsing lists moved to the menu.
   landscape, and use the floating Note tab for anything wrong. Public testers use Discord
   `#bug-reports`.
 - Decide decision 5 (iPads) during stage 2.
-- The switch is done (2026-10-31). Deleting `/mobile-classic`, `mobile_dashboard.html`,
-  `dashboard.html` and `/mobile-rebuild` waits until step 1.5 covers what they still do.
+- The switch is done (2026-10-31), and so is the clean-up (1.6, the same day):
+  `mobile_dashboard.html`, `dashboard.html` and `mobile_rebuild_mockup.html` are deleted,
+  `/mobile-classic` and `/mobile-rebuild` forward to `/mobile`. The last copy is in git tag
+  `backup/before-mobile-cleanup-2026-10-31`.

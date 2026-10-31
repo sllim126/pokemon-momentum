@@ -49,8 +49,9 @@ coding agent. Read this first, then `docs/todo.txt`.
   that assume higher grade means higher price.
 - **The phone site is the mobile app** (`scripts/dashboards/mobile_app.html`, plan
   `docs/mobile_app_plan.md`). The owner switched it on early, 2026-10-31: phones get it at `/`,
-  `/mobile` and `/m-next`, and it is still being finished (steps 1.2-1.5). The old phone page
-  is frozen at `/mobile-classic` until it is deleted; don't change it.
+  `/mobile` and `/m-next`. The old phone page (`mobile_dashboard.html`) and the old research
+  dashboard (`dashboard.html`) were deleted on 2026-10-31; git tag
+  `backup/before-mobile-cleanup-2026-10-31` holds the last copy.
 - **Bug reports go to Discord** (`#bug-reports`). Don't add on-site bug forms to new pages.
 - **Documentation is part of the job.** A human must be able to review the code: comment
   the non-obvious parts and update the docs a change affects, in the same commit.

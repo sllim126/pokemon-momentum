@@ -2,7 +2,8 @@ Pokemon Momentum Mobile Redesign Notes
 ======================================
 
 Historical planning notes (April 2026), kept for context. The mobile page that was built
-is `scripts/dashboards/mobile_dashboard.html`, served at `/mobile`.
+from them (`mobile_dashboard.html`) was replaced by the mobile app (`mobile_app.html`, plan
+in `docs/mobile_app_plan.md`) and deleted on 2026-10-31.
 
 Purpose
 -------
