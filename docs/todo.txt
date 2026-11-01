@@ -43,12 +43,10 @@ Current Focus (2026-10-25)
 Recently Completed
 ------------------
 
-- 2026-11-01 Squarespace price sync switched off (commented out with `#OFF` in the live crontab
-  and `deploy/crontab.txt`). It had failed on 2026-10-29, 10-30 and 10-31:
-  SQUARESPACE_EXPORT_CSV in .env holds a host path (/opt/pokemon-momentum/...) but the job runs
-  in the container, where the repo is /app. To revive it before 2026-11-14, set that value to
-  /app/products_....csv (or a relative path) and remove the `#OFF ` prefix.
-  data/market_prices_latest.csv now stops refreshing; only the admin store-pricing comparison reads it.
+- 2026-11-01 Squarespace price sync fixed. It failed on 2026-10-29, 10-30 and 10-31 because
+  SQUARESPACE_MARKET_CSV and SQUARESPACE_EXPORT_CSV in .env held host paths
+  (/opt/pokemon-momentum/...) but the job runs in the container, where the repo is /app. Both now
+  start with /app/; a dry run passed (117 price changes queued). Daily 09:15 run kept on.
 
 - 2026-10-31 "Our store" button (desktop and phone) now opens the TCGplayer Pro store, so it keeps
   working after Squarespace closes on 2026-11-14 (owner's choice until the new store launches).
@@ -185,8 +183,8 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
 - [next] Phase 2: cart + Stripe Checkout (test mode only), orders, webhooks, reconciliation.
   Phase 3: LAN-only admin, exports (Pirate Ship, sales tax, bookkeeping, TCGplayer
   reconciliation), backups.
-- [planned] After launch: delete `scripts/squarespace_price_sync.py` (cron entry already off
-  since 2026-11-01) and switch the market site's "Poke6s" buy button to the new store.
+- [planned] After launch: retire `scripts/squarespace_price_sync.py` from cron
+  (`deploy/crontab.txt`) and switch the market site's "Poke6s" buy button to the new store.
 
 New mobile app (owner, 2026-10-21). Plan: `docs/mobile_app_plan.md`. Built at `/m-next`
 (`scripts/dashboards/mobile_app.html`) next to the old `/mobile`, in the desktop app's look,
