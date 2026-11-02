@@ -252,6 +252,8 @@ Thumbs.db
 data/tcgcsv_archive/
 # TCGCSV catalogue crawl (scripts/download/crawl_tcgcsv_catalogue.py): thousands of JSON files
 data/tcgcsv_catalogue/
+# TCGCSV archive torrents (scripts/torrents/build_archive_torrent.py): hard links to data/raw
+data/torrents/
 
 # Owner review-note uploads from /m-next (private; stay on the server)
 data/review_note_attachments/

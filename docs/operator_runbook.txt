@@ -702,6 +702,26 @@ sudo docker-compose exec -T pokemon-momentum python scripts/download/crawl_tcgcs
   while the first pass runs, one post when it completes, nothing on a quiet night, red with
   a ping on 403/429 (exit 3: don't retry, check the TCGCSV Discord) or any failure.
 
+TCGCSV archive torrents
+-----------------------
+Owner's plan (2026-11-02): seed TCGCSV's daily archive as torrents to take load off TCGCSV,
+one per finished year (2024, 2025; 2026 on 2027-01-02) and one per month after that.
+Not shared yet: the owner shares the magnet links once CptSpaceToaster agrees.
+
+- Build: `scripts/torrents/build_archive_torrent.py --year 2024` (or `--month 2026-11`).
+  It needs libtorrent, which isn't in the site's container: run it on the host from a venv
+  with `pip install libtorrent`. Output in `data/torrents/` (gitignored): the torrent's folder
+  (hard links to `data/raw`, plus README.txt and SHA256SUMS.txt), the `.torrent`, and the
+  magnet link in `<name>.magnet.txt`. Torrents are v1-only, for older clients.
+- Seeding: the owner's qBittorrent on 192.168.1.207 (web UI port 8080, category "TCGCSV",
+  saved to `Z:\TCGCSV`). It is a separate Windows machine, so a new torrent's files have to
+  reach it once: add the `.torrent` there through the web API, then have this server seed
+  to it over the LAN only (libtorrent with DHT and trackers off, port 6891) and point
+  qBittorrent at `192.168.1.240:6891` (`/api/v2/torrents/addPeers`). That's how 2024 and 2025
+  were loaded on 2026-11-02.
+- Info hashes: 2024 `b4e6415457ba8f5a841cceb149242d48542f58de`,
+  2025 `90554b38726121571b352ae75fd1143aff4a5064`.
+
 Manual category runs inside Docker
 ----------------------------------
 Use these when testing a category-specific pipeline path directly.

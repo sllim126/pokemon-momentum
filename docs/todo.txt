@@ -370,6 +370,11 @@ screens, 3 refine, 4 camera/OCR.
   (total with the normal ~1,900 stays under 10,000); night 1 starts with categories + groups
   (~95 requests) to get the exact count and plan the remaining nights.
   Ask TCGCSV (their Discord) before any bulk download beyond this plan.
+- [waiting] TCGCSV archive torrents (owner, 2026-11-02): 2024 and 2025 built and seeding in the
+  owner's qBittorrent (runbook "TCGCSV archive torrents"). Owner shares the magnet links once
+  CptSpaceToaster agrees. Next: [planned] automate the monthly torrent (2nd of each month) and
+  the 2026 yearly one (2027-01-02): build here, push to qBittorrent with the LAN seed step,
+  post the magnet link to Discord; needs libtorrent in a host venv and a crontab line.
 - [idea] Help TCGCSV by seeding a torrent of the price archive (owner offered in the TCGCSV
   Discord #development, 2026-10-19; CptSpaceToaster can't torrent and said "hopefully some
   enterprising folks" would). Archive is about 1 GB, all categories, prices only. Before
