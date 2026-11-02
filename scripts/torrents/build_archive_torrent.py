@@ -2,7 +2,8 @@
 
 Owner's plan (2026-11-02): help TCGCSV with its bandwidth bill by seeding the archive as
 torrents: one per finished year (2024, 2025, then 2026 on 2027-01-02) and one per month from
-then on. Sharing waits for CptSpaceToaster's OK (TCGCSV passes on TCGplayer data with
+then on. CptSpaceToaster OK'd sharing them in the TCGCSV Discord's #useful-shares on
+2026-11-02 and can withdraw that at any time (TCGCSV passes on TCGplayer data with
 TCGplayer's permission). See docs/operator_runbook.txt "TCGCSV archive torrents".
 
 For a period it makes, under data/torrents/ (gitignored):
