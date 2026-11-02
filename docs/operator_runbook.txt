@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-10-31
+Last reviewed: 2026-11-02
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -16,7 +16,9 @@ crontab changes). Each job is explained further down in this file.
 | Daily 03:00 | Storefront market prices (`data/storefront/market_reference.json`, read by the new shop's product pages) | cron: `scripts/build_storefront_market_reference.py` | `logs/storefront_market_reference.log` |
 | Daily 03:30 | Other games price archive (collect only) | `pokemon-momentum-tcgcsv-collect.timer` | see "Other games archive" |
 | Daily 04:30 | Placeholder Library sync (new Mega-era sets and promos) | cron: `scripts/utilities/sync_placeholder_library.py` | `logs/placeholder_sync.log` |
-| Daily 09:15 | Squarespace price sync (reaches the live store) | cron: `scripts/run_squarespace_price_sync.sh` | `logs/squarespace_price_sync_cron.log` |
+| Daily 09:15 | Squarespace price sync (reaches the live store; retire when Squarespace closes 2026-11-14) | cron: `scripts/run_squarespace_price_sync.sh` | `logs/squarespace_price_sync_cron.log` |
+| Daily 12:00 | TCGCSV catalogue crawl (sets and products for every game, at most 4,000 requests a day; Discord summary) | cron: `scripts/pipeline/run_tcgcsv_catalogue_host.sh` | `logs/tcgcsv_catalogue.log` |
+| Daily 21:30 | TCGCSV archive backfill, from 2026-11-01 (one request a night while the archive is offline; downloads the gap when it returns; Discord summary) | cron: `scripts/pipeline/run_archive_backfill_host.sh` | `logs/archive_backfill.log` |
 | Every 15 min | Copy Discord #bug-reports into the review queue | cron: `scripts/utilities/import_discord_bug_reports.py` | `logs/discord_bug_import.log` |
 | Fri 15:00 | Weekly Discord posts | cron: `scripts/utilities/post_weekly_discord.py` | `logs/discord_weekly.log` |
 | Sun 11:00 | Weekly full metadata refresh | `pokemon-momentum-weekly-refresh.timer` | journal |
@@ -646,6 +648,80 @@ sudo systemctl start pokemon-momentum-weekly-placeholder-refresh.service
 ```
 
 
+Backfill missing TCGCSV archive days
+------------------------------------
+TCGCSV's daily archive (`prices-YYYY-MM-DD.ppmd.7z`, every game, one file a day) went
+offline on 2026-09-16. `data/raw` holds every file from 2024-02-08 to 2026-09-15.
+`scripts/download/backfill_tcgcsv_archive.py` fetches the days after the newest file held,
+once TCGCSV serves them again. It follows the TCGCSV rules (150 ms apart, stop on 403/429),
+asks for each file at most once a day (`data/raw/backfill_attempts.json`), tests each file
+with `7z t`, and extracts only days with no extracted folder yet (2026-09-16 to 10-07; later
+days already came from the per-group fetch). The site can stay up: it doesn't touch DuckDB.
+
+```bash
+cd /opt/pokemon-momentum
+sudo docker-compose exec -T pokemon-momentum python scripts/download/backfill_tcgcsv_archive.py --dry-run
+sudo docker-compose exec -T pokemon-momentum python scripts/download/backfill_tcgcsv_archive.py
+```
+
+- It runs by itself every night at 21:30 UTC from 2026-11-01 (`run_archive_backfill_host.sh`,
+  adam's crontab) and posts to Discord: grey "still offline" while TCGCSV answers 403 with its
+  "temporarily removed" notice (one request a night, no ping), green with the list of days
+  the night the archive returns, red with a ping on any other 403/429 or failure. Once the gap
+  is filled it fetches the one new day each night and stays quiet unless something fails.
+- Exit 3 with TCGCSV's "temporarily removed" notice: the archive is still offline. That
+  was one request; the cron tries again the next night.
+- After a successful run the next nightly update loads the new days into DuckDB for both
+  English and Japanese. To load at once, stop the site and run the daily pipeline with
+  `--skip-download` for categories 3 and 85 (below).
+
+TCGCSV catalogue crawl (every game's sets and products)
+-------------------------------------------------------
+The archive files hold every game's prices but no names. `scripts/download/crawl_tcgcsv_catalogue.py`
+saves TCGCSV's set lists and product lists for every game, as served, into
+`data/tcgcsv_catalogue/` (`categories.json`, `<categoryId>/groups.json`,
+`<categoryId>/<groupId>/products.json`; gitignored). Owner, 2026-11-02: download everything
+we can within TCGCSV's rules.
+
+- TCGCSV allows 10,000 requests a day for everything we run. The nightly Pokemon update and
+  the other-games collector use about 2,000-4,000, so this job stops at 4,000 a day
+  (`--budget`). The day's count is kept in `data/tcgcsv_catalogue/state.json`, so a second
+  run the same day only uses what is left. The first full pass takes a few nights; after that
+  each file is fetched again only once it is 30 days old (`--refresh-days`).
+- Order: Pokemon, Pokemon Japan, Magic, Yu-Gi-Oh, One Piece, Lorcana, then every other game.
+- Prices are not fetched here; they come from the archive.
+- It doesn't touch DuckDB, so the site can stay up.
+
+```bash
+cd /opt/pokemon-momentum
+scripts/pipeline/run_tcgcsv_catalogue_host.sh          # tonight's slice, posts to Discord
+sudo docker-compose exec -T pokemon-momentum python scripts/download/crawl_tcgcsv_catalogue.py --dry-run
+```
+
+- Schedule: daily 12:00 UTC from adam's crontab (`deploy/crontab.txt`). Discord: progress
+  while the first pass runs, one post when it completes, nothing on a quiet night, red with
+  a ping on 403/429 (exit 3: don't retry, check the TCGCSV Discord) or any failure.
+
+TCGCSV archive torrents
+-----------------------
+Owner's plan (2026-11-02): seed TCGCSV's daily archive as torrents to take load off TCGCSV,
+one per finished year (2024, 2025; 2026 on 2027-01-02) and one per month after that.
+Not shared yet: the owner shares the magnet links once CptSpaceToaster agrees.
+
+- Build: `scripts/torrents/build_archive_torrent.py --year 2024` (or `--month 2026-11`).
+  It needs libtorrent, which isn't in the site's container: run it on the host from a venv
+  with `pip install libtorrent`. Output in `data/torrents/` (gitignored): the torrent's folder
+  (hard links to `data/raw`, plus README.txt and SHA256SUMS.txt), the `.torrent`, and the
+  magnet link in `<name>.magnet.txt`. Torrents are v1-only, for older clients.
+- Seeding: the owner's qBittorrent on 192.168.1.207 (web UI port 8080, category "TCGCSV",
+  saved to `Z:\TCGCSV`). It is a separate Windows machine, so a new torrent's files have to
+  reach it once: add the `.torrent` there through the web API, then have this server seed
+  to it over the LAN only (libtorrent with DHT and trackers off, port 6891) and point
+  qBittorrent at `192.168.1.240:6891` (`/api/v2/torrents/addPeers`). That's how 2024 and 2025
+  were loaded on 2026-11-02.
+- Info hashes: 2024 `b4e6415457ba8f5a841cceb149242d48542f58de`,
+  2025 `90554b38726121571b352ae75fd1143aff4a5064`.
+
 Manual category runs inside Docker
 ----------------------------------
 Use these when testing a category-specific pipeline path directly.
@@ -785,13 +861,12 @@ What “healthy” looks like by layer
 
 Download/extract layer:
 
-- TCGCSV retired its daily `.ppmd.7z` price archive in 2026-09. Prices are now fetched per
-  group by `scripts/download/fetch_tcgcsv_prices.py`, dated from `last-updated.txt`, and
-  written into the same extracted layout: `/app/data/extracted/prices-DATE.ppmd/DATE/<cat>/<group>/prices`
-- `/app/data/raw` only holds the historical archives (through 2026-09-15)
-- there are no prices for 2026-09-16 through 2026-10-07 (between the archive's retirement and
-  the per-group fetch). Lists that need a week of steady daily readings were thin until about
-  a week after prices resumed; this is expected, not a fault
+- Prices are fetched per group by `scripts/download/fetch_tcgcsv_prices.py`, dated from
+  `last-updated.txt`, and written into the extracted layout:
+  `/app/data/extracted/prices-DATE.ppmd/DATE/<cat>/<group>/prices`
+- TCGCSV's daily `.ppmd.7z` archive was offline 2026-09-16 to 2026-10-31. `/app/data/raw`
+  holds every archive file from 2024-02-08, kept complete by the nightly backfill (section
+  "Backfill missing TCGCSV archive days"); the 2026-09-16 to 10-07 gap was loaded on 2026-11-02
 - all TCGCSV calls go through `scripts/utilities/tcgcsv_client.py`: one request at a time,
   >=100 ms apart, User-Agent `Poke6sMarket/1.0.0`
 - exit code 3 from the fetch or product-metadata step means TCGCSV answered 403/429 (blocked or

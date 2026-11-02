@@ -1,5 +1,5 @@
-"""Post a job summary (nightly update, Squarespace price sync, or the collect-only TCGCSV
-archive) to a Discord webhook.
+"""Post a job summary (nightly update, Squarespace price sync, the collect-only TCGCSV
+archive, or the TCGCSV archive backfill) to a Discord webhook.
 
 Runs on the host (stdlib only) at the end of run_daily_update_host.sh,
 run_squarespace_price_sync.sh and run_tcgcsv_collect_host.sh, so it still reports when Docker or the job itself is
@@ -28,6 +28,7 @@ EXTRACTED_DIR = ROOT / "data" / "extracted"
 CATEGORIES = {3: ("English", "pokemon"), 85: ("Japanese", "pokemon_jp")}  # id -> (label, file slug)
 STALE_AFTER_DAYS = 2  # newest price older than this turns a success orange
 GREEN, ORANGE, RED = 0x2ECC71, 0xE67E22, 0xE74C3C  # embed colors: ok / warning / failed
+GREY = 0x95A5A6  # nothing wrong, nothing done (TCGCSV archive still offline): no mention
 # Log lines worth quoting in a failure message.
 ERROR_LINE = re.compile(r"(ERROR|Traceback|Stopping after failed step|^- .+: exit \d+|exit=[1-9])")
 
@@ -194,19 +195,69 @@ def collect_summary(args: argparse.Namespace, lines: list[str]) -> tuple[str, in
     return "✅ succeeded", GREEN, fields
 
 
+def backfill_summary(args: argparse.Namespace, lines: list[str]) -> tuple[str, int, list[dict] | None]:
+    """The TCGCSV archive backfill (backfill_tcgcsv_archive.py). Exit 3 is TCGCSV's 403: while
+    the archive is offline that is the expected answer, so it's grey, not a failure. Returns
+    fields=None (no message) for a routine night: one new day fetched, nothing missing before it."""
+    fetched = [line.split()[1] for line in lines if line.startswith("OK prices-")]
+    missing = next((line for line in lines if line.startswith("Missing archive files")), "")
+    stopped = next((line for line in lines if line.startswith("STOPPED at")), "")
+    backlog = int(re.search(r": (\d+);", missing).group(1)) if re.search(r": (\d+);", missing) else 0
+    fields = [{"name": "Missing before this run", "value": missing[len("Missing archive files "):] or "?", "inline": False}]
+    if fetched:
+        fields.append({"name": f"Fetched {len(fetched)}", "value": "\n".join(fetched)[:1000], "inline": False})
+    if args.exit_code == 3:
+        offline = "temporarily removed" in stopped
+        fields.append({"name": "TCGCSV answered", "value": stopped[:900] or "403/429", "inline": False})
+        if offline:
+            return "⏸ archive still offline (one request, will try again tomorrow)", GREY, fields
+        return "❌ blocked or throttled (403/429): stopped, needs a look", RED, fields
+    if args.exit_code != 0:
+        fields.append(error_field(lines))
+        return f"❌ FAILED (exit {args.exit_code})", RED, fields
+    if backlog <= 1 and len(fetched) <= 1:
+        return "✅ up to date", GREEN, None
+    return "✅ archive is back: gap downloaded", GREEN, fields
+
+
+def catalogue_summary(args: argparse.Namespace, lines: list[str]) -> tuple[str, int, list[dict] | None]:
+    """The TCGCSV catalogue crawl (crawl_tcgcsv_catalogue.py). Posts progress while the first
+    pass runs and once when it completes; a night with nothing fetched posts nothing."""
+    progress = next((line for line in lines if line.startswith("Catalogue: ")), "")
+    stopped = next((line for line in lines if line.startswith("STOPPED")), "")
+    fields = [{"name": "Progress", "value": progress[len("Catalogue: "):] or "?", "inline": False}]
+    if args.exit_code == 3:
+        fields.append({"name": "TCGCSV answered", "value": stopped[:900] or "403/429", "inline": False})
+        return "❌ blocked or throttled (403/429): stopped, needs a look", RED, fields
+    if args.exit_code != 0:
+        fields.append(error_field(lines))
+        return f"❌ FAILED (exit {args.exit_code})", RED, fields
+    saved = re.search(r"saved (\d+) tonight", progress)
+    if not saved or saved.group(1) == "0":
+        return "✅ nothing due", GREEN, None
+    if any(line.startswith("Catalogue complete") for line in lines):
+        return "✅ catalogue up to date", GREEN, fields
+    return "⏳ part done, continues tomorrow", GREEN, fields
+
+
 # Job name -> (message title, default log file, summary builder).
 JOBS = {
     "daily-update": ("Nightly market update", ROOT / "logs" / "daily_update.log", daily_update_summary),
     "price-sync": ("Squarespace price sync", ROOT / "logs" / "squarespace_price_sync_cron.log", price_sync_summary),
     "collect": ("Other games price archive", ROOT / "logs" / "tcgcsv_collect.log", collect_summary),
+    "archive-backfill": ("TCGCSV archive backfill", ROOT / "logs" / "archive_backfill.log", backfill_summary),
+    "catalogue": ("TCGCSV catalogue crawl", ROOT / "logs" / "tcgcsv_catalogue.log", catalogue_summary),
 }
 
 
-def build_payload(args: argparse.Namespace) -> dict:
-    """The Discord webhook message: one embed, plus a mention only when something needs attention."""
+def build_payload(args: argparse.Namespace) -> dict | None:
+    """The Discord webhook message: one embed, plus a mention only when something needs attention.
+    None when the job has nothing worth posting (fields=None from its summary builder)."""
     default_title, default_log, summarize = JOBS[args.job]
     log_file = args.log_file or default_log
     status, color, fields = summarize(args, run_log(log_file, args.log_offset))
+    if fields is None:
+        return None
 
     duration = ""
     if args.started_at:
@@ -226,7 +277,7 @@ def build_payload(args: argparse.Namespace) -> dict:
         "allowed_mentions": {"parse": []},
     }
     mention = setting("POKE6S_DISCORD_MENTION", "@everyone")
-    if color != GREEN and mention.lower() != "none":
+    if color in (ORANGE, RED) and mention.lower() != "none":
         # In a private channel, @everyone only reaches members who can see it.
         payload["content"] = f"{mention} {args.title or default_title} needs attention"
         payload["allowed_mentions"] = {"parse": ["everyone", "users", "roles"]}
@@ -250,6 +301,9 @@ def main() -> int:
     """Build and send the message. Always returns 0 so a Discord outage can't fail the job."""
     args = parse_args()
     payload = build_payload(args)
+    if payload is None:
+        print("Nothing to report; no Discord message.")
+        return 0
     url = setting("POKE6S_DISCORD_WEBHOOK_URL")
     if args.dry_run or not url:
         if not url and not args.dry_run:

@@ -14,6 +14,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.common.category_config import get_category_config
+from scripts.common.duckdb_settings import connect_capped
 
 
 EXTRACTED_DIR = "/app/data/extracted"
@@ -40,7 +41,7 @@ def main() -> int:
     out_csv = f"{EXTRACTED_DIR}/{category.sparkline_snapshot_csv}"
     table_name = category.sparkline_snapshot_table
 
-    con = duckdb.connect(DB_PATH)
+    con = connect_capped(DB_PATH)
     con.execute(
         f"""
         CREATE OR REPLACE TABLE {table_name} AS

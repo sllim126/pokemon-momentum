@@ -1,7 +1,8 @@
 """Collect-only daily archive of TCGCSV prices for games the site doesn't show yet.
 
-TCGCSV retired its daily price archive in September 2026, so a game's price history only
-exists from the day we start saving it. This job saves one day of TCGCSV data per game
+Started while TCGCSV's daily price archive was offline (2026-09-16 to 2026-10-31), when a
+game's price history only existed from the day we saved it. The archive is back (data/raw
+holds every game's prices), so this overlaps it; kept running until the owner decides. This job saves one day of TCGCSV data per game
 (Magic, Yu-Gi-Oh, One Piece, Lorcana by default) exactly as served, so a future site for
 those games can be built on real history. Nothing here touches DuckDB or the website.
 

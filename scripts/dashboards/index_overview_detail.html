@@ -1166,7 +1166,7 @@
       }
       const data = await response.json();
       holdingsLimit = Number(data.constituent_limit || 100);
-      document.title = `Poke6s Market | ${data.index_name || "Market Index"}`;
+      document.title = `Poke6s Market Watch | ${data.index_name || "Market Index"}`;
       if (indexPageTitle) indexPageTitle.textContent = "Poke6s Market Indexes";
       if (indexName) indexName.textContent = data.index_name || "Market Index";
       if (indexPanelTitle) indexPanelTitle.textContent = data.index_name || "Market Index";

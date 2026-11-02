@@ -7,6 +7,54 @@ Archived Completed Work
 October 2026 (archived 2026-10-12, when todo.txt was rewritten as the main action list)
 ----------------------------------------------------------------------------------------
 
+- Completed and archived at the 2026-11-02 milestone (archive-backfill):
+  - 2026-10-29 `/m-next` owner feedback: (1) a "Sign in" button at the right of the top bar (icon
+    only on phones; "Account" once signed in) and Account → "Sign in / account" in the menu, which
+    opens /account-settings and returns to /m-next after Google sign-in (`?return=`, same-site
+    paths only), so the owner's Note tab can appear; (2) "Pay up to" is replaced by counter-offers
+    at 95/90/85/80/75/70% of the asking price, each with its dollar amount and rating (vs market to
+    keep, profit after fees to resell; vs the 30-day average on a spike). The verdict box stays
+    hidden until a price is typed.
+  - 2026-10-29 Owner decisions: (1) Pullbacks and Whole-set Dips include cards under a year old:
+    they skip the "up over the year" test and must pass the rest (+13 English cards today: 1
+    Pullback, 12 Whole-set Dips). "Up since release" was tried first and let in 1 card, because
+    most new cards sit below their release price; the snapshot now has `roc_since_release_pct`
+    (first price on or after the set's release) for showing it later. (2) Graded tab: "Ungraded"
+    is our TCGplayer market price, PriceCharting's ungraded price moved to the note. (3) Deleted
+    `data/processed/tracking.sqlite3.bak-2026-10-13` (old sign-in database backup).
+    (4) Japanese Pullbacks need 3 price changes in 30 days instead of 6
+    (PULLBACK_MIN_PRICE_CHANGES_30D_JP; Japanese cards change price far less often): 4 -> 8
+    Japanese Pullbacks today; Japanese Whole-set Dips stay empty (other rules).
+  - 2026-10-28 Research > Sets: a 90-day trend line per set replaces the Strength column (still a
+    sort; `/group_sparklines`, one cached call for every set), and every set page shows the set's
+    value chart starting at its release date (`/group_series?since_release=true`), not only sets
+    opened from Market Stats. Breadth numbers sit beside their bars; under 1400 px the Items
+    column hides and set names wrap.
+  - 2026-10-25 Handover review for Codex or any other agent: `docs/api_routes.md` lists every
+    server route (a test fails when a new route isn't in it); the runbook opens with the whole
+    job schedule and `deploy/crontab.txt` keeps a copy of the crontab; AGENTS.md gained the
+    handover, public-repo, no-new-costs and graded-price rules; review-note attachments are
+    git-ignored and documented.
+  - 2026-10-24 Pullbacks: the owner keeps the new rules after the trial week ("doing well").
+    Rules in `query_support.build_pullback_sql` (PULLBACK_*), shared by /good_buys, /set_dips
+    and Budget Builder's "Pullback entry" tag. Old vs new on 2026-10-23 English data: old rules
+    770 cards (192 down over the year); new 80 Pullbacks + 141 Whole-set Dips, none down over the
+    year; 590 old cards dropped (192 falling over the year, 85 under a year old, 27 less than 10%
+    off their high, 286 not behind their price band or set). Still open: Japanese lists are
+    empty (most Japanese cards change price about once a month, under the 6-changes bar), and
+    recheck the numbers mid-November once the feed has a full month without gaps.
+  - 2026-10-25 `/m-next` has an owner-only floating review-note tab. It keeps the current app
+    screen in place, saves optional multiple file uploads plus card/list/search/device context to
+    the internal bug-report queue, preserves unsent text drafts and collapses after saving. Public
+    visitors still use Discord; offline retry remains a possible follow-up.
+  - 2026-10-23 Placeholder Library updates itself: `sync_placeholder_library.py` (daily 04:30 UTC)
+    adds new Mega-era sets and promos from the TCGplayer catalog and rebuilds the print and
+    checklist pages. First run added 30th Celebration, its Classic Collection and Delta Reign to
+    the set catalog and 30 promos (new 30th Celebration page). Product names for those promos
+    need the owner's check (see High Priority).
+  - 2026-10-23 How it works (the header's Learn) credits TCGCSV with a support link
+    (cpt.tcgcsv.com) and no longer shows an empty card column.
+
 - Completed and archived at the 2026-10-31 milestone (storefront-phase1):
   - 2026-10-22 Desktop app on iPad-portrait widths (<1100 px): the list menu folds into a
     "☰ Lists" button, card names wrap, the toolbar and card buttons make room.

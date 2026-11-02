@@ -57,3 +57,27 @@ class DailyUpdateWarningTests(unittest.TestCase):
         with patch.object(notify_discord, "read_health", return_value={"latest": today, "rows": "100"}):
             status, color, _ = notify_discord.daily_update_summary(argparse.Namespace(exit_code=0), ["Pipeline finished successfully."])
         self.assertEqual(color, notify_discord.GREEN)
+
+
+class ArchiveBackfillSummaryTests(unittest.TestCase):
+    MISSING = "Missing archive files 2026-09-16 to 2026-10-30: 45; already asked for today: 0; to fetch now: 45"
+
+    def test_offline_is_grey_without_a_ping(self):
+        lines = [self.MISSING, "STOPPED at prices-2026-09-16.ppmd.7z: TCGCSV returned 403 ... 'The price archive has been temporarily removed'"]
+        status, color, _ = notify_discord.backfill_summary(argparse.Namespace(exit_code=3), lines)
+        self.assertEqual(color, notify_discord.GREY)
+        self.assertIn("still offline", status)
+
+    def test_other_403_is_red(self):
+        lines = [self.MISSING, "STOPPED at prices-2026-09-20.ppmd.7z: TCGCSV returned 429 for ..."]
+        _, color, _ = notify_discord.backfill_summary(argparse.Namespace(exit_code=3), lines)
+        self.assertEqual(color, notify_discord.RED)
+
+    def test_gap_download_lists_days_and_routine_night_is_silent(self):
+        lines = [self.MISSING, "OK prices-2026-09-16.ppmd.7z (3,000,000 bytes)", "OK prices-2026-09-17.ppmd.7z (3,100,000 bytes)"]
+        status, color, fields = notify_discord.backfill_summary(argparse.Namespace(exit_code=0), lines)
+        self.assertEqual(color, notify_discord.GREEN)
+        self.assertIn("prices-2026-09-17.ppmd.7z", fields[1]["value"])
+        routine = ["Missing archive files 2026-11-05 to 2026-11-05: 1; already asked for today: 0; to fetch now: 1",
+                   "OK prices-2026-11-05.ppmd.7z (3,000,000 bytes)"]
+        self.assertIsNone(notify_discord.backfill_summary(argparse.Namespace(exit_code=0), routine)[2])

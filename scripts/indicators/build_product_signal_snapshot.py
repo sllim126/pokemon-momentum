@@ -9,6 +9,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.common.category_config import get_category_config
+from scripts.common.duckdb_settings import connect_capped
 from scripts.common.product_classification import get_product_class_sql, get_product_kind_sql
 
 
@@ -40,7 +41,7 @@ def main() -> int:
     out_csv = f"{EXTRACTED_DIR}/{category.product_signal_csv}"
     table_name = category.product_signal_table
 
-    con = duckdb.connect(DB_PATH)
+    con = connect_capped(DB_PATH)
 
     # Expected input state:
     # - pokemon_prices contains historical fact rows for this category

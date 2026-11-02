@@ -8,3 +8,5 @@
 0 15 * * 5 cd /opt/pokemon-momentum && /usr/bin/python3 scripts/utilities/post_weekly_discord.py >> logs/discord_weekly.log 2>&1
 30 4 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin docker-compose exec -T pokemon-momentum python scripts/utilities/sync_placeholder_library.py >> logs/placeholder_sync.log 2>&1
 0 3 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin docker-compose exec -T pokemon-momentum python scripts/build_storefront_market_reference.py >> logs/storefront_market_reference.log 2>&1
+30 21 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin scripts/pipeline/run_archive_backfill_host.sh
+0 12 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin scripts/pipeline/run_tcgcsv_catalogue_host.sh
