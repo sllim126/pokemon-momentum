@@ -861,13 +861,12 @@ What “healthy” looks like by layer
 
 Download/extract layer:
 
-- TCGCSV retired its daily `.ppmd.7z` price archive in 2026-09. Prices are now fetched per
-  group by `scripts/download/fetch_tcgcsv_prices.py`, dated from `last-updated.txt`, and
-  written into the same extracted layout: `/app/data/extracted/prices-DATE.ppmd/DATE/<cat>/<group>/prices`
-- `/app/data/raw` only holds the historical archives (through 2026-09-15)
-- there are no prices for 2026-09-16 through 2026-10-07 (between the archive's retirement and
-  the per-group fetch). Lists that need a week of steady daily readings were thin until about
-  a week after prices resumed; this is expected, not a fault
+- Prices are fetched per group by `scripts/download/fetch_tcgcsv_prices.py`, dated from
+  `last-updated.txt`, and written into the extracted layout:
+  `/app/data/extracted/prices-DATE.ppmd/DATE/<cat>/<group>/prices`
+- TCGCSV's daily `.ppmd.7z` archive was offline 2026-09-16 to 2026-10-31. `/app/data/raw`
+  holds every archive file from 2024-02-08, kept complete by the nightly backfill (section
+  "Backfill missing TCGCSV archive days"); the 2026-09-16 to 10-07 gap was loaded on 2026-11-02
 - all TCGCSV calls go through `scripts/utilities/tcgcsv_client.py`: one request at a time,
   >=100 ms apart, User-Agent `Poke6sMarket/1.0.0`
 - exit code 3 from the fetch or product-metadata step means TCGCSV answered 403/429 (blocked or

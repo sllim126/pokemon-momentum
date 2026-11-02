@@ -144,7 +144,8 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
 
     if not args.skip_download:
         # Expected result: today's TCGCSV prices land in the extracted layout for this category.
-        # (TCGCSV retired its daily archive in 2026-09; Download_new_day.py no longer has data.)
+        # (Per set, not the daily archive file: Download_new_day.py is unused since 2026-09.
+        # The archive itself is kept in data/raw by backfill_tcgcsv_archive.py.)
         steps.append(
             (
                 "Download latest TCGCSV prices",

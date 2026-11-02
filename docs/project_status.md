@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-10-31
+Last reviewed: 2026-11-02
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -11,11 +11,18 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
 
 - Production entry point: `https://market.poke6s.com/`
 - Primary branch: `main`
-- Market data: daily English and Japanese TCGCSV-backed updates, fetched per set since
-  TCGCSV retired its daily archive (no prices exist for 2026-09-16 to 2026-10-07)
+- Market data: daily English and Japanese TCGCSV-backed updates, fetched per set. TCGCSV's
+  daily archive was offline 2026-09-16 to 2026-10-31; it returned on 2026-11-01 and the
+  nightly backfill (21:30 UTC) filled the gap, so `data/raw` holds every day from 2024-02-08
+- TCGCSV catalogue: set and product lists for all ~94 games, crawled at up to 4,000 requests
+  a day (12:00 UTC) into `data/tcgcsv_catalogue/`
+- Archive torrents: 2024 and 2025 seeding from the owner's qBittorrent; not shared until
+  CptSpaceToaster agrees (runbook "TCGCSV archive torrents")
+- Nightly pipeline memory: snapshot scripts cap DuckDB at 10 GB and 4 threads
+  (`scripts/common/duckdb_settings.py`) after an out-of-memory kill on 2026-11-02
 - Graded data: nightly PriceCharting snapshot, kept as our own history
-- Alerts: nightly update, Squarespace price sync and the other-games archive post
-  pass/fail summaries to Discord
+- Alerts: nightly update, Squarespace price sync, the other-games archive, the archive
+  backfill and the catalogue crawl post summaries to Discord
 - Other games: Magic, Yu-Gi-Oh, One Piece and Lorcana prices are archived nightly
   (collect only, since 2026-10-12; no site yet) in `data/tcgcsv_archive/`
 - Storage: DuckDB working database, partitioned Parquet history, and generated snapshots

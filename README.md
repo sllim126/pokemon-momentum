@@ -185,8 +185,9 @@ python scripts/pipeline/validate_pipeline.py
 
 ### Other games: collect-only archive
 
-TCGCSV no longer keeps a daily archive, so price history only exists from the day it is
-saved. `scripts/pipeline/run_tcgcsv_collect_host.sh` (systemd timer, 03:30 UTC, user `adam`) saves
+This started while TCGCSV's daily archive was offline (2026-09-16 to 2026-10-31). The archive
+is back and `data/raw` now holds every game's prices for every day, so this nightly
+collection overlaps it; it is kept running for now. `scripts/pipeline/run_tcgcsv_collect_host.sh` (systemd timer, 03:30 UTC, user `adam`) saves
 Magic (1), Yu-Gi-Oh (2), One Piece (68) and Lorcana (71) every night, one
 `data/tcgcsv_archive/<date>/tcgcsv-<date>-<categoryId>.tar.gz` per game, with the files
 exactly as TCGCSV served them (product lists on Sundays). Nothing is loaded into DuckDB and
@@ -194,8 +195,8 @@ the website keeps running. The games and details are in
 `scripts/download/collect_tcgcsv_categories.py`; the log is `logs/tcgcsv_collect.log`.
 
 The current daily flow is:
-1. download today's prices from TCGCSV, one request per set (TCGCSV retired its daily
-   archive in September 2026; there are no prices for 2026-09-16 to 2026-10-07)
+1. download today's prices from TCGCSV, one request per set (TCGCSV's daily archive is
+   also kept in `data/raw` by a nightly backfill; see `docs/operator_runbook.txt`)
 2. load price history into DuckDB
 3. refresh group metadata
 4. refresh product metadata (only sets whose product file changed)

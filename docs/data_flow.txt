@@ -102,9 +102,10 @@ High-level flow
 8. Build market-index snapshots (these read parquet, so they must come after step 7)
 9. Serve dashboards and API from DuckDB + parquet
 
-Data gap: TCGCSV retired its daily archive in September 2026, so there are no prices for
-2026-09-16 through 2026-10-07. Days on either side load normally; charts and indexes
-simply join across the gap.
+Data gap (closed 2026-11-02): TCGCSV's daily archive was offline from 2026-09-16, which left
+no prices for 2026-09-16 through 2026-10-07. It returned on 2026-11-01; the backfill
+(`scripts/download/backfill_tcgcsv_archive.py`, nightly 21:30 UTC) downloaded the missing
+days into `/app/data/raw`, extracted the gap, and the nightly loader picked them up.
 
 Host-driven daily automation now runs that pipeline for both category `3` and category `85`
 sequentially, so Japanese snapshots are rebuilt during the same nightly maintenance window
@@ -265,8 +266,9 @@ Etiquette (TCGCSV's published usage guidelines):
 Important detail:
 
 - this stage is category-specific: the nightly run calls it once for `3` and once for `85`
-- before 2026-09 this stage downloaded TCGCSV's daily `.7z` archive instead; those old
-  archives remain in `/app/data/raw` and are no longer updated
+- before 2026-09 this stage downloaded TCGCSV's daily `.7z` archive instead. The archive
+  files in `/app/data/raw` are kept complete by the nightly backfill (one new file a day);
+  extracted folders for days the per-group fetch already covered are left as they are
 
 Result of this stage:
 
@@ -691,6 +693,16 @@ Collect-only archive for other games (03:30 UTC, systemd timer pokemon-momentum-
 - nothing is loaded into DuckDB, no snapshots, no website pages; the archive exists so
   those games have real history if a site for them is built later
 - Discord summary: "Other games price archive"
+
+TCGCSV catalogue crawl (12:00 UTC, adam's crontab,
+[run_tcgcsv_catalogue_host.sh](/opt/pokemon-momentum/scripts/pipeline/run_tcgcsv_catalogue_host.sh)):
+
+- [crawl_tcgcsv_catalogue.py](/opt/pokemon-momentum/scripts/download/crawl_tcgcsv_catalogue.py)
+  saves the game list, every game's set list and every set's product list, as served, into
+  `data/tcgcsv_catalogue/`; the archive files give the prices, this gives the names
+- at most 4,000 requests a day (state in `data/tcgcsv_catalogue/state.json`), each file
+  refreshed after 30 days; nothing is loaded into DuckDB
+- Discord summary: "TCGCSV catalogue crawl"
 
 Weekly behavior:
 
