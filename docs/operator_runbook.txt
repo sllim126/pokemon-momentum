@@ -710,6 +710,10 @@ Sharing approved by CptSpaceToaster in the TCGCSV Discord (2026-11-02): post the
 links and updates in #useful-shares. He may later monetize the archive lightly to cover
 TCGCSV's hosting and doesn't expect the torrents to get in the way, but if he ever asks, take
 the posts and links down (and stop seeding) straight away; the owner promised that.
+Posted 2026-11-02 as one #useful-shares thread (magnets in code blocks, .torrent files
+attached); add each new torrent as a reply there. The seeder needs the router's port forward
+(TCP and UDP 2191 to the qBittorrent machine): without it, outside peers can't connect even
+though qBittorrent still uploads on connections it opens itself.
 
 - Build: `scripts/torrents/build_archive_torrent.py --year 2024` (or `--month 2026-11`).
   It needs libtorrent, which isn't in the site's container: run it on the host from a venv
