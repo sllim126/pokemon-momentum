@@ -347,8 +347,8 @@ screens, 3 refine, 4 camera/OCR.
   We fetched only the 46 missing files, once each. Owner (2026-11-02): download everything we
   can within his rules. Step 4 built: `scripts/download/crawl_tcgcsv_catalogue.py` (sets and
   products for every game, at most 4,000 requests a day, refreshed monthly; runbook "TCGCSV
-  catalogue crawl"). [waiting] Owner: add its 12:00 UTC line from deploy/crontab.txt to the
-  live crontab (the agent's crontab edit was blocked by its permission check).
+  catalogue crawl"). Runs daily at 12:00 UTC (crontab added by the owner 2026-11-02). First
+  slice 2026-11-02: 3,999 files, 531 MB, 94 games; the rest follows over the next nights.
   1. (done: owner has the OK) Tell CptSpaceToaster first (it is effectively a mirror; ties in with the owner's torrent
      offer) and confirm a daily single-file archive pull is fine.
   2. Day 1: download every daily archive file since Feb 2024 once (~1,000 files, ~1 GB, all
