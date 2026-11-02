@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-10-31
+Last reviewed: 2026-11-02
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -17,6 +17,7 @@ crontab changes). Each job is explained further down in this file.
 | Daily 03:30 | Other games price archive (collect only) | `pokemon-momentum-tcgcsv-collect.timer` | see "Other games archive" |
 | Daily 04:30 | Placeholder Library sync (new Mega-era sets and promos) | cron: `scripts/utilities/sync_placeholder_library.py` | `logs/placeholder_sync.log` |
 | Daily 09:15 | Squarespace price sync (reaches the live store; retire when Squarespace closes 2026-11-14) | cron: `scripts/run_squarespace_price_sync.sh` | `logs/squarespace_price_sync_cron.log` |
+| Daily 12:00 | TCGCSV catalogue crawl (sets and products for every game, at most 4,000 requests a day; Discord summary) | cron: `scripts/pipeline/run_tcgcsv_catalogue_host.sh` | `logs/tcgcsv_catalogue.log` |
 | Daily 21:30 | TCGCSV archive backfill, from 2026-11-01 (one request a night while the archive is offline; downloads the gap when it returns; Discord summary) | cron: `scripts/pipeline/run_archive_backfill_host.sh` | `logs/archive_backfill.log` |
 | Every 15 min | Copy Discord #bug-reports into the review queue | cron: `scripts/utilities/import_discord_bug_reports.py` | `logs/discord_bug_import.log` |
 | Fri 15:00 | Weekly Discord posts | cron: `scripts/utilities/post_weekly_discord.py` | `logs/discord_weekly.log` |
@@ -673,6 +674,33 @@ sudo docker-compose exec -T pokemon-momentum python scripts/download/backfill_tc
 - After a successful run the next nightly update loads the new days into DuckDB for both
   English and Japanese. To load at once, stop the site and run the daily pipeline with
   `--skip-download` for categories 3 and 85 (below).
+
+TCGCSV catalogue crawl (every game's sets and products)
+-------------------------------------------------------
+The archive files hold every game's prices but no names. `scripts/download/crawl_tcgcsv_catalogue.py`
+saves TCGCSV's set lists and product lists for every game, as served, into
+`data/tcgcsv_catalogue/` (`categories.json`, `<categoryId>/groups.json`,
+`<categoryId>/<groupId>/products.json`; gitignored). Owner, 2026-11-02: download everything
+we can within TCGCSV's rules.
+
+- TCGCSV allows 10,000 requests a day for everything we run. The nightly Pokemon update and
+  the other-games collector use about 2,000-4,000, so this job stops at 4,000 a day
+  (`--budget`). The day's count is kept in `data/tcgcsv_catalogue/state.json`, so a second
+  run the same day only uses what is left. The first full pass takes a few nights; after that
+  each file is fetched again only once it is 30 days old (`--refresh-days`).
+- Order: Pokemon, Pokemon Japan, Magic, Yu-Gi-Oh, One Piece, Lorcana, then every other game.
+- Prices are not fetched here; they come from the archive.
+- It doesn't touch DuckDB, so the site can stay up.
+
+```bash
+cd /opt/pokemon-momentum
+scripts/pipeline/run_tcgcsv_catalogue_host.sh          # tonight's slice, posts to Discord
+sudo docker-compose exec -T pokemon-momentum python scripts/download/crawl_tcgcsv_catalogue.py --dry-run
+```
+
+- Schedule: daily 12:00 UTC from adam's crontab (`deploy/crontab.txt`). Discord: progress
+  while the first pass runs, one post when it completes, nothing on a quiet night, red with
+  a ping on 403/429 (exit 3: don't retry, check the TCGCSV Discord) or any failure.
 
 Manual category runs inside Docker
 ----------------------------------

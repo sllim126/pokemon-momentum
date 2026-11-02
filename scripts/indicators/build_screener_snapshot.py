@@ -16,6 +16,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.common.category_config import get_category_config
+from scripts.common.duckdb_settings import connect_capped
 from scripts.dashboards.query_support import build_pullback_sql
 
 
@@ -45,7 +46,7 @@ def main() -> int:
     product_signal_table = category.product_signal_table
     pullback_sql = build_pullback_sql("enriched", category_id=category.category_id)
 
-    con = duckdb.connect(DB_PATH)
+    con = connect_capped(DB_PATH)
     tables = {row[0] for row in con.execute("SHOW TABLES").fetchall()}
     if product_signal_table not in tables:
         raise RuntimeError(

@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-10-31 (mobile app switched on; storefront articles)
+Last updated: 2026-11-02 (archive back; catalogue crawl; price note)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -42,6 +42,15 @@ Current Focus (2026-10-25)
 
 Recently Completed
 ------------------
+
+- 2026-11-02 Nightly update fixed after an out-of-memory kill: the English product signal
+  snapshot grew to 12.6 GB on 2026-11-02 and stopped the run (Japanese skipped). DuckDB is now
+  capped at 10 GB and 4 threads in the snapshot scripts (`scripts/common/duckdb_settings.py`;
+  6 GB was too little for the sparkline and series steps), and the update was re-run by hand.
+  The Japanese load also picked up ~300 days of 2024 history that was extracted but never loaded.
+- 2026-11-02 Market site: "do your own homework" price note (owner). How it works has "About
+  these prices" (market price follows the condition that sells most, not NM), the footers say
+  prices are a guide, and the phone Deal Checker carries a one-line reminder.
 
 - 2026-11-01 Squarespace price sync fixed. It failed on 2026-10-29, 10-30 and 10-31 because
   SQUARESPACE_MARKET_CSV and SQUARESPACE_EXPORT_CSV in .env held host paths
@@ -329,6 +338,17 @@ screens, 3 refine, 4 camera/OCR.
   "temporarily removed ... still being archived behind-the-scenes"; rerun on another day.
   Runs nightly at 21:30 UTC from 2026-11-01 (owner: first run on the 1st, then until all the
   data is in), with a Discord summary. Then the catalogue crawl (step 4).
+  Status 2026-11-02: the archive is back. The 2026-11-01 run fetched all 46 missing files
+  (2026-09-16 to 10-31), so data/raw is complete from 2024-02-08; steps 2 and the Pokemon part
+  of 3 are done (the 09-16 to 10-07 gap loaded for English and Japanese on 2026-11-02). Each
+  night now fetches one new day. Next: step 4 (catalogue crawl).
+  TCGCSV Discord, 2026-11-01: the return drew ~80 GB of downloads on day one (~$200/month if
+  sustained) and CptSpaceToaster is banning repeat full-archive downloads in the first week.
+  We fetched only the 46 missing files, once each. Owner (2026-11-02): download everything we
+  can within his rules. Step 4 built: `scripts/download/crawl_tcgcsv_catalogue.py` (sets and
+  products for every game, at most 4,000 requests a day, refreshed monthly; runbook "TCGCSV
+  catalogue crawl"). [waiting] Owner: add its 12:00 UTC line from deploy/crontab.txt to the
+  live crontab (the agent's crontab edit was blocked by its permission check).
   1. (done: owner has the OK) Tell CptSpaceToaster first (it is effectively a mirror; ties in with the owner's torrent
      offer) and confirm a daily single-file archive pull is fine.
   2. Day 1: download every daily archive file since Feb 2024 once (~1,000 files, ~1 GB, all

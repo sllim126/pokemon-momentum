@@ -220,12 +220,33 @@ def backfill_summary(args: argparse.Namespace, lines: list[str]) -> tuple[str, i
     return "✅ archive is back: gap downloaded", GREEN, fields
 
 
+def catalogue_summary(args: argparse.Namespace, lines: list[str]) -> tuple[str, int, list[dict] | None]:
+    """The TCGCSV catalogue crawl (crawl_tcgcsv_catalogue.py). Posts progress while the first
+    pass runs and once when it completes; a night with nothing fetched posts nothing."""
+    progress = next((line for line in lines if line.startswith("Catalogue: ")), "")
+    stopped = next((line for line in lines if line.startswith("STOPPED")), "")
+    fields = [{"name": "Progress", "value": progress[len("Catalogue: "):] or "?", "inline": False}]
+    if args.exit_code == 3:
+        fields.append({"name": "TCGCSV answered", "value": stopped[:900] or "403/429", "inline": False})
+        return "❌ blocked or throttled (403/429): stopped, needs a look", RED, fields
+    if args.exit_code != 0:
+        fields.append(error_field(lines))
+        return f"❌ FAILED (exit {args.exit_code})", RED, fields
+    saved = re.search(r"saved (\d+) tonight", progress)
+    if not saved or saved.group(1) == "0":
+        return "✅ nothing due", GREEN, None
+    if any(line.startswith("Catalogue complete") for line in lines):
+        return "✅ catalogue up to date", GREEN, fields
+    return "⏳ part done, continues tomorrow", GREEN, fields
+
+
 # Job name -> (message title, default log file, summary builder).
 JOBS = {
     "daily-update": ("Nightly market update", ROOT / "logs" / "daily_update.log", daily_update_summary),
     "price-sync": ("Squarespace price sync", ROOT / "logs" / "squarespace_price_sync_cron.log", price_sync_summary),
     "collect": ("Other games price archive", ROOT / "logs" / "tcgcsv_collect.log", collect_summary),
     "archive-backfill": ("TCGCSV archive backfill", ROOT / "logs" / "archive_backfill.log", backfill_summary),
+    "catalogue": ("TCGCSV catalogue crawl", ROOT / "logs" / "tcgcsv_catalogue.log", catalogue_summary),
 }
 
 
