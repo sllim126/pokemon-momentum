@@ -331,9 +331,13 @@ screens, 3 refine, 4 camera/OCR.
   Discord's #useful-shares on 2026-11-02 (CptSpaceToaster OK'd it; take them down if he ever
   asks), seeding from the owner's qBittorrent (runbook "TCGCSV archive torrents"). Outside
   download confirmed after the UniFi port forward (TCP/UDP 2191 to the seeder) was fixed.
-  Post new torrents as replies in that thread. Next: [planned] automate the monthly torrent (2nd of each month) and
-  the 2026 yearly one (2027-01-02): build here, push to qBittorrent with the LAN seed step,
-  post the magnet link to Discord; needs libtorrent in a host venv and a crontab line.
+  Post new torrents as replies in that thread.
+  Schedule (owner, 2026-11-02): monthly torrents start with November 2026 (built 2026-12-02),
+  then December 2026 and the full 2026 year together on 2027-01-02, then each month on the
+  2nd. Jan-Oct 2026 get no monthly torrents; they're in the 2026 year one.
+  Next: [planned] automate it before 2026-12-02 (build here, push to qBittorrent with the
+  LAN seed step, post the magnet link to Discord); needs libtorrent in a host venv and a
+  crontab line the owner adds. Until then, build and add by hand on the 2nd.
 - [idea] Help TCGCSV by seeding a torrent of the price archive (owner offered in the TCGCSV
   Discord #development, 2026-10-19; CptSpaceToaster can't torrent and said "hopefully some
   enterprising folks" would). Archive is about 1 GB, all categories, prices only. Before

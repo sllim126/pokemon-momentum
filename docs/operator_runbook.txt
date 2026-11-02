@@ -705,7 +705,9 @@ sudo docker-compose exec -T pokemon-momentum python scripts/download/crawl_tcgcs
 TCGCSV archive torrents
 -----------------------
 Owner's plan (2026-11-02): seed TCGCSV's daily archive as torrents to take load off TCGCSV,
-one per finished year (2024, 2025; 2026 on 2027-01-02) and one per month after that.
+one per finished year (2024, 2025; 2026 on 2027-01-02) and one per month from November
+2026 on (built on the 2nd of the next month: November on 2026-12-02, December with the 2026
+year on 2027-01-02).
 Sharing approved by CptSpaceToaster in the TCGCSV Discord (2026-11-02): post the magnet
 links and updates in #useful-shares. He may later monetize the archive lightly to cover
 TCGCSV's hosting and doesn't expect the torrents to get in the way, but if he ever asks, take
