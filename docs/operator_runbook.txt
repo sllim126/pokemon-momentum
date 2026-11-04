@@ -690,6 +690,9 @@ we can within TCGCSV's rules.
   each file is fetched again only once it is 30 days old (`--refresh-days`).
 - Order: Pokemon, Pokemon Japan, Magic, Yu-Gi-Oh, One Piece, Lorcana, then every other game.
 - Prices are not fetched here; they come from the archive.
+- 404s are remembered and only asked again when due. A game whose first 25 product requests
+  in a run are all 404 is skipped until it's due again (Marvel Comics: ~10,800 sets, none
+  with product lists); the log says "Skipped games with no product lists: 69".
 - It doesn't touch DuckDB, so the site can stay up.
 
 ```bash

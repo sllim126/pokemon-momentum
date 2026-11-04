@@ -19,6 +19,10 @@ TCGCSV's rules (https://tcgcsv.com/docs#usage-guidelines) and how this job keeps
 - at least 100 ms between requests, a named User-Agent, stop on 403/429: tcgcsv_client.
 - each file at most once a day, and only again after --refresh-days (default 30).
 - prices are not fetched: they come from the archive (one file a day for all games).
+- games whose sets have no product lists are skipped: if a game's first EMPTY_PROBE product
+  requests in a run all answer 404, the rest of its sets are left alone until the game is due
+  again (--refresh-days). Marvel Comics lists ~10,800 sets with no products; without this it
+  cost ~11,000 wasted requests a month (found 2026-11-04).
 
 Games are crawled in the owner's priority order (Pokemon, Pokemon Japan, the games already
 collected, then the rest by id). Run nightly by scripts/pipeline/run_tcgcsv_catalogue_host.sh.
@@ -49,6 +53,8 @@ DEFAULT_BUDGET = 4000
 DEFAULT_REFRESH_DAYS = 30
 # Owner's order (2026-10-19): Pokemon, Pokemon Japan, the games already collected nightly.
 PRIORITY_CATEGORIES = [3, 85, 1, 2, 68, 71]
+# A game whose first this-many product requests in a run are all 404 is marked empty.
+EMPTY_PROBE = 25
 
 
 def parse_args() -> argparse.Namespace:
@@ -63,10 +69,19 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_state() -> dict:
-    """{"fetched": {path: "YYYY-MM-DD"}, "requests": {"YYYY-MM-DD": n}}."""
-    if STATE_FILE.exists():
-        return json.loads(STATE_FILE.read_text())
-    return {"fetched": {}, "requests": {}}
+    """{"fetched": {path: "YYYY-MM-DD"}, "requests": {"YYYY-MM-DD": n},
+    "not_found": {path: "YYYY-MM-DD"}, "empty_categories": {categoryId: "YYYY-MM-DD"}}.
+    not_found holds the 404s; empty_categories the games found to have no product lists."""
+    state = json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
+    state.setdefault("fetched", {})
+    state.setdefault("requests", {})
+    state.setdefault("empty_categories", {})
+    if "not_found" not in state:
+        # State files from before 2026-11-04 didn't record 404s apart: a fetched path with no
+        # file on disk was one.
+        state["not_found"] = {path: day for path, day in state["fetched"].items()
+                              if not (CATALOGUE_ROOT / path).exists()}
+    return state
 
 
 def save_state(state: dict) -> None:
@@ -80,9 +95,13 @@ def save_state(state: dict) -> None:
 
 
 def is_due(state: dict, rel_path: str, today: str, refresh_days: int) -> bool:
-    """A file is due if never saved, or saved more than refresh_days ago (never twice a day)."""
+    """A file is due if never fetched, or fetched more than refresh_days ago (never twice a
+    day). A 404 counts as fetched, so it isn't asked for again until it's due; a saved file
+    that has gone missing from disk is due at once."""
     last = state["fetched"].get(rel_path)
-    if last is None or not (CATALOGUE_ROOT / rel_path).exists():
+    if last is None:
+        return True
+    if rel_path not in state["not_found"] and not (CATALOGUE_ROOT / rel_path).exists():
         return True
     age = (datetime.fromisoformat(today) - datetime.fromisoformat(last)).days
     return age >= refresh_days
@@ -124,7 +143,7 @@ class Crawler:
     def fetch(self, rel_path: str, url_path: str) -> bool:
         """Fetch one file if due and in budget. True if the file is now on disk (old or new)."""
         if not is_due(self.state, rel_path, self.today, self.args.refresh_days):
-            return True
+            return rel_path not in self.state["not_found"]
         self.due += 1
         if self.args.dry_run or not self.budget_left():
             return (CATALOGUE_ROOT / rel_path).exists()
@@ -134,8 +153,10 @@ class Crawler:
         if resp is None:  # 404: TCGCSV has no such file (e.g. a set with no products yet)
             print(f"404 {url_path}")
             self.state["fetched"][rel_path] = self.today
+            self.state["not_found"][rel_path] = self.today
             self.handled += 1
             return False
+        self.state["not_found"].pop(rel_path, None)
         out = CATALOGUE_ROOT / rel_path
         out.parent.mkdir(parents=True, exist_ok=True)
         tmp = out.with_suffix(".part")
@@ -156,15 +177,36 @@ class Crawler:
             categories = read_results("categories.json")
         else:
             categories = []
+        empty = self.state["empty_categories"]
+        skipped = []
         for category_id in ordered_categories(categories):
             total_files += 1
             groups_path = f"{category_id}/groups.json"
             if not self.fetch(groups_path, f"/tcgplayer/{category_id}/groups"):
                 continue
+            marked = empty.get(str(category_id))
+            if marked and (datetime.fromisoformat(self.today) - datetime.fromisoformat(marked)).days < self.args.refresh_days:
+                skipped.append(category_id)
+                continue
+            # requested: this run's product requests for this game; found: its product files on
+            # disk (saved tonight or earlier), so a game with real products is never marked empty.
+            requested = found = 0
             for group in read_results(groups_path):
+                if requested >= EMPTY_PROBE and found == 0:
+                    # Every request so far was a 404: treat the game as having no product lists.
+                    empty[str(category_id)] = self.today
+                    skipped.append(category_id)
+                    break
                 total_files += 1
                 group_id = int(group["groupId"])
-                self.fetch(f"{category_id}/{group_id}/products.json", f"/tcgplayer/{category_id}/{group_id}/products")
+                before_handled = self.handled
+                found += self.fetch(f"{category_id}/{group_id}/products.json", f"/tcgplayer/{category_id}/{group_id}/products")
+                requested += self.handled - before_handled
+            else:
+                if found:
+                    empty.pop(str(category_id), None)
+        if skipped:
+            print(f"Skipped games with no product lists: {', '.join(map(str, skipped))}")
         if not self.args.dry_run:
             save_state(self.state)
         # Unknown until each game's set list is saved, so the first nights under-count.

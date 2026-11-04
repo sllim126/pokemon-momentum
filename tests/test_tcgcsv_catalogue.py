@@ -63,6 +63,44 @@ class CatalogueCrawlTests(unittest.TestCase):
             self.assertEqual(json.loads((root / "state.json").read_text())["requests"], {crawl.datetime.now(crawl.timezone.utc).date().isoformat(): 7})
 
 
+    def test_game_with_no_product_lists_is_skipped(self):
+        """Like Marvel Comics: thousands of sets, every product list a 404."""
+        def get(_session, path):
+            calls.append(path)
+            if path == "/tcgplayer/categories":
+                return FakeResponse({"results": [{"categoryId": 3}, {"categoryId": 69}]})
+            if path == "/tcgplayer/69/groups":
+                return FakeResponse({"results": [{"groupId": 6900 + i} for i in range(100)]})
+            if path == "/tcgplayer/3/groups":
+                return FakeResponse({"results": [{"groupId": 301}]})
+            return None if "/69/" in path else FakeResponse({"results": []})
+
+        with TemporaryDirectory() as tmp:
+            root, calls = Path(tmp), []
+            out = self.run_crawl_with(root, get, "--budget", "1000")
+            # Categories, two group lists, Pokemon's one set, then 25 Marvel 404s and stop.
+            self.assertEqual(len(calls), 4 + crawl.EMPTY_PROBE)
+            self.assertIn("Skipped games with no product lists: 69", out)
+            self.assertIn("Catalogue complete", out)
+            state = json.loads((root / "state.json").read_text())
+            self.assertIn("69", state["empty_categories"])
+            self.assertEqual(len(state["not_found"]), crawl.EMPTY_PROBE)
+            # Next run: no request at all (404s aren't re-asked, the game stays skipped).
+            calls.clear()
+            self.run_crawl_with(root, get, "--budget", "1000")
+            self.assertEqual(calls, [])
+
+    def run_crawl_with(self, root: Path, get, *argv: str) -> str:
+        with mock.patch.object(crawl, "CATALOGUE_ROOT", root), \
+             mock.patch.object(crawl, "STATE_FILE", root / "state.json"), \
+             mock.patch.object(crawl, "tcgcsv_get", get), \
+             mock.patch.object(crawl, "build_tcgcsv_session", lambda: None), \
+             mock.patch.object(sys, "argv", ["crawl", *argv]), \
+             mock.patch("builtins.print") as printed:
+            self.assertEqual(crawl.main(), 0)
+        return "\n".join(" ".join(map(str, c.args)) for c in printed.call_args_list)
+
+
 class CatalogueSummaryTests(unittest.TestCase):
     def test_progress_posts_and_quiet_night_does_not(self):
         lines = ["Catalogue: 3 of 9 files fresh; 2 games; saved 3 tonight; requests today: 3",

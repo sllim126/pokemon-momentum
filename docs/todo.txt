@@ -47,6 +47,11 @@ Recently Completed
   is complete from 2024-02-08, and the gap is loaded for English and Japanese.
 - 2026-11-02 TCGCSV catalogue crawl (sets and products for every game; daily 12:00 UTC, at most
   4,000 requests). First slice: 3,999 files, 94 games.
+- 2026-11-04 Catalogue crawl stops wasting requests: 404s were re-asked every night (a missing
+  file looked unfetched), and Marvel Comics' ~10,800 sets with no product lists ate 3,720 of
+  night two's 4,000 requests. 404s are now remembered, and a game whose first 25 product
+  requests are all 404 is skipped until due again.
+
 - 2026-11-02 TCGCSV archive torrents for 2024 and 2025 built and seeding in the owner's
   qBittorrent (`scripts/torrents/build_archive_torrent.py`); CptSpaceToaster OK'd sharing and
   they were posted in #useful-shares the same day.
