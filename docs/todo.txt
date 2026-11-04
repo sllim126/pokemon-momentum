@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-02 (milestone: archive-backfill)
+Last updated: 2026-11-04 (milestone: torrent-sharing)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -22,21 +22,21 @@ Status tags used below:
 When you finish an item, move it to Recently Completed with the date and commit, then
 archive older Recently Completed entries at the next milestone.
 
-Current Focus (2026-10-25)
+Current Focus (2026-11-04)
 --------------------------
 
 - Desktop: the single-page desktop app at `/` (desktop home since 2026-10-12) holds all five areas (Buy,
   Discover, Research, Track, Learn). Guide: `docs/desktop_app.md`. Collector Hub,
   Placeholder Library and Account share its style through `desktop_theme.css`.
-- Mobile: a new mobile app is being built at `/m-next` (owner, 2026-10-21; plan, decisions and
-  inventory in `docs/mobile_app_plan.md`; work items under "New mobile app" below). The old
-  `/mobile` page stays frozen until the switch. Admin pages stay parked.
+- Mobile: the new phone app is live at `/`, `/mobile` and `/m-next` (owner switched it early,
+  2026-10-31; plan and remaining stages in `docs/mobile_app_plan.md`). The old phone and research
+  dashboards were deleted; tag `backup/before-mobile-cleanup-2026-10-31` holds their last copy.
 - Storefront: our own store on poke6s.com replaces Squarespace (plan ends 2026-11-14). Plan,
   phases and progress log: `docs/storefront_plan.md`. Phase 1 running locally (2026-10-31);
   online changes (Cloudflare, DNS) paused by the owner.
 - Bug reports go to the Discord `#bug-reports` channel. New pages get no on-site bug form.
-- Dates: Pokémon Black Friday on TCGplayer ~Nov 25 - Dec 1; new mobile app switch Nov 10
-  (steps 1.2-1.5 done by about Nov 3).
+- Dates: Pokémon Black Friday on TCGplayer ~Nov 25 - Dec 1; Squarespace plan ends Nov 14;
+  first monthly TCGCSV archive torrent is due Dec 2.
 - Project map: `docs/project_status.md`. Every server route: `docs/api_routes.md`. Operating
   steps and the job schedule: `docs/operator_runbook.txt`.
 
@@ -59,53 +59,6 @@ Recently Completed
 - 2026-11-02 Market site: "do your own homework" price note (owner). How it works has "About
   these prices" (market price follows the condition that sells most, not NM), the footers say
   prices are a guide, and the phone Deal Checker carries a one-line reminder.
-- 2026-11-01 Squarespace price sync fixed. It failed on 2026-10-29, 10-30 and 10-31 because
-  SQUARESPACE_MARKET_CSV and SQUARESPACE_EXPORT_CSV in .env held host paths
-  (/opt/pokemon-momentum/...) but the job runs in the container, where the repo is /app. Both now
-  start with /app/; a dry run passed (117 price changes queued). Daily 09:15 run kept on.
-- 2026-10-31 "Our store" button (desktop and phone) now opens the TCGplayer Pro store, so it keeps
-  working after Squarespace closes on 2026-11-14 (owner's choice until the new store launches).
-- 2026-10-31 Mobile app clean-up (1.6): deleted the old phone page (`mobile_dashboard.html`), the
-  old research dashboard (`dashboard.html`), the mobile concept page and their tests;
-  `/mobile-classic` and `/mobile-rebuild` forward to `/mobile`. Backup: git tag
-  `backup/before-mobile-cleanup-2026-10-31`. `/time_to_buy` (data route) has no page now; remove
-  it later if nothing else uses it.
-- 2026-10-31 Mobile app step 1.5: Sealed Deals, Budget Builder, How it works.
-- 2026-10-31 Mobile app step 1.4: Sets, one set, Pokémon, Market Stats (indexes, set values).
-- 2026-10-31 Site name: "Poke6s Market" is now "Poke6s Market Watch" in the header, tab titles
-  and footers (owner: it's its own thing and not a marketplace). The address stays
-  market.poke6s.com; index names ("Poke6s Market Index ...") are unchanged.
-- 2026-10-31 Mobile app step 1.3: My lists, account in the menu, bottom tab bar on phones.
-- 2026-10-31 Mobile app step 1.2: Graded, Your targets, Stats, Save, Our store on the card
-  screen (see the 1.2 item under "New mobile app").
-- 2026-10-31 Storefront footer "Community" column (Discord, YouTube, Instagram, Facebook, X,
-  Reddit); the same accounts are in the shop's Organization data for search engines.
-- 2026-10-31 Mobile app switched on early (owner): phones get `mobile_app.html` at `/`, `/mobile`
-  and `/dashboard` (old `?tab=` list links open the matching list); the old phone page moved
-  to `/mobile-classic`; the "Preview" badge is gone. AGENTS.md's frozen-page rule now covers
-  `/mobile-classic`.
-- 2026-10-31 Storefront market prices in cron (daily 03:00 UTC, owner OK);
-  `deploy/crontab.txt` synced with the live crontab. `docs/chat_history/` added to .gitignore.
-- 2026-10-31 Storefront articles (owner asked to bring them forward from Phase 4): `/articles`
-  with category/tag filters, article pages, "Latest articles" on the home page, sitemap and
-  BlogPosting JSON-LD; the 10 Squarespace posts imported with their pictures
-  (`storefront/app/article_import.py`); old `/resources/...` addresses 301 to the new ones.
-  The storefront container now runs as the host user (files stay editable). 52 tests.
-- 2026-10-31 Squarespace site saved before the plan ends: page text, the 10 Resources blog
-  posts and all images (256, including every product photo in the export), each page as
-  Markdown and as served, by `storefront/tools/archive_squarespace_site.py`; kept with the
-  owner's business records next to the products, orders and customer exports (not in this
-  repo). `docs/storefront_current_site.md` corrected: the site has a blog, a Reviews page and a
-  pre-order page; old policies summarized. Redirects added for /new-page-1 and /pre-order-interest.
-- 2026-10-31 Storefront Phase 1 running locally (branch `storefront/phase1-catalog`): separate
-  `storefront` container on port 8010 (LAN only, search engines blocked), SQLite catalog with
-  migrations, importer from the Squarespace export (94 products, 30 visible, 151 photos copied
-  as WebP), shop/search/category/set/product pages with our market price and 30-day trend,
-  sitemap, JSON-LD, 301 redirects from old Squarespace addresses, draft policy pages; 46 tests.
-  Guide: `storefront/README.md`. Owner checks still open under "Own storefront" below.
-- 2026-10-31 Storefront plan written and reviewed with the owner (D1, D3-D9 decided; D2 after the
-  2026-11-02 Utah call); current Squarespace site and DNS records documented in
-  `docs/storefront_current_site.md`.
 
 High Priority
 -------------
@@ -152,17 +105,17 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
 - [planned] After launch: retire `scripts/squarespace_price_sync.py` from cron
   (`deploy/crontab.txt`) and switch the market site's "Poke6s" buy button to the new store.
 
-New mobile app (owner, 2026-10-21). Plan: `docs/mobile_app_plan.md`. Built at `/m-next`
-(`scripts/dashboards/mobile_app.html`) next to the old `/mobile`, in the desktop app's look,
+New mobile app (owner, 2026-10-21). Plan: `docs/mobile_app_plan.md`. The phone site now uses
+`scripts/dashboards/mobile_app.html` at `/`, `/mobile` and `/m-next`, in the desktop app's look,
 fluid from phone portrait to tablet landscape. Stages: 1 rebuild (steps 1.1-1.6), 2 bigger
-screens, 3 refine, 4 camera/OCR.
+screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
 
 - Owner decisions (2026-10-24/25, details in `docs/mobile_app_plan.md`): public feedback stays
   on Discord while the owner has private in-app review notes; no Alerts & Targets for now; Time
   to Buy and Set Explorer dropped on phones; iPads still undecided; **switch on November 10**
   unless called earlier. **Switched early on 2026-10-31** (owner): phones get the app at `/`,
-  `/mobile` and `/dashboard`; the old page is at `/mobile-classic`. Steps 1.2-1.5 continue on the
-  live app.
+  `/mobile` and `/dashboard`; the old page was deleted after a backup tag. Steps 1.2-1.5 are
+  live and await the owner checks below.
 - [waiting] Owner: try `/m-next` on the phone in portrait and landscape after each step; decide
   iPad routing during stage 2.
 - [in progress] 1.1 Framework and Deal Checker (2026-10-21/22): "Check a card" home screen

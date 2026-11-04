@@ -4,6 +4,29 @@ Pokemon Momentum TODO Archive
 Archived Completed Work
 -----------------------
 
+November 2026
+-------------
+
+- Completed and archived at the 2026-11-04 milestone (torrent-sharing):
+  - 2026-11-01 Squarespace price sync fixed after three failures: its `.env` CSV paths now use
+    the container's `/app/` paths; a 117-change dry run passed and the daily 09:15 job stayed on.
+  - 2026-10-31 The desktop and phone "Our store" button now opens the TCGplayer Pro store until
+    the new Poke6s store launches.
+  - 2026-10-31 Mobile cleanup and early switch: phones get the new app at `/`, `/mobile` and
+    `/dashboard`; the old phone, research and concept pages and their tests were deleted.
+    `backup/before-mobile-cleanup-2026-10-31` holds the last copy; legacy mobile addresses
+    forward to `/mobile`.
+  - 2026-10-31 Mobile steps 1.2-1.5 shipped: graded prices, targets, stats, saved lists, account,
+    phone tab bar, Sets, Pokémon, Market Stats, Sealed Deals, Budget Builder and How it works.
+  - 2026-10-31 The site name changed from "Poke6s Market" to "Poke6s Market Watch" in headers,
+    tab titles and footers; the address and index names stayed unchanged.
+  - 2026-10-31 Storefront Phase 1 runs locally on port 8010: catalog import, product/category/
+    search pages, market price and trend, SEO, redirects and draft policies. Articles and their
+    pictures were imported, Community links added, and the daily 03:00 market reference job was
+    installed. The saved Squarespace copy includes page text, ten blog posts and 256 images.
+  - 2026-10-31 The storefront plan and current Squarespace site were documented; owner decisions
+    D1 and D3-D9 were recorded, with remaining reviews tracked in `docs/todo.txt`.
+
 October 2026 (archived 2026-10-12, when todo.txt was rewritten as the main action list)
 ----------------------------------------------------------------------------------------
 
