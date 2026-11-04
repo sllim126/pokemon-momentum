@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-02
+Last reviewed: 2026-11-04
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -690,6 +690,9 @@ we can within TCGCSV's rules.
   each file is fetched again only once it is 30 days old (`--refresh-days`).
 - Order: Pokemon, Pokemon Japan, Magic, Yu-Gi-Oh, One Piece, Lorcana, then every other game.
 - Prices are not fetched here; they come from the archive.
+- 404s are remembered and only asked again when due. A game whose first 25 product requests
+  in a run are all 404 is skipped until it's due again (Marvel Comics: ~10,800 sets, none
+  with product lists); the log says "Skipped games with no product lists: 69".
 - It doesn't touch DuckDB, so the site can stay up.
 
 ```bash
@@ -705,8 +708,17 @@ sudo docker-compose exec -T pokemon-momentum python scripts/download/crawl_tcgcs
 TCGCSV archive torrents
 -----------------------
 Owner's plan (2026-11-02): seed TCGCSV's daily archive as torrents to take load off TCGCSV,
-one per finished year (2024, 2025; 2026 on 2027-01-02) and one per month after that.
-Not shared yet: the owner shares the magnet links once CptSpaceToaster agrees.
+one per finished year (2024, 2025; 2026 on 2027-01-02) and one per month from November
+2026 on (built on the 2nd of the next month: November on 2026-12-02, December with the 2026
+year on 2027-01-02).
+Sharing approved by CptSpaceToaster in the TCGCSV Discord (2026-11-02): post the magnet
+links and updates in #useful-shares. He may later monetize the archive lightly to cover
+TCGCSV's hosting and doesn't expect the torrents to get in the way, but if he ever asks, take
+the posts and links down (and stop seeding) straight away; the owner promised that.
+Posted 2026-11-02 as one #useful-shares thread (magnets in code blocks, .torrent files
+attached); add each new torrent as a reply there. The seeder needs the router's port forward
+(TCP and UDP 2191 to the qBittorrent machine): without it, outside peers can't connect even
+though qBittorrent still uploads on connections it opens itself.
 
 - Build: `scripts/torrents/build_archive_torrent.py --year 2024` (or `--month 2026-11`).
   It needs libtorrent, which isn't in the site's container: run it on the host from a venv

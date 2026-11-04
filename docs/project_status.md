@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-11-02
+Last reviewed: 2026-11-04
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -15,7 +15,8 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   daily archive was offline 2026-09-16 to 2026-10-31; it returned on 2026-11-01 and the
   nightly backfill (21:30 UTC) filled the gap, so `data/raw` holds every day from 2024-02-08
 - TCGCSV catalogue: set and product lists for all ~94 games, crawled at up to 4,000 requests
-  a day (12:00 UTC) into `data/tcgcsv_catalogue/`
+  a day (12:00 UTC) into `data/tcgcsv_catalogue/`; games with no product lists (Marvel
+  Comics) are skipped after 25 not-founds, and 404s aren't re-asked until due
 - Archive torrents: 2024 and 2025 seeding from the owner's qBittorrent; not shared until
   CptSpaceToaster agrees (runbook "TCGCSV archive torrents")
 - Nightly pipeline memory: snapshot scripts cap DuckDB at 10 GB and 4 threads
@@ -154,6 +155,9 @@ Added 2026-10:
   Bolt / White Flare / 30th Celebration / Dark Phantasma / Pokemon GO 20, 25th Anniversary 16)
 - Sealed Deals reads the owner's checked pack counts and pack mixes from
   `scripts/dashboards/sealed_pack_overrides.csv` and prices collections by the packs inside
+- TCGCSV's 2024 and 2025 daily price archives are shared as owner-seeded torrents with
+  CptSpaceToaster's permission. Monthly torrents start with November 2026 and are built on the
+  second day of the following month; see the operator runbook for the sharing and withdrawal rules.
 - `data/sealed_pack_checklist.csv` lists every sealed product whose pack count is still a guess;
   `scripts/utilities/sealed_checklist_server.py` serves a one-item-at-a-time page (port 8099) to fill it in
 - ATLA Binder planner at `/atla/`, isolated in a read-only nginx container on host port

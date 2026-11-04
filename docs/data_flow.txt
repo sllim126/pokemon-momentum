@@ -701,7 +701,8 @@ TCGCSV catalogue crawl (12:00 UTC, adam's crontab,
   saves the game list, every game's set list and every set's product list, as served, into
   `data/tcgcsv_catalogue/`; the archive files give the prices, this gives the names
 - at most 4,000 requests a day (state in `data/tcgcsv_catalogue/state.json`), each file
-  refreshed after 30 days; nothing is loaded into DuckDB
+  refreshed after 30 days (404s too); a game whose first 25 product requests in a run are
+  all 404 is skipped until due again; nothing is loaded into DuckDB
 - Discord summary: "TCGCSV catalogue crawl"
 
 Weekly behavior:
