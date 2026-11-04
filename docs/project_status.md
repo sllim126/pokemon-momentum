@@ -15,7 +15,8 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   daily archive was offline 2026-09-16 to 2026-10-31; it returned on 2026-11-01 and the
   nightly backfill (21:30 UTC) filled the gap, so `data/raw` holds every day from 2024-02-08
 - TCGCSV catalogue: set and product lists for all ~94 games, crawled at up to 4,000 requests
-  a day (12:00 UTC) into `data/tcgcsv_catalogue/`
+  a day (12:00 UTC) into `data/tcgcsv_catalogue/`; games with no product lists (Marvel
+  Comics) are skipped after 25 not-founds, and 404s aren't re-asked until due
 - Archive torrents: 2024 and 2025 seeding from the owner's qBittorrent; not shared until
   CptSpaceToaster agrees (runbook "TCGCSV archive torrents")
 - Nightly pipeline memory: snapshot scripts cap DuckDB at 10 GB and 4 threads

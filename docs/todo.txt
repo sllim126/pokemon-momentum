@@ -43,27 +43,13 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
-- 2026-11-02 TCGCSV archive back: the 2026-11-01 backfill run fetched all 46 missing days; data/raw
-  is complete from 2024-02-08, and the gap is loaded for English and Japanese.
-- 2026-11-02 TCGCSV catalogue crawl (sets and products for every game; daily 12:00 UTC, at most
-  4,000 requests). First slice: 3,999 files, 94 games.
 - 2026-11-04 Catalogue crawl stops wasting requests: 404s were re-asked every night (a missing
   file looked unfetched), and Marvel Comics' ~10,800 sets with no product lists ate 3,720 of
   night two's 4,000 requests. 404s are now remembered, and a game whose first 25 product
   requests are all 404 is skipped until due again.
-
 - 2026-11-02 TCGCSV archive torrents for 2024 and 2025 built and seeding in the owner's
   qBittorrent (`scripts/torrents/build_archive_torrent.py`); CptSpaceToaster OK'd sharing and
   they were posted in #useful-shares the same day.
-
-- 2026-11-02 Nightly update fixed after an out-of-memory kill: the English product signal
-  snapshot grew to 12.6 GB on 2026-11-02 and stopped the run (Japanese skipped). DuckDB is now
-  capped at 10 GB and 4 threads in the snapshot scripts (`scripts/common/duckdb_settings.py`;
-  6 GB was too little for the sparkline and series steps), and the update was re-run by hand.
-  The Japanese load also picked up ~300 days of 2024 history that was extracted but never loaded.
-- 2026-11-02 Market site: "do your own homework" price note (owner). How it works has "About
-  these prices" (market price follows the condition that sells most, not NM), the footers say
-  prices are a guide, and the phone Deal Checker carries a one-line reminder.
 
 High Priority
 -------------
