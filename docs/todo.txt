@@ -43,6 +43,14 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-05: Budget Builder picks rotate day to day (owner: "just for fun"). Prices move
+  little overnight, so the same cards won several days running. Cards shown by default on the
+  last three price dates lose 25 / 15 / 8 points (`BUDGET_ROTATION_PENALTIES` in api.py; history
+  in `budget_pick_history`, tracking SQLite, kept 30 days). Only default views are recorded
+  (not Keep or "New picks"), and only earlier dates count, so a day's picks hold all day. Both
+  builders (graded rotates per card across grades); "Picked recently" reason; How it works
+  updated; tests use a temporary tracking database. Simulated on 2026-11-04 prices: the next
+  day's $100 list shares no cards with today's.
 - 2026-11-05: Retired unused files, after checking nothing reads or runs them (no code, cron,
   systemd or doc reference; none open; the only reads since March were one bulk scan). Moved
   to `data/backups/retired_2026-11-05/` (2.2 GB, gitignored): the March CSVs in
@@ -139,6 +147,8 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   the new store's `/p/<slug>` pages. Since 2026-10-31 it opens the TCGplayer Pro store (owner:
   sell there until the new store launches, after Black Friday); which products show it still
   comes from the last Squarespace export, so refresh that rule from the new store's stock then.
+- [next] Check the Budget Builder on 2026-11-06 shows different picks from 2026-11-05 (first day of
+  rotation; today's default views were recorded for price date 2026-11-04).
 - [next] Check the 2026-11-06 02:00 nightly update is green: first run with the snapshot
   builders reading through `prices_by_current_group`. If it fails, see docs/data_flow.txt step 5.
 - [next] Owner, before 2026-11-14: domain forwarding stopgap (plan decision D5) (the Squarespace

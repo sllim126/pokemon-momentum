@@ -133,6 +133,16 @@ def ensure_tracking_schema() -> None:
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             );
+
+            -- Budget Builder rotation (api.py, BUDGET_ROTATION_PENALTIES): the cards each
+            -- builder showed by default for a price date, so later days can rest them.
+            CREATE TABLE IF NOT EXISTS budget_pick_history (
+                builder TEXT NOT NULL,
+                category_id INTEGER NOT NULL,
+                price_date TEXT NOT NULL,
+                card_key TEXT NOT NULL,
+                PRIMARY KEY (builder, category_id, price_date, card_key)
+            );
             """
         )
         # One-time upgrade: sessions created before tokens were hashed are hashed in place,
@@ -758,3 +768,56 @@ def upsert_psa_certification(
     finally:
         con.close()
     return get_psa_certification(cert_number) or {}
+
+
+# How long Budget Builder pick history is kept. Rotation only looks back a few days.
+BUDGET_PICK_HISTORY_DAYS = 30
+
+
+def record_budget_picks(builder: str, category_id: int, price_date: str, card_keys: list[str]) -> None:
+    """Remember the cards a Budget Builder showed by default for one price date.
+
+    builder is "raw" or "graded"; card_key is "productId||subTypeName". Recording the same
+    card twice for a date does nothing, so every page view can call this. Rows older than
+    BUDGET_PICK_HISTORY_DAYS are dropped on the way.
+    """
+    if not card_keys or not price_date:
+        return
+    ensure_tracking_schema()
+    con = get_con()
+    try:
+        con.executemany(
+            "INSERT OR IGNORE INTO budget_pick_history (builder, category_id, price_date, card_key) VALUES (?, ?, ?, ?)",
+            [(builder, int(category_id), str(price_date), key) for key in card_keys],
+        )
+        con.execute(
+            "DELETE FROM budget_pick_history WHERE price_date < date(?, ?)",
+            [str(price_date), f"-{BUDGET_PICK_HISTORY_DAYS} day"],
+        )
+        con.commit()
+    finally:
+        con.close()
+
+
+def recent_budget_picks(builder: str, category_id: int, before_date: str, days: int) -> dict[str, str]:
+    """Cards a builder showed in the `days` days before `before_date` (not on it): {card_key: last date}.
+
+    Only earlier dates count, so a day's picks don't change as the day's own views are recorded.
+    """
+    if not before_date:
+        return {}
+    ensure_tracking_schema()
+    con = get_con()
+    try:
+        rows = con.execute(
+            """
+            SELECT card_key, MAX(price_date) AS last_date
+            FROM budget_pick_history
+            WHERE builder = ? AND category_id = ? AND price_date < ? AND price_date >= date(?, ?)
+            GROUP BY card_key
+            """,
+            [builder, int(category_id), str(before_date), str(before_date), f"-{int(days)} day"],
+        ).fetchall()
+        return {row["card_key"]: row["last_date"] for row in rows}
+    finally:
+        con.close()

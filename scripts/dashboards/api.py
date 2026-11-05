@@ -141,6 +141,8 @@ from scripts.dashboards.tracking_store import (
     set_tag,
     get_psa_certification,
     upsert_psa_certification,
+    recent_budget_picks,
+    record_budget_picks,
 )
 
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -248,6 +250,16 @@ POPULAR_POKEMON = (
 )
 POPULAR_POKEMON_BONUS = 10.0
 POPULAR_POKEMON_RE = re.compile(r"\b(" + "|".join(re.escape(name) for name in POPULAR_POKEMON) + r")\b", re.IGNORECASE)
+
+# Budget Builder rotation (owner, 2026-11-06: "just for fun", so the picks should change day
+# to day). Prices move little overnight, so without this the same cards win several days in
+# a row. A card the builder showed by default on a recent price date loses this many points,
+# by how many days before today's price date it was shown. Scores are tightly packed (on
+# 2026-11-05 the $100 picks scored 77-91 and the next 20 cards 67-77), so -25 rests yesterday's
+# picks for a day and strong cards come back after a day or two. Only default views are
+# recorded (not Keep or "New picks"), and only earlier dates count, so a day's picks stay the
+# same all day. History lives in tracking_store.budget_pick_history.
+BUDGET_ROTATION_PENALTIES = {1: 25.0, 2: 15.0, 3: 8.0}
 
 
 def _is_popular_pokemon(name: str | None) -> bool:
@@ -1457,6 +1469,37 @@ def _budget_candidate_score(row: dict, budget: float) -> float:
         score -= (price_vs_sma30 - 16.0) * 0.9
 
     return round(score, 3)
+
+
+def _budget_rotation(builder: str, category_id: int, price_date: str | None) -> dict[str, float]:
+    """Rotation penalty per card key ("productId||subTypeName") for today's price date.
+
+    Reads the picks shown on the few price dates before price_date and returns the penalty
+    from BUDGET_ROTATION_PENALTIES for each. Never breaks the builder: if the history can't be
+    read, nobody is penalised.
+    """
+    if not price_date:
+        return {}
+    try:
+        today = date.fromisoformat(str(price_date)[:10])
+        recent = recent_budget_picks(builder, category_id, today.isoformat(), max(BUDGET_ROTATION_PENALTIES))
+    except Exception as exc:  # a broken history must not take the page down
+        print(f"budget rotation: could not read pick history: {exc!r}")
+        return {}
+    penalties: dict[str, float] = {}
+    for key, last in recent.items():
+        days_ago = (today - date.fromisoformat(last)).days
+        if days_ago in BUDGET_ROTATION_PENALTIES:
+            penalties[key] = BUDGET_ROTATION_PENALTIES[days_ago]
+    return penalties
+
+
+def _remember_budget_picks(builder: str, category_id: int, price_date: str | None, keys: list[str]) -> None:
+    """Record a default view's picks for rotation; a failure is logged, never raised."""
+    try:
+        record_budget_picks(builder, category_id, str(price_date or "")[:10], keys)
+    except Exception as exc:
+        print(f"budget rotation: could not record picks: {exc!r}")
 
 
 def _budget_candidate_reasons(row: dict) -> list[str]:
@@ -6014,6 +6057,14 @@ def budget_builder_recommendations(
     for candidate in [*kept, *candidates]:
         candidate["score"] = _budget_candidate_score(candidate, budget)
         candidate["reasons"] = _budget_candidate_reasons(candidate)
+    # Rest cards shown on recent days (BUDGET_ROTATION_PENALTIES); kept cards are never touched.
+    price_date = next((item.get("latest_date") for item in candidates if item.get("latest_date")), None)
+    rotation = _budget_rotation("raw", category.category_id, str(price_date)[:10] if price_date else None)
+    for candidate in candidates:
+        penalty = rotation.get(f"{_safe_int(candidate.get('productId'))}||{candidate.get('subTypeName') or ''}")
+        if penalty:
+            candidate["score"] -= penalty
+            candidate["reasons"].append("picked recently")
 
     candidates.sort(
         key=lambda item: (
@@ -6067,6 +6118,9 @@ def budget_builder_recommendations(
 
     spent = round(spent, 2)
     remaining = round(max(budget - spent, 0.0), 2)
+    if not excluded_keys and not keep_key_set and items:
+        _remember_budget_picks("raw", category.category_id, items[0]["latest_date"],
+                               [f"{item['productId']}||{item['subTypeName']}" for item in items])
     return {
         "budget": budget,
         "min_price": min_price,
@@ -6086,6 +6140,7 @@ def budget_builder_recommendations(
         "allow_duplicates": allow_duplicates,
         "used_screener_snapshot": use_snapshot,
         "available_rarity_filters": BUDGET_RARITY_FILTER_OPTIONS,
+        "rotated_out": len(rotation),
         "items": items,
     }
 
@@ -6252,6 +6307,9 @@ def graded_budget_builder(
     LIMIT 3000
     """
     columns, rows = q(sql)
+    meta = _row_dicts(columns, rows[:1])[0] if rows else {}
+    # Rotation works per card, not per grade: a card picked as a PSA 10 rests at every grade.
+    rotation = _budget_rotation("graded", category.category_id, meta.get("latest_date"))
     kept: list[dict] = []
     candidates: list[dict] = []
     for item in _row_dicts(columns, rows):
@@ -6266,6 +6324,10 @@ def graded_budget_builder(
         item["reasons"] = _graded_candidate_reasons(item)
         key = (_safe_int(item.get("productId")), str(item.get("subTypeName") or ""), str(item.get("grade")))
         item["key"] = "||".join((str(key[0]), key[1], key[2]))
+        penalty = rotation.get(f"{key[0]}||{key[1]}")
+        if penalty and key not in keep_set:
+            item["score"] -= penalty
+            item["reasons"].append("picked recently")
         if key in keep_set:
             kept.append(item)
         elif key not in excluded:
@@ -6277,7 +6339,6 @@ def graded_budget_builder(
         allow_duplicates=allow_duplicates, kept=kept,
     )
 
-    meta = _row_dicts(columns, rows[:1])[0] if rows else {}
     first_date, latest_date = meta.get("first_date"), meta.get("latest_date")
     window_days = GRADED_TREND_DAYS
     if first_date and latest_date:
@@ -6311,6 +6372,9 @@ def graded_budget_builder(
             "kept": id(row) in kept_ids,
         })
     spent = round(sum(item["latest_price"] for item in items), 2)
+    if not excluded and not keep_set and items:
+        _remember_budget_picks("graded", category.category_id, latest_date,
+                               [f"{item['productId']}||{item['subTypeName']}" for item in items])
     return {
         "available": True,
         "source": "PriceCharting",
@@ -6326,6 +6390,7 @@ def graded_budget_builder(
         "history_days": _safe_int(meta.get("history_days")),
         "window_days": window_days,
         "category_id": category.category_id,
+        "rotated_out": len(rotation),
         "items": items,
     }
 
