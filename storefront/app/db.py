@@ -14,13 +14,16 @@ from pathlib import Path
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
 
 
-def connect(db_path: Path, *, readonly: bool = False) -> sqlite3.Connection:
+def connect(db_path: Path, *, readonly: bool = False, writer: bool = False) -> sqlite3.Connection:
     """Open the store database.
 
-    The public site opens it read-only, so a bug in a page handler can't change products or
-    orders (plan: "The public app can't change products or orders").
+    The public pages open it read-only, so a bug in a page handler can't change products or
+    orders. Only checkout, the Stripe webhook and the reconcile job (orders.py) open a
+    `writer`: autocommit mode, so orders.py controls each transaction with BEGIN IMMEDIATE.
     """
-    if readonly:
+    if writer:
+        conn = sqlite3.connect(db_path, check_same_thread=False, isolation_level=None)
+    elif readonly:
         conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, check_same_thread=False)
     else:
         db_path.parent.mkdir(parents=True, exist_ok=True)

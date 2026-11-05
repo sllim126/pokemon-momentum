@@ -1,6 +1,6 @@
 # New storefront for poke6s.com: plan
 
-Last reviewed: 2026-10-31
+Last reviewed: 2026-11-05
 **Status: Phase 1 under way (local only), started 2026-10-31.** Cloudflare and all other online
 changes are paused by the owner (2026-10-31): build and run locally, Stripe test mode only.
 Developer guide for the code: `storefront/README.md`. See "Progress log" at the end.
@@ -229,8 +229,8 @@ Prices as published on 2026-10-31; check current pricing before relying on them.
 - `categories`, `product_categories`, `tags`, `product_tags`: carry over the rules in
   `docs/store_category_tree_proposal.md` and `docs/store_tag_policy.md`.
 - `orders`:
-  - id, number (`P6-2026-0001` style), status (`pending`, `paid`, `shipped`, `refunded`,
-    `partially_refunded`, `cancelled`, `disputed`);
+  - id, number (`P6-2026-0001` style; `P6T-...` for Stripe test mode), status (`pending`,
+    `paid`, `shipped`, `refunded`, `partially_refunded`, `cancelled`, `expired`, `disputed`);
   - email, name, shipping address (JSON);
   - subtotal, shipping, tax, discount, total (cents);
   - Stripe session ID and payment intent ID;
@@ -440,7 +440,7 @@ Reviewed with the owner on 2026-10-31. D2 waits for the 2026-11-02 Utah call.
 |---|---|---|
 | D1 | Which stock is listed here and which on TCGplayer | **Decided:** our site lists sealed product and accessories; singles stay on TCGplayer. Revisit after launch |
 | D2 | Sales tax method | **Open:** decide after the 2026-11-02 call. Stripe Tax for a fast launch, our own Utah table if the fee matters. Build the tax step behind one interface so either can be plugged in |
-| D3 | Shipping | **Decided:** flat rate by shipping class, free shipping over a threshold. The owner sets the amounts from Pirate Ship costs; until then use settings with placeholder values (small sealed $5, large sealed $9, free over $100) |
+| D3 | Shipping | **Decided:** flat rate by shipping class, free shipping over a threshold. Free shipping over **$150** (owner, 2026-11-05, matching PokeNE). Flat-rate amounts stay placeholders (small sealed $5, large sealed $9) until the owner sets them from Pirate Ship costs; live Pirate Ship rates at checkout are a later option |
 | D4 | Look and feel | **Decided:** match market.poke6s.com (`scripts/dashboards/desktop_theme.css`) |
 | D5 | poke6s.com from 2026-11-14 until launch | **Decided:** forward to `poke6s.tcgplayerpro.com` in the Squarespace Domains panel |
 | D6 | When to move DNS to Cloudflare | **Decided:** soon (within a week or two), with Claude walking the owner through it, mail records double-checked |
@@ -478,3 +478,4 @@ Reviewed with the owner on 2026-10-31. D2 waits for the 2026-11-02 Utah call.
 | 2026-10-31 | Claude | Phase 1 built and running locally on branch `storefront/phase1-catalog` (owner paused Cloudflare and other online changes): `storefront/` service on port 8010 (LAN), SQLite schema + migrations, importer (94 sealed/accessory products from the 2026-10-09 export, 30 visible, 151 photos copied from Squarespace's CDN as WebP), shop/search/category/set/product pages, market price + 30-day trend from `data/storefront/market_reference.json` (writer `scripts/build_storefront_market_reference.py`), sitemap, robots (blocked until launch), JSON-LD, Open Graph, 301 redirects, draft policy pages. 46 storefront tests + 3 writer tests pass; checked at 1920×1080, 1366×768 and phone with no console errors. **Stopped at:** Phase 1 done except the items in the next column | Owner: check the shop on a phone on the home network; review the draft pages in `storefront/content/pages/` (handling time in Shipping, tax-record years in Privacy). Then Phase 2 (cart + Stripe **test mode**). Not done: market reference in the daily job (cron, owner), re-import from the final pre-11-14 export, Google Merchant feed (Phase 4) |
 | 2026-10-31 | Claude | Saved the old site before the plan ends (`storefront/tools/archive_squarespace_site.py`): page text, 10 Resources blog posts (missed in the first site survey) and 256 images, in the owner's records outside the repo. `docs/storefront_current_site.md` corrected; redirects added for `/new-page-1` and `/pre-order-interest` | Owner: where the blog posts go at launch (todo); compare draft policies with the old ones (6% cancellation fee). Re-run the script on the last day |
 | 2026-10-31 | Claude | Articles brought forward from Phase 4 (owner): `/articles` list with category and tag filters, `/articles/<slug>` pages with BlogPosting JSON-LD, home page "Latest articles", sitemap; the 10 Squarespace posts imported to `storefront/content/articles/` (`app/article_import.py`) with their pictures; every old `/resources/...` address 301s to its new one. Storefront container now runs as the host user. 52 tests pass | Owner: read through the imported articles. Full review of all policy pages, terms and FAQs (they were adapted from another shop's, with permission) |
+| 2026-11-05 | Claude | Phase 2 built locally on branch `storefront/phase2-cart` (migration `002_orders`): cart in the browser priced by the server (`POST /cart/quote`), `POST /checkout` with 30-minute stock reservations and a Stripe Checkout Session (US shipping, flat rate by largest class, free over $150, promotion codes, 3-D Secure from $150, Stripe Tax behind `STOREFRONT_TAX_MODE`), webhook with signature check and repeat protection, reconcile job (start-up + 15 min), thanks and order status pages, Discord alerts, order and shipping emails (SMTP or outbox), `orders_cli` (list/show/ship/reconcile). Checkout is off without a Stripe key and refuses live keys. 88 storefront tests pass (34 new); checked at 1920×1080, 1366×768 and phone | Owner: Stripe account (tonight), test keys in `.env`, one test order with card 4242…; D2 after the Utah call; shipping amounts (D3); Microsoft 365 SMTP for real emails. Then Phase 3 (admin) |

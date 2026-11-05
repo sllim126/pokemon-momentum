@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-05 (milestone: budget-builders)
+Last updated: 2026-11-05 (milestone: storefront-phase2)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -43,28 +43,19 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-05 Storefront Phase 2: cart and Stripe Checkout (test mode). Owner's own Stripe
+  account made (separate from the Squarespace-managed one), test key in `.env`, and a real test
+  order placed end to end on a side copy of the store (paid, free shipping over $150, stock
+  taken, confirmation email written to the outbox). What's left: the Phase 2 item below.
+- 2026-11-05 Storefront: owner checked the shop on a phone and read the 10 articles ("good for
+  now"). Squarespace saves finished: email subscribers, form submitters and the two form sheets
+  (newsletter sign-ups, pre-order interest) saved in the owner's private records; no final
+  products export needed. Shipping decision D3: free over $150 (Shipping page and plan updated).
 - 2026-11-05 KPDH branch reconciliation: transplanted the final Series 2 catalog and images,
   base-first binder option, corrected continuous CR numbering and lime provisional-evidence
   markers onto current `main` without importing the old branches' unrelated dashboard, cron
   or documentation changes. The isolated image built and passed smoke checks; 249 tests and
   33 subtests pass.
-- 2026-11-05 Budget Builder keep and cycle (owner): "Keep" on any pick, then "New picks" refills
-  the rest of the budget with cards not shown yet (starts over when they run out). Desktop and
-  phone; API `keep_keys` on `/budget_builder`. Popular Pokémon (Charizard, Umbreon, Gengar…)
-  get a +10 tie-breaker and a "Popular Pokémon" label (owner, after Reddit feedback).
-- 2026-11-05 Indexes leave out cards with flip-flopping prices (4+ jumps of 3x in a year; 42 EN,
-  19 JP cards). WOTC 100's worst day 37.7% -> 5.9%, Top 151's 14.3% -> 7.8%; Method tab lists
-  them. Discover lists not changed (owner to decide).
-- 2026-11-05 Desktop charts: five date labels (three when narrow, with the year on long spans) and a
-  faint line with the year at each January 1 (owner).
-- 2026-11-05 Desktop: the browser's Back button returns from a set (or index) to the list, like
-  "← All sets" (owner).
-- 2026-11-05 Breakouts tightened (owner spotted Basic Darkness Energy, flat at ~$4.90 for months):
-  a breakout must also be 5% above its 30-day average. And cards TCGplayer moved to another set
-  (116 EN, 7 JP) get one history in the series, sparkline and signal snapshots; their charts
-  sometimes showed the old set's history (ending Aug 2025). Snapshots rebuild at 02:00.
-- 2026-11-05 Graded Budget Builder (Beta) on desktop and phone: PSA 10s, 9-10s or 8-10s from
-  PriceCharting, $100-$1,000 presets, Keep and New picks, each price linked to PriceCharting.
 
 High Priority
 -------------
@@ -82,12 +73,13 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
 - [next] Check the 2026-11-06 02:00 nightly update is green: first run with the snapshot
   builders reading through `prices_by_current_group`. If it fails, see docs/data_flow.txt step 5.
 - [next] Owner, before 2026-11-14: domain forwarding stopgap (plan decision D5) (the Squarespace
-  website plan is cancelled, ending 2026-11-14, confirmed 2026-10-31); one last products export just before the plan ends (for the importer re-run
-  below). Products, orders and customers/subscribers were exported 2026-10-31; page text, blog
+  website plan is cancelled, ending 2026-11-14, confirmed 2026-10-31); no final products export needed (owner, 2026-11-05: no new products; the
+  2026-10-31 export is the last). Products, orders and customers/subscribers were exported 2026-10-31; page text, blog
   posts and images were saved by script the same day. No site changes are expected before the
   plan ends other than the daily price sync (owner), so no second copy is needed.
-- [waiting] Plan decision D2 (sales tax method) after the 2026-11-02 Utah call; D3 shipping
-  amounts from the owner's Pirate Ship costs. D1, D4-D9 decided 2026-10-31.
+- [waiting] Plan decision D2 (sales tax method) after the Utah call (to be retried). D3: free
+  shipping over $150 (owner, 2026-11-05); flat-rate amounts from the owner's Pirate Ship costs
+  later, live Pirate Ship rates possibly after launch. D1, D4-D9 decided 2026-10-31.
 - [parked] Phase 0 (owner + Claude), paused by the owner 2026-10-31 (no online changes for
   now): Cloudflare DNS move (copy the Microsoft 365 mail records
   exactly), Tunnel (replaces the home-IP item below), Stripe test account.
@@ -96,20 +88,40 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   importer, shop/search/category/set/product pages, market price + trend, SEO, redirects,
   draft policy pages, 46 tests. Cloudflare and other online changes paused by the owner.
   Left before calling it done:
-  - [waiting] Owner: browse `http://<server>:8010` on a phone on the home network.
   - [waiting] Owner: full review of every policy page, the terms and the FAQ before launch,
     including the draft pages in `storefront/content/pages/` (handling time in Shipping,
     tax-record years in Privacy). The old Squarespace text was adapted from another shop's
     (with permission) and will be rewritten; the old cancellation fee (6%) is decided in that
     review. Old text for comparison is in the saved site copy. Remove `draft: true` when done.
-  - [waiting] Owner: read through the 10 imported articles (`/articles`).
-  - [planned] Re-run the importer (with --fetch-images) on the final Squarespace export
-    before 2026-11-14.
   - [idea] JP products without a TCGplayer mapping (e.g. JP-AE-BB) show no market price;
     add them to `data/squarespace_tcgplayer_mapping.csv`.
-- [next] Phase 2: cart + Stripe Checkout (test mode only), orders, webhooks, reconciliation.
-  Phase 3: LAN-only admin, exports (Pirate Ship, sales tax, bookkeeping, TCGplayer
-  reconciliation), backups.
+- [in progress] Phase 2: cart + Stripe Checkout, test mode (Claude, 2026-11-05; merged to
+  `main` at the storefront-phase2 milestone; guide `storefront/README.md` "Checkout"). Built and
+  tested with a fake Stripe (88 storefront tests) and with the owner's real Stripe sandbox: one
+  test order paid end to end on a side copy of the store. Live keys are refused unless
+  STOREFRONT_ALLOW_LIVE=1. **Stopped at:** the running store on :8010 serves whatever branch the
+  live folder `/opt/pokemon-momentum` is on; it was on `plan/lorcana-market` at this milestone,
+  so Phase 2 reaches :8010 only once that folder is back on `main` and
+  `docker-compose up -d storefront` is run (picks up the new environment variables; the
+  `002_orders` migration applies at start-up). Left:
+  - [next] Once :8010 runs Phase 2: one test order there, then `orders_cli ship` it to see the
+    shipped email (the side-copy test didn't try shipping, back-out or a declined card).
+  - [planned] STRIPE_WEBHOOK_SECRET: needs a public address Stripe can reach (Cloudflare
+    Tunnel, paused by the owner) or the Stripe CLI. Until then the thanks page and the 15-minute
+    reconcile job confirm payments.
+  - [waiting] Owner: Stripe activation (business profile, bank, statement descriptor POKE6S)
+    before live payments. Use the new Stripe account, not the Squarespace-managed one.
+  - [waiting] D2 sales tax: owner calls the Utah State Tax Commission again (the first call
+    was cut off by a "too busy, call later" message). `STOREFRONT_TAX_MODE=stripe` is ready if Stripe Tax
+    is chosen; our own Utah table would be built behind the same switch.
+  - [planned] Microsoft 365 SMTP for order emails (SMTP AUTH may need switching on for
+    admin@poke6s.com); until then emails are files in `data/storefront/outbox/`.
+  - [planned] Decide where order alerts go (STOREFRONT_DISCORD_WEBHOOK_URL; off by default).
+  - [planned] Once real orders exist, stop re-running the Squarespace importer (it resets
+    stock); the Phase 3 admin takes over stock changes.
+- [next] Phase 3: LAN-only admin (orders, ship with tracking, refunds, stock), exports (Pirate
+  Ship, sales tax, bookkeeping, TCGplayer reconciliation), signature confirmation over ~$250,
+  backups.
 - [planned] After launch: retire `scripts/squarespace_price_sync.py` from cron
   (`deploy/crontab.txt`) and switch the market site's "Poke6s" buy button to the new store.
 

@@ -1,0 +1,57 @@
+{#- Order status: after checkout (/order/thanks) and from the link in the order emails
+    (/order/<number>?k=<access token>). `order` comes from orders.get_order(). -#}
+{% extends "base.html" %}
+{% set labels = {'pending': 'Waiting for payment', 'paid': 'Paid, being packed', 'shipped': 'Shipped',
+                 'refunded': 'Refunded', 'partially_refunded': 'Partly refunded', 'cancelled': 'Cancelled',
+                 'expired': 'Not completed', 'disputed': 'Payment disputed'} %}
+{% block content %}
+<section class="order">
+  {% if thanks and order.status in ('paid', 'shipped') %}
+  <h1>Thank you for your order!</h1>
+  <p>We've emailed a confirmation to <strong>{{ order.email }}</strong>, and we'll email tracking when it ships.</p>
+  {% elif thanks and order.status == 'pending' %}
+  <h1>Almost done</h1>
+  <p>We're waiting for the payment confirmation from Stripe. This page shows it once it arrives;
+     the confirmation email follows.</p>
+  {% else %}
+  <h1>Order {{ order.number }}</h1>
+  {% endif %}
+
+  <p class="order-head">
+    <span>Order <strong>{{ order.number }}</strong></span>
+    <span class="pill {{ 'up' if order.status in ('paid', 'shipped') else 'down' if order.status in ('disputed', 'cancelled', 'expired') else 'good' }}">{{ labels.get(order.status, order.status) }}</span>
+    {% if order.mode == 'test' %}<span class="pill good">Test order, no real payment</span>{% endif %}
+  </p>
+
+  {% if order.status == 'shipped' and order.tracking_number %}
+  <p><strong>Tracking:</strong> {{ order.carrier or '' }} {{ order.tracking_number }}</p>
+  {% endif %}
+
+  <table class="lines">
+    <thead><tr><th scope="col">Item</th><th scope="col" class="num">Qty</th><th scope="col" class="num">Price</th></tr></thead>
+    <tbody>
+      {% for item in order["items"] %}
+      <tr><td>{{ item.title }}</td><td class="num">{{ item.quantity }}</td><td class="num">{{ (item.unit_price_cents * item.quantity) | money }}</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><th scope="row" colspan="2">Subtotal</th><td class="num">{{ order.subtotal_cents | money }}</td></tr>
+      {% if order.discount_cents %}<tr><th scope="row" colspan="2">Discount</th><td class="num">−{{ order.discount_cents | money }}</td></tr>{% endif %}
+      <tr><th scope="row" colspan="2">Shipping</th><td class="num">{{ order.shipping_cents | money if order.shipping_cents else 'Free' }}</td></tr>
+      {% if order.tax_cents %}<tr><th scope="row" colspan="2">Sales tax</th><td class="num">{{ order.tax_cents | money }}</td></tr>{% endif %}
+      <tr class="total"><th scope="row" colspan="2">Total</th><td class="num">{{ order.total_cents | money }}</td></tr>
+      {% if order.refunded_cents %}<tr><th scope="row" colspan="2">Refunded</th><td class="num">−{{ order.refunded_cents | money }}</td></tr>{% endif %}
+    </tfoot>
+  </table>
+
+  {% if order.shipping and order.shipping.address %}
+  {% set a = order.shipping.address %}
+  <h2>Shipping to</h2>
+  <p class="address">{{ order.shipping.name or order.name }}<br>{{ a.line1 }}{% if a.line2 %}<br>{{ a.line2 }}{% endif %}<br>{{ a.city }}, {{ a.state }} {{ a.postal_code }}</p>
+  {% endif %}
+
+  <p class="muted small">Questions about this order? Email <a href="mailto:{{ settings.contact_email }}?subject={{ ('Order ' ~ order.number) | urlencode }}">{{ settings.contact_email }}</a>
+    with your order number. <a href="/shipping">Shipping</a> · <a href="/returns">Returns</a></p>
+  <p><a class="btn" href="/shop">Keep shopping</a></p>
+</section>
+{% endblock %}

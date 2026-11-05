@@ -41,6 +41,7 @@
       <nav class="ext-links" aria-label="Other Poke6s sites">
         <a href="{{ settings.market_base_url }}">Market prices</a>
         <a href="{{ settings.tcgplayer_store_url }}">Singles on TCGplayer</a>
+        {% if checkout_enabled %}<a class="cart-link" href="/cart" {% if path == '/cart' %}aria-current="page"{% endif %}>Cart<span class="cart-count" data-cart-count hidden></span></a>{% endif %}
       </nav>
     </div>
     <nav class="wrap cat-nav" aria-label="Categories">

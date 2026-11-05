@@ -3,8 +3,9 @@
 Our own shop, replacing Squarespace. The plan, decisions and progress log are in
 `docs/storefront_plan.md`; this file is the developer guide for the code in `storefront/`.
 
-**Status (2026-10-31): Phase 1, local only.** The catalog browses on the home network at
-`http://<server>:8010`. There is no checkout yet: product pages link to the TCGplayer store.
+**Status (2026-11-05): Phase 2 built, local only, Stripe test mode.** The catalog browses on
+the home network at `http://<server>:8010`. Cart and checkout switch on when a Stripe **test**
+key is in `.env` (see "Checkout" below); without one, product pages link to the TCGplayer store.
 Nothing is public: robots are blocked and every page says `noindex` until
 `STOREFRONT_ALLOW_INDEXING=1` at launch.
 
@@ -90,15 +91,64 @@ docker-compose run --rm -v <copy folder>:/archive:ro storefront \
 
 Existing article files are kept unless `--force` is given.
 
+## Checkout (Phase 2, Stripe test mode)
+
+How it works: `app/orders.py` (module docstring), plan "Checkout and orders".
+
+**Switch it on.** Put the Stripe **test** keys in `.env` (never in code or chat), then
+`docker-compose up -d storefront` (an `up`, not a `restart`, so the new settings are read):
+
+```
+STRIPE_SECRET_KEY=sk_test_...         # Stripe dashboard > Developers > API keys (test mode)
+STRIPE_WEBHOOK_SECRET=whsec_...       # from `stripe listen` or the dashboard webhook (optional)
+```
+
+Live keys (`sk_live_...`) are refused unless `STOREFRONT_ALLOW_LIVE=1`; going live is the
+owner's call. Other settings (all optional, defaults in `app/settings.py`):
+`STOREFRONT_FREE_SHIPPING_OVER_CENTS` (15000), `STOREFRONT_SHIP_<CLASS>_CENTS` (placeholders:
+small sealed 500, large sealed 900, accessory 500, single 500), `STOREFRONT_TAX_MODE`
+(`none`, or `stripe` for Stripe Tax; decision D2), `STOREFRONT_DISCORD_WEBHOOK_URL` (order
+alerts; off when empty), `STOREFRONT_SMTP_HOST` / `_USER` / `_PASSWORD` (Microsoft 365, port
+587). Without SMTP, order emails are written to `data/storefront/outbox/*.eml`.
+
+**A test order.** Add something to the cart, Checkout, and pay on Stripe's page with card
+`4242 4242 4242 4242`, any future date, any CVC, any US address. Orders are numbered
+`P6T-2026-0001` in test mode (`P6-...` live).
+
+**Webhooks are optional locally.** Payment is confirmed three ways, whichever comes first: the
+webhook (`POST /stripe/webhook`), the thanks page asking Stripe directly, and the reconcile job
+(start-up and every 15 minutes) that checks every pending order. To test webhooks, run the
+Stripe CLI (`stripe listen --forward-to localhost:8010/stripe/webhook`) and put the `whsec_...`
+it prints in `.env`.
+
+**Orders from the command line** (until the Phase 3 admin):
+
+```
+docker-compose exec storefront python -m storefront.app.orders_cli list
+docker-compose exec storefront python -m storefront.app.orders_cli show P6T-2026-0001
+docker-compose exec storefront python -m storefront.app.orders_cli ship P6T-2026-0001 --carrier USPS --tracking 9400...
+docker-compose exec storefront python -m storefront.app.orders_cli reconcile
+```
+
+**Stock.** Checkout reserves stock for 30 minutes; payment turns it into a sale; an abandoned or
+cancelled checkout gives it back. Every change is a `stock_movements` row. Refunds don't
+restock (returns are inspected first). **Careful:** re-running the Squarespace importer resets
+stock to the export's numbers, which would undo sales made here. Once real orders exist, change
+stock by hand until the Phase 3 admin.
+
 ## Code map
 
 | File | What it does |
 |---|---|
-| `app/main.py` | FastAPI app: routes, 404 + redirect handling, security headers |
+| `app/main.py` | FastAPI app: routes, 404 + redirect handling, security headers, reconcile loop |
+| `app/orders.py` | Cart pricing, checkout, reservations, payment, expiry, refunds, disputes, shipping |
+| `app/stripe_api.py` | The Stripe calls (Checkout Sessions) over HTTPS; webhook signature check |
+| `app/notify.py` | Discord order alerts; order and shipping emails (SMTP or the outbox folder) |
+| `app/orders_cli.py` | `list`, `show`, `ship`, `reconcile` from the command line |
 | `app/catalog.py` | Read-only queries: filters, search, facets, product, sets, sitemap |
 | `app/importer.py` | Squarespace export + intake CSVs → database |
 | `app/classify.py` | Product type, language, category, shipping class; slugs; search text |
-| `app/db.py`, `app/migrations/*.sql` | SQLite connection (read-only for pages), migrations applied in order at start-up |
+| `app/db.py`, `app/migrations/*.sql` | SQLite connection (read-only for pages, a writer for orders), migrations applied in order at start-up |
 | `app/market.py` | Reads `market_reference.json` (reloads when the file changes) |
 | `app/images.py` | Originals + WebP copies, named with a content hash |
 | `app/seo.py` | JSON-LD (Product, BreadcrumbList, Organization), sitemap, robots |
@@ -123,6 +173,12 @@ The writer for the market prices lives with the market app:
 | `/c/<category>` | Category (same filters) |
 | `/sets`, `/sets/<set-slug>` | Sets in stock |
 | `/p/<slug>` | Product page, with the market price and 30-day trend |
+| `/cart` | Cart (kept in the browser; priced by `POST /cart/quote`). `?cancelled=<number>&k=<token>` releases a checkout the shopper backed out of |
+| `POST /cart/quote` | `{"items": [{"sku", "qty"}]}` → lines, problems, subtotal, shipping, total (JSON) |
+| `POST /checkout` | Same body → `{"url": <Stripe checkout page>}`; 409 with a new quote if the cart changed, 503 when checkout is off |
+| `/order/thanks?session_id=` | After payment (confirms with Stripe if the webhook hasn't arrived) |
+| `/order/<number>?k=<token>` | Order status; the link is in the order emails |
+| `POST /stripe/webhook` | Stripe events (signature checked; each event applied once) |
 | `/<page>` | Markdown pages from `content/pages/` |
 | `/media/<480\|1200>/<name>.webp` | Product photos, cached for a year |
 | `/sitemap.xml`, `/robots.txt`, `/healthz` | Search engines and monitoring |
@@ -145,6 +201,6 @@ reviews them before launch, then removes the line.
 
 ## Not yet (later phases)
 
-Cart, Stripe test-mode checkout, orders and webhooks (Phase 2); LAN-only admin, exports and
-backups (Phase 3); Google Merchant feed, per-article social cards, newsletter (Phase 4). See
+Sales tax by our own Utah table (if chosen for D2), live keys (owner); LAN-only admin, exports,
+signature confirmation on large orders and backups (Phase 3); Google Merchant feed, per-article social cards, newsletter (Phase 4). See
 the plan.

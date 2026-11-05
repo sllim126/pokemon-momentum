@@ -3,16 +3,24 @@
 Run: `docker-compose up -d storefront` (port 8010). Plan: docs/storefront_plan.md.
 Developer guide (routes, import, tests): storefront/README.md.
 
-Phase 1 is browse-only: products show "Buy on TCGplayer" until the Stripe checkout (Phase 2).
+Checkout (Phase 2) is on only when a Stripe key is set (settings.checkout_enabled); without one,
+products show "Buy on TCGplayer" as in Phase 1. The cart lives in the browser (localStorage) and
+is priced by the server; orders.py has the checkout and order rules.
 Articles (the blog carried over from Squarespace's /resources) are Markdown files; see articles.py.
-The database is opened read-only per request; only the importer (and later the LAN-only
-admin) writes to it.
+Pages open the database read-only per request. Only checkout, the Stripe webhook, the thanks
+page and the reconcile job open a writer (orders.py); the importer and the later LAN-only
+admin are the other writers.
 """
 
 from __future__ import annotations
 
+import asyncio
+import hmac
+import logging
 import re
 import sqlite3
+import time
+from collections import defaultdict, deque
 from collections.abc import Iterator
 from contextlib import asynccontextmanager, contextmanager
 from datetime import UTC, datetime
@@ -20,12 +28,13 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, RedirectResponse, Response
+from fastapi.responses import (FileResponse, HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse,
+                               Response)
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import catalog, classify, images, redirects, seo
+from . import catalog, classify, images, orders, redirects, seo, stripe_api
 from .articles import Articles
 from .db import connect, latest_migration, migrate
 from .market import MarketReference
@@ -36,6 +45,11 @@ APP_DIR = Path(__file__).resolve().parent
 PAGES_DIR = STOREFRONT_DIR / "content" / "pages"
 ARTICLES_DIR = STOREFRONT_DIR / "content" / "articles"
 MEDIA_NAME = re.compile(r"^[a-z0-9-]+$")
+RECONCILE_EVERY_SECONDS = 15 * 60
+# Checkout attempts per visitor per hour. Each attempt holds stock for 30 minutes, so this keeps
+# one visitor from tying up the shelf.
+CHECKOUTS_PER_HOUR = 10
+log = logging.getLogger("storefront")
 
 SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
@@ -65,16 +79,40 @@ def load_pages() -> dict[str, dict]:
     return pages
 
 
-def create_app(settings: Settings | None = None, articles_dir: Path | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, articles_dir: Path | None = None, stripe=None) -> FastAPI:
+    """Build the app. `stripe` replaces the real Stripe client (tests pass a fake)."""
     settings = settings or load_settings()
     market = MarketReference(settings.market_reference_path)
     pages = load_pages()
     articles = Articles(articles_dir or ARTICLES_DIR)
+    if settings.stripe_secret_key and not settings.checkout_enabled:
+        log.warning("Live Stripe key refused: set STOREFRONT_ALLOW_LIVE=1 to take real payments.")
+    if stripe is None and settings.checkout_enabled:
+        stripe = stripe_api.StripeClient(settings.stripe_secret_key)
+    checkout_attempts: dict[str, deque] = defaultdict(deque)
+
+    def reconcile_once() -> None:
+        with writer() as conn:
+            counts = orders.reconcile(conn, settings, stripe, settings.base_url)
+        if any(counts.values()):
+            log.info("Reconcile: %s", counts)
+
+    async def reconcile_loop() -> None:
+        # Catches up on missed webhooks (plan step 6): at start-up, then every 15 minutes.
+        while True:
+            try:
+                await asyncio.to_thread(reconcile_once)
+            except Exception:   # never let one bad pass stop the loop
+                log.exception("Reconcile pass failed")
+            await asyncio.sleep(RECONCILE_EVERY_SECONDS)
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
         migrate(settings.db_path)
+        task = asyncio.create_task(reconcile_loop()) if stripe is not None and settings.checkout_enabled else None
         yield
+        if task:
+            task.cancel()
 
     app = FastAPI(title="Poke6s storefront", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     # Trailing slashes are handled in not_found() with one 301, not Starlette's 307 hop.
@@ -82,7 +120,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
     templates = Jinja2Templates(directory=APP_DIR / "templates")
     env = templates.env
-    env.globals.update(settings=settings, year=datetime.now(UTC).year, sort_labels=catalog.SORT_LABELS,
+    env.globals.update(settings=settings, checkout_enabled=settings.checkout_enabled, year=datetime.now(UTC).year, sort_labels=catalog.SORT_LABELS,
                        type_labels=classify.PRODUCT_TYPE_LABELS, language_labels=classify.LANGUAGE_LABELS,
                        ship_class_labels=classify.SHIP_CLASS_LABELS, footer_pages=pages,
                        social_links=seo.SOCIAL_LINKS)
@@ -100,6 +138,25 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
             yield conn
         finally:
             conn.close()
+
+    @contextmanager
+    def writer() -> Iterator[sqlite3.Connection]:
+        conn = connect(settings.db_path, writer=True)
+        try:
+            yield conn
+        finally:
+            conn.close()
+
+    def site_url(request: Request) -> str:
+        """Address to send shoppers back to from Stripe. Until launch base_url is localhost, so
+        the address the shopper used is taken instead (a phone on the home network)."""
+        if any(host in settings.base_url for host in ("://localhost", "://127.0.0.1")):
+            return str(request.base_url).rstrip("/")
+        return settings.base_url
+
+    def visitor(request: Request) -> str:
+        # Behind Cloudflare (at launch) the real address is in CF-Connecting-IP.
+        return request.headers.get("cf-connecting-ip") or (request.client.host if request.client else "?")
 
     def page(request: Request, template: str, status_code: int = 200, **context) -> HTMLResponse:
         with db() as conn:
@@ -285,6 +342,113 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
                     more=articles.more_like(found), crumbs=crumbs, og_type="article",
                     og_image=seo.image_url(settings, found.cover), description=found.description,
                     jsonld=[seo.article_jsonld(settings, found), seo.breadcrumbs_jsonld(settings, crumbs)])
+
+    # --- cart, checkout and orders (Phase 2; rules in orders.py) --------------------------
+
+    @app.get("/cart", response_class=HTMLResponse)
+    def cart(request: Request, cancelled: str = "", k: str = ""):
+        notice = ""
+        if cancelled and k:
+            # Back from Stripe without paying: give the reserved stock back straight away
+            # rather than after the 30-minute hold.
+            with writer() as conn:
+                order = orders.get_order(conn, cancelled)
+                if order and order["status"] == "pending" and hmac.compare_digest(order["access_token"], k):
+                    if stripe is not None and order["stripe_session_id"]:
+                        try:
+                            stripe.expire_session(order["stripe_session_id"])
+                        except (stripe_api.StripeError, OSError):
+                            pass   # the reconcile job tries again; the session expires anyway
+                    orders.release(conn, order["number"], "expired", note="shopper went back to the cart")
+            notice = "Checkout cancelled. Your items are still in your cart."
+        response = page(request, "cart.html", title="Your cart", notice=notice,
+                        free_over=settings.free_shipping_over_cents)
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    @app.post("/cart/quote")
+    async def cart_quote(request: Request):
+        try:
+            cart_items = orders.parse_cart(await request.json())
+        except (orders.CartError, ValueError):
+            return JSONResponse({"error": "The cart is not readable."}, status_code=400)
+        with db() as conn:
+            quote = orders.build_quote(conn, cart_items, settings)
+        return quote.as_json()
+
+    @app.post("/checkout")
+    async def checkout(request: Request):
+        if not settings.checkout_enabled or stripe is None:
+            return JSONResponse({"error": "Checkout isn't open yet."}, status_code=503)
+        attempts, now = checkout_attempts[visitor(request)], time.monotonic()
+        while attempts and now - attempts[0] > 3600:
+            attempts.popleft()
+        if len(attempts) >= CHECKOUTS_PER_HOUR:
+            return JSONResponse({"error": "Too many checkout attempts. Please try again later."}, status_code=429)
+        attempts.append(now)
+        try:
+            cart_items = orders.parse_cart(await request.json())
+        except (orders.CartError, ValueError):
+            return JSONResponse({"error": "The cart is not readable."}, status_code=400)
+        base = site_url(request)
+
+        def run() -> dict:
+            with writer() as conn:
+                return orders.start_checkout(conn, stripe, settings, cart_items, base)
+
+        try:
+            result = await asyncio.to_thread(run)
+        except orders.CheckoutError as exc:
+            body = {"error": exc.message}
+            if exc.quote is not None:
+                body["quote"] = exc.quote.as_json()
+            return JSONResponse(body, status_code=exc.status)
+        return {"url": result["url"]}
+
+    def order_page(request: Request, order: dict, thanks: bool) -> HTMLResponse:
+        response = page(request, "order.html", title=f"Order {order['number']}", order=order, thanks=thanks)
+        response.headers["Cache-Control"] = "no-store"
+        return response
+
+    @app.get("/order/thanks", response_class=HTMLResponse)
+    def order_thanks(request: Request, session_id: str = ""):
+        with writer() as conn:
+            order = orders.get_order(conn, session_id=session_id) if session_id else None
+            if order is None:
+                raise HTTPException(404)
+            if order["status"] == "pending" and stripe is not None:
+                # Usually the webhook has already arrived; if not, ask Stripe now so the
+                # shopper sees "paid" without waiting for the reconcile job.
+                try:
+                    orders.mark_paid(conn, settings, stripe.retrieve_session(session_id), site_url(request))
+                except (stripe_api.StripeError, OSError):
+                    pass
+                order = orders.get_order(conn, order["number"])
+        return order_page(request, order, thanks=True)
+
+    @app.get("/order/{number}", response_class=HTMLResponse)
+    def order_status(request: Request, number: str, k: str = ""):
+        with db() as conn:
+            order = orders.get_order(conn, number)
+        if order is None or not k or not hmac.compare_digest(order["access_token"], k):
+            raise HTTPException(404)
+        return order_page(request, order, thanks=False)
+
+    @app.post("/stripe/webhook")
+    async def stripe_webhook(request: Request):
+        payload = await request.body()
+        try:
+            event = stripe_api.verify_webhook(payload, request.headers.get("stripe-signature", ""),
+                                              settings.stripe_webhook_secret)
+        except ValueError:
+            return JSONResponse({"error": "bad signature"}, status_code=400)
+        base = site_url(request)
+
+        def run() -> str:
+            with writer() as conn:
+                return orders.handle_event(conn, settings, event, base)
+
+        return {"ok": True, "result": await asyncio.to_thread(run)}
 
     # --- text pages (registered last so they never shadow the routes above) --------------
 
