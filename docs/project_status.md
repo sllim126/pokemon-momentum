@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-11-04
+Last reviewed: 2026-11-05
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -122,7 +122,8 @@ Added 2026-10:
 - PriceCharting graded prices with a nightly history (shown with a required link back)
 - 6-Month Hold check (break-even after fees and shipping, trend, past track record)
 - Shared site header and five area pages
-- Desktop app with Buy (Sealed Deals with loose-pack comparison, card-art Budget Builder),
+- Desktop app with Buy (Sealed Deals with loose-pack comparison, card-art Budget Builder with
+  Keep and New picks, Graded Budget Builder (Beta) from PriceCharting),
   Discover, Track (saved lists with price targets), Research (Sets, Pokémon, Market Stats)
   and Learn (How it works), plus a legal footer
 - Collector Hub, Placeholder Library and Account restyled on a shared desktop stylesheet

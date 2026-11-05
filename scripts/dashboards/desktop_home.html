@@ -220,6 +220,11 @@
     .pick .keep[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: #8cc8ff; }
     .pick.kept { border-color: var(--accent); }
     .pick-bar { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; font-size: 12px; color: var(--muted); }
+    .budget-source { margin-left: auto; }
+    .budget-source a, .pick-top a.pc-price { color: #8cc8ff; }
+    .pick-top a.pc-price { font-size: 18px; font-weight: 700; text-decoration: none; font-variant-numeric: tabular-nums; }
+    .pick-top a.pc-price:hover { text-decoration: underline; }
+    .grade-tag { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid var(--accent); color: #8cc8ff; }
     .pick-bar button { padding: 6px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent-soft); color: #8cc8ff; cursor: pointer; font-size: 13px; font-weight: 600; }
     .hit-cell { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: center; min-width: 0; max-width: 260px; }
     .hit-cell img { width: 26px; height: 36px; object-fit: contain; border-radius: 3px; background: var(--panel-3); }
@@ -408,7 +413,7 @@
   <script>
     if (/[?&]list=track_/.test(location.search)) document.body.dataset.area = "track";
     if (/[?&]list=(sets|set|species|indexes|index|set_values)(&|$)/.test(location.search)) document.body.dataset.area = "research";
-    if (/[?&]list=(sealed_deals|budget)(&|$)/.test(location.search)) document.body.dataset.area = "buy";
+    if (/[?&]list=(sealed_deals|budget|graded_budget)(&|$)/.test(location.search)) document.body.dataset.area = "buy";
     if (/[?&]list=guide(&|$)/.test(location.search)) document.body.dataset.area = "learn";
   </script>
   <div id="site-shell"></div>
@@ -464,7 +469,7 @@
             <button type="button" data-budget="250">$250</button>
             <button type="button" data-budget="400">$400</button>
           </div>
-          <label class="buy-input" id="budgetBox" hidden>$<input id="budgetInput" type="number" min="5" max="5000" step="5" value="150" aria-label="Budget" /></label>
+          <label class="buy-input" id="budgetBox" hidden>$<input id="budgetInput" type="number" min="5" max="20000" step="5" value="150" aria-label="Budget" /></label>
           <label class="buy-input" id="budgetMaxBox" hidden>Max per card $<input id="budgetMaxInput" type="number" min="1" step="1" placeholder="Any" /></label>
           <select id="budgetCards" aria-label="Number of cards" hidden>
             <option value="0">Any number of cards</option><option value="6">6 cards</option><option value="8">8 cards</option>
@@ -474,6 +479,9 @@
             <option value="1">1 per set</option><option value="2">2 per set</option><option value="3">3 per set</option><option value="4">4 per set</option>
           </select>
           <select id="budgetRarity" aria-label="Rarities" hidden></select>
+          <select id="budgetGrades" aria-label="Grades" hidden>
+            <option value="10">PSA 10s</option><option value="9-10">9s and 10s</option><option value="8-10">8s, 9s and 10s</option>
+          </select>
           <input type="number" id="minPriceInput" min="0" step="1" placeholder="Min $" aria-label="Minimum price" />
           <input type="number" id="maxPriceInput" min="0" step="1" placeholder="Max $" aria-label="Maximum price" />
           <select id="sortSelect" aria-label="Sort">
@@ -505,6 +513,7 @@
           <div class="pick-bar">
             <button type="button" id="budgetRefresh">↻ New picks</button>
             <span id="budgetNote">Keep the cards you like, then get new picks for the rest.</span>
+            <span class="budget-source" id="budgetSource" hidden></span>
           </div>
           <div class="swapped" id="swapped" hidden></div>
           <div class="pick-grid" id="pickGrid"></div>
@@ -650,6 +659,7 @@
     const LISTS = [
       { key: "sealed_deals", group: "Buy", buy: true, kindless: true, label: "Sealed Deals", desc: "Boxes, ETBs, tins and bundles compared with buying the same booster packs loose. Negative means the sealed product is the cheaper way to get those packs.", price: "latest_price", change: "vs_loose_pct", changeLabel: "vs loose packs", changeHeader: "Vs loose packs", lowerIsBetter: true, extra: "Packs bought loose" },
       { key: "budget", group: "Buy", buy: true, kindless: true, label: "Budget Builder", desc: "Don't know what to buy? Pick a budget and get a spread of the strongest actively traded hits that fit it.", price: "latest_price", change: "roc_30d_pct", changeLabel: "30 days" },
+      { key: "graded_budget", group: "Buy", buy: true, kindless: true, label: "Graded Budget Builder (Beta)", desc: "New and still being tuned: graded slabs whose PriceCharting prices are climbing, picked to fit a budget. Just for fun, not advice.", price: "latest_price", change: "roc_window_pct", changeLabel: "trend window" },
       { key: "top_movers", group: "Rising", label: "Top Movers", desc: "Biggest steady 30-day gains with real trading activity.", price: "p_now", change: "roc_pct", changeLabel: "30 days" },
       { key: "confirmed_uptrends", group: "Rising", label: "Confirmed Movers", desc: "Uptrends confirmed by moving averages and a bullish streak.", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg", extra: "Streak", days: "bullish_streak" },
       { key: "sma30_holds", group: "Rising", label: "Consistent Movers", desc: "Held above their 30-day average for 30 straight days.", price: "latest_price", change: "pct_vs_sma30", changeLabel: "vs 30-day avg", extra: "Days above avg", days: "hold_days" },
@@ -700,10 +710,19 @@
       promo: "Promo", stamped: "Stamped", reverse_holo: "Reverse Holo", pokeball_holo: "Poke Ball Holo", masterball_holo: "Master Ball Holo",
       ball_pattern: "Ball Pattern", energy_symbol_pattern: "Energy Symbol Pattern",
     };
+    // Budget Builder and Graded Budget Builder share one set of controls, Keep and New picks.
+    const BUDGET_LISTS = ["budget", "graded_budget"];
+    const isBudgetList = (key) => BUDGET_LISTS.includes(key);
+    const BUDGET_PRESETS = { budget: [75, 150, 250, 400], graded_budget: [100, 250, 500, 750, 1000] };
+    const BUDGET_DEFAULT = { budget: 150, graded_budget: 250 };
+    const GRADE_CHOICES = ["10", "9-10", "8-10"];
+    // Keep / seen / swap keys: graded picks carry the grade too ("productId||subType||grade").
+    const pickKey = (row) => row.raw?.key || row.key;
     const BUDGET_ALL_RARITIES = ["illustration_rare", "special_illustration_rare", "ultra_rare", "hyper_rare", "secret_rare", "double_rare", "holo_rare", "promo"];
     const PICK_REASONS = {
       "near 30d trend": "Near its 30-day average", "active movement": "Trades often", "under the radar": "Under the radar",
       "early uptrend": "Early mover", "good buy setup": "Pullback entry", "popular pokemon": "Popular Pokémon",
+      "steady climb": "Steady climb", "sells often": "Sells often", "near average": "Near its recent average",
     };
     const SPECIES_SUGGESTIONS = ["Charizard", "Pikachu", "Umbreon", "Gengar", "Mew", "Rayquaza", "Lugia", "Eevee"];
     const GROUP_LINKS = {
@@ -736,7 +755,9 @@
       species: params.get("q") || "",
       era: params.get("era") || "",
       productType: params.get("type") || "",
-      budget: Math.max(5, Math.min(5000, Number(params.get("budget")) || 150)),
+      budget: Math.max(5, Math.min(20000, Number(params.get("budget")) || (params.get("list") === "graded_budget" ? 250 : 150))),
+      budgetGrades: GRADE_CHOICES.includes(params.get("grades")) ? params.get("grades") : "10",
+      budgetFor: null,  // which budget view the kept/seen/swapped cards belong to
       budgetMax: Number(params.get("max")) || null,
       budgetRarity: params.get("rarity") || "",
       budgetCards: [6, 8, 10, 12, 16].includes(Number(params.get("cards"))) ? Number(params.get("cards")) : 0,
@@ -818,10 +839,11 @@
       if (state.list === "set" && state.setFrom === "set_values") url.searchParams.set("from", "stats");
       if (state.list === "set_values" && state.era) url.searchParams.set("era", state.era);
       if (state.list === "sealed_deals" && state.productType) url.searchParams.set("type", state.productType);
-      if (state.list === "budget") {
+      if (isBudgetList(state.list)) {
         url.searchParams.set("budget", String(state.budget));
-        if (state.budgetMax) url.searchParams.set("max", String(state.budgetMax));
-        if (state.budgetRarity) url.searchParams.set("rarity", state.budgetRarity);
+        if (state.list === "graded_budget" && state.budgetGrades !== "10") url.searchParams.set("grades", state.budgetGrades);
+        if (state.list === "budget" && state.budgetMax) url.searchParams.set("max", String(state.budgetMax));
+        if (state.list === "budget" && state.budgetRarity) url.searchParams.set("rarity", state.budgetRarity);
         if (state.budgetCards) url.searchParams.set("cards", String(state.budgetCards));
         if (state.budgetPerSet !== 2) url.searchParams.set("per_set", String(state.budgetPerSet));
         if (state.budgetSkipped.size) url.searchParams.set("skip", [...state.budgetSkipped.keys()].join(","));
@@ -1093,7 +1115,7 @@
     const lastCounts = {};
     async function loadCounts() {
       const scope = `${state.market}:${state.kind}`;
-      await Promise.all(LISTS.filter((l) => !l.learn && !["set", "species", "budget"].includes(l.key)).map(async (list) => {
+      await Promise.all(LISTS.filter((l) => !l.learn && !["set", "species", ...BUDGET_LISTS].includes(l.key)).map(async (list) => {
         try {
           const rows = await fetchList(list);
           if (`${state.market}:${state.kind}` === scope) lastCounts[list.key] = rows.length;
@@ -1123,7 +1145,7 @@
       if (list.key === "set") return fetchSetCards();
       if (list.key === "species") return fetchSpecies();
       if (list.key === "sealed_deals") return fetchSealedDeals();
-      if (list.key === "budget") return fetchBudget();
+      if (isBudgetList(list.key)) return fetchBudget(list);
       if (list.key === "indexes") return fetchIndexes();
       if (list.key === "index") return fetchIndex(state.indexKey).then((payload) => {
         const rows = (payload.holdings || []).map((raw) => normalizeRow({ productKind: "card", ...raw }, list));
@@ -1233,16 +1255,19 @@
       return { loose_value: loose, loose_lines: lines, vs_loose_pct: (item.latest_price / loose - 1) * 100 };
     }
     // Budget Builder picks for the current controls; the response summary rides along as rows.meta.
-    function fetchBudget() {
-      const list = LISTS.find((l) => l.key === "budget");
+    function fetchBudget(list) {
+      const graded = list.key === "graded_budget";
       const query = new URLSearchParams({ budget: String(state.budget), limit: String(state.budgetCards), max_per_set: String(state.budgetPerSet), category_id: String(categoryId()) });
-      if (state.budgetMax) query.set("max_price", String(state.budgetMax));
-      if (state.budgetRarity === "all") query.set("rarities", BUDGET_ALL_RARITIES.join(","));
-      else if (state.budgetRarity) query.set("rarities", state.budgetRarity);
+      if (graded) query.set("grades", state.budgetGrades);
+      else {
+        if (state.budgetMax) query.set("max_price", String(state.budgetMax));
+        if (state.budgetRarity === "all") query.set("rarities", BUDGET_ALL_RARITIES.join(","));
+        else if (state.budgetRarity) query.set("rarities", state.budgetRarity);
+      }
       const skip = [...new Set([...state.budgetSkipped.keys(), ...state.budgetSeen])].filter((key) => !state.budgetKept.has(key));
       if (skip.length) query.set("exclude_keys", skip.join(","));
       if (state.budgetKept.size) query.set("keep_keys", [...state.budgetKept.keys()].join(","));
-      return cached(`budget:${state.market}:${query}`, () => getJson(`/budget_builder?${query}`).then((payload) => {
+      return cached(`${list.key}:${state.market}:${query}`, () => getJson(`/${graded ? "graded_budget_builder" : "budget_builder"}?${query}`).then((payload) => {
         const rows = (payload.items || []).map((raw) => normalizeRow({ productKind: "card", ...raw }, list));
         rows.meta = payload;
         return rows;
@@ -1370,15 +1395,30 @@
       $("setFilter").hidden = list.key !== "set" || state.kind === "sealed";
       $("eraFilter").hidden = !isSets && view !== "set_values";
       $("typeFilter").hidden = list.key !== "sealed_deals";
-      ["budgetPresets", "budgetBox", "budgetMaxBox", "budgetCards", "budgetPerSet", "budgetRarity"].forEach((id) => { $(id).hidden = list.key !== "budget"; });
-      $("pickWrap").hidden = list.key !== "budget";
-      if (list.key === "budget") $("cardsTable").hidden = true;
-      $("filterInput").hidden = list.key === "budget";
-      $("sortSelect").hidden = list.key === "budget";
+      const budgetView = isBudgetList(list.key);
+      ["budgetPresets", "budgetBox", "budgetCards", "budgetPerSet"].forEach((id) => { $(id).hidden = !budgetView; });
+      ["budgetMaxBox", "budgetRarity"].forEach((id) => { $(id).hidden = list.key !== "budget"; });
+      $("budgetGrades").hidden = list.key !== "graded_budget";
+      $("pickWrap").hidden = !budgetView;
+      if (budgetView) $("cardsTable").hidden = true;
+      $("filterInput").hidden = budgetView;
+      $("sortSelect").hidden = budgetView;
+      if (budgetView && state.budgetFor !== list.key) {
+        // Raw and graded picks have different keys and price ranges: switching between the two
+        // builders starts fresh (the first visit keeps whatever the link brought).
+        if (state.budgetFor) {
+          state.budgetKept.clear(); state.budgetSeen.clear(); state.budgetSkipped.clear();
+          state.budget = BUDGET_DEFAULT[list.key];
+          state.budgetMeta = null;
+          $("budgetInput").value = String(state.budget);
+        }
+        state.budgetFor = list.key;
+      }
+      if (budgetView) renderBudgetPresets();
       $("kindSwitch").hidden = Boolean(list.kindless);
       $("extraHeader").hidden = !list.extra;
       $("extraHeader").textContent = list.extra || "";
-      ["minPriceInput", "maxPriceInput"].forEach((id) => { $(id).hidden = isSets || view === "indexes" || view === "set_values" || list.key === "budget"; });
+      ["minPriceInput", "maxPriceInput"].forEach((id) => { $(id).hidden = isSets || view === "indexes" || view === "set_values" || budgetView; });
       $("filterInput").placeholder = view === "set_values" ? "Filter sets by name or era" : view === "indexes" ? "Filter indexes by name" : isSets ? "Filter sets by name or era" : list.key === "set" ? "Filter this set by name or number" : "Filter this list by name or set";
       if (list.key === "set") describeSet();
       if (setChart) drawSetChart(state.groupId);
@@ -1398,7 +1438,7 @@
         if (list.key === "set") renderSetFilter(rows.availableFilters || []);
         if (list.key === "sealed_deals") renderTypeFilter(rows);
         if (list.key === "index") describeIndex(rows.payload);
-        if (list.key === "budget") { state.budgetMeta = rows.meta; renderBudgetRarity(rows.meta?.available_rarity_filters || []); }
+        if (budgetView) { state.budgetMeta = rows.meta; if (list.key === "budget") renderBudgetRarity(rows.meta?.available_rarity_filters || []); renderBudgetSource(); renderBudgetPresets(); }
         // A freshly loaded list keeps the selected card only if it's in that list.
         if (!keepSelection && state.selected && !state.productKey && !rows.some((r) => r.key === state.selected.key)) {
           state.selected = null;
@@ -1777,6 +1817,7 @@
         section("Buy", "", [
           ["Sealed Deals", "Boxes, ETBs, bundles and blisters compared with buying the same booster packs loose. A negative “vs loose packs” means the sealed product is the cheaper way to get those packs. Products whose packs can't all be priced show “—”."],
           ["Budget Builder", "Pick a budget and get a spread of the strongest actively traded hits that fit it, at most two per set by default. Already own one? “I have this, swap it” finds a replacement. Like some of them? Keep those, and “New picks” fills the rest of the budget with cards you haven't seen yet."],
+          ["Graded Budget Builder (Beta)", "The same idea for graded slabs: PSA 10s, 9s and 10s, or 8s to 10s, scored on each grade's own PriceCharting price (climbing, steady and selling) with every price linking to PriceCharting. New and still being tuned; just for fun, not advice."],
         ]),
         section("Market lists", "Each list is a different way a card's price can be moving. Click any card to see its chart and the checks below.", [
           ["Top Movers", "The biggest steady gains over the last 30 days, with real trading activity."],
@@ -1863,8 +1904,8 @@
       const track = Boolean(currentList().track);
       const noun = track ? "items" : state.list === "sealed_deals" || (state.kind === "sealed" && !currentList().kindless) ? "products" : "cards";
       $("listCount").textContent = state.rows.length ? `${rows.length.toLocaleString()}${rows.length !== state.rows.length ? ` of ${state.rows.length.toLocaleString()}` : ""} ${noun}` : "";
-      if (state.list === "budget") renderPicks(rows);
-      body.replaceChildren(...(state.list === "budget" ? [] : rows).map((row) => {
+      if (isBudgetList(state.list)) renderPicks(rows);
+      body.replaceChildren(...(isBudgetList(state.list) ? [] : rows).map((row) => {
         const image = row.imageUrl ? el("img", { class: "thumb", src: row.imageUrl, alt: "", loading: "lazy" }) : el("div", { class: "thumb" });
         if (row.imageUrl) image.addEventListener("error", () => { image.style.visibility = "hidden"; }, { once: true });
         const meta = (row.productKind === "sealed"
@@ -1893,11 +1934,14 @@
         if (wanted) selectCard(wanted, { scroll: true });
         else loadCardByKey(requested);
       } else if (rows.length && !state.selected) {
-        selectCard(rows[0]);
+        // A graded pick's price is the slab's: open the card's own (raw) details instead.
+        if (state.list === "graded_budget") loadCardByKey(rows[0].key);
+        else selectCard(rows[0]);
       }
     }
     // Budget Builder draws its picks as a card-art grid instead of the table.
     function renderPicks(rows) {
+      const graded = state.list === "graded_budget";
       $("pickGrid").replaceChildren(...rows.map((row) => {
         const r = row.raw;
         const image = el("img", { src: row.imageUrl || "/images/Logo.png", alt: "", loading: "lazy" });
@@ -1906,12 +1950,12 @@
         const swap = el("button", { type: "button", class: "swap", text: "I have this, swap it" });
         swap.addEventListener("click", (event) => {
           event.stopPropagation();
-          state.budgetKept.delete(row.key);
-          state.budgetSkipped.set(row.key, row.name);
+          state.budgetKept.delete(pickKey(row));
+          state.budgetSkipped.set(pickKey(row), row.name);
           state.selected = null;
           loadList();
         });
-        const kept = state.budgetKept.has(row.key);
+        const kept = state.budgetKept.has(pickKey(row));
         const keep = el("button", { type: "button", class: "keep", "aria-pressed": String(kept), text: kept ? "✓ Kept" : "Keep" });
         keep.addEventListener("click", (event) => {
           event.stopPropagation();
@@ -1920,15 +1964,16 @@
         const card = el("article", { class: `pick${kept ? " kept" : ""}`, "data-key": row.key, "aria-selected": String(state.selected?.key === row.key) },
           image,
           el("div", { class: "pick-body" },
-            el("div", { class: "pick-top" }, el("strong", { text: money(row.price) }),
+            el("div", { class: "pick-top" }, graded ? priceChartingPrice(row) : el("strong", { text: money(row.price) }),
               el("span", { class: "card-meta", text: Number.isFinite(r.budget_share_pct) ? `${Math.round(r.budget_share_pct)}% of budget` : "" })),
+            graded ? el("div", {}, el("span", { class: "grade-tag", text: r.grade_label })) : null,
             el("div", { class: "pick-name", text: row.name, title: row.name }),
             el("div", { class: "card-meta", text: [row.set, row.number && `#${row.number}`, row.rarity].filter(Boolean).join(" · ") }),
-            el("div", { class: "pick-chips" }, chip("7d", r.roc_7d_pct), chip("30d", r.roc_30d_pct)),
+            el("div", { class: "pick-chips" }, chip("7d", r.roc_7d_pct), graded ? chip(`${state.budgetMeta?.window_days || 30}d`, r.roc_window_pct) : chip("30d", r.roc_30d_pct)),
             el("div", { class: "pick-chips" }, ...(r.reasons || []).filter((reason) => !/7d$/.test(reason))
               .map((reason) => el("span", { class: "reason", text: PICK_REASONS[reason] || reason }))),
             el("div", { class: "pick-actions" }, keep, swap)));
-        card.addEventListener("click", () => selectCard(row));
+        card.addEventListener("click", () => (graded ? loadCardByKey(row.key) : selectCard(row)));
         return card;
       }));
       const skipped = $("swapped");
@@ -1938,6 +1983,32 @@
         b.addEventListener("click", () => { state.budgetSkipped.delete(key); state.selected = null; loadList(); });
         return b;
       }));
+    }
+    // A graded price, linked to its PriceCharting page (the condition of their licence).
+    function priceChartingPrice(row) {
+      const link = el("a", { class: "pc-price", href: row.raw.pc_url, target: "_blank", rel: "noopener", title: "Price from PriceCharting", text: money(row.price) });
+      link.addEventListener("click", (event) => event.stopPropagation());
+      return link;
+    }
+    // Graded Budget Builder: where the prices come from and how much history the trends use.
+    function renderBudgetSource() {
+      const meta = state.budgetMeta;
+      const box = $("budgetSource");
+      box.hidden = state.list !== "graded_budget";
+      if (box.hidden) return;
+      box.replaceChildren("Graded prices from ", el("a", { href: "https://www.pricecharting.com/category/pokemon-cards", target: "_blank", rel: "noopener", text: "PriceCharting" }),
+        meta?.history_days ? ` · trends use ${meta.window_days} days of history (since ${meta.first_date})` : "");
+    }
+    // Preset budgets: raw $75-$400, graded $100-$1,000.
+    function renderBudgetPresets() {
+      const box = $("budgetPresets");
+      if (box.dataset.for !== state.list) {
+        box.dataset.for = state.list;
+        box.replaceChildren(...(BUDGET_PRESETS[state.list] || BUDGET_PRESETS.budget).map((value) =>
+          el("button", { type: "button", "data-budget": String(value), text: value >= 1000 ? `$${value / 1000}k` : `$${value}` })));
+      }
+      box.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.budget) === state.budget)));
+      $("budgetGrades").value = state.budgetGrades;
     }
     // Green/red percentage pill; "—" when there's no figure.
     function changePill(value, lowerIsBetter = false) {
@@ -2004,7 +2075,7 @@
     // "Spent / left / cards / sets" chips above the picks.
     function renderBudgetSummary() {
       const meta = state.budgetMeta;
-      if (state.list !== "budget" || !meta || !state.rows.length) return;
+      if (!isBudgetList(state.list) || !meta || !state.rows.length) return;
       const chip = (strong, text) => el("span", {}, el("strong", { text: strong }), ` ${text}`);
       const box = $("trackSummary");
       box.hidden = false;
@@ -2018,8 +2089,9 @@
     }
     // Keep only marks the card: the others stay as they are until "New picks".
     function toggleKeep(row) {
-      if (state.budgetKept.has(row.key)) state.budgetKept.delete(row.key);
-      else state.budgetKept.set(row.key, row.name);
+      const key = pickKey(row);
+      if (state.budgetKept.has(key)) state.budgetKept.delete(key);
+      else state.budgetKept.set(key, row.name);
       syncUrl();
       renderPicks(state.rows);
       renderBudgetSummary();
@@ -2027,11 +2099,11 @@
     // "New picks": pass over every pick on screen that isn't kept and fill the rest again. When
     // nothing new is left for these settings, start the cycle over from the best picks.
     $("budgetRefresh").addEventListener("click", async () => {
-      for (const row of state.rows) if (!state.budgetKept.has(row.key)) state.budgetSeen.add(row.key);
+      for (const row of state.rows) if (!state.budgetKept.has(pickKey(row))) state.budgetSeen.add(pickKey(row));
       $("budgetNote").textContent = "";
       state.selected = null;
       await loadList();
-      if (state.budgetSeen.size && !state.rows.some((row) => !state.budgetKept.has(row.key))) {
+      if (state.budgetSeen.size && !state.rows.some((row) => !state.budgetKept.has(pickKey(row)))) {
         state.budgetSeen.clear();
         state.selected = null;
         await loadList();
@@ -2043,7 +2115,8 @@
     function budgetChanged(delay = 500) {
       clearTimeout(budgetTimer);
       budgetTimer = setTimeout(() => {
-        state.budget = Math.max(5, Math.min(5000, Number($("budgetInput").value) || 150));
+        state.budget = Math.max(5, Math.min(20000, Number($("budgetInput").value) || BUDGET_DEFAULT[state.list] || 150));
+        state.budgetGrades = $("budgetGrades").value || "10";
         state.budgetMax = Number($("budgetMaxInput").value) || null;
         state.budgetRarity = $("budgetRarity").value;
         state.budgetCards = Number($("budgetCards").value) || 0;
@@ -2054,7 +2127,7 @@
       }, 500);
     }
     ["budgetInput", "budgetMaxInput"].forEach((id) => $(id).addEventListener("input", () => budgetChanged()));
-    ["budgetRarity", "budgetCards", "budgetPerSet"].forEach((id) => $(id).addEventListener("change", () => budgetChanged(0)));
+    ["budgetRarity", "budgetGrades", "budgetCards", "budgetPerSet"].forEach((id) => $(id).addEventListener("change", () => budgetChanged(0)));
     $("budgetCards").value = String(state.budgetCards);
     $("budgetPerSet").value = String(state.budgetPerSet);
     $("budgetInput").value = String(state.budget);
@@ -2081,6 +2154,11 @@
           el("h3", { text: state.species ? `No ${state.kind === "sealed" ? "sealed products" : "cards"} found for “${state.species}”` : "Look up a Pokémon" }),
           el("div", { text: state.species ? "Check the spelling, or try one of these." : "Type a name above to see every printing across all sets, or start with one of these." }),
           chips);
+        return;
+      }
+      if (state.list === "graded_budget") {
+        empty.replaceChildren(el("h3", { text: `No graded picks fit ${money(state.budget)} right now` }),
+          el("div", { text: "Try a larger budget, more grades, or more cards per set." }));
         return;
       }
       if (state.list === "budget") {

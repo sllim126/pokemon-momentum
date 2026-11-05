@@ -47,6 +47,8 @@ Recently Completed
   the rest of the budget with cards not shown yet (starts over when they run out). Desktop and
   phone; API `keep_keys` on `/budget_builder`. Popular Pokémon (Charizard, Umbreon, Gengar…)
   get a +10 tie-breaker and a "Popular Pokémon" label (owner, after Reddit feedback).
+- 2026-11-05 Graded Budget Builder (Beta) on desktop and phone: PSA 10s, 9-10s or 8-10s from
+  PriceCharting, $100-$1,000 presets, Keep and New picks, each price linked to PriceCharting.
 - 2026-11-04 Catalogue crawl stops wasting requests: 404s were re-asked every night (a missing
   file looked unfetched), and Marvel Comics' ~10,800 sets with no product lists ate 3,720 of
   night two's 4,000 requests. 404s are now remembered, and a game whose first 25 product
@@ -158,13 +160,11 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   should get the desktop app or the mobile page (today they get mobile; see "iPad: a
   dedicated analysis layout" under Parked). Write each finding here as its own item.
   Done so far: iPad-portrait widths fold the list menu into a "Lists" button (2026-10-22).
-- [idea] Graded Budget Builder / graded movers from PriceCharting (owner, 2026-11-05). History
-  starts 2026-10-09: 22 days by 2026-11-05, ~48,000 cards with a PSA 10 price. Enough for 7-day
-  moves now; 30-day change and averages want 45-60 days (early-mid December), 90-day views
-  ~January. Every price shown must link to PriceCharting. Sales volume is per card, not per
-  grade. Never assume higher grade = higher price (PSA 1 premium).
-- [idea] Popular Pokémon page (owner, 2026-11-05): which chase Pokémon's cards are moving.
-  Shape to be agreed with the owner.
+- [in progress] Graded Budget Builder (Beta), live 2026-11-05 on desktop and phone (owner: "just
+  for fun, not advice"). PriceCharting history starts 2026-10-09 (22 days on 2026-11-05), so the
+  trend window is under 30 days until mid-November. Next: review the picks once a full month of
+  history exists; maybe BGS/CGC/SGC 10s (columns exist); drop "(Beta)" when the owner is happy.
+  Rules: every price links to PriceCharting; never assume higher grade = higher price.
 - [planned] Mobile interface testing (owner, 2026-10-21): now part of the new mobile app
   (see "New mobile app" above). Test `/m-next` on real phones after each step instead of the
   old `/mobile`, which is being replaced; known old-page issues are under "Parked: Mobile

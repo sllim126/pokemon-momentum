@@ -779,6 +779,37 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual([item["groupId"] for item in payload["items"]], [101, 102, 103])
         self.assertIn("under the radar", payload["items"][0]["reasons"])
 
+    @patch.object(api, "db_has_table", return_value=True)
+    @patch.object(api, "products_from", return_value="pokemon_products")
+    @patch.object(api, "groups_from", return_value="pokemon_groups")
+    def test_graded_budget_builder_picks_slabs_with_pricecharting_links(self, *_mocks):
+        columns = ["productId", "subTypeName", "grade", "latest_price", "pc_id", "sales_volume", "price_7d_ago",
+                   "window_start_price", "window_avg", "price_changes_14d", "price_changes_window", "productName",
+                   "imageUrl", "rarity", "number", "groupId", "groupName", "latest_date", "first_date",
+                   "history_days", "is_kept"]
+        def row(pid, grade, name, price, group, kept=False):
+            return (pid, "Holofoil", grade, price, 9000 + pid, 300, price * 0.9, price * 0.85, price * 0.95, 4, 8,
+                    name, "", "Ultra Rare", "1/1", group, f"Set {group}", "2026-11-05", "2026-10-09", 22, kept)
+        rows = [row(1, "10", "Card Alpha", 80.0, 101, kept=True), row(2, "10", "Card Beta", 60.0, 102),
+                row(2, "9", "Card Beta", 25.0, 102), row(3, "9", "Card Gamma", 40.0, 103), row(4, "10", "Card Delta", 30.0, 104)]
+        with patch.object(api, "q", return_value=(columns, rows)) as q_mock:
+            payload = api.graded_budget_builder(budget=250, grades="9-10", limit=4, keep_keys="1||Holofoil||10",
+                                                exclude_keys="4||Holofoil||10", category_id=3)
+        sql = q_mock.call_args.args[0]
+        self.assertIn("grade IN ('9', '10')", sql)
+        self.assertIn("ORDER BY is_kept DESC", sql)
+        items = payload["items"]
+        self.assertEqual(items[0]["key"], "1||Holofoil||10")
+        self.assertTrue(items[0]["kept"])
+        self.assertEqual(items[0]["grade_label"], "PSA 10")
+        self.assertEqual(items[0]["pc_url"], "https://www.pricecharting.com/game/9001")  # every price links back
+        keys = [item["key"] for item in items]
+        self.assertNotIn("4||Holofoil||10", keys)                 # swapped out
+        self.assertEqual(len({item["productId"] for item in items}), len(items))  # one grade per card
+        self.assertLessEqual(payload["spent"], 250.0)
+        self.assertEqual(payload["window_days"], 27)
+        self.assertEqual(api._graded_keys("5||Holofoil||10,bad,6||Normal||7"), {(5, "Holofoil", "10")})
+
     def test_budget_builder_gives_popular_pokemon_a_small_bonus(self):
         base = {"latest_price": 20.0, "roc_7d_pct": 3.0, "roc_30d_pct": 5.0, "trend_score": 30.0,
                 "price_vs_sma30_pct": 4.0, "recent_distinct_prices_7d": 4, "recent_distinct_prices_30d": 8}

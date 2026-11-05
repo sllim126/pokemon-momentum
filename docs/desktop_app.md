@@ -109,6 +109,14 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
   whatever they cost) and `exclude_keys` (owned + seen), so it never repeats a card. When no
   new card is left it clears `budgetSeen` and starts over. Changing the budget or any menu
   clears `budgetSeen` but keeps the kept cards.
+- **Graded Budget Builder (Beta)** (`graded_budget`, desktop and phone, 2026-11-05) shares
+  Budget Builder's controls, Keep and New picks (`isBudgetList`, `pickKey`). It calls
+  `/graded_budget_builder`: PriceCharting prices for PSA 10 / grade 9 / grade 8, each grade
+  scored on its own history (never assuming a higher grade costs more). Every graded price is
+  a link to PriceCharting (licence condition). Clicking a pick opens the card's raw details
+  (`loadCardByKey` / `openProductFromLink`), not the slab price. Switching between the two
+  builders clears kept, seen and swapped cards. Trends use up to 30 days; the history started
+  2026-10-09, so the window is shorter until mid-November.
 - **Discover lists survive feed gaps.** Each screener's activity bars ("10 different prices
   in 30 days", "4 readings in 7 days") are scaled to the days that actually have prices in
   that window (`gap_scaled_threshold` in `query_support.py`), so a gap in the TCGCSV feed

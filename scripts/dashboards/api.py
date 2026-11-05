@@ -5879,6 +5879,246 @@ def budget_builder_recommendations(
     }
 
 
+# ---------- Graded Budget Builder (beta, 2026-11-05) ----------
+# Budget Builder for graded slabs, from PriceCharting's daily prices (history since 2026-10-09).
+# Each grade is scored on its own price history: a grade is never assumed to be worth more
+# than the one below it (PSA 1s often sell above mid grades). Every price shown must link to
+# its PriceCharting page (`pc_url`), the condition of the licence.
+GRADED_GRADES = {
+    # grade -> (pricecharting_prices column, label). PriceCharting's 8 and 9 are any grader;
+    # its 10 here is PSA 10 (BGS/CGC/SGC 10s have their own columns, left out for now).
+    "10": ("psa10", "PSA 10"),
+    "9": ("grade9", "Grade 9"),
+    "8": ("grade8", "Grade 8"),
+}
+GRADED_GRADE_CHOICES = {"10": ["10"], "9-10": ["9", "10"], "8-10": ["8", "9", "10"]}
+GRADED_TREND_DAYS = 30  # change and average window; shorter while the history is younger
+
+
+def _graded_keys(raw_keys: str | None) -> set[tuple[int, str, str]]:
+    """'productId||subType||grade,...' -> {(productId, subType, grade)}."""
+    parsed: set[tuple[int, str, str]] = set()
+    for raw_key in str(raw_keys or "").split(","):
+        parts = raw_key.split("||")
+        if len(parts) != 3 or parts[2] not in GRADED_GRADES:
+            continue
+        try:
+            parsed.add((int(parts[0]), parts[1], parts[2]))
+        except ValueError:
+            continue
+    return parsed
+
+
+def _graded_candidate_score(row: dict, budget: float) -> float:
+    """Rank a graded pick like Budget Builder does: recent gains, a steady trend over the
+    window, how often the graded price changes and how much the card sells (PriceCharting's
+    sales volume, all grades together), each capped; overheated moves and a poor fit to the
+    budget cost points. Popular Pokémon get the same bonus as raw picks."""
+    price = max(_safe_float(row.get("latest_price")), 0.0)
+    roc_7d = _safe_float(row.get("roc_7d_pct"))
+    roc_window = _safe_float(row.get("roc_window_pct"))
+    vs_avg = _safe_float(row.get("price_vs_avg_pct"))
+    changes_14d = _safe_float(row.get("price_changes_14d"))
+    changes_window = _safe_float(row.get("price_changes_window"))
+    volume = _safe_float(row.get("sales_volume"))
+    ratio_to_budget = (price / budget) if budget > 0 else 1.0
+
+    score = 0.0
+    score += min(max(roc_7d, -6.0), 15.0) * 1.6
+    score += min(max(roc_window, -10.0), 22.0) * 0.9
+    score += min(changes_14d, 6.0) * 2.0
+    score += min(changes_window, 12.0) * 1.0
+    score += min(volume / 40.0, 8.0) * 1.5
+    if _is_popular_pokemon(row.get("productName")):
+        score += POPULAR_POKEMON_BONUS
+    score -= abs(vs_avg - 3.0) * 0.5
+
+    if ratio_to_budget <= 0.06:
+        score -= 6.0
+    elif ratio_to_budget <= 0.32:
+        score += 8.0
+    elif ratio_to_budget <= 0.48:
+        score += 4.0
+    elif ratio_to_budget > 0.72:
+        score -= 14.0
+
+    if roc_7d > 15.0:
+        score -= (roc_7d - 15.0) * 1.2
+    if roc_window > 30.0:
+        score -= (roc_window - 30.0) * 0.8
+    if vs_avg > 15.0:
+        score -= (vs_avg - 15.0) * 0.9
+    return round(score, 3)
+
+
+def _graded_candidate_reasons(row: dict) -> list[str]:
+    reasons: list[str] = []
+    if _is_popular_pokemon(row.get("productName")):
+        reasons.append("popular pokemon")
+    if _safe_float(row.get("roc_7d_pct")) > 0 and _safe_float(row.get("roc_window_pct")) > 0:
+        reasons.append("steady climb")
+    if _safe_float(row.get("sales_volume")) >= 150:
+        reasons.append("sells often")
+    if 0.0 <= _safe_float(row.get("price_vs_avg_pct")) <= 8.0:
+        reasons.append("near average")
+    return reasons[:4]
+
+
+@app.get("/graded_budget_builder")
+def graded_budget_builder(
+    budget: float = 250.0,
+    grades: str = "10",
+    min_price: float = 15.0,
+    limit: int = 6,
+    max_per_set: int = 2,
+    exclude_keys: str | None = None,
+    keep_keys: str | None = None,
+    allow_duplicates: bool = False,
+    category_id: int = 3,
+):
+    """Graded slabs that together fit `budget` (beta). Same rules and Keep / New picks as
+    /budget_builder; keys are "productId||subType||grade". Picks need a price on PriceCharting's
+    latest day and at least three different prices in the trend window. A card is picked at
+    one grade at most.
+    """
+    if not db_has_table("pricecharting_prices"):
+        return {"available": False, "items": []}
+    budget = max(25.0, min(float(budget), 20000.0))
+    min_price = max(1.0, min(float(min_price), budget))
+    limit = 500 if int(limit) <= 0 else max(1, min(int(limit), 500))
+    max_per_set = max(1, min(int(max_per_set), 4))
+    grades = grades if grades in GRADED_GRADE_CHOICES else "10"
+    category = category_config(category_id)
+    excluded = _graded_keys(exclude_keys)
+    keep_set = _graded_keys(keep_keys)
+
+    # One row per (card, printing, grade): latest price, the price a week ago and at the start
+    # of the window, the window average, and how many different prices it had.
+    unions = " UNION ALL ".join(
+        f"SELECT snapshot_date AS d, productId, subTypeName, pc_id, sales_volume, '{grade}' AS grade, {GRADED_GRADES[grade][0]} AS price "
+        f"FROM pricecharting_prices WHERE {GRADED_GRADES[grade][0]} > 0"
+        for grade in GRADED_GRADE_CHOICES["8-10"]
+    )
+    wanted = ", ".join(f"'{grade}'" for grade in GRADED_GRADE_CHOICES[grades])
+    keep_filter = " OR ".join(
+        f"(s.productId = {pid} AND s.subTypeName = '{sub.replace(chr(39), chr(39) * 2)}' AND s.grade = '{grade}')"
+        for pid, sub, grade in sorted(keep_set)
+    ) or "FALSE"
+    sql = f"""
+    WITH latest AS (SELECT MAX(snapshot_date) AS d, MIN(snapshot_date) AS first_d, COUNT(DISTINCT snapshot_date) AS days FROM pricecharting_prices),
+    series AS ({unions}),
+    stats AS (
+      SELECT productId, subTypeName, grade,
+        MAX(d) AS last_d,
+        arg_max(price, d) AS latest_price,
+        arg_max(pc_id, d) AS pc_id,
+        arg_max(sales_volume, d) AS sales_volume,
+        arg_max(price, d) FILTER (WHERE d <= (SELECT d FROM latest) - INTERVAL 7 DAY) AS price_7d_ago,
+        arg_min(price, d) FILTER (WHERE d >= (SELECT d FROM latest) - INTERVAL {GRADED_TREND_DAYS} DAY) AS window_start_price,
+        AVG(price) FILTER (WHERE d >= (SELECT d FROM latest) - INTERVAL {GRADED_TREND_DAYS} DAY) AS window_avg,
+        COUNT(DISTINCT price) FILTER (WHERE d >= (SELECT d FROM latest) - INTERVAL 14 DAY) AS price_changes_14d,
+        COUNT(DISTINCT price) FILTER (WHERE d >= (SELECT d FROM latest) - INTERVAL {GRADED_TREND_DAYS} DAY) AS price_changes_window
+      FROM series
+      GROUP BY 1, 2, 3
+    )
+    SELECT s.productId, s.subTypeName, s.grade, s.latest_price, s.pc_id, s.sales_volume,
+      s.price_7d_ago, s.window_start_price, s.window_avg, s.price_changes_14d, s.price_changes_window,
+      p.name AS productName, p.imageUrl, p.rarity, p.number, p.groupId, g.name AS groupName,
+      CAST((SELECT d FROM latest) AS VARCHAR) AS latest_date,
+      CAST((SELECT first_d FROM latest) AS VARCHAR) AS first_date,
+      (SELECT days FROM latest) AS history_days,
+      ({keep_filter}) AS is_kept
+    FROM stats s
+    JOIN {products_from(category.category_id)} p ON p.productId = s.productId
+    LEFT JOIN {groups_from(category.category_id)} g ON g.groupId = p.groupId
+    WHERE s.last_d = (SELECT d FROM latest)
+      AND (({keep_filter}) OR (
+        s.grade IN ({wanted})
+        AND s.latest_price BETWEEN {min_price} AND {budget}
+        AND s.price_changes_window >= 3))
+    -- Kept cards first, so the pool limit can never drop one.
+    ORDER BY is_kept DESC, s.price_changes_window DESC, s.sales_volume DESC NULLS LAST
+    LIMIT 3000
+    """
+    columns, rows = q(sql)
+    kept: list[dict] = []
+    candidates: list[dict] = []
+    for item in _row_dicts(columns, rows):
+        price = _safe_float(item.get("latest_price"))
+        week_ago = _safe_float(item.get("price_7d_ago"))
+        start = _safe_float(item.get("window_start_price"))
+        average = _safe_float(item.get("window_avg"))
+        item["roc_7d_pct"] = round((price / week_ago - 1) * 100, 2) if week_ago > 0 else 0.0
+        item["roc_window_pct"] = round((price / start - 1) * 100, 2) if start > 0 else 0.0
+        item["price_vs_avg_pct"] = round((price / average - 1) * 100, 2) if average > 0 else 0.0
+        item["score"] = _graded_candidate_score(item, budget)
+        item["reasons"] = _graded_candidate_reasons(item)
+        key = (_safe_int(item.get("productId")), str(item.get("subTypeName") or ""), str(item.get("grade")))
+        item["key"] = "||".join((str(key[0]), key[1], key[2]))
+        if key in keep_set:
+            kept.append(item)
+        elif key not in excluded:
+            candidates.append(item)
+    kept.sort(key=lambda item: -_safe_float(item.get("latest_price")))
+    candidates.sort(key=lambda item: (-_safe_float(item.get("score")), _safe_float(item.get("latest_price"))))
+    selected = _select_budget_candidates(
+        candidates, budget=budget, limit=limit, max_per_set=max_per_set,
+        allow_duplicates=allow_duplicates, kept=kept,
+    )
+
+    meta = _row_dicts(columns, rows[:1])[0] if rows else {}
+    first_date, latest_date = meta.get("first_date"), meta.get("latest_date")
+    window_days = GRADED_TREND_DAYS
+    if first_date and latest_date:
+        window_days = min(GRADED_TREND_DAYS, (date.fromisoformat(latest_date) - date.fromisoformat(first_date)).days)
+    kept_ids = {id(item) for item in kept}
+    items = []
+    for row in selected:
+        price = round(_safe_float(row.get("latest_price")), 2)
+        items.append({
+            "key": row["key"],
+            "productId": row.get("productId"),
+            "subTypeName": row.get("subTypeName"),
+            "productName": row.get("productName"),
+            "groupId": row.get("groupId"),
+            "groupName": row.get("groupName"),
+            "imageUrl": row.get("imageUrl"),
+            "rarity": row.get("rarity"),
+            "number": row.get("number"),
+            "grade": row.get("grade"),
+            "grade_label": GRADED_GRADES[row.get("grade")][1],
+            "latest_price": price,
+            "roc_7d_pct": row["roc_7d_pct"],
+            "roc_window_pct": row["roc_window_pct"],
+            "price_vs_avg_pct": row["price_vs_avg_pct"],
+            "sales_volume": _safe_int(row.get("sales_volume")),
+            "price_changes_window": _safe_int(row.get("price_changes_window")),
+            "pc_url": PRICECHARTING_PRODUCT_URL.format(id=row.get("pc_id")),
+            "score": round(_safe_float(row.get("score")), 2),
+            "reasons": row.get("reasons") or [],
+            "budget_share_pct": round(price / budget * 100.0, 2),
+            "kept": id(row) in kept_ids,
+        })
+    spent = round(sum(item["latest_price"] for item in items), 2)
+    return {
+        "available": True,
+        "source": "PriceCharting",
+        "budget": budget,
+        "grades": grades,
+        "spent": spent,
+        "remaining": round(max(budget - spent, 0.0), 2),
+        "count": len(items),
+        "set_count": len({item["groupId"] for item in items}),
+        "kept_count": len(kept),
+        "latest_date": latest_date,
+        "first_date": first_date,
+        "history_days": _safe_int(meta.get("history_days")),
+        "window_days": window_days,
+        "category_id": category.category_id,
+        "items": items,
+    }
+
+
 PULLBACK_COLUMNS = """
           latest_date, groupId, groupName, productId, productName, imageUrl, rarity, number,
           productClass, productKind, subTypeName, latest_price, high_90d,
