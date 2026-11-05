@@ -482,6 +482,30 @@ already be covered.
 Active Queue
 ------------
 
+- [planned] Performance review (2026-11-05): the design is sound (nightly snapshot tables, one
+  shared read-only DuckDB connection; phone pages answer in 5-95 ms). Four fixes found:
+  1. Drop dead tables from `prices_db.duckdb` (13.9 GB): the old `prices` table (30.5M rows;
+     the live one is `pokemon_prices`), the five `top200_*` tables, the empty `groups`, and the
+     old unprefixed `product_signal_snapshot` / `group_signal_snapshot` if nothing reads them.
+     Then remove what wrote them (`scripts/rankings/`, `build_roc_dashboard_v*`), which no
+     pipeline runs. Back up the database first and list exactly what goes for the owner's OK.
+  2. Graded Budget Builder takes ~0.9 s on every load: it recomputes 30-day trends over 1.2M
+     PriceCharting rows per request. Build a small daily snapshot after the PriceCharting
+     download (target ~50 ms), like the other snapshots.
+  3. `/top_movers` takes ~1 s on the first request after a restart (~35 ms when cached). Warm
+     it at start-up or snapshot it. Minor.
+  4. `scripts/dashboards/api.py` is 8,567 lines with 112 routes. Split it by area (store,
+     research, budget, indexes) when working in each area. For people reviewing it; it isn't
+     a speed problem.
+- [idea] Nightly speed (English run ~12 min on 2026-11-05): ~4-5 min is network (TCGCSV
+  prices 36 s, product metadata 185 s, PriceCharting 74 s); the compute is joined export
+  95 s, product signal 103 s, series 92 s, index overview 75 s. DuckDB is capped at 4 threads
+  (`scripts/common/duckdb_settings.py`) on an 8-core host; try 6-8 threads overnight, and
+  make the series/signal snapshots incremental (only cards with new prices). GPU (the LLM
+  server, .217) considered and rejected: the work is SQL group-by/window scans that are
+  memory-bound, the code would need a cuDF rewrite, data would cross the network, and it
+  would compete with the LLM for VRAM, for a few minutes saved at 2 AM.
+
 - [planned] Search ranking can put a promo above the main printing (example: "charizard 199").
 - [waiting] Confirm the fee and shipping numbers marked ESTIMATE in
   `scripts/common/selling_costs.py` against real invoices (owner has the invoices).
