@@ -39,6 +39,7 @@ from .articles import Articles
 from .db import connect, latest_migration, migrate
 from .market import MarketReference
 from .metrics import install_metrics
+from .visitors import install_visitor_counting
 from .markdown import render, split_front_matter
 from .settings import STOREFRONT_DIR, Settings, load_settings
 
@@ -121,6 +122,8 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     # Request counts and timings for Grafana; /metrics answers only Prometheus on the host.
     # Registered first so no catch-all page route can shadow it.
     install_metrics(app, "storefront")
+    # Visitors and page views per day, no cookies (visitors.py); kept in the store's data folder.
+    install_visitor_counting(app, "storefront", settings.data_dir / "visitors.sqlite3")
     app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
     templates = Jinja2Templates(directory=APP_DIR / "templates")
     env = templates.env

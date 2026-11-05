@@ -8,7 +8,7 @@ writes grafana/dashboards/*.json next to this file. Grafana loads that folder by
 Change the dashboards here, not in the Grafana UI: UI edits are lost when the file is
 rebuilt. The JSON is committed too, so the dashboards work without running this script.
 
-Five dashboards, all reading the Prometheus data source (uid "prometheus"):
+Six dashboards, all reading the Prometheus data source (uid "prometheus"):
 
 * Overview: is everything all right? One screen of status tiles, the jobs table and the
   headline charts. Grafana's home page. At the bottom, a collapsed "AIOS Experiments" row of
@@ -17,6 +17,7 @@ Five dashboards, all reading the Prometheus data source (uid "prometheus"):
 * Servers: this host (CPU, memory, disks, network, updates) and every Docker container.
 * Jobs & work: scheduled jobs, data downloads, logs, docs/todo.txt, bug reports, git.
 * Home lab: the Proxmox cluster (nodes, VMs, containers, storage) and the UniFi network.
+* Visitors: people and page views per day, top pages, referrers and devices, per site.
 
 Where the numbers come from: docs/operator_runbook.txt, "Monitoring".
 
@@ -270,8 +271,10 @@ def overview():
     for i, (title, expr, kw) in enumerate(tiles):
         p.append(stat(title, expr, g(i * 3, 1, 3, 4), **kw))
     tiles2 = [
-        ("Requests / min", "sum(rate(http_requests_total[5m])) * 60",
-         dict(decimals=1, description="Both apps, all pages and API calls, last 5 minutes.")),
+        ("Visitors today", 'sum(site_today_total{kind="visitors"})',
+         dict(decimals=0, link=("Visitors dashboard", "/d/momentum-visitors"),
+              description="People who loaded a page on market.poke6s.com or the new storefront today "
+                          "(UTC), bots left out. Details on the Visitors dashboard.")),
         ("Server errors (24 h)", 'sum(increase(http_requests_total{status=~"5.."}[24h])) or vector(0)',
          dict(decimals=0, thresholds=steps("green", (1, "orange"), (20, "red")),
               description="Responses with a 5xx status from either app.")),
@@ -779,11 +782,99 @@ def aios_experiments_row(y):
     return r
 
 
+# --- Visitors -------------------------------------------------------------------------------
+
+
+def daily_barchart(title, app, pos, days=30):
+    """Visitors and page views per UTC day, from the day-labelled site_daily_total series."""
+    q = lambda kind: f'max by (day) (site_daily_total{{app="{app}",kind="{kind}"}})'
+    return {
+        "type": "barchart", "title": title, "gridPos": pos, "datasource": DS,
+        "description": f"Last {days} days, UTC. Visitors = people (one per day); page views = pages they loaded.",
+        "targets": [target(q("visitors"), ref="A", instant=True, table=True),
+                    target(q("pageviews"), ref="B", instant=True, table=True)],
+        "transformations": [
+            {"id": "merge", "options": {}},
+            {"id": "organize", "options": {
+                "excludeByName": {"Time": True},
+                "renameByName": {"day": "Day", "Value #A": "Visitors", "Value #B": "Page views"},
+                "indexByName": {"day": 0, "Value #A": 1, "Value #B": 2}}},
+            {"id": "sortBy", "options": {"sort": [{"field": "Day", "desc": False}]}},
+        ],
+        "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "decimals": 0,
+                                     "custom": {"lineWidth": 0, "fillOpacity": 85}},
+                        "overrides": []},
+        "options": {"xField": "Day", "orientation": "vertical", "groupWidth": 0.7, "barWidth": 0.9,
+                    "showValue": "never", "stacking": "none", "xTickLabelRotation": -45,
+                    "xTickLabelSpacing": 100,
+                    "legend": {"displayMode": "list", "placement": "bottom", "showLegend": True},
+                    "tooltip": {"mode": "multi", "sort": "none"}},
+    }
+
+
+def breakdown_table(title, app, kind, heading, pos, value_heading, description=""):
+    return table(title,
+                 [target(f'site_week_breakdown{{app="{app}",kind="{kind}"}}', ref="A", instant=True, table=True)],
+                 pos, {"key": heading, "Value": value_heading}, description=description,
+                 overrides=[col("Value", decimals=0)], sort=(value_heading, True), cell_color=False)
+
+
+def visitors():
+    p = []
+    explain = ("**How visitors are counted** (no cookies, nothing sent anywhere): a page view is a full "
+               "page loaded by a person, not an API call, bot, link preview or probe. A visitor is one "
+               "person per UTC day, recognised by an anonymous fingerprint that is thrown away at "
+               "midnight UTC. People sharing a router and browser count as one. Details: "
+               "`scripts/dashboards/visitors.py`.")
+    for i, (app, label) in enumerate((("market", "market.poke6s.com"),
+                                      ("storefront", "New storefront (not public yet: LAN visits only)"))):
+        y = i * 29
+        p.append(row(label, y))
+        v = lambda kind, period=None: (f'sum(site_today_total{{app="{app}",kind="{kind}"}})' if period is None
+                                       else f'sum(site_period_total{{app="{app}",kind="{kind}",period="{period}"}})')
+        tiles = [
+            ("Visitors today", v("visitors")),
+            ("Page views today", v("pageviews")),
+            ("Visitors yesterday", v("visitors", "yesterday")),
+            ("Visits, last 7 days", v("visitors", "7d")),
+            ("Visits, last 30 days", v("visitors", "30d")),
+            ("Page views, last 7 days", v("pageviews", "7d")),
+            ("Pages per visitor (7 days)", f'{v("pageviews", "7d")} / clamp_min({v("visitors", "7d")}, 1)'),
+            ("Bot page loads today", f'sum(site_today_total{{app="{app}",kind="bot_pageviews"}})'),
+        ]
+        for j, (title, expr) in enumerate(tiles):
+            kw = dict(decimals=1 if "per visitor" in title else 0)
+            if title.startswith("Bot"):
+                kw["description"] = "Crawlers, link previews and monitoring probes; not counted as visitors."
+            if "last" in title and title.startswith("Visits"):
+                kw["description"] = "Daily visitors added up: someone who came on two days counts twice."
+            p.append(stat(title, expr, g(j * 3, y + 1, 3, 4), **kw))
+        p.append(daily_barchart("Visitors and page views per day", app, g(0, y + 5, 16, 10)))
+        p.append({
+            "type": "bargauge", "title": "Devices (new visitors, 7 days)", "gridPos": g(16, y + 5, 8, 10),
+            "datasource": DS,
+            "targets": [target(f'site_week_breakdown{{app="{app}",kind="device"}}', "{{key}}", instant=True)],
+            "fieldConfig": {"defaults": {"color": {"mode": "fixed", "fixedColor": "blue"}, "min": 0, "decimals": 0},
+                            "overrides": []},
+            "options": {"orientation": "horizontal", "displayMode": "basic", "showUnfilled": True,
+                        "valueMode": "text", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": False}},
+        })
+        p.append(breakdown_table("Top pages (7 days)", app, "page", "Page", g(0, y + 15, 12, 10), "Page views"))
+        p.append(breakdown_table("Where visitors came from (7 days)", app, "referrer", "From",
+                                 g(12, y + 15, 12, 10), "Visitors",
+                                 description="The site a new visitor arrived from. (direct) = typed the address, "
+                                             "a bookmark, an app that hides the referrer, or one of our own sites."))
+        if i == 0:
+            p.append(text("", explain, g(0, y + 25, 24, 4)))
+    return dashboard("momentum-visitors", "Pokemon Momentum: Visitors", p, refresh="5m",
+                     time_from="now-30d", tags=("visitors",))
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for name, board in (("overview", overview()), ("website", website()),
                         ("servers", servers()), ("jobs_and_work", jobs_and_work()),
-                        ("home_lab", home_lab())):
+                        ("home_lab", home_lab()), ("visitors", visitors())):
         (OUT / f"{name}.json").write_text(json.dumps(board, indent=2) + "\n", encoding="utf-8")
         print(f"wrote {OUT / f'{name}.json'} ({len(board['panels'])} panels)")
 

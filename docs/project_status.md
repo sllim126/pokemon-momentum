@@ -24,7 +24,9 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
 - Graded data: nightly PriceCharting snapshot, kept as our own history
 - Monitoring: Grafana on this host (http://192.168.1.240:3000, since 2026-11-05) shows the
   website, jobs, data downloads, server, containers, todo list and bug reports; Prometheus
-  collects it. Runbook section "Monitoring"; files in `deploy/monitoring/`, `scripts/monitoring/`
+  collects it. Also the Proxmox cluster, the UniFi network, and visitors per day for each site
+  (counted by the apps themselves, no cookies). Runbook section "Monitoring"; files in
+  `deploy/monitoring/`, `scripts/monitoring/`
 - Alerts: nightly update, Squarespace price sync, the other-games archive, the archive
   backfill and the catalogue crawl post summaries to Discord
 - Other games: Magic, Yu-Gi-Oh, One Piece and Lorcana prices are archived nightly

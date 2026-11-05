@@ -634,8 +634,8 @@
     },
     {
       "type": "stat",
-      "title": "Requests / min",
-      "description": "Both apps, all pages and API calls, last 5 minutes.",
+      "title": "Visitors today",
+      "description": "People who loaded a page on market.poke6s.com or the new storefront today (UTC), bots left out. Details on the Visitors dashboard.",
       "gridPos": {
         "x": 0,
         "y": 5,
@@ -649,7 +649,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(rate(http_requests_total[5m])) * 60",
+          "expr": "sum(site_today_total{kind=\"visitors\"})",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -675,7 +675,13 @@
             ]
           },
           "mappings": [],
-          "decimals": 1
+          "decimals": 0,
+          "links": [
+            {
+              "title": "Visitors dashboard",
+              "url": "/d/momentum-visitors"
+            }
+          ]
         },
         "overrides": []
       },

@@ -74,6 +74,8 @@ from scripts.common.selling_costs import CHANNELS, DEFAULT_CHANNEL
 from scripts.common.pricecharting import PRODUCT_URL as PRICECHARTING_PRODUCT_URL
 from scripts.dashboards.hold_check import hold_check
 from scripts.dashboards.metrics import install_metrics
+from scripts.dashboards.visitors import install_visitor_counting
+from scripts.dashboards.query_support import PROCESSED_DIR as _PROCESSED_DIR
 from prometheus_client import Gauge
 from scripts.dashboards.psa_service import (
     fetch_psa_cert_from_upstream,
@@ -645,6 +647,9 @@ def _refresh_market_freshness() -> None:
 
 
 install_metrics(app, "market", refresh=_refresh_market_freshness)
+# Visitors and page views per day (no cookies; see scripts/dashboards/visitors.py). The
+# counts live in data/processed/visitors.sqlite3, which is never committed.
+install_visitor_counting(app, "market", _PROCESSED_DIR / "visitors.sqlite3")
 
 
 def is_mobile_request(request: Request) -> bool:

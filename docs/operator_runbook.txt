@@ -44,6 +44,8 @@ Open: http://192.168.1.240:3000 (LAN; sign in as `admin`). Folder "Pokemon Momen
 - Website: requests, errors and response times per app and route; outside probes
 - Servers: CPU, memory, disks, network, updates, SMART, every Docker container
 - Jobs & work: jobs, downloads, log files, docs/todo.txt, bug reports, git
+- Visitors: people and page views per day for market.poke6s.com and the new storefront, top
+  pages, where visitors came from, phone vs desktop (see "Visitor counting" below)
 - Home lab: the Proxmox cluster (3 nodes, every VM and container, storage pools) and the
   UniFi network (gateway, switches, access points, clients, internet link), and any other
   machine listed in `deploy/monitoring/nodes.yml`
@@ -117,6 +119,19 @@ renews it, UnPoller fails with an x509 error; save the new one with
 "UnPoller can read UniFi" is DOWN: `docker logs unpoller`. To revoke: delete `grafana-ro` in
 UniFi. Two PDUs share the name "USP PDU Pro", so the Devices table shows them as one row;
 rename one in UniFi to separate them.
+
+Visitor counting (added 2026-11-05): both apps count page views and visitors themselves
+(`scripts/dashboards/visitors.py`, `storefront/app/visitors.py`). No cookies, no tracking
+script, no outside service, so no consent banner is needed. A page view is a full HTML page
+loaded by a person (bots, link previews, probes, API calls and prefetches are left out). A
+visitor is one person per UTC day: the app keeps a hash of a daily random salt + address +
+browser, and deletes the salt and hashes when the day ends; only daily totals stay (400 days).
+Files: `data/processed/visitors.sqlite3` (market) and `data/storefront/visitors.sqlite3`
+(storefront), never committed. The real address comes from Caddy's X-Forwarded-For (trusted
+only from the private network); this was checked on 2026-11-05. Requests without an address
+(the test suite's client) are never counted. Limits: people sharing a router and browser count
+as one; days are UTC. www.poke6s.com is still Squarespace until 2026-11-14 (its numbers are in
+Squarespace's own analytics); the storefront counts only LAN visits until it is public.
 
 Adding another machine (it appears in Home lab, "Other machines"):
 

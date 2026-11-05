@@ -51,6 +51,8 @@ Recently Completed
   now"). Squarespace saves finished: email subscribers, form submitters and the two form sheets
   (newsletter sign-ups, pre-order interest) saved in the owner's private records; no final
   products export needed. Shipping decision D3: free over $150 (Shipping page and plan updated).
+- 2026-11-05 Visitor counting for both sites (no cookies) and a Visitors dashboard; the
+  Overview's "Requests / min" tile became "Visitors today".
 - 2026-11-05 Grafana monitoring (branch `monitoring/grafana`): request metrics on both apps
   (private `/metrics`), outside probes, container metrics, a status collector for jobs, data
   downloads, logs, todo, bug reports and git, and four provisioned dashboards. Root disk grown
@@ -84,6 +86,12 @@ Four dashboards on http://192.168.1.240:3000; runbook section "Monitoring".
   real data: a script that turns the Markdown AIOS registry into the aios-feed/1 JSON, then
   either the Infinity plugin (lists) or collect_status.py (counts). Owner: where does the
   registry live? Details: docs/aios_grafana_experiments.md.
+- [idea] Node-exporter on the Proxmox hosts (192.168.1.73, .74, .75) and the backup server
+  (PBS, 192.168.1.72) for temperatures, fans and per-disk activity; add them to
+  deploy/monitoring/nodes.yml. PBS could also be read through its API like Proxmox.
+- [planned] When the storefront goes public on poke6s.com, check the Visitors dashboard counts
+  its real visitors (the X-Forwarded-For path will differ if it runs behind Cloudflare Tunnel:
+  trust CF-Connecting-IP there).
 - [next] Scale the dashboards down after the owner has used them for a while (which tiles matter).
 - [waiting] Alerts: send Grafana alerts (site down, job failed or overdue, disk over 90%, price
   data over 3 days old) to Discord? Needs a channel and its own webhook (not #bug-reports).
