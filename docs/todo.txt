@@ -82,10 +82,17 @@ Four dashboards on http://192.168.1.240:3000; runbook section "Monitoring".
 - [idea] Physical disk health on the Home lab dashboard: the Proxmox API lists every disk's
   SMART verdict and wear (all fine on 2026-11-05; two hardware RAID volumes show UNKNOWN).
   The collector could read it with the existing token.
-- [waiting] AIOS Experiments row (Overview, collapsed, placeholders only; 2026-11-05). To show
-  real data: a script that turns the Markdown AIOS registry into the aios-feed/1 JSON, then
-  either the Infinity plugin (lists) or collect_status.py (counts). Owner: where does the
-  registry live? Details: docs/aios_grafana_experiments.md.
+- [planned] AIOS Experiments row (Overview, collapsed, placeholders only; 2026-11-05). Keep the
+  placeholders disconnected and unchanged until the registry and feed exist. Planned design
+  (owner, 2026-11-05):
+  - The authoritative registry will be `05-Projects/AIOS/Task-Registry.md` in the
+    ISI-Knowledge repository (now at /home/adam/Downloads/ISI-Knowledge). It doesn't exist yet.
+    The repo's current TODO.md holds only knowledgebase tasks and is not the task system.
+  - The feed will be generated on the machine that holds that repository, as
+    `reports/aios/grafana-feed.json` (format aios-feed/1, docs/aios_grafana_experiments.md),
+    then exposed or synced to Grafana read-only.
+  - Never create a second registry on the Grafana server.
+  Implementation pending: the registry, the feed generator, and the read-only path to Grafana.
 - [idea] Node-exporter on the Proxmox hosts (192.168.1.73, .74, .75) and the backup server
   (PBS, 192.168.1.72) for temperatures, fans and per-disk activity; add them to
   deploy/monitoring/nodes.yml. PBS could also be read through its API like Proxmox.

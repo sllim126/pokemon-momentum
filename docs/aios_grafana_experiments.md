@@ -80,9 +80,8 @@ Rules:
 There are two steps, and both are reversible.
 
 1. **Generate the feed.** A small script turns the registry into the JSON above and writes it
-   somewhere Grafana can read. For example, a cron job on this server could write
-   `/var/lib/aios/feed.json`, served on localhost only. That script belongs with the
-   registry, wherever it lives; it was not found on this server on 2026-11-05.
+   somewhere Grafana can read. That script belongs with the registry, on the machine that
+   holds the ISI-Knowledge repository; see "Planned design" below for the agreed locations.
 
 2. **Show it in Grafana.** Choose one of these:
    - **Lists (recommended):** install the free, open-source **Infinity** data source plugin
@@ -99,9 +98,18 @@ There are two steps, and both are reversible.
 Either way, make the change in `build_dashboards.py` (not in the Grafana editor, whose
 changes are lost at the next rebuild), and keep the `AIOS_EXPERIMENTS` switch working.
 
-## Open questions for the owner
+## Planned design (owner, 2026-11-05)
 
-- Where does the AIOS registry live, and on which machine? Will the feed be generated there
-  or here?
-- Should the section move to its own dashboard once it has real data, rather than staying on
-  the Overview?
+Nothing below exists yet; the placeholders stay disconnected and unchanged until it does.
+
+- **Registry (source of truth):** `05-Projects/AIOS/Task-Registry.md` in the ISI-Knowledge
+  repository, currently at `/home/adam/Downloads/ISI-Knowledge`. The repository's existing
+  `TODO.md` holds only knowledgebase tasks and is not the task system.
+- **Feed:** `reports/aios/grafana-feed.json` in the same repository, generated on the machine
+  that holds the repository, in the `aios-feed/1` format above.
+- **Into Grafana:** exposed or synced to Grafana **read-only**. Grafana never writes back.
+- **No second registry** on the Grafana server: it only ever holds a read-only copy of the
+  generated feed, or reads it over the network.
+
+Still to decide when it's built: how the feed reaches Grafana (a read-only file sync or a
+read-only URL), and whether the section moves to its own dashboard once it has real data.
