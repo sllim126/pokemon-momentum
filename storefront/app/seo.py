@@ -146,4 +146,4 @@ def robots_txt(settings: Settings) -> str:
     if not settings.allow_indexing:
         # Before launch (or on a LAN copy): keep every crawler out.
         return "User-agent: *\nDisallow: /\n"
-    return f"User-agent: *\nDisallow: /order/\nDisallow: /checkout\n\nSitemap: {settings.base_url}/sitemap.xml\n"
+    return f"User-agent: *\nDisallow: /order/\nDisallow: /checkout\nDisallow: /cart\n\nSitemap: {settings.base_url}/sitemap.xml\n"

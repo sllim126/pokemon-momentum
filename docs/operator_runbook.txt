@@ -240,8 +240,15 @@ The replacement for Squarespace runs in its own container, `poke6s-storefront`, 
   `python3 storefront/tools/archive_squarespace_site.py --out <folder> --products-csv <export>`.
 - Articles: Markdown files in `storefront/content/articles/`; restart the container after
   adding or editing one. How to write one: `storefront/README.md` "Articles".
-- Data (never committed): `data/storefront/` holds `store.db`, `images/` and
-  `market_reference.json`. Backups arrive in Phase 3.
+- Checkout (Phase 2, Stripe test mode): on when `STRIPE_SECRET_KEY=sk_test_...` is in `.env`,
+  then `docker-compose up -d storefront`. Test card 4242 4242 4242 4242. Orders:
+  `docker-compose exec storefront python -m storefront.app.orders_cli list` (also `show`,
+  `ship <number> --tracking <n>`, `reconcile`). Pending checkouts are checked against Stripe at
+  start-up and every 15 minutes. Without SMTP settings, order emails go to
+  `data/storefront/outbox/`. Live keys are refused unless `STOREFRONT_ALLOW_LIVE=1` (owner).
+  Don't re-run the Squarespace importer once real orders exist: it resets stock.
+- Data (never committed): `data/storefront/` holds `store.db` (products and orders),
+  `images/`, `outbox/` and `market_reference.json`. Backups arrive in Phase 3.
 
 Storefront linking (`Poke6s` button)
 ------------------------------------

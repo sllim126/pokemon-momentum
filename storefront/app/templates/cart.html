@@ -1,0 +1,18 @@
+{#- Cart. The cart itself is in the browser (localStorage "poke6s-cart": SKUs and quantities);
+    store.js asks POST /cart/quote for prices, stock and shipping, and fills [data-cart-body].
+    Checkout posts the same SKUs to POST /checkout and goes to the Stripe page it returns. -#}
+{% extends "base.html" %}
+{% block content %}
+<section class="cart" data-cart data-enabled="{{ 1 if checkout_enabled else 0 }}"
+         data-free-over="{{ free_over }}" data-tcgplayer="{{ settings.tcgplayer_store_url }}">
+  <h1>Your cart</h1>
+  {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
+  {% if not checkout_enabled %}
+  <p class="notice">Checkout on poke6s.com isn't open yet. Until then, buy from our
+    <a href="{{ settings.tcgplayer_store_url }}">TCGplayer store</a> or email
+    <a href="mailto:{{ settings.contact_email }}">{{ settings.contact_email }}</a>.</p>
+  {% endif %}
+  <div data-cart-body aria-live="polite"><p class="muted">Loading your cart…</p></div>
+  <noscript><p class="notice">The cart needs JavaScript switched on.</p></noscript>
+</section>
+{% endblock %}
