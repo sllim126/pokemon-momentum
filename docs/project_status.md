@@ -33,8 +33,10 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
 - Commerce: Squarespace storefront linking, price synchronization, listing intake, and supplier-profitability workflows
   (the Squarespace plan ends 2026-11-14; our own store replaces it: `docs/storefront_plan.md`)
 - Own storefront (poke6s.com, in progress): separate `storefront` container on port 8010, LAN
-  only until launch. Phase 1 (catalog, browse, SEO, redirects) runs locally since 2026-10-31;
-  no checkout yet. Articles (the old Squarespace blog) at `/articles`. Guide: `storefront/README.md`
+  only until launch. Phase 1 (catalog, browse, SEO, redirects) runs locally since 2026-10-31.
+  Phase 2 (cart and Stripe Checkout, test mode; orders in `store.db`) merged 2026-11-05; checkout
+  stays off without `STRIPE_SECRET_KEY` and refuses live keys unless `STOREFRONT_ALLOW_LIVE=1`.
+  Articles (the old Squarespace blog) at `/articles`. Guide: `storefront/README.md`
 - Collector resources: generated placeholder libraries, checklists, print pages, review queues, and downloads
 - Standalone binder planners: ATLA and KPDH are served by separate read-only nginx
   containers at `/atla/` and `/kpdh/`; collection state stays in each visitor's browser

@@ -125,7 +125,11 @@ product ID -> latest market price, 30-day change, market.poke6s.com link) for ev
 product plus the cards in the store's mapping and intake CSVs. The `storefront` container reads
 that file for product pages. It is run by hand for now; adding it after the nightly run needs
 the owner's OK (cron). Products themselves come from the Squarespace export via
-`storefront/app/importer.py` into `data/storefront/store.db`. See `storefront/README.md`.
+`storefront/app/importer.py` into `data/storefront/store.db`. Orders (Phase 2, test mode) are
+written to the same database: the cart is priced from `store.db`, stock is reserved at checkout,
+Stripe confirms payment (webhook, thanks page or the 15-minute reconcile job), and order emails
+go out by SMTP or, until that is set up, as files in `data/storefront/outbox/`. Re-running the
+importer resets stock, so stop once real orders exist. See `storefront/README.md`.
 
 
 Recent dashboard workflow additions
