@@ -643,16 +643,14 @@ Licensing:
 This step is a soft step: a PriceCharting failure warns but does not stop the price update.
 
 
-Legacy scripts (not run)
-------------------------
-The older top-200 ranking and ROC scripts are kept in the repository but are no longer part
-of the pipeline: `run_daily_update.py` does not call them and the API does not read their
-output. They were English-only.
-
-- `scripts/rankings/` (top-200 universe, lookup, names, timeseries, 30-day movers)
-- `scripts/indicators/compute_*.py`, `export_timeseries_ma.py`,
-  `single_card_moving_average.py`, `build_151_indicators.py`
-- `scripts/dashboards/build_*dashboard*.py` (static HTML generators that predate the API)
+Legacy scripts (removed 2026-11-05)
+-----------------------------------
+The older English-only top-200 ranking and ROC scripts were removed on 2026-11-05, with the
+tables they wrote (`prices`, `top200_*`, the unprefixed `product_signal_snapshot`,
+`group_signal_snapshot` and `groups`); no pipeline step, route or test used them. Git history
+before that date holds them: `scripts/rankings/`, `scripts/indicators/compute_*.py`,
+`export_timeseries_ma.py`, `single_card_moving_average.py`, `build_151_indicators.py`,
+`scripts/dashboards/build_*dashboard*.py` and `scripts/utilities/5_dollar_minimum.py`.
 
 Everything the site shows today comes from the snapshot stages above, for both `3` and `85`.
 
