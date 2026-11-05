@@ -106,6 +106,9 @@ def _newest_mtime(path: Path, pattern: str = "*") -> float | None:
 
 
 def systemd_jobs(m: Metrics, state: dict) -> None:
+    """Metrics for each systemd job in JOBS: last start and finish, exit code, last success, running
+    now, and whether its timer is active and when it fires next (read with systemctl show).
+    """
     for job, (kind, interval) in JOBS.items():
         m.add("momentum_job_expected_interval_seconds", interval,
               "How often the job should run", task=job, runner=kind.split(":")[0])
@@ -164,6 +167,10 @@ def _unix(value: str | None) -> float | None:
 
 
 def data_downloads(m: Metrics) -> None:
+    """When each data source last changed (PriceCharting CSV, TCGCSV archive and catalogue, parquet,
+    market prices CSV, storefront market reference), so
+    Grafana can show a feed that stopped arriving.
+    """
     help_text = "When this data source was last downloaded or rebuilt"
     sources = {
         "pricecharting_csv": _newest_mtime(ROOT / "data/pricecharting/raw"),
@@ -200,6 +207,7 @@ def logs(m: Metrics) -> None:
 
 
 def todo(m: Metrics) -> None:
+    """Count docs/todo.txt items per status tag ([next], [planned], ...), leaving out Recently Completed."""
     path = ROOT / "docs/todo.txt"
     text = path.read_text(encoding="utf-8")
     # Count list items ("- [next] ...", at any indent) in every section except "Recently
@@ -243,6 +251,9 @@ def _iso(value: str) -> float:
 
 
 def git(m: Metrics) -> None:
+    """Repository health: on main or not, uncommitted project files (data files excluded),
+    commits not pushed to origin, and when main last changed.
+    """
     def run(*args: str) -> str:
         return subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True, timeout=20).stdout
 
@@ -271,6 +282,9 @@ def reminders(m: Metrics) -> None:
 
 
 def main() -> int:
+    """Collect every section into one metrics file. A section that fails is reported (as a metric and
+    on stderr) without stopping the others; both output files are written atomically.
+    """
     m = Metrics()
     try:
         state = json.loads(STATE_FILE.read_text())

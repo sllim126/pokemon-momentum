@@ -1,3 +1,12 @@
+"""Nightly step: load newly downloaded daily price files into the pokemon_prices table.
+
+Reads data/extracted/<package>/<date>/<category>/<group>/prices files from the download step and
+inserts only the days not loaded yet for that category (both markets share the table, keyed
+by date, category, set, product and printing; the unique index pokemon_prices_uq stops
+duplicates). --refresh-csv also rewrites data/extracted/<slug>_prices_all_days.csv, which
+only old, unused scripts read; the nightly doesn't pass it.
+"""
+
 import argparse
 import os
 import json

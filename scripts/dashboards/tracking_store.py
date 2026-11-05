@@ -1,3 +1,15 @@
+"""Accounts, sign-in sessions, tags, saved views, bug reports and the PSA lookup cache (SQLite).
+
+Kept in its own SQLite file, data/processed/tracking.sqlite3, not in the DuckDB price database:
+the site only reads DuckDB, and the nightly update stops the site to write it, so small user
+writes here never contend with the price pipeline. ensure_tracking_schema() creates or upgrades
+the tables on first use. Each function opens and closes its own connection.
+
+Security: PINs are salted scrypt hashes; session tokens are stored only as SHA-256 hashes
+(see the constants below). The routes that call this live in api.py under /tracking/*,
+/bug_reports and /api/psa/cert.
+"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -150,6 +162,10 @@ def hash_pin(pin: str, salt: str) -> str:
 
 
 def create_user(username: str, pin: str) -> int:
+    """Create a username + PIN account and return its id. The PIN is stored only as a salted scrypt hash (hash_pin).
+
+    Raises sqlite3.IntegrityError if the (normalised) username is taken (UNIQUE column).
+    """
     ensure_tracking_schema()
     normalized = normalize_username(username)
     salt = secrets.token_hex(16)
@@ -170,6 +186,11 @@ def create_user(username: str, pin: str) -> int:
 
 
 def create_google_user(email: str) -> int:
+    """Create an account for a Google sign-in (username = email) and return its id.
+
+    Google accounts have no PIN: pin_salt and pin_hash are empty, so verify_user can never match
+    them and they can only sign in through Google.
+    """
     ensure_tracking_schema()
     normalized = normalize_username(email)
     now = utc_now_iso()
@@ -303,6 +324,7 @@ def delete_session(token: str) -> None:
 
 
 def update_user_pin(user_id: int, new_pin: str) -> None:
+    """Replace a user's PIN with a new salted hash (new salt each time)."""
     ensure_tracking_schema()
     salt = secrets.token_hex(16)
     now = utc_now_iso()
@@ -335,6 +357,7 @@ def delete_user(user_id: int) -> None:
 
 
 def get_tags_for_user(user_id: int) -> list[dict]:
+    """Every tag a user has put on a printing (Watching, Own, ...), as dicts, ordered by market, product and tag."""
     ensure_tracking_schema()
     con = get_con()
     try:
@@ -361,6 +384,7 @@ def get_tags_for_user(user_id: int) -> list[dict]:
 
 
 def set_tag(user_id: int, category_id: int, product_id: int, sub_type_name: str, tag: str, enabled: bool) -> None:
+    """Turn one tag on or off for one printing. On is an upsert (refreshes updated_at); off deletes the row."""
     ensure_tracking_schema()
     now = utc_now_iso()
     con = get_con()
@@ -390,6 +414,9 @@ def set_tag(user_id: int, category_id: int, product_id: int, sub_type_name: str,
 
 
 def merge_tags(user_id: int, items: list[dict]) -> None:
+    """Add many tags at once, keeping any the user already has. Used when tags saved in the browser
+    before sign-in are merged into the account; nothing is removed.
+    """
     ensure_tracking_schema()
     now = utc_now_iso()
     con = get_con()
@@ -419,6 +446,7 @@ def merge_tags(user_id: int, items: list[dict]) -> None:
 
 
 def list_saved_views_for_user(user_id: int) -> list[dict]:
+    """A user's saved views, most recently changed first. state_json stays a JSON string for the page to parse."""
     ensure_tracking_schema()
     con = get_con()
     try:
@@ -456,6 +484,11 @@ def save_saved_view(
     ticker_enabled: bool = False,
     view_id: int | None = None,
 ) -> dict:
+    """Create a saved view (view_id None) or update the user's own view by id, and return the stored row.
+
+    The update only matches the user's own rows, so another user's id raises KeyError (the
+    route answers 404).
+    """
     ensure_tracking_schema()
     now = utc_now_iso()
     con = get_con()
@@ -518,6 +551,9 @@ def delete_saved_view(user_id: int, view_id: int) -> None:
 
 
 def create_bug_report(payload: dict) -> int:
+    """Store one bug report and return its id. Since bug reports moved to Discord, rows come from
+    scripts/utilities/import_discord_bug_reports.py, not from an on-site form.
+    """
     ensure_tracking_schema()
     now = utc_now_iso()
     con = get_con()
@@ -569,6 +605,7 @@ def create_bug_report(payload: dict) -> int:
 
 
 def list_bug_reports(limit: int = 200) -> list[dict]:
+    """The newest bug reports (up to `limit`) for the admin Bug Reports page."""
     ensure_tracking_schema()
     con = get_con()
     try:
@@ -604,6 +641,12 @@ def list_bug_reports(limit: int = 200) -> list[dict]:
 
 
 def get_psa_certification(cert_number: str) -> dict | None:
+    """The cached PSA certificate lookup for a cert number, or None if we never fetched it.
+
+    raw_response_json comes back parsed ({} if the stored text isn't valid JSON). /api/psa/cert
+    answers from this cache while it's fresh (psa_cache_is_fresh in api.py); a new or stale
+    cert, or refresh=true, calls PSA and is admin-only, to protect our PSA quota.
+    """
     ensure_tracking_schema()
     con = get_con()
     try:
@@ -664,6 +707,7 @@ def upsert_psa_certification(
     lookup_status: str,
     last_checked_at: str | None = None,
 ) -> dict:
+    """Store (or refresh) PSA's answer for one cert number and return the cached row as get_psa_certification gives it."""
     ensure_tracking_schema()
     now = utc_now_iso()
     checked_at = last_checked_at or now

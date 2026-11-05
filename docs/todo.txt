@@ -43,6 +43,13 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-05: Comment and docs review. Every file the site or the nightly runs now opens with a
+  header saying what it is and where it fits (api.py has a map of its routes and data paths),
+  and their 15+ line functions have docstrings, each checked against the code (64 added;
+  the signal lists' rules are spelled out). The 18 longer uncommented functions in the
+  desktop and phone pages got comments. Docs checked for dead file references and review
+  dates; `data_flow.txt` dated. Not covered: `storefront/` (its own session; ~200 functions
+  without docstrings, see below) and the Squarespace scripts being retired after 2026-11-14.
 - 2026-11-05: Price database cleaned up and compacted, 13.87 GB -> 7.96 GB. Left out the dead
   `prices` table (30.5M rows, last written 2026-03-02), the `top200_*` tables and the old
   unprefixed snapshot and `groups` tables; every kept table hash-checked identical. Removed the
@@ -500,6 +507,21 @@ Active Queue
   4. `scripts/dashboards/api.py` is 8,567 lines with 112 routes. Split it by area (store,
      research, budget, indexes) when working in each area. For people reviewing it; it isn't
      a speed problem.
+  5. The "named" export (`join_prices_to_names.py`, nightly step "Rebuild joined price/name
+     export") rebuilds `pokemon_prices_named` / `pokemon_jp_prices_named` (56M rows) and 5.4 GB
+     of CSV every night (~95 s + ~17 s), and nothing reads them: no route, page or later
+     step (validate_pipeline only checks they exist). Ask the owner, then drop the step or make
+     it opt-in. Also stale: `data/extracted/pokemon*_prices_all_days.csv` (2.3 GB, last written
+     2026-03-18, only read by the unused scripts in 6).
+  6. Unused scripts nothing runs or imports (checked 2026-11-05): `scripts/extract/
+     build_pokemon_prices_csv.py`, `extract_ids_from_prices.py`, `read_one_prices_file.py`,
+     `scripts/utilities/List_sybtypes.py`, `date_check.py`, `get_pokemon_groups.py`,
+     `scripts/download/download_groups_lookup.py`, and `test_env.py` at the root. Remove
+     with the owner's OK.
+- [planned] Storefront code comments: `storefront/` has ~200 functions without docstrings (42
+  of them 15+ lines, e.g. `app/importer.py`, `app/orders.py`, `app/main.py`). Document them
+  in the storefront work, using the same rule as the 2026-11-05 review: a header per file,
+  docstrings on long functions, every claim checked against the code.
 - [idea] Nightly speed (English run ~12 min on 2026-11-05): ~4-5 min is network (TCGCSV
   prices 36 s, product metadata 185 s, PriceCharting 74 s); the compute is joined export
   95 s, product signal 103 s, series 92 s, index overview 75 s. DuckDB is capped at 4 threads

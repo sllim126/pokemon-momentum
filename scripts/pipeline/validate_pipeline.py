@@ -1,3 +1,15 @@
+"""Run the nightly pipeline's steps one by one and check each produced what it should.
+
+For debugging the pipeline by hand, not part of the schedule. Each step lists the files and
+tables it must leave behind. By default it only checks those outputs exist (safe while the
+site runs); with --run it runs each step first, which needs the DuckDB write lock (stop the
+site first; docs/operator_runbook.txt, "Manual category runs"). --step / --from-step pick
+steps. Steps mirror run_daily_update.py, so when you add a nightly step, add it here too.
+
+    python scripts/pipeline/validate_pipeline.py --category-id 3          # check outputs
+    python scripts/pipeline/validate_pipeline.py --category-id 3 --run    # run and check
+"""
+
 import argparse
 import shlex
 import subprocess

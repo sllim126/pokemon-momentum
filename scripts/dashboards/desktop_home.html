@@ -1010,6 +1010,7 @@
     function renderSearchActive() {
       searchResults.querySelectorAll(".search-item").forEach((node, index) => node.classList.toggle("active", index === searchActive));
     }
+    // Open what a search result points to: a set, an index or a card.
     function chooseSearchItem(item) {
       searchResults.hidden = true;
       if (item.kind === "set") {
@@ -1542,6 +1543,8 @@
       const pts = state.setSparks?.market === state.market ? state.setSparks.sets[String(groupId)] : null;
       return pts && pts.length > 1 && pts[0] > 0 ? (pts[pts.length - 1] / pts[0] - 1) * 100 : NaN;
     };
+    // Sets table (Research > Sets), filtered by era and the filter box, with a 90-day trend
+    // sparkline per set (loaded separately, so it shows "…" until it arrives).
     function renderSets(errorText) {
       const text = $("filterInput").value.trim().toLowerCase();
       let rows = state.setRows.filter((r) => (!state.era || r.generation === state.era)
@@ -1652,6 +1655,7 @@
         if (seq === listRequestSeq) $("listLoading").hidden = true;
       }
     }
+    // Market indexes table (Research > Indexes): each index's level and changes, filtered by name.
     function renderIndexes() {
       const text = $("filterInput").value.trim().toLowerCase();
       let rows = state.indexRows.filter((r) => !text || String(r.payload.index_name).toLowerCase().includes(text));
@@ -1716,6 +1720,8 @@
         if (seq === listRequestSeq) $("listLoading").hidden = true;
       }
     }
+    // Set Values table: what a whole set costs (total_set_cost) and how that changed, filtered
+    // like Sets.
     function renderSetValues() {
       const text = $("filterInput").value.trim().toLowerCase();
       let rows = state.valueRows.filter((r) => (!state.era || r.generation === state.era)
@@ -1792,6 +1798,8 @@
           ? el("ul", {}, ...cards.map((c) => el("li", { text: `${c.productName || `Product ${c.productId}`}${c.subTypeName ? ` (${c.subTypeName})` : ""}${c.groupName ? ` · ${c.groupName}` : ""}: ${c.flips} jumps` })))
           : el("p", { class: "muted", text: "None right now." }));
     }
+    // An index's Method tab: how it's built, its included sets, reshuffles and the cards left out
+    // for unstable prices (unstableSection).
     function renderIndexInfo(payload) {
       const view = $("guideView");
       const table = (head, rows) => el("table", { class: "info-table" },
@@ -1921,6 +1929,7 @@
       rerender();
     });
 
+    // The main results table for the current list, or its empty/error message.
     function renderResults(errorText) {
       const rows = visibleRows();
       const body = $("resultsBody");
@@ -2482,6 +2491,8 @@
       state.days = Number(button.dataset.days);
       loadChart(state.selected, detailRequestSeq);
     });
+    // Price chart for the open card over the chosen window (/series). seq drops answers for a
+    // card the user has already left.
     async function loadChart(card, seq) {
       document.querySelectorAll("#windowSwitch button").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.days) === state.days)));
       const chart = $("chart");

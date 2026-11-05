@@ -42,6 +42,11 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """Rebuild both series tables (730-day daily and weekly long history) and their CSV copies.
+
+    The ordered LIST() per printing can't spill to disk, which is why the DuckDB memory cap is
+    10 GB (scripts/common/duckdb_settings.py). ~90 s for English.
+    """
     args = parse_args()
     category = get_category_config(args.category_id)
     out_csv = f"{EXTRACTED_DIR}/{category.series_snapshot_csv}"

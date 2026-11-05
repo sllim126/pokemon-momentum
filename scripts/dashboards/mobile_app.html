@@ -897,6 +897,8 @@
       $("reviewTab").hidden = false;
       $("reviewTab").setAttribute("aria-expanded", "false");
     }
+    // Owner review notes: what's on screen (page, market, list, search, open card, Deal Checker
+    // input, scroll positions, screen size), attached to a note so it can be reproduced later.
     function reviewContext() {
       const search = state.list === "check" ? ($("homeSearch").value || $("searchInput").value) : $("filterInput").value;
       return {
@@ -922,6 +924,8 @@
     function saveReviewDraft() {
       writeStore(REVIEW_DRAFT_KEY, { title: $("reviewNoteTitle").value, details: $("reviewDetails").value });
     }
+    // Show the owner-only review-note tab when the signed-in user is an admin. Everyone else, and
+    // anyone signed out or offline, never sees it.
     async function enableOwnerReviewNotes() {
       try {
         const response = await fetch("/tracking/session");
@@ -1198,6 +1202,8 @@
       }
       return listCache.get(cacheKey);
     }
+    // Load the rows for any list: one fetcher per list type (saved lists, sets, indexes, budget
+    // builders...); everything else is a Discover screener route (/top_movers, ...).
     function fetchList(list) {
       if (list.track) return fetchTracked().then((rows) => (list.tag === "all" ? rows : rows.filter((r) => tagsFor(r.key).has(list.tag))));
       if (list.key === "sets") return fetchSets();
@@ -1518,6 +1524,8 @@
       $("typeSelect").value = state.productType;
     }
     $("typeSelect").addEventListener("change", () => { state.productType = $("typeSelect").value; syncUrl(); renderRows(); });
+    // Budget Builder controls: budget presets, the grade picker (graded builder only) and the
+    // source line (PriceCharting history so far, for graded).
     function renderBudgetControls() {
       const graded = state.list === "graded_budget";
       const presets = BUDGET_PRESETS[state.list] || BUDGET_PRESETS.budget;
@@ -1895,6 +1903,8 @@
       if (sort === "price_asc") rows.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
       return rows;
     }
+    // Draw the current list. Lists with their own view (sets, indexes, guide...) render themselves;
+    // the rest become card rows, with Keep buttons on the budget builders.
     function renderRows() {
       const list = currentList();
       if (list.view === "guide") return;
@@ -2009,6 +2019,8 @@
     document.addEventListener("pointerdown", (event) => {
       if (!event.target.closest(".search")) searchResults.hidden = true;
     });
+    // Search as you type (2+ characters). searchSeq drops answers that arrive after a newer
+    // keystroke, so results never jump back to an older query.
     async function runSearch() {
       const query = searchInput.value.trim();
       const seq = ++searchSeq;
@@ -2085,6 +2097,8 @@
       affiliate.searchParams.set("u", target.toString());
       return affiliate.toString();
     }
+    // The card page: image, price, chart, Deal Checker, graded prices, targets and tags.
+    // cardSeq drops late answers for a card the user has already left.
     function renderCard() {
       const card = state.selected;
       const pane = $("cardPane");
@@ -2217,6 +2231,8 @@
       clearTimeout(holdTimer);
       holdTimer = setTimeout(() => loadHold(cardSeq), 450);
     }
+    // Deal Checker's 6-Month Hold: how this card did historically after a buy at this price
+    // (/hold_check), then redraw the verdict.
     async function loadHold(seq) {
       const card = deal.card;
       const query = new URLSearchParams({ productId: card.productId, subTypeName: card.subTypeName, category_id: String(categoryId()) });
@@ -2297,6 +2313,7 @@
       else if (tone === "good" && falling) [tone, title] = ["fair", "Careful: the price is falling"];
       return { tone, title, offers, notes, spike };
     }
+    // Deal Checker verdict for the asking price entered (judgeDeal), coloured by tone.
     function renderVerdict() {
       if (!deal || !$("verdict")) return;
       const result = judgeDeal({ ask: deal.ask, market: deal.card.price, mode: state.mode, details: deal.details, hold: deal.hold });
@@ -2349,6 +2366,7 @@
       const buy = Number.parseFloat(raw.buy), sell = Number.parseFloat(raw.sell);
       return { buy: buy > 0 ? buy : null, sell: sell > 0 ? sell : null };
     }
+    // Buy/sell target prices for a card, kept in this browser's storage (TARGETS_KEY).
     function targetsSection(card) {
       const { buy, sell } = targetFor(card);
       const field = (id, label, value, example) => el("label", {}, el("span", { text: label }),
@@ -2448,6 +2466,8 @@
         }),
         el("div", { class: "caption", text: syncedTags ? "Synced to your account." : "Saved on this phone. Sign in (menu → Account) to sync with your account." }));
     }
+    // Put a tag (Watching, Own...) on a card or take it off: on the server when signed in, in this
+    // browser otherwise. Then refresh saved-list counts and any saved list on screen.
     async function toggleTag(card, tag, enabled) {
       const token = trackingToken();
       if (token && syncedTags) {

@@ -39,6 +39,10 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """Rebuild <slug>_screener_snapshot from the product signal snapshot plus the last few readings of
+    each printing, and write its CSV copy. Raises RuntimeError if the product signal snapshot
+    doesn't exist yet (run build_product_signal_snapshot.py first).
+    """
     args = parse_args()
     category = get_category_config(args.category_id)
     out_csv = f"{EXTRACTED_DIR}/{category.screener_snapshot_csv}"
