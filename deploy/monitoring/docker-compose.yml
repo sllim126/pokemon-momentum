@@ -1,0 +1,28 @@
+# Container metrics for Grafana (see "Monitoring" in docs/operator_runbook.txt).
+# cAdvisor reads Docker's view of every container on this host (CPU, memory, network,
+# restarts) and serves it on localhost:8098 for Prometheus. Localhost only: it lists every
+# container and image, which is nobody else's business.
+#   docker compose -f deploy/monitoring/docker-compose.yml up -d
+services:
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.52.1
+    container_name: cadvisor
+    command:
+      - --docker_only=true            # skip the host's own cgroups; node-exporter covers the host
+      - --housekeeping_interval=15s   # match Prometheus' scrape interval
+      - --store_container_labels=false
+      - --whitelisted_container_labels=com.docker.compose.project,com.docker.compose.service
+      # Per-process, per-disk and hugepage details cost CPU and nothing here uses them.
+      - --disable_metrics=advtcp,cpuset,hugetlb,memory_numa,percpu,perf_event,process,referenced_memory,resctrl,sched,tcp,udp,disk,diskIO
+    ports:
+      - "127.0.0.1:8098:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    privileged: true
+    restart: unless-stopped

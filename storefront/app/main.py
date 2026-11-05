@@ -38,6 +38,7 @@ from . import catalog, classify, images, orders, redirects, seo, stripe_api
 from .articles import Articles
 from .db import connect, latest_migration, migrate
 from .market import MarketReference
+from .metrics import install_metrics
 from .markdown import render, split_front_matter
 from .settings import STOREFRONT_DIR, Settings, load_settings
 
@@ -117,6 +118,9 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     app = FastAPI(title="Poke6s storefront", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     # Trailing slashes are handled in not_found() with one 301, not Starlette's 307 hop.
     app.router.redirect_slashes = False
+    # Request counts and timings for Grafana; /metrics answers only Prometheus on the host.
+    # Registered first so no catch-all page route can shadow it.
+    install_metrics(app, "storefront")
     app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
     templates = Jinja2Templates(directory=APP_DIR / "templates")
     env = templates.env

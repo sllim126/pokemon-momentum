@@ -13,5 +13,6 @@ matplotlib
 plotly
 python-dotenv
 python-multipart
+prometheus-client
 fastapi
 uvicorn

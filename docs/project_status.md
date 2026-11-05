@@ -22,6 +22,9 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
 - Nightly pipeline memory: snapshot scripts cap DuckDB at 10 GB and 4 threads
   (`scripts/common/duckdb_settings.py`) after an out-of-memory kill on 2026-11-02
 - Graded data: nightly PriceCharting snapshot, kept as our own history
+- Monitoring: Grafana on this host (http://192.168.1.240:3000, since 2026-11-05) shows the
+  website, jobs, data downloads, server, containers, todo list and bug reports; Prometheus
+  collects it. Runbook section "Monitoring"; files in `deploy/monitoring/`, `scripts/monitoring/`
 - Alerts: nightly update, Squarespace price sync, the other-games archive, the archive
   backfill and the catalogue crawl post summaries to Discord
 - Other games: Magic, Yu-Gi-Oh, One Piece and Lorcana prices are archived nightly

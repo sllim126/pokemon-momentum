@@ -51,6 +51,10 @@ Recently Completed
   now"). Squarespace saves finished: email subscribers, form submitters and the two form sheets
   (newsletter sign-ups, pre-order interest) saved in the owner's private records; no final
   products export needed. Shipping decision D3: free over $150 (Shipping page and plan updated).
+- 2026-11-05 Grafana monitoring (branch `monitoring/grafana`): request metrics on both apps
+  (private `/metrics`), outside probes, container metrics, a status collector for jobs, data
+  downloads, logs, todo, bug reports and git, and four provisioned dashboards. Root disk grown
+  to 598 GB through Proxmox (was 90% full, now 45%).
 - 2026-11-05 KPDH branch reconciliation: transplanted the final Series 2 catalog and images,
   base-first binder option, corrected continuous CR numbering and lime provisional-evidence
   markers onto current `main` without importing the old branches' unrelated dashboard, cron
@@ -59,6 +63,29 @@ Recently Completed
 
 High Priority
 -------------
+
+Monitoring with Grafana (owner, 2026-11-05): "show me everything, then we scale it down".
+Four dashboards on http://192.168.1.240:3000; runbook section "Monitoring".
+- [in progress] Build-out on branch `monitoring/grafana`. Done and live: app `/metrics`,
+  blackbox probes, cAdvisor, status collector, four dashboards, Prometheus and Grafana
+  provisioning (`deploy/monitoring/install.sh` has been run). Stopped at: the crontab. Owner
+  installs it with `crontab deploy/crontab.txt` (adds the every-minute collector and wraps each
+  cron job in run_job.py; the agent was not allowed to change the crontab). Until then the cron
+  jobs show "No run recorded yet" and the todo/bug/git tiles stop updating.
+- [next] Owner: remove the temporary sudo file once the build-out is merged:
+  `sudo rm /etc/sudoers.d/90-claude-buildout` (the Overview's "Temporary sudo" tile turns green).
+- [next] Scale the dashboards down after the owner has used them for a while (which tiles matter).
+- [waiting] Alerts: send Grafana alerts (site down, job failed or overdue, disk over 90%, price
+  data over 3 days old) to Discord? Needs a channel and its own webhook (not #bug-reports).
+- [waiting] Canvas "last download" tile: the data lives on another server with separate access;
+  the owner adds it later.
+- [waiting] `grafana.tail6217f2.ts.net` (Tailscale serve) forwards to port 8086, where nothing
+  listens; Grafana is on 3000. Point it at 3000?
+- [idea] The home-lab targets already in prometheus.yml (Proxmox, UniFi, two training servers)
+  are all down; fix or remove them, or leave them out of scope.
+- [planned] 2026-11-14: when the Squarespace price sync is retired, drop
+  `squarespace-price-sync` from JOBS in scripts/monitoring/collect_status.py and the probe of
+  https://poke6s.com/ changes meaning (it becomes the new store once launched).
 
 Own storefront on poke6s.com, replacing Squarespace (owner, 2026-10-31). Plan, costs, phases
 and open decisions: `docs/storefront_plan.md` (progress log at its end). What the Squarespace

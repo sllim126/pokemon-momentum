@@ -3,10 +3,16 @@
 # Restore on a new server with: crontab deploy/crontab.txt  (this REPLACES the whole crontab;
 # compare with `crontab -l` first). What each job does: "Schedule at a glance" in
 # docs/operator_runbook.txt. Systemd timers are separate, in deploy/systemd/.
-15 9 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin docker-compose exec -T pokemon-momentum bash scripts/run_squarespace_price_sync.sh >> logs/squarespace_price_sync_cron.log 2>&1
-*/15 * * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin docker-compose exec -T pokemon-momentum python scripts/utilities/import_discord_bug_reports.py >> logs/discord_bug_import.log 2>&1
-0 15 * * 5 cd /opt/pokemon-momentum && /usr/bin/python3 scripts/utilities/post_weekly_discord.py >> logs/discord_weekly.log 2>&1
-30 4 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin docker-compose exec -T pokemon-momentum python scripts/utilities/sync_placeholder_library.py >> logs/placeholder_sync.log 2>&1
-0 3 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin docker-compose exec -T pokemon-momentum python scripts/build_storefront_market_reference.py >> logs/storefront_market_reference.log 2>&1
-30 21 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin scripts/pipeline/run_archive_backfill_host.sh
-0 12 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin scripts/pipeline/run_tcgcsv_catalogue_host.sh
+#
+# Monitoring (docs/operator_runbook.txt, "Monitoring"): each job runs through
+# scripts/monitoring/run_job.py <name> -- <command>, which runs the command unchanged and
+# records its exit code and times for Grafana. The names match the JOBS table in
+# scripts/monitoring/collect_status.py, which the first line below runs every minute.
+* * * * * cd /opt/pokemon-momentum && /usr/bin/python3 scripts/monitoring/collect_status.py >> logs/monitoring_collector.log 2>&1
+15 9 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin /usr/bin/python3 scripts/monitoring/run_job.py squarespace-price-sync -- docker-compose exec -T pokemon-momentum bash scripts/run_squarespace_price_sync.sh >> logs/squarespace_price_sync_cron.log 2>&1
+*/15 * * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin /usr/bin/python3 scripts/monitoring/run_job.py discord-bug-import -- docker-compose exec -T pokemon-momentum python scripts/utilities/import_discord_bug_reports.py >> logs/discord_bug_import.log 2>&1
+0 15 * * 5 cd /opt/pokemon-momentum && /usr/bin/python3 scripts/monitoring/run_job.py discord-weekly -- /usr/bin/python3 scripts/utilities/post_weekly_discord.py >> logs/discord_weekly.log 2>&1
+30 4 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin /usr/bin/python3 scripts/monitoring/run_job.py placeholder-sync -- docker-compose exec -T pokemon-momentum python scripts/utilities/sync_placeholder_library.py >> logs/placeholder_sync.log 2>&1
+0 3 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin /usr/bin/python3 scripts/monitoring/run_job.py storefront-market-reference -- docker-compose exec -T pokemon-momentum python scripts/build_storefront_market_reference.py >> logs/storefront_market_reference.log 2>&1
+30 21 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin /usr/bin/python3 scripts/monitoring/run_job.py archive-backfill -- scripts/pipeline/run_archive_backfill_host.sh
+0 12 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin /usr/bin/python3 scripts/monitoring/run_job.py tcgcsv-catalogue -- scripts/pipeline/run_tcgcsv_catalogue_host.sh

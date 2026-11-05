@@ -57,6 +57,7 @@ or the `pm_tracking_token` cookie); **admin** = signed in with an address listed
 | Route | Used by | What it returns |
 | --- | --- | --- |
 | `/health` | monitoring, every page | Latest data date and history source for a market |
+| `/metrics` | Prometheus on the host (not public) | Request counts, errors and timings per route, and the price-data date, in Prometheus format. Answers only local requests without proxy headers; anything else gets 404. See `docs/operator_runbook.txt`, Monitoring |
 | `/categories` | market pickers | The markets the site covers |
 | `/search` | search boxes | Cards and sets matching a query (server-side search) |
 | `/product_picker` | pickers | One page of the catalogue |

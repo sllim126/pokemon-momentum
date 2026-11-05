@@ -1,0 +1,13 @@
+# Loads every dashboard JSON in deploy/monitoring/grafana/dashboards/ into a "Pokemon
+# Momentum" folder. Installed to /etc/grafana/provisioning/dashboards/ by install.sh.
+# Grafana rereads the folder every 30 s. Edits made in the Grafana UI are not saved back:
+# change build_dashboards.py instead and rerun it (allowUiUpdates lets you experiment).
+apiVersion: 1
+providers:
+  - name: pokemon-momentum
+    folder: Pokemon Momentum
+    type: file
+    allowUiUpdates: true
+    updateIntervalSeconds: 30
+    options:
+      path: /opt/pokemon-momentum/deploy/monitoring/grafana/dashboards

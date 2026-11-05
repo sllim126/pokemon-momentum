@@ -26,6 +26,69 @@ crontab changes). Each job is explained further down in this file.
 
 Check timers with `systemctl list-timers | grep pokemon`.
 
+Every cron job above runs through `scripts/monitoring/run_job.py`, and
+`scripts/monitoring/collect_status.py` runs every minute; both feed Grafana (see Monitoring).
+
+Monitoring (Grafana)
+--------------------
+
+Added 2026-11-05. Grafana shows the website, the jobs, the data downloads, this server, its
+containers and the work list on four dashboards. Everything is free software on this host;
+nothing is sent outside.
+
+Open: http://192.168.1.240:3000 (LAN; sign in as `admin`). Folder "Pokemon Momentum":
+
+- Overview (Grafana's home page): status tiles, "Did the jobs run?", data ages, trends
+- Website: requests, errors and response times per app and route; outside probes
+- Servers: CPU, memory, disks, network, updates, SMART, every Docker container
+- Jobs & work: jobs, downloads, log files, docs/todo.txt, bug reports, git
+
+How the numbers get there (Prometheus on localhost:9090 collects all of it):
+
+| Source | What | Where |
+| --- | --- | --- |
+| node-exporter (:9100, apt) | host CPU, memory, disks, network, apt, SMART | already installed |
+| `/metrics` on :8001 and :8010 | requests, errors, timings per route; price-data date | `scripts/dashboards/metrics.py`, `storefront/app/metrics.py` |
+| blackbox exporter (127.0.0.1:9115, apt) | site up and response time, certificate expiry | `deploy/monitoring/prometheus_momentum.yml` |
+| cAdvisor (127.0.0.1:8098, container) | per-container CPU, memory, restarts | `deploy/monitoring/docker-compose.yml` |
+| `collect_status.py` (cron, every minute) | systemd job results, data download ages, logs, todo counts, bug reports, git | writes `/var/lib/prometheus/node-exporter/momentum_status.prom` |
+| `run_job.py` (wraps each cron job) | exit code, start/finish, duration, last success | writes `momentum_job_<name>.prom` in the same folder |
+
+`/metrics` is private: it answers only requests from the host or Docker without proxy
+headers, so through Caddy (market.poke6s.com/metrics) it is a 404.
+
+Files in the repo: `deploy/monitoring/` (install script, Prometheus scrape jobs, Grafana
+provisioning, the dashboard builder and its JSON output) and `scripts/monitoring/`.
+
+Change a dashboard: edit `deploy/monitoring/build_dashboards.py`, then
+`python3 deploy/monitoring/build_dashboards.py`; Grafana picks up the JSON within 30 s.
+Edits made in the Grafana UI are lost at the next rebuild.
+
+Add a job: add it to `JOBS` in `scripts/monitoring/collect_status.py` (with its interval).
+A cron job also needs `/usr/bin/python3 scripts/monitoring/run_job.py <name> -- ` in front of
+its command in the crontab and `deploy/crontab.txt`. A systemd job needs nothing else.
+
+Install or repair (needs sudo; safe to rerun): `bash deploy/monitoring/install.sh`. It sets
+the text-file folder to group `adam`, keeps the blackbox exporter on localhost, copies the
+scrape jobs to `/etc/prometheus/momentum_scrape.yml` (loaded via `scrape_config_files` in
+`prometheus.yml`, backup kept), installs the Grafana provisioning, sets the home dashboard
+and starts cAdvisor. The crontab is separate: `crontab deploy/crontab.txt` (compare with
+`crontab -l` first).
+
+Checks:
+
+```bash
+curl -s 'localhost:9090/api/v1/targets?state=active' | grep -o '"health":"[a-z]*"' | sort | uniq -c
+curl -s localhost:8001/metrics | head          # 200 from the host
+curl -s -o /dev/null -w '%{http_code}\n' https://market.poke6s.com/metrics   # 404
+tail logs/monitoring_collector.log              # collector errors, if any
+```
+
+Notes: the Proxmox, UniFi and training-server targets in `prometheus.yml` predate this and
+are down; they are outside this project. A job shows "No run recorded yet" until it has run
+once under monitoring (systemd forgets runs at reboot; the weekly jobs fall back to the timer's
+last trigger time). Overdue = no success for 1.5 x the job's interval plus an hour.
+
 Older dashboard checks (March 2026)
 -----------------------------------
 

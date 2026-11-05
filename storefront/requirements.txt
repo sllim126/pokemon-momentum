@@ -7,5 +7,6 @@ markdown-it-py
 pillow
 requests
 python-multipart
+prometheus-client
 pytest
 httpx

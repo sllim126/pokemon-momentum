@@ -73,6 +73,8 @@ from scripts.dashboards.index_config import INDEX_DEFINITIONS, index_keys_for_ca
 from scripts.common.selling_costs import CHANNELS, DEFAULT_CHANNEL
 from scripts.common.pricecharting import PRODUCT_URL as PRICECHARTING_PRODUCT_URL
 from scripts.dashboards.hold_check import hold_check
+from scripts.dashboards.metrics import install_metrics
+from prometheus_client import Gauge
 from scripts.dashboards.psa_service import (
     fetch_psa_cert_from_upstream,
     normalize_psa_lookup,
@@ -617,6 +619,32 @@ app.add_middleware(
 )
 
 ensure_tracking_schema()
+
+# --- Monitoring (scripts/dashboards/metrics.py; dashboards in deploy/grafana/) -----------
+# How old the Pokemon price history is. The nightly update should keep this under ~1.2
+# days; Grafana turns the panel red past 2. Read from the same health snapshot as /health,
+# at most every 5 minutes, so scrapes every 15 s cost almost nothing.
+MARKET_LATEST_DATA = Gauge(
+    "market_latest_data_timestamp_seconds",
+    "Midnight UTC of the newest price date in the history (Pokemon, category 3)",
+)
+_market_freshness_checked = {"at": 0.0}
+
+
+def _refresh_market_freshness() -> None:
+    now = time.time()
+    if now - _market_freshness_checked["at"] < 300:
+        return
+    _market_freshness_checked["at"] = now
+    try:
+        latest = health(3)["latest"]
+        day = datetime.strptime(latest[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        MARKET_LATEST_DATA.set(day.timestamp())
+    except Exception:  # a failed read must not break the scrape; the gauge keeps its last value
+        pass
+
+
+install_metrics(app, "market", refresh=_refresh_market_freshness)
 
 
 def is_mobile_request(request: Request) -> bool:
