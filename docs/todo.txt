@@ -43,6 +43,9 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-05 Budget Builder keep and cycle (owner): "Keep" on any pick, then "New picks" refills
+  the rest of the budget with cards not shown yet (starts over when they run out). Desktop and
+  phone; API `keep_keys` on `/budget_builder`.
 - 2026-11-04 Catalogue crawl stops wasting requests: 404s were re-asked every night (a missing
   file looked unfetched), and Marvel Comics' ~10,800 sets with no product lists ate 3,720 of
   night two's 4,000 requests. 404s are now remembered, and a game whose first 25 product

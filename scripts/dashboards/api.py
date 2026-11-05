@@ -1390,12 +1390,15 @@ def _select_budget_candidates(
     limit: int,
     max_per_set: int,
     allow_duplicates: bool = False,
+    kept: list[dict] | None = None,
 ) -> list[dict]:
     """Walk the ranked candidates and keep each one that still fits the money left.
 
     Three passes: first only cards up to 45% of the budget, then 65%, then any price, so a
     single expensive card can't take the whole budget before cheaper strong picks are in.
     Also enforces max_per_set and, unless allow_duplicates, one card per Pokémon name.
+    `kept` cards (the visitor pressed Keep) go in first whatever they cost: their prices come
+    off the budget and they count toward the per-set, per-name and card-number limits.
     """
     if budget <= 0:
         return []
@@ -1404,6 +1407,14 @@ def _select_budget_candidates(
     name_counts: dict[str, int] = {}
     selected: list[dict] = []
     remaining = budget
+    for card in kept or []:
+        selected.append(card)
+        remaining = round(max(remaining - _safe_float(card.get("latest_price")), 0.0), 2)
+        group_id = _safe_int(card.get("groupId"))
+        group_counts[group_id] = group_counts.get(group_id, 0) + 1
+        name_root = _budget_name_root(card.get("productName"))
+        if name_root:
+            name_counts[name_root] = name_counts.get(name_root, 0) + 1
     passes = [
         {"max_ratio": 0.45},
         {"max_ratio": 0.65},
@@ -5647,6 +5658,7 @@ def budget_builder_recommendations(
     max_per_set: int = 2,
     rarities: str | None = None,
     exclude_keys: str | None = None,
+    keep_keys: str | None = None,
     allow_duplicates: bool = False,
     category_id: int = 3,
 ):
@@ -5657,7 +5669,10 @@ def budget_builder_recommendations(
     Each gets a score from trend and recent movement, plus short "why" reasons, and
     _select_budget_candidates fills the budget from the top of that ranking. limit=0
     fills the budget with as many as fit; exclude_keys ("productId||subType,...") swaps
-    out cards the visitor already owns.
+    out cards the visitor already owns, or has already been shown when they ask for new picks.
+    keep_keys (same format) are cards the visitor pressed Keep on: they stay in the result
+    (marked "kept") and the rest of the budget is filled around them. They're looked up by key,
+    so a kept card stays even if it no longer passes the price, rarity or activity filters.
     """
     budget = max(5.0, min(float(budget), 5000.0))
     min_price = max(0.5, min(float(min_price), budget))
@@ -5668,6 +5683,7 @@ def budget_builder_recommendations(
     category = category_config(category_id)
     rarity_filters = _budget_filter_keys(rarities)
     excluded_keys = _budget_exclude_keys(exclude_keys)
+    keep_key_set = _budget_exclude_keys(keep_keys)
     rarity_clause = build_set_basket_filter(rarity_filters, "s.rarity", "s.subTypeName", "s.productName")
 
     use_snapshot = True
@@ -5687,8 +5703,7 @@ def budget_builder_recommendations(
           0 AS under_the_radar_default_flag,
         """
 
-    sql = f"""
-    SELECT
+    columns_sql = f"""
       s.latest_date,
       s.groupId,
       s.groupName,
@@ -5714,6 +5729,9 @@ def budget_builder_recommendations(
       s.last_change_date,
       {snapshot_fields}
       COALESCE(s.breakout_90d_flag, 0) AS breakout_90d_flag
+    """
+    sql = f"""
+    SELECT {columns_sql}
     FROM {source} s
     WHERE s.categoryId = {category.category_id}
       AND s.latest_date = (SELECT MAX(latest_date) FROM {source})
@@ -5737,12 +5755,26 @@ def budget_builder_recommendations(
     """
     columns, rows = q(sql)
     candidates = _row_dicts(columns, rows)
-    if excluded_keys:
-        candidates = [
-            item for item in candidates
-            if (_safe_int(item.get("productId")), str(item.get("subTypeName") or "")) not in excluded_keys
-        ]
-    for candidate in candidates:
+
+    def card_key(item: dict) -> tuple[int, str]:
+        return (_safe_int(item.get("productId")), str(item.get("subTypeName") or ""))
+
+    kept: list[dict] = []
+    if keep_key_set:
+        product_ids = ", ".join(str(product_id) for product_id, _ in sorted(keep_key_set))
+        kept_columns, kept_rows = q(f"""
+        SELECT {columns_sql}
+        FROM {source} s
+        WHERE s.categoryId = {category.category_id}
+          AND s.latest_date = (SELECT MAX(latest_date) FROM {source})
+          AND s.productId IN ({product_ids})
+        """)
+        kept = [item for item in _row_dicts(kept_columns, kept_rows) if card_key(item) in keep_key_set]
+        kept.sort(key=lambda item: -_safe_float(item.get("latest_price")))
+    skip = excluded_keys | keep_key_set
+    if skip:
+        candidates = [item for item in candidates if card_key(item) not in skip]
+    for candidate in [*kept, *candidates]:
         candidate["score"] = _budget_candidate_score(candidate, budget)
         candidate["reasons"] = _budget_candidate_reasons(candidate)
 
@@ -5760,7 +5792,9 @@ def budget_builder_recommendations(
         limit=limit,
         max_per_set=max_per_set,
         allow_duplicates=allow_duplicates,
+        kept=kept,
     )
+    kept_ids = {id(item) for item in kept}
 
     items: list[dict] = []
     spent = 0.0
@@ -5790,6 +5824,7 @@ def budget_builder_recommendations(
                 "score": round(_safe_float(row.get("score")), 2),
                 "reasons": row.get("reasons") or [],
                 "budget_share_pct": round((price / budget) * 100.0, 2) if budget > 0 else None,
+                "kept": id(row) in kept_ids,
             }
         )
 
@@ -5808,6 +5843,8 @@ def budget_builder_recommendations(
         "category": category.label,
         "rarities": rarity_filters,
         "exclude_keys": [f"{product_id}||{subtype}" for product_id, subtype in sorted(excluded_keys)],
+        "keep_keys": [f"{product_id}||{subtype}" for product_id, subtype in sorted(keep_key_set)],
+        "kept_count": len(kept),
         "max_per_set": max_per_set,
         "allow_duplicates": allow_duplicates,
         "used_screener_snapshot": use_snapshot,

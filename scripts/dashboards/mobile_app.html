@@ -378,7 +378,14 @@
     .budget-opts select { height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); padding: 0 6px; font-size: 14px; min-width: 0; }
     .swapped { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 0 14px 8px; color: var(--muted); font-size: 12.5px; }
     .swapped button { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 3px 10px; font-size: 12.5px; color: var(--muted); }
-    .swap-btn { display: block; margin: -4px 14px 8px 70px; border: 1px solid var(--line); background: none; border-radius: 8px; padding: 5px 10px; font-size: 12.5px; color: var(--muted); }
+    .swap-btn { border: 1px solid var(--line); background: none; border-radius: 8px; padding: 5px 10px; font-size: 12.5px; color: var(--muted); text-align: left; }
+    /* Keep / swap under each Budget Builder pick, and the "New picks" button (keep and cycle). */
+    .pick-actions { display: flex; flex-wrap: wrap; gap: 6px; margin: -4px 14px 8px 70px; }
+    .keep-btn { border: 1px solid var(--line-strong); background: var(--panel); border-radius: 8px; padding: 5px 12px; font-size: 12.5px; font-weight: 600; color: var(--text); }
+    .keep-btn[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+    .budget-cycle { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .budget-cycle button { height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); font-size: 14px; font-weight: 600; }
+    .budget-cycle span { color: var(--muted); font-size: 12.5px; flex: 1 1 140px; }
     .suggest { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 14px 14px; }
     .suggest button { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 6px 12px; font-size: 14px; }
     .guide { padding: 0 14px calc(20px + var(--safe-b)); color: var(--muted); font-size: 14px; }
@@ -570,6 +577,10 @@
             <option value="1">1 per set</option><option value="2">2 per set</option><option value="3">3 per set</option><option value="4">4 per set</option>
           </select>
           <select id="budgetRarity" aria-label="Rarities"></select>
+        </div>
+        <div class="budget-cycle">
+          <button type="button" id="budgetRefresh">↻ New picks</button>
+          <span id="budgetNote">Tap Keep on the cards you like, then get new picks for the rest.</span>
         </div>
       </div>
       <div class="tools" id="tools1">
@@ -802,6 +813,10 @@
       budgetCards: [6, 8, 10, 12, 16].includes(Number(params.get("cards"))) ? Number(params.get("cards")) : 0,
       budgetPerSet: [1, 2, 3, 4].includes(Number(params.get("per_set"))) ? Number(params.get("per_set")) : 2,
       budgetSkipped: new Map((params.get("skip") || "").split(",").filter(Boolean).map((key) => [key, ""])),
+      // Keep and cycle: kept cards stay put (and ride in the link as keep=); budgetSeen holds
+      // the picks already shown and passed over, so "New picks" never repeats one. Not in the link.
+      budgetKept: new Map((params.get("keep") || "").split(",").filter(Boolean).map((key) => [key, ""])),
+      budgetSeen: new Set(),
       budgetMeta: null,
       mode: readStore(MODE_KEY, "keep") === "resell" ? "resell" : "keep",
       productKey: params.get("product"),  // card to open once the list loads
@@ -990,6 +1005,7 @@
         if (state.budgetCards) url.searchParams.set("cards", String(state.budgetCards));
         if (state.budgetPerSet !== 2) url.searchParams.set("per_set", String(state.budgetPerSet));
         if (state.budgetSkipped.size) url.searchParams.set("skip", [...state.budgetSkipped.keys()].join(","));
+        if (state.budgetKept.size) url.searchParams.set("keep", [...state.budgetKept.keys()].join(","));
       }
       if (state.selected) url.searchParams.set("product", state.selected.key);
       history.replaceState(history.state, "", url);
@@ -1462,7 +1478,9 @@
       const query = new URLSearchParams({ budget: String(state.budget), limit: String(state.budgetCards), max_per_set: String(state.budgetPerSet), category_id: String(categoryId()) });
       if (state.budgetRarity === "all") query.set("rarities", BUDGET_ALL_RARITIES.join(","));
       else if (state.budgetRarity) query.set("rarities", state.budgetRarity);
-      if (state.budgetSkipped.size) query.set("exclude_keys", [...state.budgetSkipped.keys()].join(","));
+      const skip = [...new Set([...state.budgetSkipped.keys(), ...state.budgetSeen])].filter((key) => !state.budgetKept.has(key));
+      if (skip.length) query.set("exclude_keys", skip.join(","));
+      if (state.budgetKept.size) query.set("keep_keys", [...state.budgetKept.keys()].join(","));
       return cached(`budget:${state.market}:${query}`, () => getJson(`/budget_builder?${query}`).then((payload) => {
         const rows = (payload.items || []).map((raw) => normalizeRow({ productKind: "card", ...raw }, list));
         rows.meta = payload;
@@ -1498,7 +1516,9 @@
       if (box.hidden) return;
       const chip = (strong, text) => el("span", {}, el("strong", { text: strong }), ` ${text}`);
       box.replaceChildren(chip(money(meta.spent), `spent of ${money(meta.budget)}`), chip(money(meta.remaining), "left"),
-        chip(String(meta.count), meta.count === 1 ? "card" : "cards"), chip(String(meta.set_count), meta.set_count === 1 ? "set" : "sets"));
+        chip(String(meta.count), meta.count === 1 ? "card" : "cards"), chip(String(meta.set_count), meta.set_count === 1 ? "set" : "sets"),
+        state.budgetKept.size ? chip(String(state.budgetKept.size), "kept") : "");
+      $("budgetRefresh").textContent = state.budgetKept.size ? "↻ New picks for the rest" : "↻ New picks";
     }
     function renderSwapped() {
       const box = $("swapped");
@@ -1517,6 +1537,7 @@
         state.budgetRarity = $("budgetRarity").value;
         state.budgetCards = Number($("budgetCards").value) || 0;
         state.budgetPerSet = Number($("budgetPerSet").value) || 2;
+        state.budgetSeen.clear();  // new settings, new pool: start the cycle over
         loadList();
       }, delay);
     }
@@ -1529,6 +1550,26 @@
       $("budgetInput").value = button.dataset.budget;
       budgetChanged(0);
     });
+    // "New picks": pass over every pick on screen that isn't kept and fill the rest again. When
+    // nothing new is left for these settings, start the cycle over from the best picks.
+    $("budgetRefresh").addEventListener("click", async () => {
+      for (const row of state.rows) if (!state.budgetKept.has(row.key)) state.budgetSeen.add(row.key);
+      $("budgetNote").textContent = "";
+      await loadList();
+      if (state.budgetSeen.size && !state.rows.some((row) => !state.budgetKept.has(row.key))) {
+        state.budgetSeen.clear();
+        await loadList();
+        $("budgetNote").textContent = "That was every pick for this budget, so these start over from the top.";
+      }
+    });
+    // Keep only marks the card: the others stay as they are until "New picks".
+    function toggleKeep(row) {
+      if (state.budgetKept.has(row.key)) state.budgetKept.delete(row.key);
+      else state.budgetKept.set(row.key, row.name);
+      syncUrl();
+      renderRows();
+      renderBudgetSummary();
+    }
 
     function renderSuggestions() {
       $("suggest").hidden = false;
@@ -1578,7 +1619,7 @@
         ]),
         section("Buy", "", [
           ["Sealed Deals", "Boxes, ETBs, bundles and blisters compared with buying the same booster packs loose. A negative figure means the sealed product is the cheaper way to get those packs; “—” means not every pack inside has a loose price."],
-          ["Budget Builder", "Pick a budget and get a spread of the strongest actively traded hits that fit it, at most two per set by default. Already own one? “I have this, swap it” finds a replacement."],
+          ["Budget Builder", "Pick a budget and get a spread of the strongest actively traded hits that fit it, at most two per set by default. Already own one? “I have this, swap it” finds a replacement. Like some of them? Keep those, and “New picks” fills the rest of the budget with cards you haven't seen yet."],
         ]),
         section("Saving cards", "♡ Save adds a card to your Buy List, Watchlist, Favorites or Needs Review. Saved cards stay on this phone, and sync to your account when you're signed in, so they also show on the desktop site."),
         section("Feedback", "Found something wrong? Tell us in the #bug-reports channel on our Discord (Menu → Help)."),
@@ -1842,9 +1883,12 @@
           const item = cardRow(row, () => selectCard(row, { open: true }), { nums: [el("span", { class: "price", text: money(row.price) }),
             el("span", { class: "sub", text: Number.isFinite(r.budget_share_pct) ? `${Math.round(r.budget_share_pct)}% of budget` : "" })] });
           const why = (r.reasons || []).filter((reason) => !/7d$/.test(reason)).map((reason) => PICK_REASONS[reason] || reason).join(" · ");
+          const kept = state.budgetKept.has(row.key);
+          const keep = el("button", { type: "button", class: "keep-btn", "aria-pressed": String(kept), text: kept ? "✓ Kept" : "Keep" });
+          keep.addEventListener("click", () => toggleKeep(row));
           const swap = el("button", { type: "button", class: "swap-btn", text: `I have this, swap it${why ? ` · ${why}` : ""}` });
-          swap.addEventListener("click", () => { state.budgetSkipped.set(row.key, row.name); loadList(); });
-          item.append(swap);
+          swap.addEventListener("click", () => { state.budgetKept.delete(row.key); state.budgetSkipped.set(row.key, row.name); loadList(); });
+          item.append(el("div", { class: "pick-actions" }, keep, swap));
           return item;
         }
         return cardRow(row, () => selectCard(row, { open: true }));

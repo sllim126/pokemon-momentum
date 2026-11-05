@@ -1,6 +1,6 @@
 # Desktop App: Maintainer Guide
 
-Last reviewed: 2026-10-31
+Last reviewed: 2026-11-05
 
 The desktop app is one page that holds the site's five areas (Buy, Discover, Research,
 Track, Learn) in a single three-column layout built for 1080p screens. Since 2026-10-12 it
@@ -102,6 +102,12 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
 - **Budget Builder** picks are chosen on the server (`budget_builder_recommendations` and
   `_select_budget_candidates` in `api.py`). It needs four price readings in the last week,
   or every reading available after a feed gap.
+- **Budget Builder keep and cycle** (desktop and phone, 2026-11-05). "Keep" only marks a pick
+  on the page (no reload) and adds it to the link as `keep=`. "New picks" adds every unkept
+  pick on screen to `budgetSeen` and asks again with `keep_keys` (kept cards go in first,
+  whatever they cost) and `exclude_keys` (owned + seen), so it never repeats a card. When no
+  new card is left it clears `budgetSeen` and starts over. Changing the budget or any menu
+  clears `budgetSeen` but keeps the kept cards.
 - **Discover lists survive feed gaps.** Each screener's activity bars ("10 different prices
   in 30 days", "4 readings in 7 days") are scaled to the days that actually have prices in
   that window (`gap_scaled_threshold` in `query_support.py`), so a gap in the TCGCSV feed
