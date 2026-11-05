@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-04 (milestone: torrent-sharing)
+Last updated: 2026-11-05 (milestone: budget-builders)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -60,13 +60,6 @@ Recently Completed
   sometimes showed the old set's history (ending Aug 2025). Snapshots rebuild at 02:00.
 - 2026-11-05 Graded Budget Builder (Beta) on desktop and phone: PSA 10s, 9-10s or 8-10s from
   PriceCharting, $100-$1,000 presets, Keep and New picks, each price linked to PriceCharting.
-- 2026-11-04 Catalogue crawl stops wasting requests: 404s were re-asked every night (a missing
-  file looked unfetched), and Marvel Comics' ~10,800 sets with no product lists ate 3,720 of
-  night two's 4,000 requests. 404s are now remembered, and a game whose first 25 product
-  requests are all 404 is skipped until due again.
-- 2026-11-02 TCGCSV archive torrents for 2024 and 2025 built and seeding in the owner's
-  qBittorrent (`scripts/torrents/build_archive_torrent.py`); CptSpaceToaster OK'd sharing and
-  they were posted in #useful-shares the same day.
 
 High Priority
 -------------
@@ -81,6 +74,8 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   the new store's `/p/<slug>` pages. Since 2026-10-31 it opens the TCGplayer Pro store (owner:
   sell there until the new store launches, after Black Friday); which products show it still
   comes from the last Squarespace export, so refresh that rule from the new store's stock then.
+- [next] Check the 2026-11-06 02:00 nightly update is green: first run with the snapshot
+  builders reading through `prices_by_current_group`. If it fails, see docs/data_flow.txt step 5.
 - [next] Owner, before 2026-11-14: domain forwarding stopgap (plan decision D5) (the Squarespace
   website plan is cancelled, ending 2026-11-14, confirmed 2026-10-31); one last products export just before the plan ends (for the importer re-run
   below). Products, orders and customers/subscribers were exported 2026-10-31; page text, blog
