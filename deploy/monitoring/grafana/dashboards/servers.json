@@ -1477,7 +1477,7 @@
     {
       "type": "table",
       "title": "Prometheus targets",
-      "description": "Everything Prometheus collects from. The home-lab targets (Proxmox, UniFi, training servers) were already configured and are down; they are outside this project.",
+      "description": "Everything Prometheus collects from. Proxmox works through pve-exporter (Home lab dashboard); the old UniFi and training-server targets are being fixed one at a time (docs/todo.txt).",
       "gridPos": {
         "x": 0,
         "y": 35,

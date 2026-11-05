@@ -1,4 +1,6 @@
-# Container metrics for Grafana (see "Monitoring" in docs/operator_runbook.txt).
+# Exporters for Grafana (see "Monitoring" in docs/operator_runbook.txt). All listen on
+# localhost only; Prometheus on this host scrapes them.
+#
 # cAdvisor reads Docker's view of every container on this host (CPU, memory, network,
 # restarts) and serves it on localhost:8098 for Prometheus. Localhost only: it lists every
 # container and image, which is nobody else's business.
@@ -25,4 +27,25 @@ services:
     devices:
       - /dev/kmsg
     privileged: true
+    restart: unless-stopped
+
+  # Proxmox cluster (192.168.1.75): node, VM, container and storage status from the
+  # Proxmox API, so nothing is installed on Proxmox itself. Outside the repo, in
+  # /etc/momentum-monitoring/:
+  #   secrets.env      PVE_USER=root@pam, PVE_TOKEN_NAME=grafana, PVE_TOKEN_VALUE=<secret>.
+  #                    The token has privilege separation on and only role PVEAuditor on /
+  #                    (read-only); never untick separation on a root@pam token.
+  #   pve-root-ca.pem  Proxmox's own CA (public), so HTTPS is verified, not skipped.
+  #                    Fetched from /nodes/pve/certificates/info; valid until 2032.
+  # Prometheus asks for /pve?target=192.168.1.75&cluster=1&node=1.
+  pve-exporter:
+    image: prompve/prometheus-pve-exporter:3.5.5
+    container_name: pve-exporter
+    env_file: /etc/momentum-monitoring/secrets.env
+    environment:
+      REQUESTS_CA_BUNDLE: /etc/ssl/pve-root-ca.pem
+    volumes:
+      - /etc/momentum-monitoring/pve-root-ca.pem:/etc/ssl/pve-root-ca.pem:ro
+    ports:
+      - "127.0.0.1:9221:9221"
     restart: unless-stopped

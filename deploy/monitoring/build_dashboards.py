@@ -8,13 +8,14 @@ writes grafana/dashboards/*.json next to this file. Grafana loads that folder by
 Change the dashboards here, not in the Grafana UI: UI edits are lost when the file is
 rebuilt. The JSON is committed too, so the dashboards work without running this script.
 
-Four dashboards, all reading the Prometheus data source (uid "prometheus"):
+Five dashboards, all reading the Prometheus data source (uid "prometheus"):
 
 * Overview: is everything all right? One screen of status tiles, the jobs table and the
   headline charts. Grafana's home page.
 * Website: requests, errors and response times per app and route, and outside probes.
 * Servers: this host (CPU, memory, disks, network, updates) and every Docker container.
 * Jobs & work: scheduled jobs, data downloads, logs, docs/todo.txt, bug reports, git.
+* Home lab: the Proxmox cluster (nodes, VMs, containers, storage); more machines later.
 
 Where the numbers come from: docs/operator_runbook.txt, "Monitoring".
 
@@ -435,8 +436,8 @@ def servers():
     p.append(table("Prometheus targets",
                    [target("up", ref="A", instant=True, table=True)], g(0, 35, 12, 8),
                    {"job": "Job", "instance": "Target", "Value": "Up"},
-                   description="Everything Prometheus collects from. The home-lab targets (Proxmox, UniFi, "
-                               "training servers) were already configured and are down; they are outside this project.",
+                   description="Everything Prometheus collects from. Proxmox works through pve-exporter (Home lab "
+                               "dashboard); the old UniFi and training-server targets are being fixed one at a time (docs/todo.txt).",
                    overrides=[col("Value", mappings=UP_DOWN)], sort=("Up", False)))
     p.append(table("Status collector",
                    [target("momentum_collector_errors", ref="A", instant=True, table=True)], g(12, 35, 12, 8),
@@ -500,10 +501,105 @@ def jobs_and_work():
     return dashboard("momentum-jobs", "Pokemon Momentum: Jobs & work", p, tags=("jobs",))
 
 
+# pve-exporter ids look like "node/pve", "qemu/100", "lxc/105", "storage/pve/local-lvm".
+# Its *_info series carry the names; join them on id so tables show names, not numbers.
+# The brackets around expr matter: "a - b * on (id) info" would join only b.
+GUEST = 'id=~"(qemu|lxc)/.*"'
+NODE = 'id=~"node/.*"'
+STORAGE = 'id=~"storage/.*"'
+
+
+def guest(expr):
+    return f"max by (id, name, node, type) (({expr}) * on (id) group_left (name, node, type) pve_guest_info)"
+
+
+def pve_node(expr):
+    return f"max by (id, name) (({expr}) * on (id) group_left (name) pve_node_info)"
+
+
+def pve_storage(expr):
+    return f"max by (id, node, storage) (({expr}) * on (id) group_left (node, storage) pve_storage_info)"
+
+
+def home_lab():
+    """Machines outside this project's own host. Proxmox since 2026-11-05; UniFi and the
+    training servers get their own rows as their exporters are set up (docs/todo.txt)."""
+    p = []
+    p.append(row("Proxmox cluster (192.168.1.75)", 0))
+    tiles = [
+        ("Exporter can read Proxmox", 'max(up{job="proxmox"}) or vector(0)',
+         dict(mappings=UP_DOWN, thresholds=steps("red", (1, "green")),
+              description="DOWN means the pve-exporter container can't read the Proxmox API "
+                          "(token, permission or certificate; runbook 'Monitoring').")),
+        ("Nodes up", f"count(pve_up{{{NODE}}} == 1) or vector(0)", dict()),
+        ("Nodes down", f"count(pve_up{{{NODE}}} == 0) or vector(0)", dict(thresholds=steps("green", (1, "red")))),
+        ("Guests running", f"count(pve_up{{{GUEST}}} == 1) or vector(0)",
+         dict(description="Virtual machines and containers that are on.")),
+        ("Guests stopped", f"count(pve_up{{{GUEST}}} == 0 unless on (id) pve_guest_info{{template=\"1\"}}) or vector(0)",
+         dict(description="Off guests (templates left out). Not always a problem: some are off on purpose.")),
+        ("Cluster CPU", f"100 * sum(pve_cpu_usage_ratio{{{NODE}}} * pve_cpu_usage_limit{{{NODE}}}) / sum(pve_cpu_usage_limit{{{NODE}}})",
+         dict(unit="percent", decimals=0, thresholds=steps("green", (80, "orange"), (95, "red")))),
+        ("Cluster memory", f"100 * sum(pve_memory_usage_bytes{{{NODE}}}) / sum(pve_memory_size_bytes{{{NODE}}})",
+         dict(unit="percent", decimals=0, thresholds=steps("green", (85, "orange"), (95, "red")))),
+        ("Fullest storage", f"max(100 * pve_disk_usage_bytes{{{STORAGE}}} / (pve_disk_size_bytes{{{STORAGE}}} > 0))",
+         dict(unit="percent", decimals=0, thresholds=steps("green", (80, "orange"), (90, "red")),
+              description="The most-used storage pool on any node; see the Storage table.")),
+    ]
+    for i, (title, expr, kw) in enumerate(tiles):
+        p.append(stat(title, expr, g(i * 3, 1, 3, 4), **kw))
+
+    p.append(table("Nodes",
+                   [target(pve_node(f"pve_up{{{NODE}}}"), ref="A", instant=True, table=True),
+                    target(pve_node(f"100 * pve_cpu_usage_ratio{{{NODE}}}"), ref="B", instant=True, table=True),
+                    target(pve_node(f"100 * pve_memory_usage_bytes{{{NODE}}} / pve_memory_size_bytes{{{NODE}}}"), ref="C", instant=True, table=True),
+                    target(pve_node(f"pve_uptime_seconds{{{NODE}}}"), ref="D", instant=True, table=True)],
+                   g(0, 5, 8, 7),
+                   {"name": "Node", "Value #A": "Up", "Value #B": "CPU", "Value #C": "Memory", "Value #D": "Up for"},
+                   overrides=[col("Value #A", mappings=UP_DOWN),
+                              col("Value #B", unit="percent", decimals=0, thresholds=steps("text", (80, "orange"), (95, "red"))),
+                              col("Value #C", unit="percent", decimals=0, thresholds=steps("text", (85, "orange"), (95, "red"))),
+                              col("Value #D", unit="dtdurations", decimals=0)]))
+    p.append(table("Storage",
+                   [target(pve_storage(f"100 * pve_disk_usage_bytes{{{STORAGE}}} / (pve_disk_size_bytes{{{STORAGE}}} > 0)"), ref="A", instant=True, table=True),
+                    target(pve_storage(f"pve_disk_size_bytes{{{STORAGE}}} - pve_disk_usage_bytes{{{STORAGE}}}"), ref="B", instant=True, table=True),
+                    target(pve_storage(f"pve_disk_size_bytes{{{STORAGE}}}"), ref="C", instant=True, table=True)],
+                   g(8, 5, 16, 7),
+                   {"storage": "Storage", "node": "Node", "Value #A": "Used", "Value #B": "Free", "Value #C": "Size"},
+                   overrides=[col("Value #A", unit="percent", decimals=0, thresholds=steps("green", (80, "orange"), (90, "red"))),
+                              col("Value #B", unit="bytes"), col("Value #C", unit="bytes")],
+                   sort=("Used", True)))
+    p.append(table("Virtual machines and containers",
+                   [target(guest(f"pve_up{{{GUEST}}}"), ref="A", instant=True, table=True),
+                    target(guest(f"100 * pve_cpu_usage_ratio{{{GUEST}}}"), ref="B", instant=True, table=True),
+                    target(guest(f"pve_memory_usage_bytes{{{GUEST}}}"), ref="C", instant=True, table=True),
+                    target(guest(f"pve_memory_size_bytes{{{GUEST}}}"), ref="D", instant=True, table=True),
+                    target(guest(f"pve_uptime_seconds{{{GUEST}}}"), ref="E", instant=True, table=True)],
+                   g(0, 12, 24, 10),
+                   {"name": "Name", "id": "ID", "type": "Type", "node": "Node", "Value #A": "Running",
+                    "Value #B": "CPU (of its cores)", "Value #C": "Memory used", "Value #D": "Memory given",
+                    "Value #E": "Up for"},
+                   description="This VM (grafana, which runs the website) is one of these.",
+                   overrides=[col("Value #A", mappings=value_map({1: ("Running", "green"), 0: ("Stopped", "text")})),
+                              col("Value #B", unit="percent", decimals=0, thresholds=steps("text", (80, "orange"), (95, "red"))),
+                              col("Value #C", unit="bytes"), col("Value #D", unit="bytes"),
+                              col("Value #E", unit="dtdurations", decimals=0)],
+                   sort=("Memory used", True)))
+    p.append(timeseries("Node CPU", [target(pve_node(f"100 * pve_cpu_usage_ratio{{{NODE}}}"), "{{name}}")],
+                        g(0, 22, 8, 8), unit="percent"))
+    p.append(timeseries("Busiest guests (CPU)",
+                        [target(f"topk(8, {guest(f'100 * pve_cpu_usage_ratio{{{GUEST}}}')})", "{{name}}")],
+                        g(8, 22, 8, 8), unit="percent", description="Percent of each guest's own cores."))
+    p.append(timeseries("Largest guests (memory)",
+                        [target(f"topk(8, {guest(f'pve_memory_usage_bytes{{{GUEST}}}')})", "{{name}}")],
+                        g(16, 22, 8, 8), unit="bytes"))
+    return dashboard("momentum-homelab", "Pokemon Momentum: Home lab", p, tags=("homelab",))
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     for name, board in (("overview", overview()), ("website", website()),
-                        ("servers", servers()), ("jobs_and_work", jobs_and_work())):
+                        ("servers", servers()), ("jobs_and_work", jobs_and_work()),
+                        ("home_lab", home_lab())):
         (OUT / f"{name}.json").write_text(json.dumps(board, indent=2) + "\n", encoding="utf-8")
         print(f"wrote {OUT / f'{name}.json'} ({len(board['panels'])} panels)")
 
