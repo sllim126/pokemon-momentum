@@ -168,7 +168,10 @@ Added 2026-10:
   daily and paced, collection JSON can be exported/imported, destructive page clears ask
   first, and Caddy compresses the public page with zstd/gzip
 - KPDH Binder planner at `/kpdh/`, isolated in a read-only nginx container on host port
-  8091 and reached through the same Caddy proxy
+  8091 and reached through the same Caddy proxy. Energy and Classic Series 2 are live;
+  the planner preserves Series 1 collection IDs, offers premium-first or base-first binder
+  order, uses the confirmed continuous Series 2 CR numbering, and outlines the nine
+  Energy CR cards in lime while physical-card confirmation is pending
 - Confirmed and Consistent Movers show how many days each card has been in the list (sortable);
   Set values' top-hit card opens in the side pane; browser Back closes the full card page
 - Binder planners on phones (2026-10-21/22): cards near the top, sideways page strip with a

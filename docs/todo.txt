@@ -43,6 +43,11 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-05 KPDH branch reconciliation: transplanted the final Series 2 catalog and images,
+  base-first binder option, corrected continuous CR numbering and lime provisional-evidence
+  markers onto current `main` without importing the old branches' unrelated dashboard, cron
+  or documentation changes. The isolated image built and passed smoke checks; 249 tests and
+  33 subtests pass.
 - 2026-11-05 Budget Builder keep and cycle (owner): "Keep" on any pick, then "New picks" refills
   the rest of the budget with cards not shown yet (starts over when they run out). Desktop and
   phone; API `keep_keys` on `/budget_builder`. Popular Pokémon (Charizard, Umbreon, Gengar…)
