@@ -47,6 +47,8 @@ Recently Completed
   the rest of the budget with cards not shown yet (starts over when they run out). Desktop and
   phone; API `keep_keys` on `/budget_builder`. Popular Pokémon (Charizard, Umbreon, Gengar…)
   get a +10 tie-breaker and a "Popular Pokémon" label (owner, after Reddit feedback).
+- 2026-11-05 Desktop: the browser's Back button returns from a set (or index) to the list, like
+  "← All sets" (owner).
 - 2026-11-05 Breakouts tightened (owner spotted Basic Darkness Energy, flat at ~$4.90 for months):
   a breakout must also be 5% above its 30-day average. And cards TCGplayer moved to another set
   (116 EN, 7 JP) get one history in the series, sparkline and signal snapshots; their charts

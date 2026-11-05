@@ -117,6 +117,10 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
   (`loadCardByKey` / `openProductFromLink`), not the slab price. Switching between the two
   builders clears kept, seen and swapped cards. Trends use up to 30 days; the history started
   2026-10-09, so the window is shorter until mid-November.
+- **Back button into sets and indexes** (2026-11-05). Opening a set or an index pushes a
+  history entry (`pushDrillEntry`), so the browser's Back returns to Sets / Market Stats, and
+  "← All sets" goes back through it. The `popstate` handler reopens whatever view the
+  address names. Picking cards inside a view still replaces the address (no entry per card).
 - **Breakouts** (2026-11-05) need the price above the previous 90-day high *and* at least 5%
   above the 30-day average (`min_vs_sma30_pct` on `/breakouts`), so a flat card ticking a cent
   past its old high doesn't count.

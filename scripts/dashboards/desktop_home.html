@@ -1080,7 +1080,14 @@
     }
     // A set's cards. `from` is where "back" returns to: Sets, or Set values in Market Stats
     // (which also shows the whole-set price chart).
+    // Opening a set or an index adds a browser history entry (like the full card page), so the
+    // browser's Back button returns to the list it came from; syncUrl then fills the new entry
+    // in with the set's address. "← All sets" goes back through that entry too.
+    function pushDrillEntry() {
+      history.pushState({ poke6sDrill: true }, "", location.href);
+    }
     function openSet(groupId, name, from = "sets") {
+      pushDrillEntry();
       state.setFrom = from;
       state.groupId = Number(groupId);
       state.groupName = name || "";
@@ -1094,12 +1101,17 @@
       return list.navParent || list.parent || list.key;
     }
     function openIndex(key) {
+      pushDrillEntry();
       state.indexTab = "cards";
       state.indexKey = key;
       openList("index");
     }
     const parentOf = (list) => (list.key === "set" ? state.setFrom : list.parent);
-    $("backButton").addEventListener("click", () => { const parent = parentOf(currentList()); if (parent) openList(parent); });
+    $("backButton").addEventListener("click", () => {
+      if (history.state?.poke6sDrill) return history.back();  // popstate below reopens the list
+      const parent = parentOf(currentList());
+      if (parent) openList(parent);
+    });
     $("statsTabs").addEventListener("click", (event) => {
       const button = event.target.closest("button[data-stats]");
       if (button && button.dataset.stats !== state.list) openList(button.dataset.stats);
@@ -2361,7 +2373,25 @@
       if (event.key === "Escape" && state.fullCard && !event.target.closest("input, select, textarea")) closeFullCard();
     });
     window.addEventListener("popstate", () => {
-      if (state.fullCard && !new URLSearchParams(location.search).has("card")) setFullCard(false);
+      const params = new URLSearchParams(location.search);
+      if (state.fullCard && !params.has("card")) return setFullCard(false);
+      // Back or Forward between a list and a set or index: show the view the address names.
+      const key = params.get("list") || "top_movers";
+      if (key === state.list && !["set", "index"].includes(key)) return;
+      if (!LISTS.some((l) => l.key === key)) return;
+      if (key === "set") {
+        const groupId = Number(params.get("set")) || state.groupId;
+        if (groupId !== state.groupId) state.groupName = "";  // filled in when the set loads
+        state.groupId = groupId;
+        state.setFrom = params.get("from") === "stats" ? "set_values" : "sets";
+        state.setFilter = params.get("filter") || "all";
+      }
+      if (key === "index") {
+        state.indexKey = params.get("index") || state.indexKey;
+        state.indexTab = params.get("tab") || "cards";
+      }
+      if (key === "sets" || key === "set_values") state.era = params.get("era") || "";
+      openList(key);
     });
     // Double-clicking a card's picture opens its full page (the first click already selected it).
     document.addEventListener("dblclick", (event) => {
