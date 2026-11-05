@@ -299,9 +299,16 @@ class _LatestTracker:
 _COLLECTORS: dict[str, _LatestTracker] = {}
 
 
-def install_visitor_counting(app, app_name: str, db_path: Path) -> VisitorTracker:
-    """Count page views and visitors for this app and publish them on /metrics."""
-    tracker = VisitorTracker(db_path, app_name)
+def install_visitor_counting(app, app_name: str, db_path: Path) -> VisitorTracker | None:
+    """Count page views and visitors for this app and publish them on /metrics.
+
+    If the counts file can't be created (a missing or read-only data folder), the app runs
+    without counting rather than failing to start; the reason is printed once."""
+    try:
+        tracker = VisitorTracker(db_path, app_name)
+    except (OSError, sqlite3.Error) as exc:
+        print(f"visitor counting off for {app_name}: {exc}", flush=True)
+        return None
     app.add_middleware(_PageViewMiddleware, tracker=tracker)
     if app_name not in _COLLECTORS:
         _COLLECTORS[app_name] = _LatestTracker()

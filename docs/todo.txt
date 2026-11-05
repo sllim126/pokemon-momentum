@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-05 (milestone: storefront-phase2)
+Last updated: 2026-11-05 (milestone: grafana-monitoring)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -53,28 +53,25 @@ Recently Completed
   products export needed. Shipping decision D3: free over $150 (Shipping page and plan updated).
 - 2026-11-05 Visitor counting for both sites (no cookies) and a Visitors dashboard; the
   Overview's "Requests / min" tile became "Visitors today".
-- 2026-11-05 Grafana monitoring (branch `monitoring/grafana`): request metrics on both apps
-  (private `/metrics`), outside probes, container metrics, a status collector for jobs, data
-  downloads, logs, todo, bug reports and git, and four provisioned dashboards. Root disk grown
-  to 598 GB through Proxmox (was 90% full, now 45%).
-- 2026-11-05 KPDH branch reconciliation: transplanted the final Series 2 catalog and images,
-  base-first binder option, corrected continuous CR numbering and lime provisional-evidence
-  markers onto current `main` without importing the old branches' unrelated dashboard, cron
-  or documentation changes. The isolated image built and passed smoke checks; 249 tests and
-  33 subtests pass.
+- 2026-11-05 Grafana monitoring (milestone grafana-monitoring): six dashboards on
+  http://192.168.1.240:3000 (Overview, Website, Servers, Jobs & work, Home lab, Visitors).
+  Request metrics on both apps (private `/metrics`), outside probes, container metrics, a
+  status collector and cron-job wrapper (crontab installed by the owner), Proxmox (read-only
+  API token) and UniFi (View Only local account) exporters with verified HTTPS, dead home-lab
+  targets removed, AIOS Experiments placeholders. Root disk grown to 598 GB through Proxmox
+  (was 90% full, now 45%). Runbook section "Monitoring".
 
 High Priority
 -------------
 
 Monitoring with Grafana (owner, 2026-11-05): "show me everything, then we scale it down".
-Four dashboards on http://192.168.1.240:3000; runbook section "Monitoring".
-- [in progress] Build-out on branch `monitoring/grafana`. Done and live: app `/metrics`,
-  blackbox probes, cAdvisor, status collector, four dashboards, Prometheus and Grafana
-  provisioning (`deploy/monitoring/install.sh` has been run). Stopped at: the crontab. Owner
-  installs it with `crontab deploy/crontab.txt` (adds the every-minute collector and wraps each
-  cron job in run_job.py; the agent was not allowed to change the crontab). Until then the cron
-  jobs show "No run recorded yet" and the todo/bug/git tiles stop updating.
-- [next] Owner: remove the temporary sudo file once the build-out is merged:
+Six dashboards on http://192.168.1.240:3000; runbook section "Monitoring".
+- [next] Branch clean-up for whoever continues the Lorcana plan: `plan/lorcana-market` also
+  carries the monitoring commits (two sessions shared one checkout on 2026-11-05). Those are
+  now on main (cherry-picked), so merge main into it, or rebuild it from main plus its own two
+  commits (cddec53 "Plan a Lorcana market research site", 3a24c99 "sharper card images").
+  The stale `monitoring/grafana` branch holds none of the work and can be deleted.
+- [next] Owner: remove the temporary sudo file now that the build-out is merged:
   `sudo rm /etc/sudoers.d/90-claude-buildout` (the Overview's "Temporary sudo" tile turns green).
 - [waiting] Owner: two UniFi access points are offline (2026-11-05): Garage/patio U6-Lite
   (192.168.1.10) and Living room U6-Lite (192.168.1.14). This is UniFi's Wi-Fi "warning". The
@@ -106,10 +103,6 @@ Four dashboards on http://192.168.1.240:3000; runbook section "Monitoring".
   the owner adds it later.
 - [waiting] `grafana.tail6217f2.ts.net` (Tailscale serve) forwards to port 8086, where nothing
   listens; Grafana is on 3000. Point it at 3000?
-- [done 2026-11-05] Fix or replace the old home-lab targets in prometheus.yml (owner, 2026-11-05),
-  one at a time. Done: Proxmox (pve-exporter) and UniFi (UnPoller, local View Only account
-  grafana-ro), both on the Home lab dashboard; training servers removed (offline or unused).
-  Other machines go in deploy/monitoring/nodes.yml (runbook "Adding another machine").
 - [planned] 2026-11-14: when the Squarespace price sync is retired, drop
   `squarespace-price-sync` from JOBS in scripts/monitoring/collect_status.py and the probe of
   https://poke6s.com/ changes meaning (it becomes the new store once launched).

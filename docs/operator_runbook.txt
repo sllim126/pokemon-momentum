@@ -32,9 +32,9 @@ Every cron job above runs through `scripts/monitoring/run_job.py`, and
 Monitoring (Grafana)
 --------------------
 
-Added 2026-11-05. Grafana shows the website, the jobs, the data downloads, this server, its
-containers and the work list on four dashboards. Everything is free software on this host;
-nothing is sent outside.
+Added 2026-11-05. Grafana shows the website and its visitors, the jobs, the data downloads,
+this server and its containers, the Proxmox cluster, the UniFi network and the work list on
+six dashboards. Everything is free software on this host; nothing is sent outside.
 
 Open: http://192.168.1.240:3000 (LAN; sign in as `admin`). Folder "Pokemon Momentum":
 
