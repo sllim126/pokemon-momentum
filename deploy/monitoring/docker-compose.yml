@@ -49,3 +49,36 @@ services:
     ports:
       - "127.0.0.1:9221:9221"
     restart: unless-stopped
+
+  # UniFi network (gateway 192.168.1.1): WAN, Wi-Fi, switches, access points and clients,
+  # read from the UniFi Network app. Outside the repo, in /etc/momentum-monitoring/:
+  #   unifi.env       UP_UNIFI_DEFAULT_USER / UP_UNIFI_DEFAULT_PASS: a local-access-only
+  #                   UniFi admin with View Only on Network and no other apps. It must be
+  #                   local: a UI.com (SSO) admin needs two-factor codes and can't sign in here.
+  #   unifi-cert.pem  The gateway's own self-signed certificate (CN unifi.local, valid until
+  #                   2027-07-27). HTTPS is verified against it: Go reads SSL_CERT_FILE as
+  #                   its only trusted root, and the name unifi.local maps to the gateway.
+  #                   When UniFi renews it, fetch it again (runbook "Monitoring").
+  unpoller:
+    image: ghcr.io/unpoller/unpoller:v2.15.4
+    container_name: unpoller
+    env_file: /etc/momentum-monitoring/unifi.env
+    environment:
+      UP_UNIFI_DEFAULT_URL: https://unifi.local
+      UP_UNIFI_DEFAULT_VERIFY_SSL: "true"
+      UP_UNIFI_DEFAULT_SAVE_SITES: "true"
+      UP_UNIFI_DEFAULT_SAVE_DPI: "false"     # per-app traffic: heavy, and not needed yet
+      UP_UNIFI_DEFAULT_SAVE_EVENTS: "false"
+      UP_UNIFI_DEFAULT_SAVE_ALARMS: "false"
+      UP_INFLUXDB_DISABLE: "true"
+      UP_LOKI_URL: ""
+      UP_PROMETHEUS_HTTP_LISTEN: 0.0.0.0:9130
+      UP_PROMETHEUS_NAMESPACE: unpoller
+      SSL_CERT_FILE: /etc/ssl/unifi-cert.pem
+    extra_hosts:
+      - "unifi.local:192.168.1.1"
+    volumes:
+      - /etc/momentum-monitoring/unifi-cert.pem:/etc/ssl/unifi-cert.pem:ro
+    ports:
+      - "127.0.0.1:9130:9130"
+    restart: unless-stopped

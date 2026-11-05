@@ -61,3 +61,12 @@ scrape_configs:
         target_label: instance
       - target_label: __address__
         replacement: localhost:9221
+
+  # UniFi network through the UnPoller container (docker-compose.yml here). Replaces the old
+  # 'unifi' SNMP job in prometheus.yml, whose exporter on 192.168.1.1:9116 never answered.
+  # UnPoller asks the UniFi controller on every scrape, so keep the interval relaxed.
+  - job_name: unifi
+    scrape_interval: 30s
+    scrape_timeout: 25s
+    static_configs:
+      - targets: ["localhost:9130"]

@@ -74,6 +74,12 @@ Four dashboards on http://192.168.1.240:3000; runbook section "Monitoring".
   jobs show "No run recorded yet" and the todo/bug/git tiles stop updating.
 - [next] Owner: remove the temporary sudo file once the build-out is merged:
   `sudo rm /etc/sudoers.d/90-claude-buildout` (the Overview's "Temporary sudo" tile turns green).
+- [waiting] Owner: two UniFi access points are offline (2026-11-05): Garage/patio U6-Lite
+  (192.168.1.10) and Living room U6-Lite (192.168.1.14). This is UniFi's Wi-Fi "warning". The
+  VPN area shows "error" (no VPN server running?). Expected, or worth a look?
+- [idea] Physical disk health on the Home lab dashboard: the Proxmox API lists every disk's
+  SMART verdict and wear (all fine on 2026-11-05; two hardware RAID volumes show UNKNOWN).
+  The collector could read it with the existing token.
 - [next] Scale the dashboards down after the owner has used them for a while (which tiles matter).
 - [waiting] Alerts: send Grafana alerts (site down, job failed or overdue, disk over 90%, price
   data over 3 days old) to Discord? Needs a channel and its own webhook (not #bug-reports).
@@ -82,10 +88,8 @@ Four dashboards on http://192.168.1.240:3000; runbook section "Monitoring".
 - [waiting] `grafana.tail6217f2.ts.net` (Tailscale serve) forwards to port 8086, where nothing
   listens; Grafana is on 3000. Point it at 3000?
 - [in progress] Fix or replace the old home-lab targets in prometheus.yml (owner, 2026-11-05),
-  one at a time. Proxmox: done (pve-exporter, Home lab dashboard). Next:
-  - UniFi (192.168.1.1, old SNMP target on :9116, nothing listening): replace with UnPoller
-    (free container); needs a View Only local UniFi account, credentials in
-    /etc/momentum-monitoring/secrets.env (UNIFI_USER, UNIFI_PASS). Add a Home lab row.
+  one at a time. Proxmox: done (pve-exporter). UniFi: done (UnPoller, local View Only account
+  grafana-ro). Both on the Home lab dashboard. Next:
   - Training server 10.0.4.45 (SSH only): install prometheus-node-exporter on it (owner, or
     add this server's SSH key).
   - Training server 172.26.10.4: no route, no answer. Owner: does it still exist? Else remove.

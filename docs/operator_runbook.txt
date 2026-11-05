@@ -42,7 +42,8 @@ Open: http://192.168.1.240:3000 (LAN; sign in as `admin`). Folder "Pokemon Momen
 - Website: requests, errors and response times per app and route; outside probes
 - Servers: CPU, memory, disks, network, updates, SMART, every Docker container
 - Jobs & work: jobs, downloads, log files, docs/todo.txt, bug reports, git
-- Home lab: the Proxmox cluster (3 nodes, every VM and container, storage pools)
+- Home lab: the Proxmox cluster (3 nodes, every VM and container, storage pools) and the
+  UniFi network (gateway, switches, access points, clients, internet link)
 
 How the numbers get there (Prometheus on localhost:9090 collects all of it):
 
@@ -54,6 +55,7 @@ How the numbers get there (Prometheus on localhost:9090 collects all of it):
 | cAdvisor (127.0.0.1:8098, container) | per-container CPU, memory, restarts | `deploy/monitoring/docker-compose.yml` |
 | `collect_status.py` (cron, every minute) | systemd job results, data download ages, logs, todo counts, bug reports, git | writes `/var/lib/prometheus/node-exporter/momentum_status.prom` |
 | pve-exporter (127.0.0.1:9221, container) | Proxmox nodes, VMs, containers, storage (Home lab dashboard) | `deploy/monitoring/docker-compose.yml`; token and CA in `/etc/momentum-monitoring/` |
+| UnPoller (127.0.0.1:9130, container) | UniFi network: devices, clients, internet link, Wi-Fi (Home lab dashboard) | `deploy/monitoring/docker-compose.yml`; account and certificate in `/etc/momentum-monitoring/` |
 | `run_job.py` (wraps each cron job) | exit code, start/finish, duration, last success | writes `momentum_job_<name>.prom` in the same folder |
 
 `/metrics` is private: it answers only requests from the host or Docker without proxy
@@ -98,8 +100,23 @@ pve-exporter`; 401 = token wrong or deleted, 403 = permission missing, SSL error
 Proxmox CA changed (fetch it again from Datacenter > node > System > Certificates).
 To revoke: delete the token in Proxmox (Datacenter > Permissions > API Tokens).
 
-Notes: the UniFi and training-server targets in `prometheus.yml` predate this and are down;
-they are being replaced one at a time (docs/todo.txt). A job shows "No run recorded yet" until it has run
+UniFi (added 2026-11-05): the UnPoller container signs in to the UniFi Network app on the
+Dream Machine Pro with the local account `grafana-ro` (View Only, local access only, not a
+super admin). It must be a local account: a UI.com (SSO) admin needs two-factor codes and
+the sign-in fails with "MFA token required". The username and password are in
+`/etc/momentum-monitoring/unifi.env` (mode 600; names UP_UNIFI_DEFAULT_USER and
+UP_UNIFI_DEFAULT_PASS). HTTPS is verified against the gateway's own self-signed certificate,
+`/etc/momentum-monitoring/unifi-cert.pem` (CN unifi.local, valid until 2027-07-27): the
+container reaches the gateway as `unifi.local` and trusts only that certificate. When UniFi
+renews it, UnPoller fails with an x509 error; save the new one with
+`echo | openssl s_client -connect 192.168.1.1:443 2>/dev/null | openssl x509 > /etc/momentum-monitoring/unifi-cert.pem`
+(check it is the gateway first) and `docker restart unpoller`. If the Home lab tile
+"UnPoller can read UniFi" is DOWN: `docker logs unpoller`. To revoke: delete `grafana-ro` in
+UniFi. Two PDUs share the name "USP PDU Pro", so the Devices table shows them as one row;
+rename one in UniFi to separate them.
+
+Notes: the training-server targets in `prometheus.yml` predate this and are down; they are
+being fixed one at a time (docs/todo.txt). A job shows "No run recorded yet" until it has run
 once under monitoring (systemd forgets runs at reboot; the weekly jobs fall back to the timer's
 last trigger time). Overdue = no success for 1.5 x the job's interval plus an hour.
 

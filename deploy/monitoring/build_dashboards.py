@@ -15,7 +15,7 @@ Five dashboards, all reading the Prometheus data source (uid "prometheus"):
 * Website: requests, errors and response times per app and route, and outside probes.
 * Servers: this host (CPU, memory, disks, network, updates) and every Docker container.
 * Jobs & work: scheduled jobs, data downloads, logs, docs/todo.txt, bug reports, git.
-* Home lab: the Proxmox cluster (nodes, VMs, containers, storage); more machines later.
+* Home lab: the Proxmox cluster (nodes, VMs, containers, storage) and the UniFi network.
 
 Where the numbers come from: docs/operator_runbook.txt, "Monitoring".
 
@@ -441,8 +441,8 @@ def servers():
     p.append(table("Prometheus targets",
                    [target("up", ref="A", instant=True, table=True)], g(0, 35, 12, 8),
                    {"job": "Job", "instance": "Target", "Value": "Up"},
-                   description="Everything Prometheus collects from. Proxmox works through pve-exporter (Home lab "
-                               "dashboard); the old UniFi and training-server targets are being fixed one at a time (docs/todo.txt).",
+                   description="Everything Prometheus collects from. Proxmox (pve-exporter) and UniFi (UnPoller) feed the "
+                               "Home lab dashboard; the old training-server targets are still being fixed (docs/todo.txt).",
                    overrides=[col("Value", mappings=UP_DOWN)], sort=("Up", False)))
     p.append(table("Status collector",
                    [target("momentum_collector_errors", ref="A", instant=True, table=True)], g(12, 35, 12, 8),
@@ -527,8 +527,9 @@ def pve_storage(expr):
 
 
 def home_lab():
-    """Machines outside this project's own host. Proxmox since 2026-11-05; UniFi and the
-    training servers get their own rows as their exporters are set up (docs/todo.txt)."""
+    """Machines outside this project's own host: the Proxmox cluster and the UniFi network
+    (both since 2026-11-05). The training servers get a row once their exporters are set up
+    (docs/todo.txt)."""
     p = []
     p.append(row("Proxmox cluster (192.168.1.75)", 0))
     tiles = [
@@ -597,7 +598,90 @@ def home_lab():
     p.append(timeseries("Largest guests (memory)",
                         [target(f"topk(8, {guest(f'pve_memory_usage_bytes{{{GUEST}}}')})", "{{name}}")],
                         g(16, 22, 8, 8), unit="bytes"))
+    p.extend(network_row(30))
     return dashboard("momentum-homelab", "Pokemon Momentum: Home lab", p, tags=("homelab",))
+
+
+# UnPoller series carry the device or client name; "uptime 0" is how it reports a device the
+# controller has lost (an AP that is unplugged or offline).
+UNIFI_STATUS_MAP = [{
+    "type": "value",
+    "options": {"ok": {"text": "ok", "color": "green", "index": 0},
+                "warning": {"text": "warning", "color": "orange", "index": 1},
+                "error": {"text": "error", "color": "red", "index": 2}},
+}]
+
+
+def network_row(y):
+    """UniFi network, read by UnPoller (deploy/monitoring/docker-compose.yml)."""
+    p = [row("Network (UniFi, Dream Machine Pro 192.168.1.1)", y)]
+    y += 1
+    tiles = [
+        ("UnPoller can read UniFi", 'max(up{job="unifi"}) * (count(unpoller_device_info) > bool 0) or vector(0)',
+         dict(mappings=UP_DOWN, thresholds=steps("red", (1, "green")),
+              description="DOWN means UnPoller can't sign in to the UniFi controller (account, password or "
+                          "certificate; runbook 'Monitoring').")),
+        ("Devices offline", "count(unpoller_device_uptime_seconds == 0) or vector(0)",
+         dict(thresholds=steps("green", (1, "red")),
+              description="UniFi devices the controller can't reach (uptime 0). See the Devices table.")),
+        ("Internet latency", 'max(unpoller_site_latency_seconds{subsystem="www"})',
+         dict(unit="s", decimals=3, thresholds=steps("green", (0.05, "orange"), (0.15, "red")))),
+        ("Internet drops", 'max(unpoller_site_intenet_drops_total{subsystem="www"})',
+         dict(thresholds=steps("green", (1, "orange"), (5, "red")),
+              description="Internet outages the gateway counted (its own running total).")),
+        ("Wired clients", 'sum(unpoller_site_users{subsystem="lan"})', dict()),
+        ("Wi-Fi clients", 'sum(unpoller_site_users{subsystem="wlan"})', dict()),
+        ("Firmware updates", "count(unpoller_device_upgradable == 1) or vector(0)",
+         dict(thresholds=steps("green", (1, "orange")), description="Devices with newer firmware available.")),
+        ("Gateway CPU", 'max(unpoller_device_cpu_utilization_ratio{type="udm"}) * 100',
+         dict(unit="percent", decimals=0, thresholds=steps("green", (80, "orange"), (95, "red")))),
+    ]
+    for i, (title, expr, kw) in enumerate(tiles):
+        p.append(stat(title, expr, g(i * 3, y, 3, 4), **kw))
+    y += 4
+
+    p.append(table("Network areas (UniFi's own verdict)",
+                   [target('count by (subsystem, status) ({__name__=~"unpoller_site_.+", subsystem!=""})',
+                           ref="A", instant=True, table=True)],
+                   g(0, y, 6, 8), {"subsystem": "Area", "status": "Status"},
+                   description="wan = the internet link, www = reaching the internet, lan = switches, "
+                               "wlan = Wi-Fi (warning when an AP is offline), vpn = VPN server.",
+                   overrides=[col("status", mappings=UNIFI_STATUS_MAP)]))
+    dev = "max by (name, type) "
+    p.append(table("Devices",
+                   [target("max by (name, type, model, ip, version) (unpoller_device_info)", ref="A", instant=True, table=True),
+                    target(f"{dev}(unpoller_device_uptime_seconds > bool 0)", ref="B", instant=True, table=True),
+                    target(f"{dev}(unpoller_device_uptime_seconds)", ref="C", instant=True, table=True),
+                    target(f"{dev}(unpoller_device_stations)", ref="D", instant=True, table=True),
+                    target(f"{dev}(unpoller_device_cpu_utilization_ratio) * 100", ref="E", instant=True, table=True),
+                    target(f"{dev}(unpoller_device_temperature_celsius)", ref="F", instant=True, table=True),
+                    target(f"{dev}(unpoller_device_upgradable)", ref="G", instant=True, table=True)],
+                   g(6, y, 18, 8),
+                   {"name": "Device", "type": "Type", "model": "Model", "ip": "IP", "Value #B": "Online",
+                    "Value #C": "Up for", "Value #D": "Clients", "Value #E": "CPU", "Value #F": "Temp",
+                    "Value #G": "Update", "version": "Firmware"},
+                   description="uap = access point, usw = switch or PDU, udm = gateway.",
+                   overrides=[
+                              col("Value #B", mappings=value_map({1: ("Online", "green"), 0: ("OFFLINE", "red")})),
+                              col("Value #C", unit="dtdurations", decimals=0),
+                              col("Value #E", unit="percent", decimals=0),
+                              col("Value #F", unit="celsius", decimals=0, thresholds=steps("text", (70, "orange"), (85, "red"))),
+                              col("Value #G", mappings=value_map({1: ("available", "orange"), 0: ("", "text")}))],
+                   sort=("Online", False)))
+    y += 8
+
+    p.append(timeseries("Internet traffic (gateway WAN)",
+                        [target('sum(rate(unpoller_device_wan_receive_bytes_total[5m])) * 8', "download", "A"),
+                         target('sum(rate(unpoller_device_wan_transmit_bytes_total[5m])) * 8', "upload", "B")],
+                        g(0, y, 8, 8), unit="bps"))
+    p.append(timeseries("Internet latency",
+                        [target('max(unpoller_site_latency_seconds{subsystem="www"})', "latency")],
+                        g(8, y, 8, 8), unit="s"))
+    p.append(timeseries("Busiest clients (download)",
+                        [target('topk(8, sum by (name) (rate(unpoller_client_receive_bytes_total[5m]))) * 8', "{{name}}")],
+                        g(16, y, 8, 8), unit="bps",
+                        description="Traffic each client received in the last 5 minutes, as UniFi counts it."))
+    return p
 
 
 def main() -> None:
