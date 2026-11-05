@@ -160,6 +160,18 @@ Port 8091 must not be forwarded publicly. Collection progress lives only in each
 browser; use the planner's Export and Import controls to move it between browser origins
 or devices.
 
+The live catalog includes Energy and Classic Series 2. Series 2 uses printed `KPDH02`
+codes; Classic CR runs `001`-`006` and Energy CR continues at `007`-`015`. The nine Energy
+CR cards carry lime provisional-evidence markers until physical cards confirm the official
+images. Existing Series 1 IDs and the `kpdh-master-binder-v2` browser key stay unchanged.
+See `docs/kpdh_series2_plan.md` for sources, counts, migration behavior and rollback tags.
+
+Run the focused catalog checks after any KPDH catalog, image or layout change:
+
+```bash
+docker-compose exec -T pokemon-momentum python -m pytest -q -p no:cacheprovider tests/test_kpdh_series2.py
+```
+
 
 Store Pricing Ops
 -----------------
