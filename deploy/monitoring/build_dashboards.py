@@ -441,8 +441,8 @@ def servers():
     p.append(table("Prometheus targets",
                    [target("up", ref="A", instant=True, table=True)], g(0, 35, 12, 8),
                    {"job": "Job", "instance": "Target", "Value": "Up"},
-                   description="Everything Prometheus collects from. Proxmox (pve-exporter) and UniFi (UnPoller) feed the "
-                               "Home lab dashboard; the old training-server targets are still being fixed (docs/todo.txt).",
+                   description="Everything Prometheus collects from. Proxmox (pve-exporter), UniFi (UnPoller) and the "
+                               "machines in deploy/monitoring/nodes.yml feed the Home lab dashboard.",
                    overrides=[col("Value", mappings=UP_DOWN)], sort=("Up", False)))
     p.append(table("Status collector",
                    [target("momentum_collector_errors", ref="A", instant=True, table=True)], g(12, 35, 12, 8),
@@ -527,9 +527,8 @@ def pve_storage(expr):
 
 
 def home_lab():
-    """Machines outside this project's own host: the Proxmox cluster and the UniFi network
-    (both since 2026-11-05). The training servers get a row once their exporters are set up
-    (docs/todo.txt)."""
+    """Machines outside this project's own host: the Proxmox cluster, the UniFi network (both
+    since 2026-11-05) and any other machine listed in nodes.yml."""
     p = []
     p.append(row("Proxmox cluster (192.168.1.75)", 0))
     tiles = [
@@ -599,6 +598,7 @@ def home_lab():
                         [target(f"topk(8, {guest(f'pve_memory_usage_bytes{{{GUEST}}}')})", "{{name}}")],
                         g(16, 22, 8, 8), unit="bytes"))
     p.extend(network_row(30))
+    p.extend(machines_row(56))
     return dashboard("momentum-homelab", "Pokemon Momentum: Home lab", p, tags=("homelab",))
 
 
@@ -610,6 +610,40 @@ UNIFI_STATUS_MAP = [{
                 "warning": {"text": "warning", "color": "orange", "index": 1},
                 "error": {"text": "error", "color": "red", "index": 2}},
 }]
+
+
+def machines_row(y):
+    """Other machines listed in deploy/monitoring/nodes.yml (job "machines"): Linux and
+    Synology run node-exporter, Windows runs windows_exporter. Empty until one is added."""
+    m = 'job="machines"'
+    by = "max by (instance, machine) "
+    lin_cpu = f'100 * (1 - avg by (instance, machine) (rate(node_cpu_seconds_total{{{m},mode="idle"}}[5m])))'
+    win_cpu = f'100 * (1 - avg by (instance, machine) (rate(windows_cpu_time_total{{{m},mode="idle"}}[5m])))'
+    lin_mem = f'{by}(100 * (1 - node_memory_MemAvailable_bytes{{{m}}} / node_memory_MemTotal_bytes{{{m}}}))'
+    win_mem = f'{by}(100 * (1 - windows_os_physical_memory_free_bytes{{{m}}} / windows_cs_physical_memory_bytes{{{m}}}))'
+    lin_disk = (f'{by}(100 * (1 - node_filesystem_avail_bytes{{{m},fstype!~"tmpfs|overlay|squashfs|ramfs|rootfs"}}'
+                f' / node_filesystem_size_bytes{{{m},fstype!~"tmpfs|overlay|squashfs|ramfs|rootfs"}}))')
+    win_disk = f'{by}(100 * (1 - windows_logical_disk_free_bytes{{{m}}} / windows_logical_disk_size_bytes{{{m}}}))'
+    return [
+        row("Other machines (deploy/monitoring/nodes.yml)", y),
+        table("Machines",
+              [target(f"{by}(up{{{m}}})", ref="A", instant=True, table=True),
+               target(f"({lin_cpu}) or ({win_cpu})", ref="B", instant=True, table=True),
+               target(f"({lin_mem}) or ({win_mem})", ref="C", instant=True, table=True),
+               target(f"({lin_disk}) or ({win_disk})", ref="D", instant=True, table=True),
+               target(f"{by}(time() - node_boot_time_seconds{{{m}}}) or {by}(windows_system_system_up_time{{{m}}})",
+                      ref="E", instant=True, table=True)],
+              g(0, y + 1, 24, 8),
+              {"machine": "Machine", "instance": "Address", "Value #A": "Up", "Value #B": "CPU",
+               "Value #C": "Memory", "Value #D": "Fullest disk", "Value #E": "Up for"},
+              description="Empty until a machine is added to deploy/monitoring/nodes.yml (runbook "
+                          "'Monitoring', 'Adding another machine').",
+              overrides=[col("Value #A", mappings=UP_DOWN),
+                         col("Value #B", unit="percent", decimals=0, thresholds=steps("text", (80, "orange"), (95, "red"))),
+                         col("Value #C", unit="percent", decimals=0, thresholds=steps("text", (85, "orange"), (95, "red"))),
+                         col("Value #D", unit="percent", decimals=0, thresholds=steps("text", (80, "orange"), (90, "red"))),
+                         col("Value #E", unit="dtdurations", decimals=0)]),
+    ]
 
 
 def network_row(y):

@@ -1,0 +1,11 @@
+# Other machines on the network that run an exporter, for the Home lab dashboard.
+# install.sh copies this to /etc/prometheus/momentum_nodes.yml; Prometheus rereads it on its
+# own every few minutes (no restart). How to add a machine: docs/operator_runbook.txt,
+# "Monitoring", "Adding another machine".
+#
+# Linux, Synology (Docker) and Proxmox hosts: node-exporter on port 9100.
+# Windows: windows_exporter on port 9182.
+# Example (remove the leading "# "):
+# - targets: ["192.168.1.30:9100"]
+#   labels: {machine: caddy-host, os: linux}
+[]

@@ -87,12 +87,10 @@ Four dashboards on http://192.168.1.240:3000; runbook section "Monitoring".
   the owner adds it later.
 - [waiting] `grafana.tail6217f2.ts.net` (Tailscale serve) forwards to port 8086, where nothing
   listens; Grafana is on 3000. Point it at 3000?
-- [in progress] Fix or replace the old home-lab targets in prometheus.yml (owner, 2026-11-05),
-  one at a time. Proxmox: done (pve-exporter). UniFi: done (UnPoller, local View Only account
-  grafana-ro). Both on the Home lab dashboard. Next:
-  - Training server 10.0.4.45 (SSH only): install prometheus-node-exporter on it (owner, or
-    add this server's SSH key).
-  - Training server 172.26.10.4: no route, no answer. Owner: does it still exist? Else remove.
+- [done 2026-11-05] Fix or replace the old home-lab targets in prometheus.yml (owner, 2026-11-05),
+  one at a time. Done: Proxmox (pve-exporter) and UniFi (UnPoller, local View Only account
+  grafana-ro), both on the Home lab dashboard; training servers removed (offline or unused).
+  Other machines go in deploy/monitoring/nodes.yml (runbook "Adding another machine").
 - [planned] 2026-11-14: when the Squarespace price sync is retired, drop
   `squarespace-price-sync` from JOBS in scripts/monitoring/collect_status.py and the probe of
   https://poke6s.com/ changes meaning (it becomes the new store once launched).

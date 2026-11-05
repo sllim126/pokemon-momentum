@@ -32,6 +32,7 @@ fi
 
 echo "== Prometheus"
 sudo install -m 644 "$HERE/prometheus_momentum.yml" "$PROM_EXTRA"
+sudo install -m 644 "$HERE/nodes.yml" /etc/prometheus/momentum_nodes.yml
 if ! grep -q "^scrape_config_files:" "$PROM_MAIN"; then
   sudo cp -p "$PROM_MAIN" "$PROM_MAIN.bak-$(date +%Y%m%d%H%M%S)"
   printf '\n# Pokemon Momentum scrape jobs (deploy/monitoring/install.sh)\nscrape_config_files:\n  - %s\n' "$PROM_EXTRA" \

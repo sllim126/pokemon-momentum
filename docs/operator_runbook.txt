@@ -43,7 +43,8 @@ Open: http://192.168.1.240:3000 (LAN; sign in as `admin`). Folder "Pokemon Momen
 - Servers: CPU, memory, disks, network, updates, SMART, every Docker container
 - Jobs & work: jobs, downloads, log files, docs/todo.txt, bug reports, git
 - Home lab: the Proxmox cluster (3 nodes, every VM and container, storage pools) and the
-  UniFi network (gateway, switches, access points, clients, internet link)
+  UniFi network (gateway, switches, access points, clients, internet link), and any other
+  machine listed in `deploy/monitoring/nodes.yml`
 
 How the numbers get there (Prometheus on localhost:9090 collects all of it):
 
@@ -115,8 +116,26 @@ renews it, UnPoller fails with an x509 error; save the new one with
 UniFi. Two PDUs share the name "USP PDU Pro", so the Devices table shows them as one row;
 rename one in UniFi to separate them.
 
-Notes: the training-server targets in `prometheus.yml` predate this and are down; they are
-being fixed one at a time (docs/todo.txt). A job shows "No run recorded yet" until it has run
+Adding another machine (it appears in Home lab, "Other machines"):
+
+1. Install an exporter on it. It serves read-only system numbers on one port; nothing is
+   sent anywhere. Allow that port only from this server (192.168.1.240).
+   - Linux (Ubuntu, Debian, a Proxmox host): `sudo apt install -y prometheus-node-exporter`
+     (port 9100). Firewall: `sudo ufw allow from 192.168.1.240 to any port 9100 proto tcp`
+     if ufw is on.
+   - Windows: the windows_exporter installer (.msi) from
+     github.com/prometheus-community/windows_exporter/releases (port 9182). Allow inbound
+     9182 from 192.168.1.240 in Windows Defender Firewall.
+   - Synology: Container Manager, image `prom/node-exporter`, network "host", with the
+     whole disk mounted read-only at /host and the argument `--path.rootfs=/host` (port 9100).
+   Check from this server: `curl -s http://<ip>:9100/metrics | head` (9182 for Windows).
+2. Add it to `deploy/monitoring/nodes.yml`, for example
+   `- targets: ["192.168.1.30:9100"]` and `labels: {machine: caddy-host, os: linux}`, then
+   `sudo install -m 644 deploy/monitoring/nodes.yml /etc/prometheus/momentum_nodes.yml`
+   (or rerun install.sh). Prometheus picks it up within two minutes; no restart.
+
+The old training-server targets (10.0.4.45, 172.26.10.4) were removed 2026-11-05: offline or
+no longer used. Backups of prometheus.yml from each change are next to it (`.bak-<time>`). A job shows "No run recorded yet" until it has run
 once under monitoring (systemd forgets runs at reboot; the weekly jobs fall back to the timer's
 last trigger time). Overdue = no success for 1.5 x the job's interval plus an hour.
 

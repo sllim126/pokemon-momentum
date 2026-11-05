@@ -70,3 +70,11 @@ scrape_configs:
     scrape_timeout: 25s
     static_configs:
       - targets: ["localhost:9130"]
+
+  # Other machines (Linux, Windows, Synology): listed in nodes.yml here, copied by install.sh
+  # to /etc/prometheus/momentum_nodes.yml. Prometheus rereads that file on its own, so adding
+  # a machine needs no restart.
+  - job_name: machines
+    file_sd_configs:
+      - files: [/etc/prometheus/momentum_nodes.yml]
+        refresh_interval: 2m

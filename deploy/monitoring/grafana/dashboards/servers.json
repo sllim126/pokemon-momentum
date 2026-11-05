@@ -1482,7 +1482,7 @@
     {
       "type": "table",
       "title": "Prometheus targets",
-      "description": "Everything Prometheus collects from. Proxmox (pve-exporter) and UniFi (UnPoller) feed the Home lab dashboard; the old training-server targets are still being fixed (docs/todo.txt).",
+      "description": "Everything Prometheus collects from. Proxmox (pve-exporter), UniFi (UnPoller) and the machines in deploy/monitoring/nodes.yml feed the Home lab dashboard.",
       "gridPos": {
         "x": 0,
         "y": 35,
