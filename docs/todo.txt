@@ -43,6 +43,9 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-05 Lorcana market plan written (`docs/lorcana_market_plan.md`): data on hand,
+  source rules checked (TCGCSV, Lorcast, Scrydex, PriceCharting, Ravensburger), rarity
+  tiers, indexes, sealed pack counts and phases. No code yet.
 - 2026-11-05 Storefront Phase 2: cart and Stripe Checkout (test mode). Owner's own Stripe
   account made (separate from the Squarespace-managed one), test key in `.env`, and a real test
   order placed end to end on a side copy of the store (paid, free shipping over $150, stock
@@ -611,6 +614,25 @@ Active Queue
   remaining idea.
 - [planned] Re-check first-load speed after real usage of the desktop app.
 - [idea] Keyboard shortcuts beyond up/down row stepping, if they clearly help.
+
+Lorcana Market (research site, internal first)
+----------------------------------------------
+
+Plan: `docs/lorcana_market_plan.md`. Research only (no store or listings), English, LAN-only
+until the owner decides on a public address. No new costs: TCGCSV/TCGplayer data and images
+only; Scrydex (paid) and PriceCharting graded are out of scope.
+
+- [planned] Phase 0: add category 71 (`lorcana`) to `category_config.py`; load history from
+  `data/raw` archives (Lorcana is in them back to 2024-02-08); add 71 to the nightly per-set
+  fetch and snapshots, then drop it from the collect-only job; Lorcana rarity tiers and
+  printings; Discord summary line.
+- [planned] Phase 1: game chosen by host name (Pokemon stays the default and unchanged);
+  Discover, Research by set / franchise (`Property`) / ink, card page, Track; desktop first;
+  footer credit and "not endorsed by Disney or Ravensburger" disclaimer.
+- [planned] Phase 2: Lorcana 100, Chase and Sealed indexes; Sealed Deals after the pack
+  counts in the plan are checked against product pages.
+- [waiting] Phase 3: owner picks brand and domain (subdomain of poke6s.com or a game-neutral
+  domain); avoid a name that starts with the Lorcana trademark.
 
 Parked: Mobile and Admin
 ------------------------

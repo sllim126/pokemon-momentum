@@ -15,7 +15,8 @@ coding agent. Read this first, then `docs/todo.txt`.
 - Finished items move to `docs/todo_archive.txt` at the next milestone (see below).
 - Project map: `docs/project_status.md`. Every server route: `docs/api_routes.md`. Desktop
   app guide: `docs/desktop_app.md`. New mobile app: `docs/mobile_app_plan.md`. New storefront
-  (replacing Squarespace on poke6s.com): `docs/storefront_plan.md`. Operating
+  (replacing Squarespace on poke6s.com): `docs/storefront_plan.md`. Lorcana research site
+  (planned): `docs/lorcana_market_plan.md`. Operating
   steps and the job schedule: `docs/operator_runbook.txt`. Data flow: `docs/data_flow.txt`.
 - **Handing over between agents.** The owner switches between Claude Code, Codex and others.
   A tool's own memory, skills or chat history are invisible to the next one, so anything

@@ -31,6 +31,7 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   backfill and the catalogue crawl post summaries to Discord
 - Other games: Magic, Yu-Gi-Oh, One Piece and Lorcana prices are archived nightly
   (collect only, since 2026-10-12; no site yet) in `data/tcgcsv_archive/`
+- Lorcana research site: planned, internal first, research only (`docs/lorcana_market_plan.md`)
 - Storage: DuckDB working database, partitioned Parquet history, and generated snapshots
 - Frontend: static HTML/CSS/JavaScript pages served by FastAPI; a new single-page desktop
   app (`/` on desktop, `docs/desktop_app.md`) covers Buy, Discover, Research, Track and Learn
