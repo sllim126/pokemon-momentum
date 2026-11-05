@@ -1,3 +1,41 @@
+"""Pokemon Momentum web server: every page and JSON route of the research site (FastAPI).
+
+Run by the `pokemon-momentum` container (uvicorn on port 8001; see docker-compose.yml). Every
+route, its page and who may call it is listed in docs/api_routes.md, which a test keeps in
+step with this file. Desktop app guide: docs/desktop_app.md; phone app: docs/mobile_app_plan.md.
+
+Where the data comes from
+- The nightly update (02:00 UTC, scripts/pipeline/run_daily_update.py) writes everything into
+  data/processed/prices_db.duckdb. This server only reads it, through one shared read-only
+  connection (query_support.get_con / q). Table names come from scripts/common/category_config
+  (`pokemon_*` for English, category 3; `pokemon_jp_*` for Japanese, category 85).
+- Most lists read a nightly snapshot table (product signal, screener, series, sparkline...)
+  and answer in milliseconds. Many routes also have a slower fallback that computes the same
+  thing from raw prices: it runs when a caller asks for non-default parameters, or when a
+  snapshot is missing. If a list is slow, check which path it took first.
+- The *_from() helpers in query_support pick the table (or a CSV fallback) for a category.
+- PriceCharting graded prices: table pricecharting_prices; every price shown must link back to
+  PriceCharting (AGENTS.md).
+
+Rough map of this file (line numbers drift; search for the route string)
+- page routes (HTML files, redirects, phone/desktop switch): `@app.get("/")` onwards
+- admin research (EOD index views) and store tools (Squarespace pricing, single listings,
+  supplier pricing): /eod/*, /pricing-upload, /single-listings/*, /supplier-*
+- sign-in and saved state (tracking_store.py): /tracking/*
+- market data for the apps: /universe, /groups, /search, /group_products, /series,
+  /card_details, /sparkline_batch, /index-overview-data
+- Discover lists: /budget_builder, /graded_budget_builder, /good_buys, /small_dips,
+  /set_dips, /top_movers, /breakouts, /sma30_holds, /confirmed_uptrends, /under_the_radar,
+  /early_uptrends (one screener each, answering {columns, rows})
+
+Safety notes
+- SQL is built with f-strings. Every value put into SQL is either cast (int/float), clamped,
+  or has single quotes doubled first; keep doing that for any new parameter.
+- Signed-in routes call require_tracking_user / require_admin_user before anything else.
+- Graded prices don't rise steadily with grade (PSA 1s can sell above mid grades): never add
+  checks that assume they do.
+"""
+
 import csv
 import difflib
 import hashlib
@@ -1280,6 +1318,7 @@ def eod_market_details(authorization: str | None = Header(default=None), trackin
 
 @app.get("/eod/index_list")
 def eod_index_list(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    """Admin only: the English sets that have prices, as {value, label} options for the EOD research page's index picker."""
     require_admin_user(authorization=authorization, tracking_token=tracking_token)
     cols, rows = q(
         f"""
@@ -1421,6 +1460,11 @@ def _budget_candidate_score(row: dict, budget: float) -> float:
 
 
 def _budget_candidate_reasons(row: dict) -> list[str]:
+    """Short labels saying why the Budget Builder picked a card ("popular pokemon", "under the radar", ...).
+
+    Shown under each pick in the apps (PICK_REASONS there turns them into sentences). The
+    labels mirror the bonuses in _budget_candidate_score, so a new bonus needs a label here.
+    """
     reasons: list[str] = []
     if _is_popular_pokemon(row.get("productName")):
         reasons.append("popular pokemon")
@@ -1509,6 +1553,13 @@ def _select_budget_candidates(
 
 
 def _format_days_delta(series: list[dict], key: str, days: int) -> tuple[float | None, float | None]:
+    """Change in `key` over the last `days` calendar days of a dated series.
+
+    Returns (absolute change, percent change), comparing the newest row with the last row on or
+    before (newest date - days), or the first row if the series is shorter. (None, None) when
+    there is no series or either value is missing; the percent is None when the earlier value
+    is zero.
+    """
     if not series:
         return None, None
     latest_date = datetime.strptime(series[-1]["date"], "%Y-%m-%d").date()
@@ -2290,6 +2341,11 @@ SEALED_PACK_OVERRIDES_CSV = SCRIPT_DIR / "sealed_pack_overrides.csv"
 
 
 def _load_sealed_pack_overrides_csv(path: Path = SEALED_PACK_OVERRIDES_CSV) -> dict[int, dict]:
+    """Hand-entered pack counts for sealed products, {productId: row}, from SEALED_PACK_OVERRIDES_CSV.
+
+    Used when a product's name doesn't tell us how many packs it holds. A missing file gives
+    {}; a bad line is skipped.
+    """
     overrides: dict[int, dict] = {}
     if not path.exists():
         return overrides
@@ -2823,6 +2879,12 @@ def _infer_pack_count(
 
 
 def _infer_retail_per_pack(name_raw: str, product_class: str, product_type: str | None = None) -> float:
+    """Estimated US retail price per pack (USD) for a sealed product, guessed from its name and type.
+
+    Used to compare a sealed product's market price with what its packs cost at retail. 0.0
+    means "no meaningful retail price" (Trick or Trade bags, mini-pack bundles and anything
+    not recognised), and callers then skip the retail comparison.
+    """
     name = _sealed_name(name_raw)
     normalized_type = str(product_type or "").lower()
 
@@ -2864,6 +2926,11 @@ def _infer_retail_per_pack(name_raw: str, product_class: str, product_type: str 
 
 
 def _infer_product_type(name_raw: str, product_class: str) -> str:
+    """The sealed product type ("Booster Box", "Elite Trainer Box", ...) guessed from its name.
+
+    Order matters: more specific names are checked first ("booster box case" before
+    "booster box"). Falls back to "Sealed Product" when nothing matches.
+    """
     name = _sealed_name(name_raw)
     if "ultra premium collection" in name:
         return "Ultra Premium Collection"
@@ -3442,6 +3509,11 @@ def _format_tracked_tag_label(tag: str) -> str:
 
 
 def _tracking_sort_key(row: dict, tracked_sort: str) -> tuple:
+    """Sort key for one tracked-card row, for the Track page's sort menu (`tracked_sort`).
+
+    Every column compares as case-insensitive text (so card numbers sort as text), with the
+    product name as tie-breaker. The default sorts by tags, then set, then name.
+    """
     def text(value) -> str:
         return str(value or "").casefold()
 
@@ -3904,6 +3976,11 @@ def _validate_csv_columns(header_line: str, required_fields: list[str], detail: 
 
 
 def _summarize_listing_drafts(rows: list[dict[str, str]]) -> dict[str, object]:
+    """Counts and a short preview of a Squarespace single-listing draft file, for the upload page.
+
+    Counts ready, error and approved rows (by draft_status / review_status) and returns the first
+    few rows for the page to show before anything is sent to the store.
+    """
     ready_rows = [row for row in rows if str(row.get("draft_status") or "").strip().lower() == "ready"]
     error_rows = [row for row in rows if str(row.get("draft_status") or "").strip().lower() == "error"]
     approved_rows = [
@@ -4229,6 +4306,12 @@ def supplier_pricing_save(
 
 
 def verify_google_identity_token(credential: str) -> dict:
+    """Check a Google sign-in credential with Google's tokeninfo endpoint and return its claims.
+
+    Raises 503 if Google sign-in isn't configured (GOOGLE_CLIENT_ID unset), 400 for a missing
+    credential, 502 if Google can't be reached, and 401 if Google rejects it, it was issued for
+    another client ID, or the email, subject or verified flag is missing.
+    """
     if not GOOGLE_CLIENT_ID:
         raise HTTPException(status_code=503, detail="Google sign-in is not configured")
     token = str(credential or "").strip()
@@ -4284,6 +4367,11 @@ def tracking_auth_config():
 
 @app.post("/tracking/google_session")
 def tracking_google_session(payload: dict):
+    """Sign in with Google: create the account on first use, then start a session.
+
+    Answers like /tracking/session: {token, user: {username, is_admin}}. The account is the
+    Google email; admins are recognised by is_admin_username.
+    """
     identity = verify_google_identity_token(payload.get("credential", ""))
     email = identity["email"]
     existing = get_user_by_username(email)
@@ -4351,6 +4439,11 @@ def tracking_tags_merge(payload: dict, authorization: str | None = Header(defaul
 
 
 def _normalize_tracking_view_state(payload: dict | None) -> dict:
+    """Clean a saved view's state from the browser into the fields we store.
+
+    Unknown keys are dropped, lists that aren't lists become [], and numbers and text are
+    coerced, so a malformed request can't store junk that breaks the page when the view loads.
+    """
     body = payload if isinstance(payload, dict) else {}
     browse_set_filters = body.get("browse_set_filters") or []
     if not isinstance(browse_set_filters, list):
@@ -4423,6 +4516,7 @@ def tracking_saved_views(authorization: str | None = Header(default=None)):
 
 @app.post("/tracking/views")
 def tracking_saved_views_upsert(payload: dict | None = None, authorization: str | None = Header(default=None)):
+    """Save (or overwrite by name) a signed-in user's saved view. Names must be 2+ characters; the state is cleaned first."""
     session_user = require_tracking_user(authorization)
     body = payload if isinstance(payload, dict) else {}
     name = str(body.get("name") or "").strip()
@@ -4739,6 +4833,7 @@ def bug_reports(
 
 @app.get("/eod/index_components")
 def eod_index_components(index: str, authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    """Admin only: the cards in one set ("index") for the EOD research page, via the EOD-style API wrapper (EOD_API)."""
     require_admin_user(authorization=authorization, tracking_token=tracking_token)
     try:
         general, components = EOD_API.get_index_components(index)
@@ -4764,6 +4859,11 @@ def eod_index_components(index: str, authorization: str | None = Header(default=
 
 @app.get("/eod/series")
 def eod_series(code: str, days: int = 365, authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    """Admin only: one product's daily price series for the EOD research page, looked up by its code.
+
+    `days` is clamped to 7-5000. Errors from the wrapper become HTTP errors with the code in
+    the message.
+    """
     require_admin_user(authorization=authorization, tracking_token=tracking_token)
     days = max(7, min(days, 5000))
     try:
@@ -4826,6 +4926,12 @@ def eod_series(code: str, days: int = 365, authorization: str | None = Header(de
 
 @app.get("/universe")
 def universe(limit: int = 5000, category_id: int = 3, product_id: int | None = None, sub_type_name: str | None = None, keys: str | None = None):
+    """The tradable card list for a market: one row per printing from the product signal snapshot.
+
+    The desktop app loads it once to drive search and the card picker. Narrow it with
+    product_id + sub_type_name (one printing) or keys ("productId||subTypeName" pairs, comma
+    separated). Metadata (names, images, rarity, card/sealed) comes from build_metadata_cte.
+    """
     limit = max(1, min(limit, 50000))
     category = category_config(category_id)
     product_signal_source = product_signal_from(category.category_id)
@@ -4963,6 +5069,7 @@ def product_picker(limit: int = 250, offset: int = 0, category_id: int = 3):
 
 @app.get("/groups")
 def groups(limit: int = 1000, offset: int = 0, category_id: int = 3):
+    """Sets that have products in the signal snapshot, by name, with their product counts. Used by set pickers."""
     limit = max(1, min(limit, 5000))
     offset = max(0, offset)
     category = category_config(category_id)
@@ -5067,6 +5174,10 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         return sorted(prefixes)
 
     def fuzzy_candidate_rows(normalized_term: str) -> list[dict]:
+        """Search fallback for typos: products whose name, set or number contains a 2-4 letter prefix of the term.
+
+        The rows are then scored with fuzzy_row_score; terms under 3 characters return nothing.
+        """
         if len(normalized_term) < 3:
             return []
         category = category_config(category_id)
@@ -5113,6 +5224,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
         return items
 
     def fuzzy_group_rows(normalized_term: str) -> list[dict]:
+        """Search fallback for typos in set names: sets whose name or abbreviation contains a prefix of the term."""
         if len(normalized_term) < 3:
             return []
         category = category_config(category_id)
@@ -5458,6 +5570,7 @@ def search(query: str, limit: int = 12, category_id: int = 3):
             ]
 
         def fuzzy_row_score(needle_variants: set[str], *values: str) -> float:
+            """Best similarity (0-1, difflib ratio) between any variant of the search term and any word of the given fields. Used to rank fuzzy matches."""
             tokens: list[str] = []
             for value in values:
                 tokens.extend(token_candidates(value))
@@ -5636,6 +5749,11 @@ def group_products(
     filters: str | None = None,
     category_id: int = 3,
 ):
+    """Every card (and sealed product) in one set with its latest price and signals: the Browse a Set view.
+
+    Joins the product signal snapshot with metadata; `filters` narrows to rarity/variant groups,
+    product_kind to "card" or "sealed". Capped at `limit` rows (max 10,000).
+    """
     limit = max(1, min(limit, 10000))
     category = category_config(category_id)
     price_source = prices_from(category.category_id)
@@ -5731,6 +5849,7 @@ def group_products(
 
 @app.get("/product_signals")
 def product_signals(limit: int = 500, min_price: float = 0.0, category_id: int = 3):
+    """Raw rows of the nightly product signal snapshot, strongest trend first. No page uses it today; kept for scripts and checks."""
     limit = max(1, min(limit, 5000))
     category = category_config(category_id)
 
@@ -6359,6 +6478,14 @@ def time_to_buy(
     filters: str | None = None,
     category_id: int = 3,
 ):
+    """Older "Time to Buy" screener for one set: cards trading flat near their recent level, not rising.
+
+    No page uses it since 2026-10-31 (docs/api_routes.md); the route is kept for now. Needs
+    group_id (empty answer without it). A card qualifies when it has enough recent readings and
+    distinct prices, trades at or below its 30-day average, its prices over the last
+    lookback_days stay within max_variance_to_current_pct of today's, and its 30- and 90-day
+    changes are at most max_30d_pct / max_90d_pct (0 = not up). Steadiest first.
+    """
     limit = max(1, min(limit, 5000))
     lookback_days = max(5, min(lookback_days, 30))
     min_recent_observations = max(3, min(min_recent_observations, lookback_days))
@@ -6478,6 +6605,13 @@ def time_to_buy(
 
 @app.get("/group_signals")
 def group_signals(limit: int = 500, min_items: int = 5, generation: str | None = None, category_id: int = 3):
+    """Set Strength: one row per set with its average 7/30/90-day changes and breadth, from the group signal snapshot.
+
+    Sorted by era, then breadth_score (build_group_signal_snapshot: a weighted mix of the set's
+    average 30- and 90-day change and the share of its cards above their 30-day average or at
+    a 90-day high). `min_items` hides tiny sets;
+    `generation` keeps one era (see build_generation_case).
+    """
     limit = max(1, min(limit, 5000))
     min_items = max(1, min(min_items, 1000))
     category = category_config(category_id)
@@ -6858,6 +6992,7 @@ def sealed_deals(
     signal_source = _product_signal_source_resilient(category.category_id)
 
     def build_sql(source: str) -> str:
+        """The sealed-deals query against `source` (the product signal snapshot, or raw prices as a fallback)."""
         return f"""
     SELECT
       latest_date,
@@ -7132,6 +7267,15 @@ def snapshot_history(category_id: int, productId: int, subTypeName: str) -> list
 
 @app.get("/series")
 def series(productId: int, subTypeName: str, days: int = 365, category_id: int = 3):
+    """Price history for one printing (productId + subTypeName) for the charts, with 7- and 30-day averages.
+
+    Paths, fastest first:
+    - days <= 730: the nightly series snapshot, trimmed to the last `days` calendar days before
+      the card's latest price (calendar days, not data points, so gaps don't stretch "30D").
+    - longer ("All"): the long-series snapshot (weekly older history + the daily 730 days).
+    - otherwise, or when the snapshot is too thin (< 7 points), the raw prices table.
+    When a card moved to another set, the snapshot can hold one row per set; the latest wins.
+    """
     days = max(7, min(days, 5000))
     st = subTypeName.replace("'", "''")
     category = category_config(category_id)
@@ -7415,6 +7559,17 @@ def top_movers(
     product_kind: str | None = None,
     category_id: int = 3,
 ):
+    """Top Movers: the biggest 30-day gains among cards that really trade.
+
+    A card needs a prior price of at least min_prior, enough days with a signal, enough recent
+    readings and distinct prices (so one odd sale can't make a mover), and, by default, a price
+    change in the last few days. Activity bars are lowered when the feed missed days
+    (gap_scaled_threshold).
+
+    Fast path: with the default window (30 days, 1% daily move, 14-day variation window) it reads
+    the precomputed top_mover_* columns of the product signal snapshot. Any other window runs the
+    full query over raw prices, which takes seconds. Sorted by 30-day change.
+    """
     category = category_config(category_id)
     min_recent_observations = max(2, min(min_recent_observations, 30))
     min_recent_distinct_prices = max(2, min(min_recent_distinct_prices, 15))
@@ -7909,6 +8064,11 @@ def sma30_holds(
     product_kind: str | None = None,
     category_id: int = 3,
 ):
+    """Consistent Movers: cards that have stayed above their 30-day average for days_required days in a row.
+
+    Reads hold_days / cross_date from the product signal snapshot; needs real trading (distinct
+    prices over 30 days, bar lowered when the feed has gaps).
+    """
     days_required = max(1, min(days_required, 30))
     limit = max(1, min(limit, 1000))
     min_recent_distinct_prices_30d = max(2, min(min_recent_distinct_prices_30d, 30))
@@ -7960,6 +8120,12 @@ def confirmed_uptrends(
     product_kind: str | None = None,
     category_id: int = 3,
 ):
+    """Confirmed Movers: cards on a bullish streak of at least days_required days. Snapshot only.
+
+    A bullish day (build_product_signal_snapshot) is price above its 30-day average and the
+    7-day average above the 30-day one. Sorted by streak length, then distance above the
+    30-day average.
+    """
     days_required = max(1, min(days_required, 30))
     limit = max(1, min(limit, 1000))
     category = category_config(category_id)
@@ -8018,6 +8184,21 @@ def under_the_radar(
     product_kind: str | None = None,
     category_id: int = 3,
 ):
+    """Under the Radar: quiet cards just starting to rise from a flat base.
+
+    A card qualifies when, among other checks: each of its last three readings is higher than
+    the one before (screener snapshot latest_price_3d < _2d < _1d); its 7-day change
+    is small but positive (min_7d_pct..max_7d_pct) and faster than its 30-day pace
+    (acceleration); its 30- and 90-day changes are still small; it crossed above its 30-day
+    average recently but hasn't held there long (max_hold_days); it's still close to that average
+    (max_price_vs_sma30_pct); and it hasn't flip-flopped across the average often in 180 days
+    (max_above30_crosses_180d, which weeds out noisy cards).
+
+    Paths: default parameters read the precomputed under_the_radar_default_flag/rank from the
+    screener snapshot; other parameters run the full rule set against the snapshot plus a
+    240-day price scan for the crossing count; without the snapshot, everything comes from raw
+    prices (slow). It can be empty on quiet days: the three-rises rule is strict on purpose.
+    """
     days_required = max(1, min(days_required, 15))
     limit = max(1, min(limit, 1000))
     min_recent_distinct_prices_30d = max(2, min(min_recent_distinct_prices_30d, 30))
@@ -8382,6 +8563,13 @@ def early_uptrends(
     product_kind: str | None = None,
     category_id: int = 3,
 ):
+    """Early Movers: cards just starting to trend up, still close to their base.
+
+    The same shape of rules as under_the_radar but looser (bigger 7-day and 90-day changes
+    allowed, lower acceleration, longer hold above the 30-day average) and without the
+    crossing-count limit. Same three paths: precomputed default flag in the screener snapshot,
+    full rules on the snapshot, or raw prices.
+    """
     days_required = max(1, min(days_required, 15))
     limit = max(1, min(limit, 1000))
     min_recent_distinct_prices_30d = max(2, min(min_recent_distinct_prices_30d, 30))

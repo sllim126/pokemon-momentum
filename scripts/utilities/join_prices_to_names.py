@@ -1,3 +1,10 @@
+"""Nightly step: rebuild <slug>_prices_named, the full price history joined to card and set names.
+
+An export for looking at the data by hand (table plus data/extracted/<slug>_prices_named.csv).
+No page, route or later step reads it; validate_pipeline only checks it exists. It costs
+~95 s a night and ~5 GB of CSV (see docs/todo.txt, performance review).
+"""
+
 import argparse
 import sys
 from pathlib import Path

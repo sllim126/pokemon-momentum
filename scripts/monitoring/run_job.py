@@ -56,6 +56,9 @@ def _previous_success(path: Path, job: str) -> float | None:
 
 
 def _write(job: str, started: float, finished: float, code: int) -> None:
+    """Write this job's metrics file (start, finish, duration, exit code, last success). A failed run
+    keeps the previous last-success time, read back from the old file.
+    """
     path = TEXTFILE_DIR / f"momentum_job_{job}.prom"
     success = finished if code == 0 else _previous_success(path, job)
     values = {
@@ -75,6 +78,11 @@ def _write(job: str, started: float, finished: float, code: int) -> None:
 
 
 def main(argv: list[str]) -> int:
+    """Run the command after `--`, record its metrics, and exit with the command's own exit code.
+
+    Exit code 2 for bad usage; a command that can't start is recorded with exit code 127. A problem
+    writing the metrics is printed but never changes the job's exit code.
+    """
     if len(argv) < 3 or argv[1] != "--" or not re.fullmatch(r"[a-z0-9-]+", argv[0]):
         print("usage: run_job.py <job-name> -- <command> [args...]", file=sys.stderr)
         return 2

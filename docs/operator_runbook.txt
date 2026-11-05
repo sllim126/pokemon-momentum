@@ -1482,6 +1482,37 @@ sudo docker-compose up -d pokemon-momentum
 ```
 
 
+Compacting the price database
+-----------------------------
+DuckDB never shrinks `data/processed/prices_db.duckdb`: tables the nightly update replaces
+leave free space behind, and dropping a table gives nothing back. Writing a fresh copy does.
+Done on 2026-11-05: 13.87 GB -> 7.96 GB (also left out the old `prices` table, last written
+2026-03-02, and the unused `top200_*` and unprefixed snapshot tables). Pre-clean-up backup:
+`data/backups/prices_db_before_cleanup_2026-11-05.duckdb` (gitignored; delete once the site has
+run well for a week or two).
+
+Do it well away from the 02:00 UTC update (about 5 minutes in all):
+
+```bash
+cd /opt/pokemon-momentum
+# 1. Back up (1-2 min). The site only reads, so the file is consistent while it runs.
+cp data/processed/prices_db.duckdb data/backups/prices_db_before_compact_$(date +%F).duckdb
+# 2. Copy into a new file (~3 min); checks every table's row count. Add --drop <table> to leave
+#    a table out.
+docker exec pokemon-momentum python scripts/utilities/compact_duckdb.py \
+  --source /app/data/backups/prices_db_before_compact_$(date +%F).duckdb \
+  --dest /app/data/processed/prices_db.compact.duckdb
+# 3. Swap it in (about 10 seconds of downtime) and give the file back to adam.
+docker-compose stop pokemon-momentum
+mv data/processed/prices_db.compact.duckdb data/processed/prices_db.duckdb
+docker-compose start pokemon-momentum
+docker exec pokemon-momentum chown 1000:1000 /app/data/processed/prices_db.duckdb
+```
+
+Expected: the script ends with "Row counts match", and the site's pages answer as before. To
+undo, stop the site and copy the backup back over `prices_db.duckdb`.
+
+
 If Japanese category loads no history
 -------------------------------------
 Symptoms:

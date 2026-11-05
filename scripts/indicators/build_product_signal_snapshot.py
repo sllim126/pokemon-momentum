@@ -1,3 +1,20 @@
+"""Nightly step: the product signal snapshot, one row per printing with its trend signals.
+
+The main input of the Discover lists and the apps (table <slug>_product_signal_snapshot, plus a
+CSV copy in data/extracted). For each printing it computes from price history: latest price,
+changes over 7/30/90/365 days and since release, 3/7/30/90-day moving averages, how long the
+price has held above its 30-day average (hold_days, cross_date), bullish and early-bullish
+streaks, a trend_score, how actively it trades (distinct prices, readings), and the
+precomputed top_mover_* columns behind /top_movers' fast path.
+
+Reads prices through price_views.prices_by_current_group, so a card TCGplayer moved to another
+set keeps one history. Run by run_daily_update.py after the price load:
+
+    python scripts/indicators/build_product_signal_snapshot.py --category-id 3
+
+Needs the DuckDB write lock (the nightly stops the site first). ~100 s for English.
+"""
+
 import argparse
 import sys
 from pathlib import Path

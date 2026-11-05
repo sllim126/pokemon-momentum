@@ -37,6 +37,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """Rebuild <slug>_health_snapshot (one row: price row count and newest date) and its CSV copy."""
     args = parse_args()
     category = get_category_config(args.category_id)
     out_csv = f"{EXTRACTED_DIR}/{category.health_snapshot_csv}"

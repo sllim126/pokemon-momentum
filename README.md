@@ -308,7 +308,7 @@ repo, and the "milestone" wrap-up routine) and [docs/todo.txt](/opt/pokemon-mome
 
 ## Notes
 
-- This project has moved beyond the old `top200` prototype workflow.
+- The old `top200` prototype scripts and tables were removed on 2026-11-05 (still in git history).
 - The application currently spans market research, collector tools, and protected
   Squarespace/store operations; `docs/project_status.md` is the concise project map.
 - Generated-artifact handling is defined in `docs/project_status.md`; runtime outputs stay
