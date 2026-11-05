@@ -7,6 +7,17 @@ Archived Completed Work
 November 2026
 -------------
 
+- Completed and archived at the 2026-11-05 milestone (homelab-dashboards):
+  - 2026-11-05 Visitor counting for both sites (no cookies) and a Visitors dashboard; the
+    Overview's "Requests / min" tile became "Visitors today".
+  - 2026-11-05 Grafana monitoring (milestone grafana-monitoring): six dashboards on
+    http://192.168.1.240:3000 (Overview, Website, Servers, Jobs & work, Home lab, Visitors).
+    Request metrics on both apps (private `/metrics`), outside probes, container metrics, a
+    status collector and cron-job wrapper (crontab installed by the owner), Proxmox (read-only
+    API token) and UniFi (View Only local account) exporters with verified HTTPS, dead home-lab
+    targets removed, AIOS Experiments placeholders. Root disk grown to 598 GB through Proxmox
+    (was 90% full, now 45%). Runbook section "Monitoring".
+
 - Completed and archived at the 2026-11-05 milestone (job-metrics-fix):
   - 2026-11-05 Storefront Phase 2: cart and Stripe Checkout (test mode). Owner's own Stripe
     account made (separate from the Squarespace-managed one), test key in `.env`, and a real test

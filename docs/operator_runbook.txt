@@ -34,21 +34,32 @@ Monitoring (Grafana)
 
 Added 2026-11-05. Grafana shows the website and its visitors, the jobs, the data downloads,
 this server and its containers, the Proxmox cluster, the UniFi network and the work list on
-six dashboards. Everything is free software on this host; nothing is sent outside.
+seven dashboards in two folders. Everything is free software on this host; nothing is sent
+outside. Every dashboard's top bar has a Home link and "Pokemon Momentum" and "Home lab"
+drop-downs. Grafana's home page is the owner's "Everything" dashboard (headline tiles for
+every project), installed from a private repository; `install.sh` leaves an existing home
+page alone and sets Overview only when none is set.
 
 Open: http://192.168.1.240:3000 (LAN; sign in as `admin`). Folder "Pokemon Momentum":
 
-- Overview (Grafana's home page): status tiles, "Did the jobs run?", data ages, trends
+- Overview: status tiles, "Did the jobs run?", data ages, trends
   At its bottom, a collapsed "AIOS Experiments" row of placeholders: a display layer for
   the AIOS task registry, not a task list (`docs/aios_grafana_experiments.md`)
 - Website: requests, errors and response times per app and route; outside probes
-- Servers: CPU, memory, disks, network, updates, SMART, every Docker container
 - Jobs & work: jobs, downloads, log files, docs/todo.txt, bug reports, git
 - Visitors: people and page views per day for market.poke6s.com and the new storefront, top
   pages, where visitors came from, phone vs desktop (see "Visitor counting" below)
-- Home lab: the Proxmox cluster (3 nodes, every VM and container, storage pools) and the
-  UniFi network (gateway, switches, access points, clients, internet link), and any other
-  machine listed in `deploy/monitoring/nodes.yml`
+
+Folder "Home lab" (moved out of "Pokemon Momentum" on 2026-11-05: these serve more than the
+Pokemon sites):
+
+- Proxmox cluster: 3 nodes, every VM and container, storage pools
+- Network (UniFi): gateway, switches, access points, clients, internet link
+- Servers: this host's CPU, memory, disks, network, updates, SMART, every Docker container,
+  and "Other machines" (any machine listed in `deploy/monitoring/nodes.yml`)
+
+The JSON for the two folders lives in `deploy/monitoring/grafana/dashboards/` and
+`deploy/monitoring/grafana/homelab/`, both written by `deploy/monitoring/build_dashboards.py`.
 
 How the numbers get there (Prometheus on localhost:9090 collects all of it):
 
@@ -59,8 +70,8 @@ How the numbers get there (Prometheus on localhost:9090 collects all of it):
 | blackbox exporter (127.0.0.1:9115, apt) | site up and response time, certificate expiry | `deploy/monitoring/prometheus_momentum.yml` |
 | cAdvisor (127.0.0.1:8098, container) | per-container CPU, memory, restarts | `deploy/monitoring/docker-compose.yml` |
 | `collect_status.py` (cron, every minute) | systemd job results, data download ages, logs, todo counts, bug reports, git | writes `/var/lib/prometheus/node-exporter/momentum_status.prom` |
-| pve-exporter (127.0.0.1:9221, container) | Proxmox nodes, VMs, containers, storage (Home lab dashboard) | `deploy/monitoring/docker-compose.yml`; token and CA in `/etc/momentum-monitoring/` |
-| UnPoller (127.0.0.1:9130, container) | UniFi network: devices, clients, internet link, Wi-Fi (Home lab dashboard) | `deploy/monitoring/docker-compose.yml`; account and certificate in `/etc/momentum-monitoring/` |
+| pve-exporter (127.0.0.1:9221, container) | Proxmox nodes, VMs, containers, storage (Home lab: Proxmox cluster) | `deploy/monitoring/docker-compose.yml`; token and CA in `/etc/momentum-monitoring/` |
+| UnPoller (127.0.0.1:9130, container) | UniFi network: devices, clients, internet link, Wi-Fi (Home lab: Network) | `deploy/monitoring/docker-compose.yml`; account and certificate in `/etc/momentum-monitoring/` |
 | `run_job.py` (wraps each cron job) | exit code, start/finish, duration, last success | writes `momentum_job_<name>.prom` in the same folder |
 
 `/metrics` is private: it answers only requests from the host or Docker without proxy
@@ -80,7 +91,7 @@ its command in the crontab and `deploy/crontab.txt`. A systemd job needs nothing
 Install or repair (needs sudo; safe to rerun): `bash deploy/monitoring/install.sh`. It sets
 the text-file folder to group `adam`, keeps the blackbox exporter on localhost, copies the
 scrape jobs to `/etc/prometheus/momentum_scrape.yml` (loaded via `scrape_config_files` in
-`prometheus.yml`, backup kept), installs the Grafana provisioning, sets the home dashboard
+`prometheus.yml`, backup kept), installs the Grafana provisioning, sets the home dashboard (only if none is set)
 and starts cAdvisor. The crontab is separate: `crontab deploy/crontab.txt` (compare with
 `crontab -l` first).
 
@@ -101,7 +112,7 @@ untick privilege separation: on a root@pam token that would give full root. The 
 is in `/etc/momentum-monitoring/secrets.env` (mode 600, outside the repo; names PVE_USER,
 PVE_TOKEN_NAME, PVE_TOKEN_VALUE). HTTPS is verified against Proxmox's own CA, saved as
 `/etc/momentum-monitoring/pve-root-ca.pem` (valid until 2032; SHA-256 fingerprint starts
-C7:72:A8). If the Home lab tile "Exporter can read Proxmox" is DOWN: `docker logs
+C7:72:A8). If the Proxmox cluster tile "Exporter can read Proxmox" is DOWN: `docker logs
 pve-exporter`; 401 = token wrong or deleted, 403 = permission missing, SSL error = the
 Proxmox CA changed (fetch it again from Datacenter > node > System > Certificates).
 To revoke: delete the token in Proxmox (Datacenter > Permissions > API Tokens).
@@ -116,7 +127,7 @@ UP_UNIFI_DEFAULT_PASS). HTTPS is verified against the gateway's own self-signed 
 container reaches the gateway as `unifi.local` and trusts only that certificate. When UniFi
 renews it, UnPoller fails with an x509 error; save the new one with
 `echo | openssl s_client -connect 192.168.1.1:443 2>/dev/null | openssl x509 > /etc/momentum-monitoring/unifi-cert.pem`
-(check it is the gateway first) and `docker restart unpoller`. If the Home lab tile
+(check it is the gateway first) and `docker restart unpoller`. If the Network tile
 "UnPoller can read UniFi" is DOWN: `docker logs unpoller`. To revoke: delete `grafana-ro` in
 UniFi. Two PDUs share the name "USP PDU Pro", so the Devices table shows them as one row;
 rename one in UniFi to separate them.
@@ -134,7 +145,7 @@ only from the private network); this was checked on 2026-11-05. Requests without
 as one; days are UTC. www.poke6s.com is still Squarespace until 2026-11-14 (its numbers are in
 Squarespace's own analytics); the storefront counts only LAN visits until it is public.
 
-Adding another machine (it appears in Home lab, "Other machines"):
+Adding another machine (it appears in Home lab: Servers, "Other machines"):
 
 1. Install an exporter on it. It serves read-only system numbers on one port; nothing is
    sent anywhere. Allow that port only from this server (192.168.1.240).
