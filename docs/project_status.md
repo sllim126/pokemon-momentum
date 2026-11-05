@@ -120,6 +120,11 @@ The following pages require a Google sign-in listed in `POKEMON_MOMENTUM_ADMIN_U
 - English/Japanese market index family
 - Squarespace price sync and inventory audit
 - Singles listing workflow with cached, square-padded Scrydex artwork
+- Clean-up and code review (2026-11-05): the price database was compacted from 13.9 GB to
+  8.0 GB after dropping the old pre-March tables, and 29 unused scripts were removed
+  (`scripts/utilities/compact_duckdb.py` does future compactions; runbook "Compacting the price
+  database"). Every file the site and the nightly run now has a header and documented
+  functions; `scripts/dashboards/api.py`'s header maps its routes and data paths.
 - Collector Hub and generated placeholder/checklist workflow
 
 Added 2026-10:
@@ -210,7 +215,7 @@ The repository currently uses three artifact classes:
    they remain versioned until deployment builds them independently. They are marked as
    generated in `.gitattributes` and should be committed separately from builder changes.
 3. Local runtime artifacts: `output/`, `data/raw/`, `data/extracted/`, `data/processed/`,
-   `logs/`, and `.locks/`. These remain ignored and must not be committed.
+   `data/backups/`, `logs/`, and `.locks/`. These remain ignored and must not be committed.
 
 Cached files under `images/cards/` are deployable binary assets used by Squarespace and
 storefront workflows. Keep their commits separate from application logic when practical.
