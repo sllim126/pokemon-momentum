@@ -225,6 +225,23 @@ def test_stripe_tax_mode_asks_stripe_to_add_tax(imported, fake):
         params = fake.sessions[start(client, ("JP-PACK-A", 1))]["params"]
     assert params["automatic_tax"] == {"enabled": True}
     assert params["line_items"][0]["price_data"]["tax_behavior"] == "exclusive"
+    with TestClient(create_app(settings, stripe=fake)) as client:
+        assert 'data-tax-note="Utah orders: sales tax is added on the next page."' in client.get("/cart").text
+
+
+def test_unknown_tax_mode_keeps_checkout_off(imported):
+    settings = dataclasses.replace(imported, stripe_secret_key="sk_test_fake", tax_mode="included")
+    assert not settings.checkout_enabled and "STOREFRONT_TAX_MODE" in settings.tax_problem
+
+
+def test_checkout_key_survives_reused_order_numbers(app_client, fake):
+    """Stripe remembers idempotency keys for 24 hours; a rebuilt test database starts at -0001
+    again, so the key must include more than the order number."""
+    key_holder = []
+    original = fake.create_session
+    fake.create_session = lambda params, idempotency_key: key_holder.append(idempotency_key) or original(params, idempotency_key)
+    start(app_client, ("JP-PACK-A", 1))
+    assert key_holder[0].startswith("checkout-P6T-") and len(key_holder[0]) > len("checkout-P6T-2026-0001-")
 
 
 # --- payment, webhooks and reconciliation ---------------------------------------------------

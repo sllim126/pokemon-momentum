@@ -43,6 +43,14 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-05 Storefront sales tax (D2, owner): Stripe Tax adds Utah sales tax on top at
+  checkout; Utah registered in the Stripe sandbox and checked (South Jordan rate 7.45% on any
+  Utah address, $0 out of state). A free fixed-rate version was tried; Stripe no longer allows
+  per-state rates in Checkout.
+- 2026-11-05 Storefront runs from its own clone (`~/poke6s-store`, `main` only) via
+  `deploy/update_storefront.sh`, so branch switches in the repo folder no longer change :8010.
+- 2026-11-05 Branch clean-up: deleted 8 local branches already in `main`. Kept the unmerged
+  ones (KPDH, Lorcana plan, chat history, mobile note, budget rotation) for their owners.
 - 2026-11-05: Retired unused files, after checking nothing reads or runs them (no code, cron,
   systemd or doc reference; none open; the only reads since March were one bulk scan). Moved
   to `data/backups/retired_2026-11-05/` (2.2 GB, gitignored): the March CSVs in
@@ -164,25 +172,20 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     review. Old text for comparison is in the saved site copy. Remove `draft: true` when done.
   - [idea] JP products without a TCGplayer mapping (e.g. JP-AE-BB) show no market price;
     add them to `data/squarespace_tcgplayer_mapping.csv`.
-- [in progress] Phase 2: cart + Stripe Checkout, test mode (Claude, 2026-11-05; merged to
-  `main` at the storefront-phase2 milestone; guide `storefront/README.md` "Checkout"). Built and
-  tested with a fake Stripe (88 storefront tests) and with the owner's real Stripe sandbox: one
-  test order paid end to end on a side copy of the store. Live keys are refused unless
-  STOREFRONT_ALLOW_LIVE=1. **Stopped at:** the running store on :8010 serves whatever branch the
-  live folder `/opt/pokemon-momentum` is on; it was on `plan/lorcana-market` at this milestone,
-  so Phase 2 reaches :8010 only once that folder is back on `main` and
-  `docker-compose up -d storefront` is run (picks up the new environment variables; the
-  `002_orders` migration applies at start-up). Left:
-  - [next] Once :8010 runs Phase 2: one test order there, then `orders_cli ship` it to see the
-    shipped email (the side-copy test didn't try shipping, back-out or a declined card).
+- [in progress] Phase 2: cart + Stripe Checkout, test mode (Claude, 2026-11-05; guide
+  `storefront/README.md` "Checkout"). Built, merged and running on :8010 from the store's own
+  clone (`~/poke6s-store`, updated by `deploy/update_storefront.sh`). Tested with a fake Stripe
+  and the owner's Stripe sandbox (one paid test order). Sales tax (D2): Stripe Tax, Utah
+  registered in the sandbox. Live keys are refused unless STOREFRONT_ALLOW_LIVE=1. Left:
+  - [next] Owner: one test order on :8010 to a Utah address (tax should show), one to another
+    state (no tax), a back-out and a declined card (4000 0000 0000 0002); then
+    `orders_cli ship` one to see the shipped email.
   - [planned] STRIPE_WEBHOOK_SECRET: needs a public address Stripe can reach (Cloudflare
     Tunnel, paused by the owner) or the Stripe CLI. Until then the thanks page and the 15-minute
     reconcile job confirm payments.
   - [waiting] Owner: Stripe activation (business profile, bank, statement descriptor POKE6S)
-    before live payments. Use the new Stripe account, not the Squarespace-managed one.
-  - [waiting] D2 sales tax: owner calls the Utah State Tax Commission again (the first call
-    was cut off by a "too busy, call later" message). `STOREFRONT_TAX_MODE=stripe` is ready if Stripe Tax
-    is chosen; our own Utah table would be built behind the same switch.
+    before live payments, and Tax -> Registrations -> Utah in live mode. Use the new Stripe
+    account, not the Squarespace-managed one.
   - [planned] Microsoft 365 SMTP for order emails (SMTP AUTH may need switching on for
     admin@poke6s.com); until then emails are files in `data/storefront/outbox/`.
   - [planned] Decide where order alerts go (STOREFRONT_DISCORD_WEBHOOK_URL; off by default).

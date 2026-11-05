@@ -224,7 +224,9 @@ def start_checkout(conn: sqlite3.Connection, stripe, settings: Settings, cart: l
     order = get_order(conn, number)
     params = session_params(settings, quote, order, base_url, expires)
     try:
-        session = stripe.create_session(params, idempotency_key=f"checkout-{number}")
+        # The order's secret token makes the key unique even if order numbers repeat (a test
+        # database rebuilt, or a copy of the store): Stripe refuses a reused key with new details.
+        session = stripe.create_session(params, idempotency_key=f"checkout-{number}-{order['access_token'][:12]}")
     except (StripeError, OSError) as exc:
         log.warning("Stripe session for %s failed: %s", number, exc)
         release(conn, number, "cancelled", now=now, note="Stripe checkout could not start")
@@ -232,6 +234,13 @@ def start_checkout(conn: sqlite3.Connection, stripe, settings: Settings, cart: l
     conn.execute("UPDATE orders SET stripe_session_id = ? WHERE number = ?", (session["id"], number))
     conn.commit()
     return {"url": session["url"], "number": number}
+
+
+def tax_note(settings: Settings) -> str:
+    """One line for the cart about sales tax, matching the tax mode."""
+    if settings.tax_mode == "stripe":
+        return "Utah orders: sales tax is added on the next page."
+    return ""
 
 
 def session_params(settings: Settings, quote: Quote, order: dict, base_url: str, expires: datetime) -> dict:
