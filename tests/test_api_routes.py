@@ -810,6 +810,19 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(payload["window_days"], 27)
         self.assertEqual(api._graded_keys("5||Holofoil||10,bad,6||Normal||7"), {(5, "Holofoil", "10")})
 
+    def test_index_leaves_out_cards_with_flip_flopping_prices(self):
+        """Run the unstable-card rule on a tiny in-memory price table."""
+        import duckdb
+        con = duckdb.connect()
+        con.execute("CREATE TABLE prices (categoryId INT, groupId INT, productId INT, subTypeName VARCHAR, date DATE, marketPrice DOUBLE)")
+        flipper = [400, 10000, 400, 10000, 400, 10000]   # five 3x+ jumps
+        steady = [400, 410, 420, 430, 1300, 1310]         # one 3x jump: a real move, kept
+        for product_id, prices in ((1, flipper), (2, steady)):
+            for day, price in enumerate(prices):
+                con.execute("INSERT INTO prices VALUES (3, 10, ?, 'Holofoil', DATE '2026-11-01' + ?::INT, ?)", [product_id, day, price])
+        sql = "WITH " + api._unstable_cards_cte("prices", 3, "10") + " SELECT productId, flips, peak_price FROM unstable"
+        self.assertEqual(con.execute(sql).fetchall(), [(1, 5, 10000.0)])
+
     def test_budget_builder_gives_popular_pokemon_a_small_bonus(self):
         base = {"latest_price": 20.0, "roc_7d_pct": 3.0, "roc_30d_pct": 5.0, "trend_score": 30.0,
                 "price_vs_sma30_pct": 4.0, "recent_distinct_prices_7d": 4, "recent_distinct_prices_30d": 8}

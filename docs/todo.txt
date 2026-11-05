@@ -47,6 +47,9 @@ Recently Completed
   the rest of the budget with cards not shown yet (starts over when they run out). Desktop and
   phone; API `keep_keys` on `/budget_builder`. Popular Pokémon (Charizard, Umbreon, Gengar…)
   get a +10 tie-breaker and a "Popular Pokémon" label (owner, after Reddit feedback).
+- 2026-11-05 Indexes leave out cards with flip-flopping prices (4+ jumps of 3x in a year; 42 EN,
+  19 JP cards). WOTC 100's worst day 37.7% -> 5.9%, Top 151's 14.3% -> 7.8%; Method tab lists
+  them. Discover lists not changed (owner to decide).
 - 2026-11-05 Desktop charts: five date labels (three when narrow, with the year on long spans) and a
   faint line with the year at each January 1 (owner).
 - 2026-11-05 Desktop: the browser's Back button returns from a set (or index) to the list, like
@@ -182,11 +185,8 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   volume once a few months of volume exist (volume starts 2026-10-09; earlier years would use
   today's weights, say so on the chart). Watch: new-set joins, bad one-off prices, memory in
   the nightly. Add a breadth line (% of cards above their 30-day average).
-- [waiting] Index spikes from unstable prices (owner asked, 2026-11-05): WOTC 100 jumps +/-25-38%
-  in a day since April 2026 because TCGplayer's market price for Base Set Charizard 1st Edition
-  Holofoil flips between ~$400 and exactly $10,000 (also 1st Ed Gyarados $30/$600 on 05-22).
-  Proposed: leave out cards whose price jumps >3x and back more than once within weeks, note it
-  in the Method tab; check the same cards in Top Movers. Waiting for the owner's OK.
+- [idea] Neo 100, EX 100 and JP Top 100 still have days moving 10-25% that the unstable-price
+  rule doesn't explain (one-off big moves or reshuffle days?). Look when there's time.
 - [planned] Mobile interface testing (owner, 2026-10-21): now part of the new mobile app
   (see "New mobile app" above). Test `/m-next` on real phones after each step instead of the
   old `/mobile`, which is being replaced; known old-page issues are under "Parked: Mobile

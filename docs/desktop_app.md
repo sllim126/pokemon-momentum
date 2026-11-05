@@ -121,6 +121,11 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
   history entry (`pushDrillEntry`), so the browser's Back returns to Sets / Market Stats, and
   "← All sets" goes back through it. The `popstate` handler reopens whatever view the
   address names. Picking cards inside a view still replaces the address (no entry per card).
+- **Indexes leave out cards with flip-flopping prices** (2026-11-05). A card whose market price
+  jumped 3x or more day to day at least 4 times in the last 365 days is left out of the index
+  for its whole history (`UNSTABLE_*` and `_unstable_cards_cte` in `api.py`). The Method tab
+  lists the left-out cards that could have qualified. Base Set Charizard 1st Edition (27 jumps
+  between ~$400 and $10,000) had made WOTC 100 move 25-38% in a day on 56 days.
 - **Breakouts** (2026-11-05) need the price above the previous 90-day high *and* at least 5%
   above the 30-day average (`min_vs_sma30_pct` on `/breakouts`), so a flat card ticking a cent
   past its old high doesn't count.

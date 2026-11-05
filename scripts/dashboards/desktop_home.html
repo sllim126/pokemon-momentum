@@ -1781,6 +1781,17 @@
         if (seq === listRequestSeq) { $("listLoading").hidden = true; $("resultsEmpty").hidden = true; }
       }
     }
+    // Cards left out because their TCGplayer price flip-flops (see UNSTABLE_* in api.py).
+    function unstableSection(payload) {
+      const rule = payload.unstable_rule;
+      const cards = payload.unstable_excluded || [];
+      if (!rule) return null;
+      return el("section", {}, el("h3", { text: "Cards left out: unstable prices" }),
+        el("p", { text: `A card whose TCGplayer market price jumped ${rule.flip_ratio}× or more up or down, from one day to the next, at least ${rule.min_flips} times in the last ${rule.window_days} days is left out of this index for its whole history. One bad price feed, such as a card flipping between $400 and $10,000, would otherwise swing the whole index. Checked every night, so a card comes back once its price settles.` }),
+        cards.length
+          ? el("ul", {}, ...cards.map((c) => el("li", { text: `${c.productName || `Product ${c.productId}`}${c.subTypeName ? ` (${c.subTypeName})` : ""}${c.groupName ? ` · ${c.groupName}` : ""}: ${c.flips} jumps` })))
+          : el("p", { class: "muted", text: "None right now." }));
+    }
     function renderIndexInfo(payload) {
       const view = $("guideView");
       const table = (head, rows) => el("table", { class: "info-table" },
@@ -1807,7 +1818,8 @@
             el("p", { text: "Expensive cards carry more weight, since the index adds up prices. Cards can enter or leave any day as prices move. Sealed products are left out." }),
             el("p", { text: "When more than 10% of the cards change in one day (a reshuffle), the index is recalibrated so the line stays continuous. Between reshuffles, every move comes from card prices." })),
           el("section", {}, el("h3", { text: "Reading it" }),
-            el("p", { text: "2,000 means this group of top cards is worth twice what it was on day one. Compare indexes to see which era is gaining or cooling, not to price any single card." })));
+            el("p", { text: "2,000 means this group of top cards is worth twice what it was on day one. Compare indexes to see which era is gaining or cooling, not to price any single card." })),
+          unstableSection(payload));
       }
     }
 

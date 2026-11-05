@@ -1551,6 +1551,39 @@ def _resolve_index_group_ids(index_key: str, category_id: int) -> list[int]:
     return [int(row[0]) for row in rows if int(row[0]) not in excluded_group_ids]
 
 
+# Cards whose TCGplayer market price flip-flops are left out of the indexes (owner, 2026-11-05).
+# Base Set Charizard 1st Edition jumped between ~$400 and exactly $10,000 27 times in a year,
+# which made WOTC 100 move 25-38% in a day on 56 days. A "flip" is a day-to-day move of
+# UNSTABLE_FLIP_RATIO or more either way; UNSTABLE_MIN_FLIPS in the last UNSTABLE_WINDOW_DAYS
+# leaves the card out of the whole index history. Rechecked every night, so a card returns
+# once its price settles. Tested 2026-11-05: 42 English and 19 Japanese cards; WOTC 100's worst
+# day fell from 37.7% to 5.9% and Top 151's from 14.3% to 7.8%. Two flips caught ~10x more
+# cards (many rare but genuine high-end cards) for no further gain.
+UNSTABLE_FLIP_RATIO = 3.0
+UNSTABLE_MIN_FLIPS = 4
+UNSTABLE_WINDOW_DAYS = 365
+
+
+def _unstable_cards_cte(price_source: str, category_id: int, group_ids_sql: str) -> str:
+    """SQL for `unstable (productId, subTypeName, flips)`: the index's cards to leave out."""
+    return f"""
+    unstable AS (
+      SELECT productId, subTypeName, COUNT(*) AS flips, MAX(GREATEST(price, prev)) AS peak_price
+      FROM (
+        SELECT productId, COALESCE(subTypeName, '') AS subTypeName, marketPrice AS price,
+          LAG(marketPrice) OVER (PARTITION BY productId, COALESCE(subTypeName, '') ORDER BY date) AS prev
+        FROM {price_source}
+        WHERE categoryId = {int(category_id)}
+          AND groupId IN ({group_ids_sql})
+          AND marketPrice > 0
+          AND date >= (SELECT MAX(date) FROM {price_source} WHERE categoryId = {int(category_id)}) - INTERVAL {UNSTABLE_WINDOW_DAYS} DAY
+      ) moves
+      WHERE prev > 0 AND (price / prev >= {UNSTABLE_FLIP_RATIO} OR prev / price >= {UNSTABLE_FLIP_RATIO})
+      GROUP BY productId, subTypeName
+      HAVING COUNT(*) >= {UNSTABLE_MIN_FLIPS}
+    )"""
+
+
 def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100") -> dict:
     """Build the full index payload used by all /index-overview-<era> pages.
 
@@ -1578,6 +1611,7 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
     top100_sql = f"""
     WITH
     {metadata_cte},
+    {_unstable_cards_cte(price_source, category_id, group_ids_sql)},
     filtered AS (
       SELECT
         p.date,
@@ -1594,6 +1628,10 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
         AND p.marketPrice IS NOT NULL
         AND p.marketPrice > 0
         AND lower(COALESCE(m.productKind, '')) = 'card'
+        AND NOT EXISTS (
+          SELECT 1 FROM unstable u
+          WHERE u.productId = p.productId AND u.subTypeName = COALESCE(p.subTypeName, '')
+        )
     ),
     ranked AS (
       SELECT
@@ -1905,9 +1943,30 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
         "latest_reconstitution_date": latest_reconstitution_date,
     }
 
+    # The left-out cards, for the Method tab.
+    unstable_cols, unstable_rows = q(f"""
+    WITH
+    {metadata_cte},
+    {_unstable_cards_cte(price_source, category_id, group_ids_sql)}
+    SELECT u.productId, u.subTypeName, u.flips, u.peak_price, ANY_VALUE(m.productName) AS productName, ANY_VALUE(m.groupName) AS groupName
+    FROM unstable u
+    LEFT JOIN metadata m ON m.productId = u.productId
+    GROUP BY 1, 2, 3, 4
+    ORDER BY u.flips DESC, productName
+    """)
+    # Only list cards whose price ever reached today's cheapest index card: the rest could
+    # never have been in the index anyway.
+    entry_price = min((_safe_float(h.get("marketPrice")) for h in holdings), default=0.0)
+    unstable_excluded = [
+        dict(zip(unstable_cols, row)) for row in unstable_rows
+        if _safe_float(row[unstable_cols.index("peak_price")]) >= entry_price
+    ]
+
     return {
         "index_key": index_key,
         "index_name": str(definition.get("index_name") or index_key),
+        "unstable_excluded": unstable_excluded,
+        "unstable_rule": {"flip_ratio": UNSTABLE_FLIP_RATIO, "min_flips": UNSTABLE_MIN_FLIPS, "window_days": UNSTABLE_WINDOW_DAYS},
         "description": str(definition.get("description") or "Top 100 cards by market price"),
         "base_level": float(definition.get("base_level") or 1000.0),
         "constituent_limit": constituent_limit,
