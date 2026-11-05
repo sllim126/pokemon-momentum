@@ -159,9 +159,14 @@ Adding another machine (it appears in Home lab: Servers, "Other machines"):
      whole disk mounted read-only at /host and the argument `--path.rootfs=/host` (port 9100).
    Check from this server: `curl -s http://<ip>:9100/metrics | head` (9182 for Windows).
 2. Add it to `deploy/monitoring/nodes.yml`, for example
-   `- targets: ["192.168.1.30:9100"]` and `labels: {machine: caddy-host, os: linux}`, then
+   `- targets: ["192.168.1.30:9100"]` and `labels: {machine: caddy-host, os: linux, role: web}`
+   (role is shown as a column), then
    `sudo install -m 644 deploy/monitoring/nodes.yml /etc/prometheus/momentum_nodes.yml`
    (or rerun install.sh). Prometheus picks it up within two minutes; no restart.
+
+In it since 2026-11-05: the Proxmox Backup Server (192.168.1.72, which already ran
+node-exporter). Home lab web services are checked by the blackbox exporter (`probe: homelab`
+in `prometheus_momentum.yml`, "Home lab services" table): Plex at 192.168.1.219:32400/identity.
 
 The old training-server targets (10.0.4.45, 172.26.10.4) were removed 2026-11-05: offline or
 no longer used. Backups of prometheus.yml from each change are next to it (`.bak-<time>`). If a job is missing from "Did the jobs run?" although it ran, check node-exporter's log (the

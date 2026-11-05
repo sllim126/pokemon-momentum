@@ -641,9 +641,9 @@ def machines_row(y):
     """Other machines listed in deploy/monitoring/nodes.yml (job "machines"): Linux and
     Synology run node-exporter, Windows runs windows_exporter. Empty until one is added."""
     m = 'job="machines"'
-    by = "max by (instance, machine) "
-    lin_cpu = f'100 * (1 - avg by (instance, machine) (rate(node_cpu_seconds_total{{{m},mode="idle"}}[5m])))'
-    win_cpu = f'100 * (1 - avg by (instance, machine) (rate(windows_cpu_time_total{{{m},mode="idle"}}[5m])))'
+    by = "max by (instance, machine, role) "
+    lin_cpu = f'100 * (1 - avg by (instance, machine, role) (rate(node_cpu_seconds_total{{{m},mode="idle"}}[5m])))'
+    win_cpu = f'100 * (1 - avg by (instance, machine, role) (rate(windows_cpu_time_total{{{m},mode="idle"}}[5m])))'
     lin_mem = f'{by}(100 * (1 - node_memory_MemAvailable_bytes{{{m}}} / node_memory_MemTotal_bytes{{{m}}}))'
     win_mem = f'{by}(100 * (1 - windows_os_physical_memory_free_bytes{{{m}}} / windows_cs_physical_memory_bytes{{{m}}}))'
     lin_disk = (f'{by}(100 * (1 - node_filesystem_avail_bytes{{{m},fstype!~"tmpfs|overlay|squashfs|ramfs|rootfs"}}'
@@ -658,8 +658,8 @@ def machines_row(y):
                target(f"({lin_disk}) or ({win_disk})", ref="D", instant=True, table=True),
                target(f"{by}(time() - node_boot_time_seconds{{{m}}}) or {by}(windows_system_system_up_time{{{m}}})",
                       ref="E", instant=True, table=True)],
-              g(0, y + 1, 24, 8),
-              {"machine": "Machine", "instance": "Address", "Value #A": "Up", "Value #B": "CPU",
+              g(0, y + 1, 17, 8),
+              {"machine": "Machine", "role": "Role", "instance": "Address", "Value #A": "Up", "Value #B": "CPU",
                "Value #C": "Memory", "Value #D": "Fullest disk", "Value #E": "Up for"},
               description="Empty until a machine is added to deploy/monitoring/nodes.yml (runbook "
                           "'Monitoring', 'Adding another machine').",
@@ -668,6 +668,14 @@ def machines_row(y):
                          col("Value #C", unit="percent", decimals=0, thresholds=steps("text", (85, "orange"), (95, "red"))),
                          col("Value #D", unit="percent", decimals=0, thresholds=steps("text", (80, "orange"), (90, "red"))),
                          col("Value #E", unit="dtdurations", decimals=0)]),
+        table("Home lab services",
+              [target('probe_success{probe="homelab"}', ref="A", instant=True, table=True),
+               target('probe_duration_seconds{probe="homelab"}', ref="B", instant=True, table=True)],
+              g(17, y + 1, 7, 8),
+              {"service": "Service", "Value #A": "Up", "Value #B": "Response"},
+              description="Web checks of home lab services (blackbox-http job, probe=homelab in "
+                          "deploy/monitoring/prometheus_momentum.yml). Plex: its /identity page.",
+              overrides=[col("Value #A", mappings=UP_DOWN), col("Value #B", unit="s", decimals=2)]),
     ]
 
 

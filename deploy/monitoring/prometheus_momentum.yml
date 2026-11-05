@@ -35,6 +35,10 @@ scrape_configs:
           - http://localhost:8001/health
           - http://localhost:8010/healthz
         labels: {probe: local}
+      # Home lab services: up/down and response time. Plex's /identity page needs no token.
+      - targets:
+          - http://192.168.1.219:32400/identity
+        labels: {probe: homelab, service: Plex}
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target

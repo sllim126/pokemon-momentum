@@ -1756,7 +1756,7 @@
       "gridPos": {
         "x": 0,
         "y": 44,
-        "w": 24,
+        "w": 17,
         "h": 8
       },
       "datasource": {
@@ -1766,7 +1766,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "max by (instance, machine) (up{job=\"machines\"})",
+          "expr": "max by (instance, machine, role) (up{job=\"machines\"})",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1778,7 +1778,7 @@
         },
         {
           "refId": "B",
-          "expr": "(100 * (1 - avg by (instance, machine) (rate(node_cpu_seconds_total{job=\"machines\",mode=\"idle\"}[5m])))) or (100 * (1 - avg by (instance, machine) (rate(windows_cpu_time_total{job=\"machines\",mode=\"idle\"}[5m]))))",
+          "expr": "(100 * (1 - avg by (instance, machine, role) (rate(node_cpu_seconds_total{job=\"machines\",mode=\"idle\"}[5m])))) or (100 * (1 - avg by (instance, machine, role) (rate(windows_cpu_time_total{job=\"machines\",mode=\"idle\"}[5m]))))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1790,7 +1790,7 @@
         },
         {
           "refId": "C",
-          "expr": "(max by (instance, machine) (100 * (1 - node_memory_MemAvailable_bytes{job=\"machines\"} / node_memory_MemTotal_bytes{job=\"machines\"}))) or (max by (instance, machine) (100 * (1 - windows_os_physical_memory_free_bytes{job=\"machines\"} / windows_cs_physical_memory_bytes{job=\"machines\"})))",
+          "expr": "(max by (instance, machine, role) (100 * (1 - node_memory_MemAvailable_bytes{job=\"machines\"} / node_memory_MemTotal_bytes{job=\"machines\"}))) or (max by (instance, machine, role) (100 * (1 - windows_os_physical_memory_free_bytes{job=\"machines\"} / windows_cs_physical_memory_bytes{job=\"machines\"})))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1802,7 +1802,7 @@
         },
         {
           "refId": "D",
-          "expr": "(max by (instance, machine) (100 * (1 - node_filesystem_avail_bytes{job=\"machines\",fstype!~\"tmpfs|overlay|squashfs|ramfs|rootfs\"} / node_filesystem_size_bytes{job=\"machines\",fstype!~\"tmpfs|overlay|squashfs|ramfs|rootfs\"}))) or (max by (instance, machine) (100 * (1 - windows_logical_disk_free_bytes{job=\"machines\"} / windows_logical_disk_size_bytes{job=\"machines\"})))",
+          "expr": "(max by (instance, machine, role) (100 * (1 - node_filesystem_avail_bytes{job=\"machines\",fstype!~\"tmpfs|overlay|squashfs|ramfs|rootfs\"} / node_filesystem_size_bytes{job=\"machines\",fstype!~\"tmpfs|overlay|squashfs|ramfs|rootfs\"}))) or (max by (instance, machine, role) (100 * (1 - windows_logical_disk_free_bytes{job=\"machines\"} / windows_logical_disk_size_bytes{job=\"machines\"})))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1814,7 +1814,7 @@
         },
         {
           "refId": "E",
-          "expr": "max by (instance, machine) (time() - node_boot_time_seconds{job=\"machines\"}) or max by (instance, machine) (windows_system_system_up_time{job=\"machines\"})",
+          "expr": "max by (instance, machine, role) (time() - node_boot_time_seconds{job=\"machines\"}) or max by (instance, machine, role) (windows_system_system_up_time{job=\"machines\"})",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1835,6 +1835,7 @@
           "options": {
             "renameByName": {
               "machine": "Machine",
+              "role": "Role",
               "instance": "Address",
               "Value #A": "Up",
               "Value #B": "CPU",
@@ -1844,12 +1845,13 @@
             },
             "indexByName": {
               "machine": 0,
-              "instance": 1,
-              "Value #A": 2,
-              "Value #B": 3,
-              "Value #C": 4,
-              "Value #D": 5,
-              "Value #E": 6
+              "role": 1,
+              "instance": 2,
+              "Value #A": 3,
+              "Value #B": 4,
+              "Value #C": 5,
+              "Value #D": 6,
+              "Value #E": 7
             },
             "excludeByName": {
               "Time": true,
@@ -1860,6 +1862,7 @@
             },
             "includeByName": {
               "machine": true,
+              "role": true,
               "instance": true,
               "Value #A": true,
               "Value #B": true,
@@ -2052,6 +2055,154 @@
         "sortBy": []
       },
       "id": 24
+    },
+    {
+      "type": "table",
+      "title": "Home lab services",
+      "description": "Web checks of home lab services (blackbox-http job, probe=homelab in deploy/monitoring/prometheus_momentum.yml). Plex: its /identity page.",
+      "gridPos": {
+        "x": 17,
+        "y": 44,
+        "w": 7,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "probe_success{probe=\"homelab\"}",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "expr": "probe_duration_seconds{probe=\"homelab\"}",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "service": "Service",
+              "Value #A": "Up",
+              "Value #B": "Response"
+            },
+            "indexByName": {
+              "service": 0,
+              "Value #A": 1,
+              "Value #B": 2
+            },
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "runner": true
+            },
+            "includeByName": {
+              "service": true,
+              "Value #A": true,
+              "Value #B": true
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-text"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "UP",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "0": {
+                        "text": "DOWN",
+                        "color": "red",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #B"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": []
+      },
+      "id": 25
     }
   ],
   "templating": {

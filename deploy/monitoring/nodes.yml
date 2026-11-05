@@ -5,7 +5,9 @@
 #
 # Linux, Synology (Docker) and Proxmox hosts: node-exporter on port 9100.
 # Windows: windows_exporter on port 9182.
-# Example (remove the leading "# "):
+# Labels: machine (shown name), os, and role (what it is, shown as a column).
+# Example:
 # - targets: ["192.168.1.30:9100"]
-#   labels: {machine: caddy-host, os: linux}
-[]
+#   labels: {machine: caddy-host, os: linux, role: web}
+- targets: ["192.168.1.72:9100"]
+  labels: {machine: pbs, os: linux, role: "Proxmox Backup Server"}
