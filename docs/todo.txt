@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-05 (milestone: grafana-monitoring)
+Last updated: 2026-11-05 (milestone: job-metrics-fix)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -43,14 +43,10 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
-- 2026-11-05 Storefront Phase 2: cart and Stripe Checkout (test mode). Owner's own Stripe
-  account made (separate from the Squarespace-managed one), test key in `.env`, and a real test
-  order placed end to end on a side copy of the store (paid, free shipping over $150, stock
-  taken, confirmation email written to the outbox). What's left: the Phase 2 item below.
-- 2026-11-05 Storefront: owner checked the shop on a phone and read the 10 articles ("good for
-  now"). Squarespace saves finished: email subscribers, form submitters and the two form sheets
-  (newsletter sign-ups, pre-order interest) saved in the owner's private records; no final
-  products export needed. Shipping decision D3: free over $150 (Shipping page and plan updated).
+- 2026-11-05 Job metrics fix (milestone job-metrics-fix): node-exporter was dropping the systemd
+  jobs' results (nightly update, other-games archive, weekly refreshes) because run_job.py and
+  collect_status.py gave the same metrics different help text. Both now share one table
+  (run_job.JOB_HELP), with a test; all four jobs that have run show in "Did the jobs run?".
 - 2026-11-05 Visitor counting for both sites (no cookies) and a Visitors dashboard; the
   Overview's "Requests / min" tile became "Visitors today".
 - 2026-11-05 Grafana monitoring (milestone grafana-monitoring): six dashboards on

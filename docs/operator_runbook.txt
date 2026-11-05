@@ -91,6 +91,7 @@ curl -s 'localhost:9090/api/v1/targets?state=active' | grep -o '"health":"[a-z]*
 curl -s localhost:8001/metrics | head          # 200 from the host
 curl -s -o /dev/null -w '%{http_code}\n' https://market.poke6s.com/metrics   # 404
 tail logs/monitoring_collector.log              # collector errors, if any
+journalctl -u prometheus-node-exporter --since -10min | grep -c 'error gathering'   # 0 expected
 ```
 
 Proxmox (added 2026-11-05): the pve-exporter container reads the Proxmox API at
@@ -152,7 +153,9 @@ Adding another machine (it appears in Home lab, "Other machines"):
    (or rerun install.sh). Prometheus picks it up within two minutes; no restart.
 
 The old training-server targets (10.0.4.45, 172.26.10.4) were removed 2026-11-05: offline or
-no longer used. Backups of prometheus.yml from each change are next to it (`.bak-<time>`). A job shows "No run recorded yet" until it has run
+no longer used. Backups of prometheus.yml from each change are next to it (`.bak-<time>`). If a job is missing from "Did the jobs run?" although it ran, check node-exporter's log (the
+last check above): it drops a metric when two text files describe it differently. The job
+metrics' help text lives in one place, `JOB_HELP` in `scripts/monitoring/run_job.py`. A job shows "No run recorded yet" until it has run
 once under monitoring (systemd forgets runs at reboot; the weekly jobs fall back to the timer's
 last trigger time). Overdue = no success for 1.5 x the job's interval plus an hour.
 
