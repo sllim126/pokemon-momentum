@@ -166,7 +166,10 @@ if (cartRoot) {
     if (q.to_free_shipping_cents > 0) {
       summary.append(el("p", { class: "small good" }, `Add ${money(q.to_free_shipping_cents)} more for free shipping.`));
     }
-    summary.append(el("p", { class: "small muted" }, "Sales tax, if any, and discount codes are applied on the next page."));
+    // The tax line comes from the server (orders.tax_note), so it matches the tax mode.
+    const taxNote = cartRoot.dataset.taxNote;
+    summary.append(el("p", { class: "small muted" },
+      (taxNote ? taxNote + " " : "") + "Discount codes are applied on the next page."));
     if (enabled) {
       const button = el("button", { type: "button", class: "btn primary wide" }, "Checkout");
       button.addEventListener("click", () => checkout(button));

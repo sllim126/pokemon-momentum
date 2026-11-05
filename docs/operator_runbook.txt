@@ -383,7 +383,11 @@ New storefront (poke6s.com, local only)
 The replacement for Squarespace runs in its own container, `poke6s-storefront`, on port 8010
 (home network only; not published until launch). Details: `storefront/README.md`.
 
-- Start or restart: `docker-compose up -d storefront` / `docker-compose restart storefront`.
+- The store runs from its own copy of the code, `~/poke6s-store` (a clone holding `main`
+  only), not from this folder, so coding sessions switching branches here don't change it.
+  Update it after a merge to `main`, and to start or restart it: `deploy/update_storefront.sh`
+  (pulls `main` into the clone, rebuilds if needed, restarts, checks /healthz). Plain
+  `docker-compose up -d storefront` here would run this folder's code instead; use the script.
 - Health: `curl -s localhost:8010/healthz` (visible products, schema version, market date).
 - Market prices on product pages refresh daily at 03:00 UTC (cron, approved by the owner
   2026-10-31). By hand:
@@ -397,7 +401,8 @@ The replacement for Squarespace runs in its own container, `poke6s-storefront`, 
 - Articles: Markdown files in `storefront/content/articles/`; restart the container after
   adding or editing one. How to write one: `storefront/README.md` "Articles".
 - Checkout (Phase 2, Stripe test mode): on when `STRIPE_SECRET_KEY=sk_test_...` is in `.env`,
-  then `docker-compose up -d storefront`. Test card 4242 4242 4242 4242. Orders:
+  then `deploy/update_storefront.sh`. Sales tax: `STOREFRONT_TAX_MODE=stripe` (Stripe Tax; Utah
+  registered in the Stripe dashboard, sandbox done 2026-11-05). Test card 4242 4242 4242 4242. Orders:
   `docker-compose exec storefront python -m storefront.app.orders_cli list` (also `show`,
   `ship <number> --tracking <n>`, `reconcile`). Pending checkouts are checked against Stripe at
   start-up and every 15 minutes. Without SMTP settings, order emails go to

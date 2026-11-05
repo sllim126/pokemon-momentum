@@ -288,21 +288,23 @@ is refunded.
 
 ## Sales tax
 
-- **Out-of-state orders:** no Utah tax. Other states don't require us to collect until sales into
-  them are far above our size; recheck yearly.
-- **Utah orders: we must collect Utah sales tax.** Utah rates vary by city and county. Whether the
-  buyer's local rate applies to shipped orders is being confirmed with the Utah State Tax
-  Commission on 2026-11-02, along with whether the price may include tax.
-- **Two ways to do it (decision D2, after that call):**
-  - **A. Stripe Tax:** Stripe works out the tax from the shipping address at checkout. Simplest
-    and always correct, but costs 0.5% per transaction where it calculates.
-  - **B. Our own rate table:**
-    - load Utah's published rate file into the database;
-    - ask for state and ZIP in the cart before checkout, and add a "Utah sales tax" line item;
-    - after payment, check the Stripe shipping address against what was entered, and flag a
-      mismatch for the owner.
-    - No fee, more code.
-- **Either way, the admin sales-tax report** produces the figures for each TAP filing period.
+Decided by the owner on 2026-11-05, after the Utah State Tax Commission call (D2):
+
+- **Stripe Tax adds sales tax on top at checkout** (`STOREFRONT_TAX_MODE=stripe`). Prices on the
+  site are before tax. Stripe charges tax only where the account is registered: Utah.
+- **Utah orders:** Stripe uses Utah's sourcing rule, which taxes in-state sales at the seller's
+  location, so every Utah order pays the South Jordan rate. Checked in the sandbox on
+  2026-11-05: $130 to South Jordan or Salt Lake City adds $9.69 (7.45%); to Las Vegas, $0.
+- **Out-of-state orders:** no tax. Other states don't require us to collect until sales into
+  them are far above our size; recheck yearly (Stripe Tax shows how close each state is).
+- **Cost:** about 0.5% of each taxed order (owner OK'd Stripe handling tax, 2026-11-05).
+- **Set-up, once per mode** (sandbox done 2026-11-05; live at activation): business address and
+  default product type (General - Tangible Goods), then Tax -> Registrations -> United States ->
+  Utah. Without the registration Stripe calculates $0.
+- **Tried and dropped:** a free fixed Utah rate. Checkout no longer accepts per-state "dynamic"
+  tax rates, so it can't skip out-of-state orders.
+- **Records:** each order stores the tax charged (`orders.tax_cents`); Stripe Tax's reports give
+  the figures for the Utah return (likely annual). The Phase 3 admin report totals them too.
 
 ## Shipping
 
@@ -434,12 +436,12 @@ live test order, Search Console and Merchant Center, then the "After launch" ste
 
 ## Owner decisions
 
-Reviewed with the owner on 2026-10-31. D2 waits for the 2026-11-02 Utah call.
+Reviewed with the owner on 2026-10-31. D2 decided 2026-11-05.
 
 | # | Decision | Answer |
 |---|---|---|
 | D1 | Which stock is listed here and which on TCGplayer | **Decided:** our site lists sealed product and accessories; singles stay on TCGplayer. Revisit after launch |
-| D2 | Sales tax method | **Open:** decide after the 2026-11-02 call. Stripe Tax for a fast launch, our own Utah table if the fee matters. Build the tax step behind one interface so either can be plugged in |
+| D2 | Sales tax method | **Decided (owner, 2026-11-05):** Stripe Tax adds tax on top at checkout; registered in Utah only, so out-of-state orders pay none. See "Sales tax" |
 | D3 | Shipping | **Decided:** flat rate by shipping class, free shipping over a threshold. Free shipping over **$150** (owner, 2026-11-05, matching PokeNE). Flat-rate amounts stay placeholders (small sealed $5, large sealed $9) until the owner sets them from Pirate Ship costs; live Pirate Ship rates at checkout are a later option |
 | D4 | Look and feel | **Decided:** match market.poke6s.com (`scripts/dashboards/desktop_theme.css`) |
 | D5 | poke6s.com from 2026-11-14 until launch | **Decided:** forward to `poke6s.tcgplayerpro.com` in the Squarespace Domains panel |
@@ -479,3 +481,4 @@ Reviewed with the owner on 2026-10-31. D2 waits for the 2026-11-02 Utah call.
 | 2026-10-31 | Claude | Saved the old site before the plan ends (`storefront/tools/archive_squarespace_site.py`): page text, 10 Resources blog posts (missed in the first site survey) and 256 images, in the owner's records outside the repo. `docs/storefront_current_site.md` corrected; redirects added for `/new-page-1` and `/pre-order-interest` | Owner: where the blog posts go at launch (todo); compare draft policies with the old ones (6% cancellation fee). Re-run the script on the last day |
 | 2026-10-31 | Claude | Articles brought forward from Phase 4 (owner): `/articles` list with category and tag filters, `/articles/<slug>` pages with BlogPosting JSON-LD, home page "Latest articles", sitemap; the 10 Squarespace posts imported to `storefront/content/articles/` (`app/article_import.py`) with their pictures; every old `/resources/...` address 301s to its new one. Storefront container now runs as the host user. 52 tests pass | Owner: read through the imported articles. Full review of all policy pages, terms and FAQs (they were adapted from another shop's, with permission) |
 | 2026-11-05 | Claude | Phase 2 built locally on branch `storefront/phase2-cart` (migration `002_orders`): cart in the browser priced by the server (`POST /cart/quote`), `POST /checkout` with 30-minute stock reservations and a Stripe Checkout Session (US shipping, flat rate by largest class, free over $150, promotion codes, 3-D Secure from $150, Stripe Tax behind `STOREFRONT_TAX_MODE`), webhook with signature check and repeat protection, reconcile job (start-up + 15 min), thanks and order status pages, Discord alerts, order and shipping emails (SMTP or outbox), `orders_cli` (list/show/ship/reconcile). Checkout is off without a Stripe key and refuses live keys. 88 storefront tests pass (34 new); checked at 1920×1080, 1366×768 and phone | Owner: Stripe account (tonight), test keys in `.env`, one test order with card 4242…; D2 after the Utah call; shipping amounts (D3); Microsoft 365 SMTP for real emails. Then Phase 3 (admin) |
+| 2026-11-05 | Claude | D2 decided: Stripe Tax (`STOREFRONT_TAX_MODE=stripe`), Utah registered in the sandbox and checked ($130 to any Utah address adds $9.69; Nevada $0). Unknown tax modes keep checkout off; cart and Terms say tax is added for Utah orders; checkout idempotency key made unique when order numbers repeat | Owner: register Utah in live-mode Stripe Tax at activation |
