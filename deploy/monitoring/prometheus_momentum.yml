@@ -1,0 +1,80 @@
+# Scrape jobs for the Pokemon Momentum dashboards. install.sh copies this file to
+# /etc/prometheus/momentum_scrape.yml, and /etc/prometheus/prometheus.yml loads it with
+#   scrape_config_files: [/etc/prometheus/momentum_scrape.yml]
+# The host's own jobs (node, prometheus and the home-lab targets) stay in prometheus.yml.
+scrape_configs:
+  # Request counts, errors and response times from each app (scripts/dashboards/metrics.py
+  # and storefront/app/metrics.py). /metrics answers only local requests.
+  - job_name: momentum-apps
+    static_configs:
+      - targets: ["localhost:8001"]
+        labels: {app: market}
+      - targets: ["localhost:8010"]
+        labels: {app: storefront}
+
+  # Per-container CPU, memory and restarts (deploy/monitoring/docker-compose.yml).
+  - job_name: cadvisor
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["localhost:8098"]
+
+  # Is the site up, as a visitor sees it? The public addresses go out through the
+  # internet and back in through the Caddy proxy; the local ones skip the proxy, so a
+  # public failure with the local one fine points at Caddy, DNS or the router.
+  - job_name: blackbox-http
+    scrape_interval: 60s
+    metrics_path: /probe
+    params: {module: [http_2xx]}
+    static_configs:
+      - targets:
+          - https://market.poke6s.com/health
+          - https://market.poke6s.com/
+          - https://poke6s.com/
+        labels: {probe: public}
+      - targets:
+          - http://localhost:8001/health
+          - http://localhost:8010/healthz
+        labels: {probe: local}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:9115
+
+  # Proxmox cluster through the pve-exporter container (docker-compose.yml here). Replaces
+  # the old 'proxmox' job in prometheus.yml, whose exporter on 192.168.1.75:9121 was gone.
+  # cluster=1 covers every node, VM, container and storage pool; node=1 adds this node's
+  # version and subscription details.
+  - job_name: proxmox
+    scrape_interval: 30s
+    scrape_timeout: 25s
+    metrics_path: /pve
+    params: {cluster: ["1"], node: ["1"]}
+    static_configs:
+      - targets: [192.168.1.75]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:9221
+
+  # UniFi network through the UnPoller container (docker-compose.yml here). Replaces the old
+  # 'unifi' SNMP job in prometheus.yml, whose exporter on 192.168.1.1:9116 never answered.
+  # UnPoller asks the UniFi controller on every scrape, so keep the interval relaxed.
+  - job_name: unifi
+    scrape_interval: 30s
+    scrape_timeout: 25s
+    static_configs:
+      - targets: ["localhost:9130"]
+
+  # Other machines (Linux, Windows, Synology): listed in nodes.yml here, copied by install.sh
+  # to /etc/prometheus/momentum_nodes.yml. Prometheus rereads that file on its own, so adding
+  # a machine needs no restart.
+  - job_name: machines
+    file_sd_configs:
+      - files: [/etc/prometheus/momentum_nodes.yml]
+        refresh_interval: 2m

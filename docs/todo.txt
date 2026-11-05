@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-05 (milestone: storefront-phase2)
+Last updated: 2026-11-05 (milestone: grafana-monitoring)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -51,14 +51,61 @@ Recently Completed
   now"). Squarespace saves finished: email subscribers, form submitters and the two form sheets
   (newsletter sign-ups, pre-order interest) saved in the owner's private records; no final
   products export needed. Shipping decision D3: free over $150 (Shipping page and plan updated).
-- 2026-11-05 KPDH branch reconciliation: transplanted the final Series 2 catalog and images,
-  base-first binder option, corrected continuous CR numbering and lime provisional-evidence
-  markers onto current `main` without importing the old branches' unrelated dashboard, cron
-  or documentation changes. The isolated image built and passed smoke checks; 249 tests and
-  33 subtests pass.
+- 2026-11-05 Visitor counting for both sites (no cookies) and a Visitors dashboard; the
+  Overview's "Requests / min" tile became "Visitors today".
+- 2026-11-05 Grafana monitoring (milestone grafana-monitoring): six dashboards on
+  http://192.168.1.240:3000 (Overview, Website, Servers, Jobs & work, Home lab, Visitors).
+  Request metrics on both apps (private `/metrics`), outside probes, container metrics, a
+  status collector and cron-job wrapper (crontab installed by the owner), Proxmox (read-only
+  API token) and UniFi (View Only local account) exporters with verified HTTPS, dead home-lab
+  targets removed, AIOS Experiments placeholders. Root disk grown to 598 GB through Proxmox
+  (was 90% full, now 45%). Runbook section "Monitoring".
 
 High Priority
 -------------
+
+Monitoring with Grafana (owner, 2026-11-05): "show me everything, then we scale it down".
+Six dashboards on http://192.168.1.240:3000; runbook section "Monitoring".
+- [next] Branch clean-up for whoever continues the Lorcana plan: `plan/lorcana-market` also
+  carries the monitoring commits (two sessions shared one checkout on 2026-11-05). Those are
+  now on main (cherry-picked), so merge main into it, or rebuild it from main plus its own two
+  commits (cddec53 "Plan a Lorcana market research site", 3a24c99 "sharper card images").
+  The stale `monitoring/grafana` branch holds none of the work and can be deleted.
+- [next] Owner: remove the temporary sudo file now that the build-out is merged:
+  `sudo rm /etc/sudoers.d/90-claude-buildout` (the Overview's "Temporary sudo" tile turns green).
+- [waiting] Owner: two UniFi access points are offline (2026-11-05): Garage/patio U6-Lite
+  (192.168.1.10) and Living room U6-Lite (192.168.1.14). This is UniFi's Wi-Fi "warning". The
+  VPN area shows "error" (no VPN server running?). Expected, or worth a look?
+- [idea] Physical disk health on the Home lab dashboard: the Proxmox API lists every disk's
+  SMART verdict and wear (all fine on 2026-11-05; two hardware RAID volumes show UNKNOWN).
+  The collector could read it with the existing token.
+- [planned] AIOS Experiments row (Overview, collapsed, placeholders only; 2026-11-05). Keep the
+  placeholders disconnected and unchanged until the registry and feed exist. Planned design
+  (owner, 2026-11-05):
+  - The authoritative registry will be `05-Projects/AIOS/Task-Registry.md` in the
+    ISI-Knowledge repository (now at /home/adam/Downloads/ISI-Knowledge). It doesn't exist yet.
+    The repo's current TODO.md holds only knowledgebase tasks and is not the task system.
+  - The feed will be generated on the machine that holds that repository, as
+    `reports/aios/grafana-feed.json` (format aios-feed/1, docs/aios_grafana_experiments.md),
+    then exposed or synced to Grafana read-only.
+  - Never create a second registry on the Grafana server.
+  Implementation pending: the registry, the feed generator, and the read-only path to Grafana.
+- [idea] Node-exporter on the Proxmox hosts (192.168.1.73, .74, .75) and the backup server
+  (PBS, 192.168.1.72) for temperatures, fans and per-disk activity; add them to
+  deploy/monitoring/nodes.yml. PBS could also be read through its API like Proxmox.
+- [planned] When the storefront goes public on poke6s.com, check the Visitors dashboard counts
+  its real visitors (the X-Forwarded-For path will differ if it runs behind Cloudflare Tunnel:
+  trust CF-Connecting-IP there).
+- [next] Scale the dashboards down after the owner has used them for a while (which tiles matter).
+- [waiting] Alerts: send Grafana alerts (site down, job failed or overdue, disk over 90%, price
+  data over 3 days old) to Discord? Needs a channel and its own webhook (not #bug-reports).
+- [waiting] Canvas "last download" tile: the data lives on another server with separate access;
+  the owner adds it later.
+- [waiting] `grafana.tail6217f2.ts.net` (Tailscale serve) forwards to port 8086, where nothing
+  listens; Grafana is on 3000. Point it at 3000?
+- [planned] 2026-11-14: when the Squarespace price sync is retired, drop
+  `squarespace-price-sync` from JOBS in scripts/monitoring/collect_status.py and the probe of
+  https://poke6s.com/ changes meaning (it becomes the new store once launched).
 
 Own storefront on poke6s.com, replacing Squarespace (owner, 2026-10-31). Plan, costs, phases
 and open decisions: `docs/storefront_plan.md` (progress log at its end). What the Squarespace

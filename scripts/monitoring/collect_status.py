@@ -1,0 +1,311 @@
+#!/usr/bin/env python3
+"""Write the project's status as Prometheus metrics for the Grafana overview dashboard.
+
+Runs on the host (not in Docker) every minute from adam's crontab and writes
+``momentum_status.prom`` into node-exporter's text-file folder, which Prometheus scrapes.
+Standard library only, so it runs on the host's own Python. See "Monitoring" in
+docs/operator_runbook.txt for the whole setup.
+
+What it reports (all metric names start with ``momentum_``):
+
+* systemd jobs: when each pokemon-momentum-* unit last started and finished, its exit
+  code, when it last succeeded and when its timer fires next. Cron jobs report the same
+  ``momentum_job_*`` metrics themselves, through scripts/monitoring/run_job.py.
+* ``momentum_job_expected_interval_seconds``: how often every job (systemd or cron) should
+  run, so Grafana can show "overdue" without knowing the schedule. Keep JOBS below in step
+  with the schedule in docs/operator_runbook.txt.
+* Data downloads: the newest PriceCharting CSV, TCGCSV archive day, parquet history,
+  catalogue crawl and storefront price file.
+* Log files: when each file in logs/ was last written.
+* docs/todo.txt: items per status tag and the "Last updated" date.
+* Bug reports from Discord (tracking.sqlite3): reports per status, newest report time.
+* Git: current branch, uncommitted project files, commits not yet pushed.
+* A reminder while the temporary sudo file from the monitoring build-out still exists.
+
+Every section is fenced off with its own try/except: one failing check (say, a locked
+database) is reported as ``momentum_collector_errors{section=...}`` and the rest still
+publishes. The file is written to a temporary name and renamed, so Prometheus never reads
+a half-written file.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import sqlite3
+import subprocess
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+TEXTFILE_DIR = Path(os.environ.get("MOMENTUM_TEXTFILE_DIR", "/var/lib/prometheus/node-exporter"))
+OUTPUT = TEXTFILE_DIR / "momentum_status.prom"
+# Remembers when each systemd job last succeeded, because systemd only keeps the latest run.
+STATE_FILE = TEXTFILE_DIR / ".momentum_status_state.json"
+SUDOERS_REMINDER = Path("/etc/sudoers.d/90-claude-buildout")
+
+DAY = 86400
+# job name -> (how it runs, expected interval in seconds). "systemd:<unit>" units are read
+# here; "cron" jobs write their own metrics through run_job.py under the same name.
+JOBS = {
+    "daily-update": ("systemd:pokemon-momentum-daily-update", DAY),
+    "tcgcsv-collect": ("systemd:pokemon-momentum-tcgcsv-collect", DAY),
+    "weekly-refresh": ("systemd:pokemon-momentum-weekly-refresh", 7 * DAY),
+    "weekly-placeholder-refresh": ("systemd:pokemon-momentum-weekly-placeholder-refresh", 7 * DAY),
+    "storefront-market-reference": ("cron", DAY),
+    "placeholder-sync": ("cron", DAY),
+    "squarespace-price-sync": ("cron", DAY),
+    "tcgcsv-catalogue": ("cron", DAY),
+    "archive-backfill": ("cron", DAY),
+    "discord-bug-import": ("cron", 15 * 60),
+    "discord-weekly": ("cron", 7 * DAY),
+}
+
+TODO_TAGS = ("next", "in progress", "waiting", "planned", "parked", "idea", "watching")
+
+
+class Metrics:
+    """Collects lines in the Prometheus text format, one HELP/TYPE header per metric."""
+
+    def __init__(self) -> None:
+        self.lines: list[str] = []
+        self.declared: set[str] = set()
+
+    def add(self, name: str, value: float | int | None, help_text: str, **labels: str) -> None:
+        if value is None:
+            return
+        if name not in self.declared:
+            self.lines += [f"# HELP {name} {help_text}", f"# TYPE {name} gauge"]
+            self.declared.add(name)
+        label_text = ",".join(f'{k}="{_escape(str(v))}"' for k, v in labels.items())
+        self.lines.append(f"{name}{{{label_text}}} {float(value)}" if labels else f"{name} {float(value)}")
+
+    def text(self) -> str:
+        return "\n".join(self.lines) + "\n"
+
+
+def _escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ")
+
+
+def _newest_mtime(path: Path, pattern: str = "*") -> float | None:
+    if path.is_file():
+        return path.stat().st_mtime
+    if not path.is_dir():
+        return None
+    times = [p.stat().st_mtime for p in path.glob(pattern) if p.is_file()]
+    return max(times) if times else None
+
+
+# --- sections ------------------------------------------------------------------------------
+
+
+def systemd_jobs(m: Metrics, state: dict) -> None:
+    for job, (kind, interval) in JOBS.items():
+        m.add("momentum_job_expected_interval_seconds", interval,
+              "How often the job should run", task=job, runner=kind.split(":")[0])
+        if not kind.startswith("systemd:"):
+            continue
+        unit = kind.split(":", 1)[1]
+        props = _systemctl_show(f"{unit}.service", "ExecMainStartTimestamp", "ExecMainExitTimestamp",
+                                "ExecMainStatus", "Result", "ActiveState")
+        timer = _systemctl_show(f"{unit}.timer", "NextElapseUSecRealtime", "LastTriggerUSec", "ActiveState")
+        started = _unix(props.get("ExecMainStartTimestamp"))
+        if started is None:
+            # systemd forgets service runs at reboot; the timer's last trigger survives.
+            started = _unix(timer.get("LastTriggerUSec"))
+        finished = _unix(props.get("ExecMainExitTimestamp"))
+        running = props.get("ActiveState") in {"active", "activating"}
+        m.add("momentum_job_running", 1 if running else 0, "1 while the job is running", task=job)
+        m.add("momentum_job_last_start_timestamp_seconds", started, "When the job last started", task=job)
+        if finished:
+            code = int(props.get("ExecMainStatus") or 0)
+            ok = props.get("Result") == "success" and code == 0
+            m.add("momentum_job_last_run_timestamp_seconds", finished, "When the job last finished", task=job)
+            m.add("momentum_job_last_exit_code", code, "Exit code of the last run (0 = ok)", task=job)
+            if started:
+                m.add("momentum_job_last_duration_seconds", max(0.0, finished - started),
+                      "How long the last run took", task=job)
+            if ok:
+                state[job] = finished
+        m.add("momentum_job_last_success_timestamp_seconds", state.get(job),
+              "When the job last finished without an error", task=job)
+        m.add("momentum_job_next_run_timestamp_seconds", _unix(timer.get("NextElapseUSecRealtime")),
+              "When the systemd timer fires next", task=job)
+        m.add("momentum_job_timer_active", 1 if timer.get("ActiveState") == "active" else 0,
+              "1 when the systemd timer is switched on", task=job)
+
+
+def _systemctl_show(unit: str, *props: str) -> dict:
+    out = subprocess.run(
+        ["systemctl", "show", "--timestamp=unix", unit, *[f"-p{p}" for p in props]],
+        capture_output=True, text=True, timeout=10,
+    ).stdout
+    return dict(line.split("=", 1) for line in out.splitlines() if "=" in line)
+
+
+def _unix(value: str | None) -> float | None:
+    # systemd prints "@1793845058" with --timestamp=unix, but some properties (the timer's
+    # LastTriggerUSec) ignore that flag and print "Sun 2026-11-01 11:00:01 UTC". Empty or
+    # "n/a" means it has never run.
+    if not value or value == "n/a":
+        return None
+    if value.startswith("@"):
+        return float(value[1:])
+    try:
+        return datetime.strptime(value, "%a %Y-%m-%d %H:%M:%S UTC").replace(tzinfo=timezone.utc).timestamp()
+    except ValueError:
+        return None
+
+
+def data_downloads(m: Metrics) -> None:
+    help_text = "When this data source was last downloaded or rebuilt"
+    sources = {
+        "pricecharting_csv": _newest_mtime(ROOT / "data/pricecharting/raw"),
+        "tcgcsv_archive": _newest_mtime_dirs(ROOT / "data/tcgcsv_archive"),
+        "tcgcsv_catalogue": _newest_mtime_dirs(ROOT / "data/tcgcsv_catalogue"),
+        "parquet_history": _newest_mtime_dirs(ROOT / "data/parquet"),
+        "market_prices_csv": _newest_mtime(ROOT / "data/market_prices_latest.csv"),
+        "storefront_market_reference": _newest_mtime(ROOT / "data/storefront/market_reference.json"),
+    }
+    for source, mtime in sources.items():
+        m.add("momentum_data_updated_timestamp_seconds", mtime, help_text, source=source)
+    # The archive folder is named by price date, which can lag the download by a day.
+    days = [p.name for p in (ROOT / "data/tcgcsv_archive").iterdir() if re.fullmatch(r"\d{4}-\d{2}-\d{2}", p.name)]
+    if days:
+        newest = datetime.strptime(max(days), "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        m.add("momentum_tcgcsv_archive_latest_day_timestamp_seconds", newest.timestamp(),
+              "Price date of the newest TCGCSV archive folder")
+
+
+def _newest_mtime_dirs(path: Path) -> float | None:
+    """Newest modification time among the folder and its direct children (one level only:
+    the parquet and archive trees hold tens of thousands of files)."""
+    if not path.exists():
+        return None
+    times = [path.stat().st_mtime] + [p.stat().st_mtime for p in path.iterdir()]
+    return max(times)
+
+
+def logs(m: Metrics) -> None:
+    for log in sorted((ROOT / "logs").glob("*.log")):
+        stat = log.stat()
+        m.add("momentum_log_updated_timestamp_seconds", stat.st_mtime, "When the log was last written", log=log.stem)
+        m.add("momentum_log_size_bytes", stat.st_size, "Size of the log file", log=log.stem)
+
+
+def todo(m: Metrics) -> None:
+    path = ROOT / "docs/todo.txt"
+    text = path.read_text(encoding="utf-8")
+    # Count list items ("- [next] ...", at any indent) in every section except "Recently
+    # Completed". A section heading is a line underlined with dashes; the tag legend at the
+    # top has no "- " before its tags, so it isn't counted.
+    sections = re.split(r"^(.+)\n-{3,}\s*$", text, flags=re.M)
+    open_part = "".join(
+        body for heading, body in zip(sections[1::2], sections[2::2])
+        if heading.strip() != "Recently Completed"
+    )
+    for tag in TODO_TAGS:
+        count = len(re.findall(rf"^\s*- \[{re.escape(tag)}\b[^\]]*\]", open_part, re.M))
+        m.add("momentum_todo_items", count, "Open items in docs/todo.txt by status tag", status=tag)
+    match = re.search(r"^Last updated:\s*(\d{4}-\d{2}-\d{2})", text, re.M)
+    if match:
+        day = datetime.strptime(match.group(1), "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        m.add("momentum_todo_last_updated_timestamp_seconds", day.timestamp(), "The 'Last updated' date in docs/todo.txt")
+    m.add("momentum_todo_file_modified_timestamp_seconds", path.stat().st_mtime, "When docs/todo.txt was last saved")
+
+
+def bug_reports(m: Metrics) -> None:
+    db = ROOT / "data/processed/tracking.sqlite3"
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True, timeout=5)
+    try:
+        for status, count in con.execute("SELECT status, count(*) FROM bug_reports GROUP BY status"):
+            m.add("momentum_bug_reports", count, "Bug reports by status (admin page /bug-reports)", status=status)
+        newest = con.execute("SELECT max(created_at) FROM bug_reports").fetchone()[0]
+        if newest:
+            m.add("momentum_bug_report_newest_timestamp_seconds", _iso(newest), "When the newest bug report came in")
+        users = con.execute("SELECT count(*) FROM tracking_users").fetchone()[0]
+        m.add("momentum_site_accounts", users, "Signed-up accounts on the market site")
+    finally:
+        con.close()
+
+
+def _iso(value: str) -> float:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.timestamp()
+
+
+def git(m: Metrics) -> None:
+    def run(*args: str) -> str:
+        return subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True, timeout=20).stdout
+
+    branch = run("rev-parse", "--abbrev-ref", "HEAD").strip()
+    m.add("momentum_git_branch_info", 1, "Branch the repo is on (label)", branch=branch)
+    m.add("momentum_git_on_main", 1 if branch == "main" else 0, "1 when the repo is on main")
+    # Data files are changed by the jobs every day and are never committed, so leave them out
+    # (AGENTS.md: "Data files are not commits").
+    changed = [
+        line for line in run("status", "--porcelain").splitlines()
+        if not re.search(r"(^.. \"?data/|products_.*\.csv|TCG Placeholders/)", line)
+    ]
+    m.add("momentum_git_uncommitted_files", len(changed), "Changed project files not yet committed (data files excluded)")
+    ahead = run("rev-list", "--count", "origin/main..main").strip()
+    m.add("momentum_git_unpushed_commits", int(ahead or 0), "Commits on main not yet pushed to origin")
+    last = run("log", "-1", "--format=%ct", "main").strip()
+    m.add("momentum_git_last_commit_timestamp_seconds", int(last or 0) or None, "Time of the newest commit on main")
+
+
+def reminders(m: Metrics) -> None:
+    m.add("momentum_temporary_sudo_present", 1 if SUDOERS_REMINDER.exists() else 0,
+          "1 while /etc/sudoers.d/90-claude-buildout exists (remove it after the monitoring build-out)")
+
+
+# --- main ----------------------------------------------------------------------------------
+
+
+def main() -> int:
+    m = Metrics()
+    try:
+        state = json.loads(STATE_FILE.read_text())
+    except (OSError, ValueError):
+        state = {}
+    sections = {
+        "systemd_jobs": lambda: systemd_jobs(m, state),
+        "data_downloads": lambda: data_downloads(m),
+        "logs": lambda: logs(m),
+        "todo": lambda: todo(m),
+        "bug_reports": lambda: bug_reports(m),
+        "git": lambda: git(m),
+        "reminders": lambda: reminders(m),
+    }
+    errors = {}
+    for name, section in sections.items():
+        try:
+            section()
+            errors[name] = 0
+        except Exception as exc:  # report and carry on; see module docstring
+            errors[name] = 1
+            print(f"collect_status: {name} failed: {exc!r}", file=sys.stderr)
+    for name, failed in errors.items():
+        m.add("momentum_collector_errors", failed, "1 when this section of collect_status.py failed", section=name)
+    m.add("momentum_collector_last_run_timestamp_seconds", time.time(), "When collect_status.py last ran")
+
+    _write_atomic(OUTPUT, m.text())
+    _write_atomic(STATE_FILE, json.dumps(state))
+    return 0
+
+
+def _write_atomic(path: Path, text: str) -> None:
+    tmp = path.with_name(f".{path.name}.tmp")
+    tmp.write_text(text, encoding="utf-8")
+    tmp.chmod(0o644)
+    tmp.replace(path)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

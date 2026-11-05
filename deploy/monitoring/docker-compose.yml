@@ -1,0 +1,84 @@
+# Exporters for Grafana (see "Monitoring" in docs/operator_runbook.txt). All listen on
+# localhost only; Prometheus on this host scrapes them.
+#
+# cAdvisor reads Docker's view of every container on this host (CPU, memory, network,
+# restarts) and serves it on localhost:8098 for Prometheus. Localhost only: it lists every
+# container and image, which is nobody else's business.
+#   docker compose -f deploy/monitoring/docker-compose.yml up -d
+services:
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.52.1
+    container_name: cadvisor
+    command:
+      - --docker_only=true            # skip the host's own cgroups; node-exporter covers the host
+      - --housekeeping_interval=15s   # match Prometheus' scrape interval
+      - --store_container_labels=false
+      - --whitelisted_container_labels=com.docker.compose.project,com.docker.compose.service
+      # Per-process, per-disk and hugepage details cost CPU and nothing here uses them.
+      - --disable_metrics=advtcp,cpuset,hugetlb,memory_numa,percpu,perf_event,process,referenced_memory,resctrl,sched,tcp,udp,disk,diskIO
+    ports:
+      - "127.0.0.1:8098:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    privileged: true
+    restart: unless-stopped
+
+  # Proxmox cluster (192.168.1.75): node, VM, container and storage status from the
+  # Proxmox API, so nothing is installed on Proxmox itself. Outside the repo, in
+  # /etc/momentum-monitoring/:
+  #   secrets.env      PVE_USER=root@pam, PVE_TOKEN_NAME=grafana, PVE_TOKEN_VALUE=<secret>.
+  #                    The token has privilege separation on and only role PVEAuditor on /
+  #                    (read-only); never untick separation on a root@pam token.
+  #   pve-root-ca.pem  Proxmox's own CA (public), so HTTPS is verified, not skipped.
+  #                    Fetched from /nodes/pve/certificates/info; valid until 2032.
+  # Prometheus asks for /pve?target=192.168.1.75&cluster=1&node=1.
+  pve-exporter:
+    image: prompve/prometheus-pve-exporter:3.5.5
+    container_name: pve-exporter
+    env_file: /etc/momentum-monitoring/secrets.env
+    environment:
+      REQUESTS_CA_BUNDLE: /etc/ssl/pve-root-ca.pem
+    volumes:
+      - /etc/momentum-monitoring/pve-root-ca.pem:/etc/ssl/pve-root-ca.pem:ro
+    ports:
+      - "127.0.0.1:9221:9221"
+    restart: unless-stopped
+
+  # UniFi network (gateway 192.168.1.1): WAN, Wi-Fi, switches, access points and clients,
+  # read from the UniFi Network app. Outside the repo, in /etc/momentum-monitoring/:
+  #   unifi.env       UP_UNIFI_DEFAULT_USER / UP_UNIFI_DEFAULT_PASS: a local-access-only
+  #                   UniFi admin with View Only on Network and no other apps. It must be
+  #                   local: a UI.com (SSO) admin needs two-factor codes and can't sign in here.
+  #   unifi-cert.pem  The gateway's own self-signed certificate (CN unifi.local, valid until
+  #                   2027-07-27). HTTPS is verified against it: Go reads SSL_CERT_FILE as
+  #                   its only trusted root, and the name unifi.local maps to the gateway.
+  #                   When UniFi renews it, fetch it again (runbook "Monitoring").
+  unpoller:
+    image: ghcr.io/unpoller/unpoller:v2.15.4
+    container_name: unpoller
+    env_file: /etc/momentum-monitoring/unifi.env
+    environment:
+      UP_UNIFI_DEFAULT_URL: https://unifi.local
+      UP_UNIFI_DEFAULT_VERIFY_SSL: "true"
+      UP_UNIFI_DEFAULT_SAVE_SITES: "true"
+      UP_UNIFI_DEFAULT_SAVE_DPI: "false"     # per-app traffic: heavy, and not needed yet
+      UP_UNIFI_DEFAULT_SAVE_EVENTS: "false"
+      UP_UNIFI_DEFAULT_SAVE_ALARMS: "false"
+      UP_INFLUXDB_DISABLE: "true"
+      UP_LOKI_URL: ""
+      UP_PROMETHEUS_HTTP_LISTEN: 0.0.0.0:9130
+      UP_PROMETHEUS_NAMESPACE: unpoller
+      SSL_CERT_FILE: /etc/ssl/unifi-cert.pem
+    extra_hosts:
+      - "unifi.local:192.168.1.1"
+    volumes:
+      - /etc/momentum-monitoring/unifi-cert.pem:/etc/ssl/unifi-cert.pem:ro
+    ports:
+      - "127.0.0.1:9130:9130"
+    restart: unless-stopped

@@ -301,7 +301,7 @@ repo, and the "milestone" wrap-up routine) and [docs/todo.txt](/opt/pokemon-mome
 - [docs/dashboard_how_to.txt](/opt/pokemon-momentum/docs/dashboard_how_to.txt)
 - [docs/data_flow.txt](/opt/pokemon-momentum/docs/data_flow.txt)
 - [docs/index_overview_maintenance.md](/opt/pokemon-momentum/docs/index_overview_maintenance.md)
-- [docs/operator_runbook.txt](/opt/pokemon-momentum/docs/operator_runbook.txt)
+- [docs/operator_runbook.txt](/opt/pokemon-momentum/docs/operator_runbook.txt) (includes Monitoring: the Grafana dashboards at http://192.168.1.240:3000)
 - [docs/responsive_qa.md](/opt/pokemon-momentum/docs/responsive_qa.md)
 - [docs/todo.txt](/opt/pokemon-momentum/docs/todo.txt)
 
