@@ -7,6 +7,16 @@ Archived Completed Work
 November 2026
 -------------
 
+- Completed and archived at the 2026-11-05 milestone (job-metrics-fix):
+  - 2026-11-05 Storefront Phase 2: cart and Stripe Checkout (test mode). Owner's own Stripe
+    account made (separate from the Squarespace-managed one), test key in `.env`, and a real test
+    order placed end to end on a side copy of the store (paid, free shipping over $150, stock
+    taken, confirmation email written to the outbox). What's left: the Phase 2 item below.
+  - 2026-11-05 Storefront: owner checked the shop on a phone and read the 10 articles ("good for
+    now"). Squarespace saves finished: email subscribers, form submitters and the two form sheets
+    (newsletter sign-ups, pre-order interest) saved in the owner's private records; no final
+    products export needed. Shipping decision D3: free over $150 (Shipping page and plan updated).
+
 - Completed and archived at the 2026-11-05 milestone (grafana-monitoring):
   - 2026-11-05 KPDH branch reconciliation: transplanted the final Series 2 catalog and images,
     base-first binder option, corrected continuous CR numbering and lime provisional-evidence

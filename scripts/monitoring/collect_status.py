@@ -41,6 +41,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from run_job import JOB_HELP  # noqa: E402  (same help text in both scripts; see run_job.py)
 TEXTFILE_DIR = Path(os.environ.get("MOMENTUM_TEXTFILE_DIR", "/var/lib/prometheus/node-exporter"))
 OUTPUT = TEXTFILE_DIR / "momentum_status.prom"
 # Remembers when each systemd job last succeeded, because systemd only keeps the latest run.
@@ -119,20 +121,20 @@ def systemd_jobs(m: Metrics, state: dict) -> None:
             started = _unix(timer.get("LastTriggerUSec"))
         finished = _unix(props.get("ExecMainExitTimestamp"))
         running = props.get("ActiveState") in {"active", "activating"}
-        m.add("momentum_job_running", 1 if running else 0, "1 while the job is running", task=job)
-        m.add("momentum_job_last_start_timestamp_seconds", started, "When the job last started", task=job)
+        m.add("momentum_job_running", 1 if running else 0, JOB_HELP["momentum_job_running"], task=job)
+        m.add("momentum_job_last_start_timestamp_seconds", started, JOB_HELP["momentum_job_last_start_timestamp_seconds"], task=job)
         if finished:
             code = int(props.get("ExecMainStatus") or 0)
             ok = props.get("Result") == "success" and code == 0
-            m.add("momentum_job_last_run_timestamp_seconds", finished, "When the job last finished", task=job)
-            m.add("momentum_job_last_exit_code", code, "Exit code of the last run (0 = ok)", task=job)
+            m.add("momentum_job_last_run_timestamp_seconds", finished, JOB_HELP["momentum_job_last_run_timestamp_seconds"], task=job)
+            m.add("momentum_job_last_exit_code", code, JOB_HELP["momentum_job_last_exit_code"], task=job)
             if started:
                 m.add("momentum_job_last_duration_seconds", max(0.0, finished - started),
-                      "How long the last run took", task=job)
+                      JOB_HELP["momentum_job_last_duration_seconds"], task=job)
             if ok:
                 state[job] = finished
         m.add("momentum_job_last_success_timestamp_seconds", state.get(job),
-              "When the job last finished without an error", task=job)
+              JOB_HELP["momentum_job_last_success_timestamp_seconds"], task=job)
         m.add("momentum_job_next_run_timestamp_seconds", _unix(timer.get("NextElapseUSecRealtime")),
               "When the systemd timer fires next", task=job)
         m.add("momentum_job_timer_active", 1 if timer.get("ActiveState") == "active" else 0,
