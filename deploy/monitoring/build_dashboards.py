@@ -378,9 +378,14 @@ def servers():
         ("Updates waiting", "sum(apt_upgrades_pending) or vector(0)", dict(thresholds=steps("green", (1, "orange")))),
         ("Reboot needed", "max(node_reboot_required) or vector(0)",
          dict(mappings=value_map({1: ("YES", "orange"), 0: ("No", "green")}), thresholds=steps("green", (1, "orange")))),
-        ("Disks healthy (SMART)", "min(smartmon_device_smart_healthy) or vector(1)",
-         dict(mappings=value_map({1: ("OK", "green"), 0: ("FAILING", "red")}), thresholds=steps("red", (1, "green")),
-              description="smartctl's overall health verdict for every disk it can read.")),
+        # Only disks that really report SMART: this host is a Proxmox VM, and its virtual
+        # disk (QEMU HARDDISK) has none, yet the SMART script still writes healthy=0 for it.
+        ("Disks healthy (SMART)",
+         "min(smartmon_device_smart_healthy and on (disk) (smartmon_device_smart_available == 1)) or vector(-1)",
+         dict(mappings=value_map({1: ("OK", "green"), 0: ("FAILING", "red"), -1: ("No SMART (virtual disk)", "text")}),
+              thresholds=steps("red", (1, "green")),
+              description="smartctl's health verdict for disks that report SMART. This server is a VM, so its "
+                          "disk is virtual and has none; the physical disks are on the Proxmox hosts.")),
     ]
     for i, (title, expr, kw) in enumerate(tiles):
         p.append(stat(title, expr, g(i * 3, 1, 3, 4), **kw))
