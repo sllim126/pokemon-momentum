@@ -96,10 +96,13 @@ High-level flow
 3. Refresh group and product metadata
 4. Build joined/named exports for inspection
 5. Build product-level and group-level signal snapshots (plus screener, sparkline,
-   series and health snapshots)
+   series and health snapshots). The signal, sparkline and series builders read prices
+   through `prices_by_current_group` (scripts/common/price_views.py), which files every
+   price under the card's current set, so a card TCGplayer moved keeps one history.
 6. Download PriceCharting graded prices (English pass only; covers both markets)
 7. Export partitioned parquet history
-8. Build market-index snapshots (these read parquet, so they must come after step 7)
+8. Build market-index snapshots (these read parquet, so they must come after step 7).
+   Cards whose price flip-flops (4+ day-to-day jumps of 3x in a year) are left out.
 9. Serve dashboards and API from DuckDB + parquet
 
 Data gap (closed 2026-11-02): TCGCSV's daily archive was offline from 2026-09-16, which left

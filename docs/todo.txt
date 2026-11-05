@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-04 (milestone: torrent-sharing)
+Last updated: 2026-11-05 (milestone: storefront-phase2)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -43,19 +43,19 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
-- 2026-11-05 Storefront Phase 2 built (test mode, waiting for Stripe keys): see the Phase 2
-  item under the storefront section for what's left.
+- 2026-11-05 Storefront Phase 2: cart and Stripe Checkout (test mode). Owner's own Stripe
+  account made (separate from the Squarespace-managed one), test key in `.env`, and a real test
+  order placed end to end on a side copy of the store (paid, free shipping over $150, stock
+  taken, confirmation email written to the outbox). What's left: the Phase 2 item below.
 - 2026-11-05 Storefront: owner checked the shop on a phone and read the 10 articles ("good for
   now"). Squarespace saves finished: email subscribers, form submitters and the two form sheets
   (newsletter sign-ups, pre-order interest) saved in the owner's private records; no final
   products export needed. Shipping decision D3: free over $150 (Shipping page and plan updated).
-- 2026-11-04 Catalogue crawl stops wasting requests: 404s were re-asked every night (a missing
-  file looked unfetched), and Marvel Comics' ~10,800 sets with no product lists ate 3,720 of
-  night two's 4,000 requests. 404s are now remembered, and a game whose first 25 product
-  requests are all 404 is skipped until due again.
-- 2026-11-02 TCGCSV archive torrents for 2024 and 2025 built and seeding in the owner's
-  qBittorrent (`scripts/torrents/build_archive_torrent.py`); CptSpaceToaster OK'd sharing and
-  they were posted in #useful-shares the same day.
+- 2026-11-05 KPDH branch reconciliation: transplanted the final Series 2 catalog and images,
+  base-first binder option, corrected continuous CR numbering and lime provisional-evidence
+  markers onto current `main` without importing the old branches' unrelated dashboard, cron
+  or documentation changes. The isolated image built and passed smoke checks; 249 tests and
+  33 subtests pass.
 
 High Priority
 -------------
@@ -70,6 +70,8 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   the new store's `/p/<slug>` pages. Since 2026-10-31 it opens the TCGplayer Pro store (owner:
   sell there until the new store launches, after Black Friday); which products show it still
   comes from the last Squarespace export, so refresh that rule from the new store's stock then.
+- [next] Check the 2026-11-06 02:00 nightly update is green: first run with the snapshot
+  builders reading through `prices_by_current_group`. If it fails, see docs/data_flow.txt step 5.
 - [next] Owner, before 2026-11-14: domain forwarding stopgap (plan decision D5) (the Squarespace
   website plan is cancelled, ending 2026-11-14, confirmed 2026-10-31); no final products export needed (owner, 2026-11-05: no new products; the
   2026-10-31 export is the last). Products, orders and customers/subscribers were exported 2026-10-31; page text, blog
@@ -93,16 +95,22 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     review. Old text for comparison is in the saved site copy. Remove `draft: true` when done.
   - [idea] JP products without a TCGplayer mapping (e.g. JP-AE-BB) show no market price;
     add them to `data/squarespace_tcgplayer_mapping.csv`.
-- [in progress] Phase 2: cart + Stripe Checkout, test mode (Claude, 2026-11-05, branch
-  `storefront/phase2-cart`; guide `storefront/README.md` "Checkout"). Built and tested with a
-  fake Stripe (88 storefront tests): cart, checkout with 30-minute reservations, webhook,
-  reconcile job, thanks/order pages, Discord alerts, order + shipping emails (outbox until
-  SMTP), `orders_cli`. Checkout stays off until a Stripe key is in `.env`. **Stopped at:**
-  waiting for the owner's Stripe account. Left:
-  - [waiting] Owner: Stripe account (sign-up planned 2026-11-05 evening); put the test keys in
-    `.env` as STRIPE_SECRET_KEY (and STRIPE_WEBHOOK_SECRET if using the Stripe CLI); then
-    `docker-compose up -d storefront` and one test order (card 4242 4242 4242 4242), then
-    `orders_cli ship` it to see the shipped email. That's Phase 2's "done when".
+- [in progress] Phase 2: cart + Stripe Checkout, test mode (Claude, 2026-11-05; merged to
+  `main` at the storefront-phase2 milestone; guide `storefront/README.md` "Checkout"). Built and
+  tested with a fake Stripe (88 storefront tests) and with the owner's real Stripe sandbox: one
+  test order paid end to end on a side copy of the store. Live keys are refused unless
+  STOREFRONT_ALLOW_LIVE=1. **Stopped at:** the running store on :8010 serves whatever branch the
+  live folder `/opt/pokemon-momentum` is on; it was on `plan/lorcana-market` at this milestone,
+  so Phase 2 reaches :8010 only once that folder is back on `main` and
+  `docker-compose up -d storefront` is run (picks up the new environment variables; the
+  `002_orders` migration applies at start-up). Left:
+  - [next] Once :8010 runs Phase 2: one test order there, then `orders_cli ship` it to see the
+    shipped email (the side-copy test didn't try shipping, back-out or a declined card).
+  - [planned] STRIPE_WEBHOOK_SECRET: needs a public address Stripe can reach (Cloudflare
+    Tunnel, paused by the owner) or the Stripe CLI. Until then the thanks page and the 15-minute
+    reconcile job confirm payments.
+  - [waiting] Owner: Stripe activation (business profile, bank, statement descriptor POKE6S)
+    before live payments. Use the new Stripe account, not the Squarespace-managed one.
   - [waiting] D2 sales tax: owner calls the Utah State Tax Commission again (the first call
     was cut off by a "too busy, call later" message). `STOREFRONT_TAX_MODE=stripe` is ready if Stripe Tax
     is chosen; our own Utah table would be built behind the same switch.
@@ -175,6 +183,22 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   should get the desktop app or the mobile page (today they get mobile; see "iPad: a
   dedicated analysis layout" under Parked). Write each finding here as its own item.
   Done so far: iPad-portrait widths fold the list menu into a "Lists" button (2026-10-22).
+- [in progress] Graded Budget Builder (Beta), live 2026-11-05 on desktop and phone (owner: "just
+  for fun, not advice"). PriceCharting history starts 2026-10-09 (22 days on 2026-11-05), so the
+  trend window is under 30 days until mid-November. Next: review the picks once a full month of
+  history exists; maybe BGS/CGC/SGC 10s (columns exist); drop "(Beta)" when the owner is happy.
+  Rules: every price links to PriceCharting; never assume higher grade = higher price.
+- [parked] Phone charts: the desktop's five date labels and January 1 year lines (desktop
+  2026-11-05, `drawChart` in desktop_home.html). Owner: hold off on the phone for now.
+- [planned] Market indexes (owner, 2026-11-05, "soon"): split Market Stats → Indexes into two
+  groups, "Eras" (the current era indexes, Top 151 stays as is) and "Markets": whole market,
+  sealed market, English, Japanese, later graded. Whole market = every actively traded single
+  and sealed product above ~$2, equal-weighted first; weight by price x PriceCharting sales
+  volume once a few months of volume exist (volume starts 2026-10-09; earlier years would use
+  today's weights, say so on the chart). Watch: new-set joins, bad one-off prices, memory in
+  the nightly. Add a breadth line (% of cards above their 30-day average).
+- [idea] Neo 100, EX 100 and JP Top 100 still have days moving 10-25% that the unstable-price
+  rule doesn't explain (one-off big moves or reshuffle days?). Look when there's time.
 - [planned] Mobile interface testing (owner, 2026-10-21): now part of the new mobile app
   (see "New mobile app" above). Test `/m-next` on real phones after each step instead of the
   old `/mobile`, which is being replaced; known old-page issues are under "Parked: Mobile

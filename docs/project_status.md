@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-11-04
+Last reviewed: 2026-11-05
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -122,7 +122,8 @@ Added 2026-10:
 - PriceCharting graded prices with a nightly history (shown with a required link back)
 - 6-Month Hold check (break-even after fees and shipping, trend, past track record)
 - Shared site header and five area pages
-- Desktop app with Buy (Sealed Deals with loose-pack comparison, card-art Budget Builder),
+- Desktop app with Buy (Sealed Deals with loose-pack comparison, card-art Budget Builder with
+  Keep and New picks, Graded Budget Builder (Beta) from PriceCharting),
   Discover, Track (saved lists with price targets), Research (Sets, Pokémon, Market Stats)
   and Learn (How it works), plus a legal footer
 - Collector Hub, Placeholder Library and Account restyled on a shared desktop stylesheet
@@ -167,7 +168,10 @@ Added 2026-10:
   daily and paced, collection JSON can be exported/imported, destructive page clears ask
   first, and Caddy compresses the public page with zstd/gzip
 - KPDH Binder planner at `/kpdh/`, isolated in a read-only nginx container on host port
-  8091 and reached through the same Caddy proxy
+  8091 and reached through the same Caddy proxy. Energy and Classic Series 2 are live;
+  the planner preserves Series 1 collection IDs, offers premium-first or base-first binder
+  order, uses the confirmed continuous Series 2 CR numbering, and outlines the nine
+  Energy CR cards in lime while physical-card confirmation is pending
 - Confirmed and Consistent Movers show how many days each card has been in the list (sortable);
   Set values' top-hit card opens in the side pane; browser Back closes the full card page
 - Binder planners on phones (2026-10-21/22): cards near the top, sideways page strip with a

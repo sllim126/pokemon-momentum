@@ -10,6 +10,7 @@ if str(ROOT) not in sys.path:
 
 from scripts.common.category_config import get_category_config
 from scripts.common.duckdb_settings import connect_capped
+from scripts.common.price_views import prices_by_current_group
 from scripts.common.product_classification import get_product_class_sql, get_product_kind_sql
 
 
@@ -42,6 +43,8 @@ def main() -> int:
     table_name = category.product_signal_table
 
     con = connect_capped(DB_PATH)
+    # One history per card even when TCGplayer moved it to another set (see price_views).
+    prices = prices_by_current_group(con, category.category_id)
 
     # Expected input state:
     # - pokemon_prices contains historical fact rows for this category
@@ -55,7 +58,7 @@ CREATE OR REPLACE TABLE {table_name} AS
 WITH latest_date AS (
     -- Establish the as-of date for the entire snapshot.
     SELECT MAX(date) AS latest_date
-    FROM pokemon_prices
+    FROM {prices}
     WHERE categoryId = {category.category_id}
       AND marketPrice IS NOT NULL
 ),
@@ -68,7 +71,7 @@ base AS (
         productId,
         subTypeName,
         marketPrice AS price
-    FROM pokemon_prices
+    FROM {prices}
     WHERE categoryId = {category.category_id}
       AND marketPrice IS NOT NULL
 ),

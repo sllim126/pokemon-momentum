@@ -7,6 +7,32 @@ Archived Completed Work
 November 2026
 -------------
 
+- Completed and archived at the 2026-11-05 milestone (storefront-phase2):
+  - 2026-11-05 Budget Builder keep and cycle (owner): "Keep" on any pick, then "New picks" refills
+    the rest of the budget with cards not shown yet (starts over when they run out). Desktop and
+    phone; API `keep_keys` on `/budget_builder`. Popular Pokémon (Charizard, Umbreon, Gengar…)
+    get a +10 tie-breaker and a "Popular Pokémon" label (owner, after Reddit feedback).
+  - 2026-11-05 Indexes leave out cards with flip-flopping prices (4+ jumps of 3x in a year; 42 EN,
+    19 JP cards). WOTC 100's worst day 37.7% -> 5.9%, Top 151's 14.3% -> 7.8%; Method tab lists
+    them. Discover lists not changed (owner to decide).
+  - 2026-11-05 Desktop charts: five date labels (three when narrow, with the year on long spans) and a
+    faint line with the year at each January 1 (owner).
+  - 2026-11-05 Desktop: the browser's Back button returns from a set (or index) to the list, like
+    "← All sets" (owner).
+  - 2026-11-05 Breakouts tightened (owner spotted Basic Darkness Energy, flat at ~$4.90 for months):
+    a breakout must also be 5% above its 30-day average. And cards TCGplayer moved to another set
+    (116 EN, 7 JP) get one history in the series, sparkline and signal snapshots; their charts
+    sometimes showed the old set's history (ending Aug 2025). Snapshots rebuild at 02:00.
+  - 2026-11-05 Graded Budget Builder (Beta) on desktop and phone: PSA 10s, 9-10s or 8-10s from
+    PriceCharting, $100-$1,000 presets, Keep and New picks, each price linked to PriceCharting.
+- Completed and archived at the 2026-11-05 milestone (budget-builders):
+  - 2026-11-04 Catalogue crawl stops wasting requests: 404s were re-asked every night (a missing
+    file looked unfetched), and Marvel Comics' ~10,800 sets with no product lists ate 3,720 of
+    night two's 4,000 requests. 404s are now remembered, and a game whose first 25 product
+    requests are all 404 is skipped until due again.
+  - 2026-11-02 TCGCSV archive torrents for 2024 and 2025 built and seeding in the owner's
+    qBittorrent (`scripts/torrents/build_archive_torrent.py`); CptSpaceToaster OK'd sharing and
+    they were posted in #useful-shares the same day.
 - Completed and archived at the 2026-11-04 milestone (torrent-sharing):
   - 2026-11-02 TCGCSV archive back: the 2026-11-01 backfill run fetched all 46 missing days; data/raw
     is complete from 2024-02-08, and the gap is loaded for English and Japanese.

@@ -1,6 +1,6 @@
 # Desktop App: Maintainer Guide
 
-Last reviewed: 2026-10-31
+Last reviewed: 2026-11-05
 
 The desktop app is one page that holds the site's five areas (Buy, Discover, Research,
 Track, Learn) in a single three-column layout built for 1080p screens. Since 2026-10-12 it
@@ -101,7 +101,38 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
   `packBreakdown()`.
 - **Budget Builder** picks are chosen on the server (`budget_builder_recommendations` and
   `_select_budget_candidates` in `api.py`). It needs four price readings in the last week,
-  or every reading available after a feed gap.
+  or every reading available after a feed gap. Popular Pokémon (`POPULAR_POKEMON` in `api.py`)
+  get a +10 tie-breaker and a "Popular Pokémon" label; price momentum stays the main signal.
+- **Budget Builder keep and cycle** (desktop and phone, 2026-11-05). "Keep" only marks a pick
+  on the page (no reload) and adds it to the link as `keep=`. "New picks" adds every unkept
+  pick on screen to `budgetSeen` and asks again with `keep_keys` (kept cards go in first,
+  whatever they cost) and `exclude_keys` (owned + seen), so it never repeats a card. When no
+  new card is left it clears `budgetSeen` and starts over. Changing the budget or any menu
+  clears `budgetSeen` but keeps the kept cards.
+- **Graded Budget Builder (Beta)** (`graded_budget`, desktop and phone, 2026-11-05) shares
+  Budget Builder's controls, Keep and New picks (`isBudgetList`, `pickKey`). It calls
+  `/graded_budget_builder`: PriceCharting prices for PSA 10 / grade 9 / grade 8, each grade
+  scored on its own history (never assuming a higher grade costs more). Every graded price is
+  a link to PriceCharting (licence condition). Clicking a pick opens the card's raw details
+  (`loadCardByKey` / `openProductFromLink`), not the slab price. Switching between the two
+  builders clears kept, seen and swapped cards. Trends use up to 30 days; the history started
+  2026-10-09, so the window is shorter until mid-November.
+- **Back button into sets and indexes** (2026-11-05). Opening a set or an index pushes a
+  history entry (`pushDrillEntry`), so the browser's Back returns to Sets / Market Stats, and
+  "← All sets" goes back through it. The `popstate` handler reopens whatever view the
+  address names. Picking cards inside a view still replaces the address (no entry per card).
+- **Indexes leave out cards with flip-flopping prices** (2026-11-05). A card whose market price
+  jumped 3x or more day to day at least 4 times in the last 365 days is left out of the index
+  for its whole history (`UNSTABLE_*` and `_unstable_cards_cte` in `api.py`). The Method tab
+  lists the left-out cards that could have qualified. Base Set Charizard 1st Edition (27 jumps
+  between ~$400 and $10,000) had made WOTC 100 move 25-38% in a day on 56 days.
+- **Breakouts** (2026-11-05) need the price above the previous 90-day high *and* at least 5%
+  above the 30-day average (`min_vs_sma30_pct` on `/breakouts`), so a flat card ticking a cent
+  past its old high doesn't count.
+- **Cards TCGplayer moved to another set** keep one history: the series, sparkline and signal
+  snapshot builders read prices through `prices_by_current_group` (`scripts/common/price_views.py`),
+  which files every price under the card's current set. Before 2026-11-05 such cards had two
+  chart rows and `/series` sometimes showed the old one (e.g. a chart ending Aug 2025).
 - **Discover lists survive feed gaps.** Each screener's activity bars ("10 different prices
   in 30 days", "4 readings in 7 days") are scaled to the days that actually have prices in
   that window (`gap_scaled_threshold` in `query_support.py`), so a gap in the TCGCSV feed
