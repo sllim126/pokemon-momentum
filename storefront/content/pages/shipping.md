@@ -11,8 +11,7 @@ We ship to addresses in the United States only.
 
 Shipping is a flat rate based on the largest item in your order (single cards, small sealed
 items such as packs and bundles, or large sealed items such as boxes). The rate is shown at
-checkout before you pay. Orders over a set amount ship free; the current threshold is shown
-in your cart.
+checkout before you pay. Orders over $150 ship free in the US.
 
 ## Handling time
 

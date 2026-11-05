@@ -440,7 +440,7 @@ Reviewed with the owner on 2026-10-31. D2 waits for the 2026-11-02 Utah call.
 |---|---|---|
 | D1 | Which stock is listed here and which on TCGplayer | **Decided:** our site lists sealed product and accessories; singles stay on TCGplayer. Revisit after launch |
 | D2 | Sales tax method | **Open:** decide after the 2026-11-02 call. Stripe Tax for a fast launch, our own Utah table if the fee matters. Build the tax step behind one interface so either can be plugged in |
-| D3 | Shipping | **Decided:** flat rate by shipping class, free shipping over a threshold. The owner sets the amounts from Pirate Ship costs; until then use settings with placeholder values (small sealed $5, large sealed $9, free over $100) |
+| D3 | Shipping | **Decided:** flat rate by shipping class, free shipping over a threshold. Free shipping over **$150** (owner, 2026-11-05, matching PokeNE). Flat-rate amounts stay placeholders (small sealed $5, large sealed $9) until the owner sets them from Pirate Ship costs; live Pirate Ship rates at checkout are a later option |
 | D4 | Look and feel | **Decided:** match market.poke6s.com (`scripts/dashboards/desktop_theme.css`) |
 | D5 | poke6s.com from 2026-11-14 until launch | **Decided:** forward to `poke6s.tcgplayerpro.com` in the Squarespace Domains panel |
 | D6 | When to move DNS to Cloudflare | **Decided:** soon (within a week or two), with Claude walking the owner through it, mail records double-checked |

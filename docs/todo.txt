@@ -43,6 +43,10 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-05 Storefront: owner checked the shop on a phone and read the 10 articles ("good for
+  now"). Squarespace saves finished: email subscribers, form submitters and the two form sheets
+  (newsletter sign-ups, pre-order interest) saved in the owner's private records; no final
+  products export needed. Shipping decision D3: free over $150 (Shipping page and plan updated).
 - 2026-11-04 Catalogue crawl stops wasting requests: 404s were re-asked every night (a missing
   file looked unfetched), and Marvel Comics' ~10,800 sets with no product lists ate 3,720 of
   night two's 4,000 requests. 404s are now remembered, and a game whose first 25 product
@@ -65,12 +69,13 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   sell there until the new store launches, after Black Friday); which products show it still
   comes from the last Squarespace export, so refresh that rule from the new store's stock then.
 - [next] Owner, before 2026-11-14: domain forwarding stopgap (plan decision D5) (the Squarespace
-  website plan is cancelled, ending 2026-11-14, confirmed 2026-10-31); one last products export just before the plan ends (for the importer re-run
-  below). Products, orders and customers/subscribers were exported 2026-10-31; page text, blog
+  website plan is cancelled, ending 2026-11-14, confirmed 2026-10-31); no final products export needed (owner, 2026-11-05: no new products; the
+  2026-10-31 export is the last). Products, orders and customers/subscribers were exported 2026-10-31; page text, blog
   posts and images were saved by script the same day. No site changes are expected before the
   plan ends other than the daily price sync (owner), so no second copy is needed.
-- [waiting] Plan decision D2 (sales tax method) after the 2026-11-02 Utah call; D3 shipping
-  amounts from the owner's Pirate Ship costs. D1, D4-D9 decided 2026-10-31.
+- [waiting] Plan decision D2 (sales tax method) after the 2026-11-02 Utah call. D3: free
+  shipping over $150 (owner, 2026-11-05); flat-rate amounts from the owner's Pirate Ship costs
+  later, live Pirate Ship rates possibly after launch. D1, D4-D9 decided 2026-10-31.
 - [parked] Phase 0 (owner + Claude), paused by the owner 2026-10-31 (no online changes for
   now): Cloudflare DNS move (copy the Microsoft 365 mail records
   exactly), Tunnel (replaces the home-IP item below), Stripe test account.
@@ -79,15 +84,11 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   importer, shop/search/category/set/product pages, market price + trend, SEO, redirects,
   draft policy pages, 46 tests. Cloudflare and other online changes paused by the owner.
   Left before calling it done:
-  - [waiting] Owner: browse `http://<server>:8010` on a phone on the home network.
   - [waiting] Owner: full review of every policy page, the terms and the FAQ before launch,
     including the draft pages in `storefront/content/pages/` (handling time in Shipping,
     tax-record years in Privacy). The old Squarespace text was adapted from another shop's
     (with permission) and will be rewritten; the old cancellation fee (6%) is decided in that
     review. Old text for comparison is in the saved site copy. Remove `draft: true` when done.
-  - [waiting] Owner: read through the 10 imported articles (`/articles`).
-  - [planned] Re-run the importer (with --fetch-images) on the final Squarespace export
-    before 2026-11-14.
   - [idea] JP products without a TCGplayer mapping (e.g. JP-AE-BB) show no market price;
     add them to `data/squarespace_tcgplayer_mapping.csv`.
 - [next] Phase 2: cart + Stripe Checkout (test mode only), orders, webhooks, reconciliation.
