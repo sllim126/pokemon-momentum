@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-05 (milestone: job-metrics-fix)
+Last updated: 2026-11-05 (milestone: homelab-dashboards)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -54,15 +54,6 @@ Recently Completed
   jobs' results (nightly update, other-games archive, weekly refreshes) because run_job.py and
   collect_status.py gave the same metrics different help text. Both now share one table
   (run_job.JOB_HELP), with a test; all four jobs that have run show in "Did the jobs run?".
-- 2026-11-05 Visitor counting for both sites (no cookies) and a Visitors dashboard; the
-  Overview's "Requests / min" tile became "Visitors today".
-- 2026-11-05 Grafana monitoring (milestone grafana-monitoring): six dashboards on
-  http://192.168.1.240:3000 (Overview, Website, Servers, Jobs & work, Home lab, Visitors).
-  Request metrics on both apps (private `/metrics`), outside probes, container metrics, a
-  status collector and cron-job wrapper (crontab installed by the owner), Proxmox (read-only
-  API token) and UniFi (View Only local account) exporters with verified HTTPS, dead home-lab
-  targets removed, AIOS Experiments placeholders. Root disk grown to 598 GB through Proxmox
-  (was 90% full, now 45%). Runbook section "Monitoring".
 
 High Priority
 -------------
@@ -70,6 +61,11 @@ High Priority
 Monitoring with Grafana (owner, 2026-11-05): "show me everything, then we scale it down".
 Dashboards on http://192.168.1.240:3000 in folders "Pokemon Momentum" and "Home lab";
 runbook section "Monitoring".
+- [idea] Grafana loads the dashboards straight from this working checkout, so switching the
+  checkout to a branch without `deploy/monitoring/grafana/homelab/` (anything older than
+  2026-11-05) makes the Home lab dashboards vanish until switched back. Consider having
+  install.sh copy the JSON to /var/lib/grafana/dashboards/ instead, as the private ISI
+  dashboards already do.
 - [next] Branch clean-up for whoever continues the Lorcana plan: `plan/lorcana-market` also
   carries the monitoring commits (two sessions shared one checkout on 2026-11-05). Those are
   now on main (cherry-picked), so merge main into it, or rebuild it from main plus its own two
