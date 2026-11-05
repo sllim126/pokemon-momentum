@@ -43,6 +43,16 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-05: Retired unused files, after checking nothing reads or runs them (no code, cron,
+  systemd or doc reference; none open; the only reads since March were one bulk scan). Moved
+  to `data/backups/retired_2026-11-05/` (2.2 GB, gitignored): the March CSVs in
+  `data/extracted/` (`pokemon*_prices_all_days.csv`, `top200_*.csv`, unprefixed
+  `product_signal_snapshot.csv` / `group_signal_snapshot.csv`, `roc_snapshot_7_30_90.csv`) and
+  `unused_scripts.tar.gz` with the 8 scripts removed from the repo (`scripts/extract/
+  build_pokemon_prices_csv.py`, `extract_ids_from_prices.py`, `read_one_prices_file.py`,
+  `scripts/utilities/List_sybtypes.py`, `date_check.py`, `get_pokemon_groups.py`,
+  `scripts/download/download_groups_lookup.py`, `test_env.py`). Delete the folder after
+  ~2026-11-19 with the database backup if nothing missed them.
 - 2026-11-05: Comment and docs review. Every file the site or the nightly runs now opens with a
   header saying what it is and where it fits (api.py has a map of its routes and data paths),
   and their 15+ line functions have docstrings, each checked against the code (64 added;
@@ -497,8 +507,9 @@ Active Queue
 - [planned] Performance review (2026-11-05): the design is sound (nightly snapshot tables, one
   shared read-only DuckDB connection; phone pages answer in 5-95 ms). Fix 1 (dead tables) is
   done, see Recently Completed. Still to do:
-  1. Delete `data/backups/prices_db_before_cleanup_2026-11-05.duckdb` (13.9 GB) once the site
-     and nightly have run well on the compacted database for a week or two (~2026-11-19).
+  1. Delete `data/backups/prices_db_before_cleanup_2026-11-05.duckdb` (13.9 GB) and
+     `data/backups/retired_2026-11-05/` (2.2 GB) once the site and nightly have run well
+     without them for a week or two (~2026-11-19).
   2. Graded Budget Builder takes ~0.9 s on every load: it recomputes 30-day trends over 1.2M
      PriceCharting rows per request. Build a small daily snapshot after the PriceCharting
      download (target ~50 ms), like the other snapshots.
@@ -511,17 +522,17 @@ Active Queue
      export") rebuilds `pokemon_prices_named` / `pokemon_jp_prices_named` (56M rows) and 5.4 GB
      of CSV every night (~95 s + ~17 s), and nothing reads them: no route, page or later
      step (validate_pipeline only checks they exist). Ask the owner, then drop the step or make
-     it opt-in. Also stale: `data/extracted/pokemon*_prices_all_days.csv` (2.3 GB, last written
-     2026-03-18, only read by the unused scripts in 6).
-  6. Unused scripts nothing runs or imports (checked 2026-11-05): `scripts/extract/
-     build_pokemon_prices_csv.py`, `extract_ids_from_prices.py`, `read_one_prices_file.py`,
-     `scripts/utilities/List_sybtypes.py`, `date_check.py`, `get_pokemon_groups.py`,
-     `scripts/download/download_groups_lookup.py`, and `test_env.py` at the root. Remove
-     with the owner's OK.
+     it opt-in.
 - [planned] Storefront code comments: `storefront/` has ~200 functions without docstrings (42
   of them 15+ lines, e.g. `app/importer.py`, `app/orders.py`, `app/main.py`). Document them
   in the storefront work, using the same rule as the 2026-11-05 review: a header per file,
   docstrings on long functions, every claim checked against the code.
+- [waiting] Split `scripts/dashboards/api.py` (8,567 lines) into a few modules by area, early
+  December: after the Squarespace tools leave it (plan ends 2026-11-14, about a quarter of the
+  file) and after Black Friday (~Nov 25 - Dec 1). Recommended 2026-11-05; owner to decide.
+  A move only, no behaviour changes; ~40 tests patch `api.<name>` and need their targets
+  updated. Suggested files: sign-in/tracking, admin research (EOD), market data, Discover
+  lists, index overview. (Item 4 of the performance review.)
 - [idea] Nightly speed (English run ~12 min on 2026-11-05): ~4-5 min is network (TCGCSV
   prices 36 s, product metadata 185 s, PriceCharting 74 s); the compute is joined export
   95 s, product signal 103 s, series 92 s, index overview 75 s. DuckDB is capped at 4 threads
