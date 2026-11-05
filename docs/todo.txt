@@ -173,6 +173,8 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   trend window is under 30 days until mid-November. Next: review the picks once a full month of
   history exists; maybe BGS/CGC/SGC 10s (columns exist); drop "(Beta)" when the owner is happy.
   Rules: every price links to PriceCharting; never assume higher grade = higher price.
+- [parked] Phone charts: the desktop's five date labels and January 1 year lines (desktop
+  2026-11-05, `drawChart` in desktop_home.html). Owner: hold off on the phone for now.
 - [planned] Mobile interface testing (owner, 2026-10-21): now part of the new mobile app
   (see "New mobile app" above). Test `/m-next` on real phones after each step instead of the
   old `/mobile`, which is being replaced; known old-page issues are under "Parked: Mobile
