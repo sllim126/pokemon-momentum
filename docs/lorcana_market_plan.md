@@ -28,7 +28,7 @@ are under "Lorcana Market" in the todo list.
 | Price history 2024-02-08 to 2026-11 | `data/raw/prices-*.ppmd.7z` (the TCGCSV daily archive holds every game; folder `<date>/71/`) | On disk, not loaded |
 | Daily Lorcana prices since 2026-10-11 | `data/tcgcsv_archive/<date>/tcgcsv-<date>-71.tar.gz` (collect-only job) | Running nightly |
 | Set and product lists | `data/tcgcsv_catalogue/71/` | 21 sets, ~4,000 products |
-| Card images | TCGplayer `imageUrl` in the product lists, as the Pokemon pages use; higher-resolution images from Lorcast | Free |
+| Card images | TCGplayer `imageUrl` in the product lists, as the Pokemon pages use. Sharper images: downloaded from Lorcast and hosted by us (planned) | Free |
 
 Lorcana sets with release dates come from the TCGCSV group list: The First Chapter
 (2023-08-18) through Hyperia City (2026-10-16), Into the Inkdark (listed for 2027-02-05),
@@ -47,8 +47,8 @@ Checked 2026-11-05. **None of the choices below adds a cost.**
 | Source | Use | Rules that apply | Decision |
 | --- | --- | --- | --- |
 | TCGCSV (TCGplayer data) | Prices, products, images | Same etiquette as now: one fetch per file per day, at least 100 ms between requests (code uses 150 ms), stop on 403/429. The FAQ asks people not to build "self-serving" rent-seeking products and treats a free informational site as fine. Attribution isn't required; a thank-you link is appreciated. | **Use.** Lorcana adds about 21 set files a day. Add the TCGCSV thank-you link in the footer. |
-| Lorcast (lorcast.com) | Higher-resolution card images; optional extras TCGplayer lacks (keywords, format legality) | Free, no key; asks for 50-100 ms between API requests and bans IPs that flood it. Images are served from `*.lorcast.io`, which those API limits don't cover. States it is not endorsed by Disney or Ravensburger and that it may not charge for Lorcana content. | **Use for sharper card images** (the card page and zoom). Look up image links once per set, weekly at most, and cache the mapping. TCGplayer images stay the default for lists. Data extras aren't needed for phase 1. |
-| Scrydex | Card images, prices | The API is paid only: Starter $29/month, Growth $99, Professional $399; no free plan. It does cover Lorcana. | **Don't use the API** (new cost). The Pokemon listing tool loads images only from `images.scrydex.com`, with no account. For Lorcana, use Lorcast's published image links instead. |
+| Lorcast (lorcast.com) | Card images, hosted by us; optional extras TCGplayer lacks (keywords, format legality) | Free, no key; asks for 50-100 ms between API requests and bans IPs that flood it. Images are served from `*.lorcast.io`, which those API limits don't cover. No rule against downloading was found (checked 2026-11-05). States it is not endorsed by Disney or Ravensburger and that it may not charge for Lorcana content. | **Use (owner, 2026-11-05).** Download each card image once and serve it from our own server; then only fetch images for new cards (look up the card list once per set, weekly at most). Keep requests 100 ms+ apart and stop on errors, as with TCGCSV. Images go in `data/lorcana_images/` (not committed). TCGplayer images are the fallback for cards Lorcast lacks. |
+| Scrydex | Card images, prices | The API is paid only: Starter $29/month, Growth $99, Professional $399; no free plan. Its terms (§4) forbid redistributing or mirroring its content and automated or excessive requests without written authorization. | **Do not use for Lorcana** (cost, and downloading its images would be mirroring). Lorcast covers images. |
 | PriceCharting | Graded prices | Same subscription, no extra cost, but the written permission (2026-10-09) was for graded prices on market.poke6s.com. The download script fetches only Pokemon (`CATEGORY_IDS = (3, 85)`). | **Not in scope.** Showing Lorcana graded prices would need a new OK from PriceCharting first. Lorcana grading volume is thin anyway. |
 | Ravensburger / Disney | Names, card art | Ravensburger's Community Code (in effect since 2023-05-10) has no fan-site section. It forbids "counterfeit or unauthorized Ravensburger names or products", tied to a Marketing Materials Policy that isn't public. Fan sites such as Lorcast and Lorcana Player use a disclaimer: not published, endorsed or approved by Disney or Ravensburger. | Don't use the Lorcana logo or Ravensburger branding. Put the disclaimer in the footer. Before going public, prefer a brand that doesn't start with the trademark (for example "<brand> — Lorcana prices" on a neutral domain) over "Lorcana6s". |
 
@@ -104,12 +104,14 @@ checklist like `data/sealed_pack_checklist.csv`:
 1. Add category 71 to `category_config.py` (slug `lorcana`, label "Disney Lorcana").
 2. Load Lorcana history from the `data/raw` daily archives into the `lorcana_*` tables and
    Parquet history, with the same loader the Pokemon backfill uses.
-3. Add category 71 to the nightly per-set TCGCSV fetch and snapshot builds, inside the
+3. Download Lorcast card images once into `data/lorcana_images/` (polite pacing, resumable,
+   skips files already saved), matched to TCGplayer products by set and card number.
+4. Add category 71 to the nightly per-set TCGCSV fetch and snapshot builds, inside the
    DuckDB memory caps (`scripts/common/duckdb_settings.py`). Once that's running, take 71
    out of the collect-only job so the same file isn't fetched twice a day.
-4. Add the Lorcana rarity tiers and printing handling where the pipeline uses Pokemon
+5. Add the Lorcana rarity tiers and printing handling where the pipeline uses Pokemon
    rarity names.
-5. Add Lorcana pass/fail to the nightly Discord summary.
+6. Add Lorcana pass/fail to the nightly Discord summary.
 
 **Phase 1: internal research site (LAN only).**
 - The game is chosen by host name, or by a `game` setting for LAN testing, rather than

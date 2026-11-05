@@ -624,8 +624,9 @@ only; Scrydex (paid) and PriceCharting graded are out of scope.
 
 - [planned] Phase 0: add category 71 (`lorcana`) to `category_config.py`; load history from
   `data/raw` archives (Lorcana is in them back to 2024-02-08); add 71 to the nightly per-set
-  fetch and snapshots, then drop it from the collect-only job; Lorcana rarity tiers and
-  printings; Discord summary line.
+  fetch and snapshots, then drop it from the collect-only job; download Lorcast card images
+  once and host them ourselves (owner agreed 2026-11-05; Scrydex terms forbid mirroring);
+  Lorcana rarity tiers and printings; Discord summary line.
 - [planned] Phase 1: game chosen by host name (Pokemon stays the default and unchanged);
   Discover, Research by set / franchise (`Property`) / ink, card page, Track; desktop first;
   footer credit and "not endorsed by Disney or Ravensburger" disclaimer.
