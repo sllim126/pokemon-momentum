@@ -779,6 +779,94 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual([item["groupId"] for item in payload["items"]], [101, 102, 103])
         self.assertIn("under the radar", payload["items"][0]["reasons"])
 
+    @patch.object(api, "db_has_table", return_value=True)
+    @patch.object(api, "products_from", return_value="pokemon_products")
+    @patch.object(api, "groups_from", return_value="pokemon_groups")
+    def test_graded_budget_builder_picks_slabs_with_pricecharting_links(self, *_mocks):
+        columns = ["productId", "subTypeName", "grade", "latest_price", "pc_id", "sales_volume", "price_7d_ago",
+                   "window_start_price", "window_avg", "price_changes_14d", "price_changes_window", "productName",
+                   "imageUrl", "rarity", "number", "groupId", "groupName", "latest_date", "first_date",
+                   "history_days", "is_kept"]
+        def row(pid, grade, name, price, group, kept=False):
+            return (pid, "Holofoil", grade, price, 9000 + pid, 300, price * 0.9, price * 0.85, price * 0.95, 4, 8,
+                    name, "", "Ultra Rare", "1/1", group, f"Set {group}", "2026-11-05", "2026-10-09", 22, kept)
+        rows = [row(1, "10", "Card Alpha", 80.0, 101, kept=True), row(2, "10", "Card Beta", 60.0, 102),
+                row(2, "9", "Card Beta", 25.0, 102), row(3, "9", "Card Gamma", 40.0, 103), row(4, "10", "Card Delta", 30.0, 104)]
+        with patch.object(api, "q", return_value=(columns, rows)) as q_mock:
+            payload = api.graded_budget_builder(budget=250, grades="9-10", limit=4, keep_keys="1||Holofoil||10",
+                                                exclude_keys="4||Holofoil||10", category_id=3)
+        sql = q_mock.call_args.args[0]
+        self.assertIn("grade IN ('9', '10')", sql)
+        self.assertIn("ORDER BY is_kept DESC", sql)
+        items = payload["items"]
+        self.assertEqual(items[0]["key"], "1||Holofoil||10")
+        self.assertTrue(items[0]["kept"])
+        self.assertEqual(items[0]["grade_label"], "PSA 10")
+        self.assertEqual(items[0]["pc_url"], "https://www.pricecharting.com/game/9001")  # every price links back
+        keys = [item["key"] for item in items]
+        self.assertNotIn("4||Holofoil||10", keys)                 # swapped out
+        self.assertEqual(len({item["productId"] for item in items}), len(items))  # one grade per card
+        self.assertLessEqual(payload["spent"], 250.0)
+        self.assertEqual(payload["window_days"], 27)
+        self.assertEqual(api._graded_keys("5||Holofoil||10,bad,6||Normal||7"), {(5, "Holofoil", "10")})
+
+    def test_index_leaves_out_cards_with_flip_flopping_prices(self):
+        """Run the unstable-card rule on a tiny in-memory price table."""
+        import duckdb
+        con = duckdb.connect()
+        con.execute("CREATE TABLE prices (categoryId INT, groupId INT, productId INT, subTypeName VARCHAR, date DATE, marketPrice DOUBLE)")
+        flipper = [400, 10000, 400, 10000, 400, 10000]   # five 3x+ jumps
+        steady = [400, 410, 420, 430, 1300, 1310]         # one 3x jump: a real move, kept
+        for product_id, prices in ((1, flipper), (2, steady)):
+            for day, price in enumerate(prices):
+                con.execute("INSERT INTO prices VALUES (3, 10, ?, 'Holofoil', DATE '2026-11-01' + ?::INT, ?)", [product_id, day, price])
+        sql = "WITH " + api._unstable_cards_cte("prices", 3, "10") + " SELECT productId, flips, peak_price FROM unstable"
+        self.assertEqual(con.execute(sql).fetchall(), [(1, 5, 10000.0)])
+
+    def test_budget_builder_gives_popular_pokemon_a_small_bonus(self):
+        base = {"latest_price": 20.0, "roc_7d_pct": 3.0, "roc_30d_pct": 5.0, "trend_score": 30.0,
+                "price_vs_sma30_pct": 4.0, "recent_distinct_prices_7d": 4, "recent_distinct_prices_30d": 8}
+        plain = api._budget_candidate_score({**base, "productName": "Dondozo - 207/198"}, 100)
+        popular = api._budget_candidate_score({**base, "productName": "Umbreon VMAX (Alternate Art)"}, 100)
+        self.assertEqual(round(popular - plain, 3), api.POPULAR_POKEMON_BONUS)
+        self.assertIn("popular pokemon", api._budget_candidate_reasons({**base, "productName": "Mewtwo ex"}))
+        self.assertFalse(api._is_popular_pokemon("Mewthree"))  # whole words only
+
+    @patch.object(api, "screener_snapshot_from", return_value="pokemon_screener_snapshot")
+    @patch.object(api, "category_config", return_value=api.category_config(3))
+    def test_budget_builder_keeps_cards_and_refills_the_rest(self, _category_config_mock, _snapshot_mock):
+        """Keep stays in whatever it costs; new picks skip what was shown before (exclude_keys)."""
+        columns = ["latest_date", "groupId", "groupName", "productId", "productName", "imageUrl", "rarity",
+                   "number", "productClass", "productKind", "subTypeName", "latest_price", "roc_7d_pct",
+                   "roc_30d_pct", "roc_90d_pct", "price_vs_sma30_pct", "price_vs_sma90_pct",
+                   "acceleration_7d_vs_30d", "trend_score", "recent_observations_7d",
+                   "recent_distinct_prices_7d", "recent_distinct_prices_30d", "last_change_date",
+                   "good_buys_default_flag", "early_uptrends_default_flag", "under_the_radar_default_flag",
+                   "breakout_90d_flag"]
+        def row(group_id, product_id, name, price):
+            return ("2026-05-27", group_id, f"Set {group_id}", product_id, name, "", "Illustration Rare", "1/1",
+                    "card", "card", "Holofoil", price, 4.0, 6.0, 9.0, 3.0, 4.0, 2.0, 30.0, 8, 4, 8,
+                    "2026-05-27", 0, 0, 0, 0)
+        rows = [row(101, 1, "Card Alpha", 30.0), row(102, 2, "Card Beta", 25.0), row(103, 3, "Card Gamma", 20.0),
+                row(104, 4, "Card Delta", 15.0), row(105, 5, "Card Epsilon", 60.0)]
+        with patch.object(api, "q", return_value=(columns, rows)) as q_mock:
+            payload = api.budget_builder_recommendations(
+                budget=100, min_price=5, limit=3, max_per_set=2,
+                keep_keys="5||Holofoil", exclude_keys="1||Holofoil", category_id=3)
+
+        # The kept card is looked up by its key, apart from the filtered candidate query.
+        self.assertIn("s.productId IN (5)", q_mock.call_args_list[1].args[0])
+        ids = [item["productId"] for item in payload["items"]]
+        self.assertEqual(ids[0], 5)
+        self.assertTrue(payload["items"][0]["kept"])
+        self.assertEqual(payload["kept_count"], 1)
+        self.assertNotIn(1, ids)            # shown before, so skipped
+        self.assertEqual(len(ids), 3)       # the kept card counts toward the card number
+        self.assertEqual(len(set(ids)), 3)  # and isn't picked twice
+        self.assertLessEqual(payload["spent"], 100.0)
+        self.assertEqual(payload["keep_keys"], ["5||Holofoil"])
+        self.assertFalse(any(item["kept"] for item in payload["items"][1:]))
+
     @patch.object(api, "_select_budget_candidates", return_value=[])
     @patch.object(api, "screener_snapshot_from", return_value="pokemon_screener_snapshot")
     @patch.object(api, "q", return_value=([], []))

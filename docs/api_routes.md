@@ -1,6 +1,6 @@
 # Site routes
 
-Last reviewed: 2026-10-31
+Last reviewed: 2026-11-05
 
 Every route served by `scripts/dashboards/api.py` (FastAPI, port 8001 in the container,
 public at market.poke6s.com). `tests/test_api_routes.py::test_every_route_is_in_the_route_reference`
@@ -74,7 +74,8 @@ or the `pm_tracking_token` cookie); **admin** = signed in with an address listed
 | `/sparkline_batch` (POST) | lists | Small price series for many products at once |
 | `/store_link` | card page | The Poke6s store listing for a product, when in stock |
 | `/sealed_deals` | Sealed Deals | Sealed products with pack counts and price per pack |
-| `/budget_builder` | Budget Builder | Cards that fit a budget, spread across sets |
+| `/budget_builder` | Budget Builder | Cards that fit a budget, spread across sets; `exclude_keys` skips cards (owned or already shown), `keep_keys` keeps cards and fills the rest around them |
+| `/graded_budget_builder` | Graded Budget Builder (beta) | Graded slabs (PriceCharting PSA 10 / grade 9 / grade 8) that fit a budget; `grades` = `10`, `9-10` or `8-10`; keys are `productId||subType||grade`; every item carries its PriceCharting link (`pc_url`) |
 | `/top_movers`, `/breakouts`, `/sma30_holds`, `/confirmed_uptrends`, `/under_the_radar`, `/early_uptrends` | screener lists | One screener each: `{columns, rows}` |
 | `/good_buys`, `/small_dips`, `/set_dips` | Pullbacks, Small Dips, Whole-set Dips | Pullback screeners; rules in `query_support.build_pullback_sql` |
 | `/time_to_buy` | none (its page was deleted 2026-10-31) | Older Time to Buy screener, dropped from the desktop and mobile apps; the route remains for now |

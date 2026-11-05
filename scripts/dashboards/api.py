@@ -191,6 +191,27 @@ GOOGLE_CLIENT_ID = os.getenv("POKEMON_MOMENTUM_GOOGLE_CLIENT_ID", "").strip()
 INDEX_OVERVIEW_CACHE_TTL_SECONDS = 15 * 60
 _INDEX_OVERVIEW_CACHE: dict[tuple[int, str], tuple[datetime, dict]] = {}
 INDEX_OVERVIEW_SNAPSHOT_SUFFIX = "index_overview_snapshot.json"
+# Pokémon collectors chase whatever the market does (owner, 2026-11-05). Budget Builder gives
+# their cards POPULAR_POKEMON_BONUS points: a tie-breaker on top of price momentum, which stays
+# the main signal (a card whose price keeps moving is one collectors are buying). For scale,
+# the top tenth of candidates score about 53 and the median about 31, so the bonus lifts a
+# popular card that's already moving, but can't carry one that isn't. Matched as whole words
+# in the product name ("Mew" doesn't match "Mewtwo"; both are listed).
+POPULAR_POKEMON = (
+    "Charizard", "Pikachu", "Umbreon", "Espeon", "Eevee", "Vaporeon", "Jolteon", "Flareon",
+    "Leafeon", "Glaceon", "Sylveon", "Gengar", "Mew", "Mewtwo", "Rayquaza", "Lugia", "Ho-Oh",
+    "Gardevoir", "Greninja", "Lucario", "Dragonite", "Gyarados", "Snorlax", "Blastoise",
+    "Venusaur", "Arceus", "Giratina", "Darkrai", "Tyranitar", "Garchomp", "Mimikyu", "Articuno",
+    "Zapdos", "Moltres", "Celebi", "Jirachi", "Latias", "Latios", "Suicune", "Entei", "Raikou",
+)
+POPULAR_POKEMON_BONUS = 10.0
+POPULAR_POKEMON_RE = re.compile(r"\b(" + "|".join(re.escape(name) for name in POPULAR_POKEMON) + r")\b", re.IGNORECASE)
+
+
+def _is_popular_pokemon(name: str | None) -> bool:
+    return bool(POPULAR_POKEMON_RE.search(str(name or "")))
+
+
 DEFAULT_BUDGET_RARITY_FILTERS = [
     "illustration_rare",
     "special_illustration_rare",
@@ -1316,7 +1337,8 @@ def _budget_name_root(name: str | None) -> str:
 
 def _budget_candidate_score(row: dict, budget: float) -> float:
     """Rank a Budget Builder candidate: rewards recent gains, acceleration, trend strength
-    and active trading, each capped so one extreme number can't dominate."""
+    and active trading, each capped so one extreme number can't dominate, plus a small bonus
+    for popular Pokémon (POPULAR_POKEMON)."""
     price = max(_safe_float(row.get("latest_price")), 0.0)
     roc_7d = _safe_float(row.get("roc_7d_pct"))
     roc_30d = _safe_float(row.get("roc_30d_pct"))
@@ -1341,6 +1363,8 @@ def _budget_candidate_score(row: dict, budget: float) -> float:
         score += 12.0
     if _truthy_flag(row.get("good_buys_default_flag")):
         score += 8.0
+    if _is_popular_pokemon(row.get("productName")):
+        score += POPULAR_POKEMON_BONUS
 
     score -= abs(price_vs_sma30 - 4.0) * 0.5
 
@@ -1365,6 +1389,8 @@ def _budget_candidate_score(row: dict, budget: float) -> float:
 
 def _budget_candidate_reasons(row: dict) -> list[str]:
     reasons: list[str] = []
+    if _is_popular_pokemon(row.get("productName")):
+        reasons.append("popular pokemon")
     if _truthy_flag(row.get("under_the_radar_default_flag")):
         reasons.append("under the radar")
     if _truthy_flag(row.get("early_uptrends_default_flag")):
@@ -1390,12 +1416,15 @@ def _select_budget_candidates(
     limit: int,
     max_per_set: int,
     allow_duplicates: bool = False,
+    kept: list[dict] | None = None,
 ) -> list[dict]:
     """Walk the ranked candidates and keep each one that still fits the money left.
 
     Three passes: first only cards up to 45% of the budget, then 65%, then any price, so a
     single expensive card can't take the whole budget before cheaper strong picks are in.
     Also enforces max_per_set and, unless allow_duplicates, one card per Pokémon name.
+    `kept` cards (the visitor pressed Keep) go in first whatever they cost: their prices come
+    off the budget and they count toward the per-set, per-name and card-number limits.
     """
     if budget <= 0:
         return []
@@ -1404,6 +1433,14 @@ def _select_budget_candidates(
     name_counts: dict[str, int] = {}
     selected: list[dict] = []
     remaining = budget
+    for card in kept or []:
+        selected.append(card)
+        remaining = round(max(remaining - _safe_float(card.get("latest_price")), 0.0), 2)
+        group_id = _safe_int(card.get("groupId"))
+        group_counts[group_id] = group_counts.get(group_id, 0) + 1
+        name_root = _budget_name_root(card.get("productName"))
+        if name_root:
+            name_counts[name_root] = name_counts.get(name_root, 0) + 1
     passes = [
         {"max_ratio": 0.45},
         {"max_ratio": 0.65},
@@ -1514,6 +1551,39 @@ def _resolve_index_group_ids(index_key: str, category_id: int) -> list[int]:
     return [int(row[0]) for row in rows if int(row[0]) not in excluded_group_ids]
 
 
+# Cards whose TCGplayer market price flip-flops are left out of the indexes (owner, 2026-11-05).
+# Base Set Charizard 1st Edition jumped between ~$400 and exactly $10,000 27 times in a year,
+# which made WOTC 100 move 25-38% in a day on 56 days. A "flip" is a day-to-day move of
+# UNSTABLE_FLIP_RATIO or more either way; UNSTABLE_MIN_FLIPS in the last UNSTABLE_WINDOW_DAYS
+# leaves the card out of the whole index history. Rechecked every night, so a card returns
+# once its price settles. Tested 2026-11-05: 42 English and 19 Japanese cards; WOTC 100's worst
+# day fell from 37.7% to 5.9% and Top 151's from 14.3% to 7.8%. Two flips caught ~10x more
+# cards (many rare but genuine high-end cards) for no further gain.
+UNSTABLE_FLIP_RATIO = 3.0
+UNSTABLE_MIN_FLIPS = 4
+UNSTABLE_WINDOW_DAYS = 365
+
+
+def _unstable_cards_cte(price_source: str, category_id: int, group_ids_sql: str) -> str:
+    """SQL for `unstable (productId, subTypeName, flips)`: the index's cards to leave out."""
+    return f"""
+    unstable AS (
+      SELECT productId, subTypeName, COUNT(*) AS flips, MAX(GREATEST(price, prev)) AS peak_price
+      FROM (
+        SELECT productId, COALESCE(subTypeName, '') AS subTypeName, marketPrice AS price,
+          LAG(marketPrice) OVER (PARTITION BY productId, COALESCE(subTypeName, '') ORDER BY date) AS prev
+        FROM {price_source}
+        WHERE categoryId = {int(category_id)}
+          AND groupId IN ({group_ids_sql})
+          AND marketPrice > 0
+          AND date >= (SELECT MAX(date) FROM {price_source} WHERE categoryId = {int(category_id)}) - INTERVAL {UNSTABLE_WINDOW_DAYS} DAY
+      ) moves
+      WHERE prev > 0 AND (price / prev >= {UNSTABLE_FLIP_RATIO} OR prev / price >= {UNSTABLE_FLIP_RATIO})
+      GROUP BY productId, subTypeName
+      HAVING COUNT(*) >= {UNSTABLE_MIN_FLIPS}
+    )"""
+
+
 def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100") -> dict:
     """Build the full index payload used by all /index-overview-<era> pages.
 
@@ -1541,6 +1611,7 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
     top100_sql = f"""
     WITH
     {metadata_cte},
+    {_unstable_cards_cte(price_source, category_id, group_ids_sql)},
     filtered AS (
       SELECT
         p.date,
@@ -1557,6 +1628,10 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
         AND p.marketPrice IS NOT NULL
         AND p.marketPrice > 0
         AND lower(COALESCE(m.productKind, '')) = 'card'
+        AND NOT EXISTS (
+          SELECT 1 FROM unstable u
+          WHERE u.productId = p.productId AND u.subTypeName = COALESCE(p.subTypeName, '')
+        )
     ),
     ranked AS (
       SELECT
@@ -1868,9 +1943,30 @@ def _build_index_overview_payload(category_id: int = 3, index_key: str = "sv100"
         "latest_reconstitution_date": latest_reconstitution_date,
     }
 
+    # The left-out cards, for the Method tab.
+    unstable_cols, unstable_rows = q(f"""
+    WITH
+    {metadata_cte},
+    {_unstable_cards_cte(price_source, category_id, group_ids_sql)}
+    SELECT u.productId, u.subTypeName, u.flips, u.peak_price, ANY_VALUE(m.productName) AS productName, ANY_VALUE(m.groupName) AS groupName
+    FROM unstable u
+    LEFT JOIN metadata m ON m.productId = u.productId
+    GROUP BY 1, 2, 3, 4
+    ORDER BY u.flips DESC, productName
+    """)
+    # Only list cards whose price ever reached today's cheapest index card: the rest could
+    # never have been in the index anyway.
+    entry_price = min((_safe_float(h.get("marketPrice")) for h in holdings), default=0.0)
+    unstable_excluded = [
+        dict(zip(unstable_cols, row)) for row in unstable_rows
+        if _safe_float(row[unstable_cols.index("peak_price")]) >= entry_price
+    ]
+
     return {
         "index_key": index_key,
         "index_name": str(definition.get("index_name") or index_key),
+        "unstable_excluded": unstable_excluded,
+        "unstable_rule": {"flip_ratio": UNSTABLE_FLIP_RATIO, "min_flips": UNSTABLE_MIN_FLIPS, "window_days": UNSTABLE_WINDOW_DAYS},
         "description": str(definition.get("description") or "Top 100 cards by market price"),
         "base_level": float(definition.get("base_level") or 1000.0),
         "constituent_limit": constituent_limit,
@@ -5647,6 +5743,7 @@ def budget_builder_recommendations(
     max_per_set: int = 2,
     rarities: str | None = None,
     exclude_keys: str | None = None,
+    keep_keys: str | None = None,
     allow_duplicates: bool = False,
     category_id: int = 3,
 ):
@@ -5657,7 +5754,10 @@ def budget_builder_recommendations(
     Each gets a score from trend and recent movement, plus short "why" reasons, and
     _select_budget_candidates fills the budget from the top of that ranking. limit=0
     fills the budget with as many as fit; exclude_keys ("productId||subType,...") swaps
-    out cards the visitor already owns.
+    out cards the visitor already owns, or has already been shown when they ask for new picks.
+    keep_keys (same format) are cards the visitor pressed Keep on: they stay in the result
+    (marked "kept") and the rest of the budget is filled around them. They're looked up by key,
+    so a kept card stays even if it no longer passes the price, rarity or activity filters.
     """
     budget = max(5.0, min(float(budget), 5000.0))
     min_price = max(0.5, min(float(min_price), budget))
@@ -5668,6 +5768,7 @@ def budget_builder_recommendations(
     category = category_config(category_id)
     rarity_filters = _budget_filter_keys(rarities)
     excluded_keys = _budget_exclude_keys(exclude_keys)
+    keep_key_set = _budget_exclude_keys(keep_keys)
     rarity_clause = build_set_basket_filter(rarity_filters, "s.rarity", "s.subTypeName", "s.productName")
 
     use_snapshot = True
@@ -5687,8 +5788,7 @@ def budget_builder_recommendations(
           0 AS under_the_radar_default_flag,
         """
 
-    sql = f"""
-    SELECT
+    columns_sql = f"""
       s.latest_date,
       s.groupId,
       s.groupName,
@@ -5714,6 +5814,9 @@ def budget_builder_recommendations(
       s.last_change_date,
       {snapshot_fields}
       COALESCE(s.breakout_90d_flag, 0) AS breakout_90d_flag
+    """
+    sql = f"""
+    SELECT {columns_sql}
     FROM {source} s
     WHERE s.categoryId = {category.category_id}
       AND s.latest_date = (SELECT MAX(latest_date) FROM {source})
@@ -5737,12 +5840,26 @@ def budget_builder_recommendations(
     """
     columns, rows = q(sql)
     candidates = _row_dicts(columns, rows)
-    if excluded_keys:
-        candidates = [
-            item for item in candidates
-            if (_safe_int(item.get("productId")), str(item.get("subTypeName") or "")) not in excluded_keys
-        ]
-    for candidate in candidates:
+
+    def card_key(item: dict) -> tuple[int, str]:
+        return (_safe_int(item.get("productId")), str(item.get("subTypeName") or ""))
+
+    kept: list[dict] = []
+    if keep_key_set:
+        product_ids = ", ".join(str(product_id) for product_id, _ in sorted(keep_key_set))
+        kept_columns, kept_rows = q(f"""
+        SELECT {columns_sql}
+        FROM {source} s
+        WHERE s.categoryId = {category.category_id}
+          AND s.latest_date = (SELECT MAX(latest_date) FROM {source})
+          AND s.productId IN ({product_ids})
+        """)
+        kept = [item for item in _row_dicts(kept_columns, kept_rows) if card_key(item) in keep_key_set]
+        kept.sort(key=lambda item: -_safe_float(item.get("latest_price")))
+    skip = excluded_keys | keep_key_set
+    if skip:
+        candidates = [item for item in candidates if card_key(item) not in skip]
+    for candidate in [*kept, *candidates]:
         candidate["score"] = _budget_candidate_score(candidate, budget)
         candidate["reasons"] = _budget_candidate_reasons(candidate)
 
@@ -5760,7 +5877,9 @@ def budget_builder_recommendations(
         limit=limit,
         max_per_set=max_per_set,
         allow_duplicates=allow_duplicates,
+        kept=kept,
     )
+    kept_ids = {id(item) for item in kept}
 
     items: list[dict] = []
     spent = 0.0
@@ -5790,6 +5909,7 @@ def budget_builder_recommendations(
                 "score": round(_safe_float(row.get("score")), 2),
                 "reasons": row.get("reasons") or [],
                 "budget_share_pct": round((price / budget) * 100.0, 2) if budget > 0 else None,
+                "kept": id(row) in kept_ids,
             }
         )
 
@@ -5808,10 +5928,252 @@ def budget_builder_recommendations(
         "category": category.label,
         "rarities": rarity_filters,
         "exclude_keys": [f"{product_id}||{subtype}" for product_id, subtype in sorted(excluded_keys)],
+        "keep_keys": [f"{product_id}||{subtype}" for product_id, subtype in sorted(keep_key_set)],
+        "kept_count": len(kept),
         "max_per_set": max_per_set,
         "allow_duplicates": allow_duplicates,
         "used_screener_snapshot": use_snapshot,
         "available_rarity_filters": BUDGET_RARITY_FILTER_OPTIONS,
+        "items": items,
+    }
+
+
+# ---------- Graded Budget Builder (beta, 2026-11-05) ----------
+# Budget Builder for graded slabs, from PriceCharting's daily prices (history since 2026-10-09).
+# Each grade is scored on its own price history: a grade is never assumed to be worth more
+# than the one below it (PSA 1s often sell above mid grades). Every price shown must link to
+# its PriceCharting page (`pc_url`), the condition of the licence.
+GRADED_GRADES = {
+    # grade -> (pricecharting_prices column, label). PriceCharting's 8 and 9 are any grader;
+    # its 10 here is PSA 10 (BGS/CGC/SGC 10s have their own columns, left out for now).
+    "10": ("psa10", "PSA 10"),
+    "9": ("grade9", "Grade 9"),
+    "8": ("grade8", "Grade 8"),
+}
+GRADED_GRADE_CHOICES = {"10": ["10"], "9-10": ["9", "10"], "8-10": ["8", "9", "10"]}
+GRADED_TREND_DAYS = 30  # change and average window; shorter while the history is younger
+
+
+def _graded_keys(raw_keys: str | None) -> set[tuple[int, str, str]]:
+    """'productId||subType||grade,...' -> {(productId, subType, grade)}."""
+    parsed: set[tuple[int, str, str]] = set()
+    for raw_key in str(raw_keys or "").split(","):
+        parts = raw_key.split("||")
+        if len(parts) != 3 or parts[2] not in GRADED_GRADES:
+            continue
+        try:
+            parsed.add((int(parts[0]), parts[1], parts[2]))
+        except ValueError:
+            continue
+    return parsed
+
+
+def _graded_candidate_score(row: dict, budget: float) -> float:
+    """Rank a graded pick like Budget Builder does: recent gains, a steady trend over the
+    window, how often the graded price changes and how much the card sells (PriceCharting's
+    sales volume, all grades together), each capped; overheated moves and a poor fit to the
+    budget cost points. Popular Pokémon get the same bonus as raw picks."""
+    price = max(_safe_float(row.get("latest_price")), 0.0)
+    roc_7d = _safe_float(row.get("roc_7d_pct"))
+    roc_window = _safe_float(row.get("roc_window_pct"))
+    vs_avg = _safe_float(row.get("price_vs_avg_pct"))
+    changes_14d = _safe_float(row.get("price_changes_14d"))
+    changes_window = _safe_float(row.get("price_changes_window"))
+    volume = _safe_float(row.get("sales_volume"))
+    ratio_to_budget = (price / budget) if budget > 0 else 1.0
+
+    score = 0.0
+    score += min(max(roc_7d, -6.0), 15.0) * 1.6
+    score += min(max(roc_window, -10.0), 22.0) * 0.9
+    score += min(changes_14d, 6.0) * 2.0
+    score += min(changes_window, 12.0) * 1.0
+    score += min(volume / 40.0, 8.0) * 1.5
+    if _is_popular_pokemon(row.get("productName")):
+        score += POPULAR_POKEMON_BONUS
+    score -= abs(vs_avg - 3.0) * 0.5
+
+    if ratio_to_budget <= 0.06:
+        score -= 6.0
+    elif ratio_to_budget <= 0.32:
+        score += 8.0
+    elif ratio_to_budget <= 0.48:
+        score += 4.0
+    elif ratio_to_budget > 0.72:
+        score -= 14.0
+
+    if roc_7d > 15.0:
+        score -= (roc_7d - 15.0) * 1.2
+    if roc_window > 30.0:
+        score -= (roc_window - 30.0) * 0.8
+    if vs_avg > 15.0:
+        score -= (vs_avg - 15.0) * 0.9
+    return round(score, 3)
+
+
+def _graded_candidate_reasons(row: dict) -> list[str]:
+    reasons: list[str] = []
+    if _is_popular_pokemon(row.get("productName")):
+        reasons.append("popular pokemon")
+    if _safe_float(row.get("roc_7d_pct")) > 0 and _safe_float(row.get("roc_window_pct")) > 0:
+        reasons.append("steady climb")
+    if _safe_float(row.get("sales_volume")) >= 150:
+        reasons.append("sells often")
+    if 0.0 <= _safe_float(row.get("price_vs_avg_pct")) <= 8.0:
+        reasons.append("near average")
+    return reasons[:4]
+
+
+@app.get("/graded_budget_builder")
+def graded_budget_builder(
+    budget: float = 250.0,
+    grades: str = "10",
+    min_price: float = 15.0,
+    limit: int = 6,
+    max_per_set: int = 2,
+    exclude_keys: str | None = None,
+    keep_keys: str | None = None,
+    allow_duplicates: bool = False,
+    category_id: int = 3,
+):
+    """Graded slabs that together fit `budget` (beta). Same rules and Keep / New picks as
+    /budget_builder; keys are "productId||subType||grade". Picks need a price on PriceCharting's
+    latest day and at least three different prices in the trend window. A card is picked at
+    one grade at most.
+    """
+    if not db_has_table("pricecharting_prices"):
+        return {"available": False, "items": []}
+    budget = max(25.0, min(float(budget), 20000.0))
+    min_price = max(1.0, min(float(min_price), budget))
+    limit = 500 if int(limit) <= 0 else max(1, min(int(limit), 500))
+    max_per_set = max(1, min(int(max_per_set), 4))
+    grades = grades if grades in GRADED_GRADE_CHOICES else "10"
+    category = category_config(category_id)
+    excluded = _graded_keys(exclude_keys)
+    keep_set = _graded_keys(keep_keys)
+
+    # One row per (card, printing, grade): latest price, the price a week ago and at the start
+    # of the window, the window average, and how many different prices it had.
+    unions = " UNION ALL ".join(
+        f"SELECT snapshot_date AS d, productId, subTypeName, pc_id, sales_volume, '{grade}' AS grade, {GRADED_GRADES[grade][0]} AS price "
+        f"FROM pricecharting_prices WHERE {GRADED_GRADES[grade][0]} > 0"
+        for grade in GRADED_GRADE_CHOICES["8-10"]
+    )
+    wanted = ", ".join(f"'{grade}'" for grade in GRADED_GRADE_CHOICES[grades])
+    keep_filter = " OR ".join(
+        f"(s.productId = {pid} AND s.subTypeName = '{sub.replace(chr(39), chr(39) * 2)}' AND s.grade = '{grade}')"
+        for pid, sub, grade in sorted(keep_set)
+    ) or "FALSE"
+    sql = f"""
+    WITH latest AS (SELECT MAX(snapshot_date) AS d, MIN(snapshot_date) AS first_d, COUNT(DISTINCT snapshot_date) AS days FROM pricecharting_prices),
+    series AS ({unions}),
+    stats AS (
+      SELECT productId, subTypeName, grade,
+        MAX(d) AS last_d,
+        arg_max(price, d) AS latest_price,
+        arg_max(pc_id, d) AS pc_id,
+        arg_max(sales_volume, d) AS sales_volume,
+        arg_max(price, d) FILTER (WHERE d <= (SELECT d FROM latest) - INTERVAL 7 DAY) AS price_7d_ago,
+        arg_min(price, d) FILTER (WHERE d >= (SELECT d FROM latest) - INTERVAL {GRADED_TREND_DAYS} DAY) AS window_start_price,
+        AVG(price) FILTER (WHERE d >= (SELECT d FROM latest) - INTERVAL {GRADED_TREND_DAYS} DAY) AS window_avg,
+        COUNT(DISTINCT price) FILTER (WHERE d >= (SELECT d FROM latest) - INTERVAL 14 DAY) AS price_changes_14d,
+        COUNT(DISTINCT price) FILTER (WHERE d >= (SELECT d FROM latest) - INTERVAL {GRADED_TREND_DAYS} DAY) AS price_changes_window
+      FROM series
+      GROUP BY 1, 2, 3
+    )
+    SELECT s.productId, s.subTypeName, s.grade, s.latest_price, s.pc_id, s.sales_volume,
+      s.price_7d_ago, s.window_start_price, s.window_avg, s.price_changes_14d, s.price_changes_window,
+      p.name AS productName, p.imageUrl, p.rarity, p.number, p.groupId, g.name AS groupName,
+      CAST((SELECT d FROM latest) AS VARCHAR) AS latest_date,
+      CAST((SELECT first_d FROM latest) AS VARCHAR) AS first_date,
+      (SELECT days FROM latest) AS history_days,
+      ({keep_filter}) AS is_kept
+    FROM stats s
+    JOIN {products_from(category.category_id)} p ON p.productId = s.productId
+    LEFT JOIN {groups_from(category.category_id)} g ON g.groupId = p.groupId
+    WHERE s.last_d = (SELECT d FROM latest)
+      AND (({keep_filter}) OR (
+        s.grade IN ({wanted})
+        AND s.latest_price BETWEEN {min_price} AND {budget}
+        AND s.price_changes_window >= 3))
+    -- Kept cards first, so the pool limit can never drop one.
+    ORDER BY is_kept DESC, s.price_changes_window DESC, s.sales_volume DESC NULLS LAST
+    LIMIT 3000
+    """
+    columns, rows = q(sql)
+    kept: list[dict] = []
+    candidates: list[dict] = []
+    for item in _row_dicts(columns, rows):
+        price = _safe_float(item.get("latest_price"))
+        week_ago = _safe_float(item.get("price_7d_ago"))
+        start = _safe_float(item.get("window_start_price"))
+        average = _safe_float(item.get("window_avg"))
+        item["roc_7d_pct"] = round((price / week_ago - 1) * 100, 2) if week_ago > 0 else 0.0
+        item["roc_window_pct"] = round((price / start - 1) * 100, 2) if start > 0 else 0.0
+        item["price_vs_avg_pct"] = round((price / average - 1) * 100, 2) if average > 0 else 0.0
+        item["score"] = _graded_candidate_score(item, budget)
+        item["reasons"] = _graded_candidate_reasons(item)
+        key = (_safe_int(item.get("productId")), str(item.get("subTypeName") or ""), str(item.get("grade")))
+        item["key"] = "||".join((str(key[0]), key[1], key[2]))
+        if key in keep_set:
+            kept.append(item)
+        elif key not in excluded:
+            candidates.append(item)
+    kept.sort(key=lambda item: -_safe_float(item.get("latest_price")))
+    candidates.sort(key=lambda item: (-_safe_float(item.get("score")), _safe_float(item.get("latest_price"))))
+    selected = _select_budget_candidates(
+        candidates, budget=budget, limit=limit, max_per_set=max_per_set,
+        allow_duplicates=allow_duplicates, kept=kept,
+    )
+
+    meta = _row_dicts(columns, rows[:1])[0] if rows else {}
+    first_date, latest_date = meta.get("first_date"), meta.get("latest_date")
+    window_days = GRADED_TREND_DAYS
+    if first_date and latest_date:
+        window_days = min(GRADED_TREND_DAYS, (date.fromisoformat(latest_date) - date.fromisoformat(first_date)).days)
+    kept_ids = {id(item) for item in kept}
+    items = []
+    for row in selected:
+        price = round(_safe_float(row.get("latest_price")), 2)
+        items.append({
+            "key": row["key"],
+            "productId": row.get("productId"),
+            "subTypeName": row.get("subTypeName"),
+            "productName": row.get("productName"),
+            "groupId": row.get("groupId"),
+            "groupName": row.get("groupName"),
+            "imageUrl": row.get("imageUrl"),
+            "rarity": row.get("rarity"),
+            "number": row.get("number"),
+            "grade": row.get("grade"),
+            "grade_label": GRADED_GRADES[row.get("grade")][1],
+            "latest_price": price,
+            "roc_7d_pct": row["roc_7d_pct"],
+            "roc_window_pct": row["roc_window_pct"],
+            "price_vs_avg_pct": row["price_vs_avg_pct"],
+            "sales_volume": _safe_int(row.get("sales_volume")),
+            "price_changes_window": _safe_int(row.get("price_changes_window")),
+            "pc_url": PRICECHARTING_PRODUCT_URL.format(id=row.get("pc_id")),
+            "score": round(_safe_float(row.get("score")), 2),
+            "reasons": row.get("reasons") or [],
+            "budget_share_pct": round(price / budget * 100.0, 2),
+            "kept": id(row) in kept_ids,
+        })
+    spent = round(sum(item["latest_price"] for item in items), 2)
+    return {
+        "available": True,
+        "source": "PriceCharting",
+        "budget": budget,
+        "grades": grades,
+        "spent": spent,
+        "remaining": round(max(budget - spent, 0.0), 2),
+        "count": len(items),
+        "set_count": len({item["groupId"] for item in items}),
+        "kept_count": len(kept),
+        "latest_date": latest_date,
+        "first_date": first_date,
+        "history_days": _safe_int(meta.get("history_days")),
+        "window_days": window_days,
+        "category_id": category.category_id,
         "items": items,
     }
 
@@ -6753,10 +7115,12 @@ def series(productId: int, subTypeName: str, days: int = 365, category_id: int =
               AND productId = {productId}
               AND subTypeName = '{st}'
               AND latest_date = (SELECT MAX(latest_date) FROM {series_snapshot_from(category.category_id)})
-            LIMIT 1
         """
         _, rows = q(sql)
         if rows:
+            # Snapshots built before 2026-11-05 hold two rows for a card TCGplayer moved to
+            # another set (see scripts/common/price_views.py): use the one that runs latest.
+            rows = sorted(rows, key=lambda row: (json.loads(row[1] or "[]") or [""])[-1], reverse=True)
             latest, dates_json, prices_json, sma7_json, sma30_json = rows[0]
             dates = json.loads(dates_json or "[]")
             prices = json.loads(prices_json or "[]")
@@ -7268,9 +7632,17 @@ def breakouts(
     recent_change_within_days: int = 5,
     min_recent_distinct_prices_30d: int = 10,
     max_hold_days: int = 7,
+    min_vs_sma30_pct: float = 5.0,
     product_kind: str | None = None,
     category_id: int = 3,
 ):
+    """Cards freshly above their previous 90-day high, with recent activity.
+
+    min_vs_sma30_pct (owner, 2026-11-05): the price must also be at least this far above its
+    30-day average. A flat card that ticks a cent past its old high (Basic Darkness Energy
+    Cracked Ice: $4.95 high, $5.02 now, +2% on its average after months at ~$4.90) is not a
+    breakout; a card that ran up (Victini V: +2% past its high but +22% on its average) is.
+    """
     category = category_config(category_id)
     price_source = prices_from(category.category_id)
     signal_source = product_signal_from(category.category_id)
@@ -7290,6 +7662,7 @@ def breakouts(
         and recent_change_within_days == 5
         and min_recent_distinct_prices_30d == 10
         and max_hold_days == 7
+        and min_vs_sma30_pct == 5.0
     )
     # Lower the activity bar when the feed has missing days (see gap_scaled_threshold).
     # Both query paths below use the scaled value.
@@ -7316,11 +7689,13 @@ def breakouts(
             hold_days,
             last_change_date,
             recent_observations_30d,
-            recent_distinct_prices_30d
+            recent_distinct_prices_30d,
+            price_vs_sma30_pct
         FROM {signal_source}
         WHERE categoryId = {category.category_id}
           AND latest_date = (SELECT MAX(latest_date) FROM {signal_source})
           AND latest_price >= {min_price}
+          AND COALESCE(price_vs_sma30_pct, 0) >= {min_vs_sma30_pct}
           AND prior_high_90d IS NOT NULL
           AND latest_price > prior_high_90d
           AND ((latest_price / NULLIF(prior_high_90d, 0)) - 1) * 100.0 >= {min_breakout_pct}
@@ -7414,7 +7789,8 @@ def breakouts(
             b.groupId,
             b.subTypeName,
             COUNT(*) AS recent_observations_30d,
-            COUNT(DISTINCT b.marketPrice) AS recent_distinct_prices_30d
+            COUNT(DISTINCT b.marketPrice) AS recent_distinct_prices_30d,
+            AVG(b.marketPrice) AS avg_30d
         FROM base b
         JOIN latest l
           ON b.productId = l.productId
@@ -7451,7 +7827,8 @@ def breakouts(
         ls.hold_days,
         ph.last_change_date,
         ra.recent_observations_30d,
-        ra.recent_distinct_prices_30d
+        ra.recent_distinct_prices_30d,
+        ((w.marketPrice / NULLIF(ra.avg_30d, 0)) - 1) * 100.0 AS price_vs_sma30_pct
     FROM win w
     JOIN hi h
       ON w.productId = h.productId
@@ -7480,6 +7857,7 @@ def breakouts(
       AND ph.last_change_date >= w.latest_date - INTERVAL {recent_change_within_days} DAY
       AND ra.recent_distinct_prices_30d >= {min_recent_distinct_prices_30d}
       AND COALESCE(ls.hold_days, 0) <= {max_hold_days}
+      AND ((w.marketPrice / NULLIF(ra.avg_30d, 0)) - 1) * 100.0 >= {min_vs_sma30_pct}
       {product_kind_filter}
     ORDER BY breakout_pct DESC, w.marketPrice DESC
     LIMIT {limit}
