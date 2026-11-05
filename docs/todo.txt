@@ -43,6 +43,11 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-05: Price database cleaned up and compacted, 13.87 GB -> 7.96 GB. Left out the dead
+  `prices` table (30.5M rows, last written 2026-03-02), the `top200_*` tables and the old
+  unprefixed snapshot and `groups` tables; every kept table hash-checked identical. Removed the
+  21 legacy scripts that wrote them. New `scripts/utilities/compact_duckdb.py`; procedure in
+  `docs/operator_runbook.txt` ("Compacting the price database"). `data/backups/` gitignored.
 - 2026-11-05 Home lab dashboards in their own Grafana folder: "Home lab: Proxmox cluster",
   "Home lab: Network (UniFi)" and "Home lab: Servers" (with "Other machines") moved out of
   "Pokemon Momentum", since they serve more than the Pokemon sites. Old links still work;
@@ -483,12 +488,10 @@ Active Queue
 ------------
 
 - [planned] Performance review (2026-11-05): the design is sound (nightly snapshot tables, one
-  shared read-only DuckDB connection; phone pages answer in 5-95 ms). Four fixes found:
-  1. Drop dead tables from `prices_db.duckdb` (13.9 GB): the old `prices` table (30.5M rows;
-     the live one is `pokemon_prices`), the five `top200_*` tables, the empty `groups`, and the
-     old unprefixed `product_signal_snapshot` / `group_signal_snapshot` if nothing reads them.
-     Then remove what wrote them (`scripts/rankings/`, `build_roc_dashboard_v*`), which no
-     pipeline runs. Back up the database first and list exactly what goes for the owner's OK.
+  shared read-only DuckDB connection; phone pages answer in 5-95 ms). Fix 1 (dead tables) is
+  done, see Recently Completed. Still to do:
+  1. Delete `data/backups/prices_db_before_cleanup_2026-11-05.duckdb` (13.9 GB) once the site
+     and nightly have run well on the compacted database for a week or two (~2026-11-19).
   2. Graded Budget Builder takes ~0.9 s on every load: it recomputes 30-day trends over 1.2M
      PriceCharting rows per request. Build a small daily snapshot after the PriceCharting
      download (target ~50 ms), like the other snapshots.
