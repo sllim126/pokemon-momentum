@@ -175,6 +175,18 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   Rules: every price links to PriceCharting; never assume higher grade = higher price.
 - [parked] Phone charts: the desktop's five date labels and January 1 year lines (desktop
   2026-11-05, `drawChart` in desktop_home.html). Owner: hold off on the phone for now.
+- [planned] Market indexes (owner, 2026-11-05, "soon"): split Market Stats → Indexes into two
+  groups, "Eras" (the current era indexes, Top 151 stays as is) and "Markets": whole market,
+  sealed market, English, Japanese, later graded. Whole market = every actively traded single
+  and sealed product above ~$2, equal-weighted first; weight by price x PriceCharting sales
+  volume once a few months of volume exist (volume starts 2026-10-09; earlier years would use
+  today's weights, say so on the chart). Watch: new-set joins, bad one-off prices, memory in
+  the nightly. Add a breadth line (% of cards above their 30-day average).
+- [waiting] Index spikes from unstable prices (owner asked, 2026-11-05): WOTC 100 jumps +/-25-38%
+  in a day since April 2026 because TCGplayer's market price for Base Set Charizard 1st Edition
+  Holofoil flips between ~$400 and exactly $10,000 (also 1st Ed Gyarados $30/$600 on 05-22).
+  Proposed: leave out cards whose price jumps >3x and back more than once within weeks, note it
+  in the Method tab; check the same cards in Top Movers. Waiting for the owner's OK.
 - [planned] Mobile interface testing (owner, 2026-10-21): now part of the new mobile app
   (see "New mobile app" above). Test `/m-next` on real phones after each step instead of the
   old `/mobile`, which is being replaced; known old-page issues are under "Parked: Mobile
