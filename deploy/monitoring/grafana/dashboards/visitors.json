@@ -22,7 +22,17 @@
       "tags": [
         "pokemon-momentum"
       ],
-      "asDropdown": false,
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true
+    },
+    {
+      "title": "Home lab",
+      "type": "dashboards",
+      "tags": [
+        "homelab"
+      ],
+      "asDropdown": true,
       "includeVars": false,
       "keepTime": true
     }

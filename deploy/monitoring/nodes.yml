@@ -1,4 +1,4 @@
-# Other machines on the network that run an exporter, for the Home lab dashboard.
+# Other machines on the network that run an exporter, for "Other machines" on the Home lab: Servers dashboard.
 # install.sh copies this to /etc/prometheus/momentum_nodes.yml; Prometheus rereads it on its
 # own every few minutes (no restart). How to add a machine: docs/operator_runbook.txt,
 # "Monitoring", "Adding another machine".

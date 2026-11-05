@@ -3,21 +3,27 @@
 
     python3 deploy/monitoring/build_dashboards.py
 
-writes grafana/dashboards/*.json next to this file. Grafana loads that folder by itself
-(provisioning in grafana/provisioning/dashboards.yml) within 30 s; no restart needed.
+writes grafana/dashboards/*.json (Grafana folder "Pokemon Momentum") and grafana/homelab/*.json
+(folder "Home lab") next to this file. Grafana loads both by itself (provisioning in
+grafana/provisioning/dashboards.yml) within 30 s; no restart needed.
 Change the dashboards here, not in the Grafana UI: UI edits are lost when the file is
 rebuilt. The JSON is committed too, so the dashboards work without running this script.
 
-Six dashboards, all reading the Prometheus data source (uid "prometheus"):
+Eight dashboards, all reading the Prometheus data source (uid "prometheus"). Pokemon Momentum:
 
 * Overview: is everything all right? One screen of status tiles, the jobs table and the
   headline charts. Grafana's home page. At the bottom, a collapsed "AIOS Experiments" row of
   placeholders (see AIOS_EXPERIMENTS below).
 * Website: requests, errors and response times per app and route, and outside probes.
-* Servers: this host (CPU, memory, disks, network, updates) and every Docker container.
 * Jobs & work: scheduled jobs, data downloads, logs, docs/todo.txt, bug reports, git.
-* Home lab: the Proxmox cluster (nodes, VMs, containers, storage) and the UniFi network.
 * Visitors: people and page views per day, top pages, referrers and devices, per site.
+
+Home lab (moved to their own folder 2026-11-05, as they serve more than the Pokemon sites):
+
+* Proxmox cluster: nodes, VMs, containers, storage.
+* Network (UniFi): devices, clients, WAN.
+* Servers: this host (CPU, memory, disks, network, updates), every Docker container,
+  monitoring itself, and other machines listed in nodes.yml.
 
 Where the numbers come from: docs/operator_runbook.txt, "Monitoring".
 
@@ -31,7 +37,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent / "grafana" / "dashboards"
+OUT = Path(__file__).resolve().parent / "grafana" / "dashboards"      # folder "Pokemon Momentum"
+OUT_HOMELAB = Path(__file__).resolve().parent / "grafana" / "homelab"  # folder "Home lab"
 DS = {"type": "prometheus", "uid": "prometheus"}
 
 # --- shared PromQL -------------------------------------------------------------------------
@@ -179,7 +186,9 @@ def g(x, y, w, h):
     return {"x": x, "y": y, "w": w, "h": h}
 
 
-def dashboard(uid, title, panels, refresh="1m", time_from="now-24h", tags=()):
+def dashboard(uid, title, panels, refresh="1m", time_from="now-24h", tags=(), family="pokemon-momentum"):
+    """family is the tag shared by one Grafana folder's dashboards ("pokemon-momentum" or
+    "homelab"); the top bar of every dashboard has a drop-down for each family."""
     next_id = 1
     for p in panels:
         # A collapsed row keeps its panels inside it; they need ids too.
@@ -187,11 +196,12 @@ def dashboard(uid, title, panels, refresh="1m", time_from="now-24h", tags=()):
             panel["id"] = next_id
             next_id += 1
     return {
-        "uid": uid, "title": title, "tags": ["pokemon-momentum", *tags], "timezone": "browser",
+        "uid": uid, "title": title, "tags": [family, *tags], "timezone": "browser",
         "schemaVersion": 39, "version": 1, "editable": True, "graphTooltip": 1,
         "refresh": refresh, "time": {"from": time_from, "to": "now"},
-        "links": [{"title": "Pokemon Momentum", "type": "dashboards", "tags": ["pokemon-momentum"],
-                   "asDropdown": False, "includeVars": False, "keepTime": True}],
+        "links": [{"title": name, "type": "dashboards", "tags": [tag],
+                   "asDropdown": True, "includeVars": False, "keepTime": True}
+                  for name, tag in (("Pokemon Momentum", "pokemon-momentum"), ("Home lab", "homelab"))],
         "panels": panels, "templating": {"list": []}, "annotations": {"list": []},
     }
 
@@ -452,7 +462,7 @@ def servers():
                    [target("up", ref="A", instant=True, table=True)], g(0, 35, 12, 8),
                    {"job": "Job", "instance": "Target", "Value": "Up"},
                    description="Everything Prometheus collects from. Proxmox (pve-exporter), UniFi (UnPoller) and the "
-                               "machines in deploy/monitoring/nodes.yml feed the Home lab dashboard.",
+                               "machines in deploy/monitoring/nodes.yml feed 'Other machines' below.",
                    overrides=[col("Value", mappings=UP_DOWN)], sort=("Up", False)))
     p.append(table("Status collector",
                    [target("momentum_collector_errors", ref="A", instant=True, table=True)], g(12, 35, 12, 8),
@@ -461,7 +471,8 @@ def servers():
     # The table's excludeByName hides "job" by default; keep it for the targets table.
     p[-2]["transformations"][1]["options"]["excludeByName"].pop("job")
     p[-2]["transformations"][1]["options"]["excludeByName"].pop("instance")
-    return dashboard("momentum-servers", "Pokemon Momentum: Servers", p, tags=("servers",))
+    p.extend(machines_row(43))
+    return dashboard("momentum-servers", "Home lab: Servers", p, tags=("servers",), family="homelab")
 
 
 def jobs_and_work():
@@ -536,9 +547,8 @@ def pve_storage(expr):
     return f"max by (id, node, storage) (({expr}) * on (id) group_left (node, storage) pve_storage_info)"
 
 
-def home_lab():
-    """Machines outside this project's own host: the Proxmox cluster, the UniFi network (both
-    since 2026-11-05) and any other machine listed in nodes.yml."""
+def proxmox():
+    """The Proxmox cluster (since 2026-11-05). Keeps the old "Home lab" uid so links still work."""
     p = []
     p.append(row("Proxmox cluster (192.168.1.75)", 0))
     tiles = [
@@ -607,9 +617,12 @@ def home_lab():
     p.append(timeseries("Largest guests (memory)",
                         [target(f"topk(8, {guest(f'pve_memory_usage_bytes{{{GUEST}}}')})", "{{name}}")],
                         g(16, 22, 8, 8), unit="bytes"))
-    p.extend(network_row(30))
-    p.extend(machines_row(56))
-    return dashboard("momentum-homelab", "Pokemon Momentum: Home lab", p, tags=("homelab",))
+    return dashboard("momentum-homelab", "Home lab: Proxmox cluster", p, tags=("proxmox",), family="homelab")
+
+
+def network():
+    return dashboard("homelab-network", "Home lab: Network (UniFi)", network_row(0), tags=("network",),
+                     family="homelab")
 
 
 # UnPoller series carry the device or client name; "uptime 0" is how it reports a device the
@@ -871,12 +884,17 @@ def visitors():
 
 
 def main() -> None:
-    OUT.mkdir(parents=True, exist_ok=True)
-    for name, board in (("overview", overview()), ("website", website()),
-                        ("servers", servers()), ("jobs_and_work", jobs_and_work()),
-                        ("home_lab", home_lab()), ("visitors", visitors())):
-        (OUT / f"{name}.json").write_text(json.dumps(board, indent=2) + "\n", encoding="utf-8")
-        print(f"wrote {OUT / f'{name}.json'} ({len(board['panels'])} panels)")
+    boards = ((OUT, "overview", overview()), (OUT, "website", website()),
+              (OUT, "jobs_and_work", jobs_and_work()), (OUT, "visitors", visitors()),
+              (OUT_HOMELAB, "proxmox", proxmox()), (OUT_HOMELAB, "network", network()),
+              (OUT_HOMELAB, "servers", servers()))
+    for folder, name, board in boards:
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / f"{name}.json").write_text(json.dumps(board, indent=2) + "\n", encoding="utf-8")
+        print(f"wrote {folder / f'{name}.json'} ({len(board['panels'])} panels)")
+    # Dashboards that moved folder (2026-11-05); a stale copy would clash on uid.
+    for old in ("home_lab.json", "servers.json"):
+        (OUT / old).unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
