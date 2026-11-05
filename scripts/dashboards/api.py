@@ -7056,10 +7056,12 @@ def series(productId: int, subTypeName: str, days: int = 365, category_id: int =
               AND productId = {productId}
               AND subTypeName = '{st}'
               AND latest_date = (SELECT MAX(latest_date) FROM {series_snapshot_from(category.category_id)})
-            LIMIT 1
         """
         _, rows = q(sql)
         if rows:
+            # Snapshots built before 2026-11-05 hold two rows for a card TCGplayer moved to
+            # another set (see scripts/common/price_views.py): use the one that runs latest.
+            rows = sorted(rows, key=lambda row: (json.loads(row[1] or "[]") or [""])[-1], reverse=True)
             latest, dates_json, prices_json, sma7_json, sma30_json = rows[0]
             dates = json.loads(dates_json or "[]")
             prices = json.loads(prices_json or "[]")
@@ -7571,9 +7573,17 @@ def breakouts(
     recent_change_within_days: int = 5,
     min_recent_distinct_prices_30d: int = 10,
     max_hold_days: int = 7,
+    min_vs_sma30_pct: float = 5.0,
     product_kind: str | None = None,
     category_id: int = 3,
 ):
+    """Cards freshly above their previous 90-day high, with recent activity.
+
+    min_vs_sma30_pct (owner, 2026-11-05): the price must also be at least this far above its
+    30-day average. A flat card that ticks a cent past its old high (Basic Darkness Energy
+    Cracked Ice: $4.95 high, $5.02 now, +2% on its average after months at ~$4.90) is not a
+    breakout; a card that ran up (Victini V: +2% past its high but +22% on its average) is.
+    """
     category = category_config(category_id)
     price_source = prices_from(category.category_id)
     signal_source = product_signal_from(category.category_id)
@@ -7593,6 +7603,7 @@ def breakouts(
         and recent_change_within_days == 5
         and min_recent_distinct_prices_30d == 10
         and max_hold_days == 7
+        and min_vs_sma30_pct == 5.0
     )
     # Lower the activity bar when the feed has missing days (see gap_scaled_threshold).
     # Both query paths below use the scaled value.
@@ -7619,11 +7630,13 @@ def breakouts(
             hold_days,
             last_change_date,
             recent_observations_30d,
-            recent_distinct_prices_30d
+            recent_distinct_prices_30d,
+            price_vs_sma30_pct
         FROM {signal_source}
         WHERE categoryId = {category.category_id}
           AND latest_date = (SELECT MAX(latest_date) FROM {signal_source})
           AND latest_price >= {min_price}
+          AND COALESCE(price_vs_sma30_pct, 0) >= {min_vs_sma30_pct}
           AND prior_high_90d IS NOT NULL
           AND latest_price > prior_high_90d
           AND ((latest_price / NULLIF(prior_high_90d, 0)) - 1) * 100.0 >= {min_breakout_pct}
@@ -7717,7 +7730,8 @@ def breakouts(
             b.groupId,
             b.subTypeName,
             COUNT(*) AS recent_observations_30d,
-            COUNT(DISTINCT b.marketPrice) AS recent_distinct_prices_30d
+            COUNT(DISTINCT b.marketPrice) AS recent_distinct_prices_30d,
+            AVG(b.marketPrice) AS avg_30d
         FROM base b
         JOIN latest l
           ON b.productId = l.productId
@@ -7754,7 +7768,8 @@ def breakouts(
         ls.hold_days,
         ph.last_change_date,
         ra.recent_observations_30d,
-        ra.recent_distinct_prices_30d
+        ra.recent_distinct_prices_30d,
+        ((w.marketPrice / NULLIF(ra.avg_30d, 0)) - 1) * 100.0 AS price_vs_sma30_pct
     FROM win w
     JOIN hi h
       ON w.productId = h.productId
@@ -7783,6 +7798,7 @@ def breakouts(
       AND ph.last_change_date >= w.latest_date - INTERVAL {recent_change_within_days} DAY
       AND ra.recent_distinct_prices_30d >= {min_recent_distinct_prices_30d}
       AND COALESCE(ls.hold_days, 0) <= {max_hold_days}
+      AND ((w.marketPrice / NULLIF(ra.avg_30d, 0)) - 1) * 100.0 >= {min_vs_sma30_pct}
       {product_kind_filter}
     ORDER BY breakout_pct DESC, w.marketPrice DESC
     LIMIT {limit}

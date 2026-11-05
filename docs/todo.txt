@@ -47,6 +47,10 @@ Recently Completed
   the rest of the budget with cards not shown yet (starts over when they run out). Desktop and
   phone; API `keep_keys` on `/budget_builder`. Popular Pokémon (Charizard, Umbreon, Gengar…)
   get a +10 tie-breaker and a "Popular Pokémon" label (owner, after Reddit feedback).
+- 2026-11-05 Breakouts tightened (owner spotted Basic Darkness Energy, flat at ~$4.90 for months):
+  a breakout must also be 5% above its 30-day average. And cards TCGplayer moved to another set
+  (116 EN, 7 JP) get one history in the series, sparkline and signal snapshots; their charts
+  sometimes showed the old set's history (ending Aug 2025). Snapshots rebuild at 02:00.
 - 2026-11-05 Graded Budget Builder (Beta) on desktop and phone: PSA 10s, 9-10s or 8-10s from
   PriceCharting, $100-$1,000 presets, Keep and New picks, each price linked to PriceCharting.
 - 2026-11-04 Catalogue crawl stops wasting requests: 404s were re-asked every night (a missing

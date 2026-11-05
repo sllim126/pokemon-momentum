@@ -20,6 +20,7 @@ if str(ROOT) not in sys.path:
 
 from scripts.common.category_config import get_category_config
 from scripts.common.duckdb_settings import connect_capped
+from scripts.common.price_views import prices_by_current_group
 
 
 EXTRACTED_DIR = "/app/data/extracted"
@@ -47,12 +48,14 @@ def main() -> int:
     table_name = category.series_snapshot_table
 
     con = connect_capped(DB_PATH)
+    # One history per card even when TCGplayer moved it to another set (see price_views).
+    prices = prices_by_current_group(con, category.category_id)
     con.execute(
         f"""
         CREATE OR REPLACE TABLE {table_name} AS
         WITH latest_date AS (
             SELECT MAX(date) AS latest_date
-            FROM pokemon_prices
+            FROM {prices}
             WHERE categoryId = {category.category_id}
               AND marketPrice IS NOT NULL
         ),
@@ -64,7 +67,7 @@ def main() -> int:
                 subTypeName,
                 date,
                 marketPrice AS price
-            FROM pokemon_prices
+            FROM {prices}
             WHERE categoryId = {category.category_id}
               AND marketPrice IS NOT NULL
               AND date >= (SELECT latest_date FROM latest_date) - INTERVAL 729 DAY
@@ -124,7 +127,7 @@ def main() -> int:
         CREATE OR REPLACE TABLE {long_table} AS
         WITH latest_date AS (
             SELECT MAX(date) AS latest_date
-            FROM pokemon_prices
+            FROM {prices}
             WHERE categoryId = {category.category_id}
               AND marketPrice IS NOT NULL
         ),
@@ -146,7 +149,7 @@ def main() -> int:
                     ORDER BY date
                     ROWS BETWEEN 29 PRECEDING AND CURRENT ROW
                 ) AS sma30
-            FROM pokemon_prices
+            FROM {prices}
             WHERE categoryId = {category.category_id}
               AND marketPrice IS NOT NULL
         ),

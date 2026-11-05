@@ -117,6 +117,13 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
   (`loadCardByKey` / `openProductFromLink`), not the slab price. Switching between the two
   builders clears kept, seen and swapped cards. Trends use up to 30 days; the history started
   2026-10-09, so the window is shorter until mid-November.
+- **Breakouts** (2026-11-05) need the price above the previous 90-day high *and* at least 5%
+  above the 30-day average (`min_vs_sma30_pct` on `/breakouts`), so a flat card ticking a cent
+  past its old high doesn't count.
+- **Cards TCGplayer moved to another set** keep one history: the series, sparkline and signal
+  snapshot builders read prices through `prices_by_current_group` (`scripts/common/price_views.py`),
+  which files every price under the card's current set. Before 2026-11-05 such cards had two
+  chart rows and `/series` sometimes showed the old one (e.g. a chart ending Aug 2025).
 - **Discover lists survive feed gaps.** Each screener's activity bars ("10 different prices
   in 30 days", "4 readings in 7 days") are scaled to the days that actually have prices in
   that window (`gap_scaled_threshold` in `query_support.py`), so a gap in the TCGCSV feed
