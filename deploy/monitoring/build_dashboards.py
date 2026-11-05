@@ -12,7 +12,8 @@ rebuilt. The JSON is committed too, so the dashboards work without running this 
 Eight dashboards, all reading the Prometheus data source (uid "prometheus"). Pokemon Momentum:
 
 * Overview: is everything all right? One screen of status tiles, the jobs table and the
-  headline charts. Grafana's home page. At the bottom, a collapsed "AIOS Experiments" row of
+  headline charts. (Grafana's home page is a cross-project "Everything" dashboard kept in a
+  private repository; it falls back to this one if that isn't installed.) At the bottom, a collapsed "AIOS Experiments" row of
   placeholders (see AIOS_EXPERIMENTS below).
 * Website: requests, errors and response times per app and route, and outside probes.
 * Jobs & work: scheduled jobs, data downloads, logs, docs/todo.txt, bug reports, git.
@@ -199,7 +200,8 @@ def dashboard(uid, title, panels, refresh="1m", time_from="now-24h", tags=(), fa
         "uid": uid, "title": title, "tags": [family, *tags], "timezone": "browser",
         "schemaVersion": 39, "version": 1, "editable": True, "graphTooltip": 1,
         "refresh": refresh, "time": {"from": time_from, "to": "now"},
-        "links": [{"title": name, "type": "dashboards", "tags": [tag],
+        "links": [{"title": "Home", "type": "link", "url": "/", "icon": "dashboard", "targetBlank": False}] +
+                 [{"title": name, "type": "dashboards", "tags": [tag],
                    "asDropdown": True, "includeVars": False, "keepTime": True}
                   for name, tag in (("Pokemon Momentum", "pokemon-momentum"), ("Home lab", "homelab"))],
         "panels": panels, "templating": {"list": []}, "annotations": {"list": []},

@@ -35,11 +35,14 @@ Monitoring (Grafana)
 Added 2026-11-05. Grafana shows the website and its visitors, the jobs, the data downloads,
 this server and its containers, the Proxmox cluster, the UniFi network and the work list on
 seven dashboards in two folders. Everything is free software on this host; nothing is sent
-outside. Every dashboard's top bar has "Pokemon Momentum" and "Home lab" drop-downs.
+outside. Every dashboard's top bar has a Home link and "Pokemon Momentum" and "Home lab"
+drop-downs. Grafana's home page is the owner's "Everything" dashboard (headline tiles for
+every project), installed from a private repository; `install.sh` leaves an existing home
+page alone and sets Overview only when none is set.
 
 Open: http://192.168.1.240:3000 (LAN; sign in as `admin`). Folder "Pokemon Momentum":
 
-- Overview (Grafana's home page): status tiles, "Did the jobs run?", data ages, trends
+- Overview: status tiles, "Did the jobs run?", data ages, trends
   At its bottom, a collapsed "AIOS Experiments" row of placeholders: a display layer for
   the AIOS task registry, not a task list (`docs/aios_grafana_experiments.md`)
 - Website: requests, errors and response times per app and route; outside probes
@@ -88,7 +91,7 @@ its command in the crontab and `deploy/crontab.txt`. A systemd job needs nothing
 Install or repair (needs sudo; safe to rerun): `bash deploy/monitoring/install.sh`. It sets
 the text-file folder to group `adam`, keeps the blackbox exporter on localhost, copies the
 scrape jobs to `/etc/prometheus/momentum_scrape.yml` (loaded via `scrape_config_files` in
-`prometheus.yml`, backup kept), installs the Grafana provisioning, sets the home dashboard
+`prometheus.yml`, backup kept), installs the Grafana provisioning, sets the home dashboard (only if none is set)
 and starts cAdvisor. The crontab is separate: `crontab deploy/crontab.txt` (compare with
 `crontab -l` first).
 

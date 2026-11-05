@@ -46,10 +46,11 @@ sudo install -m 644 -g grafana "$HERE/grafana/provisioning/datasources.yml" \
   /etc/grafana/provisioning/datasources/pokemon-momentum.yml
 sudo install -m 644 -g grafana "$HERE/grafana/provisioning/dashboards.yml" \
   /etc/grafana/provisioning/dashboards/pokemon-momentum.yml
-# Open Grafana on the Overview dashboard (grafana-server reads this file as its environment).
+# Open Grafana on the Overview dashboard (grafana-server reads this file as its environment),
+# unless a home page is already set: since 2026-11-05 the owner's home page is a cross-project
+# "Everything" dashboard installed from a private repository, which this must not undo.
 HOME_LINE="GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=$HERE/grafana/dashboards/overview.json"
-if ! sudo grep -qxF "$HOME_LINE" /etc/default/grafana-server; then
-  sudo sed -i '/^GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/d' /etc/default/grafana-server
+if ! sudo grep -q '^GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=' /etc/default/grafana-server; then
   echo "$HOME_LINE" | sudo tee -a /etc/default/grafana-server >/dev/null
 fi
 sudo systemctl restart grafana-server

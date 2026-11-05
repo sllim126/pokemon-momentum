@@ -17,6 +17,13 @@
   },
   "links": [
     {
+      "title": "Home",
+      "type": "link",
+      "url": "/",
+      "icon": "dashboard",
+      "targetBlank": false
+    },
+    {
       "title": "Pokemon Momentum",
       "type": "dashboards",
       "tags": [
