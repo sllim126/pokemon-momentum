@@ -779,6 +779,15 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual([item["groupId"] for item in payload["items"]], [101, 102, 103])
         self.assertIn("under the radar", payload["items"][0]["reasons"])
 
+    def test_budget_builder_gives_popular_pokemon_a_small_bonus(self):
+        base = {"latest_price": 20.0, "roc_7d_pct": 3.0, "roc_30d_pct": 5.0, "trend_score": 30.0,
+                "price_vs_sma30_pct": 4.0, "recent_distinct_prices_7d": 4, "recent_distinct_prices_30d": 8}
+        plain = api._budget_candidate_score({**base, "productName": "Dondozo - 207/198"}, 100)
+        popular = api._budget_candidate_score({**base, "productName": "Umbreon VMAX (Alternate Art)"}, 100)
+        self.assertEqual(round(popular - plain, 3), api.POPULAR_POKEMON_BONUS)
+        self.assertIn("popular pokemon", api._budget_candidate_reasons({**base, "productName": "Mewtwo ex"}))
+        self.assertFalse(api._is_popular_pokemon("Mewthree"))  # whole words only
+
     @patch.object(api, "screener_snapshot_from", return_value="pokemon_screener_snapshot")
     @patch.object(api, "category_config", return_value=api.category_config(3))
     def test_budget_builder_keeps_cards_and_refills_the_rest(self, _category_config_mock, _snapshot_mock):

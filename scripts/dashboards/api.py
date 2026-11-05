@@ -191,6 +191,27 @@ GOOGLE_CLIENT_ID = os.getenv("POKEMON_MOMENTUM_GOOGLE_CLIENT_ID", "").strip()
 INDEX_OVERVIEW_CACHE_TTL_SECONDS = 15 * 60
 _INDEX_OVERVIEW_CACHE: dict[tuple[int, str], tuple[datetime, dict]] = {}
 INDEX_OVERVIEW_SNAPSHOT_SUFFIX = "index_overview_snapshot.json"
+# Pokémon collectors chase whatever the market does (owner, 2026-11-05). Budget Builder gives
+# their cards POPULAR_POKEMON_BONUS points: a tie-breaker on top of price momentum, which stays
+# the main signal (a card whose price keeps moving is one collectors are buying). For scale,
+# the top tenth of candidates score about 53 and the median about 31, so the bonus lifts a
+# popular card that's already moving, but can't carry one that isn't. Matched as whole words
+# in the product name ("Mew" doesn't match "Mewtwo"; both are listed).
+POPULAR_POKEMON = (
+    "Charizard", "Pikachu", "Umbreon", "Espeon", "Eevee", "Vaporeon", "Jolteon", "Flareon",
+    "Leafeon", "Glaceon", "Sylveon", "Gengar", "Mew", "Mewtwo", "Rayquaza", "Lugia", "Ho-Oh",
+    "Gardevoir", "Greninja", "Lucario", "Dragonite", "Gyarados", "Snorlax", "Blastoise",
+    "Venusaur", "Arceus", "Giratina", "Darkrai", "Tyranitar", "Garchomp", "Mimikyu", "Articuno",
+    "Zapdos", "Moltres", "Celebi", "Jirachi", "Latias", "Latios", "Suicune", "Entei", "Raikou",
+)
+POPULAR_POKEMON_BONUS = 10.0
+POPULAR_POKEMON_RE = re.compile(r"\b(" + "|".join(re.escape(name) for name in POPULAR_POKEMON) + r")\b", re.IGNORECASE)
+
+
+def _is_popular_pokemon(name: str | None) -> bool:
+    return bool(POPULAR_POKEMON_RE.search(str(name or "")))
+
+
 DEFAULT_BUDGET_RARITY_FILTERS = [
     "illustration_rare",
     "special_illustration_rare",
@@ -1316,7 +1337,8 @@ def _budget_name_root(name: str | None) -> str:
 
 def _budget_candidate_score(row: dict, budget: float) -> float:
     """Rank a Budget Builder candidate: rewards recent gains, acceleration, trend strength
-    and active trading, each capped so one extreme number can't dominate."""
+    and active trading, each capped so one extreme number can't dominate, plus a small bonus
+    for popular Pokémon (POPULAR_POKEMON)."""
     price = max(_safe_float(row.get("latest_price")), 0.0)
     roc_7d = _safe_float(row.get("roc_7d_pct"))
     roc_30d = _safe_float(row.get("roc_30d_pct"))
@@ -1341,6 +1363,8 @@ def _budget_candidate_score(row: dict, budget: float) -> float:
         score += 12.0
     if _truthy_flag(row.get("good_buys_default_flag")):
         score += 8.0
+    if _is_popular_pokemon(row.get("productName")):
+        score += POPULAR_POKEMON_BONUS
 
     score -= abs(price_vs_sma30 - 4.0) * 0.5
 
@@ -1365,6 +1389,8 @@ def _budget_candidate_score(row: dict, budget: float) -> float:
 
 def _budget_candidate_reasons(row: dict) -> list[str]:
     reasons: list[str] = []
+    if _is_popular_pokemon(row.get("productName")):
+        reasons.append("popular pokemon")
     if _truthy_flag(row.get("under_the_radar_default_flag")):
         reasons.append("under the radar")
     if _truthy_flag(row.get("early_uptrends_default_flag")):

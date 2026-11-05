@@ -101,7 +101,8 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
   `packBreakdown()`.
 - **Budget Builder** picks are chosen on the server (`budget_builder_recommendations` and
   `_select_budget_candidates` in `api.py`). It needs four price readings in the last week,
-  or every reading available after a feed gap.
+  or every reading available after a feed gap. Popular Pokémon (`POPULAR_POKEMON` in `api.py`)
+  get a +10 tie-breaker and a "Popular Pokémon" label; price momentum stays the main signal.
 - **Budget Builder keep and cycle** (desktop and phone, 2026-11-05). "Keep" only marks a pick
   on the page (no reload) and adds it to the link as `keep=`. "New picks" adds every unkept
   pick on screen to `budgetSeen` and asks again with `keep_keys` (kept cards go in first,
