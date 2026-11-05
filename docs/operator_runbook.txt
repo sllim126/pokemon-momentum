@@ -39,6 +39,8 @@ nothing is sent outside.
 Open: http://192.168.1.240:3000 (LAN; sign in as `admin`). Folder "Pokemon Momentum":
 
 - Overview (Grafana's home page): status tiles, "Did the jobs run?", data ages, trends
+  At its bottom, a collapsed "AIOS Experiments" row of placeholders: a display layer for
+  the AIOS task registry, not a task list (`docs/aios_grafana_experiments.md`)
 - Website: requests, errors and response times per app and route; outside probes
 - Servers: CPU, memory, disks, network, updates, SMART, every Docker container
 - Jobs & work: jobs, downloads, log files, docs/todo.txt, bug reports, git

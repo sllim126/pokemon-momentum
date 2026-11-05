@@ -80,6 +80,10 @@ Four dashboards on http://192.168.1.240:3000; runbook section "Monitoring".
 - [idea] Physical disk health on the Home lab dashboard: the Proxmox API lists every disk's
   SMART verdict and wear (all fine on 2026-11-05; two hardware RAID volumes show UNKNOWN).
   The collector could read it with the existing token.
+- [waiting] AIOS Experiments row (Overview, collapsed, placeholders only; 2026-11-05). To show
+  real data: a script that turns the Markdown AIOS registry into the aios-feed/1 JSON, then
+  either the Infinity plugin (lists) or collect_status.py (counts). Owner: where does the
+  registry live? Details: docs/aios_grafana_experiments.md.
 - [next] Scale the dashboards down after the owner has used them for a while (which tiles matter).
 - [waiting] Alerts: send Grafana alerts (site down, job failed or overdue, disk over 90%, price
   data over 3 days old) to Discord? Needs a channel and its own webhook (not #bug-reports).

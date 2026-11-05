@@ -11,7 +11,8 @@ rebuilt. The JSON is committed too, so the dashboards work without running this 
 Five dashboards, all reading the Prometheus data source (uid "prometheus"):
 
 * Overview: is everything all right? One screen of status tiles, the jobs table and the
-  headline charts. Grafana's home page.
+  headline charts. Grafana's home page. At the bottom, a collapsed "AIOS Experiments" row of
+  placeholders (see AIOS_EXPERIMENTS below).
 * Website: requests, errors and response times per app and route, and outside probes.
 * Servers: this host (CPU, memory, disks, network, updates) and every Docker container.
 * Jobs & work: scheduled jobs, data downloads, logs, docs/todo.txt, bug reports, git.
@@ -178,8 +179,12 @@ def g(x, y, w, h):
 
 
 def dashboard(uid, title, panels, refresh="1m", time_from="now-24h", tags=()):
-    for i, p in enumerate(panels, start=1):
-        p["id"] = i
+    next_id = 1
+    for p in panels:
+        # A collapsed row keeps its panels inside it; they need ids too.
+        for panel in [p, *p.get("panels", [])]:
+            panel["id"] = next_id
+            next_id += 1
     return {
         "uid": uid, "title": title, "tags": ["pokemon-momentum", *tags], "timezone": "browser",
         "schemaVersion": 39, "version": 1, "editable": True, "graphTooltip": 1,
@@ -303,6 +308,8 @@ def overview():
                         [target('probe_duration_seconds{probe="public"}', "{{instance}}")],
                         g(16, 21, 8, 8), unit="s",
                         description="Full round trip from this host, out to the internet and back through Caddy."))
+    if AIOS_EXPERIMENTS:
+        p.append(aios_experiments_row(29))
     return dashboard("momentum-overview", "Pokemon Momentum: Overview", p, tags=("overview",))
 
 
@@ -716,6 +723,60 @@ def network_row(y):
                         g(16, y, 8, 8), unit="bps",
                         description="Traffic each client received in the last 5 minutes, as UniFi counts it."))
     return p
+
+
+# --- AIOS Experiments (Overview, collapsed) -------------------------------------------------
+#
+# An experimental presentation layer for the owner's AIOS task registry (Markdown). Grafana is
+# NOT the task system: nothing is typed into these panels. Today they are placeholders; later
+# each one shows one list from a JSON feed generated from the registry. The feed format and
+# the steps to connect it: docs/aios_grafana_experiments.md.
+#
+# To remove the whole section: set AIOS_EXPERIMENTS = False and rerun this script. The rest of
+# the Overview is unaffected either way (the row is last and starts collapsed).
+AIOS_EXPERIMENTS = True
+AIOS_FEED_SCHEMA = "aios-feed/1"
+
+# (feed key, panel title, what it will list). The feed key is the contract: the generated JSON
+# has the list under sections.<key>. Keep keys stable; titles can change freely.
+AIOS_SECTIONS = (
+    ("priorities", "Today's priorities", "What to work on today, in order."),
+    ("active_projects", "Active projects", "Projects under way, with their current status."),
+    ("waiting", "Blocked or waiting tasks", "Tasks that can't move, and what they wait for."),
+    ("decisions", "Decisions requiring attention", "Open questions only the owner can settle."),
+    ("completed", "Recently completed work", "What was finished lately, newest first."),
+    ("docs_followups", "Documentation and BookStack follow-ups", "Docs and BookStack pages to write or update."),
+)
+# Every item in every section has these fields (only "title" is required), so each panel can
+# become the same kind of table.
+AIOS_ITEM_FIELDS = ("title", "project", "status", "owner", "due", "updated", "link", "note")
+
+
+def aios_placeholder(key, title, what, pos):
+    columns = " · ".join(f"`{f}`" for f in AIOS_ITEM_FIELDS)
+    content = (
+        f"**Experimental placeholder.** {what}\n\n"
+        f"Not connected yet, and not the place to keep tasks: the AIOS task registry is the source "
+        f"of truth.\n\n"
+        f"- Feed key: `sections.{key}` (schema `{AIOS_FEED_SCHEMA}`)\n"
+        f"- Columns: {columns}\n\n"
+        f"How to connect: `docs/aios_grafana_experiments.md`."
+    )
+    panel = text(f"{title} (placeholder)", content, pos)
+    panel["description"] = f"AIOS Experiments, feed key sections.{key}. Placeholder; see docs/aios_grafana_experiments.md."
+    # Machine-readable marker so a later script can find and swap these panels.
+    panel["options"]["aiosFeedKey"] = key
+    return panel
+
+
+def aios_experiments_row(y):
+    """A collapsed row (click to open) holding one placeholder per AIOS section, two rows of
+    three. Collapsed rows keep their panels inside the row object, so nothing below or above
+    moves and the row costs nothing until it's opened."""
+    r = row("AIOS Experiments (placeholders, not the task system)", y, collapsed=True)
+    for i, (key, title, what) in enumerate(AIOS_SECTIONS):
+        r["panels"].append(aios_placeholder(key, title, what, g((i % 3) * 8, y + 1 + (i // 3) * 8, 8, 8)))
+    return r
 
 
 def main() -> None:

@@ -1809,6 +1809,122 @@
         }
       },
       "id": 24
+    },
+    {
+      "type": "row",
+      "title": "AIOS Experiments (placeholders, not the task system)",
+      "collapsed": true,
+      "panels": [
+        {
+          "type": "text",
+          "title": "Today's priorities (placeholder)",
+          "gridPos": {
+            "x": 0,
+            "y": 30,
+            "w": 8,
+            "h": 8
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "**Experimental placeholder.** What to work on today, in order.\n\nNot connected yet, and not the place to keep tasks: the AIOS task registry is the source of truth.\n\n- Feed key: `sections.priorities` (schema `aios-feed/1`)\n- Columns: `title` \u00b7 `project` \u00b7 `status` \u00b7 `owner` \u00b7 `due` \u00b7 `updated` \u00b7 `link` \u00b7 `note`\n\nHow to connect: `docs/aios_grafana_experiments.md`.",
+            "aiosFeedKey": "priorities"
+          },
+          "description": "AIOS Experiments, feed key sections.priorities. Placeholder; see docs/aios_grafana_experiments.md.",
+          "id": 26
+        },
+        {
+          "type": "text",
+          "title": "Active projects (placeholder)",
+          "gridPos": {
+            "x": 8,
+            "y": 30,
+            "w": 8,
+            "h": 8
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "**Experimental placeholder.** Projects under way, with their current status.\n\nNot connected yet, and not the place to keep tasks: the AIOS task registry is the source of truth.\n\n- Feed key: `sections.active_projects` (schema `aios-feed/1`)\n- Columns: `title` \u00b7 `project` \u00b7 `status` \u00b7 `owner` \u00b7 `due` \u00b7 `updated` \u00b7 `link` \u00b7 `note`\n\nHow to connect: `docs/aios_grafana_experiments.md`.",
+            "aiosFeedKey": "active_projects"
+          },
+          "description": "AIOS Experiments, feed key sections.active_projects. Placeholder; see docs/aios_grafana_experiments.md.",
+          "id": 27
+        },
+        {
+          "type": "text",
+          "title": "Blocked or waiting tasks (placeholder)",
+          "gridPos": {
+            "x": 16,
+            "y": 30,
+            "w": 8,
+            "h": 8
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "**Experimental placeholder.** Tasks that can't move, and what they wait for.\n\nNot connected yet, and not the place to keep tasks: the AIOS task registry is the source of truth.\n\n- Feed key: `sections.waiting` (schema `aios-feed/1`)\n- Columns: `title` \u00b7 `project` \u00b7 `status` \u00b7 `owner` \u00b7 `due` \u00b7 `updated` \u00b7 `link` \u00b7 `note`\n\nHow to connect: `docs/aios_grafana_experiments.md`.",
+            "aiosFeedKey": "waiting"
+          },
+          "description": "AIOS Experiments, feed key sections.waiting. Placeholder; see docs/aios_grafana_experiments.md.",
+          "id": 28
+        },
+        {
+          "type": "text",
+          "title": "Decisions requiring attention (placeholder)",
+          "gridPos": {
+            "x": 0,
+            "y": 38,
+            "w": 8,
+            "h": 8
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "**Experimental placeholder.** Open questions only the owner can settle.\n\nNot connected yet, and not the place to keep tasks: the AIOS task registry is the source of truth.\n\n- Feed key: `sections.decisions` (schema `aios-feed/1`)\n- Columns: `title` \u00b7 `project` \u00b7 `status` \u00b7 `owner` \u00b7 `due` \u00b7 `updated` \u00b7 `link` \u00b7 `note`\n\nHow to connect: `docs/aios_grafana_experiments.md`.",
+            "aiosFeedKey": "decisions"
+          },
+          "description": "AIOS Experiments, feed key sections.decisions. Placeholder; see docs/aios_grafana_experiments.md.",
+          "id": 29
+        },
+        {
+          "type": "text",
+          "title": "Recently completed work (placeholder)",
+          "gridPos": {
+            "x": 8,
+            "y": 38,
+            "w": 8,
+            "h": 8
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "**Experimental placeholder.** What was finished lately, newest first.\n\nNot connected yet, and not the place to keep tasks: the AIOS task registry is the source of truth.\n\n- Feed key: `sections.completed` (schema `aios-feed/1`)\n- Columns: `title` \u00b7 `project` \u00b7 `status` \u00b7 `owner` \u00b7 `due` \u00b7 `updated` \u00b7 `link` \u00b7 `note`\n\nHow to connect: `docs/aios_grafana_experiments.md`.",
+            "aiosFeedKey": "completed"
+          },
+          "description": "AIOS Experiments, feed key sections.completed. Placeholder; see docs/aios_grafana_experiments.md.",
+          "id": 30
+        },
+        {
+          "type": "text",
+          "title": "Documentation and BookStack follow-ups (placeholder)",
+          "gridPos": {
+            "x": 16,
+            "y": 38,
+            "w": 8,
+            "h": 8
+          },
+          "options": {
+            "mode": "markdown",
+            "content": "**Experimental placeholder.** Docs and BookStack pages to write or update.\n\nNot connected yet, and not the place to keep tasks: the AIOS task registry is the source of truth.\n\n- Feed key: `sections.docs_followups` (schema `aios-feed/1`)\n- Columns: `title` \u00b7 `project` \u00b7 `status` \u00b7 `owner` \u00b7 `due` \u00b7 `updated` \u00b7 `link` \u00b7 `note`\n\nHow to connect: `docs/aios_grafana_experiments.md`.",
+            "aiosFeedKey": "docs_followups"
+          },
+          "description": "AIOS Experiments, feed key sections.docs_followups. Placeholder; see docs/aios_grafana_experiments.md.",
+          "id": 31
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 29,
+        "w": 24,
+        "h": 1
+      },
+      "id": 25
     }
   ],
   "templating": {
