@@ -2205,17 +2205,189 @@
       "id": 25
     },
     {
+      "type": "table",
+      "title": "ZFS pools (RAID health)",
+      "description": "Degraded means the pool is running without one of its disks: replace it soon. A scrub or resilver doesn't change the state. Per-disk errors: `zpool status` on the server.",
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 24,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by (machine, zpool, state) (node_zfs_zpool_state{job=\"machines\"} == 1)",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "expr": "max by (machine, zpool) (label_replace(node_filesystem_avail_bytes{job=\"machines\",fstype=\"zfs\"}, \"zpool\", \"$1\", \"device\", \"([^/]+).*\"))",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "machine": "Machine",
+              "zpool": "Pool",
+              "state": "State",
+              "Value #B": "Free"
+            },
+            "indexByName": {
+              "machine": 0,
+              "zpool": 1,
+              "state": 2,
+              "Value #B": 3
+            },
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "runner": true
+            },
+            "includeByName": {
+              "machine": true,
+              "zpool": true,
+              "state": true,
+              "Value #B": true
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-text"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "state"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "online": {
+                        "text": "Online",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "degraded": {
+                        "text": "Degraded (a disk is missing or failed)",
+                        "color": "red",
+                        "index": 1
+                      },
+                      "faulted": {
+                        "text": "Faulted",
+                        "color": "red",
+                        "index": 2
+                      },
+                      "offline": {
+                        "text": "Offline",
+                        "color": "red",
+                        "index": 3
+                      },
+                      "removed": {
+                        "text": "Removed",
+                        "color": "red",
+                        "index": 4
+                      },
+                      "unavail": {
+                        "text": "Unavailable",
+                        "color": "red",
+                        "index": 5
+                      },
+                      "suspended": {
+                        "text": "Suspended",
+                        "color": "red",
+                        "index": 6
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #B"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": []
+      },
+      "id": 26
+    },
+    {
       "type": "row",
       "title": "Synology NAS (SNMP; deploy/monitoring/prometheus_momentum.yml, job synology)",
       "collapsed": false,
       "panels": [],
       "gridPos": {
         "x": 0,
-        "y": 52,
+        "y": 56,
         "w": 24,
         "h": 1
       },
-      "id": 26
+      "id": 27
     },
     {
       "type": "table",
@@ -2223,7 +2395,7 @@
       "description": "Volumes not normal: degraded, crashed, or busy (sync, scrub, expand). Disks not normal: status or health other than normal. Update: DSM update waiting.",
       "gridPos": {
         "x": 0,
-        "y": 53,
+        "y": 57,
         "w": 24,
         "h": 6
       },
@@ -2753,7 +2925,7 @@
         "cellHeight": "sm",
         "sortBy": []
       },
-      "id": 27
+      "id": 28
     }
   ],
   "templating": {

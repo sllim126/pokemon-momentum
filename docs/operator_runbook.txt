@@ -166,7 +166,8 @@ Adding another machine (it appears in Home lab: Servers, "Other machines"):
 In it since 2026-11-05: the Proxmox Backup Server (192.168.1.72, which already ran
 node-exporter; labelled `group: proxmox`, so it shows in its own row on Home lab: Proxmox
 cluster rather than under "Other machines") and the OpenMediaVault storage server (192.168.1.155; the same server also
-answers on .9 and .229). Home lab web services are checked by the blackbox exporter (`probe: homelab`
+answers on .9 and .229; its ZFS pool "zfs" is in the "ZFS pools (RAID health)" table from
+node-exporter's node_zfs_zpool_state: Online is fine, Degraded means a disk is out). Home lab web services are checked by the blackbox exporter (`probe: homelab`
 in `prometheus_momentum.yml`, "Home lab services" table): Plex at 192.168.1.219:32400/identity.
 
 Synology NAS (since 2026-11-06; "Synology NAS" table on Home lab: Servers):

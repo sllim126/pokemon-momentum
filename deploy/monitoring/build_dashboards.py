@@ -474,7 +474,8 @@ def servers():
     p[-2]["transformations"][1]["options"]["excludeByName"].pop("job")
     p[-2]["transformations"][1]["options"]["excludeByName"].pop("instance")
     p.extend(machines_row(43))
-    p.extend(nas_row(52, 'job="synology"', "Synology NAS (SNMP; deploy/monitoring/prometheus_momentum.yml, job synology)"))
+    p.append(zfs_pools_table(g(0, 52, 24, 4)))
+    p.extend(nas_row(56, 'job="synology"', "Synology NAS (SNMP; deploy/monitoring/prometheus_momentum.yml, job synology)"))
     return dashboard("momentum-servers", "Home lab: Servers", p, tags=("servers",), family="homelab")
 
 
@@ -691,6 +692,39 @@ def machines_row(y):
                           "deploy/monitoring/prometheus_momentum.yml). Plex: its /identity page.",
               overrides=[col("Value #A", mappings=UP_DOWN), col("Value #B", unit="s", decimals=2)]),
     ]
+
+
+# ZFS pool health (node-exporter's zfs collector, 1.5+): node_zfs_zpool_state is 1 for the
+# pool's current state (label state) and 0 for the others.
+ZPOOL_STATE_MAP = [{
+    "type": "value",
+    "options": {"online": {"text": "Online", "color": "green", "index": 0},
+                "degraded": {"text": "Degraded (a disk is missing or failed)", "color": "red", "index": 1},
+                "faulted": {"text": "Faulted", "color": "red", "index": 2},
+                "offline": {"text": "Offline", "color": "red", "index": 3},
+                "removed": {"text": "Removed", "color": "red", "index": 4},
+                "unavail": {"text": "Unavailable", "color": "red", "index": 5},
+                "suspended": {"text": "Suspended", "color": "red", "index": 6}},
+}]
+
+
+def zfs_pools_table(pos):
+    """ZFS pools on the machines in nodes.yml (the OpenMediaVault server's pool "zfs").
+    Free space comes from the pool's datasets, which all share the pool's free space; the
+    pool name is the part of the dataset name before the first "/"."""
+    m = 'job="machines"'
+    free = ('max by (machine, zpool) (label_replace(node_filesystem_avail_bytes{%s,fstype="zfs"}, '
+            '"zpool", "$1", "device", "([^/]+).*"))' % m)
+    return table("ZFS pools (RAID health)",
+                 [target(f"max by (machine, zpool, state) (node_zfs_zpool_state{{{m}}} == 1)",
+                         ref="A", instant=True, table=True),
+                  target(free, ref="B", instant=True, table=True)],
+                 pos,
+                 {"machine": "Machine", "zpool": "Pool", "state": "State", "Value #B": "Free"},
+                 description="Degraded means the pool is running without one of its disks: replace it "
+                             "soon. A scrub or resilver doesn't change the state. Per-disk errors: "
+                             "`zpool status` on the server.",
+                 overrides=[col("state", mappings=ZPOOL_STATE_MAP), col("Value #B", unit="bytes")])
 
 
 def nas_table(title, sel, pos, description=""):
