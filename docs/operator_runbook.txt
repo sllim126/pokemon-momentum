@@ -155,8 +155,7 @@ Adding another machine (it appears in Home lab: Servers, "Other machines"):
    - Windows: the windows_exporter installer (.msi) from
      github.com/prometheus-community/windows_exporter/releases (port 9182). Allow inbound
      9182 from 192.168.1.240 in Windows Defender Firewall.
-   - Synology: Container Manager, image `prom/node-exporter`, network "host", with the
-     whole disk mounted read-only at /host and the argument `--path.rootfs=/host` (port 9100).
+   - Synology: use SNMP instead (see "Synology NAS" below); nothing to install on the NAS.
    Check from this server: `curl -s http://<ip>:9100/metrics | head` (9182 for Windows).
 2. Add it to `deploy/monitoring/nodes.yml`, for example
    `- targets: ["192.168.1.30:9100"]` and `labels: {machine: caddy-host, os: linux, role: web}`
@@ -165,8 +164,25 @@ Adding another machine (it appears in Home lab: Servers, "Other machines"):
    (or rerun install.sh). Prometheus picks it up within two minutes; no restart.
 
 In it since 2026-11-05: the Proxmox Backup Server (192.168.1.72, which already ran
-node-exporter). Home lab web services are checked by the blackbox exporter (`probe: homelab`
+node-exporter) and the OpenMediaVault storage server (192.168.1.155; the same server also
+answers on .9 and .229). Home lab web services are checked by the blackbox exporter (`probe: homelab`
 in `prometheus_momentum.yml`, "Home lab services" table): Plex at 192.168.1.219:32400/identity.
+
+Synology NAS (since 2026-11-06; "Synology NAS" table on Home lab: Servers):
+
+- Read over SNMP by the snmp-exporter container (127.0.0.1:9116, `docker-compose.yml`), using
+  the image's built-in "synology" module: system status, volumes and RAID, every disk's status,
+  health and temperature, fans, DSM version and updates, CPU, memory, uptime.
+- On the NAS: DSM > Control Panel > Terminal & SNMP > SNMP: enable SNMP, SNMPv1/v2c, and a
+  community word (not "public"). On this server the same word sits in
+  `/etc/momentum-monitoring/snmp-auth.yml` (mode 600, owner adam; the container runs as adam):
+  `auths: {synology: {community: <word>, version: 2}}`. It is never in the repository.
+- Add a NAS: a target with a `nas` label under job `synology` in `prometheus_momentum.yml`, then
+  `sudo install -m 644 deploy/monitoring/prometheus_momentum.yml /etc/prometheus/momentum_scrape.yml`
+  and `sudo systemctl reload prometheus`. Laomedeia (DS920+, 192.168.1.119) is in it. Other
+  units the owner tracks elsewhere are scraped from a private file listed under
+  `scrape_config_files` in prometheus.yml; leave that line in place.
+- Check: `curl -s "http://127.0.0.1:9116/snmp?target=<ip>&auth=synology&module=system" | grep sysName`.
 
 The old training-server targets (10.0.4.45, 172.26.10.4) were removed 2026-11-05: offline or
 no longer used. Backups of prometheus.yml from each change are next to it (`.bak-<time>`). If a job is missing from "Did the jobs run?" although it ran, check node-exporter's log (the

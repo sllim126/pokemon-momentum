@@ -43,6 +43,9 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-06 More home lab machines in Grafana (Home lab: Servers): Proxmox Backup Server and
+  the OpenMediaVault storage server (node-exporter), Plex (web check of its /identity page),
+  and the Synology NAS Laomedeia over SNMP (snmp-exporter container, "Synology NAS" table).
 - 2026-11-05: Budget Builder picks rotate day to day (owner: "just for fun"). Prices move
   little overnight, so the same cards won several days running. Cards shown by default on the
   last three price dates lose 25 / 15 / 8 points (`BUDGET_ROTATION_PENALTIES` in api.py; history
@@ -91,6 +94,9 @@ High Priority
 Monitoring with Grafana (owner, 2026-11-05): "show me everything, then we scale it down".
 Dashboards on http://192.168.1.240:3000 in folders "Pokemon Momentum" and "Home lab";
 runbook section "Monitoring".
+- [idea] OpenMediaVault RAID: node-exporter's md collector (node_md_*) could show array state
+  and failed disks next to the Synology table. Also: OMV ran at 88% CPU and 83% memory on
+  2026-11-06 (worth a look); Plex streams and libraries would need a Plex token (owner's call).
 - [idea] Grafana loads the dashboards straight from this working checkout, so switching the
   checkout to a branch without `deploy/monitoring/grafana/homelab/` (anything older than
   2026-11-05) makes the Home lab dashboards vanish until switched back. Consider having

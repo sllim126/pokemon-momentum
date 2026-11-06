@@ -474,6 +474,7 @@ def servers():
     p[-2]["transformations"][1]["options"]["excludeByName"].pop("job")
     p[-2]["transformations"][1]["options"]["excludeByName"].pop("instance")
     p.extend(machines_row(43))
+    p.extend(nas_row(52, 'job="synology"', "Synology NAS (SNMP; deploy/monitoring/prometheus_momentum.yml, job synology)"))
     return dashboard("momentum-servers", "Home lab: Servers", p, tags=("servers",), family="homelab")
 
 
@@ -677,6 +678,57 @@ def machines_row(y):
                           "deploy/monitoring/prometheus_momentum.yml). Plex: its /identity page.",
               overrides=[col("Value #A", mappings=UP_DOWN), col("Value #B", unit="s", decimals=2)]),
     ]
+
+
+def nas_table(title, sel, pos, description=""):
+    """One row per Synology NAS (label nas), from the snmp-exporter's synology module.
+    Status codes (Synology MIB): systemStatus 1 normal / 2 failed; raidStatus 1 normal,
+    11 degraded, 12 crashed, others are busy states (sync, scrub, expand); diskStatus 1 normal;
+    diskHealthStatus 1 normal; upgradeAvailable 1 available / 2 up to date. A copy of this
+    lives in the owner's private ISI dashboards (same metrics, other NAS units)."""
+    # Every column carries the same labels (nas, model, DSM version) so the table merges into
+    # one row per NAS.
+    info = (f"(max by (nas, modelName) (modelName{{{sel}}}) * on (nas) group_left (version) "
+            f"max by (nas, version) (version{{{sel}}}))")
+    lab = lambda e: f"({e}) * on (nas) group_left (modelName, version) {info}"
+    zero = f"max by (nas) (systemStatus{{{sel}}}) * 0"
+    disks_bad = (f"count by (nas) ((max by (nas, diskID) (diskStatus{{{sel}}} != bool 1) + "
+                 f"max by (nas, diskID) (diskHealthStatus{{{sel}}} != bool 1)) > 0)")
+    cols = [
+        ("A", f"max by (nas) (systemStatus{{{sel}}})"),
+        ("B", f"max by (nas) (100 * (1 - raidFreeSize{{{sel}}} / raidTotalSize{{{sel}}}))"),
+        ("C", f"count by (nas) (raidStatus{{{sel}}} != 1) or {zero}"),
+        ("D", f"({disks_bad}) or {zero}"),
+        ("E", f"max by (nas) (temperature{{{sel}}})"),
+        ("F", f"max by (nas) (diskTemperature{{{sel}}})"),
+        ("G", f"max by (nas) (upgradeAvailable{{{sel}}})"),
+        ("H", f"max by (nas) (100 - ssCpuIdle{{{sel}}})"),
+        ("I", f"max by (nas) (100 * (1 - (memAvailReal{{{sel}}} + memBuffer{{{sel}}} + memCached{{{sel}}}) / memTotalReal{{{sel}}}))"),
+        ("J", f"max by (nas) (hrSystemUptime{{{sel}}}) / 100"),  # system uptime (sysUpTime restarts with SNMP)
+    ]
+    return table(title, [target(lab(e), ref=r, instant=True, table=True) for r, e in cols], pos,
+                 {"nas": "NAS", "modelName": "Model", "version": "DSM", "Value #A": "System",
+                  "Value #B": "Fullest volume", "Value #C": "Volumes not normal", "Value #D": "Disks not normal",
+                  "Value #E": "System temp", "Value #F": "Hottest disk", "Value #G": "DSM update",
+                  "Value #H": "CPU", "Value #I": "Memory", "Value #J": "Up for"},
+                 description=description,
+                 overrides=[col("Value #A", mappings=value_map({1: ("Normal", "green"), 2: ("FAILED", "red")})),
+                            col("Value #B", unit="percent", decimals=0, thresholds=steps("text", (80, "orange"), (90, "red"))),
+                            col("Value #C", decimals=0, thresholds=steps("green", (1, "red"))),
+                            col("Value #D", decimals=0, thresholds=steps("green", (1, "red"))),
+                            col("Value #E", unit="celsius", decimals=0, thresholds=steps("text", (60, "orange"), (70, "red"))),
+                            col("Value #F", unit="celsius", decimals=0, thresholds=steps("text", (50, "orange"), (60, "red"))),
+                            col("Value #G", mappings=value_map({1: ("Available", "orange"), 2: ("Up to date", "green")})),
+                            col("Value #H", unit="percent", decimals=0, thresholds=steps("text", (80, "orange"), (95, "red"))),
+                            col("Value #I", unit="percent", decimals=0, thresholds=steps("text", (85, "orange"), (95, "red"))),
+                            col("Value #J", unit="dtdurations", decimals=0)])
+
+
+def nas_row(y, sel, title):
+    return [row(title, y),
+            nas_table("Synology NAS", sel, g(0, y + 1, 24, 6),
+                      description="Volumes not normal: degraded, crashed, or busy (sync, scrub, expand). "
+                                  "Disks not normal: status or health other than normal. Update: DSM update waiting.")]
 
 
 def network_row(y):

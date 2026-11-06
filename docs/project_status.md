@@ -26,7 +26,8 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   website, jobs, data downloads, server, containers, todo list and bug reports; Prometheus
   collects it. Also the Proxmox cluster, the UniFi network, and visitors per day for each site
   (counted by the apps themselves, no cookies). The Proxmox, network and server dashboards
-  sit in a separate "Home lab" folder. Runbook section "Monitoring"; files in
+  sit in a separate "Home lab" folder, which also covers the backup server,
+  the OpenMediaVault storage server, Plex and a Synology NAS (SNMP). Runbook section "Monitoring"; files in
   `deploy/monitoring/`, `scripts/monitoring/`
 - Alerts: nightly update, Squarespace price sync, the other-games archive, the archive
   backfill and the catalogue crawl post summaries to Discord
