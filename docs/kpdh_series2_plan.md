@@ -23,9 +23,13 @@ its unrelated dashboard and operations commits.
   The published crops retain the sealed sleeves; the archival PDFs remain ignored under
   `data/kpdh_scan_intake/`. Detail views can switch between each card's front and back.
   Deployed 2026-11-06; every front and back was verified through the public `/kpdh/` route.
-  Later that day, each side was independently rotated and cropped to the physical 5:7 or
-  7:5 card ratio; this fixed the notably tilted PR1-02 Mira scans without altering artwork.
-- Verification: the full test suite passed (241 tests and 33 subtests); the local and public
+  Later that day, all eight fronts and backs were independently straightened to the physical
+  5:7 or 7:5 card ratio. Live review then found that rotation-only crops could still hide a
+  sleeve edge; PR1-01 through PR1-03 and convention promos PR-01/PR-02 now use measured
+  four-corner perspective correction with a narrow, even outer margin. This fixed Mira's
+  notably tilted PR1-02 scans and the convention promos' off-center backs without altering
+  the card artwork.
+- Verification: the full test suite passed (266 tests and 33 subtests); the local and public
   planner, catalog, representative Series 1/2 assets, redirects, noindex/security headers,
   root market page and container logs were checked after deployment.
 - Rollback: the prior local Docker image is tagged
@@ -35,10 +39,11 @@ its unrelated dashboard and operations commits.
   the 2026-10-29 lime evidence markers is tagged
   `kpdh-binder-planner:rollback-20261029-pre-evidence-markers`. The image immediately before
   the physical promo scans is tagged `kpdh-binder-planner:rollback-20261106-pre-promo-scans`;
-  PR1 scans use measured four-corner perspective correction rather than a centered rotation
-  crop, keeping all sleeve edges visible and centered despite uneven placement on the sheet;
   the first unstraightened promo deployment is tagged
-  `kpdh-binder-planner:rollback-20261106-pre-square-scans`.
+  `kpdh-binder-planner:rollback-20261106-pre-square-scans`; the image before perspective
+  correction is tagged `kpdh-binder-planner:rollback-20261106-pre-centered-pr1`; and the
+  PR1-corrected image before the convention promos were corrected is tagged
+  `kpdh-binder-planner:rollback-20261106-pr1-centered`.
 
 ## Confirmed release information
 
