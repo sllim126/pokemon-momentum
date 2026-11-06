@@ -395,6 +395,17 @@ def test_shipping_an_order_emails_tracking(app_client, shop, fake):
     assert order["status"] == "shipped"
     shipped = [p.read_text() for p in shop.outbox_dir.glob("*.eml") if "has shipped" in p.read_text()]
     assert len(shipped) == 1 and "9400111899223817461234" in shipped[0]
+    # The designed (HTML) version: logo attached to the email, tracking button to USPS.
+    from email import policy
+    from email.parser import BytesParser
+    path = next(p for p in shop.outbox_dir.glob("*.eml") if "has shipped" in p.read_text())
+    message = BytesParser(policy=policy.default).parsebytes(path.read_bytes())
+    html = message.get_body(("html",)).get_content()
+    assert "Your order is on its way" in html and "TEST ORDER" in html
+    assert "https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899223817461234" in html
+    logo = [part for part in message.walk() if part.get_content_type() == "image/png"]
+    assert len(logo) == 1 and f'cid:{logo[0]["Content-ID"].strip("<>")}' in html
+    assert "9400111899223817461234" in message.get_body(("plain",)).get_content()
 
 
 # --- switches -----------------------------------------------------------------------------

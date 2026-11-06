@@ -43,6 +43,9 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-06 Storefront order emails redesigned (owner): HTML version with the logo, order
+  table, totals, "Track package" button (USPS/UPS/FedEx/DHL) and "View your order" button; the
+  plain-text version stays for mail apps that don't show HTML.
 - 2026-11-06 Storefront Phase 2 checked by the owner on :8010 from computers, iPad and phone:
   Utah order taxed by Stripe Tax ($18.68 on $250.80), Arizona order untaxed, shipped email works.
 - 2026-11-05 Storefront sales tax (D2, owner): Stripe Tax adds Utah sales tax on top at
