@@ -79,6 +79,10 @@ ROTATIONS = {
 # rotation followed by a center crop, these measurements correct perspective and
 # retain every sleeve edge even when a card was not centered in its original box.
 QUADS = {
+    ("scan0325", "kpdh01-pr-01"): (675, 555, 675, 2600, 2080, 2590, 2075, 550),
+    ("scan0325", "kpdh01-pr-02"): (2490, 280, 2485, 2510, 4070, 2495, 4050, 270),
+    ("scan0326", "kpdh01-pr-01"): (700, 255, 700, 2310, 2155, 2300, 2150, 250),
+    ("scan0326", "kpdh01-pr-02"): (2650, 180, 2650, 2370, 4210, 2380, 4200, 185),
     ("scan0329", "kpdh01-pr1-01"): (2920, 270, 2910, 2470, 4500, 2510, 4510, 300),
     ("scan0329", "kpdh01-pr1-02"): (800, 2140, 900, 4500, 2580, 4380, 2490, 2080),
     ("scan0329", "kpdh01-pr1-03"): (2780, 3480, 2770, 5750, 4430, 5780, 4430, 3500),

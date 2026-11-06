@@ -47,6 +47,9 @@ Recently Completed
   four-corner perspective correction for all six PR1 front/back assets. Every sleeve edge
   now remains visible with an even scanner-bed margin; Rumi's back and both Mira sides were
   individually reviewed against the owner's screenshots.
+- 2026-11-06 KPDH convention promo centering: extended four-corner perspective correction
+  to both sides of PR-01 and PR-02 after live review found excess whitespace and clipped
+  sleeve edges in the older center crops.
 
 - 2026-11-06 KPDH promo scan alignment: independently straightened all eight fronts and
   eight backs, standardized crops to the physical portrait/landscape ratios, and corrected
