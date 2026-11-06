@@ -23,6 +23,8 @@ its unrelated dashboard and operations commits.
   The published crops retain the sealed sleeves; the archival PDFs remain ignored under
   `data/kpdh_scan_intake/`. Detail views can switch between each card's front and back.
   Deployed 2026-11-06; every front and back was verified through the public `/kpdh/` route.
+  Later that day, each side was independently rotated and cropped to the physical 5:7 or
+  7:5 card ratio; this fixed the notably tilted PR1-02 Mira scans without altering artwork.
 - Verification: the full test suite passed (241 tests and 33 subtests); the local and public
   planner, catalog, representative Series 1/2 assets, redirects, noindex/security headers,
   root market page and container logs were checked after deployment.

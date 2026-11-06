@@ -6,6 +6,8 @@ import hashlib
 import json
 from pathlib import Path
 
+from PIL import Image
+
 
 ROOT = Path(__file__).resolve().parents[1]
 BINDER = ROOT / "kpdh-binder"
@@ -176,3 +178,16 @@ def test_kpdh_promos_match_physical_cards_and_preserve_old_collections():
     dockerignore = (BINDER / ".dockerignore").read_text(encoding="utf-8")
     assert "!cards/backs/promo/*.jpg" in dockerignore
     assert "!cards/thumbs/backs/promo/*.webp" in dockerignore
+
+
+def test_kpdh_promo_crops_are_squared_to_physical_card_ratios():
+    for folder in ("promo", "backs/promo"):
+        for image_path in (BINDER / "cards" / folder).glob("*.jpg"):
+            with Image.open(image_path) as image:
+                expected_ratio = 7 / 5 if "-pr2-" in image_path.name else 5 / 7
+                assert abs(image.width / image.height - expected_ratio) < 0.001
+
+    builder = (BINDER / "scripts" / "build_promo_scans.py").read_text(encoding="utf-8")
+    assert '("scan0329", "kpdh01-pr1-02"): -3.3' in builder
+    assert '("scan0330", "kpdh01-pr1-02"): 2.0' in builder
+    assert "def squared_crop(" in builder
