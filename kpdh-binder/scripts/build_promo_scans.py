@@ -36,9 +36,9 @@ SHEETS = {
         ("kpdh01-pr2-02", (1580, 3880, 3760, 5540)),
     ),
     "scan0328": (
-        ("kpdh01-pr2-01", (1510, 260, 3630, 1810)),
-        ("kpdh01-pr2-03", (1510, 2020, 3670, 3650)),
-        ("kpdh01-pr2-02", (1580, 3880, 3760, 5540)),
+        ("kpdh01-pr2-01", (1250, 200, 3700, 1980)),
+        ("kpdh01-pr2-03", (1250, 2020, 3700, 3800)),
+        ("kpdh01-pr2-02", (1250, 3860, 3700, 5620)),
     ),
     "scan0329": (
         ("kpdh01-pr1-01", (2930, 340, 4500, 2500)),
@@ -50,6 +50,28 @@ SHEETS = {
         ("kpdh01-pr1-02", (850, 2200, 2510, 4500)),
         ("kpdh01-pr1-03", (2790, 3660, 4430, 5750)),
     ),
+}
+
+# Pillow rotates positive angles counter-clockwise. Each value was measured from the
+# corresponding sleeve/card edges after the first public crop review; fronts and backs
+# are intentionally independent because the cards were repositioned when flipped.
+ROTATIONS = {
+    ("scan0325", "kpdh01-pr-01"): -0.5,
+    ("scan0325", "kpdh01-pr-02"): 0.0,
+    ("scan0326", "kpdh01-pr-01"): 0.0,
+    ("scan0326", "kpdh01-pr-02"): 0.3,
+    ("scan0327", "kpdh01-pr2-01"): -1.7,
+    ("scan0327", "kpdh01-pr2-03"): -2.3,
+    ("scan0327", "kpdh01-pr2-02"): -1.5,
+    ("scan0328", "kpdh01-pr2-01"): -3.9,
+    ("scan0328", "kpdh01-pr2-03"): -1.8,
+    ("scan0328", "kpdh01-pr2-02"): -1.0,
+    ("scan0329", "kpdh01-pr1-01"): 0.0,
+    ("scan0329", "kpdh01-pr1-02"): -3.3,
+    ("scan0329", "kpdh01-pr1-03"): 0.5,
+    ("scan0330", "kpdh01-pr1-01"): 0.0,
+    ("scan0330", "kpdh01-pr1-02"): 2.0,
+    ("scan0330", "kpdh01-pr1-03"): 0.0,
 }
 
 
@@ -78,9 +100,40 @@ def source_image(intake: Path, stem: str, temporary: Path) -> Path:
     return destination
 
 
-def save_card(source: Image.Image, box: tuple[int, int, int, int], full: Path, thumb: Path) -> None:
+def squared_crop(crop: Image.Image, angle: float) -> Image.Image:
+    """Rotate one scan and return a centered standard-ratio crop without fill corners."""
+    width, height = crop.size
+    landscape = width > height
+    rotated = crop.rotate(angle, resample=Image.Resampling.BICUBIC, expand=True)
+
+    # A small rotation leaves triangular fill areas around the expanded image. The
+    # conservative safe rectangle below stays inside the original pixels, then the
+    # second step gives every result the physical card's 7:5 or 5:7 aspect ratio.
+    from math import cos, radians, sin
+
+    theta = abs(radians(angle))
+    safe_width = max(1, round(width * cos(theta) - height * sin(theta)))
+    safe_height = max(1, round(height * cos(theta) - width * sin(theta)))
+    target_ratio = 7 / 5 if landscape else 5 / 7
+    if safe_width / safe_height > target_ratio:
+        safe_width = round(safe_height * target_ratio)
+    else:
+        safe_height = round(safe_width / target_ratio)
+    left = (rotated.width - safe_width) // 2
+    top = (rotated.height - safe_height) // 2
+    return rotated.crop((left, top, left + safe_width, top + safe_height))
+
+
+def save_card(
+    source: Image.Image,
+    box: tuple[int, int, int, int],
+    angle: float,
+    full: Path,
+    thumb: Path,
+) -> None:
     """Crop one reviewed card and save its full and thumbnail publishing assets."""
     crop = ImageOps.exif_transpose(source).crop(box).convert("RGB")
+    crop = squared_crop(crop, angle)
     full.parent.mkdir(parents=True, exist_ok=True)
     thumb.parent.mkdir(parents=True, exist_ok=True)
     crop.save(full, "JPEG", quality=92, optimize=True, progressive=True, dpi=(600, 600))
@@ -99,6 +152,7 @@ def build(intake: Path, temporary: Path) -> None:
                 save_card(
                     sheet,
                     box,
+                    ROTATIONS[(stem, code)],
                     ROOT / "cards" / folder / f"{code}.jpg",
                     ROOT / "cards" / "thumbs" / folder / f"{code}.webp",
                 )
