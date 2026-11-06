@@ -117,6 +117,12 @@ anything else keeps checkout off), `STOREFRONT_DISCORD_WEBHOOK_URL` (order
 alerts; off when empty), `STOREFRONT_SMTP_HOST` / `_USER` / `_PASSWORD` (Microsoft 365, port
 587). Without SMTP, order emails are written to `data/storefront/outbox/*.eml`.
 
+Order emails (confirmation and shipped) have a plain-text part and a designed HTML part,
+`app/templates/email/order.html`: tables and inline styles only, because email apps ignore most
+CSS. The logo is attached to the email itself (`cid:`), so it shows before the site is public.
+The shipped email links USPS, UPS, FedEx and DHL numbers to the carrier's tracking page
+(`notify.TRACKING_URLS`; other carriers show the number without a button).
+
 **A test order.** Add something to the cart, Checkout, and pay on Stripe's page with card
 `4242 4242 4242 4242`, any future date, any CVC, any US address. Orders are numbered
 `P6T-2026-0001` in test mode (`P6-...` live).
@@ -149,7 +155,7 @@ stock by hand until the Phase 3 admin.
 | `app/main.py` | FastAPI app: routes, 404 + redirect handling, security headers, reconcile loop |
 | `app/orders.py` | Cart pricing, checkout, reservations, payment, expiry, refunds, disputes, shipping |
 | `app/stripe_api.py` | The Stripe calls (Checkout Sessions) over HTTPS; webhook signature check |
-| `app/notify.py` | Discord order alerts; order and shipping emails (SMTP or the outbox folder) |
+| `app/notify.py` | Discord order alerts; order and shipping emails (SMTP or the outbox folder; HTML in `templates/email/order.html`) |
 | `app/orders_cli.py` | `list`, `show`, `ship`, `reconcile` from the command line |
 | `app/catalog.py` | Read-only queries: filters, search, facets, product, sets, sitemap |
 | `app/importer.py` | Squarespace export + intake CSVs → database |
