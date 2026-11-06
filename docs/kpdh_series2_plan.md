@@ -22,6 +22,7 @@ its unrelated dashboard and operations commits.
   form to `-01`–`-03`, corrects PR2-02 from Rumi to Zoey, and migrates existing quantities.
   The published crops retain the sealed sleeves; the archival PDFs remain ignored under
   `data/kpdh_scan_intake/`. Detail views can switch between each card's front and back.
+  Deployed 2026-11-06; every front and back was verified through the public `/kpdh/` route.
 - Verification: the full test suite passed (241 tests and 33 subtests); the local and public
   planner, catalog, representative Series 1/2 assets, redirects, noindex/security headers,
   root market page and container logs were checked after deployment.
@@ -30,7 +31,8 @@ its unrelated dashboard and operations commits.
   2026-10-28 CR renumbering is tagged
   `kpdh-binder-planner:rollback-20261028-pre-cr-renumber`; the image immediately before
   the 2026-10-29 lime evidence markers is tagged
-  `kpdh-binder-planner:rollback-20261029-pre-evidence-markers`.
+  `kpdh-binder-planner:rollback-20261029-pre-evidence-markers`. The image immediately before
+  the physical promo scans is tagged `kpdh-binder-planner:rollback-20261106-pre-promo-scans`.
 
 ## Confirmed release information
 

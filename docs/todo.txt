@@ -48,7 +48,7 @@ Recently Completed
   migration, optimized individual assets, reproducible crops and a front/back detail toggle.
   Raw PDFs remain ignored under `data/kpdh_scan_intake/`. Branch:
   `feature/kpdh-promo-scans`; review passed with 266 tests and 33 subtests; merged locally
-  after owner approval. Deployment remains separate.
+  after owner approval. Deployed 2026-11-06; all eight fronts and backs verified publicly.
 - 2026-11-06 Storefront order emails redesigned (owner): HTML version with the logo, order
   table, totals, "Track package" button (USPS/UPS/FedEx/DHL) and "View your order" button; the
   plain-text version stays for mail apps that don't show HTML.
@@ -104,9 +104,6 @@ High Priority
   with `Illegal instruction` on this server during import. The established project image
   remains compatible and passed all 266 tests and 33 subtests; this does not affect the
   separately built static KPDH nginx container.
-- [next] Deploy the merged KPDH promo update: export the live browser collection first,
-  rebuild the KPDH container on port 8091, then verify all eight promo fronts/backs and
-  that a catalog-v4 export retains promo quantities under catalog v5.
 
 Monitoring with Grafana (owner, 2026-11-05): "show me everything, then we scale it down".
 Dashboards on http://192.168.1.240:3000 in folders "Pokemon Momentum" and "Home lab";
