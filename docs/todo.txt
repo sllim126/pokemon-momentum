@@ -43,6 +43,8 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-06 Storefront Phase 2 checked by the owner on :8010 from computers, iPad and phone:
+  Utah order taxed by Stripe Tax ($18.68 on $250.80), Arizona order untaxed, shipped email works.
 - 2026-11-05 Storefront sales tax (D2, owner): Stripe Tax adds Utah sales tax on top at
   checkout; Utah registered in the Stripe sandbox and checked (South Jordan rate 7.45% on any
   Utah address, $0 out of state). A free fixed-rate version was tried; Stripe no longer allows
@@ -177,9 +179,11 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   clone (`~/poke6s-store`, updated by `deploy/update_storefront.sh`). Tested with a fake Stripe
   and the owner's Stripe sandbox (one paid test order). Sales tax (D2): Stripe Tax, Utah
   registered in the sandbox. Live keys are refused unless STOREFRONT_ALLOW_LIVE=1. Left:
-  - [next] Owner: one test order on :8010 to a Utah address (tax should show), one to another
-    state (no tax), a back-out and a declined card (4000 0000 0000 0002); then
-    `orders_cli ship` one to see the shipped email.
+  - Owner tests on :8010 passed 2026-11-06 (computers, iPad, phone): Arizona order paid with no
+    tax; Utah order paid with $18.68 tax on $250.80 (7.45%); both marked shipped and the shipped
+    email was received (sent by hand from admin@poke6s.com, SMTP not set up yet).
+  - [planned] `orders_cli ship` says "email sent" even when it only went to the outbox; say
+    which. Its order-status link uses STOREFRONT_BASE_URL (localhost until launch).
   - [planned] STRIPE_WEBHOOK_SECRET: needs a public address Stripe can reach (Cloudflare
     Tunnel, paused by the owner) or the Stripe CLI. Until then the thanks page and the 15-minute
     reconcile job confirm payments.
