@@ -45,7 +45,10 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   Articles (the old Squarespace blog) at `/articles`. Guide: `storefront/README.md`
 - Collector resources: generated placeholder libraries, checklists, print pages, review queues, and downloads
 - Standalone binder planners: ATLA and KPDH are served by separate read-only nginx
-  containers at `/atla/` and `/kpdh/`; collection state stays in each visitor's browser
+  containers at `/atla/` and `/kpdh/`; collection state stays in each visitor's browser.
+  KPDH includes owner-scanned fronts and backs for all eight known Series 1 promos; the
+  portrait promo scans use measured perspective correction so complete card/sleeve edges
+  remain visible in the detail viewer.
 
 At the 2026-10-12 review, the health snapshot reported 39,285,648 English and 13,660,254
 Japanese price rows, both with latest data dated 2026-10-11. The daily pipeline,

@@ -74,6 +74,23 @@ ROTATIONS = {
     ("scan0330", "kpdh01-pr1-03"): 0.0,
 }
 
+# Four outer sleeve corners in full-sheet coordinates, ordered upper-left,
+# lower-left, lower-right, upper-right for Pillow's QUAD transform. Unlike a
+# rotation followed by a center crop, these measurements correct perspective and
+# retain every sleeve edge even when a card was not centered in its original box.
+QUADS = {
+    ("scan0325", "kpdh01-pr-01"): (675, 555, 675, 2600, 2080, 2590, 2075, 550),
+    ("scan0325", "kpdh01-pr-02"): (2490, 280, 2485, 2510, 4070, 2495, 4050, 270),
+    ("scan0326", "kpdh01-pr-01"): (700, 255, 700, 2310, 2155, 2300, 2150, 250),
+    ("scan0326", "kpdh01-pr-02"): (2650, 180, 2650, 2370, 4210, 2380, 4200, 185),
+    ("scan0329", "kpdh01-pr1-01"): (2920, 270, 2910, 2470, 4500, 2510, 4510, 300),
+    ("scan0329", "kpdh01-pr1-02"): (800, 2140, 900, 4500, 2580, 4380, 2490, 2080),
+    ("scan0329", "kpdh01-pr1-03"): (2780, 3480, 2770, 5750, 4430, 5780, 4430, 3500),
+    ("scan0330", "kpdh01-pr1-01"): (2750, 400, 2750, 2590, 4380, 2630, 4400, 430),
+    ("scan0330", "kpdh01-pr1-02"): (760, 2010, 700, 4310, 2400, 4390, 2440, 2070),
+    ("scan0330", "kpdh01-pr1-03"): (2600, 3650, 2600, 5850, 4310, 5850, 4300, 3650),
+}
+
 
 def extract_embedded_jpeg(pdf: Path) -> bytes:
     """Return the single full-page JPEG stream embedded in a scanner PDF."""
@@ -124,16 +141,42 @@ def squared_crop(crop: Image.Image, angle: float) -> Image.Image:
     return rotated.crop((left, top, left + safe_width, top + safe_height))
 
 
+def perspective_crop(source: Image.Image, quad: tuple[int, ...]) -> Image.Image:
+    """Square one sleeve from its four corners and retain a uniform outer margin."""
+    points = [(quad[index], quad[index + 1]) for index in range(0, 8, 2)]
+    center_x = sum(point[0] for point in points) / 4
+    center_y = sum(point[1] for point in points) / 4
+
+    # Expanding the measured sleeve quadrilateral by 3% keeps a narrow strip of
+    # scanner bed around all four sides. That makes the sleeve boundary visible
+    # in the detail modal instead of letting it disappear against the image edge.
+    expanded = tuple(
+        coordinate
+        for x, y in points
+        for coordinate in (
+            round(center_x + (x - center_x) * 1.03),
+            round(center_y + (y - center_y) * 1.03),
+        )
+    )
+    return source.transform(
+        (1500, 2100),
+        Image.Transform.QUAD,
+        expanded,
+        resample=Image.Resampling.BICUBIC,
+    )
+
+
 def save_card(
     source: Image.Image,
     box: tuple[int, int, int, int],
     angle: float,
+    quad: tuple[int, ...] | None,
     full: Path,
     thumb: Path,
 ) -> None:
     """Crop one reviewed card and save its full and thumbnail publishing assets."""
-    crop = ImageOps.exif_transpose(source).crop(box).convert("RGB")
-    crop = squared_crop(crop, angle)
+    source = ImageOps.exif_transpose(source).convert("RGB")
+    crop = perspective_crop(source, quad) if quad else squared_crop(source.crop(box), angle)
     full.parent.mkdir(parents=True, exist_ok=True)
     thumb.parent.mkdir(parents=True, exist_ok=True)
     crop.save(full, "JPEG", quality=92, optimize=True, progressive=True, dpi=(600, 600))
@@ -153,6 +196,7 @@ def build(intake: Path, temporary: Path) -> None:
                     sheet,
                     box,
                     ROTATIONS[(stem, code)],
+                    QUADS.get((stem, code)),
                     ROOT / "cards" / folder / f"{code}.jpg",
                     ROOT / "cards" / "thumbs" / folder / f"{code}.webp",
                 )
