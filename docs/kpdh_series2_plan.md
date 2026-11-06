@@ -1,6 +1,6 @@
 # KPDH Binder Planner: Series 2 Plan
 
-Last reviewed: 2026-11-05
+Last reviewed: 2026-11-06
 
 This document records the source policy, implementation and deployment checks used to add
 Kayou KPop Demon Hunters Energy Edition Series 2 and Classic Edition Series 2 to the
@@ -17,6 +17,11 @@ its unrelated dashboard and operations commits.
 - Compatibility: existing Series 1 IDs and the `kpdh-master-binder-v2` browser key are
   unchanged. Catalog v4 migrates the nine provisional Energy CR IDs from `CR-001`–`009`
   to the confirmed continuous range `CR-007`–`015` without losing quantities.
+- Promo evidence: all eight known Series 1 promos now have owner-supplied 600 DPI front and
+  back scans. Catalog v5 corrects their printed suffixes from the provisional three-digit
+  form to `-01`–`-03`, corrects PR2-02 from Rumi to Zoey, and migrates existing quantities.
+  The published crops retain the sealed sleeves; the archival PDFs remain ignored under
+  `data/kpdh_scan_intake/`. Detail views can switch between each card's front and back.
 - Verification: the full test suite passed (241 tests and 33 subtests); the local and public
   planner, catalog, representative Series 1/2 assets, redirects, noindex/security headers,
   root market page and container logs were checked after deployment.
@@ -110,8 +115,10 @@ counts and last verification date. This makes release information auditable with
 duplicating it on every card.
 
 Do not overwrite Series 1 records. Series 1 uses `KPDH01`, Mini Series 1 uses `KPDHM01`,
-and Series 2 uses `KPDH02`. The eight existing promo records remain a separate, explicitly
-`partially verified` group until official sources or physical evidence are recorded.
+and Series 2 uses `KPDH02`. The eight existing promo records remain a separate group. Their
+printed codes, character names, orientations and fronts/backs were physically verified from
+owner-owned cards on 2026-11-06. The reproducible crop map is in
+`kpdh-binder/scripts/build_promo_scans.py`; raw scanner PDFs stay outside Git under `data/`.
 
 Energy and Classic share some Series 2 cards. Confirm sharing by comparing printed code and
 official artwork; do not assume that matching rarity/index means the cards are identical.

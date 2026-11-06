@@ -90,7 +90,7 @@ def test_kpdh_series2_shared_cards_are_explicit_and_ui_is_collection_safe():
 
     html = (BINDER / "my_card_planner.html").read_text(encoding="utf-8")
     assert "cards/series2-catalog.js" in html
-    assert "catalogVersion:4" in html
+    assert "catalogVersion:5" in html
     assert "const KEY='kpdh-master-binder-v2'" in html
     assert "series2Shared=new Set(['UR','TR','QR','SSR','SR'])" in html
 
@@ -116,9 +116,9 @@ def test_kpdh_series2_evidence_note_and_v3_collection_migration_are_present():
     assert "evidence-badge" in html
     assert "Awaiting physical-card confirmation" in html
     assert "function migratedCounts(raw)" in html
-    assert "Number(raw?.catalogVersion)>=4" in html
+    assert "version<4" in html
     assert "index+7" in html
-    assert "catalogVersion:4" in html
+    assert "catalogVersion:5" in html
 
     builder = (BINDER / "scripts" / "build_series2_catalog.py").read_text(encoding="utf-8")
     assert '"number_starts": {"CR": 7}' in builder
@@ -139,3 +139,40 @@ def test_kpdh_docker_build_includes_series2_assets():
     nginx = (BINDER / "nginx" / "default.conf").read_text(encoding="utf-8")
     assert "location = /cards/series2-catalog.js" in nginx
     assert 'add_header Cache-Control "no-cache" always;' in nginx
+
+
+def test_kpdh_promos_match_physical_cards_and_preserve_old_collections():
+    html = (BINDER / "my_card_planner.html").read_text(encoding="utf-8")
+    expected = {
+        "KPDH01-PR1-01": "Rumi",
+        "KPDH01-PR1-02": "Mira",
+        "KPDH01-PR1-03": "Zoey",
+        "KPDH01-PR2-01": "Rumi",
+        "KPDH01-PR2-02": "Zoey",
+        "KPDH01-PR2-03": "HUNTR/X",
+        "KPDH01-PR-01": "Derpy & Sussie",
+        "KPDH01-PR-02": "Derpy",
+    }
+    for code, name in expected.items():
+        assert f"['{code}','{name}'" in html
+    assert "KPDH01-PR1-001','Rumi'" not in html
+    assert "hasBack:true" in html
+    assert "600 DPI scan (2026-11-06)" in html
+    assert "detailFace='front'" in html
+    assert "data-face=\"back\"" in html
+    assert "version<5" in html
+    assert "legacyPromo" in html
+
+    for code in expected:
+        filename = code.lower()
+        for relative in (
+            f"cards/promo/{filename}.jpg",
+            f"cards/backs/promo/{filename}.jpg",
+            f"cards/thumbs/promo/{filename}.webp",
+            f"cards/thumbs/backs/promo/{filename}.webp",
+        ):
+            assert (BINDER / relative).is_file(), relative
+
+    dockerignore = (BINDER / ".dockerignore").read_text(encoding="utf-8")
+    assert "!cards/backs/promo/*.jpg" in dockerignore
+    assert "!cards/thumbs/backs/promo/*.webp" in dockerignore

@@ -43,6 +43,11 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-06 KPDH promo physical-card update: all eight front/back 600 DPI scans received
+  and reviewed; corrected provisional promo IDs and PR2-02's name, added catalog-v5 quantity
+  migration, optimized individual assets, reproducible crops and a front/back detail toggle.
+  Raw PDFs remain ignored under `data/kpdh_scan_intake/`. Branch:
+  `feature/kpdh-promo-scans`; targeted tests pass; merge/deployment await owner approval.
 - 2026-11-06 Storefront order emails redesigned (owner): HTML version with the logo, order
   table, totals, "Track package" button (USPS/UPS/FedEx/DHL) and "View your order" button; the
   plain-text version stays for mail apps that don't show HTML.
@@ -92,6 +97,10 @@ Recently Completed
 
 High Priority
 -------------
+
+- [next] Review, merge and deploy `feature/kpdh-promo-scans`; export the live browser
+  collection first, rebuild the KPDH container on port 8091, then verify all eight promo
+  fronts/backs and that a catalog-v4 export retains promo quantities under catalog v5.
 
 Monitoring with Grafana (owner, 2026-11-05): "show me everything, then we scale it down".
 Dashboards on http://192.168.1.240:3000 in folders "Pokemon Momentum" and "Home lab";

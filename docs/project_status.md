@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-11-05
+Last reviewed: 2026-11-06
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -184,7 +184,9 @@ Added 2026-10:
   8091 and reached through the same Caddy proxy. Energy and Classic Series 2 are live;
   the planner preserves Series 1 collection IDs, offers premium-first or base-first binder
   order, uses the confirmed continuous Series 2 CR numbering, and outlines the nine
-  Energy CR cards in lime while physical-card confirmation is pending
+  Energy CR cards in lime while physical-card confirmation is pending. All eight known
+  Series 1 promos have physically verified two-digit codes and owner-supplied 600 DPI
+  front/back scans; catalog v5 migrates their former provisional IDs without losing counts
 - Confirmed and Consistent Movers show how many days each card has been in the list (sortable);
   Set values' top-hit card opens in the side pane; browser Back closes the full card page
 - Binder planners on phones (2026-10-21/22): cards near the top, sideways page strip with a
