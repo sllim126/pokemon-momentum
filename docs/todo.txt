@@ -47,6 +47,7 @@ Recently Completed
   eight backs, standardized crops to the physical portrait/landscape ratios, and corrected
   the PR2 back-sheet bounds so rotation does not clip the Kayou logo. Mira PR1-02 uses
   separate measured corrections for its front (3.3° clockwise) and back (2.0° counter-clockwise).
+  Deployed the same day; all 16 public assets verified, with Mira checked byte-for-byte.
 - 2026-11-06 KPDH promo physical-card update: all eight front/back 600 DPI scans received
   and reviewed; corrected provisional promo IDs and PR2-02's name, added catalog-v5 quantity
   migration, optimized individual assets, reproducible crops and a front/back detail toggle.
