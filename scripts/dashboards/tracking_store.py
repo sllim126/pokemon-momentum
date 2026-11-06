@@ -143,6 +143,21 @@ def ensure_tracking_schema() -> None:
                 card_key TEXT NOT NULL,
                 PRIMARY KEY (builder, category_id, price_date, card_key)
             );
+
+            -- Track record (pick_tracker.py): the top of each Discover list for a price
+            -- date, with the price it was picked at. Kept for good: the public track record
+            -- is only honest if old picks can't quietly disappear.
+            CREATE TABLE IF NOT EXISTS list_pick_history (
+                list_key TEXT NOT NULL,
+                category_id INTEGER NOT NULL,
+                price_date TEXT NOT NULL,
+                rank INTEGER NOT NULL,
+                product_id INTEGER NOT NULL,
+                sub_type_name TEXT NOT NULL,
+                entry_price REAL NOT NULL,
+                recorded_at TEXT NOT NULL,
+                PRIMARY KEY (list_key, category_id, price_date, product_id, sub_type_name)
+            );
             """
         )
         # One-time upgrade: sessions created before tokens were hashed are hashed in place,
@@ -771,7 +786,9 @@ def upsert_psa_certification(
 
 
 # How long Budget Builder pick history is kept. Rotation only looks back a few days.
-BUDGET_PICK_HISTORY_DAYS = 30
+# 400 days, not just the 3 the rotation needs: the Track record (pick_tracker.py) scores
+# these picks too, and a 30-day result needs at least 30 days of history.
+BUDGET_PICK_HISTORY_DAYS = 400
 
 
 def record_budget_picks(builder: str, category_id: int, price_date: str, card_keys: list[str]) -> None:
@@ -821,3 +838,86 @@ def recent_budget_picks(builder: str, category_id: int, before_date: str, days: 
         return {row["card_key"]: row["last_date"] for row in rows}
     finally:
         con.close()
+
+
+def recorded_pick_dates(category_id: int) -> set[str]:
+    """Price dates that already have Track record picks for a market."""
+    ensure_tracking_schema()
+    con = get_con()
+    try:
+        rows = con.execute(
+            "SELECT DISTINCT price_date FROM list_pick_history WHERE category_id = ?", [int(category_id)]
+        ).fetchall()
+        return {row["price_date"] for row in rows}
+    finally:
+        con.close()
+
+
+def record_list_picks(category_id: int, price_date: str, picks: list[dict]) -> int:
+    """Store one day's list picks: dicts with list_key, rank, product_id, sub_type_name, entry_price.
+
+    A card already stored for that list and date is left as it was (first record wins), so
+    recording twice in a day changes nothing. Returns the number of rows added.
+    """
+    if not picks or not price_date:
+        return 0
+    ensure_tracking_schema()
+    con = get_con()
+    try:
+        before = con.total_changes
+        con.executemany(
+            """
+            INSERT OR IGNORE INTO list_pick_history
+                (list_key, category_id, price_date, rank, product_id, sub_type_name, entry_price, recorded_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (p["list_key"], int(category_id), str(price_date), int(p["rank"]), int(p["product_id"]),
+                 str(p["sub_type_name"]), float(p["entry_price"]), utc_now_iso())
+                for p in picks
+            ],
+        )
+        con.commit()
+        return con.total_changes - before
+    finally:
+        con.close()
+
+
+def load_list_picks(category_id: int, since_date: str | None = None) -> list[dict]:
+    """Every stored list pick for a market (optionally from `since_date` on), oldest first."""
+    ensure_tracking_schema()
+    con = get_con()
+    try:
+        rows = con.execute(
+            """
+            SELECT list_key, price_date, rank, product_id, sub_type_name, entry_price
+            FROM list_pick_history
+            WHERE category_id = ? AND (? IS NULL OR price_date >= ?)
+            ORDER BY price_date, list_key, rank
+            """,
+            [int(category_id), since_date, since_date],
+        ).fetchall()
+        return [dict(row) for row in rows]
+    finally:
+        con.close()
+
+
+def load_budget_picks(builder: str, category_id: int) -> list[dict]:
+    """Every remembered Budget Builder default pick, as Track record picks (no entry price:
+    the builder didn't store one, so the Track record reads it from the price history)."""
+    ensure_tracking_schema()
+    con = get_con()
+    try:
+        rows = con.execute(
+            "SELECT price_date, card_key FROM budget_pick_history WHERE builder = ? AND category_id = ? ORDER BY price_date",
+            [builder, int(category_id)],
+        ).fetchall()
+    finally:
+        con.close()
+    picks = []
+    for rank, row in enumerate(rows, 1):
+        product_id, _, sub_type = row["card_key"].partition("||")
+        if product_id.isdigit() and sub_type:
+            picks.append({"list_key": "budget", "price_date": row["price_date"], "rank": rank,
+                          "product_id": int(product_id), "sub_type_name": sub_type, "entry_price": None})
+    return picks

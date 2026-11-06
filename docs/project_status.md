@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-11-05
+Last reviewed: 2026-11-06
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -141,6 +141,11 @@ Added 2026-10:
   and Learn (How it works), plus a legal footer
 - Collector Hub, Placeholder Library and Account restyled on a shared desktop stylesheet
 - Index snapshots now build after the parquet export, so indexes are no longer a day behind
+- Market Stats additions (2026-11-06, desktop and phone): Market mood (0-100 breadth gauge
+  with two years of history, nightly `<slug>_market_mood_snapshot`), Track record (each
+  Discover list's daily top 25 scored after 7/14/30 days against the whole market) and
+  Releases (upcoming and recent sets); on cards, the full grade ladder, price records and an
+  Embed chart (`/embed/card`); collector nicknames in search
 - The desktop app is the desktop home page at `/`; older desktop addresses forward to it
   (phones unchanged); the older research dashboard is retired on desktop (2026-10-16) and
   `dashboard.html` was deleted on 2026-10-31 once the mobile app covered its last views

@@ -1,6 +1,6 @@
 # Desktop App: Maintainer Guide
 
-Last reviewed: 2026-11-05
+Last reviewed: 2026-11-06
 
 The desktop app is one page that holds the site's five areas (Buy, Discover, Research,
 Track, Learn) in a single three-column layout built for 1080p screens. Since 2026-10-12 it
@@ -67,7 +67,18 @@ Every view is one entry in the `LISTS` array; its fields are documented above th
 | Research | Pokémon (`species`) | `/browse_species` |
 | Research | Market Stats → Indexes (`indexes`) → one index (`index`) | `/index-overview-data` |
 | Research | Market Stats → Set values (`set_values`) → one set with its chart | `/set_baskets`, then `/group_products` and `/group_series` |
+| Research | Market Stats → Market mood (`mood`): 0-100 breadth reading, its three parts, two-year chart | `/market_mood` |
+| Research | Market Stats → Track record (`track_record`): each list's hit rate after 7/14/30 days against the market, latest picks (click one to open it) | `/track_record` |
+| Research | Market Stats → Releases (`releases`): coming up, and sets out in the last 120 days (row opens the set, top card opens the card) | `/releases` |
 | Learn | How it works (`guide`; the header's Learn opens it) | Static text written by `renderGuide()`, including the "Thanks to TCGCSV" support link. No card column (`.layout.no-detail`) |
+
+The three views added 2026-11-06 (mood, track record, releases) are `INSIGHT_VIEWS`: they render
+into the guide panel (`loadInsight`), keep the card column, and have no rows or menu counts.
+The card column's Graded tab shows the whole grade ladder (ungraded, grades 7-9.5, the four 10s,
+each with its multiple of the raw price); the Full data page adds Price records (all-time high
+and low, 1/3/5-year change) and an Embed button that copies an `<iframe>` of `/embed/card`
+(only there: the card column's action bar has no room for it at 1366 px). Searching a
+collector nickname ("moonbreon") shows a note above the results.
 
 Other endpoints: `/search` (top search box), `/universe` (opening a card from a link),
 `/health` ("Prices as of"), `/series` (price chart), `/sparkline_batch` (trend column),

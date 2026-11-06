@@ -249,6 +249,29 @@
     .guide { padding: 6px 18px 24px; max-width: 900px; }
     .guide section { padding: 14px 0; border-bottom: 1px solid var(--line); }
     .guide h3 { margin: 0 0 6px; font-size: 15px; }
+    /* Market Stats > Market mood, Track record, Releases (render into .guide) */
+    .mood-head { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+    .mood-score { font-size: 44px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+    .mood-label { font-size: 18px; font-weight: 600; }
+    .mood-bar { position: relative; height: 10px; border-radius: 5px; margin: 12px 0 4px; max-width: 520px;
+      background: linear-gradient(90deg, #c2410c, #ca8a04 30%, #8a94a6 50%, #16a34a 70%, #0d9488); }
+    .mood-bar i { position: absolute; top: -4px; width: 4px; height: 18px; border-radius: 2px; background: var(--text, #fff); transform: translateX(-2px); }
+    .mood-scale { display: flex; justify-content: space-between; max-width: 520px; font-size: 11px; color: var(--muted); }
+    .insight-table { width: 100%; border-collapse: collapse; }
+    .insight-table th, .insight-table td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+    .insight-table th { font-size: 12px; font-weight: 600; color: var(--muted); }
+    .insight-table .right { text-align: right; }
+    .insight-table tr.clickable { cursor: pointer; }
+    .insight-table tr.clickable:hover td { background: rgba(136, 162, 205, 0.06); }
+    .insight-table img { width: 34px; height: 47px; object-fit: cover; border-radius: 3px; vertical-align: middle; margin-right: 8px; }
+    .insight-table img + span { display: inline-block; vertical-align: middle; max-width: calc(100% - 46px); }
+    .vs { display: block; font-size: 11px; color: var(--muted); }
+    .badge { display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 11px; border: 1px solid var(--line); color: var(--muted); }
+    .badge.listed, .badge.confirmed { color: #16a34a; border-color: rgba(22, 163, 74, 0.4); }
+    .ladder { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .ladder td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
+    .ladder td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+    .search-note { padding: 6px 12px; font-size: 12px; color: var(--muted); }
     .guide p { margin: 0 0 8px; color: var(--muted); }
     .guide dl { display: grid; grid-template-columns: 170px 1fr; gap: 6px 16px; margin: 6px 0 0; }
     .guide dt { font-weight: 600; }
@@ -295,7 +318,7 @@
     .chip-row button { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--panel-2); cursor: pointer; }
     .chip-row button:hover { border-color: var(--accent); }
     #resultsBody img.thumb, #pickGrid .pick img, #detailImage { cursor: zoom-in; }
-    #fullDataLink[hidden], #fullBackBtn[hidden] { display: none; } /* .btn is inline-flex, which ignores [hidden] */
+    #fullDataLink[hidden], #fullBackBtn[hidden], #embedBtn[hidden] { display: none; } /* .btn is inline-flex, which ignores [hidden] */
 
     /* ---------- detail ---------- */
     #detailBody { display: flex; flex-direction: column; flex: 1; min-height: 0; }
@@ -412,7 +435,7 @@
 <body data-area="discover">
   <script>
     if (/[?&]list=track_/.test(location.search)) document.body.dataset.area = "track";
-    if (/[?&]list=(sets|set|species|indexes|index|set_values)(&|$)/.test(location.search)) document.body.dataset.area = "research";
+    if (/[?&]list=(sets|set|species|indexes|index|set_values|mood|track_record|releases)(&|$)/.test(location.search)) document.body.dataset.area = "research";
     if (/[?&]list=(sealed_deals|budget|graded_budget)(&|$)/.test(location.search)) document.body.dataset.area = "buy";
     if (/[?&]list=guide(&|$)/.test(location.search)) document.body.dataset.area = "learn";
   </script>
@@ -449,6 +472,9 @@
         <div class="segment" id="statsTabs" role="group" aria-label="Market stats" hidden style="margin:0 0 12px">
           <button type="button" data-stats="indexes">Indexes</button>
           <button type="button" data-stats="set_values">Set values</button>
+          <button type="button" data-stats="mood">Market mood</button>
+          <button type="button" data-stats="track_record">Track record</button>
+          <button type="button" data-stats="releases">Releases</button>
         </div>
         <div class="segment" id="indexTabs" role="group" aria-label="Index details" hidden style="margin:0 0 12px">
           <button type="button" data-index-tab="cards">Top cards</button>
@@ -589,6 +615,7 @@
           <button type="button" class="btn" id="saveBtn" aria-haspopup="true">♡ Save</button>
           <a class="btn primary" id="tcgLink" target="_blank" rel="noopener noreferrer">TCGplayer ↗</a>
           <a class="btn" id="storeLink" target="_blank" rel="noopener noreferrer" hidden>Our TCGplayer store ↗</a>
+          <button type="button" class="btn" id="embedBtn" hidden title="Copy code that shows this card's price chart on your own site or blog">Embed</button>
           <a class="btn" id="fullDataLink" style="margin-left:auto" title="Everything about this card on one page (or double-click its picture)">Full data →</a>
           <button type="button" class="btn" id="fullBackBtn" style="margin-left:auto" hidden>← Back</button>
           <div class="save-menu" id="saveMenu" hidden></div>
@@ -674,6 +701,10 @@
       { key: "species", group: "Research", research: true, label: "Pokémon", desc: "Every printing of a Pokémon across all sets." },
       { key: "indexes", group: "Research", research: true, kindless: true, label: "Market Stats", desc: "Each index follows the most valuable cards of an era, like a stock index. Every index started at 1,000." },
       { key: "set_values", group: "Research", research: true, kindless: true, hidden: true, navParent: "indexes", label: "Market Stats", desc: "What it costs to buy every card in a set, and how much of that value sits in its top cards." },
+      // Market Stats tabs added 2026-11-06 (render into the guide panel; see loadInsight).
+      { key: "mood", group: "Research", research: true, kindless: true, hidden: true, navParent: "indexes", label: "Market Stats", desc: "How broadly card prices are rising: one number from 0 to 100, from every single priced $2 or more." },
+      { key: "track_record", group: "Research", research: true, kindless: true, hidden: true, navParent: "indexes", label: "Market Stats", desc: "How each list's picks did 7, 14 and 30 days later, next to the whole market over the same days. Misses included." },
+      { key: "releases", group: "Research", research: true, kindless: true, hidden: true, navParent: "indexes", label: "Market Stats", desc: "New sets and how their cards are settling, plus what's coming next." },
       { key: "index", group: "Research", research: true, kindless: true, hidden: true, parent: "indexes", backLabel: "← All indexes", label: "Index", desc: "", price: "marketPrice" },
       { key: "track_all", group: "My lists", track: true, tag: "all", label: "All saved", desc: "Everything you've saved, with your price targets." },
       { key: "track_owned", group: "My lists", track: true, tag: "owned", label: "Buy List", desc: "Cards and sealed products you plan to pick up." },
@@ -686,6 +717,8 @@
     // The market screeners (Rising / Starting to move / Dipped): the ones with counts in the
     // nav and the ones the home page falls back to when the default list is empty.
     const MARKET_LISTS = LISTS.filter((l) => !l.track && !l.research && !l.buy && !l.learn);
+    // Market Stats views that aren't card lists (loadInsight draws them; no counts, no rows).
+    const INSIGHT_VIEWS = ["mood", "track_record", "releases"];
     LISTS.find((l) => l.key === "set").parent = "sets";
     // Sort menu per kind of view. "signal" keeps the order the API returned.
     const SORTS = {
@@ -990,7 +1023,8 @@
         if (seq !== searchSeq) return;
         searchItems = (data.items || []).filter((item) => item.kind === "product" || item.kind === "set").slice(0, 12);
         searchActive = searchItems.length ? 0 : -1;
-        searchResults.replaceChildren(...(searchItems.length ? searchItems.map((item, index) => {
+        const nicknameNote = data.nickname && searchItems.length ? [el("div", { class: "search-note", text: `“${data.nickname}” is a nickname: showing ${data.query}` })] : [];
+        searchResults.replaceChildren(...nicknameNote, ...(searchItems.length ? searchItems.map((item, index) => {
           const isSet = item.kind === "set";
           const image = item.imageUrl ? el("img", { src: item.imageUrl, alt: "", loading: "lazy" }) : el("div", { class: "ph" });
           const meta = isSet ? `Set · ${item.meta || ""}` : [item.groupName, item.number, item.subTypeName].filter(Boolean).join(" · ");
@@ -1129,7 +1163,7 @@
     const lastCounts = {};
     async function loadCounts() {
       const scope = `${state.market}:${state.kind}`;
-      await Promise.all(LISTS.filter((l) => !l.learn && !["set", "species", ...BUDGET_LISTS].includes(l.key)).map(async (list) => {
+      await Promise.all(LISTS.filter((l) => !l.learn && !["set", "species", ...BUDGET_LISTS, ...INSIGHT_VIEWS].includes(l.key)).map(async (list) => {
         try {
           const rows = await fetchList(list);
           if (`${state.market}:${state.kind}` === scope) lastCounts[list.key] = rows.length;
@@ -1166,7 +1200,7 @@
         rows.payload = payload;
         return rows;
       });
-      if (list.key === "guide") return Promise.resolve([]);
+      if (list.key === "guide" || INSIGHT_VIEWS.includes(list.key)) return Promise.resolve([]);
       if (list.key === "set_values") return fetchSetValues();
       const cacheKey = `${list.key}:${state.market}:${state.kind}`;
       if (!listCache.has(cacheKey)) {
@@ -1382,7 +1416,8 @@
       $("targetHeader").hidden = !list.track;
       setSortOptions(list);
       const indexInfo = list.key === "index" && state.indexTab !== "cards";
-      const view = ["sets", "indexes", "guide", "set_values"].includes(list.key) ? list.key : indexInfo ? "guide" : "cards";
+      const insight = INSIGHT_VIEWS.includes(list.key);
+      const view = ["sets", "indexes", "guide", "set_values"].includes(list.key) ? list.key : indexInfo || insight ? "guide" : "cards";
       const isSets = view === "sets";
       $("setsTable").hidden = view !== "sets";
       $("indexesTable").hidden = view !== "indexes";
@@ -1396,7 +1431,7 @@
       const setChart = list.key === "set";
       $("indexChart").hidden = list.key !== "index" && !setChart;
       if (!$("indexChart").hidden) $("indexChart").replaceChildren();
-      $("statsTabs").hidden = !["indexes", "set_values"].includes(list.key);
+      $("statsTabs").hidden = !["indexes", "set_values", ...INSIGHT_VIEWS].includes(list.key);
       document.querySelectorAll("#statsTabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.stats === list.key)));
       $("indexTabs").hidden = list.key !== "index";
       document.querySelectorAll("#indexTabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.indexTab === state.indexTab)));
@@ -1444,6 +1479,7 @@
       if (view === "indexes") return loadIndexes(seq);
       if (view === "set_values") return loadSetValues(seq);
       if (indexInfo) return loadIndexInfo(seq);
+      if (insight) return loadInsight(list.key, seq);
       if (view === "guide") { renderGuide(); $("listLoading").hidden = true; $("resultsEmpty").hidden = true; return; }
       try {
         const rows = await fetchList(list);
@@ -1832,6 +1868,150 @@
       }
     }
 
+    // ---------- market stats: market mood, track record, releases ----------
+    // Three Market Stats tabs that render into the guide panel (INSIGHT_VIEWS). Their data
+    // comes from /market_mood, /track_record and /releases (api.py, "Market insights").
+    async function loadInsight(key, seq) {
+      state.rows = [];
+      const view = $("guideView");
+      view.replaceChildren(el("p", { class: "muted", text: "Loading…" }));
+      $("resultsEmpty").hidden = true;
+      const path = { mood: "/market_mood", track_record: "/track_record", releases: "/releases" }[key];
+      try {
+        const payload = await cached(`${key}:${state.market}`, () => getJson(`${path}?category_id=${categoryId()}`));
+        if (seq !== listRequestSeq) return;
+        if (key === "mood") renderMood(payload);
+        else if (key === "track_record") renderTrackRecord(payload);
+        else renderReleases(payload);
+      } catch (_err) {
+        if (seq === listRequestSeq) view.replaceChildren(el("p", { class: "muted", text: "This couldn't load. Try again in a moment." }));
+      } finally {
+        if (seq === listRequestSeq) $("listLoading").hidden = true;
+      }
+    }
+    const sharePct = (v) => (Number.isFinite(v) ? `${Math.round(v)}%` : "—");
+    // Market mood: the 0-100 reading, its three parts, and the daily history.
+    function renderMood(p) {
+      const view = $("guideView");
+      if (!p.available) {
+        listCache.delete(`mood:${state.market}`);  // ask again next time instead of keeping "not ready"
+        view.replaceChildren(el("p", { class: "muted", text: p.computing ? "The mood is being worked out for the first time today. Check back in a minute." : "No mood reading yet." }));
+        return;
+      }
+      const l = p.latest;
+      const delta = (then, label) => (Number.isFinite(then) ? `${label} ${Math.round(then)}` : null);
+      const marker = el("i", { style: `left:${Math.max(0, Math.min(100, l.mood))}%` });
+      const chart = el("div", { class: "index-chart", style: "height:170px" });
+      view.replaceChildren(
+        el("section", {},
+          el("div", { class: "mood-head" },
+            el("div", { class: "mood-score", text: String(Math.round(l.mood)) }),
+            el("div", {}, el("div", { class: "mood-label", text: l.label }), el("div", { class: "muted", text: l.meaning }))),
+          el("div", { class: "mood-bar" }, marker),
+          el("div", { class: "mood-scale" }, ...["0 Cold", "20 Cool", "40 Neutral", "60 Warm", "80 Hot", "100"].map((t) => el("span", { text: t }))),
+          el("p", { class: "muted", text: [delta(p.week_ago, "A week ago:"), delta(p.month_ago, "a month ago:"), `12-month range ${Math.round(p.year_low)}–${Math.round(p.year_high)}`, `as of ${fmtDate(l.date)}`].filter(Boolean).join(" · ") })),
+        el("section", {}, el("h3", { text: "What goes into it" }),
+          el("table", { class: "insight-table" },
+            el("thead", {}, el("tr", {}, el("th", { text: "Question" }), el("th", { class: "right", text: "Today" }), el("th", { text: "Counted" }))),
+            el("tbody", {},
+              el("tr", {}, el("td", { text: "Above their 30-day average" }), el("td", { class: "right num", text: sharePct(l.above_avg) }), el("td", { class: "muted", text: "of cards not exactly at their average" })),
+              el("tr", {}, el("td", { text: "Up over the last 7 days" }), el("td", { class: "right num", text: sharePct(l.rising) }), el("td", { class: "muted", text: `${l.up_7d.toLocaleString()} up, ${l.down_7d.toLocaleString()} down` })),
+              el("tr", {}, el("td", { text: "New 90-day highs (vs new lows)" }), el("td", { class: "right num", text: sharePct(l.new_highs) }), el("td", { class: "muted", text: `${l.new_highs_count.toLocaleString()} highs, ${l.new_lows_count.toLocaleString()} lows` }))))),
+        el("section", {}, el("h3", { text: "The last two years" }), chart),
+        el("section", {}, el("h3", { text: "How to read it" }),
+          el("p", { text: `Every single priced $${p.min_price} or more gets one vote, whatever it costs, out of ${l.cards.toLocaleString()} today. The mood is the average of the three shares above. Cards whose price didn't move are left out of each share, because TCGplayer prices often sit still for days.` }),
+          el("p", { text: "It measures how broad a move is, not how big: a few chase cards doubling barely shift it, while thousands of small cards creeping up do. The indexes show the other side, the value of the top cards." })));
+      requestAnimationFrame(() => drawChart(chart, p.history.map((h) => ({ date: h.date, price: h.mood, sma30: NaN })), (v) => String(Math.round(v))));
+    }
+    // Track record: per-list hit rates against the whole market, then the recent picks.
+    function renderTrackRecord(p) {
+      const view = $("guideView");
+      const [h1, h2, h3] = p.horizons || [7, 14, 30];
+      const vsCell = (mine, market, fmt = sharePct) => el("td", { class: "right num" }, fmt(mine), el("span", { class: "vs", text: Number.isFinite(market) ? `market ${fmt(market)}` : "" }));
+      const lists = [...(p.lists || [])].filter((l) => l.picks > 0);
+      const intro = el("section", {},
+        el("p", { text: `Every day the top ${p.picks_per_list} of each list are saved with the price they were shown at. A card counts once, on the day it joins a list, and is checked ${h1}, ${h2} and ${h3} days later. “Market” is every single priced $5 or more over the same days, so a good number in a rising market isn't mistaken for a good list.` }),
+        el("p", { class: "muted", text: `Price changes only, before fees and shipping. Picks saved since ${p.first_pick_date ? fmtDate(p.first_pick_date) : "today"}. ${p.baseline_ready ? "" : "The market comparison appears after the next nightly update."}` }));
+      const scoredAny = lists.some((l) => l[`d${h1}`]?.scored);
+      const table = lists.length ? el("table", { class: "insight-table" },
+        el("thead", {}, el("tr", {},
+          el("th", { text: "List" }), el("th", { class: "right", text: "Picks" }),
+          el("th", { class: "right", text: `Higher after ${h1}d` }), el("th", { class: "right", text: `Higher after ${h2}d` }),
+          el("th", { class: "right", text: `Higher after ${h3}d` }), el("th", { class: "right", text: `+${p.hit_pct}% after ${h3}d` }),
+          el("th", { class: "right", text: `Median after ${h3}d` }), el("th", { class: "right", text: "Open picks so far" }))),
+        el("tbody", {}, ...[{ ...p.all, label: "All lists", key: "all" }, ...lists].map((l) => el("tr", {},
+          el("td", {}, el("strong", { text: l.label })),
+          el("td", { class: "right num", text: `${l.picks}` }),
+          vsCell(l[`d${h1}`]?.up_share, l[`d${h1}`]?.market_up_share),
+          vsCell(l[`d${h2}`]?.up_share, l[`d${h2}`]?.market_up_share),
+          vsCell(l[`d${h3}`]?.up_share, l[`d${h3}`]?.market_up_share),
+          vsCell(l[`d${h3}`]?.hit_share, l[`d${h3}`]?.market_hit_share),
+          vsCell(l[`d${h3}`]?.median_pct, l[`d${h3}`]?.market_median_pct, pct),
+          el("td", { class: "right num", text: l.open ? `${l.open} · ${pct(l.open_median_pct)}` : "—" }))))) : el("p", { class: "muted", text: "No picks saved yet. The first ones are saved after the next nightly update." });
+      const firstResult = p.first_pick_date ? new Date(Date.parse(p.first_pick_date) + h1 * 864e5).toISOString().slice(0, 10) : null;
+      const waiting = !scoredAny && firstResult ? el("p", { class: "muted", text: `The first ${h1}-day results arrive on ${fmtDate(firstResult)}; until then, “Open picks so far” shows how today's picks are moving.` }) : null;
+      const recent = (p.recent || []).slice(0, 40);
+      const recentTable = recent.length ? el("table", { class: "insight-table" },
+        el("thead", {}, el("tr", {}, el("th", { text: "Card" }), el("th", { text: "List" }), el("th", { text: "Picked" }),
+          el("th", { class: "right", text: "Price then" }), el("th", { class: "right", text: "Now" }), el("th", { class: "right", text: `After ${h3}d` }))),
+        el("tbody", {}, ...recent.map((r) => {
+          const tr = el("tr", { class: "clickable", title: "Show this card" },
+            el("td", {}, r.imageUrl ? el("img", { src: r.imageUrl, alt: "", loading: "lazy" }) : null,
+              el("span", {}, el("strong", { text: r.productName || `Product ${r.product_id}` }), el("span", { class: "vs", text: [r.groupName, r.number, r.sub_type_name].filter(Boolean).join(" · ") }))),
+            el("td", { text: r.list_label }),
+            el("td", { text: fmtDate(r.price_date) }),
+            el("td", { class: "right num", text: money(r.entry_price) }),
+            el("td", { class: "right num" }, money(r.now_price), el("span", { class: "vs", text: pct(r.now_pct) })),
+            el("td", { class: "right num", text: Number.isFinite(r[`d${h3}_pct`]) ? pct(r[`d${h3}_pct`]) : "open" }));
+          tr.addEventListener("click", () => loadCardByKey(`${r.product_id}||${r.sub_type_name}`));
+          return tr;
+        }))) : null;
+      view.replaceChildren(intro, el("section", {}, el("h3", { text: "By list" }), waiting, table),
+        recentTable ? el("section", {}, el("h3", { text: "Latest picks" }), recentTable) : null);
+    }
+    // Releases: what's coming (listed on TCGplayer, or entered by hand) and recent sets.
+    function renderReleases(p) {
+      const view = $("guideView");
+      const upcoming = p.upcoming || [];
+      const statusText = { listed: "On TCGplayer", confirmed: "Confirmed", reported: "Reported" };
+      const upcomingTable = upcoming.length ? el("table", { class: "insight-table" },
+        el("thead", {}, el("tr", {}, el("th", { text: "Set" }), el("th", { text: "Release" }), el("th", { class: "right", text: "In" }), el("th", { text: "Status" }))),
+        el("tbody", {}, ...upcoming.map((u) => el("tr", {},
+          el("td", {}, el("strong", { text: u.name }), u.note ? el("span", { class: "vs", text: u.note }) : null),
+          el("td", { text: fmtDate(u.release_date) }),
+          el("td", { class: "right num", text: u.days_away <= 1 ? "now" : `${u.days_away} days` }),
+          el("td", {}, el("span", { class: `badge ${u.status}`, text: statusText[u.status] || u.status }),
+            u.source ? el("a", { href: u.source, target: "_blank", rel: "noopener noreferrer", style: "margin-left:8px;font-size:12px", text: "source ↗" }) : null))))) :
+        el("p", { class: "muted", text: "Nothing announced yet." });
+      const recent = p.recent || [];
+      const recentTable = recent.length ? el("table", { class: "insight-table" },
+        el("thead", {}, el("tr", {}, el("th", { text: "Set" }), el("th", { text: "Released" }), el("th", { class: "right", text: "Cards" }),
+          el("th", { class: "right", text: "All singles" }), el("th", { text: "Top card" }), el("th", { class: "right", text: "7 days" }), el("th", { class: "right", text: "30 days" }))),
+        el("tbody", {}, ...recent.map((r) => {
+          const top = el("td", { class: r.top_productId ? "hit-link" : "", title: r.top_productId ? "Show this card" : "" },
+            r.top_image ? el("img", { src: r.top_image, alt: "", loading: "lazy" }) : null,
+            el("span", {}, el("strong", { text: r.top_name || "—" }), el("span", { class: "vs", text: [money(r.top_price), r.top_rarity].filter(Boolean).join(" · ") })));
+          const tr = el("tr", { class: "clickable", title: "Open this set" },
+            el("td", {}, el("strong", { text: r.groupName })),
+            el("td", { text: fmtDate(r.release_date) }),
+            el("td", { class: "right num", text: String(r.cards ?? "—") }),
+            el("td", { class: "right num", text: money(r.singles_total) }),
+            top,
+            el("td", { class: "right num", text: pct(r.avg_7d_pct) }),
+            el("td", { class: "right num", text: pct(r.avg_30d_pct) }));
+          tr.addEventListener("click", (event) => {
+            if (r.top_productId && event.target.closest(".hit-link")) { loadCardByKey(`${r.top_productId}||${r.top_subTypeName}`); return; }
+            openSet(r.groupId, r.groupName, "sets");
+          });
+          return tr;
+        }))) : el("p", { class: "muted", text: `No new sets in the last ${p.days} days.` });
+      view.replaceChildren(
+        el("section", {}, el("h3", { text: "Coming up" }), upcomingTable,
+          el("p", { class: "muted", style: "margin-top:8px", text: `Sets show here as soon as TCGplayer lists them. Dates marked “Reported” come from news sites and aren't official yet${p.upcoming_checked ? ` (checked ${fmtDate(p.upcoming_checked)})` : ""}.` })),
+        el("section", {}, el("h3", { text: `Released in the last ${p.days} days` }), recentTable,
+          el("p", { class: "muted", style: "margin-top:8px", text: "“7 days” and “30 days” are the average move of the set's singles priced $5 or more. New sets often fall for a few weeks while boxes are opened, then settle." })));
+    }
+
     // ---------- guide ----------
     function renderGuide() {
       const guide = $("guideView");
@@ -1868,14 +2048,25 @@
           ["Targets", "Your own buy-below and sell-above prices. Saved items show when a card reaches them."],
           ["Graded", "PSA and CGC prices from PriceCharting, with a link back to the source."],
           ["Stats", "The 30-day average, window low and high, and printing details."],
+          ["Full data", "Everything about one card on a page: price records (all-time high and low, 1, 3 and 5-year change), the lists it's in and its other printings."],
+          ["Embed (Full data page)", "Copies a small price chart of the card that you can paste into your own site or blog."],
         ]),
         section("Research", "", [
           ["Sets", "Every set ranked by how broadly its cards are rising. Click a set to see its cards, then narrow to hits or a rarity."],
           ["Pokémon", "Every printing of one Pokémon across all sets."],
+          ["Market mood", "One number from 0 (cold) to 100 (hot) for how broadly prices are rising: the share of cards above their 30-day average, rising over 7 days, and at new 90-day highs rather than lows. Every card priced $2 or more counts once, whatever it costs."],
+          ["Track record", "Every day the top 25 of each list are saved with their price, then checked 7, 14 and 30 days later, next to all cards over the same days. The misses stay in."],
+          ["Releases", "Sets coming up and sets out in the last four months, with their top card and how their prices are settling."],
           ["Market Stats", "The market as a whole. Indexes track the most valuable cards of each era as one number, like a stock index: each started at 1,000, so 2,000 means that group of cards has doubled. Set values show what a full set costs and how much of it sits in the top cards."],
         ]),
         section("Saving cards", "♡ Save adds a card to your Buy List, Watchlist, Favorites or Needs Review. Saved cards stay in this browser, and sync to your account when you're signed in. They appear under My lists, here and on the phone site."),
         section("About these prices", "Our prices come from TCGplayer's market price (via TCGCSV) and PriceCharting. The market price is not a Near Mint price: it follows whichever condition sells most, so new cards sit near Near Mint while older cards often reflect played copies. A clean copy of an older card can be worth well above it. Poke6s Market Watch is one tool among several: do your own homework (recent sold listings, the card's condition, the seller) and don't rely on any one number."),
+        section("How a price becomes a number", "", [
+          ["One price a day", "We read TCGplayer's market price for every printing once a night. It's TCGplayer's own figure from recent sales; we don't see the individual sales, so we can't show a sales list or count sales per card."],
+          ["Jumpy prices", "A card whose price jumps back and forth many times in a short while (one bad listing can do it) is left out of the indexes until it settles."],
+          ["Graded prices", "PriceCharting's prices, downloaded once a day with their permission; every graded price links back to them. Grades 7 to 9.5 are for any grading company, the 10s are per company. A lower grade selling above a higher one is real, not an error: some collectors only collect certain grades."],
+          ["Search", "Common nicknames work too: “moonbreon”, “giratina alt”, “van gogh pikachu”."],
+        ]),
         el("p", { class: "fine", text: "Market data for research only, not financial advice. Prices and estimates can be wrong; check the listing before you buy or sell." }));
     }
 
@@ -2381,6 +2572,8 @@
       document.querySelector("main.layout").classList.toggle("full-card", state.fullCard);
       $("fullDataLink").hidden = state.fullCard;
       $("fullBackBtn").hidden = !state.fullCard;
+      // Embed only on the full-data page: the card pane's action bar has no room at 1366 px.
+      $("embedBtn").hidden = !state.fullCard;
       $("fullBackBtn").textContent = `← Back to ${currentList().label}`;
       $("fullExtra").hidden = !state.fullCard;
     }
@@ -2449,6 +2642,22 @@
         ["Set released", c.release_date ? (c.release_precision === "approximate" ? `~${c.release_date.slice(0, 4)}` : fmtDate(c.release_date)) : "—"],
       ] : [];
       const sections = [];
+      // All-time high/low and long-range change (api.py price_records). Before the last two
+      // years the history is weekly, so an old high is the best weekly price.
+      const rec = data?.records || {};
+      if (rec.high) {
+        const ch = rec.changes || {};
+        const recStats = [
+          ["All-time high", `${money(rec.high.price)} (${fmtDate(rec.high.date)})`, rec.high.vs_now_pct < 0 ? `now ${pct(rec.high.vs_now_pct)}` : "at its high"],
+          ["All-time low", `${money(rec.low.price)} (${fmtDate(rec.low.date)})`, Number.isFinite(rec.low.vs_now_pct) ? `now ${pct(rec.low.vs_now_pct)}` : ""],
+          ["1-year change", pct(ch["1y"]), ""],
+          ["3-year change", Number.isFinite(ch["3y"]) ? pct(ch["3y"]) : "—", Number.isFinite(ch["3y"]) ? "" : "not enough history"],
+          ["5-year change", Number.isFinite(ch["5y"]) ? pct(ch["5y"]) : "—", Number.isFinite(ch["5y"]) ? "" : "not enough history"],
+        ];
+        sections.push(el("div", {}, el("h3", { text: "Price records" }),
+          el("div", { class: "grid-4" }, ...recStats.map(([label, value, sub]) => el("div", { class: "stat" }, el("span", { text: label }), el("strong", { text: value }), sub ? el("span", { class: "vs", text: sub }) : null))),
+          el("p", { class: "muted", style: "margin:6px 0 0;font-size:12px", text: `Our price history starts ${fmtDate(rec.first_date)}. Before the last two years it is weekly, so an older high or low is the best weekly price.` })));
+      }
       sections.push(el("div", {}, el("h3", { text: "Price history in numbers" }),
         data ? el("div", { class: "grid-4" }, ...stats.map(([label, value]) => el("div", { class: "stat" }, el("span", { text: label }), el("strong", { text: value }))))
           : el("p", { class: "muted", text: "The full numbers for this card aren't available right now." })));
@@ -2687,11 +2896,17 @@
         // 2026-10-29: TCGplayer has more sales). PriceCharting's ungraded price, which leans on
         // eBay sales and often runs higher, goes in the note below with its link back.
         const market = card.price > 0 ? card.price : NaN;
-        const cells = [["Ungraded (TCGplayer)", market], ["PSA 9", data.prices.grade9], ["PSA 10", data.prices.psa10], ["CGC 10", data.prices.cgc10]];
-        $("gradedGrid").replaceChildren(...cells.map(([label, value]) => el("div", { class: "stat" }, el("span", { text: label }), el("strong", { text: money(value) }))));
+        // The grade ladder. "Grade 7" to "Grade 9.5" are PriceCharting's prices for any grading
+        // company; the 10s are per company. Prices don't always rise with the grade (AGENTS.md),
+        // so each row is shown as it is, never smoothed or flagged.
+        const ladder = [["Ungraded (TCGplayer)", market], ["Grade 7", data.prices.grade7], ["Grade 8", data.prices.grade8],
+          ["Grade 9", data.prices.grade9], ["Grade 9.5", data.prices.grade9_5], ["PSA 10", data.prices.psa10],
+          ["BGS 10", data.prices.bgs10], ["CGC 10", data.prices.cgc10], ["SGC 10", data.prices.sgc10]].filter(([, v]) => Number(v) > 0);
+        $("gradedGrid").replaceChildren(el("table", { class: "ladder", style: "grid-column:1/-1" },
+          el("tbody", {}, ...ladder.map(([label, value]) => el("tr", {}, el("td", { text: label }), el("td", { text: money(value) }),
+            el("td", { class: "muted", text: market && label !== "Ungraded (TCGplayer)" ? `${(value / market).toFixed(1)}× raw` : "" }))))));
         const notes = [];
         if (data.prices.ungraded) notes.push(`PriceCharting's ungraded price: ${money(data.prices.ungraded)}.`);
-        if (data.prices.psa10 && market) notes.push(`PSA 10 is ${(data.prices.psa10 / market).toFixed(1)}× the raw market price.`);
         if (data.sales_volume) notes.push(`${data.sales_volume.toLocaleString()} sales a year.`);
         $("gradedNote").textContent = notes.join(" ");
         $("gradedSource").href = data.url;
@@ -2751,6 +2966,20 @@
         el("div", { class: "save-note", text: syncedTags ? "Synced to your account." : "Saved in this browser. Sign in to sync." }));
     }
     $("saveBtn").addEventListener("click", () => { $("saveMenu").hidden = !$("saveMenu").hidden; });
+    // Embed: copy an <iframe> of /embed/card (card_embed.html) for the open card. Falls back
+    // to showing the code in a prompt when the clipboard is blocked.
+    $("embedBtn").addEventListener("click", async () => {
+      if (!state.selected) return;
+      const query = new URLSearchParams({ product: state.selected.key, ...(state.market === "JP" ? { market: "JP" } : {}) });
+      const code = `<iframe src="https://market.poke6s.com/embed/card?${query}" width="480" height="260" style="border:0;max-width:100%" loading="lazy" title="${String(state.selected.name || "Card").replace(/"/g, "&quot;")} price chart"></iframe>`;
+      try {
+        await navigator.clipboard.writeText(code);
+        $("embedBtn").textContent = "Copied ✓";
+        setTimeout(() => { $("embedBtn").textContent = "Embed"; }, 2000);
+      } catch (_err) {
+        window.prompt("Copy this code into your page:", code);
+      }
+    });
     // Add or remove a card from a saved list: on the account when signed in, otherwise in this
     // browser. Then refresh the nav counts and, on a saved list, the list itself.
     async function toggleTag(card, tag, enabled) {
