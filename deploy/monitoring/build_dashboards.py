@@ -620,6 +620,12 @@ def proxmox():
     p.append(timeseries("Largest guests (memory)",
                         [target(f"topk(8, {guest(f'pve_memory_usage_bytes{{{GUEST}}}')})", "{{name}}")],
                         g(16, 22, 8, 8), unit="bytes"))
+    # Proxmox servers outside the cluster API (the Backup Server): node-exporter, labelled
+    # group: proxmox in deploy/monitoring/nodes.yml.
+    p.append(row("Proxmox Backup Server", 30))
+    p.append(machines_table("Proxmox Backup Server", 'job="machines",group="proxmox"', g(0, 31, 24, 5),
+                            "node-exporter on the Backup Server (deploy/monitoring/nodes.yml, "
+                            "group: proxmox). Fullest disk includes its datastore on /."))
     return dashboard("momentum-homelab", "Home lab: Proxmox cluster", p, tags=("proxmox",), family="homelab")
 
 
@@ -638,10 +644,9 @@ UNIFI_STATUS_MAP = [{
 }]
 
 
-def machines_row(y):
-    """Other machines listed in deploy/monitoring/nodes.yml (job "machines"): Linux and
-    Synology run node-exporter, Windows runs windows_exporter. Empty until one is added."""
-    m = 'job="machines"'
+def machines_table(title, m, pos, description):
+    """One row per machine scraped by job "machines" (deploy/monitoring/nodes.yml) that matches
+    the label selector m: Linux and Synology run node-exporter, Windows runs windows_exporter."""
     by = "max by (instance, machine, role) "
     lin_cpu = f'100 * (1 - avg by (instance, machine, role) (rate(node_cpu_seconds_total{{{m},mode="idle"}}[5m])))'
     win_cpu = f'100 * (1 - avg by (instance, machine, role) (rate(windows_cpu_time_total{{{m},mode="idle"}}[5m])))'
@@ -650,25 +655,33 @@ def machines_row(y):
     lin_disk = (f'{by}(100 * (1 - node_filesystem_avail_bytes{{{m},fstype!~"tmpfs|overlay|squashfs|ramfs|rootfs"}}'
                 f' / node_filesystem_size_bytes{{{m},fstype!~"tmpfs|overlay|squashfs|ramfs|rootfs"}}))')
     win_disk = f'{by}(100 * (1 - windows_logical_disk_free_bytes{{{m}}} / windows_logical_disk_size_bytes{{{m}}}))'
-    return [
-        row("Other machines (deploy/monitoring/nodes.yml)", y),
-        table("Machines",
+    return table(title,
               [target(f"{by}(up{{{m}}})", ref="A", instant=True, table=True),
                target(f"({lin_cpu}) or ({win_cpu})", ref="B", instant=True, table=True),
                target(f"({lin_mem}) or ({win_mem})", ref="C", instant=True, table=True),
                target(f"({lin_disk}) or ({win_disk})", ref="D", instant=True, table=True),
                target(f"{by}(time() - node_boot_time_seconds{{{m}}}) or {by}(windows_system_system_up_time{{{m}}})",
                       ref="E", instant=True, table=True)],
-              g(0, y + 1, 17, 8),
+              pos,
               {"machine": "Machine", "role": "Role", "instance": "Address", "Value #A": "Up", "Value #B": "CPU",
                "Value #C": "Memory", "Value #D": "Fullest disk", "Value #E": "Up for"},
-              description="Empty until a machine is added to deploy/monitoring/nodes.yml (runbook "
-                          "'Monitoring', 'Adding another machine').",
+              description=description,
               overrides=[col("Value #A", mappings=UP_DOWN),
                          col("Value #B", unit="percent", decimals=0, thresholds=steps("text", (80, "orange"), (95, "red"))),
                          col("Value #C", unit="percent", decimals=0, thresholds=steps("text", (85, "orange"), (95, "red"))),
                          col("Value #D", unit="percent", decimals=0, thresholds=steps("text", (80, "orange"), (90, "red"))),
-                         col("Value #E", unit="dtdurations", decimals=0)]),
+                         col("Value #E", unit="dtdurations", decimals=0)])
+
+
+def machines_row(y):
+    """Other machines listed in deploy/monitoring/nodes.yml, except those labelled
+    group: proxmox (the Proxmox Backup Server), which the Proxmox cluster dashboard shows."""
+    return [
+        row("Other machines (deploy/monitoring/nodes.yml)", y),
+        machines_table("Machines", 'job="machines",group!="proxmox"', g(0, y + 1, 17, 8),
+                       "Empty until a machine is added to deploy/monitoring/nodes.yml (runbook "
+                       "'Monitoring', 'Adding another machine'). Proxmox machines are on the "
+                       "Proxmox cluster dashboard."),
         table("Home lab services",
               [target('probe_success{probe="homelab"}', ref="A", instant=True, table=True),
                target('probe_duration_seconds{probe="homelab"}', ref="B", instant=True, table=True)],

@@ -164,7 +164,8 @@ Adding another machine (it appears in Home lab: Servers, "Other machines"):
    (or rerun install.sh). Prometheus picks it up within two minutes; no restart.
 
 In it since 2026-11-05: the Proxmox Backup Server (192.168.1.72, which already ran
-node-exporter) and the OpenMediaVault storage server (192.168.1.155; the same server also
+node-exporter; labelled `group: proxmox`, so it shows in its own row on Home lab: Proxmox
+cluster rather than under "Other machines") and the OpenMediaVault storage server (192.168.1.155; the same server also
 answers on .9 and .229). Home lab web services are checked by the blackbox exporter (`probe: homelab`
 in `prometheus_momentum.yml`, "Home lab services" table): Plex at 192.168.1.219:32400/identity.
 

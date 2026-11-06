@@ -1752,7 +1752,7 @@
     {
       "type": "table",
       "title": "Machines",
-      "description": "Empty until a machine is added to deploy/monitoring/nodes.yml (runbook 'Monitoring', 'Adding another machine').",
+      "description": "Empty until a machine is added to deploy/monitoring/nodes.yml (runbook 'Monitoring', 'Adding another machine'). Proxmox machines are on the Proxmox cluster dashboard.",
       "gridPos": {
         "x": 0,
         "y": 44,
@@ -1766,7 +1766,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "max by (instance, machine, role) (up{job=\"machines\"})",
+          "expr": "max by (instance, machine, role) (up{job=\"machines\",group!=\"proxmox\"})",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1778,7 +1778,7 @@
         },
         {
           "refId": "B",
-          "expr": "(100 * (1 - avg by (instance, machine, role) (rate(node_cpu_seconds_total{job=\"machines\",mode=\"idle\"}[5m])))) or (100 * (1 - avg by (instance, machine, role) (rate(windows_cpu_time_total{job=\"machines\",mode=\"idle\"}[5m]))))",
+          "expr": "(100 * (1 - avg by (instance, machine, role) (rate(node_cpu_seconds_total{job=\"machines\",group!=\"proxmox\",mode=\"idle\"}[5m])))) or (100 * (1 - avg by (instance, machine, role) (rate(windows_cpu_time_total{job=\"machines\",group!=\"proxmox\",mode=\"idle\"}[5m]))))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1790,7 +1790,7 @@
         },
         {
           "refId": "C",
-          "expr": "(max by (instance, machine, role) (100 * (1 - node_memory_MemAvailable_bytes{job=\"machines\"} / node_memory_MemTotal_bytes{job=\"machines\"}))) or (max by (instance, machine, role) (100 * (1 - windows_os_physical_memory_free_bytes{job=\"machines\"} / windows_cs_physical_memory_bytes{job=\"machines\"})))",
+          "expr": "(max by (instance, machine, role) (100 * (1 - node_memory_MemAvailable_bytes{job=\"machines\",group!=\"proxmox\"} / node_memory_MemTotal_bytes{job=\"machines\",group!=\"proxmox\"}))) or (max by (instance, machine, role) (100 * (1 - windows_os_physical_memory_free_bytes{job=\"machines\",group!=\"proxmox\"} / windows_cs_physical_memory_bytes{job=\"machines\",group!=\"proxmox\"})))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1802,7 +1802,7 @@
         },
         {
           "refId": "D",
-          "expr": "(max by (instance, machine, role) (100 * (1 - node_filesystem_avail_bytes{job=\"machines\",fstype!~\"tmpfs|overlay|squashfs|ramfs|rootfs\"} / node_filesystem_size_bytes{job=\"machines\",fstype!~\"tmpfs|overlay|squashfs|ramfs|rootfs\"}))) or (max by (instance, machine, role) (100 * (1 - windows_logical_disk_free_bytes{job=\"machines\"} / windows_logical_disk_size_bytes{job=\"machines\"})))",
+          "expr": "(max by (instance, machine, role) (100 * (1 - node_filesystem_avail_bytes{job=\"machines\",group!=\"proxmox\",fstype!~\"tmpfs|overlay|squashfs|ramfs|rootfs\"} / node_filesystem_size_bytes{job=\"machines\",group!=\"proxmox\",fstype!~\"tmpfs|overlay|squashfs|ramfs|rootfs\"}))) or (max by (instance, machine, role) (100 * (1 - windows_logical_disk_free_bytes{job=\"machines\",group!=\"proxmox\"} / windows_logical_disk_size_bytes{job=\"machines\",group!=\"proxmox\"})))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1814,7 +1814,7 @@
         },
         {
           "refId": "E",
-          "expr": "max by (instance, machine, role) (time() - node_boot_time_seconds{job=\"machines\"}) or max by (instance, machine, role) (windows_system_system_up_time{job=\"machines\"})",
+          "expr": "max by (instance, machine, role) (time() - node_boot_time_seconds{job=\"machines\",group!=\"proxmox\"}) or max by (instance, machine, role) (windows_system_system_up_time{job=\"machines\",group!=\"proxmox\"})",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
