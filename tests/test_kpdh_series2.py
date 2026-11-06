@@ -188,6 +188,9 @@ def test_kpdh_promo_crops_are_squared_to_physical_card_ratios():
                 assert abs(image.width / image.height - expected_ratio) < 0.001
 
     builder = (BINDER / "scripts" / "build_promo_scans.py").read_text(encoding="utf-8")
-    assert '("scan0329", "kpdh01-pr1-02"): -3.3' in builder
-    assert '("scan0330", "kpdh01-pr1-02"): 2.0' in builder
+    assert '("scan0329", "kpdh01-pr1-02"):' in builder
+    assert '("scan0330", "kpdh01-pr1-02"):' in builder
+    assert "def perspective_crop(" in builder
+    assert "Image.Transform.QUAD" in builder
+    assert "* 1.03" in builder
     assert "def squared_crop(" in builder

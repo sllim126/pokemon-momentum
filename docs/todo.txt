@@ -43,6 +43,11 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-06 KPDH PR1 promo scan centering: replaced rotation-plus-center-crop with
+  four-corner perspective correction for all six PR1 front/back assets. Every sleeve edge
+  now remains visible with an even scanner-bed margin; Rumi's back and both Mira sides were
+  individually reviewed against the owner's screenshots.
+
 - 2026-11-06 KPDH promo scan alignment: independently straightened all eight fronts and
   eight backs, standardized crops to the physical portrait/landscape ratios, and corrected
   the PR2 back-sheet bounds so rotation does not clip the Kayou logo. Mira PR1-02 uses

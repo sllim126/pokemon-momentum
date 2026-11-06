@@ -35,6 +35,8 @@ its unrelated dashboard and operations commits.
   the 2026-10-29 lime evidence markers is tagged
   `kpdh-binder-planner:rollback-20261029-pre-evidence-markers`. The image immediately before
   the physical promo scans is tagged `kpdh-binder-planner:rollback-20261106-pre-promo-scans`;
+  PR1 scans use measured four-corner perspective correction rather than a centered rotation
+  crop, keeping all sleeve edges visible and centered despite uneven placement on the sheet;
   the first unstraightened promo deployment is tagged
   `kpdh-binder-planner:rollback-20261106-pre-square-scans`.
 
