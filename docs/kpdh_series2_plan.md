@@ -34,7 +34,9 @@ its unrelated dashboard and operations commits.
   `kpdh-binder-planner:rollback-20261028-pre-cr-renumber`; the image immediately before
   the 2026-10-29 lime evidence markers is tagged
   `kpdh-binder-planner:rollback-20261029-pre-evidence-markers`. The image immediately before
-  the physical promo scans is tagged `kpdh-binder-planner:rollback-20261106-pre-promo-scans`.
+  the physical promo scans is tagged `kpdh-binder-planner:rollback-20261106-pre-promo-scans`;
+  the first unstraightened promo deployment is tagged
+  `kpdh-binder-planner:rollback-20261106-pre-square-scans`.
 
 ## Confirmed release information
 
