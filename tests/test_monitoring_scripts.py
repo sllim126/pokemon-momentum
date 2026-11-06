@@ -42,6 +42,49 @@ class TodoCountTests(unittest.TestCase):
         self.assertIn('momentum_todo_items{status="waiting"} 1.0', out)
 
 
+class PlexTests(unittest.TestCase):
+    def test_counts_streams_transcodes_and_libraries_without_a_real_server(self):
+        replies = {
+            "/status/sessions": {"Metadata": [
+                {"Player": {"state": "playing"}, "TranscodeSession": {}},
+                {"Player": {"state": "paused"}},
+            ]},
+            "/library/sections": {"Directory": [{"key": "1", "type": "movie", "title": "Movies"},
+                                                {"key": "2", "type": "show", "title": "TV Shows"}]},
+            "/library/sections/1/all": {"totalSize": 10},
+            "/library/sections/2/all": {"totalSize": 3},
+            "/library/sections/2/all?type=4": {"totalSize": 40},
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            token = Path(tmp) / "plex-token"
+            token.write_text("not-a-real-token\n")
+            saved = collect_status.PLEX_TOKEN_FILE, collect_status._plex_get
+            collect_status.PLEX_TOKEN_FILE = token
+            collect_status._plex_get = lambda path, tok, count_only=False: replies[path]
+            try:
+                metrics = collect_status.Metrics()
+                collect_status.plex(metrics)
+            finally:
+                collect_status.PLEX_TOKEN_FILE, collect_status._plex_get = saved
+        out = metrics.text()
+        self.assertIn('momentum_plex_streams{state="playing"} 1.0', out)
+        self.assertIn('momentum_plex_streams{state="paused"} 1.0', out)
+        self.assertIn("momentum_plex_transcodes 1.0", out)
+        self.assertIn('momentum_plex_library_items{library="Movies",type="movie"} 10.0', out)
+        self.assertIn('momentum_plex_library_episodes{library="TV Shows"} 40.0', out)
+        self.assertNotIn("not-a-real-token", out)
+
+    def test_publishes_nothing_without_a_token_file(self):
+        saved = collect_status.PLEX_TOKEN_FILE
+        collect_status.PLEX_TOKEN_FILE = Path("/nonexistent/plex-token")
+        try:
+            metrics = collect_status.Metrics()
+            collect_status.plex(metrics)
+        finally:
+            collect_status.PLEX_TOKEN_FILE = saved
+        self.assertEqual(metrics.lines, [])
+
+
 class RunJobTests(unittest.TestCase):
     def test_records_exit_code_and_keeps_last_success_after_a_failure(self):
         with tempfile.TemporaryDirectory() as tmp:

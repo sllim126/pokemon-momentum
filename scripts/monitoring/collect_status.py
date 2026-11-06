@@ -21,6 +21,9 @@ What it reports (all metric names start with ``momentum_``):
 * Bug reports from Discord (tracking.sqlite3): reports per status, newest report time.
 * Git: current branch, uncommitted project files, commits not yet pushed.
 * A reminder while the temporary sudo file from the monitoring build-out still exists.
+* Plex (home lab, since 2026-11-06): streams now, how many transcode, and items per library,
+  from the Plex server's own API. Needs the owner's Plex token in PLEX_TOKEN_FILE (mode 600,
+  outside the repo); without that file the section publishes nothing.
 
 Every section is fenced off with its own try/except: one failing check (say, a locked
 database) is reported as ``momentum_collector_errors{section=...}`` and the rest still
@@ -48,6 +51,11 @@ OUTPUT = TEXTFILE_DIR / "momentum_status.prom"
 # Remembers when each systemd job last succeeded, because systemd only keeps the latest run.
 STATE_FILE = TEXTFILE_DIR / ".momentum_status_state.json"
 SUDOERS_REMINDER = Path("/etc/sudoers.d/90-claude-buildout")
+
+# Plex: the token gives full access to the owner's Plex account, so it lives only in this
+# root-made, adam-only file and is never logged or put in a metric.
+PLEX_URL = os.environ.get("MOMENTUM_PLEX_URL", "http://192.168.1.219:32400")
+PLEX_TOKEN_FILE = Path(os.environ.get("MOMENTUM_PLEX_TOKEN_FILE", "/etc/momentum-monitoring/plex-token"))
 
 DAY = 86400
 # job name -> (how it runs, expected interval in seconds). "systemd:<unit>" units are read
@@ -278,6 +286,44 @@ def reminders(m: Metrics) -> None:
           "1 while /etc/sudoers.d/90-claude-buildout exists (remove it after the monitoring build-out)")
 
 
+def _plex_get(path: str, token: str, count_only: bool = False) -> dict:
+    """GET a Plex API path as JSON. count_only asks for zero rows, so Plex just returns
+    totalSize (cheap even for a library of thousands of items)."""
+    import urllib.request
+
+    headers = {"X-Plex-Token": token, "Accept": "application/json"}
+    if count_only:
+        headers |= {"X-Plex-Container-Start": "0", "X-Plex-Container-Size": "0"}
+    with urllib.request.urlopen(urllib.request.Request(PLEX_URL + path, headers=headers), timeout=10) as resp:
+        return json.load(resp)["MediaContainer"]
+
+
+def plex(m: Metrics) -> None:
+    """Streams and library sizes on the home lab Plex server (Home lab: Servers dashboard).
+    Library names come from Plex itself; show libraries also report their episode count."""
+    if not PLEX_TOKEN_FILE.exists():
+        return
+    token = PLEX_TOKEN_FILE.read_text().strip()
+    sessions = _plex_get("/status/sessions", token).get("Metadata", [])
+    states: dict[str, int] = {"playing": 0, "paused": 0, "buffering": 0}
+    for item in sessions:
+        state = item.get("Player", {}).get("state", "playing")
+        states[state] = states.get(state, 0) + 1
+    for state, count in states.items():
+        m.add("momentum_plex_streams", count, "Plex streams now, by player state", state=state)
+    m.add("momentum_plex_transcodes", sum(1 for item in sessions if "TranscodeSession" in item),
+          "Plex streams being transcoded now (the rest play directly)")
+    for lib in _plex_get("/library/sections", token).get("Directory", []):
+        key, kind, title = lib["key"], lib.get("type", ""), lib.get("title", "")
+        items = _plex_get(f"/library/sections/{key}/all", token, count_only=True).get("totalSize")
+        m.add("momentum_plex_library_items", items,
+              "Items in each Plex library (movies, shows, artists or photos)", library=title, type=kind)
+        if kind == "show":  # type=4 counts episodes rather than shows
+            episodes = _plex_get(f"/library/sections/{key}/all?type=4", token, count_only=True).get("totalSize")
+            m.add("momentum_plex_library_episodes", episodes, "Episodes in each Plex TV library", library=title)
+    m.add("momentum_plex_up", 1, "1 when collect_status.py could read the Plex API")
+
+
 # --- main ----------------------------------------------------------------------------------
 
 
@@ -298,6 +344,7 @@ def main() -> int:
         "bug_reports": lambda: bug_reports(m),
         "git": lambda: git(m),
         "reminders": lambda: reminders(m),
+        "plex": lambda: plex(m),
     }
     errors = {}
     for name, section in sections.items():

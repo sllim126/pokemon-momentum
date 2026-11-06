@@ -475,7 +475,8 @@ def servers():
     p[-2]["transformations"][1]["options"]["excludeByName"].pop("instance")
     p.extend(machines_row(43))
     p.append(zfs_pools_table(g(0, 52, 24, 4)))
-    p.extend(nas_row(56, 'job="synology"', "Synology NAS (SNMP; deploy/monitoring/prometheus_momentum.yml, job synology)"))
+    p.extend(plex_row(56))
+    p.extend(nas_row(65, 'job="synology"', "Synology NAS (SNMP; deploy/monitoring/prometheus_momentum.yml, job synology)"))
     return dashboard("momentum-servers", "Home lab: Servers", p, tags=("servers",), family="homelab")
 
 
@@ -725,6 +726,32 @@ def zfs_pools_table(pos):
                              "soon. A scrub or resilver doesn't change the state. Per-disk errors: "
                              "`zpool status` on the server.",
                  overrides=[col("state", mappings=ZPOOL_STATE_MAP), col("Value #B", unit="bytes")])
+
+
+def plex_row(y):
+    """Plex (192.168.1.219): streams and libraries, from the plex section of
+    scripts/monitoring/collect_status.py (needs the owner's token file; runbook "Plex")."""
+    streams = 'sum(momentum_plex_streams) or vector(0)'
+    return [
+        row("Plex (192.168.1.219)", y),
+        stat("Streams now", streams, g(0, y + 1, 4, 4),
+             description="Everyone watching or listening, paused streams included."),
+        stat("Transcoding", "momentum_plex_transcodes or vector(0)", g(0, y + 5, 4, 4),
+             thresholds=steps("text", (3, "orange")),
+             description="Streams the server converts on the fly (the rest play directly). "
+                         "Each one costs CPU on the Plex machine."),
+        table("Libraries",
+              [target("max by (library, type) (momentum_plex_library_items)", ref="A", instant=True, table=True),
+               target('max by (library, type) (label_replace(momentum_plex_library_episodes, "type", "show", "", ""))',
+                      ref="B", instant=True, table=True)],
+              g(4, y + 1, 9, 8),
+              {"library": "Library", "type": "Kind", "Value #A": "Items", "Value #B": "Episodes"},
+              description="Items: movies, shows or artists, as Plex counts them. Episodes: TV libraries only.",
+              sort=("Items", True)),
+        timeseries("Streams", [target("sum(momentum_plex_streams)", "streams"),
+                               target("momentum_plex_transcodes", "transcoding", ref="B")],
+                   g(13, y + 1, 11, 8)),
+    ]
 
 
 def nas_table(title, sel, pos, description=""):

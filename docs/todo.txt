@@ -48,6 +48,8 @@ Recently Completed
   and the Synology NAS Laomedeia over SNMP (snmp-exporter container, "Synology NAS" table).
   Then: the Backup Server moved to its own row on Home lab: Proxmox cluster (nodes.yml label
   group: proxmox), and a "ZFS pools (RAID health)" table for the OMV pool (node_zfs_zpool_state).
+  And a Plex row (streams, transcodes, items per library) from collect_status.py, using the
+  owner's Plex token in /etc/momentum-monitoring/plex-token.
 - 2026-11-05: Budget Builder picks rotate day to day (owner: "just for fun"). Prices move
   little overnight, so the same cards won several days running. Cards shown by default on the
   last three price dates lose 25 / 15 / 8 points (`BUDGET_ROTATION_PENALTIES` in api.py; history
@@ -96,8 +98,7 @@ High Priority
 Monitoring with Grafana (owner, 2026-11-05): "show me everything, then we scale it down".
 Dashboards on http://192.168.1.240:3000 in folders "Pokemon Momentum" and "Home lab";
 runbook section "Monitoring".
-- [idea] OMV ran at 88% CPU and 83% memory on 2026-11-06 (worth a look). Plex streams and
-  libraries need a Plex token: owner deciding (token stays in a root-only file, not the repo).
+- [idea] OMV ran at 88% CPU and 83% memory on 2026-11-06 (worth a look).
 - [idea] Grafana loads the dashboards straight from this working checkout, so switching the
   checkout to a branch without `deploy/monitoring/grafana/homelab/` (anything older than
   2026-11-05) makes the Home lab dashboards vanish until switched back. Consider having
