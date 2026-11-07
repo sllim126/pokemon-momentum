@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-06 (market insights branch)
+Last updated: 2026-11-07 (market insights branch: after fees)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -54,6 +54,9 @@ Recently Completed
   (`/embed/card`). Search understands 16 collector nicknames. Desktop and phone; tests in
   `tests/test_market_insights.py`. A population-based "graded market cap" was dropped: we have
   no population counts (PriceCharting has prices and a sales count only).
+- 2026-11-07: Track record "By price, after fees" (same branch, owner agreed): each 7/14/30-day
+  result also gets an after-fees figure (resold at the later price minus `FEE_PCT` = 13% of the
+  sale, `pick_tracker.py`), and the summary is split at $40 entry price (`PRICE_BAND_SPLIT`).
 
 - 2026-11-05: Budget Builder picks rotate day to day (owner: "just for fun"). Prices move
   little overnight, so the same cards won several days running. Cards shown by default on the
@@ -170,6 +173,16 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   Builder (scored on PriceCharting history). Only raw English budget picks are scored today.
 - [idea] Desktop card column at 1366 px: when a card has "Our TCGplayer store", the action bar
   is wider than the column and "Full data" is clipped (seen 2026-11-06, also on main).
+- [planned] Track record: a downloadable CSV of every scored pick (date, list, card, entry and
+  day-30 price, return, after-fees return), free to reuse with credit. Owner agreed 2026-11-07;
+  wait until picks have 30-day results (from 2026-12-05).
+- [planned] Set heatmap: every set's 7/30/90-day move on one grid (Research → Sets), from the
+  group signal snapshot. Owner agreed 2026-11-07.
+- [planned] Market mood: a chart of the breadth reading over time (share of singles up over 60
+  days), from `<slug>_market_mood_snapshot`. Owner agreed 2026-11-07.
+- [planned] Track record: "how much of the move comes early", the share of a pick's 30-day move
+  already made by day 7 and day 14. Needs scored picks first (from 2026-12-05). Owner agreed
+  2026-11-07.
 - [idea] FastAPI warns that `@app.on_event("startup")` (api.py, Track record start-up job) is
   deprecated; moving to a lifespan handler means passing it when `app` is created.
 - [next] Check the 2026-11-06 02:00 nightly update is green: first run with the snapshot

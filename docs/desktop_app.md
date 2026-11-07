@@ -68,7 +68,7 @@ Every view is one entry in the `LISTS` array; its fields are documented above th
 | Research | Market Stats → Indexes (`indexes`) → one index (`index`) | `/index-overview-data` |
 | Research | Market Stats → Set values (`set_values`) → one set with its chart | `/set_baskets`, then `/group_products` and `/group_series` |
 | Research | Market Stats → Market mood (`mood`): 0-100 breadth reading, its three parts, two-year chart | `/market_mood` |
-| Research | Market Stats → Track record (`track_record`): each list's hit rate after 7/14/30 days against the market, latest picks (click one to open it) | `/track_record` |
+| Research | Market Stats → Track record (`track_record`): each list's hit rate after 7/14/30 days against the market, the same split by price with after-fees results, latest picks (click one to open it) | `/track_record` |
 | Research | Market Stats → Releases (`releases`): coming up, and sets out in the last 120 days (row opens the set, top card opens the card) | `/releases` |
 | Learn | How it works (`guide`; the header's Learn opens it) | Static text written by `renderGuide()`, including the "Thanks to TCGCSV" support link. No card column (`.layout.no-detail`) |
 

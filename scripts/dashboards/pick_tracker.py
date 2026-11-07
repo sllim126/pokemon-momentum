@@ -18,8 +18,11 @@ How it works:
      more did over the next 7/14/30 days (scripts/common/market_mood.py). Each list is shown
      against that baseline, weighted by how many picks it made on each day.
 
-Returns are price changes only: no fees, shipping or the gap between market price and what a
-card sells for. The page says so.
+Returns are price changes. Each horizon also gets an "after fees" figure: what reselling at
+the later market price would have returned once marketplace fees (FEE_PCT) are taken off the
+sale. Shipping and the gap between market price and what a card really sells for are still left
+out; the page says so. Results are also split at PRICE_BAND_SPLIT, because cheap cards rarely
+clear fees: a +10% move on a $5 card is a loss once it's sold.
 """
 
 from __future__ import annotations
@@ -32,6 +35,11 @@ PICKS_PER_LIST = 25
 HORIZONS = (7, 14, 30)
 NEW_PICK_GAP_DAYS = 30  # a card back on a list after this many days off it is a new pick
 HIT_PCT = 10.0  # "hit" = up at least this much
+# About what a TCGplayer sale costs a seller: commission plus payment processing, before
+# shipping. A rough, round figure on purpose; change it here and every page follows.
+FEE_PCT = 13.0
+PRICE_BAND_SPLIT = 40.0  # entry price that splits "Under $40" from "$40 and up"
+PRICE_BANDS = (("under", f"Under ${PRICE_BAND_SPLIT:.0f}"), ("over", f"${PRICE_BAND_SPLIT:.0f} and up"))
 
 
 def _d(value) -> date:
@@ -105,6 +113,8 @@ def score_picks(picks: list[dict], series: dict[tuple, tuple[list, list]], lates
         for h in HORIZONS:
             later = price_on(series.get(key), day + timedelta(days=h)) if (latest - day).days >= h else None
             row[f"d{h}_pct"] = round((later / entry - 1) * 100, 1) if later else None
+            # After fees: sold at the later price, minus FEE_PCT of the sale.
+            row[f"d{h}_net_pct"] = round((later * (1 - FEE_PCT / 100) / entry - 1) * 100, 1) if later else None
         scored.append(row)
     return scored
 
@@ -124,11 +134,15 @@ def summarize(scored: list[dict], baseline: dict[str, dict] | None = None) -> di
     for h in HORIZONS:
         done = [r for r in scored if r[f"d{h}_pct"] is not None]
         results = [r[f"d{h}_pct"] for r in done]
+        net = [r[f"d{h}_net_pct"] for r in done if r.get(f"d{h}_net_pct") is not None]
         entry = {
             "scored": len(done),
             "up_share": round(100 * sum(1 for x in results if x > 0) / len(results), 1) if results else None,
             "hit_share": round(100 * sum(1 for x in results if x >= HIT_PCT) / len(results), 1) if results else None,
             "median_pct": round(median(results), 1) if results else None,
+            # Share that would have sold at a profit after fees, and the median after fees.
+            "net_up_share": round(100 * sum(1 for x in net if x > 0) / len(net), 1) if net else None,
+            "net_median_pct": round(median(net), 1) if net else None,
             "market_up_share": None,
             "market_hit_share": None,
             "market_median_pct": None,
@@ -166,6 +180,11 @@ def build_track_record(
     for key, label in list_labels.items():
         rows = by_list.get(key, [])
         lists.append({"key": key, "label": label, **summarize(rows, baseline)})
+    # The same summary split by entry price (all lists together).
+    bands = []
+    for key, label in PRICE_BANDS:
+        rows = [r for r in scored if (r["entry_price"] < PRICE_BAND_SPLIT) == (key == "under")]
+        bands.append({"key": key, "label": label, **summarize(rows, baseline)})
     recent = sorted(scored, key=lambda r: (r["price_date"], -r.get("rank", 0)), reverse=True)[:recent_limit]
     first_day = min((r["price_date"] for r in scored), default=None)
     return {
@@ -175,6 +194,8 @@ def build_track_record(
         "horizons": list(HORIZONS),
         "hit_pct": HIT_PCT,
         "picks_per_list": PICKS_PER_LIST,
+        "fee_pct": FEE_PCT,
+        "bands": bands,
         "all": summarize(scored, baseline),
         "lists": lists,
         "recent": recent,

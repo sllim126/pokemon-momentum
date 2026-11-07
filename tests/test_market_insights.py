@@ -136,6 +136,25 @@ class TrackRecordTests(unittest.TestCase):
         self.assertIsNone(payload["all"]["d7"]["up_share"])
 
 
+class AfterFeesTests(unittest.TestCase):
+    def test_net_returns_and_price_bands(self):
+        days = [date.fromordinal(date(2026, 1, 1).toordinal() + i).isoformat() for i in range(31)]
+        series = {
+            (1, "Holofoil"): (days, [10.0] * 30 + [11.0]),    # +10% gross: a loss after 13% fees
+            (2, "Holofoil"): (days, [100.0] * 30 + [130.0]),  # +30% gross: +13.1% after fees
+        }
+        picks = [{"list_key": "breakouts", "price_date": "2026-01-01", "rank": r, "product_id": pid,
+                  "sub_type_name": "Holofoil", "entry_price": None} for r, pid in ((1, 1), (2, 2))]
+        payload = pick_tracker.build_track_record(picks, series, date(2026, 1, 31), None, {"breakouts": "Breakouts"})
+        d30 = payload["all"]["d30"]
+        self.assertEqual(d30["up_share"], 100.0)
+        self.assertEqual(d30["net_up_share"], 50.0)
+        self.assertEqual(payload["fee_pct"], pick_tracker.FEE_PCT)
+        under, over = payload["bands"]
+        self.assertEqual((under["key"], under["picks"], under["d30"]["net_median_pct"]), ("under", 1, -4.3))  # 11 * 0.87 / 10
+        self.assertEqual((over["key"], over["picks"], over["d30"]["net_median_pct"]), ("over", 1, 13.1))  # 130 * 0.87 / 100
+
+
 class PickStorageTests(unittest.TestCase):
     def test_record_once_and_load(self):
         with TemporaryDirectory() as tmp, mock.patch.object(tracking_store, "TRACKING_DB_PATH", Path(tmp) / "t.sqlite3"):

@@ -1284,8 +1284,9 @@
       const scoredAny = (p.lists || []).some((l) => l[`d${h1}`]?.scored);
       const firstResult = p.first_pick_date ? new Date(Date.parse(p.first_pick_date) + h1 * 864e5).toISOString().slice(0, 10) : null;
       const recent = (p.recent || []).slice(0, 25);
+      const bands = [{ ...p.all, label: "All prices" }, ...(p.bands || [])].filter((b) => b.picks > 0);
       view.replaceChildren(
-        el("p", { text: `Each day the top ${p.picks_per_list} of every list are saved with their price, and checked ${h1} and ${h3} days later next to all singles priced $5 or more (“mkt”). Price changes only, before fees.` }),
+        el("p", { text: `Each day the top ${p.picks_per_list} of every list are saved with their price, and checked ${h1} and ${h3} days later next to all singles priced $5 or more (“mkt”). Price changes before fees, except where marked.` }),
         !scoredAny && firstResult ? el("p", { text: `First ${h1}-day results on ${fmtDate(firstResult)}. Until then, “Open” shows how the picks are moving so far.` }) : null,
         el("table", { class: "ins-table" },
           el("thead", {}, el("tr", {}, el("th", { text: "List" }), el("th", { class: "r", text: `Up ${h1}d` }), el("th", { class: "r", text: `Up ${h3}d` }), el("th", { class: "r", text: `Median ${h3}d` }), el("th", { class: "r", text: "Open" }))),
@@ -1295,6 +1296,16 @@
             cell(l[`d${h3}`]?.up_share, l[`d${h3}`]?.market_up_share),
             cell(l[`d${h3}`]?.median_pct, l[`d${h3}`]?.market_median_pct, pct),
             el("td", { class: "r", text: l.open ? pct(l.open_median_pct) : "—" }))))),
+        // By price, after fees (see pick_tracker.py): profit share and median once fees come off.
+        bands.length && p.fee_pct != null ? el("h3", { text: "By price, after fees" }) : null,
+        bands.length && p.fee_pct != null ? el("table", { class: "ins-table" },
+          el("thead", {}, el("tr", {}, el("th", { text: "Price" }), el("th", { class: "r", text: `Up ${h3}d` }), el("th", { class: "r", text: "Profit after fees" }), el("th", { class: "r", text: "Median after fees" }))),
+          el("tbody", {}, ...bands.map((b) => el("tr", {},
+            el("td", {}, el("strong", { text: b.label }), el("span", { class: "vs", text: `${b.picks} picks` })),
+            el("td", { class: "r", text: sharePct(b[`d${h3}`]?.up_share) }),
+            el("td", { class: "r", text: sharePct(b[`d${h3}`]?.net_up_share) }),
+            el("td", { class: "r", text: pct(b[`d${h3}`]?.net_median_pct) }))))) : null,
+        bands.length && p.fee_pct != null ? el("p", { text: `After about ${p.fee_pct}% marketplace fees, before shipping. ${h3}-day results only.` }) : null,
         recent.length ? el("h3", { text: "Latest picks" }) : null,
         recent.length ? el("ul", { class: "ins-list" }, ...recent.map((r) => {
           const li = el("li", { role: "button", tabindex: "0" },

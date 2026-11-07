@@ -1931,7 +1931,7 @@
       const lists = [...(p.lists || [])].filter((l) => l.picks > 0);
       const intro = el("section", {},
         el("p", { text: `Every day the top ${p.picks_per_list} of each list are saved with the price they were shown at. A card counts once, on the day it joins a list, and is checked ${h1}, ${h2} and ${h3} days later. “Market” is every single priced $5 or more over the same days, so a good number in a rising market isn't mistaken for a good list.` }),
-        el("p", { class: "muted", text: `Price changes only, before fees and shipping. Picks saved since ${p.first_pick_date ? fmtDate(p.first_pick_date) : "today"}. ${p.baseline_ready ? "" : "The market comparison appears after the next nightly update."}` }));
+        el("p", { class: "muted", text: `Price changes before fees and shipping, except in “By price, after fees” below. Picks saved since ${p.first_pick_date ? fmtDate(p.first_pick_date) : "today"}. ${p.baseline_ready ? "" : "The market comparison appears after the next nightly update."}` }));
       const scoredAny = lists.some((l) => l[`d${h1}`]?.scored);
       const table = lists.length ? el("table", { class: "insight-table" },
         el("thead", {}, el("tr", {},
@@ -1966,7 +1966,25 @@
           tr.addEventListener("click", () => loadCardByKey(`${r.product_id}||${r.sub_type_name}`));
           return tr;
         }))) : null;
-      view.replaceChildren(intro, el("section", {}, el("h3", { text: "By list" }), waiting, table),
+      // By price, after fees: all lists together, split at the band price. "After fees" is the
+      // return from reselling at the later price minus p.fee_pct of the sale (pick_tracker.py).
+      const bandRows = [{ ...p.all, label: "All prices" }, ...(p.bands || [])].filter((b) => b.picks > 0);
+      const bandTable = bandRows.length && p.fee_pct != null ? el("table", { class: "insight-table" },
+        el("thead", {}, el("tr", {},
+          el("th", { text: "Price when picked" }), el("th", { class: "right", text: "Picks" }),
+          el("th", { class: "right", text: `Higher after ${h3}d` }), el("th", { class: "right", text: `Profit after fees, ${h3}d` }),
+          el("th", { class: "right", text: `Median after ${h3}d` }), el("th", { class: "right", text: `Median after fees, ${h3}d` }))),
+        el("tbody", {}, ...bandRows.map((b) => el("tr", {},
+          el("td", {}, el("strong", { text: b.label })),
+          el("td", { class: "right num", text: `${b.picks}` }),
+          el("td", { class: "right num", text: sharePct(b[`d${h3}`]?.up_share) }),
+          el("td", { class: "right num", text: sharePct(b[`d${h3}`]?.net_up_share) }),
+          el("td", { class: "right num", text: pct(b[`d${h3}`]?.median_pct) }),
+          el("td", { class: "right num", text: pct(b[`d${h3}`]?.net_median_pct) }))))) : null;
+      const bandSection = bandTable ? el("section", {}, el("h3", { text: "By price, after fees" }),
+        el("p", { class: "muted", text: `What selling at the ${h3}-day price would have made once about ${p.fee_pct}% of marketplace fees comes off the sale. Shipping isn't included. Cheap cards rarely clear fees: a card has to rise about ${Math.round(100 / (1 - p.fee_pct / 100) - 100)}% just to break even.` }),
+        bandTable) : null;
+      view.replaceChildren(intro, el("section", {}, el("h3", { text: "By list" }), waiting, table), bandSection,
         recentTable ? el("section", {}, el("h3", { text: "Latest picks" }), recentTable) : null);
     }
     // Releases: what's coming (listed on TCGplayer, or entered by hand) and recent sets.
