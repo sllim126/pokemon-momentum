@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-07 (market insights branch: after fees)
+Last updated: 2026-11-07 (market insights merged)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -165,8 +165,9 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   comes from the last Squarespace export, so refresh that rule from the new store's stock then.
 - [next] Check the Budget Builder on 2026-11-06 shows different picks from 2026-11-05 (first day of
   rotation; today's default views were recorded for price date 2026-11-04).
-- [next] Market insights branch (`feature/market-insights`): owner to try it and say what to keep.
-  It's not on the live site yet. After merging, check that the next nightly builds
+- [next] Market insights: owner approved and merged to `main` on 2026-11-07 (embed removed, grade
+  list moved into a dropdown). The live site runs from the checkout's branch, so it goes live
+  when that checkout is on `main` (or a branch with it) and the site restarts. Then check that the next nightly builds
   `pokemon_market_mood_snapshot` (log line "Build Pokemon market mood snapshot") and that the
   site log shows "Track record: recorded N picks" for the new date. The first 7-day results show
   on 2026-11-11 (picks recorded since 2026-11-05; budget picks since 2026-11-04).
