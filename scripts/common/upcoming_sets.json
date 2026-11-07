@@ -1,0 +1,30 @@
+{
+  "_about": "Upcoming sets for the Release calendar (api.py, /releases). Edit by hand: TCGCSV only lists a set once it is on sale, and from then on the calendar finds it by itself. status is 'confirmed' (announced by The Pokemon Company) or 'reported' (news sites, not yet official). market is EN or JP. Past dates drop off automatically.",
+  "checked": "2026-11-06",
+  "sets": [
+    {
+      "name": "Aura Seeker",
+      "market": "JP",
+      "release_date": "2026-11-27",
+      "status": "reported",
+      "note": "Mega Lucario Z ex",
+      "source": "https://screenrant.com/pokemon-tcg-new-set-november-27-aura-seeker/"
+    },
+    {
+      "name": "Flowing Fists",
+      "market": "EN",
+      "release_date": "2027-02-05",
+      "status": "reported",
+      "note": "English version of Aura Seeker",
+      "source": "https://lv1gaming.com/upcoming-pokemon-tcg-releases-2026-2027/"
+    },
+    {
+      "name": "MEGA x MEGA Parade",
+      "market": "JP",
+      "release_date": "2027-02-19",
+      "status": "reported",
+      "note": "",
+      "source": "https://pokennoisseur.ca/tools/release-calendar"
+    }
+  ]
+}

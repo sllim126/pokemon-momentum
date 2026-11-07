@@ -7,6 +7,22 @@ from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
 
 from scripts.dashboards import api
+from scripts.dashboards import tracking_store
+
+# Routes such as the Budget Builder write to the tracking SQLite database (pick history for
+# rotation). Point it at a throwaway file for this whole module, so tests never write into
+# the live data/processed/tracking.sqlite3.
+_tracking_tmp = TemporaryDirectory()
+_tracking_patch = patch.object(tracking_store, "TRACKING_DB_PATH", Path(_tracking_tmp.name) / "tracking.sqlite3")
+
+
+def setUpModule():
+    _tracking_patch.start()
+
+
+def tearDownModule():
+    _tracking_patch.stop()
+    _tracking_tmp.cleanup()
 
 
 class ApiRouteTests(unittest.TestCase):
@@ -180,10 +196,11 @@ class ApiRouteTests(unittest.TestCase):
     @patch.object(api, "db_has_table", return_value=True)
     @patch.object(api, "q")
     def test_graded_prices_returns_latest_with_pricecharting_link(self, q_mock, _has_table):
-        cols = ["snapshot_date", "pc_id", "set_name", "product_name", "ungraded", "grade9", "grade9_5", "psa10", "cgc10", "bgs10", "sgc10", "sales_volume"]
+        cols = ["snapshot_date", "pc_id", "set_name", "product_name", "ungraded", "grade9", "grade9_5", "psa10", "cgc10", "bgs10", "sgc10", "sales_volume", "grade7", "grade8"]
         q_mock.return_value = (cols, [
-            ("2026-10-08", 42, "Pokemon Base Set", "Charizard #4", 300.0, 900.0, None, 9000.0, 1200.0, None, None, 50),
-            ("2026-10-09", 42, "Pokemon Base Set", "Charizard #4", 310.0, 950.0, None, 9100.0, 1250.0, None, None, 51),
+            ("2026-10-08", 42, "Pokemon Base Set", "Charizard #4", 300.0, 900.0, None, 9000.0, 1200.0, None, None, 50, 500.0, 700.0),
+            # Grade 7 above grade 8 on purpose: the ladder passes prices through as they are.
+            ("2026-10-09", 42, "Pokemon Base Set", "Charizard #4", 310.0, 950.0, None, 9100.0, 1250.0, None, None, 51, 720.0, 700.0),
         ])
 
         body = self.client.get("/graded_prices?productId=1&subTypeName=Unlimited Holofoil").json()
@@ -192,6 +209,7 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(body["url"], "https://www.pricecharting.com/game/42")
         self.assertEqual(body["snapshot_date"], "2026-10-09")
         self.assertEqual(body["prices"]["psa10"], 9100.0)
+        self.assertEqual((body["prices"]["grade7"], body["prices"]["grade8"]), (720.0, 700.0))
         self.assertEqual(len(body["history"]), 2)
 
     def test_hold_check_route_rejects_unknown_channel(self):
@@ -866,6 +884,41 @@ class ApiRouteTests(unittest.TestCase):
         self.assertLessEqual(payload["spent"], 100.0)
         self.assertEqual(payload["keep_keys"], ["5||Holofoil"])
         self.assertFalse(any(item["kept"] for item in payload["items"][1:]))
+
+    @patch.object(api, "screener_snapshot_from", return_value="pokemon_screener_snapshot")
+    @patch.object(api, "category_config", return_value=api.category_config(3))
+    def test_budget_builder_rotates_recent_picks(self, _category_config_mock, _snapshot_mock):
+        """A card shown by default yesterday sits out today; a day's picks stay the same all day."""
+        columns = ["latest_date", "groupId", "groupName", "productId", "productName", "imageUrl", "rarity",
+                   "number", "productClass", "productKind", "subTypeName", "latest_price", "roc_7d_pct",
+                   "roc_30d_pct", "roc_90d_pct", "price_vs_sma30_pct", "price_vs_sma90_pct",
+                   "acceleration_7d_vs_30d", "trend_score", "recent_observations_7d",
+                   "recent_distinct_prices_7d", "recent_distinct_prices_30d", "last_change_date",
+                   "good_buys_default_flag", "early_uptrends_default_flag", "under_the_radar_default_flag",
+                   "breakout_90d_flag"]
+        def row(product_id, roc_7d, price_date="2031-01-07"):
+            return (price_date, 100 + product_id, f"Set {product_id}", product_id, f"Card {product_id}", "",
+                    "Illustration Rare", "1/1", "card", "card", "Holofoil", 20.0, roc_7d, 6.0, 9.0, 3.0, 4.0,
+                    2.0, 30.0, 8, 4, 8, price_date, 0, 0, 0, 0)
+        # Card 1 is clearly strongest, card 2 a close second, card 3 well behind.
+        rows = [row(1, 12.0), row(2, 10.0), row(3, 2.0)]
+        tracking_store.record_budget_picks("raw", 3, "2031-01-06", ["1||Holofoil"])  # shown yesterday
+        tracking_store.record_budget_picks("raw", 3, "2031-01-01", ["2||Holofoil"])  # too long ago to count
+        with patch.object(api, "q", return_value=(columns, rows)):
+            first = api.budget_builder_recommendations(budget=100, min_price=5, limit=2, category_id=3)
+            again = api.budget_builder_recommendations(budget=100, min_price=5, limit=2, category_id=3)
+        ids = [item["productId"] for item in first["items"]]
+        self.assertEqual(ids, [2, 3])              # card 1 rests a day despite the best score
+        self.assertEqual(first["rotated_out"], 1)
+        self.assertEqual([item["productId"] for item in again["items"]], ids)  # stable within the day
+        # Today's default picks are recorded for tomorrow's rotation.
+        recorded = tracking_store.recent_budget_picks("raw", 3, "2031-01-08", 1)
+        self.assertEqual({key for key in recorded if key in {"1||Holofoil", "2||Holofoil", "3||Holofoil"}},
+                         {"2||Holofoil", "3||Holofoil"})
+        # A Keep or "New picks" view is not recorded.
+        with patch.object(api, "q", return_value=(columns, [row(1, 12.0, "2031-01-08"), row(3, 2.0, "2031-01-08")])):
+            api.budget_builder_recommendations(budget=100, min_price=5, limit=1, exclude_keys="2||Holofoil", category_id=3)
+        self.assertNotIn("1||Holofoil", tracking_store.recent_budget_picks("raw", 3, "2031-01-09", 1))
 
     @patch.object(api, "_select_budget_candidates", return_value=[])
     @patch.object(api, "screener_snapshot_from", return_value="pokemon_screener_snapshot")

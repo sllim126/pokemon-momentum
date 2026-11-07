@@ -5,7 +5,7 @@ container, once per category. Steps run in order and the run stops at the first
 failure, except the soft steps in METADATA_FALLBACK_STEPS, which only warn:
 
     download today's TCGCSV prices -> load them into DuckDB -> refresh set and
-    product names -> rebuild health, signal, screener, sparkline and series snapshots ->
+    product names -> rebuild health, signal, screener, sparkline, series and market mood snapshots ->
     PriceCharting graded prices (English pass only) -> export parquet history ->
     build index snapshots (they read the parquet history, so they go last)
 
@@ -34,6 +34,9 @@ METADATA_FALLBACK_STEPS = {
     # Graded prices are supplementary; a PriceCharting outage must not stop the price update.
     "Download PriceCharting graded prices",
 }
+# Same, for steps whose names carry the market's label ("Build Pokemon market mood snapshot").
+# The mood gauge is supplementary, and the website can compute it itself if the table is stale.
+SOFT_STEP_SUFFIXES = ("market mood snapshot",)
 
 
 def parse_args() -> argparse.Namespace:
@@ -215,6 +218,12 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                     f"Build {category.label} series snapshot",
                     ["python", "scripts/indicators/build_series_snapshot.py", "--category-id", str(args.category_id)],
                 ),
+                (
+                    # Expected result: one row per day of market breadth for the Market mood gauge
+                    # (scripts/common/market_mood.py). Reads the series snapshot, so it comes after it.
+                    f"Build {category.label} market mood snapshot",
+                    ["python", "scripts/indicators/build_market_mood_snapshot.py", "--category-id", str(args.category_id)],
+                ),
             ]
         )
 
@@ -265,11 +274,11 @@ def can_fall_back_to_cached_metadata(step_name: str) -> bool:
     """Return whether a failed step can safely reuse the previous metadata snapshot.
 
     Only the steps in METADATA_FALLBACK_STEPS are soft failures: the tcgcsv-backed set
-    and product metadata refreshes, and the PriceCharting graded-price download. Price
-    loads and analytics rebuilds must still fail loudly because they directly control
-    whether the charts advance to a new date.
+    and product metadata refreshes, and the PriceCharting graded-price download, plus the
+    market mood snapshot (SOFT_STEP_SUFFIXES). Price loads and analytics rebuilds must
+    still fail loudly because they directly control whether the charts advance to a new date.
     """
-    return step_name in METADATA_FALLBACK_STEPS
+    return step_name in METADATA_FALLBACK_STEPS or step_name.endswith(SOFT_STEP_SUFFIXES)
 
 
 def main() -> int:

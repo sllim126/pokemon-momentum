@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-05
+Last reviewed: 2026-11-06
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -25,6 +25,16 @@ crontab changes). Each job is explained further down in this file.
 | Mon 11:00 | Weekly placeholder-name cleanup (product metadata + snapshot) | `pokemon-momentum-weekly-placeholder-refresh.timer` | journal |
 
 Check timers with `systemctl list-timers | grep pokemon`.
+
+After every website start (so after each nightly update) the site records the day's Track
+record picks in the background. Check it in the container log: `docker-compose logs
+pokemon-momentum | grep "Track record"` should show "recorded N picks for <date>" for
+category 3 and 85 once per price date ("recorded 0" on a second start the same day is fine).
+
+Release calendar: sets TCGplayer already lists appear by themselves. Sets not listed yet come
+from `scripts/common/upcoming_sets.json`, kept by hand: add an entry with name, market (EN or
+JP), release_date (YYYY-MM-DD), status (`confirmed` once The Pokemon Company announces it,
+`reported` before) and a source link, and update "checked". Past dates drop off on their own.
 
 Every cron job above runs through `scripts/monitoring/run_job.py`, and
 `scripts/monitoring/collect_status.py` runs every minute; both feed Grafana (see Monitoring).

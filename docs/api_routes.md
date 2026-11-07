@@ -1,6 +1,6 @@
 # Site routes
 
-Last reviewed: 2026-11-05
+Last reviewed: 2026-11-06
 
 Every route served by `scripts/dashboards/api.py` (FastAPI, port 8001 in the container,
 public at market.poke6s.com). `tests/test_api_routes.py::test_every_route_is_in_the_route_reference`
@@ -59,7 +59,7 @@ or the `pm_tracking_token` cookie); **admin** = signed in with an address listed
 | `/health` | monitoring, every page | Latest data date and history source for a market |
 | `/metrics` | Prometheus on the host (not public) | Request counts, errors and timings per route, and the price-data date, in Prometheus format. Answers only local requests without proxy headers; anything else gets 404. See `docs/operator_runbook.txt`, Monitoring |
 | `/categories` | market pickers | The markets the site covers |
-| `/search` | search boxes | Cards and sets matching a query (server-side search) |
+| `/search` | search boxes | Cards and sets matching a query (server-side search). Collector nicknames ("moonbreon") are searched as the card they mean (`scripts/common/card_nicknames.py`); `nickname` then holds the original text |
 | `/product_picker` | pickers | One page of the catalogue |
 | `/universe` | desktop app | The tradable card list for a market |
 | `/groups` | pickers | Sets with active products |
@@ -69,14 +69,17 @@ or the `pm_tracking_token` cookie); **admin** = signed in with an address listed
 | `/group_sparklines` | Desktop Sets view, 90-day trend column | Every set's 90-day equal-weight index in one call (about 15 points each; sets released inside the window start at release); cached until the next night's prices |
 | `/set_baskets` | Market Stats > Set values | What a set costs and where its value sits |
 | `/series` | every chart | Price history for one product |
-| `/card_details` | desktop card page | Everything the nightly snapshot knows about one printing |
-| `/graded_prices` | card page | PriceCharting graded prices (always shown with a PriceCharting link) |
+| `/card_details` | desktop card page | Everything the nightly snapshot knows about one printing, plus `records`: all-time high and low with dates and the 1/3/5-year change (`price_records`; weekly prices before the last two years) |
+| `/graded_prices` | card page | PriceCharting graded prices (always shown with a PriceCharting link): ungraded, grades 7, 8, 9 and 9.5 (any grader), and PSA/BGS/CGC/SGC 10 |
+| `/market_mood` | Market Stats > Market mood | A 0-100 breadth reading (share of singles $2+ above their 30-day average, rising over 7 days, at new 90-day highs vs lows), its band, a week and a month ago, and the daily history. From the nightly `<slug>_market_mood_snapshot`; without it, computed once in the background (`{"available": false, "computing": true}` meanwhile). Rules in `scripts/common/market_mood.py` |
+| `/track_record` | Market Stats > Track record | How each Discover list's daily top 25 (and the Budget Builder's default picks) did after 7, 14 and 30 days, next to all singles $5+ over the same days, a by-price split (under / over $40) with after-fees results (13% of the sale), and the latest picks. Picks are recorded when the site starts (`record_daily_picks`, tracking database `list_pick_history`); rules in `scripts/dashboards/pick_tracker.py` |
+| `/releases` | Market Stats > Releases | Sets released in the last `days` (default 120) with card count, singles total, top card and average 7/30-day move; upcoming sets from TCGCSV (listed with a later date) and `scripts/common/upcoming_sets.json` (hand-kept, marked confirmed or reported) |
 | `/hold_check` | 6-Month Hold | Whether buying today could sell at a profit after a horizon |
 | `/sparkline_batch` (POST) | lists | Small price series for many products at once |
 | `/store_link` | card page | The Poke6s store listing for a product, when in stock |
 | `/sealed_deals` | Sealed Deals | Sealed products with pack counts and price per pack |
-| `/budget_builder` | Budget Builder | Cards that fit a budget, spread across sets; `exclude_keys` skips cards (owned or already shown), `keep_keys` keeps cards and fills the rest around them |
-| `/graded_budget_builder` | Graded Budget Builder (beta) | Graded slabs (PriceCharting PSA 10 / grade 9 / grade 8) that fit a budget; `grades` = `10`, `9-10` or `8-10`; keys are `productId||subType||grade`; every item carries its PriceCharting link (`pc_url`) |
+| `/budget_builder` | Budget Builder | Cards that fit a budget, spread across sets; `exclude_keys` skips cards (owned or already shown), `keep_keys` keeps cards and fills the rest around them. Picks rotate daily: cards shown by default on the last 3 price dates lose points (`BUDGET_ROTATION_PENALTIES`; history in the tracking database's `budget_pick_history`); `rotated_out` counts them |
+| `/graded_budget_builder` | Graded Budget Builder (beta) | Graded slabs (PriceCharting PSA 10 / grade 9 / grade 8) that fit a budget; `grades` = `10`, `9-10` or `8-10`; keys are `productId||subType||grade`; every item carries its PriceCharting link (`pc_url`); rotates daily like `/budget_builder`, per card across grades |
 | `/top_movers`, `/breakouts`, `/sma30_holds`, `/confirmed_uptrends`, `/under_the_radar`, `/early_uptrends` | screener lists | One screener each: `{columns, rows}` |
 | `/good_buys`, `/small_dips`, `/set_dips` | Pullbacks, Small Dips, Whole-set Dips | Pullback screeners; rules in `query_support.build_pullback_sql` |
 | `/time_to_buy` | none (its page was deleted 2026-10-31) | Older Time to Buy screener, dropped from the desktop and mobile apps; the route remains for now |
