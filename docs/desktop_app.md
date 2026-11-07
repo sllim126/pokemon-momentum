@@ -76,8 +76,7 @@ The three views added 2026-11-06 (mood, track record, releases) are `INSIGHT_VIE
 into the guide panel (`loadInsight`), keep the card column, and have no rows or menu counts.
 The card column's Graded tab shows the whole grade ladder (ungraded, grades 7-9.5, the four 10s,
 each with its multiple of the raw price); the Full data page adds Price records (all-time high
-and low, 1/3/5-year change) and an Embed button that copies an `<iframe>` of `/embed/card`
-(only there: the card column's action bar has no room for it at 1366 px). Searching a
+and low, 1/3/5-year change). Searching a
 collector nickname ("moonbreon") shows a note above the results.
 
 Other endpoints: `/search` (top search box), `/universe` (opening a card from a link),

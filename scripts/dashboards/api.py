@@ -1063,12 +1063,6 @@ def eod_dashboard(authorization: str | None = Header(default=None), tracking_tok
     return FileResponse(EOD_DASHBOARD_HTML)
 
 
-@app.get("/embed/card")
-def embed_card():
-    """Public price chart for one card, made for an <iframe> (card_embed.html reads its query)."""
-    return FileResponse(SCRIPT_DIR / "card_embed.html")
-
-
 @app.get("/embed")
 def embed_dashboard(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
     require_admin_user(authorization=authorization, tracking_token=tracking_token)

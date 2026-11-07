@@ -318,7 +318,7 @@
     .chip-row button { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--panel-2); cursor: pointer; }
     .chip-row button:hover { border-color: var(--accent); }
     #resultsBody img.thumb, #pickGrid .pick img, #detailImage { cursor: zoom-in; }
-    #fullDataLink[hidden], #fullBackBtn[hidden], #embedBtn[hidden] { display: none; } /* .btn is inline-flex, which ignores [hidden] */
+    #fullDataLink[hidden], #fullBackBtn[hidden] { display: none; } /* .btn is inline-flex, which ignores [hidden] */
 
     /* ---------- detail ---------- */
     #detailBody { display: flex; flex-direction: column; flex: 1; min-height: 0; }
@@ -615,7 +615,6 @@
           <button type="button" class="btn" id="saveBtn" aria-haspopup="true">♡ Save</button>
           <a class="btn primary" id="tcgLink" target="_blank" rel="noopener noreferrer">TCGplayer ↗</a>
           <a class="btn" id="storeLink" target="_blank" rel="noopener noreferrer" hidden>Our TCGplayer store ↗</a>
-          <button type="button" class="btn" id="embedBtn" hidden title="Copy code that shows this card's price chart on your own site or blog">Embed</button>
           <a class="btn" id="fullDataLink" style="margin-left:auto" title="Everything about this card on one page (or double-click its picture)">Full data →</a>
           <button type="button" class="btn" id="fullBackBtn" style="margin-left:auto" hidden>← Back</button>
           <div class="save-menu" id="saveMenu" hidden></div>
@@ -2067,7 +2066,6 @@
           ["Graded", "PSA and CGC prices from PriceCharting, with a link back to the source."],
           ["Stats", "The 30-day average, window low and high, and printing details."],
           ["Full data", "Everything about one card on a page: price records (all-time high and low, 1, 3 and 5-year change), the lists it's in and its other printings."],
-          ["Embed (Full data page)", "Copies a small price chart of the card that you can paste into your own site or blog."],
         ]),
         section("Research", "", [
           ["Sets", "Every set ranked by how broadly its cards are rising. Click a set to see its cards, then narrow to hits or a rarity."],
@@ -2590,8 +2588,6 @@
       document.querySelector("main.layout").classList.toggle("full-card", state.fullCard);
       $("fullDataLink").hidden = state.fullCard;
       $("fullBackBtn").hidden = !state.fullCard;
-      // Embed only on the full-data page: the card pane's action bar has no room at 1366 px.
-      $("embedBtn").hidden = !state.fullCard;
       $("fullBackBtn").textContent = `← Back to ${currentList().label}`;
       $("fullExtra").hidden = !state.fullCard;
     }
@@ -2984,20 +2980,6 @@
         el("div", { class: "save-note", text: syncedTags ? "Synced to your account." : "Saved in this browser. Sign in to sync." }));
     }
     $("saveBtn").addEventListener("click", () => { $("saveMenu").hidden = !$("saveMenu").hidden; });
-    // Embed: copy an <iframe> of /embed/card (card_embed.html) for the open card. Falls back
-    // to showing the code in a prompt when the clipboard is blocked.
-    $("embedBtn").addEventListener("click", async () => {
-      if (!state.selected) return;
-      const query = new URLSearchParams({ product: state.selected.key, ...(state.market === "JP" ? { market: "JP" } : {}) });
-      const code = `<iframe src="https://market.poke6s.com/embed/card?${query}" width="480" height="260" style="border:0;max-width:100%" loading="lazy" title="${String(state.selected.name || "Card").replace(/"/g, "&quot;")} price chart"></iframe>`;
-      try {
-        await navigator.clipboard.writeText(code);
-        $("embedBtn").textContent = "Copied ✓";
-        setTimeout(() => { $("embedBtn").textContent = "Embed"; }, 2000);
-      } catch (_err) {
-        window.prompt("Copy this code into your page:", code);
-      }
-    });
     // Add or remove a card from a saved list: on the account when signed in, otherwise in this
     // browser. Then refresh the nav counts and, on a saved list, the list itself.
     async function toggleTag(card, tag, enabled) {
