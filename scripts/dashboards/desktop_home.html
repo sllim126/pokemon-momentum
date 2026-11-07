@@ -268,7 +268,10 @@
     .vs { display: block; font-size: 11px; color: var(--muted); }
     .badge { display: inline-block; padding: 1px 7px; border-radius: 9px; font-size: 11px; border: 1px solid var(--line); color: var(--muted); }
     .badge.listed, .badge.confirmed { color: #16a34a; border-color: rgba(22, 163, 74, 0.4); }
-    .ladder { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .ladder-more { grid-column: 1 / -1; font-size: 13px; }
+    .ladder-more summary { cursor: pointer; color: var(--muted); padding: 2px 0; }
+    .ladder-more summary:hover { color: var(--text); }
+    .ladder { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 4px; }
     .ladder td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
     .ladder td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
     .search-note { padding: 6px 12px; font-size: 12px; color: var(--muted); }
@@ -2910,15 +2913,20 @@
         // 2026-10-29: TCGplayer has more sales). PriceCharting's ungraded price, which leans on
         // eBay sales and often runs higher, goes in the note below with its link back.
         const market = card.price > 0 ? card.price : NaN;
-        // The grade ladder. "Grade 7" to "Grade 9.5" are PriceCharting's prices for any grading
-        // company; the 10s are per company. Prices don't always rise with the grade (AGENTS.md),
-        // so each row is shown as it is, never smoothed or flagged.
+        // Four headline prices as boxes, then every grade in a "See all grades" dropdown (closed
+        // by default; owner, 2026-11-07). "Grade 7" to "Grade 9.5" are PriceCharting's prices for
+        // any grading company; the 10s are per company. Prices don't always rise with the grade
+        // (AGENTS.md), so each row is shown as it is, never smoothed or flagged.
+        const cells = [["Ungraded (TCGplayer)", market], ["PSA 9", data.prices.grade9], ["PSA 10", data.prices.psa10], ["CGC 10", data.prices.cgc10]];
         const ladder = [["Ungraded (TCGplayer)", market], ["Grade 7", data.prices.grade7], ["Grade 8", data.prices.grade8],
           ["Grade 9", data.prices.grade9], ["Grade 9.5", data.prices.grade9_5], ["PSA 10", data.prices.psa10],
           ["BGS 10", data.prices.bgs10], ["CGC 10", data.prices.cgc10], ["SGC 10", data.prices.sgc10]].filter(([, v]) => Number(v) > 0);
-        $("gradedGrid").replaceChildren(el("table", { class: "ladder", style: "grid-column:1/-1" },
-          el("tbody", {}, ...ladder.map(([label, value]) => el("tr", {}, el("td", { text: label }), el("td", { text: money(value) }),
-            el("td", { class: "muted", text: market && label !== "Ungraded (TCGplayer)" ? `${(value / market).toFixed(1)}× raw` : "" }))))));
+        $("gradedGrid").replaceChildren(
+          ...cells.map(([label, value]) => el("div", { class: "stat" }, el("span", { text: label }), el("strong", { text: money(value) }))),
+          el("details", { class: "ladder-more" }, el("summary", { text: `See all grades (${ladder.length})` }),
+            el("table", { class: "ladder" },
+              el("tbody", {}, ...ladder.map(([label, value]) => el("tr", {}, el("td", { text: label }), el("td", { text: money(value) }),
+                el("td", { class: "muted", text: market && label !== "Ungraded (TCGplayer)" ? `${(value / market).toFixed(1)}× raw` : "" })))))));
         const notes = [];
         if (data.prices.ungraded) notes.push(`PriceCharting's ungraded price: ${money(data.prices.ungraded)}.`);
         if (data.sales_volume) notes.push(`${data.sales_volume.toLocaleString()} sales a year.`);

@@ -50,7 +50,8 @@ Recently Completed
   snapshot", soft), Track record (`/track_record`; picks recorded at site start into
   `list_pick_history`; Budget Builder history now kept 400 days so it can be scored too) and
   Releases (`/releases`; hand-kept `scripts/common/upcoming_sets.json`). Cards get the full
-  PriceCharting grade ladder (Graded tab) and price records (Full data). An Embed chart for
+  PriceCharting grade ladder (Graded tab; a "See all grades" dropdown under the four price boxes since
+  2026-11-07, at the owner's request) and price records (Full data). An Embed chart for
   other sites was built and removed on 2026-11-07 (owner didn't want it). Search understands 16 collector nicknames. Desktop and phone; tests in
   `tests/test_market_insights.py`. A population-based "graded market cap" was dropped: we have
   no population counts (PriceCharting has prices and a sales count only).

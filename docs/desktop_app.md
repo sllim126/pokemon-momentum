@@ -74,8 +74,9 @@ Every view is one entry in the `LISTS` array; its fields are documented above th
 
 The three views added 2026-11-06 (mood, track record, releases) are `INSIGHT_VIEWS`: they render
 into the guide panel (`loadInsight`), keep the card column, and have no rows or menu counts.
-The card column's Graded tab shows the whole grade ladder (ungraded, grades 7-9.5, the four 10s,
-each with its multiple of the raw price); the Full data page adds Price records (all-time high
+The card column's Graded tab shows four price boxes (ungraded, grade 9, PSA 10, CGC 10) and,
+under them, a "See all grades" dropdown (closed by default) with every grade PriceCharting lists
+(grades 7-9.5, the four 10s, each with its multiple of the raw price); the Full data page adds Price records (all-time high
 and low, 1/3/5-year change). Searching a
 collector nickname ("moonbreon") shows a note above the results.
 
