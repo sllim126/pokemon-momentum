@@ -29,6 +29,10 @@ its unrelated dashboard and operations commits.
   four-corner perspective correction with a narrow, even outer margin. This fixed Mira's
   notably tilted PR1-02 scans and the convention promos' off-center backs without altering
   the card artwork.
+  On 2026-11-07, individual scans 331-341 and 343 replaced the available multi-card-sheet
+  crops. Scan 337 is the physically identical back shared by all three PR2 promos; scan 342
+  is an unused duplicate of the selected Zoey front in scan 335. The original PR-01/PR-02
+  backs remain because those sides were not included in the individual rescan pass.
 - Verification: the full test suite passed (266 tests and 33 subtests); the local and public
   planner, catalog, representative Series 1/2 assets, redirects, noindex/security headers,
   root market page and container logs were checked after deployment.

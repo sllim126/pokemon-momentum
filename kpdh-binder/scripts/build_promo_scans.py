@@ -91,6 +91,33 @@ QUADS = {
     ("scan0330", "kpdh01-pr1-03"): (2600, 3650, 2600, 5850, 4310, 5850, 4300, 3650),
 }
 
+# The second scan pass put one physical card on each page. These replace the
+# corresponding crops from the crowded first-pass sheets above. Coordinates
+# follow Pillow's upper-left, lower-left, lower-right, upper-right QUAD order and
+# retain a narrow strip of the clear sleeve around the physical card. Landscape
+# PR2 cards were placed upright on the scanner and are rotated after rectifying.
+INDIVIDUAL_SCANS = {
+    "scan0331": ("fronts", (("kpdh01-pr1-01", "front", (40, 45, 40, 2130, 1525, 2130, 1525, 45), False),)),
+    "scan0332": ("backs", (("kpdh01-pr1-01", "back", (50, 35, 50, 2160, 1550, 2160, 1550, 35), False),)),
+    "scan0333": ("fronts", (("kpdh01-pr1-02", "front", (40, 40, 40, 2125, 1525, 2125, 1525, 40), False),)),
+    "scan0334": ("backs", (("kpdh01-pr1-02", "back", (50, 30, 50, 2160, 1570, 2160, 1570, 30), False),)),
+    "scan0335": ("fronts", (("kpdh01-pr1-03", "front", (40, 45, 40, 2135, 1530, 2135, 1530, 45), False),)),
+    "scan0336": ("fronts", (("kpdh01-pr2-01", "front", (40, 80, 40, 2180, 1530, 2180, 1530, 80), True),)),
+    "scan0337": (
+        "backs",
+        (
+            ("kpdh01-pr2-01", "back", (40, 5, 40, 2095, 1530, 2095, 1530, 5), True),
+            ("kpdh01-pr2-02", "back", (40, 5, 40, 2095, 1530, 2095, 1530, 5), True),
+            ("kpdh01-pr2-03", "back", (40, 5, 40, 2095, 1530, 2095, 1530, 5), True),
+        ),
+    ),
+    "scan0338": ("fronts", (("kpdh01-pr2-02", "front", (40, 110, 40, 2210, 1540, 2210, 1540, 110), True),)),
+    "scan0339": ("fronts", (("kpdh01-pr2-03", "front", (50, 105, 50, 2210, 1555, 2210, 1555, 105), True),)),
+    "scan0340": ("fronts", (("kpdh01-pr-02", "front", (45, 90, 45, 2200, 1540, 2200, 1540, 90), False),)),
+    "scan0341": ("fronts", (("kpdh01-pr-01", "front", (10, 10, 10, 2100, 1500, 2100, 1500, 10), False),)),
+    "scan0343": ("backs", (("kpdh01-pr1-03", "back", (50, 20, 50, 2170, 1550, 2170, 1550, 20), False),)),
+}
+
 
 def extract_embedded_jpeg(pdf: Path) -> bytes:
     """Return the single full-page JPEG stream embedded in a scanner PDF."""
@@ -109,6 +136,20 @@ def source_image(intake: Path, stem: str, temporary: Path) -> Path:
     if jpeg.is_file():
         return jpeg
     pdf = intake / sheet_folder / f"{stem}.pdf"
+    if not pdf.is_file():
+        raise FileNotFoundError(f"Missing {pdf}")
+    temporary.mkdir(parents=True, exist_ok=True)
+    destination = temporary / f"{stem}.jpg"
+    destination.write_bytes(extract_embedded_jpeg(pdf))
+    return destination
+
+
+def individual_source_image(intake: Path, stem: str, folder: str, temporary: Path) -> Path:
+    """Resolve a one-card rescan whose front/back folder is explicitly reviewed."""
+    jpeg = intake / folder / f"{stem}.jpg"
+    if jpeg.is_file():
+        return jpeg
+    pdf = intake / folder / f"{stem}.pdf"
     if not pdf.is_file():
         raise FileNotFoundError(f"Missing {pdf}")
     temporary.mkdir(parents=True, exist_ok=True)
@@ -166,6 +207,28 @@ def perspective_crop(source: Image.Image, quad: tuple[int, ...]) -> Image.Image:
     )
 
 
+def individual_crop(source: Image.Image, quad: tuple[int, ...], landscape: bool) -> Image.Image:
+    """Rectify a one-card scan, rotating cards printed in landscape orientation."""
+    crop = source.transform(
+        (1500, 2100),
+        Image.Transform.QUAD,
+        quad,
+        resample=Image.Resampling.BICUBIC,
+    )
+    # The landscape cards were placed with their printed top edge at the scanner's
+    # right side, so a clockwise turn restores the intended reading direction.
+    return crop.rotate(-90, expand=True) if landscape else crop
+
+
+def save_assets(crop: Image.Image, full: Path, thumb: Path) -> None:
+    """Write one prepared scan at full detail and as its optimized thumbnail."""
+    full.parent.mkdir(parents=True, exist_ok=True)
+    thumb.parent.mkdir(parents=True, exist_ok=True)
+    crop.save(full, "JPEG", quality=92, optimize=True, progressive=True, dpi=(600, 600))
+    crop.thumbnail((420, 420), Image.Resampling.LANCZOS)
+    crop.save(thumb, "WEBP", quality=80, method=6)
+
+
 def save_card(
     source: Image.Image,
     box: tuple[int, int, int, int],
@@ -177,11 +240,7 @@ def save_card(
     """Crop one reviewed card and save its full and thumbnail publishing assets."""
     source = ImageOps.exif_transpose(source).convert("RGB")
     crop = perspective_crop(source, quad) if quad else squared_crop(source.crop(box), angle)
-    full.parent.mkdir(parents=True, exist_ok=True)
-    thumb.parent.mkdir(parents=True, exist_ok=True)
-    crop.save(full, "JPEG", quality=92, optimize=True, progressive=True, dpi=(600, 600))
-    crop.thumbnail((420, 420), Image.Resampling.LANCZOS)
-    crop.save(thumb, "WEBP", quality=80, method=6)
+    save_assets(crop, full, thumb)
 
 
 def build(intake: Path, temporary: Path) -> None:
@@ -197,6 +256,22 @@ def build(intake: Path, temporary: Path) -> None:
                     box,
                     ROTATIONS[(stem, code)],
                     QUADS.get((stem, code)),
+                    ROOT / "cards" / folder / f"{code}.jpg",
+                    ROOT / "cards" / "thumbs" / folder / f"{code}.webp",
+                )
+
+    # Build the individually rescanned cards last so they supersede only the old
+    # assets they replace. PR-01/PR-02 backs intentionally remain from scan0326.
+    for stem, (source_folder, cards) in INDIVIDUAL_SCANS.items():
+        with Image.open(individual_source_image(intake, stem, source_folder, temporary)) as sheet:
+            if sheet.size != (5100, 6600):
+                raise ValueError(f"{stem} is {sheet.size}; expected the reviewed 5100 x 6600 scan")
+            source = ImageOps.exif_transpose(sheet).convert("RGB")
+            for code, face, quad, landscape in cards:
+                folder = "backs/promo" if face == "back" else "promo"
+                crop = individual_crop(source, quad, landscape)
+                save_assets(
+                    crop,
                     ROOT / "cards" / folder / f"{code}.jpg",
                     ROOT / "cards" / "thumbs" / folder / f"{code}.webp",
                 )

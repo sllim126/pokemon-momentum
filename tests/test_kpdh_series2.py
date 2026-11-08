@@ -159,7 +159,7 @@ def test_kpdh_promos_match_physical_cards_and_preserve_old_collections():
         assert f"['{code}','{name}'" in html
     assert "KPDH01-PR1-001','Rumi'" not in html
     assert "hasBack:true" in html
-    assert "600 DPI scan (2026-11-06)" in html
+    assert "600 DPI scans (2026-11-06; selected rescans 2026-11-07)" in html
     assert "detailFace='front'" in html
     assert "data-face=\"back\"" in html
     assert "version<5" in html
@@ -194,3 +194,7 @@ def test_kpdh_promo_crops_are_squared_to_physical_card_ratios():
     assert "Image.Transform.QUAD" in builder
     assert "* 1.03" in builder
     assert "def squared_crop(" in builder
+    assert "INDIVIDUAL_SCANS" in builder
+    assert '"scan0343": ("backs"' in builder
+    assert builder.count('(\"kpdh01-pr2-0') >= 6
+    assert "crop.rotate(-90, expand=True)" in builder
