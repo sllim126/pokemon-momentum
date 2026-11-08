@@ -28,7 +28,8 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   (counted by the apps themselves, no cookies). The Proxmox, network and server dashboards
   sit in a separate "Home lab" folder, which also covers the backup server (and its backups,
   once its API token is saved), the OpenMediaVault storage server and its ZFS pool, Plex
-  (streams and libraries) and a Synology NAS (SNMP). Runbook section "Monitoring"; files in
+  (streams and libraries), a Synology NAS (SNMP) and the Valheim servers on Slowheim (read from
+  that machine's own Prometheus and Loki). Runbook section "Monitoring"; files in
   `deploy/monitoring/`, `scripts/monitoring/`
 - Alerts: nightly update, Squarespace price sync, the other-games archive, the archive
   backfill and the catalogue crawl post summaries to Discord

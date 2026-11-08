@@ -49,6 +49,8 @@ Recently Completed
     "Proxmox Backup Server backups"). The certificate for verified TLS is already saved.
   - [waiting] ZFS scrubs and disk errors (Home lab: Servers, ZFS pools table): the owner runs
     `deploy/monitoring/zfs/install_on_host.sh root@192.168.1.155` (runbook, "ZFS on OMV").
+- 2026-11-08 Slowheim (Valheim machine) in Grafana: data sources for its own Prometheus and
+  Loki, and the owner's dashboard imported as Home lab: Slowheim (Valheim).
 - 2026-11-06 More home lab machines in Grafana (Home lab: Servers): Proxmox Backup Server and
   the OpenMediaVault storage server (node-exporter), Plex (web check of its /identity page),
   and the Synology NAS Laomedeia over SNMP (snmp-exporter container, "Synology NAS" table).
@@ -104,6 +106,9 @@ High Priority
 Monitoring with Grafana (owner, 2026-11-05): "show me everything, then we scale it down".
 Dashboards on http://192.168.1.240:3000 in folders "Pokemon Momentum" and "Home lab";
 runbook section "Monitoring".
+- [waiting] Slowheim: the daily world backup cron (/etc/cron.d/valheim-backup, running
+  /usr/local/bin/vh-backup.sh at 04:25) is gone; newest archive ~2026-10-28. Owner to restore it
+  (or confirm it moved). The Slowheim dashboard could show the newest archive's age.
 - [idea] OMV ran at 88% CPU and 83% memory on 2026-11-06 (worth a look).
 - [idea] Grafana loads the dashboards straight from this working checkout, so switching the
   checkout to a branch without `deploy/monitoring/grafana/homelab/` (anything older than

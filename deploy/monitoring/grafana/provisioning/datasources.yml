@@ -1,5 +1,8 @@
 # Grafana data source, installed to /etc/grafana/provisioning/datasources/ by install.sh.
-# The dashboards refer to it by uid "prometheus".
+# The dashboards refer to them by uid: "prometheus" (this server), and "slowheim-prometheus" and
+# "slowheim-loki" (the Prometheus and Loki on the Valheim machine Slowheim, 192.168.1.187,
+# plain HTTP on the LAN; used by Home lab: Slowheim (Valheim)). A changed file needs a Grafana
+# restart.
 apiVersion: 1
 datasources:
   - name: Prometheus
@@ -11,3 +14,17 @@ datasources:
     editable: false
     jsonData:
       timeInterval: 15s
+  - name: Slowheim Prometheus
+    uid: slowheim-prometheus
+    type: prometheus
+    access: proxy
+    url: http://192.168.1.187:9090
+    editable: false
+    jsonData:
+      timeInterval: 15s
+  - name: Slowheim Loki
+    uid: slowheim-loki
+    type: loki
+    access: proxy
+    url: http://192.168.1.187:3100
+    editable: false

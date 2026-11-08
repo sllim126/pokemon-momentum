@@ -1118,11 +1118,34 @@ def visitors():
                      time_from="now-30d", tags=("visitors",))
 
 
+# Slowheim (the Valheim machine, 192.168.1.187) runs its own Prometheus and Loki; Grafana
+# reaches them through the data sources "Slowheim Prometheus" and "Slowheim Loki"
+# (grafana/provisioning/datasources.yml). Its dashboard is the owner's own export, kept as-is in
+# grafana/imported/slowheim_source.json (from /home/adam/slowheim-monitoring/grafana-dashboard.json
+# on Slowheim): to update it, copy that file over and rerun this script.
+SLOWHEIM_SOURCE = Path(__file__).resolve().parent / "grafana" / "imported" / "slowheim_source.json"
+SLOWHEIM_DATASOURCES = {"${DS_PROMETHEUS}": "slowheim-prometheus", "${DS_LOKI}": "slowheim-loki"}
+
+
+def slowheim():
+    """The imported Slowheim dashboard with its data-source prompts filled in, the Home lab tag
+    and the same top bar as the others."""
+    text = SLOWHEIM_SOURCE.read_text(encoding="utf-8")
+    for placeholder, uid in SLOWHEIM_DATASOURCES.items():
+        text = text.replace(placeholder, uid)
+    board = json.loads(text)
+    for key in ("__inputs", "__requires", "__elements", "id"):
+        board.pop(key, None)
+    frame = dashboard("homelab-slowheim", "Home lab: Slowheim (Valheim)", [], tags=("valheim",), family="homelab")
+    board.update(uid=frame["uid"], title=frame["title"], tags=frame["tags"], links=frame["links"])
+    return board
+
+
 def main() -> None:
     boards = ((OUT, "overview", overview()), (OUT, "website", website()),
               (OUT, "jobs_and_work", jobs_and_work()), (OUT, "visitors", visitors()),
               (OUT_HOMELAB, "proxmox", proxmox()), (OUT_HOMELAB, "network", network()),
-              (OUT_HOMELAB, "servers", servers()))
+              (OUT_HOMELAB, "servers", servers()), (OUT_HOMELAB, "slowheim", slowheim()))
     for folder, name, board in boards:
         folder.mkdir(parents=True, exist_ok=True)
         (folder / f"{name}.json").write_text(json.dumps(board, indent=2) + "\n", encoding="utf-8")

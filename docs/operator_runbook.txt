@@ -209,6 +209,19 @@ a key is set up). Any other ZFS machine with node-exporter works the same way. T
 the machine: `systemctl disable --now zfs-status.timer`, delete the two unit files in
 /etc/systemd/system, /usr/local/lib/zfs-status and /var/lib/prometheus/node-exporter/zfs_status.prom.
 
+Slowheim, the Valheim machine (192.168.1.187; since 2026-11-08; dashboard Home lab: Slowheim
+(Valheim)): it runs its own Prometheus (:9090, jobs node, valheim and prometheus) and Loki
+(:3100, server logs with event labels join, disconnect, death_or_spawn and world_save), set up by
+the owner on that machine (/home/adam/slowheim-monitoring there). Grafana here only reads them,
+through the data sources "Slowheim Prometheus" and "Slowheim Loki" (uids slowheim-prometheus and
+slowheim-loki in deploy/monitoring/grafana/provisioning/datasources.yml; plain HTTP on the LAN,
+no auth). Its dashboard is the owner's own export, kept unchanged in
+deploy/monitoring/grafana/imported/slowheim_source.json; build_dashboards.py fills in the data
+sources and the Home lab top bar. To update it, copy Slowheim's grafana-dashboard.json over that
+file and rerun build_dashboards.py. Note (2026-11-08): /etc/cron.d/valheim-backup, the daily
+world backup the Slowheim notes describe, is missing there; the newest archive in
+/opt/valheim-backups was about 10 days old.
+
 Synology NAS (since 2026-11-06; "Synology NAS" table on Home lab: Servers):
 
 - Read over SNMP by the snmp-exporter container (127.0.0.1:9116, `docker-compose.yml`), using
