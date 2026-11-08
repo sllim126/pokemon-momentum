@@ -178,6 +178,37 @@ the Plex API every minute. It needs the owner's Plex token in /etc/momentum-moni
 Without the file the section publishes nothing; a wrong token shows as
 momentum_collector_errors{section="plex"} = 1 ("Status collector" table). To stop it, delete the file.
 
+Proxmox Backup Server backups (since 2026-11-08; "Proxmox Backup Server" row on Home lab:
+Proxmox cluster): the pbs section of `scripts/monitoring/collect_status.py` reads datastore space,
+each guest's newest backup, backups kept and verify result, and the last 7 days of backup, verify,
+prune, garbage-collection and sync tasks. It needs:
+
+- an API token with the Audit role only, in /etc/momentum-monitoring/pbs-token as
+  `user@realm!tokenname:secret` (owner adam, mode 600; never in the repo or a log). Make it in
+  the PBS web UI: Configuration > Access Control > API Token > Add (user root@pam, name grafana,
+  "Privilege Separation" ticked), then Permissions > Add > API Token Permission: path /, the
+  token, role Audit. Save it with the same `read -rs T` line as the Plex token, writing to
+  pbs-token instead.
+- PBS's certificate in /etc/momentum-monitoring/pbs-cert.pem, so TLS is verified (saved
+  2026-11-08; SHA-256 fingerprint E1:97:8E:40:...:99:E9:59:4F, matching PBS's Dashboard >
+  "Show Fingerprint"). The certificate names the server 72pbs, which the collector checks. If PBS
+  gets a new certificate, save it again:
+  `echo | openssl s_client -connect 192.168.1.72:8007 2>/dev/null | openssl x509 > /etc/momentum-monitoring/pbs-cert.pem`
+  (then compare the fingerprint with the PBS dashboard).
+
+Without the token the section publishes nothing; a failure shows as
+momentum_collector_errors{section="pbs"} = 1.
+
+ZFS on OMV (since 2026-11-08; the scrub and error columns of "ZFS pools (RAID health)"):
+`deploy/monitoring/zfs/zfs_status.py` runs as root on the OpenMediaVault server every 5 minutes
+(zfs-status.timer; no network, read-only system) and writes zfs_status.prom for its node-exporter:
+pool size and use, last scrub and its errors, scrub or resilver running, read/write/checksum
+errors per disk, and data errors. Install or update it from this server with
+`deploy/monitoring/zfs/install_on_host.sh root@192.168.1.155` (asks for OMV's SSH password unless
+a key is set up). Any other ZFS machine with node-exporter works the same way. To remove it, on
+the machine: `systemctl disable --now zfs-status.timer`, delete the two unit files in
+/etc/systemd/system, /usr/local/lib/zfs-status and /var/lib/prometheus/node-exporter/zfs_status.prom.
+
 Synology NAS (since 2026-11-06; "Synology NAS" table on Home lab: Servers):
 
 - Read over SNMP by the snmp-exporter container (127.0.0.1:9116, `docker-compose.yml`), using

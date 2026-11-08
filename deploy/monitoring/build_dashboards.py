@@ -625,10 +625,87 @@ def proxmox():
     # Proxmox servers outside the cluster API (the Backup Server): node-exporter, labelled
     # group: proxmox in deploy/monitoring/nodes.yml.
     p.append(row("Proxmox Backup Server", 30))
-    p.append(machines_table("Proxmox Backup Server", 'job="machines",group="proxmox"', g(0, 31, 24, 5),
-                            "node-exporter on the Backup Server (deploy/monitoring/nodes.yml, "
-                            "group: proxmox). Fullest disk includes its datastore on /."))
+    p.extend(pbs_panels(31))
     return dashboard("momentum-homelab", "Home lab: Proxmox cluster", p, tags=("proxmox",), family="homelab")
+
+
+# PBS backups come from the pbs section of scripts/monitoring/collect_status.py (API token
+# with the Audit role; runbook "Proxmox Backup Server"). Guests are matched to the Proxmox
+# exporter's guests by VMID: PBS calls them vm/101 or ct/101, pve-exporter qemu/101 or lxc/101.
+PBS_GROUP = "momentum_pbs_group_last_backup_timestamp_seconds"
+PBS_VERIFY_MAP = value_map({1: ("OK", "green"), 0: ("FAILED", "red"), 2: ("Not verified yet", "text")})
+
+
+def pbs_panels(y):
+    stale = 26 * 3600  # daily backups, plus a couple of hours' grace
+    tiles = [
+        ("PBS API", "max(momentum_pbs_up) or vector(0)",
+         dict(mappings=UP_DOWN, thresholds=steps("red", (1, "green")),
+              description="DOWN: no token in /etc/momentum-monitoring/pbs-token, or the collector "
+                          "couldn't read PBS (Status collector table on Home lab: Servers).")),
+        ("Stalest backup", f"time() - min({PBS_GROUP})",
+         dict(unit="s", decimals=0, thresholds=steps("green", (stale, "orange"), (2 * stale, "red")),
+              description="Age of the oldest 'newest backup' over all guests. Over a day means a guest "
+                          "missed its backup.")),
+        ("Backup failures (7 days)", 'sum(momentum_pbs_task_failures_7d{type="backup"}) or vector(0)',
+         dict(thresholds=steps("green", (1, "red")))),
+        ("Other task failures (7 days)", 'sum(momentum_pbs_task_failures_7d{type!="backup"}) or vector(0)',
+         dict(thresholds=steps("green", (1, "red")),
+              description="Verify, prune, garbage collection and sync tasks (see Tasks).")),
+        ("Verify failed", "count(momentum_pbs_group_last_verify == 0) or vector(0)",
+         dict(thresholds=steps("green", (1, "red")),
+              description="Guests whose newest backup failed verification: that backup may not restore.")),
+        ("Guests with no backup",
+         'count(label_replace(pve_guest_info{template!="1"}, "vmid", "$2", "id", "(qemu|lxc)/(.*)") '
+         f'unless on (vmid) label_replace({PBS_GROUP}, "vmid", "$1", "id", "(.*)")) or vector(0)',
+         dict(thresholds=steps("green", (1, "orange")),
+              description="Cluster guests (templates left out) with no backup group on PBS. Some may be "
+                          "left out on purpose.")),
+        ("Datastore used", "max(100 * momentum_pbs_datastore_bytes{kind=\"used\"} / ignoring (kind) "
+                           "momentum_pbs_datastore_bytes{kind=\"total\"})",
+         dict(unit="percent", decimals=0, thresholds=steps("green", (80, "orange"), (90, "red")))),
+    ]
+    p = [stat(t, e, g(i * 3, y, 3, 4), **kw) for i, (t, e, kw) in enumerate(tiles)]
+    p.append(machines_table("Server", 'job="machines",group="proxmox"', g(0, y + 4, 24, 4),
+                            "node-exporter on the Backup Server (deploy/monitoring/nodes.yml, "
+                            "group: proxmox)."))
+    by = "max by (store, type, id, guest) "
+    p.append(table("Backups by guest",
+                   [target(f"{by}(time() - {PBS_GROUP})", ref="A", instant=True, table=True),
+                    target(f"{by}(momentum_pbs_group_snapshots)", ref="B", instant=True, table=True),
+                    target(f"{by}(momentum_pbs_group_last_verify)", ref="C", instant=True, table=True)],
+                   g(0, y + 8, 14, 10),
+                   {"guest": "Guest", "type": "Type", "id": "ID", "store": "Datastore", "Value #A": "Newest backup",
+                    "Value #B": "Backups kept", "Value #C": "Newest verified"},
+                   description="One row per backup group on PBS. Guest is the backup's note (normally the "
+                               "guest's name).",
+                   overrides=[col("Value #A", unit="s", decimals=0,
+                                  thresholds=steps("text", (stale, "orange"), (2 * stale, "red"))),
+                              col("Value #C", mappings=PBS_VERIFY_MAP)],
+                   sort=("Newest backup", True)))
+    p.append(table("Tasks (last 7 days)",
+                   [target("max by (type) (time() - momentum_pbs_task_last_end_timestamp_seconds)",
+                           ref="A", instant=True, table=True),
+                    target("max by (type) (momentum_pbs_task_last_ok)", ref="B", instant=True, table=True),
+                    target("max by (type) (momentum_pbs_task_failures_7d)", ref="C", instant=True, table=True)],
+                   g(14, y + 8, 10, 6),
+                   {"type": "Task", "Value #A": "Last finished", "Value #B": "Last result", "Value #C": "Failures"},
+                   description="Types with no run in 7 days show no 'Last finished'. *job types are the "
+                               "scheduled verify and prune jobs.",
+                   overrides=[col("Value #A", unit="s", decimals=0),
+                              col("Value #B", mappings=value_map({1: ("OK", "green"), 0: ("FAILED", "red")})),
+                              col("Value #C", thresholds=steps("text", (1, "red")))]))
+    p.append(table("Datastores",
+                   [target('max by (store) (100 * momentum_pbs_datastore_bytes{kind="used"} / ignoring (kind) '
+                           'momentum_pbs_datastore_bytes{kind="total"})', ref="A", instant=True, table=True),
+                    target('max by (store) (momentum_pbs_datastore_bytes{kind="avail"})', ref="B", instant=True, table=True),
+                    target('max by (store) (momentum_pbs_datastore_bytes{kind="total"})', ref="C", instant=True, table=True)],
+                   g(14, y + 14, 10, 4),
+                   {"store": "Datastore", "Value #A": "Used", "Value #B": "Free", "Value #C": "Size"},
+                   overrides=[col("Value #A", unit="percent", decimals=0,
+                                  thresholds=steps("text", (80, "orange"), (90, "red"))),
+                              col("Value #B", unit="bytes"), col("Value #C", unit="bytes")]))
+    return p
 
 
 def network():
@@ -711,21 +788,43 @@ ZPOOL_STATE_MAP = [{
 
 def zfs_pools_table(pos):
     """ZFS pools on the machines in nodes.yml (the OpenMediaVault server's pool "zfs").
-    Free space comes from the pool's datasets, which all share the pool's free space; the
-    pool name is the part of the dataset name before the first "/"."""
+    State comes from node-exporter's zfs collector; the rest from deploy/monitoring/zfs/
+    zfs_status.py on the machine (zpool list and zpool status, every 5 minutes). Those
+    columns stay empty until that script is installed there."""
     m = 'job="machines"'
-    free = ('max by (machine, zpool) (label_replace(node_filesystem_avail_bytes{%s,fstype="zfs"}, '
-            '"zpool", "$1", "device", "([^/]+).*"))' % m)
+    by = "max by (machine, zpool) "
     return table("ZFS pools (RAID health)",
                  [target(f"max by (machine, zpool, state) (node_zfs_zpool_state{{{m}}} == 1)",
                          ref="A", instant=True, table=True),
-                  target(free, ref="B", instant=True, table=True)],
+                  target(f"{by}(100 * zfs_pool_allocated_bytes{{{m}}} / zfs_pool_size_bytes{{{m}}})",
+                         ref="B", instant=True, table=True),
+                  target(f"{by}(zfs_pool_free_bytes{{{m}}})", ref="C", instant=True, table=True),
+                  target(f"{by}(time() - zfs_pool_scrub_last_end_timestamp_seconds{{{m}}})",
+                         ref="D", instant=True, table=True),
+                  target(f"{by}(zfs_pool_scan_in_progress{{{m}}})", ref="E", instant=True, table=True),
+                  target(f"{by}(zfs_pool_scrub_last_errors{{{m}}})", ref="F", instant=True, table=True),
+                  target(f"sum by (machine, zpool) (zfs_pool_device_errors{{{m}}})", ref="G", instant=True, table=True),
+                  target(f"sum by (machine, zpool) (1 - zfs_pool_device_online{{{m}}})", ref="H", instant=True, table=True),
+                  target(f"{by}(zfs_pool_data_errors{{{m}}})", ref="I", instant=True, table=True)],
                  pos,
-                 {"machine": "Machine", "zpool": "Pool", "state": "State", "Value #B": "Free"},
-                 description="Degraded means the pool is running without one of its disks: replace it "
-                             "soon. A scrub or resilver doesn't change the state. Per-disk errors: "
-                             "`zpool status` on the server.",
-                 overrides=[col("state", mappings=ZPOOL_STATE_MAP), col("Value #B", unit="bytes")])
+                 {"machine": "Machine", "zpool": "Pool", "state": "State", "Value #B": "Used", "Value #C": "Free",
+                  "Value #D": "Last scrub", "Value #E": "Scrub/resilver running", "Value #F": "Scrub errors",
+                  "Value #G": "Disk errors", "Value #H": "Disks not online", "Value #I": "Data errors"},
+                 description="Degraded: the pool runs without one of its disks; replace it soon. Disk errors "
+                             "are read, write and checksum counters summed over every disk: any above 0 "
+                             "deserves `zpool status -v` on the server. Scrubs should run at least monthly. "
+                             "Data errors are files ZFS couldn't repair.",
+                 overrides=[col("state", mappings=ZPOOL_STATE_MAP),
+                            col("Value #B", unit="percent", decimals=0,
+                                thresholds=steps("text", (80, "orange"), (90, "red"))),
+                            col("Value #C", unit="bytes"),
+                            col("Value #D", unit="s", decimals=0,
+                                thresholds=steps("text", (35 * 86400, "orange"), (60 * 86400, "red"))),
+                            col("Value #E", mappings=value_map({1: ("Yes", "orange"), 0: ("No", "text")})),
+                            col("Value #F", thresholds=steps("text", (1, "red"))),
+                            col("Value #G", thresholds=steps("text", (1, "red"))),
+                            col("Value #H", thresholds=steps("text", (1, "red"))),
+                            col("Value #I", thresholds=steps("text", (1, "red")))])
 
 
 def plex_row(y):

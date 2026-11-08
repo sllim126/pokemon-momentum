@@ -2207,7 +2207,7 @@
     {
       "type": "table",
       "title": "ZFS pools (RAID health)",
-      "description": "Degraded means the pool is running without one of its disks: replace it soon. A scrub or resilver doesn't change the state. Per-disk errors: `zpool status` on the server.",
+      "description": "Degraded: the pool runs without one of its disks; replace it soon. Disk errors are read, write and checksum counters summed over every disk: any above 0 deserves `zpool status -v` on the server. Scrubs should run at least monthly. Data errors are files ZFS couldn't repair.",
       "gridPos": {
         "x": 0,
         "y": 52,
@@ -2233,7 +2233,91 @@
         },
         {
           "refId": "B",
-          "expr": "max by (machine, zpool) (label_replace(node_filesystem_avail_bytes{job=\"machines\",fstype=\"zfs\"}, \"zpool\", \"$1\", \"device\", \"([^/]+).*\"))",
+          "expr": "max by (machine, zpool) (100 * zfs_pool_allocated_bytes{job=\"machines\"} / zfs_pool_size_bytes{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "C",
+          "expr": "max by (machine, zpool) (zfs_pool_free_bytes{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "D",
+          "expr": "max by (machine, zpool) (time() - zfs_pool_scrub_last_end_timestamp_seconds{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "E",
+          "expr": "max by (machine, zpool) (zfs_pool_scan_in_progress{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "F",
+          "expr": "max by (machine, zpool) (zfs_pool_scrub_last_errors{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "G",
+          "expr": "sum by (machine, zpool) (zfs_pool_device_errors{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "H",
+          "expr": "sum by (machine, zpool) (1 - zfs_pool_device_online{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "I",
+          "expr": "max by (machine, zpool) (zfs_pool_data_errors{job=\"machines\"})",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -2256,13 +2340,27 @@
               "machine": "Machine",
               "zpool": "Pool",
               "state": "State",
-              "Value #B": "Free"
+              "Value #B": "Used",
+              "Value #C": "Free",
+              "Value #D": "Last scrub",
+              "Value #E": "Scrub/resilver running",
+              "Value #F": "Scrub errors",
+              "Value #G": "Disk errors",
+              "Value #H": "Disks not online",
+              "Value #I": "Data errors"
             },
             "indexByName": {
               "machine": 0,
               "zpool": 1,
               "state": 2,
-              "Value #B": 3
+              "Value #B": 3,
+              "Value #C": 4,
+              "Value #D": 5,
+              "Value #E": 6,
+              "Value #F": 7,
+              "Value #G": 8,
+              "Value #H": 9,
+              "Value #I": 10
             },
             "excludeByName": {
               "Time": true,
@@ -2275,7 +2373,14 @@
               "machine": true,
               "zpool": true,
               "state": true,
-              "Value #B": true
+              "Value #B": true,
+              "Value #C": true,
+              "Value #D": true,
+              "Value #E": true,
+              "Value #F": true,
+              "Value #G": true,
+              "Value #H": true,
+              "Value #I": true
             }
           }
         }
@@ -2363,7 +2468,203 @@
             "properties": [
               {
                 "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 80
+                    },
+                    {
+                      "color": "red",
+                      "value": 90
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #C"
+            },
+            "properties": [
+              {
+                "id": "unit",
                 "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #D"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 3024000
+                    },
+                    {
+                      "color": "red",
+                      "value": 5184000
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #E"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "Yes",
+                        "color": "orange",
+                        "index": 0
+                      },
+                      "0": {
+                        "text": "No",
+                        "color": "text",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #F"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #G"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #H"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #I"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
               }
             ]
           }

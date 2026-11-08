@@ -43,6 +43,12 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-08 Backups and ZFS health in Grafana, code ready, waiting on two owner steps:
+  - [waiting] PBS backups (Home lab: Proxmox cluster, "Proxmox Backup Server" row): the owner
+    makes a read-only API token and saves it to /etc/momentum-monitoring/pbs-token (runbook,
+    "Proxmox Backup Server backups"). The certificate for verified TLS is already saved.
+  - [waiting] ZFS scrubs and disk errors (Home lab: Servers, ZFS pools table): the owner runs
+    `deploy/monitoring/zfs/install_on_host.sh root@192.168.1.155` (runbook, "ZFS on OMV").
 - 2026-11-06 More home lab machines in Grafana (Home lab: Servers): Proxmox Backup Server and
   the OpenMediaVault storage server (node-exporter), Plex (web check of its /identity page),
   and the Synology NAS Laomedeia over SNMP (snmp-exporter container, "Synology NAS" table).
