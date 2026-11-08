@@ -43,6 +43,11 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-07 KPDH individual promo rescans: integrated scans 331-341 and 343 as
+  replacements for the older multi-card sheets, used scan 337 for all three identical PR2
+  backs, and left the unlisted duplicate Zoey-front scan 342 archived but unused. The builder
+  preserves the convention-promo backs from the first scan set and rotates PR2 after cropping.
+
 - 2026-11-06: Market insights, on branch `feature/market-insights` (owner: "start a branch and do
   all of them; if I don't like it we can trim the branch"). Ideas from a look at similar sites,
   built from data we already have (no new costs):
