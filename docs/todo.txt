@@ -194,6 +194,10 @@ runbook section "Monitoring".
   accept it (the "Stalest backup" tile stays red until then). Also decide whether to prune the
   20 backup groups of deleted or retyped guests, mostly in sixTB, and delete the unused
   admin@pbs!Grafana token (it has no permissions).
+- [waiting] Today row on Grafana's Everything dashboard (to-do lists and chats to review): built
+  2026-11-09 in the private ISI-Knowledge repo (scripts/monitoring/today/); the owner runs its
+  install.sh (sudo: Infinity plugin, a 127.0.0.1-only feed service, a cron line). Chat review
+  steps: AGENTS.md, "Reviewing past chats".
 - [owner] PBS disk /dev/sdc (WD Blue 6 TB, serial WD-WX21DA5FN43K) is failing: 2,100 pending
   and 152 uncorrectable sectors (2026-11-09), though SMART still says PASSED. Check which
   datastore it holds (likely sixTB) and replace it; copy anything worth keeping off first.
