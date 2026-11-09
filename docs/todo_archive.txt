@@ -7,6 +7,40 @@ Archived Completed Work
 November 2026
 -------------
 
+- Completed and archived at the 2026-11-09 milestone (homelab-machines):
+  - 2026-11-05 Retired unused files, after checking nothing reads or runs them (no code, cron,
+    systemd or doc reference; none open; the only reads since March were one bulk scan). Moved
+    to `data/backups/retired_2026-11-05/` (2.2 GB, gitignored): the March CSVs in
+    `data/extracted/` (`pokemon*_prices_all_days.csv`, `top200_*.csv`, unprefixed
+    `product_signal_snapshot.csv` / `group_signal_snapshot.csv`, `roc_snapshot_7_30_90.csv`) and
+    `unused_scripts.tar.gz` with the 8 scripts removed from the repo (`scripts/extract/
+    build_pokemon_prices_csv.py`, `extract_ids_from_prices.py`, `read_one_prices_file.py`,
+    `scripts/utilities/List_sybtypes.py`, `date_check.py`, `get_pokemon_groups.py`,
+    `scripts/download/download_groups_lookup.py`, `test_env.py`). Delete the folder after
+    ~2026-11-19 with the database backup if nothing missed them.
+  - 2026-11-05 Comment and docs review. Every file the site or the nightly runs now opens with a
+    header saying what it is and where it fits (api.py has a map of its routes and data paths),
+    and their 15+ line functions have docstrings, each checked against the code (64 added;
+    the signal lists' rules are spelled out). The 18 longer uncommented functions in the
+    desktop and phone pages got comments. Docs checked for dead file references and review
+    dates; `data_flow.txt` dated. Not covered: `storefront/` (its own session; ~200 functions
+    without docstrings, see below) and the Squarespace scripts being retired after 2026-11-14.
+  - 2026-11-05 Price database cleaned up and compacted, 13.87 GB -> 7.96 GB. Left out the dead
+    `prices` table (30.5M rows, last written 2026-03-02), the `top200_*` tables and the old
+    unprefixed snapshot and `groups` tables; every kept table hash-checked identical. Removed the
+    21 legacy scripts that wrote them. New `scripts/utilities/compact_duckdb.py`; procedure in
+    `docs/operator_runbook.txt` ("Compacting the price database"). `data/backups/` gitignored.
+  - 2026-11-05 Home lab dashboards in their own Grafana folder: "Home lab: Proxmox cluster",
+    "Home lab: Network (UniFi)" and "Home lab: Servers" (with "Other machines") moved out of
+    "Pokemon Momentum", since they serve more than the Pokemon sites. Old links still work;
+    every dashboard has "Pokemon Momentum" and "Home lab" drop-downs.
+  - 2026-11-05 Grafana's home page is now the owner's cross-project "Everything" dashboard (kept
+    in a private repository); install.sh no longer resets it to Overview, and every dashboard
+    here has a Home link.
+  - 2026-11-05 Job metrics fix (milestone job-metrics-fix): node-exporter was dropping the systemd
+    jobs' results (nightly update, other-games archive, weekly refreshes) because run_job.py and
+    collect_status.py gave the same metrics different help text. Both now share one table
+    (run_job.JOB_HELP), with a test; all four jobs that have run show in "Did the jobs run?".
 - Completed and archived at the 2026-11-05 milestone (homelab-dashboards):
   - 2026-11-05 Visitor counting for both sites (no cookies) and a Visitors dashboard; the
     Overview's "Requests / min" tile became "Visitors today".

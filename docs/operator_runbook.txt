@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-05
+Last reviewed: 2026-11-09 (Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
