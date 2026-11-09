@@ -43,6 +43,11 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-09 Branch clean-up: deleted 12 local branches (eight already in main, three October
+  branches contained in `codex/kpdh-binder-order`, and `plan/lorcana-market`, whose plan is
+  newer on `plan/lorcana-plan` and whose monitoring commits are in main) and two clean /tmp
+  worktrees. Left: `main`, the live `feature/homelab-machines`, `plan/lorcana-plan` and
+  `codex/kpdh-binder-order` (see "Old branches" under High Priority).
 - 2026-11-09 Brought back six fixes from the unmerged 2026-10-27 branch (`chat-history-review`),
   each re-confirmed by the owner one at a time: desktop opens on Consistent Movers (`DEFAULT_LIST`,
   `/discover` too); 7D chart window (desktop and phone); TCGplayer links preselect Near Mint
@@ -126,14 +131,13 @@ Recently Completed
 High Priority
 -------------
 
-- [waiting] Old branches, reviewed 2026-11-09. Owner to decide what else to keep from the
-  October chain (`mobile/review-note-tablet` -> `kpdh-series2` -> `chat-history-review` ->
-  `codex/kpdh-binder-order`; each contains the one before): the desktop owner-only Note tab
+- [waiting] Old branches, reviewed 2026-11-09. The leftovers of the October chain now live only on
+  `codex/kpdh-binder-order` (the other three October branches were deleted 2026-11-09; every
+  commit is on this one). Owner to decide what to keep: the desktop owner-only Note tab
   (ed1e476), two binder colour-direction notes (89df6eb, 3c55198), `docs/store_operations.md`,
   the chat-history export/import scripts and 17 todo ideas (1f9eb66), and a parked proposal
-  (1c43a2d). Check each for business plans before anything goes in this public repo. After that, delete the four October
-  branches and `plan/lorcana-market` (its plan is newer on `plan/lorcana-plan`, its monitoring
-  commits are in main). The KPDH work on them is already in main.
+  (1c43a2d). Check each for business plans before anything goes in this public repo, then
+  delete the branch. Its KPDH work is already in main.
 - [next] Pin a known-compatible DuckDB version in the root `requirements.txt`. A clean
   Docker build on 2026-11-06 resolved the unpinned dependency to DuckDB 2.0.0, which exits
   with `Illegal instruction` on this server during import. The established project image
@@ -159,11 +163,6 @@ runbook section "Monitoring".
   2026-11-05) makes the Home lab dashboards vanish until switched back. Consider having
   install.sh copy the JSON to /var/lib/grafana/dashboards/ instead, as the private ISI
   dashboards already do.
-- [next] Branch clean-up for whoever continues the Lorcana plan: `plan/lorcana-market` also
-  carries the monitoring commits (two sessions shared one checkout on 2026-11-05). Those are
-  now on main (cherry-picked), so merge main into it, or rebuild it from main plus its own two
-  commits (cddec53 "Plan a Lorcana market research site", 3a24c99 "sharper card images").
-  The stale `monitoring/grafana` branch holds none of the work and can be deleted.
 - [next] Owner: remove the temporary sudo file now that the build-out is merged:
   `sudo rm /etc/sudoers.d/90-claude-buildout` (the Overview's "Temporary sudo" tile turns green).
 - [waiting] Owner: two UniFi access points are offline (2026-11-05): Garage/patio U6-Lite
