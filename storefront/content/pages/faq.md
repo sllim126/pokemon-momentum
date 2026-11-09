@@ -1,7 +1,6 @@
 ---
 title: FAQ
 description: Common questions about orders, shipping, returns and Japanese product.
-draft: true
 ---
 ## Is everything sealed and authentic?
 

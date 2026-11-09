@@ -1,6 +1,6 @@
 # New storefront for poke6s.com: plan
 
-Last reviewed: 2026-11-05
+Last reviewed: 2026-11-09
 **Status: Phase 1 under way (local only), started 2026-10-31.** Cloudflare and all other online
 changes are paused by the owner (2026-10-31): build and run locally, Stripe test mode only.
 Developer guide for the code: `storefront/README.md`. See "Progress log" at the end.
@@ -317,8 +317,13 @@ Decided by the owner on 2026-11-05, after the Utah State Tax Commission call (D2
   
   The cart uses the largest class present. Rates and the free-shipping threshold are settings
   (decision D3).
-- **Signature confirmation** above a set order value (setting; about $250 to start), to protect
-  against "never arrived" disputes.
+- **Signature confirmation** on orders over **$150** (owner, 2026-11-09; chosen when buying the
+  label, so it isn't a store setting), to protect against "never arrived" disputes. Shipping
+  insurance for the full value on orders over $100 (owner, 2026-11-09), also chosen per label.
+- **Handling time:** orders ship within **1 business day** of payment (owner, 2026-11-09).
+- **Lost packages** (owner, 2026-11-09): lost in transit (never shown delivered) gets a
+  replacement or a full refund, the customer's choice; marked delivered but missing gets help
+  with the carrier claim, not a replacement.
 - Policies on `/shipping` and `/returns` state handling time, carriers, damage claims, returns
   window and condition rules.
 
@@ -482,3 +487,4 @@ Reviewed with the owner on 2026-10-31. D2 decided 2026-11-05.
 | 2026-10-31 | Claude | Articles brought forward from Phase 4 (owner): `/articles` list with category and tag filters, `/articles/<slug>` pages with BlogPosting JSON-LD, home page "Latest articles", sitemap; the 10 Squarespace posts imported to `storefront/content/articles/` (`app/article_import.py`) with their pictures; every old `/resources/...` address 301s to its new one. Storefront container now runs as the host user. 52 tests pass | Owner: read through the imported articles. Full review of all policy pages, terms and FAQs (they were adapted from another shop's, with permission) |
 | 2026-11-05 | Claude | Phase 2 built locally on branch `storefront/phase2-cart` (migration `002_orders`): cart in the browser priced by the server (`POST /cart/quote`), `POST /checkout` with 30-minute stock reservations and a Stripe Checkout Session (US shipping, flat rate by largest class, free over $150, promotion codes, 3-D Secure from $150, Stripe Tax behind `STOREFRONT_TAX_MODE`), webhook with signature check and repeat protection, reconcile job (start-up + 15 min), thanks and order status pages, Discord alerts, order and shipping emails (SMTP or outbox), `orders_cli` (list/show/ship/reconcile). Checkout is off without a Stripe key and refuses live keys. 88 storefront tests pass (34 new); checked at 1920×1080, 1366×768 and phone | Owner: Stripe account (tonight), test keys in `.env`, one test order with card 4242…; D2 after the Utah call; shipping amounts (D3); Microsoft 365 SMTP for real emails. Then Phase 3 (admin) |
 | 2026-11-05 | Claude | D2 decided: Stripe Tax (`STOREFRONT_TAX_MODE=stripe`), Utah registered in the sandbox and checked ($130 to any Utah address adds $9.69; Nevada $0). Unknown tax modes keep checkout off; cart and Terms say tax is added for Utah orders; checkout idempotency key made unique when order numbers repeat | Owner: register Utah in live-mode Stripe Tax at activation |
+| 2026-11-09 | Claude | Owner reviewed the store rules and the text pages: all seven pages (About, Contact, FAQ, Privacy, Returns, Shipping, Terms) approved and no longer drafts, so they show without the draft note and are in the sitemap. Shipping filled in: ships in 1 business day, signature over $150, lost-package rules. Internal rules (insurance over $100, compliance, pricing) kept in the git-ignored `docs/private/store_operations.md` | Launch steps as planned |

@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-09 (Oct 27 fixes branch)
+Last updated: 2026-11-09 (store policy pages)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -43,6 +43,11 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-09 Store rules reviewed with the owner, one at a time: the new store ships within 1
+  business day, signature on orders over $150, insurance over $100, lost in transit = replacement
+  or full refund (marked delivered = help with the carrier claim). All seven storefront text
+  pages approved and no longer drafts. The full rules (with margins and store history) moved
+  to the git-ignored `docs/private/store_operations.md`; decisions in `docs/storefront_plan.md`.
 - 2026-11-09 Brought back six fixes from the unmerged 2026-10-27 branch (`chat-history-review`),
   each re-confirmed by the owner one at a time: desktop opens on Consistent Movers (`DEFAULT_LIST`,
   `/discover` too); 7D chart window (desktop and phone); TCGplayer links preselect Near Mint
