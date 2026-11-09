@@ -1,6 +1,6 @@
 # Desktop App: Maintainer Guide
 
-Last reviewed: 2026-11-06
+Last reviewed: 2026-11-09
 
 The desktop app is one page that holds the site's five areas (Buy, Discover, Research,
 Track, Learn) in a single three-column layout built for 1080p screens. Since 2026-10-12 it
@@ -22,7 +22,7 @@ tablets are never forwarded and still get the older pages.
 | `/home-preview` | `/` (the app's former preview address) |
 | `/sealed-deals`, `/budget-builder`, `/set-explorer`, `/index-overview` | Sealed Deals, Budget Builder, Market Stats → Set values, Market Stats |
 | `/index-overview-<index>` (e.g. `-sv100`, `-jp-pokemon100`) | that index |
-| `/buy`, `/discover`, `/research`, `/track`, `/learn` | Sealed Deals, Top Movers, Sets, All saved, How it works |
+| `/buy`, `/discover`, `/research`, `/track`, `/learn` | Sealed Deals, Consistent Movers, Sets, All saved, How it works |
 | `/mobile?mode=tracked&tracked_tag=<tag>` | that saved list |
 
 The older research dashboard was retired on desktop on 2026-10-16: `/dashboard-classic` and
@@ -149,7 +149,13 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
   that window (`gap_scaled_threshold` in `query_support.py`), so a gap in the TCGCSV feed
   doesn't empty every list. With a complete feed the bars are unchanged. Early Movers and
   Under the Radar can still be empty: they also need three rises in a row.
-- **Charts and the 6-Month Hold read nightly snapshots**, not the raw history: 30D/90D/1Y
+- **Start list.** With no list in the address the app opens on Consistent Movers (`DEFAULT_LIST`;
+  owner's choice, confirmed 2026-11-09); `/discover` points at the same list.
+- **TCGplayer links** preselect the language, the printing and Near Mint (not for reverse holos,
+  where TCGplayer's combined filter often finds nothing), wrapped in the affiliate link. When an
+  admin is signed in the link goes straight to TCGplayer, so the owner's own buys are never
+  self-referred (`checkOwner()`, `/tracking/session`). The phone app does the same.
+- **Charts and the 6-Month Hold read nightly snapshots**, not the raw history: 7D/30D/90D/1Y
   from the daily 730-day series snapshot, "All" and the hold check from that plus the
   weekly long-history snapshot (`snapshot_history` in `api.py`). In the hold check's track
   record each weekly point counts for the days it stands for, so its numbers match daily data.

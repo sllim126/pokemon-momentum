@@ -779,7 +779,7 @@ OLD_PAGE_TO_APP_LIST = {
     "/set-explorer": "set_values",
     "/index-overview": "indexes",
     "/buy": "sealed_deals",
-    "/discover": "top_movers",
+    "/discover": "sma30_holds",  # the desktop default list (DEFAULT_LIST in desktop_home.html)
     "/research": "sets",
     "/track": "track_all",
     "/learn": "guide",
@@ -3839,6 +3839,9 @@ def supplier_profitability_data(
     outbound_shipping_usd = _optional_float(assumptions.get("outbound_shipping_usd")) or 7.25
     shipping_credit_usd = _optional_float(assumptions.get("shipping_credit_usd")) or 0.0
     disbursement_fee_usd = _optional_float(assumptions.get("disbursement_fee_usd")) or 15.0
+    # The disbursement fee is charged once per supplier order, not per box (owner, 2026-10-27,
+    # confirmed 2026-11-09), so each box carries its share. Without a box count, the whole fee.
+    disbursement_fee_per_unit_usd = disbursement_fee_usd / order_box_count if order_box_count > 0 else disbursement_fee_usd
     income_tax_pct = _optional_float(assumptions.get("income_tax_pct")) or 0.0
     target_margin_pct = _optional_float(assumptions.get("target_margin_pct")) or 0.0
     channel_defaults = {
@@ -3887,7 +3890,7 @@ def supplier_profitability_data(
             estimated_inbound_shipping_jpy = order_shipping_jpy / order_box_count
             estimated_inbound_shipping_usd = estimated_inbound_shipping_jpy / jpy_per_usd
             effective_inbound_shipping_usd = estimated_inbound_shipping_usd
-        landed_cost_usd = supplier_cost_usd + import_cost_usd + effective_inbound_shipping_usd + handling_cost_usd + disbursement_fee_usd
+        landed_cost_usd = supplier_cost_usd + import_cost_usd + effective_inbound_shipping_usd + handling_cost_usd + disbursement_fee_per_unit_usd
         fixed_costs = landed_cost_usd + outbound_shipping_usd - shipping_credit_usd
         store_price = _optional_float(store_row.get("current_price"))
         market_price = _optional_float(market_row.get("market_price"))
@@ -4000,6 +4003,7 @@ def supplier_profitability_data(
             "outbound_shipping_usd": outbound_shipping_usd,
             "shipping_credit_usd": shipping_credit_usd,
             "disbursement_fee_usd": disbursement_fee_usd,
+            "disbursement_fee_per_unit_usd": round(disbursement_fee_per_unit_usd, 4),
             "income_tax_pct": income_tax_pct,
             "target_margin_pct": target_margin_pct,
             "channels": channel_configs,

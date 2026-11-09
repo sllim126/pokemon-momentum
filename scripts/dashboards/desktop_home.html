@@ -573,6 +573,7 @@
             <div class="chart-bar">
               <span class="chart-caption" id="chartCaption"></span>
               <div class="segment" id="windowSwitch" role="group" aria-label="Chart window">
+                <button type="button" data-days="7" title="Last week">7D</button>
                 <button type="button" data-days="30">30D</button>
                 <button type="button" data-days="90">90D</button>
                 <button type="button" data-days="365">1Y</button>
@@ -772,6 +773,9 @@
     };
     const SAVE_TAGS = [["favorite", "Favorite"], ["watchlist", "Watchlist"], ["research", "Needs Review"], ["owned", "Buy List"]];
     const TCGPLAYER_AFFILIATE_BASE = "https://partner.tcgplayer.com/jR1OJb";
+    // List shown when no list is named in the URL: Consistent Movers, the owner's choice
+    // (2026-03-22, confirmed 2026-10-27 and 2026-11-09). /discover in api.py points at the same list.
+    const DEFAULT_LIST = "sma30_holds";
     const TOKEN_KEY = "pokemon-momentum-tracking-token";
     const LOCAL_TAGS_KEY = "pokemon-momentum-tags";
     const TARGETS_KEY = "pokemon-momentum-price-targets";
@@ -783,7 +787,7 @@
     const state = {
       market: params.get("market") === "JP" ? "JP" : "EN",
       kind: params.get("kind") === "sealed" ? "sealed" : "singles",
-      list: LISTS.some((l) => l.key === params.get("list")) ? params.get("list") : "top_movers",
+      list: LISTS.some((l) => l.key === params.get("list")) ? params.get("list") : DEFAULT_LIST,
       groupId: Number(params.get("set")) || null,
       groupName: "",
       setFilter: params.get("filter") || "all",
@@ -861,7 +865,7 @@
       url.search = "";
       if (state.market !== "EN") url.searchParams.set("market", state.market);
       if (state.kind !== "singles") url.searchParams.set("kind", state.kind);
-      if (listPinned && state.list !== "top_movers") url.searchParams.set("list", state.list);
+      if (listPinned && state.list !== DEFAULT_LIST) url.searchParams.set("list", state.list);
       if (state.list === "set") {
         url.searchParams.set("set", String(state.groupId));
         if (state.setFilter !== "all") url.searchParams.set("filter", state.setFilter);
@@ -936,7 +940,7 @@
     });
     function afterScopeChange() {
       renderSwitches();
-      if (fallbackNote) { listPinned = false; fallbackNote = ""; state.list = "top_movers"; }
+      if (fallbackNote) { listPinned = false; fallbackNote = ""; state.list = DEFAULT_LIST; }
       state.productKey = null;
       state.selected = null;
       renderDetail();
@@ -2188,7 +2192,7 @@
       const graded = state.list === "graded_budget";
       $("pickGrid").replaceChildren(...rows.map((row) => {
         const r = row.raw;
-        const image = el("img", { src: row.imageUrl || "/images/Logo.png", alt: "", loading: "lazy" });
+        const image = el("img", { src: row.imageUrl || "/images/Logo-thumb.png", alt: "", loading: "lazy" });  // 11 KB copy of the 870 KB logo
         image.addEventListener("error", () => { image.style.visibility = "hidden"; }, { once: true });
         const chip = (label, value) => (Number.isFinite(value) ? el("span", { class: `pill ${value >= 0 ? "up" : "down"}`, text: `${label} ${pct(value)}` }) : null);
         const swap = el("button", { type: "button", class: "swap", text: "I have this, swap it" });
@@ -2548,14 +2552,33 @@
       showTab(state.tab);
       if (state.fullCard) loadFullExtra(card, seq);
     }
-    // TCGplayer product link (with language and printing preselected), wrapped in the affiliate link.
+    let ownerSignedIn = false;  // true once /tracking/session confirms an admin; see tcgplayerUrl()
+    async function checkOwner() {
+      const token = trackingToken();
+      if (!token) return;  // signed out: nothing to ask (and no 401 in the console)
+      try {
+        const response = await fetch("/tracking/session", { headers: { Authorization: `Bearer ${token}` } });
+        if (!response.ok) return;
+        const payload = await response.json();
+        if (!payload.user?.is_admin) return;
+        ownerSignedIn = true;
+        if (state.selected) $("tcgLink").href = tcgplayerUrl(state.selected);  // relink the open card
+      } catch (_err) { /* signed out or offline: links keep the affiliate wrapper */ }
+    }
+    // TCGplayer product link (language, printing and Near Mint preselected), wrapped in the
+    // affiliate link. Near Mint is the owner's default (2026-03-22, confirmed 2026-11-09); it is
+    // left off for reverse holos, where TCGplayer's combined filter often shows no listings. The
+    // owner's own clicks skip the affiliate wrapper so his purchases are never self-referred
+    // (ownerSignedIn is set once /tracking/session says the user is an admin).
     function tcgplayerUrl(card) {
       const target = new URL(`https://www.tcgplayer.com/product/${card.productId}`);
       if (card.productKind !== "sealed") {
         target.searchParams.set("Language", state.market === "JP" ? "Japanese" : "English");
         const printing = { "reverse holofoil": "Reverse Holofoil", "1st edition": "1st Edition", "unlimited holofoil": "Unlimited Holofoil", "1st edition holofoil": "1st Edition Holofoil" }[card.subTypeName.toLowerCase()];
         if (printing) target.searchParams.set("Printing", printing);
+        if (printing !== "Reverse Holofoil") target.searchParams.set("Condition", "Near Mint");
       }
+      if (ownerSignedIn) return target.toString();
       const affiliate = new URL(TCGPLAYER_AFFILIATE_BASE);
       affiliate.searchParams.set("u", target.toString());
       return affiliate.toString();
@@ -2608,7 +2631,7 @@
       const params = new URLSearchParams(location.search);
       if (state.fullCard && !params.has("card")) return setFullCard(false);
       // Back or Forward between a list and a set or index: show the view the address names.
-      const key = params.get("list") || "top_movers";
+      const key = params.get("list") || DEFAULT_LIST;
       if (key === state.list && !["set", "index"].includes(key)) return;
       if (!LISTS.some((l) => l.key === key)) return;
       if (key === "set") {
@@ -3022,6 +3045,7 @@
     renderTools();
     loadFreshness();
     const tagsReady = loadSyncedTags();
+    checkOwner();
     loadCounts();
     loadList();
   })();

@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-09 (milestone: homelab-machines)
+Last updated: 2026-11-09 (Oct 27 fixes branch)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -43,6 +43,15 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-09 Brought back six fixes from the unmerged 2026-10-27 branch (`chat-history-review`),
+  each re-confirmed by the owner one at a time: desktop opens on Consistent Movers (`DEFAULT_LIST`,
+  `/discover` too); 7D chart window (desktop and phone); TCGplayer links preselect Near Mint
+  except reverse holos; a signed-in admin's TCGplayer links skip the affiliate wrapper; the
+  supplier calculator splits the per-order disbursement fee across Boxes in Order; rows without
+  a picture use an 11 KB logo copy (`images/Logo-thumb.png`). The phone's Discover tab starts on Consistent
+  Movers too (owner, same day). Declined: square-padded
+  Squarespace images, price-sync path change (both retire with Squarespace on 2026-11-14), and
+  the calculator's $0 outbound-shipping default and typed-0 handling.
 - 2026-11-08 Backups and ZFS health in Grafana: code done (PBS section of collect_status.py,
   deploy/monitoring/zfs/); each waits on one owner step, listed under Monitoring below.
 - 2026-11-08 Slowheim (Valheim machine) in Grafana: data sources for its own Prometheus and
@@ -119,6 +128,14 @@ Recently Completed
 High Priority
 -------------
 
+- [waiting] Old branches, reviewed 2026-11-09. Owner to decide what else to keep from the
+  October chain (`mobile/review-note-tablet` -> `kpdh-series2` -> `chat-history-review` ->
+  `codex/kpdh-binder-order`; each contains the one before): the desktop owner-only Note tab
+  (ed1e476), two binder colour-direction notes (89df6eb, 3c55198), `docs/store_operations.md`,
+  the chat-history export/import scripts and 17 todo ideas (1f9eb66), and a parked proposal
+  (1c43a2d). Check each for business plans before anything goes in this public repo. After that, delete the four October
+  branches and `plan/lorcana-market` (its plan is newer on `plan/lorcana-plan`, its monitoring
+  commits are in main). The KPDH work on them is already in main.
 - [next] Pin a known-compatible DuckDB version in the root `requirements.txt`. A clean
   Docker build on 2026-11-06 resolved the unpinned dependency to DuckDB 2.0.0, which exits
   with `Illegal instruction` on this server during import. The established project image
