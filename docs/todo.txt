@@ -180,6 +180,15 @@ High Priority
 - [idea] Storefront: a shelf / box / binder-page location for each stock item, to find it
   quickly when it sells.
 - [idea] An "Overheated / watch for exit" list: cards that rose too far, too fast.
+- [idea] Simplified Chinese cards as a third market, via the PikaQian API
+  (https://pikaqian.com/docs/). Owner, 2026-11-09: keep in mind; Chinese product is slowly
+  getting easier to buy and more popular in the US. Checked 2026-11-09: 60+ Simplified Chinese
+  sets (Sun & Moon to Mega Evolution), 13,000+ cards; prices from eBay sales of the Chinese
+  cards. Free tier ($0, 500 calls/month) is card and set details only; Hobby ($20/month, 5,000
+  calls) adds raw prices, enough for a daily refresh; Pro ($60/month) adds graded prices,
+  population reports and sealed. Paid, so it needs the owner's OK (AGENTS.md: no new costs).
+  Read their Terms of Service first: attribution is required on Free and Hobby, and public
+  display rights aren't stated on the docs or pricing pages.
 - [next] Pin a known-compatible DuckDB version in the root `requirements.txt`. A clean
   Docker build on 2026-11-06 resolved the unpinned dependency to DuckDB 2.0.0, which exits
   with `Illegal instruction` on this server during import. The established project image
