@@ -636,6 +636,23 @@ PBS_GROUP = "momentum_pbs_group_last_backup_timestamp_seconds"
 PBS_VERIFY_MAP = value_map({1: ("OK", "green"), 0: ("FAILED", "red"), 2: ("Not verified yet", "text")})
 
 
+def pve_guests(templates=True):
+    """pve_guest_info relabelled to PBS's naming (type vm/ct, id 101) so it joins on (type, id).
+    Matching the type too matters: a VMID freed by a deleted container can come back as a VM,
+    and PBS keeps the old ct/101 group next to the new vm/101 one."""
+    sel = "" if templates else '{template!="1"}'
+    expr = f'label_replace(pve_guest_info{sel}, "id", "$2", "id", "(qemu|lxc)/(.*)")'
+    expr = f'label_replace(label_replace({expr}, "type", "vm", "type", "qemu"), "type", "ct", "type", "lxc")'
+    return f"max by (type, id, name) ({expr})"
+
+
+def pbs_named(expr):
+    """Add the Proxmox guest name (label name) to a per-backup-group series. Groups whose guest
+    no longer exists keep no name, which is how the table shows them."""
+    return (f"max by (store, type, id, guest, name) (({expr}) * on (type, id) group_left (name) {pve_guests()} "
+            f"or (({expr}) unless on (type, id) {pve_guests()}))")
+
+
 def pbs_panels(y):
     stale = 26 * 3600  # daily backups, plus a couple of hours' grace
     tiles = [
@@ -643,10 +660,15 @@ def pbs_panels(y):
          dict(mappings=UP_DOWN, thresholds=steps("red", (1, "green")),
               description="DOWN: no token in /etc/momentum-monitoring/pbs-token, or the collector "
                           "couldn't read PBS (Status collector table on Home lab: Servers).")),
-        ("Stalest backup", f"time() - min({PBS_GROUP})",
+        # Only guests that still exist (templates left out), each by its newest backup in any
+        # datastore: PBS also holds old groups of deleted guests and older copies in retired
+        # datastores, which would otherwise pin this tile at months or years.
+        ("Stalest backup", f"time() - min(max by (type, id) ({PBS_GROUP}) and on (type, id) "
+                           f"{pve_guests(templates=False)})",
          dict(unit="s", decimals=0, thresholds=steps("green", (stale, "orange"), (2 * stale, "red")),
-              description="Age of the oldest 'newest backup' over all guests. Over a day means a guest "
-                          "missed its backup.")),
+              description="Over the cluster's current guests (templates left out), the age of the "
+                          "oldest 'newest backup', any datastore. Over a day means a guest missed its "
+                          "backup, or isn't in a backup job (see Backups by guest).")),
         ("Backup failures (7 days)", 'sum(momentum_pbs_task_failures_7d{type="backup"}) or vector(0)',
          dict(thresholds=steps("green", (1, "red")))),
         ("Other task failures (7 days)", 'sum(momentum_pbs_task_failures_7d{type!="backup"}) or vector(0)',
@@ -656,8 +678,7 @@ def pbs_panels(y):
          dict(thresholds=steps("green", (1, "red")),
               description="Guests whose newest backup failed verification: that backup may not restore.")),
         ("Guests with no backup",
-         'count(label_replace(pve_guest_info{template!="1"}, "vmid", "$2", "id", "(qemu|lxc)/(.*)") '
-         f'unless on (vmid) label_replace({PBS_GROUP}, "vmid", "$1", "id", "(.*)")) or vector(0)',
+         f"count({pve_guests(templates=False)} unless on (type, id) {PBS_GROUP}) or vector(0)",
          dict(thresholds=steps("green", (1, "orange")),
               description="Cluster guests (templates left out) with no backup group on PBS. Some may be "
                           "left out on purpose.")),
@@ -669,16 +690,17 @@ def pbs_panels(y):
     p.append(machines_table("Server", 'job="machines",group="proxmox"', g(0, y + 4, 24, 4),
                             "node-exporter on the Backup Server (deploy/monitoring/nodes.yml, "
                             "group: proxmox)."))
-    by = "max by (store, type, id, guest) "
     p.append(table("Backups by guest",
-                   [target(f"{by}(time() - {PBS_GROUP})", ref="A", instant=True, table=True),
-                    target(f"{by}(momentum_pbs_group_snapshots)", ref="B", instant=True, table=True),
-                    target(f"{by}(momentum_pbs_group_last_verify)", ref="C", instant=True, table=True)],
+                   [target(pbs_named(f"time() - {PBS_GROUP}"), ref="A", instant=True, table=True),
+                    target(pbs_named("momentum_pbs_group_snapshots"), ref="B", instant=True, table=True),
+                    target(pbs_named("momentum_pbs_group_last_verify"), ref="C", instant=True, table=True)],
                    g(0, y + 8, 14, 10),
-                   {"guest": "Guest", "type": "Type", "id": "ID", "store": "Datastore", "Value #A": "Newest backup",
-                    "Value #B": "Backups kept", "Value #C": "Newest verified"},
-                   description="One row per backup group on PBS. Guest is the backup's note (normally the "
-                               "guest's name).",
+                   {"name": "Guest", "guest": "Backup note", "type": "Type", "id": "ID", "store": "Datastore",
+                    "Value #A": "Newest backup", "Value #B": "Backups kept", "Value #C": "Newest verified"},
+                   description="One row per backup group on PBS. Guest is the name in Proxmox; a blank "
+                               "Guest is a backup of a guest that no longer exists (or whose VMID now "
+                               "belongs to a guest of the other type). Old groups in a datastore no "
+                               "longer backed up to stay until pruned by hand.",
                    overrides=[col("Value #A", unit="s", decimals=0,
                                   thresholds=steps("text", (stale, "orange"), (2 * stale, "red"))),
                               col("Value #C", mappings=PBS_VERIFY_MAP)],

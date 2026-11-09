@@ -207,7 +207,15 @@ prune, garbage-collection and sync tasks. It needs:
   (then compare the fingerprint with the PBS dashboard).
 
 Without the token the section publishes nothing; a failure shows as
-momentum_collector_errors{section="pbs"} = 1.
+momentum_collector_errors{section="pbs"} = 1. A token with no permission still signs in but
+sees nothing: PBS answers with empty lists, so the row stays blank with no error. The live
+token (2026-11-09) is root@pam!Grafana.
+
+Reading the row: PBS keeps backup groups of deleted guests, and older copies in the sixTB
+datastore from before the nightly job moved to threeTB, until they are pruned by hand. So the
+"Stalest backup" and "Guests with no backup" tiles only count the cluster's current guests
+(templates left out), matched by type and VMID, each by its newest backup in any datastore. The
+"Backups by guest" table lists every group; a blank Guest means its guest no longer exists.
 
 ZFS on OMV (since 2026-11-08; the scrub and error columns of "ZFS pools (RAID health)"):
 `deploy/monitoring/zfs/zfs_status.py` runs as root on the OpenMediaVault server every 5 minutes
