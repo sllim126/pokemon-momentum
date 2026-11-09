@@ -433,6 +433,34 @@
       .chart { height: 150px; }
       .index-chart { height: 110px; }
     }
+    /* Owner-only review notes (same tool as /m-next). Hidden unless the server confirms the
+       signed-in account is an admin; it floats over the app without changing its layout. */
+    .review-tab {
+      position: fixed; z-index: 70; right: 0; top: 46%; min-width: 40px; min-height: 72px; padding: 10px 7px;
+      border: 1px solid rgba(245, 185, 74, 0.55); border-right: 0; border-radius: 12px 0 0 12px;
+      background: #25334e; color: #ffe0a3; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+      font: 750 13px/1 var(--font, system-ui); letter-spacing: 0.04em; writing-mode: vertical-rl; cursor: pointer;
+    }
+    .review-sheet {
+      position: fixed; z-index: 80; right: 16px; bottom: 16px; width: min(460px, calc(100vw - 32px));
+      max-height: calc(100vh - 32px); overflow-y: auto; padding: 14px; border-radius: 16px;
+      border: 1px solid var(--line-strong); background: #101c30; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.68);
+    }
+    .review-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .review-head h2 { margin: 0; font-size: 16px; }
+    .review-close { border: 0; background: none; color: var(--muted); min-width: 40px; min-height: 40px; font-size: 22px; cursor: pointer; }
+    .review-sheet label { display: block; margin-top: 10px; color: var(--muted); font-size: 12px; }
+    .review-sheet input[type="text"], .review-sheet textarea {
+      display: block; width: 100%; margin-top: 4px; padding: 8px 10px; border-radius: 10px;
+      border: 1px solid var(--line-strong); background: var(--panel-3); color: var(--text); font: inherit;
+    }
+    .review-sheet textarea { min-height: 120px; resize: vertical; }
+    .review-file { display: block; width: 100%; margin-top: 6px; font-size: 13px; }
+    .review-actions { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+    .review-submit { min-height: 40px; border: 0; border-radius: 10px; padding: 8px 16px; background: var(--accent); color: #04101f; font-weight: 750; cursor: pointer; }
+    .review-submit:disabled { opacity: 0.55; }
+    .review-status { flex: 1; color: var(--muted); font-size: 12px; }
+    .review-status.error { color: var(--bad); }
   </style>
 </head>
 <body data-area="discover">
@@ -626,6 +654,28 @@
       </div>
     </aside>
   </main>
+  <button type="button" class="review-tab" id="reviewTab" aria-controls="reviewSheet" aria-expanded="false" hidden>Note</button>
+  <section class="review-sheet" id="reviewSheet" role="dialog" aria-modal="false" aria-labelledby="reviewTitle" hidden>
+    <div class="review-head">
+      <h2 id="reviewTitle">Review note</h2>
+      <button type="button" class="review-close" id="reviewClose" aria-label="Close review note">×</button>
+    </div>
+    <form id="reviewForm">
+      <label for="reviewNoteTitle">Title (optional)
+        <input type="text" id="reviewNoteTitle" autocomplete="off" placeholder="Desktop app review note" />
+      </label>
+      <label for="reviewDetails">Note
+        <textarea id="reviewDetails" required placeholder="Type the note while this screen is still in front of you…"></textarea>
+      </label>
+      <label for="reviewFiles">Files (optional)
+        <input class="review-file" id="reviewFiles" type="file" multiple />
+      </label>
+      <div class="review-actions">
+        <button type="submit" class="review-submit" id="reviewSubmit">Save note</button>
+        <div class="review-status" id="reviewStatus" role="status"></div>
+      </div>
+    </form>
+  </section>
   <footer class="legal" title="Poke6s Market Watch is a research tool, not financial or pricing advice, and no guarantee of current or future prices. Market prices follow whichever condition sells most, not Near Mint; check recent sales and the card itself before you buy or sell. Pokémon names, characters, logos and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company / The Pokémon Company International. Poke6s Market Watch is independent and not affiliated with or endorsed by them. Market prices from TCGplayer; graded prices from PriceCharting. TCGplayer links are affiliate links.">
     Research tool, not financial advice. Pokémon names and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company; Poke6s Market Watch is independent and not affiliated with or endorsed by them. Prices from TCGplayer and PriceCharting are a guide, not a guarantee: do your own homework before you buy or sell. TCGplayer links are affiliate links.
   </footer>
@@ -2552,7 +2602,7 @@
       showTab(state.tab);
       if (state.fullCard) loadFullExtra(card, seq);
     }
-    let ownerSignedIn = false;  // true once /tracking/session confirms an admin; see tcgplayerUrl()
+    let ownerSignedIn = false;  // true once /tracking/session confirms an admin; see tcgplayerUrl() and showReviewTab()
     async function checkOwner() {
       const token = trackingToken();
       if (!token) return;  // signed out: nothing to ask (and no 401 in the console)
@@ -2563,6 +2613,7 @@
         if (!payload.user?.is_admin) return;
         ownerSignedIn = true;
         if (state.selected) $("tcgLink").href = tcgplayerUrl(state.selected);  // relink the open card
+        showReviewTab();
       } catch (_err) { /* signed out or offline: links keep the affiliate wrapper */ }
     }
     // TCGplayer product link (language, printing and Near Mint preselected), wrapped in the
@@ -3039,6 +3090,94 @@
       // Unsaving from a saved list removes the row but keeps the card open, so it can be re-saved.
       if (currentList().track) loadList({ keepSelection: true });
     }
+
+    // ---------- owner review notes ----------
+    // The same private tool as on /m-next, for testing the app on a tablet or touchscreen
+    // (iPads ask for the desktop site, so they get this page; owner, 2026-10-25, restored
+    // 2026-11-09). The tab shows only for an admin account and the server re-checks on every save; notes go to the /bug-reports queue
+    // through POST /m-next/review-notes with page_path "/". Text drafts survive a reload.
+    const REVIEW_DRAFT_KEY = "pokemon-momentum-desktop-review-draft";
+    function openReviewSheet() {
+      $("reviewSheet").hidden = false;
+      $("reviewTab").hidden = true;
+      $("reviewTab").setAttribute("aria-expanded", "true");
+      requestAnimationFrame(() => $("reviewDetails").focus());
+    }
+    function closeReviewSheet() {
+      $("reviewSheet").hidden = true;
+      $("reviewTab").hidden = false;
+      $("reviewTab").setAttribute("aria-expanded", "false");
+    }
+    function reviewContext() {
+      const card = state.selected;
+      return {
+        page_path: "/",
+        page_url: location.href,
+        category_id: categoryId(),
+        market: state.market,
+        kind: state.kind,
+        list: state.list,
+        set_id: state.groupId,
+        product_key: card ? card.key : null,
+        product_name: card ? card.name : null,
+        set_name: card ? card.set : null,
+        full_card: state.fullCard,
+        card_tab: state.tab,
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+        orientation: window.innerWidth > window.innerHeight ? "landscape" : "portrait",
+        touch: window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0,
+        user_agent: navigator.userAgent,
+        captured_at: new Date().toISOString(),
+      };
+    }
+    function saveReviewDraft() {
+      try {
+        localStorage.setItem(REVIEW_DRAFT_KEY, JSON.stringify({ title: $("reviewNoteTitle").value, details: $("reviewDetails").value }));
+      } catch (_err) { /* storage blocked */ }
+    }
+    // Called by checkOwner() once /tracking/session confirms an admin (one check for both the
+    // affiliate-free TCGplayer links and this tab). Restores any unsent draft.
+    function showReviewTab() {
+      let draft = {};
+      try { draft = JSON.parse(localStorage.getItem(REVIEW_DRAFT_KEY) || "{}") || {}; } catch (_err) { /* storage blocked */ }
+      $("reviewNoteTitle").value = draft.title || "";
+      $("reviewDetails").value = draft.details || "";
+      $("reviewTab").hidden = false;
+    }
+    $("reviewTab").addEventListener("click", openReviewSheet);
+    $("reviewClose").addEventListener("click", closeReviewSheet);
+    $("reviewNoteTitle").addEventListener("input", saveReviewDraft);
+    $("reviewDetails").addEventListener("input", saveReviewDraft);
+    $("reviewForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const status = $("reviewStatus");
+      const details = $("reviewDetails").value.trim();
+      status.classList.remove("error");
+      if (!details) { status.textContent = "Write a note first."; status.classList.add("error"); $("reviewDetails").focus(); return; }
+      const form = new FormData();
+      form.append("title", $("reviewNoteTitle").value.trim() || "Desktop app review note");
+      form.append("details", details);
+      form.append("context", JSON.stringify(reviewContext()));
+      for (const file of $("reviewFiles").files) form.append("files", file);
+      $("reviewSubmit").disabled = true;
+      status.textContent = "Saving…";
+      try {
+        const response = await fetch("/m-next/review-notes", { method: "POST", body: form, headers: { Authorization: `Bearer ${trackingToken()}` } });
+        if (!response.ok) throw new Error(String(response.status));
+        $("reviewForm").reset();
+        try { localStorage.removeItem(REVIEW_DRAFT_KEY); } catch (_err) { /* storage blocked */ }
+        status.textContent = "";
+        closeReviewSheet();
+        $("reviewTab").textContent = "Saved ✓";
+        setTimeout(() => { $("reviewTab").textContent = "Note"; }, 2500);
+      } catch (_err) {
+        status.textContent = "Not saved. Your text is kept; try again.";
+        status.classList.add("error");
+      } finally {
+        $("reviewSubmit").disabled = false;
+      }
+    });
+
 
     // ---------- start ----------
     renderSwitches();

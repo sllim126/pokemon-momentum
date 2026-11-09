@@ -30,7 +30,7 @@ or the `pm_tracking_token` cookie); **admin** = signed in with an address listed
 | `/index-overview`, `/index-overview-<index>` | `index_overview_hub.html`, `index_overview_detail.html` | public | Market index pages; desktop visitors are forwarded to Market Stats |
 | `/account-settings` | `account_settings.html` | public (works when signed in) | Sign-in, saved lists, saved views |
 | `/admin` | `admin_hub.html` | admin | Links to the admin tools below |
-| `/bug-reports` | `bug_reports.html` | admin | Review queue: Discord bug reports, old mobile Feedback form entries and `/m-next` owner review notes |
+| `/bug-reports` | `bug_reports.html` | admin | Review queue: Discord bug reports, old mobile Feedback form entries and owner review notes from the phone and desktop apps |
 | `/pricing-upload` | `pricing_upload.html` | admin | Upload a Squarespace export and preview price coverage |
 | `/single-listings-upload` | `single_listings_upload.html` | admin | Singles listing workflow (intake, drafts, follow-up) |
 | `/supplier-pricing` | `supplier_pricing.html` | admin | Read supplier price sheets with OCR (tesseract.js) and compare to market |
@@ -106,7 +106,7 @@ or the `pm_tracking_token` cookie); **admin** = signed in with an address listed
 | --- | --- | --- |
 | `POST /bug_reports` | public | Old mobile Feedback form (the new pages send people to Discord instead) |
 | `GET /bug_reports` | admin | The review queue's rows |
-| `POST /m-next/review-notes` | admin | The owner's floating review note on `/m-next`, with optional files |
+| `POST /m-next/review-notes` | admin | The owner's floating review note on `/m-next` or the desktop app at `/` (`page_path` in the context; anything else is recorded as `/m-next`), with optional files |
 | `GET /m-next/review-attachments/{stored_name}` | admin | Download a review-note attachment |
 
 ## Admin data

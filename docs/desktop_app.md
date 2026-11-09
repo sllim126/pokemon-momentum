@@ -149,6 +149,10 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
   that window (`gap_scaled_threshold` in `query_support.py`), so a gap in the TCGCSV feed
   doesn't empty every list. With a complete feed the bars are unchanged. Early Movers and
   Under the Radar can still be empty: they also need three rises in a row.
+- **Owner Note tab.** Signed in as an admin, a floating "Note" tab on the right saves a review
+  note (with files) to `/bug-reports`, with the list, card and screen size, as on the phone
+  app. For testing on an iPad, which gets the desktop site. Visitors never see it; the same
+  admin check (`checkOwner()`) also drops the affiliate wrapper from TCGplayer links.
 - **Start list.** With no list in the address the app opens on Consistent Movers (`DEFAULT_LIST`;
   owner's choice, confirmed 2026-11-09); `/discover` points at the same list.
 - **TCGplayer links** preselect the language, the printing and Near Mint (not for reverse holos,
