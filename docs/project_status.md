@@ -24,12 +24,14 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
 - Graded data: nightly PriceCharting snapshot, kept as our own history
 - Monitoring: Grafana on this host (http://192.168.1.240:3000, since 2026-11-05) shows the
   website, jobs, data downloads, server, containers, todo list and bug reports; Prometheus
-  collects it. Also the Proxmox cluster, the UniFi network, and visitors per day for each site
-  (counted by the apps themselves, no cookies). The Proxmox, network and server dashboards
-  sit in a separate "Home lab" folder, which also covers the backup server (and its backups,
-  once its API token is saved), the OpenMediaVault storage server and its ZFS pool, Plex
-  (streams and libraries), a Synology NAS (SNMP) and the Valheim servers on Slowheim (read from
-  that machine's own Prometheus and Loki). Runbook section "Monitoring"; files in
+  collects it. Also the Proxmox cluster, the UniFi network, visitors per day for each site
+  (counted by the apps themselves, no cookies), and a Store dashboard for the new storefront's
+  orders, sales and stock (live orders only by default). The Proxmox, network and server
+  dashboards sit in a separate "Home lab" folder, which also covers the backup server and its
+  backups, the OpenMediaVault storage server and its ZFS pool (scrubs and disk errors), SMART
+  disk health, internet uptime (this server's own probes), Plex (streams and libraries), a
+  Synology NAS (SNMP) and the Valheim servers on Slowheim (read from that machine's own
+  Prometheus and Loki). Runbook section "Monitoring"; files in
   `deploy/monitoring/`, `scripts/monitoring/`
 - Alerts: nightly update, Squarespace price sync, the other-games archive, the archive
   backfill and the catalogue crawl post summaries to Discord

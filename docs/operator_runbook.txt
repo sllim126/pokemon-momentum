@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-09 (Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim)
+Last reviewed: 2026-11-09 (Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -59,14 +59,18 @@ Open: http://192.168.1.240:3000 (LAN; sign in as `admin`). Folder "Pokemon Momen
 - Jobs & work: jobs, downloads, log files, docs/todo.txt, bug reports, git
 - Visitors: people and page views per day for market.poke6s.com and the new storefront, top
   pages, where visitors came from, phone vs desktop (see "Visitor counting" below)
+- Store: the new storefront's orders to ship, sales per day, products, stock and what's nearly
+  sold out (see "Store dashboard" below)
 
 Folder "Home lab" (moved out of "Pokemon Momentum" on 2026-11-05: these serve more than the
 Pokemon sites):
 
 - Proxmox cluster: 3 nodes, every VM and container, storage pools
-- Network (UniFi): gateway, switches, access points, clients, internet link
-- Servers: this host's CPU, memory, disks, network, updates, SMART, every Docker container,
-  and "Other machines" (any machine listed in `deploy/monitoring/nodes.yml`)
+- Network: internet uptime from this server's own probes, then the UniFi gateway, switches,
+  access points, clients and internet link
+- Servers: this host's CPU, memory, disks, network, updates, every Docker container, "Other
+  machines" (any machine listed in `deploy/monitoring/nodes.yml`), ZFS pools, and SMART disk
+  health for every machine that reports it
 
 The JSON for the two folders lives in `deploy/monitoring/grafana/dashboards/` and
 `deploy/monitoring/grafana/homelab/`, both written by `deploy/monitoring/build_dashboards.py`.
@@ -77,9 +81,9 @@ How the numbers get there (Prometheus on localhost:9090 collects all of it):
 | --- | --- | --- |
 | node-exporter (:9100, apt) | host CPU, memory, disks, network, apt, SMART | already installed |
 | `/metrics` on :8001 and :8010 | requests, errors, timings per route; price-data date | `scripts/dashboards/metrics.py`, `storefront/app/metrics.py` |
-| blackbox exporter (127.0.0.1:9115, apt) | site up and response time, certificate expiry | `deploy/monitoring/prometheus_momentum.yml` |
+| blackbox exporter (127.0.0.1:9115, apt) | site up and response time, certificate expiry; internet uptime (job internet) | `deploy/monitoring/prometheus_momentum.yml` |
 | cAdvisor (127.0.0.1:8098, container) | per-container CPU, memory, restarts | `deploy/monitoring/docker-compose.yml` |
-| `collect_status.py` (cron, every minute) | systemd job results, data download ages, logs, todo counts, bug reports, git | writes `/var/lib/prometheus/node-exporter/momentum_status.prom` |
+| `collect_status.py` (cron, every minute) | systemd job results, data download ages, logs, todo counts, bug reports, git, Plex, PBS backups, storefront orders and stock | writes `/var/lib/prometheus/node-exporter/momentum_status.prom` |
 | pve-exporter (127.0.0.1:9221, container) | Proxmox nodes, VMs, containers, storage (Home lab: Proxmox cluster) | `deploy/monitoring/docker-compose.yml`; token and CA in `/etc/momentum-monitoring/` |
 | UnPoller (127.0.0.1:9130, container) | UniFi network: devices, clients, internet link, Wi-Fi (Home lab: Network) | `deploy/monitoring/docker-compose.yml`; account and certificate in `/etc/momentum-monitoring/` |
 | `run_job.py` (wraps each cron job) | exit code, start/finish, duration, last success | writes `momentum_job_<name>.prom` in the same folder |
@@ -226,6 +230,30 @@ errors per disk, and data errors. Install or update it from this server with
 a key is set up). Any other ZFS machine with node-exporter works the same way. To remove it, on
 the machine: `systemctl disable --now zfs-status.timer`, delete the two unit files in
 /etc/systemd/system, /usr/local/lib/zfs-status and /var/lib/prometheus/node-exporter/zfs_status.prom.
+
+SMART disk health (since 2026-11-09; "Disk health (SMART)" on Home lab: Servers): Debian's
+prometheus-node-exporter-collectors package runs smartctl on every disk every 15 minutes
+(prometheus-node-exporter-smartmon.timer) and writes smartmon.prom for node-exporter. The Backup
+Server already had it; turn it on for another Debian machine in nodes.yml (OMV, or a Proxmox node
+once it runs node-exporter) with `deploy/monitoring/smart/install_on_host.sh root@<ip>`. Read the
+table by its counters, not the PASSED verdict, which flips only when a disk is nearly dead: any
+pending or uncorrectable sector means replace the disk. On 2026-11-09 the Backup Server's
+/dev/sdc (WD Blue 6 TB, serial WD-WX21DA5FN43K) had 2,100 pending and 152 uncorrectable sectors.
+To remove it from a machine: `systemctl disable --now prometheus-node-exporter-smartmon.timer`.
+
+Internet uptime (since 2026-11-09; top row of Home lab: Network): Prometheus job `internet` in
+prometheus_momentum.yml has the blackbox exporter open a TCP connection to port 443 on the router
+(192.168.1.1), Cloudflare (1.1.1.1) and Google (8.8.8.8) every 30 s. TCP rather than ping,
+because the exporter runs unprivileged. The internet counts as up when either outside address
+answers; router up with internet down points at the ISP or modem. Uptime starts from 2026-11-09.
+No speed test yet (it would need one more small container, and uses bandwidth every run).
+
+Store dashboard (since 2026-11-09; Pokemon Momentum: Store): the storefront section of
+collect_status.py reads data/storefront/store.db read-only every minute. Sales are net of
+refunds and counted on the day each order was paid, in the shop's local time (America/Denver).
+The "Orders" picker at the top shows live orders by default; test shows the Stripe test-mode
+orders from building the shop. Only counts, sums, and product SKUs and titles reach Prometheus,
+never customer names, emails or addresses. Low stock means 2 or fewer left (STORE_LOW_STOCK).
 
 Slowheim, the Valheim machine (192.168.1.187; since 2026-11-08; dashboard Home lab: Slowheim
 (Valheim)): it runs its own Prometheus (:9090, jobs node, valheim and prometheus) and Loki

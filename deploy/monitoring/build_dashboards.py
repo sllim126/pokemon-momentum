@@ -9,7 +9,7 @@ grafana/provisioning/dashboards.yml) within 30 s; no restart needed.
 Change the dashboards here, not in the Grafana UI: UI edits are lost when the file is
 rebuilt. The JSON is committed too, so the dashboards work without running this script.
 
-Eight dashboards, all reading the Prometheus data source (uid "prometheus"). Pokemon Momentum:
+Nine dashboards, all reading the Prometheus data source (uid "prometheus"). Pokemon Momentum:
 
 * Overview: is everything all right? One screen of status tiles, the jobs table and the
   headline charts. (Grafana's home page is a cross-project "Everything" dashboard kept in a
@@ -18,11 +18,12 @@ Eight dashboards, all reading the Prometheus data source (uid "prometheus"). Pok
 * Website: requests, errors and response times per app and route, and outside probes.
 * Jobs & work: scheduled jobs, data downloads, logs, docs/todo.txt, bug reports, git.
 * Visitors: people and page views per day, top pages, referrers and devices, per site.
+* Store: the new storefront's orders, sales and stock (live orders by default; test on request).
 
 Home lab (moved to their own folder 2026-11-05, as they serve more than the Pokemon sites):
 
 * Proxmox cluster: nodes, VMs, containers, storage.
-* Network (UniFi): devices, clients, WAN.
+* Network: internet uptime from this server's own probes, then UniFi devices, clients, WAN.
 * Servers: this host (CPU, memory, disks, network, updates), every Docker container,
   monitoring itself, and other machines listed in nodes.yml.
 
@@ -475,8 +476,9 @@ def servers():
     p[-2]["transformations"][1]["options"]["excludeByName"].pop("instance")
     p.extend(machines_row(43))
     p.append(zfs_pools_table(g(0, 52, 24, 4)))
-    p.extend(plex_row(56))
-    p.extend(nas_row(65, 'job="synology"', "Synology NAS (SNMP; deploy/monitoring/prometheus_momentum.yml, job synology)"))
+    p.append(smart_table(g(0, 56, 24, 9)))
+    p.extend(plex_row(65))
+    p.extend(nas_row(74,'job="synology"', "Synology NAS (SNMP; deploy/monitoring/prometheus_momentum.yml, job synology)"))
     return dashboard("momentum-servers", "Home lab: Servers", p, tags=("servers",), family="homelab")
 
 
@@ -731,8 +733,68 @@ def pbs_panels(y):
 
 
 def network():
-    return dashboard("homelab-network", "Home lab: Network (UniFi)", network_row(0), tags=("network",),
-                     family="homelab")
+    p = internet_row(0)
+    p += network_row(13)
+    return dashboard("homelab-network", "Home lab: Network", p, tags=("network",), family="homelab")
+
+
+# Internet and ISP uptime, from this server's own probes (job "internet" in
+# prometheus_momentum.yml): TCP connects every 30 s to the router and to two outside addresses.
+INTERNET_UP = 'max(probe_success{job="internet",side="wan"})'  # either outside address answered
+ROUTER_UP = 'max(probe_success{job="internet",side="lan"})'
+
+
+def state_timeline(title, targets, pos, mappings, description=""):
+    return {
+        "type": "state-timeline", "title": title, "gridPos": pos, "datasource": DS, "description": description,
+        "targets": targets,
+        "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "mappings": mappings,
+                                     "thresholds": steps("red", (1, "green")),
+                                     "custom": {"fillOpacity": 80, "lineWidth": 0}},
+                        "overrides": []},
+        "options": {"showValue": "never", "mergeValues": True, "rowHeight": 0.8, "alignValue": "left",
+                    "legend": {"showLegend": False}, "tooltip": {"mode": "single"}},
+    }
+
+
+def internet_row(y):
+    p = [row("Internet uptime (probes from this server every 30 s)", y)]
+    uptime = lambda rng: f"100 * avg_over_time(({INTERNET_UP})[{rng}:30s])"
+    tiles = [
+        ("Internet now", f"{INTERNET_UP} or vector(0)",
+         dict(mappings=UP_DOWN, thresholds=steps("red", (1, "green")),
+              description="UP when Cloudflare (1.1.1.1) or Google (8.8.8.8) answered the last check.")),
+        ("Router now", f"{ROUTER_UP} or vector(0)",
+         dict(mappings=UP_DOWN, thresholds=steps("red", (1, "green")),
+              description="The Dream Machine (192.168.1.1). If this is down too, the problem is inside the house.")),
+        ("Uptime, 24 h", uptime("24h"),
+         dict(unit="percent", decimals=2, thresholds=steps("red", (99, "orange"), (99.9, "green")))),
+        ("Uptime, 7 days", uptime("7d"),
+         dict(unit="percent", decimals=2, thresholds=steps("red", (99, "orange"), (99.9, "green")))),
+        ("Uptime, 30 days", uptime("30d"),
+         dict(unit="percent", decimals=2, thresholds=steps("red", (99, "orange"), (99.9, "green")),
+              description="Counted from 2026-11-09, when these probes started.")),
+        ("Down time, 7 days", f"0.5 * sum_over_time(({INTERNET_UP} == bool 0)[7d:30s])",
+         dict(unit="m", decimals=1, thresholds=steps("green", (1, "orange"), (30, "red")),
+              description="Minutes with no answer from either outside address, in 30-second steps.")),
+        ("Latency (Cloudflare)", 'probe_duration_seconds{job="internet",instance="1.1.1.1:443"}',
+         dict(unit="s", decimals=3, thresholds=steps("green", (0.05, "orange"), (0.15, "red")),
+              description="Time to open a connection to 1.1.1.1 just now (one round trip plus a little).")),
+        ("Latency (router)", 'probe_duration_seconds{job="internet",side="lan"}',
+         dict(unit="s", decimals=4, thresholds=steps("green", (0.01, "orange"), (0.05, "red")))),
+    ]
+    p += [stat(t, e, g(i * 3, y + 1, 3, 4), **kw) for i, (t, e, kw) in enumerate(tiles)]
+    p.append(state_timeline("Up or down",
+                            [target(INTERNET_UP, "Internet", "A"), target(ROUTER_UP, "Router", "B")],
+                            g(0, y + 5, 12, 8), UP_DOWN,
+                            description="Red stretches are outages. Internet red with Router green: the ISP "
+                                        "or the modem. Both red: this server or the house network."))
+    p.append(timeseries("Connection time",
+                        [target('probe_duration_seconds{job="internet"}', "{{name}}")],
+                        g(12, y + 5, 12, 8), unit="s",
+                        description="Time to open a TCP connection, every 30 s. Spikes mean a busy or "
+                                    "struggling line."))
+    return p
 
 
 # UnPoller series carry the device or client name; "uptime 0" is how it reports a device the
@@ -806,6 +868,50 @@ ZPOOL_STATE_MAP = [{
                 "unavail": {"text": "Unavailable", "color": "red", "index": 5},
                 "suspended": {"text": "Suspended", "color": "red", "index": 6}},
 }]
+
+
+def smart_named(expr):
+    """Per-disk SMART series with the disk's model and serial added (from smartmon_device_info),
+    limited to disks that really report SMART (a VM's virtual disk doesn't). The host itself
+    is scraped as localhost with no machine label; it shows as "grafana"."""
+    info = ("max by (instance, disk, device_model, serial_number) (smartmon_device_info) "
+            "and on (instance, disk) (smartmon_device_smart_available == 1)")
+    joined = f"max by (instance, disk) ({expr}) * on (instance, disk) group_left (device_model, serial_number) ({info})"
+    machine = "max by (instance, machine) (label_replace(smartmon_smartctl_version, \"machine\", \"grafana\", \"machine\", \"\"))"
+    return (f"max by (machine, disk, device_model, serial_number) "
+            f"(({joined}) * on (instance) group_left (machine) {machine})")
+
+
+def smart_table(pos):
+    """SMART for every disk of every machine running the smartmon collector (the Debian package
+    prometheus-node-exporter-collectors with smartmontools; deploy/monitoring/smart/). The
+    verdict ("healthy") only flips when a disk is nearly dead, so the counters beside it are
+    what matter: any pending, uncorrectable or reallocated sector means the disk is failing."""
+    cols = [
+        ("A", "smartmon_device_smart_healthy", "Verdict",
+         dict(mappings=value_map({1: ("PASSED", "text"), 0: ("FAILING", "red")}))),
+        ("B", "smartmon_current_pending_sector_raw_value", "Pending sectors", dict(thresholds=steps("text", (1, "red")))),
+        ("C", "smartmon_offline_uncorrectable_raw_value", "Uncorrectable", dict(thresholds=steps("text", (1, "red")))),
+        ("D", "smartmon_reallocated_sector_ct_raw_value", "Reallocated", dict(thresholds=steps("text", (1, "orange"), (50, "red")))),
+        # A lifetime total, often large from one old cable fault; only new errors matter.
+        ("E", "delta(smartmon_udma_crc_error_count_raw_value[7d])", "Cable errors (7 days)",
+         dict(decimals=0, thresholds=steps("text", (1, "orange")))),
+        ("F", "smartmon_temperature_celsius_raw_value", "Temp",
+         dict(unit="celsius", thresholds=steps("text", (45, "orange"), (55, "red")))),
+        ("G", "smartmon_power_on_hours_raw_value / 8766", "Age (powered on)", dict(unit="none", decimals=1)),
+    ]
+    return table("Disk health (SMART)",
+                 [target(smart_named(expr), ref=ref, instant=True, table=True) for ref, expr, _, _ in cols],
+                 pos,
+                 {"machine": "Machine", "disk": "Disk", "device_model": "Model", "serial_number": "Serial",
+                  **{f"Value #{ref}": head for ref, _, head, _ in cols}},
+                 description="One row per physical disk, from smartctl every 15 minutes. Any pending or "
+                             "uncorrectable sector means the disk has unreadable spots and is failing: "
+                             "plan to replace it (it may still say PASSED). Cable errors that keep appearing "
+                             "usually mean a loose or bad SATA cable, not a bad disk. Age is in years of power-on time. "
+                             "Adding a machine: runbook 'Monitoring', 'SMART'.",
+                 overrides=[col(f"Value #{ref}", **kw) for ref, _, _, kw in cols],
+                 sort=("Pending sectors", True))
 
 
 def zfs_pools_table(pos):
@@ -1145,7 +1251,126 @@ def visitors():
 # (grafana/provisioning/datasources.yml). Its dashboard is the owner's own export, kept as-is in
 # grafana/imported/slowheim_source.json (from /home/adam/slowheim-monitoring/grafana-dashboard.json
 # on Slowheim): to update it, copy that file over and rerun this script.
-SLOWHEIM_SOURCE = Path(__file__).resolve().parent / "grafana" / "imported" / "slowheim_source.json"
+# --- Store (new storefront) ------------------------------------------------------------------
+#
+# From the storefront section of scripts/monitoring/collect_status.py, which reads
+# data/storefront/store.db read-only. Orders carry mode (test or live); the "Orders" picker at
+# the top defaults to live, so test orders made while building the shop never look like sales.
+
+STORE_MODE = '"$mode"'
+
+
+def store_daily_barchart(title, metrics, pos, unit="none", decimals=0, description=""):
+    """Bars per local day from day-labelled series. metrics: (metric name, legend) pairs."""
+    refs = "ABCDEF"
+    names = {"day": "Day", **{f"Value #{refs[i]}": legend for i, (_, legend) in enumerate(metrics)}}
+    return {
+        "type": "barchart", "title": title, "gridPos": pos, "datasource": DS, "description": description,
+        "targets": [target(f"max by (day) ({name}{{mode={STORE_MODE}}})", ref=refs[i], instant=True, table=True)
+                    for i, (name, _) in enumerate(metrics)],
+        "transformations": [
+            {"id": "merge", "options": {}},
+            {"id": "organize", "options": {"excludeByName": {"Time": True}, "renameByName": names,
+                                           "indexByName": {k: i for i, k in enumerate(names)}}},
+            {"id": "sortBy", "options": {"sort": [{"field": "Day", "desc": False}]}},
+        ],
+        "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "decimals": decimals, "unit": unit,
+                                     "custom": {"lineWidth": 0, "fillOpacity": 85}},
+                        "overrides": []},
+        "options": {"xField": "Day", "orientation": "vertical", "groupWidth": 0.7, "barWidth": 0.9,
+                    "showValue": "never", "stacking": "none", "xTickLabelRotation": -45,
+                    "xTickLabelSpacing": 100,
+                    "legend": {"displayMode": "list", "placement": "bottom", "showLegend": len(metrics) > 1},
+                    "tooltip": {"mode": "multi", "sort": "none"}},
+    }
+
+
+def store():
+    p = [row("Orders and sales (orders picked at the top: live or test)", 0)]
+    win = lambda name, w: f'sum({name}{{mode={STORE_MODE},window="{w}"}}) or vector(0)'
+    tiles = [
+        ("Store up (local)", 'probe_success{instance="http://localhost:8010/healthz"}',
+         dict(mappings=UP_DOWN, thresholds=steps("red", (1, "green")),
+              description="The storefront container answering on this host.")),
+        ("Orders to ship", f"sum(momentum_store_orders_to_ship{{mode={STORE_MODE}}}) or vector(0)",
+         dict(thresholds=steps("green", (1, "orange")), description="Paid orders not yet marked shipped.")),
+        ("Oldest unshipped", f"max(momentum_store_oldest_unshipped_seconds{{mode={STORE_MODE}}})",
+         dict(unit="dtdurations", decimals=0, thresholds=steps("green", (DAY, "orange"), (3 * DAY, "red")),
+              description="Time since the oldest unshipped order was paid. No value: nothing to ship.")),
+        ("Sales today", win("momentum_store_sales_dollars", "today"), dict(unit="currencyUSD", decimals=2)),
+        ("Sales, 7 days", win("momentum_store_sales_dollars", "7d"), dict(unit="currencyUSD", decimals=0)),
+        ("Sales, 30 days", win("momentum_store_sales_dollars", "30d"), dict(unit="currencyUSD", decimals=0,
+         description="Net of refunds, by the day each order was paid (shop's local time).")),
+        ("Orders, 30 days", win("momentum_store_paid_orders", "30d"), dict(decimals=0)),
+        ("Average order, 30 days",
+         f'sum(momentum_store_sales_dollars{{mode={STORE_MODE},window="30d"}}) / '
+         f'sum(momentum_store_paid_orders{{mode={STORE_MODE},window="30d"}} > 0)',
+         dict(unit="currencyUSD", decimals=2, description="No value until something sells.")),
+    ]
+    p += [stat(t, e, g(i * 3, 1, 3, 4), **kw) for i, (t, e, kw) in enumerate(tiles)]
+    p.append(store_daily_barchart("Sales per day", [("momentum_store_daily_sales_dollars", "Sales")],
+                                  g(0, 5, 10, 8), unit="currencyUSD",
+                                  description="Last 30 local days, net of refunds."))
+    p.append(store_daily_barchart("Orders and items per day",
+                                  [("momentum_store_daily_orders", "Orders"), ("momentum_store_daily_units", "Items")],
+                                  g(10, 5, 9, 8)))
+    p.append(table("Orders by status",
+                   [target(f"sum by (status) (momentum_store_orders{{mode={STORE_MODE}}})", ref="A",
+                           instant=True, table=True)],
+                   g(19, 5, 5, 8), {"status": "Status", "Value": "Orders"},
+                   description="Every order ever. pending: checkout open; expired or cancelled: never paid.",
+                   cell_color=False, sort=("Orders", True)))
+
+    p.append(row("Products and stock", 13))
+    vis = 'state="visible"'
+    tiles = [
+        ("Products on sale", f"sum(momentum_store_products{{{vis}}}) or vector(0)",
+         dict(description="Visible products, stock-tracked or not.")),
+        ("In stock", f"sum(momentum_store_products_in_stock{{{vis}}}) or vector(0)",
+         dict(description="Visible, stock-tracked products with at least one left.")),
+        ("Sold out",
+         f'sum(momentum_store_products{{{vis},stock="tracked"}}) - sum(momentum_store_products_in_stock{{{vis}}})',
+         dict(thresholds=steps("green", (1, "orange")),
+              description="Visible, stock-tracked products with none left: customers see them as sold out.")),
+        ("Low stock (1-2 left)", "count(momentum_store_low_stock > 0) or vector(0)",
+         dict(thresholds=steps("green", (1, "orange")))),
+        ("Units in stock", f"sum(momentum_store_stock_units{{{vis}}}) or vector(0)",
+         dict(description="Visible products only.")),
+        ("Stock at shop prices", f"sum(momentum_store_stock_value_dollars{{{vis}}}) or vector(0)",
+         dict(unit="currencyUSD", decimals=0, description="Visible units in stock times their shop price.")),
+        ("Hidden products", 'sum(momentum_store_products{state="hidden"}) or vector(0)',
+         dict(description="Not shown in the shop (drafts, retired or not imported for sale).")),
+        ("Hidden stock units", 'sum(momentum_store_stock_units{state="hidden"}) or vector(0)',
+         dict(description="Units counted in stock on hidden products: stock nobody can buy.")),
+    ]
+    p += [stat(t, e, g(i * 3, 14, 3, 4), **kw) for i, (t, e, kw) in enumerate(tiles)]
+    p.append(table("Nearly sold out (visible products)",
+                   [target("max by (sku, title) (momentum_store_low_stock)", ref="A", instant=True, table=True)],
+                   g(0, 18, 14, 10), {"title": "Product", "sku": "SKU", "Value": "Left"},
+                   description="Visible, stock-tracked products with 2 or fewer left (STORE_LOW_STOCK in "
+                               "collect_status.py), sold out first.",
+                   overrides=[col("Value", thresholds=steps("red", (1, "orange"), (2, "text")))],
+                   sort=("Left", False)))
+    p.append(table("Products by kind",
+                   [target("sum by (kind, state, stock) (momentum_store_products)", ref="A", instant=True, table=True),
+                    target("sum by (kind, state, stock) (label_replace(momentum_store_stock_units, "
+                           '"stock", "tracked", "kind", ".*"))', ref="B", instant=True, table=True)],
+                   g(14, 18, 10, 10),
+                   {"kind": "Kind", "state": "Shown", "stock": "Stock", "Value #A": "Products",
+                    "Value #B": "Units"},
+                   description="Untracked: made to order or supplier-backed, with no stock count.",
+                   cell_color=False, sort=("Products", True)))
+    board = dashboard("momentum-store", "Pokemon Momentum: Store", p, time_from="now-30d", tags=("store",))
+    board["templating"]["list"].append({
+        "type": "custom", "name": "mode", "label": "Orders", "query": "live,test",
+        "current": {"text": "live", "value": "live"}, "hide": 0,
+        "options": [{"text": v, "value": v, "selected": v == "live"} for v in ("live", "test")],
+        "description": "live: real orders. test: orders from Stripe test mode while building the shop.",
+    })
+    return board
+
+
+SLOWHEIM_SOURCE =Path(__file__).resolve().parent / "grafana" / "imported" / "slowheim_source.json"
 SLOWHEIM_DATASOURCES = {"${DS_PROMETHEUS}": "slowheim-prometheus", "${DS_LOKI}": "slowheim-loki"}
 
 
@@ -1166,6 +1391,7 @@ def slowheim():
 def main() -> None:
     boards = ((OUT, "overview", overview()), (OUT, "website", website()),
               (OUT, "jobs_and_work", jobs_and_work()), (OUT, "visitors", visitors()),
+              (OUT, "store", store()),
               (OUT_HOMELAB, "proxmox", proxmox()), (OUT_HOMELAB, "network", network()),
               (OUT_HOMELAB, "servers", servers()), (OUT_HOMELAB, "slowheim", slowheim()))
     for folder, name, board in boards:

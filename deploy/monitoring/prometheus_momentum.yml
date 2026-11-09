@@ -47,6 +47,31 @@ scrape_configs:
       - target_label: __address__
         replacement: localhost:9115
 
+  # Internet and ISP uptime (Home lab: Network, "Internet uptime" row). A TCP connect to
+  # port 443 every 30 s: to the router (is the LAN fine?) and to two unrelated outside
+  # addresses (is the internet there?). TCP instead of ping because the blackbox exporter
+  # runs unprivileged, and ping would need CAP_NET_RAW. "Internet up" on the dashboard means
+  # either outside address answered, so one provider's outage doesn't count as ours.
+  - job_name: internet
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: /probe
+    params: {module: [tcp_connect]}
+    static_configs:
+      - targets: ["192.168.1.1:443"]
+        labels: {probe: internet, side: lan, name: "Router (192.168.1.1)"}
+      - targets: ["1.1.1.1:443"]
+        labels: {probe: internet, side: wan, name: "Cloudflare (1.1.1.1)"}
+      - targets: ["8.8.8.8:443"]
+        labels: {probe: internet, side: wan, name: "Google (8.8.8.8)"}
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:9115
+
   # Proxmox cluster through the pve-exporter container (docker-compose.yml here). Replaces
   # the old 'proxmox' job in prometheus.yml, whose exporter on 192.168.1.75:9121 was gone.
   # cluster=1 covers every node, VM, container and storage pool; node=1 adds this node's

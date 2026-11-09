@@ -1,5 +1,5 @@
 """Host-side monitoring scripts (scripts/monitoring/, deploy/monitoring/zfs/): todo counts,
-job status files, Plex, PBS and ZFS pool parsing."""
+job status files, Plex, PBS, the storefront and ZFS pool parsing."""
 
 import importlib.util
 import sys
@@ -180,6 +180,80 @@ class ZfsStatusTests(unittest.TestCase):
         self.assertEqual(status["in_progress"], "scrub")
         self.assertIsNone(status["scrub_end"])
         self.assertEqual(status["data_errors"], 0)
+
+
+class StorefrontTests(unittest.TestCase):
+    """The storefront section against a scratch database built from the store's own migrations."""
+
+    NOW = 1_800_000_000  # 2027-01-15 08:00 UTC = 01:00 in Denver, so "today" there is the 15th
+
+    def _db(self, tmp):
+        import sqlite3
+
+        path = Path(tmp) / "store.db"
+        con = sqlite3.connect(path)
+        migrations = Path(__file__).resolve().parents[1] / "storefront" / "app" / "migrations"
+        for sql in sorted(migrations.glob("*.sql")):
+            con.executescript(sql.read_text())
+        t = "2027-01-01T00:00:00Z"
+        products = [  # sku, kind, visible, track_stock, stock, price_cents
+            ("BOX", "sealed", 1, 1, 0, 10000), ("ETB", "sealed", 1, 1, 2, 5000),
+            ("TIN", "sealed", 1, 1, 9, 2000), ("HIDDEN", "sealed", 0, 1, 4, 1000),
+            ("SLEEVES", "accessory", 1, 0, 0, 500)]
+        for i, (sku, kind, visible, tracked, stock, price) in enumerate(products, 1):
+            con.execute("INSERT INTO products (id, sku, slug, title, kind, visible, track_stock, stock, price_cents, "
+                        "created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (i, sku, sku.lower(), f"{sku} title", kind, visible, tracked, stock, price, t, t))
+        orders = [  # number, mode, status, total, refunded, paid_at
+            ("L1", "live", "shipped", 12000, 0, "2027-01-15T07:30:00Z"),            # 00:30 Denver, the 15th
+            ("L2", "live", "paid", 5000, 0, "2027-01-15T06:30:00Z"),                # 23:30 Denver, the 14th
+            ("L3", "live", "partially_refunded", 8000, 3000, "2026-12-30T12:00:00Z"),  # 16 days back
+            ("L4", "live", "expired", 9000, 0, None),
+            ("T1", "test", "shipped", 99900, 0, "2027-01-15T07:00:00Z")]
+        for i, (number, mode, status, total, refunded, paid_at) in enumerate(orders, 1):
+            con.execute("INSERT INTO orders (id, number, access_token, status, mode, ship_class, total_cents, "
+                        "refunded_cents, created_at, paid_at) VALUES (?, ?, 'k', ?, ?, 'single', ?, ?, ?, ?)",
+                        (i, number, status, mode, total, refunded, "2027-01-01T00:00:00Z", paid_at))
+            con.execute("INSERT INTO order_items (order_id, sku, title, unit_price_cents, quantity) "
+                        "VALUES (?, 'X', 'x', 100, 2)", (i,))
+        con.commit()
+        con.close()
+        return path
+
+    def _run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            collect_status.STORE_DB = self._db(tmp)
+            m = collect_status.Metrics()
+            collect_status.storefront(m, now=self.NOW)
+        return [line for line in m.lines if not line.startswith("#")]
+
+    def test_sales_use_local_days_net_of_refunds_and_keep_test_orders_apart(self):
+        lines = self._run()
+        self.assertIn('momentum_store_sales_dollars{mode="live",window="today"} 120.0', lines)
+        self.assertIn('momentum_store_daily_sales_dollars{mode="live",day="2027-01-14"} 50.0', lines)
+        self.assertIn('momentum_store_sales_dollars{mode="live",window="7d"} 170.0', lines)
+        self.assertIn('momentum_store_sales_dollars{mode="live",window="30d"} 220.0', lines)  # 120 + 50 + (80 - 30 refunded)
+        self.assertIn('momentum_store_paid_orders{mode="live",window="30d"} 3.0', lines)  # expired never counts
+        self.assertIn('momentum_store_units_sold{mode="live",window="30d"} 6.0', lines)
+        self.assertIn('momentum_store_sales_dollars{mode="test",window="today"} 999.0', lines)
+        self.assertIn('momentum_store_orders_to_ship{mode="live"} 1.0', lines)
+        self.assertIn('momentum_store_oldest_unshipped_seconds{mode="live"} 5400.0', lines)
+        self.assertIn('momentum_store_orders{mode="live",status="expired"} 1.0', lines)
+
+    def test_stock_counts_and_low_stock_list_only_visible_tracked_products(self):
+        lines = self._run()
+        self.assertIn('momentum_store_products_in_stock{kind="sealed",state="visible"} 2.0', lines)
+        self.assertIn('momentum_store_stock_units{kind="sealed",state="visible"} 11.0', lines)
+        self.assertIn('momentum_store_stock_value_dollars{kind="sealed",state="visible"} 280.0', lines)
+        self.assertIn('momentum_store_products{kind="accessory",state="visible",stock="untracked"} 1.0', lines)
+        low = [line for line in lines if line.startswith("momentum_store_low_stock")]
+        self.assertEqual(low, ['momentum_store_low_stock{sku="BOX",title="BOX title"} 0.0',
+                               'momentum_store_low_stock{sku="ETB",title="ETB title"} 2.0'])
+
+    def test_no_customer_details_in_the_metrics(self):
+        text = "\n".join(self._run())
+        for field in ("email", "name=", "shipping", "access_token"):
+            self.assertNotIn(field, text)
 
 
 class RunJobTests(unittest.TestCase):
