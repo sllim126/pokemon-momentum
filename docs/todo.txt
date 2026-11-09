@@ -194,9 +194,10 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   comes from the last Squarespace export, so refresh that rule from the new store's stock then.
 - [next] Check the Budget Builder on 2026-11-06 shows different picks from 2026-11-05 (first day of
   rotation; today's default views were recorded for price date 2026-11-04).
-- [next] Market insights: owner approved and merged to `main` on 2026-11-07 (embed removed, grade
-  list moved into a dropdown). The live site runs from the checkout's branch, so it goes live
-  when that checkout is on `main` (or a branch with it) and the site restarts. Then check that the next nightly builds
+- [next] Market insights: owner approved and merged to `main` on 2026-11-07; live since
+  2026-11-09 (main merged into `feature/homelab-machines`, which the site runs from). Picks are
+  recorded for price dates 11-05, 11-06 and 11-08 (English) and 11-05 and 11-08 (Japanese);
+  11-07 was missed while it wasn't live and can't be rebuilt. Check that the next nightly builds
   `pokemon_market_mood_snapshot` (log line "Build Pokemon market mood snapshot") and that the
   site log shows "Track record: recorded N picks" for the new date. The first 7-day results show
   on 2026-11-11 (picks recorded since 2026-11-05; budget picks since 2026-11-04).
