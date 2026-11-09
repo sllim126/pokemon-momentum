@@ -48,7 +48,10 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   Articles (the old Squarespace blog) at `/articles`. Guide: `storefront/README.md`
 - Collector resources: generated placeholder libraries, checklists, print pages, review queues, and downloads
 - Standalone binder planners: ATLA and KPDH are served by separate read-only nginx
-  containers at `/atla/` and `/kpdh/`; collection state stays in each visitor's browser
+  containers at `/atla/` and `/kpdh/`; collection state stays in each visitor's browser.
+  KPDH includes owner-scanned fronts and backs for all eight known Series 1 promos; the
+  portrait promo scans use measured perspective correction so complete card/sleeve edges
+  remain visible in the detail viewer.
 
 At the 2026-10-12 review, the health snapshot reported 39,285,648 English and 13,660,254
 Japanese price rows, both with latest data dated 2026-10-11. The daily pipeline,
@@ -144,6 +147,11 @@ Added 2026-10:
   and Learn (How it works), plus a legal footer
 - Collector Hub, Placeholder Library and Account restyled on a shared desktop stylesheet
 - Index snapshots now build after the parquet export, so indexes are no longer a day behind
+- Market Stats additions (2026-11-06, desktop and phone): Market mood (0-100 breadth gauge
+  with two years of history, nightly `<slug>_market_mood_snapshot`), Track record (each
+  Discover list's daily top 25 scored after 7/14/30 days against the whole market) and
+  Releases (upcoming and recent sets); on cards, a "See all grades" dropdown on the Graded tab and price records;
+  collector nicknames in search
 - The desktop app is the desktop home page at `/`; older desktop addresses forward to it
   (phones unchanged); the older research dashboard is retired on desktop (2026-10-16) and
   `dashboard.html` was deleted on 2026-10-31 once the mobile app covered its last views
@@ -187,7 +195,9 @@ Added 2026-10:
   8091 and reached through the same Caddy proxy. Energy and Classic Series 2 are live;
   the planner preserves Series 1 collection IDs, offers premium-first or base-first binder
   order, uses the confirmed continuous Series 2 CR numbering, and outlines the nine
-  Energy CR cards in lime while physical-card confirmation is pending
+  Energy CR cards in lime while physical-card confirmation is pending. All eight known
+  Series 1 promos have physically verified two-digit codes and owner-supplied 600 DPI
+  front/back scans; catalog v5 migrates their former provisional IDs without losing counts
 - Confirmed and Consistent Movers show how many days each card has been in the list (sortable);
   Set values' top-hit card opens in the side pane; browser Back closes the full card page
 - Binder planners on phones (2026-10-21/22): cards near the top, sideways page strip with a

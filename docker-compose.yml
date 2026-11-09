@@ -21,7 +21,9 @@ services:
   # container so a crash or heavy job in the market app can't take the shop down.
   # It sees only its code, the data folder read-only, and its own data/storefront folder.
   storefront:
-    build: ./storefront
+    # The code comes from the store's own clone (STOREFRONT_CODE_DIR, set by
+    # deploy/update_storefront.sh) so branch switches in this folder don't change the store.
+    build: ${STOREFRONT_CODE_DIR:-./storefront}
     container_name: poke6s-storefront
     # Run as the host user, so the database, photos and article files the store and its
     # importers write stay owned by (and editable for) the owner, not root.
@@ -38,6 +40,8 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       STOREFRONT_ALLOW_LIVE: ${STOREFRONT_ALLOW_LIVE:-0}
+      # Sales tax: 'stripe' = Stripe Tax adds it at checkout (Utah registration set up in the
+      # Stripe dashboard first); 'none' = no tax. Anything else keeps checkout off.
       STOREFRONT_TAX_MODE: ${STOREFRONT_TAX_MODE:-none}
       STOREFRONT_FREE_SHIPPING_OVER_CENTS: ${STOREFRONT_FREE_SHIPPING_OVER_CENTS:-15000}
       STOREFRONT_SHIP_SMALL_SEALED_CENTS: ${STOREFRONT_SHIP_SMALL_SEALED_CENTS:-500}
@@ -51,7 +55,7 @@ services:
     ports:
       - "8010:8010"
     volumes:
-      - ./storefront:/app/storefront
+      - ${STOREFRONT_CODE_DIR:-./storefront}:/app/storefront
       - ./data:/app/data:ro
       - ./data/storefront:/app/data/storefront
     restart: unless-stopped

@@ -3,7 +3,7 @@
     Checkout posts the same SKUs to POST /checkout and goes to the Stripe page it returns. -#}
 {% extends "base.html" %}
 {% block content %}
-<section class="cart" data-cart data-enabled="{{ 1 if checkout_enabled else 0 }}"
+<section class="cart" data-cart data-enabled="{{ 1 if checkout_enabled else 0 }}" data-tax-note="{{ tax_note }}"
          data-free-over="{{ free_over }}" data-tcgplayer="{{ settings.tcgplayer_store_url }}">
   <h1>Your cart</h1>
   {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}

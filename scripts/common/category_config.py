@@ -93,6 +93,10 @@ class CategoryConfig:
         return f"{self.slug}_long_series_snapshot.csv"
 
     @property
+    def market_mood_snapshot_table(self) -> str:
+        return f"{self.slug}_market_mood_snapshot"
+
+    @property
     def screener_snapshot_table(self) -> str:
         return f"{self.slug}_screener_snapshot"
 

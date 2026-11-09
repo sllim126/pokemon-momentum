@@ -1,7 +1,7 @@
 Pokemon Momentum Data Flow
 ==========================
 
-Last reviewed: 2026-11-05 (pipeline steps and table names checked against run_daily_update.py)
+Last reviewed: 2026-11-06 (pipeline steps and table names checked against run_daily_update.py)
 
 Recent Data/Serving Changes (March 2026)
 ----------------------------------------
@@ -39,6 +39,18 @@ Recent Data/Serving Changes (March 2026)
   "All" chart window and `/hold_check` join the two rows (`snapshot_history` in `api.py`)
   instead of scanning the raw parquet history (~1 s down to ~0.05 s). The raw history is
   only read if the snapshots are missing.
+- Since 2026-11-06 the next nightly step (`build_market_mood_snapshot.py`) reads the series
+  and product signal snapshots and writes `<slug>_market_mood_snapshot`: one row per day of
+  breadth counts for singles (above/below 30-day average, up/down over 7 days, new 90-day
+  highs/lows) plus what all singles $5+ did over the next 7/14/30 days (the Track record's
+  market baseline). Rules in `scripts/common/market_mood.py`. A soft step: if it fails, the
+  update carries on and `/market_mood` computes the same numbers itself once (~30 s, in the
+  background).
+- Track record picks are not part of the nightly update: when the website starts (the
+  nightly restarts it) a background thread stores the top 25 of each Discover list for the
+  new price date in the tracking database (`data/processed/tracking.sqlite3`, table
+  `list_pick_history`, kept for good). `/track_record` scores them against the series
+  snapshot. See `scripts/dashboards/pick_tracker.py`.
 - Since 2026-10-12 the web app remembers which DuckDB tables exist and whether the parquet
   history covers a market, and runs queries on cursors of one shared read-only DuckDB
   connection (`query_support.py`), instead of reopening the 13 GB file several times per

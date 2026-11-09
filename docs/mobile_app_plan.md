@@ -1,6 +1,6 @@
 # New mobile app: plan
 
-Last reviewed: 2026-10-31
+Last reviewed: 2026-11-06
 
 The owner asked on 2026-10-21 for a full rebuild of the phone site: same features as today,
 in the desktop app's look, and a layout that fills any screen from a phone in portrait to a
@@ -19,7 +19,8 @@ phone the site is a quick "is this a good deal?" tool at a card table, not a res
 - The mobile page is a fixed-width column (about 430 px). In landscape it leaves empty space on
   both sides, and the Save / Full Data bar overlaps the card.
 - Many desktop views are missing on phones: Small Dips, Whole-set Dips, Budget Builder, Sets,
-  Pokémon, Market Stats (indexes and set values) and How it works.
+  Pokémon, Market Stats (indexes, set values, and since 2026-11-06 market mood, track record
+  and releases) and How it works.
 
 ## How it is built
 

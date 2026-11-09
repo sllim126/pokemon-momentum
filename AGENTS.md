@@ -61,6 +61,9 @@ coding agent. Read this first, then `docs/todo.txt`.
 - The site runs in the Docker container `pokemon-momentum`, with the repo mounted at `/app`.
 - After Python changes: `docker-compose restart pokemon-momentum`. HTML, CSS and JavaScript
   changes need only a browser reload.
+- The storefront (port 8010) runs from its own clone, `~/poke6s-store`, which holds `main`
+  only. After merging storefront work to `main`, update it with `deploy/update_storefront.sh`;
+  don't `docker-compose up` the storefront from this folder.
 - Tests: `docker-compose exec -T pokemon-momentum python -m pytest -q -p no:cacheprovider tests`
   (or `make test-all`).
 - Desktop pages: check at 1920×1080 and 1366×768 with no page scroll and no console errors

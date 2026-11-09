@@ -55,8 +55,13 @@ class Settings:
     free_shipping_over_cents: int = 15000      # owner, 2026-11-05: free over $150
     # Ask the card's bank for 3-D Secure at or above this order total (plan "Checkout").
     three_d_secure_over_cents: int = 15000
-    # Sales tax (decision D2, still open): 'none' or 'stripe' (Stripe Tax, set up in the
-    # Stripe dashboard). Our own Utah table would be a third method behind the same switch.
+    # Sales tax (decision D2, owner 2026-11-05): added on top at checkout by Stripe Tax.
+    #   'stripe' - Stripe Tax works out the tax from the shipping address, only where the
+    #              Stripe account is registered (Utah). Set up once in the Stripe dashboard:
+    #              business address, Tax -> Registrations -> Utah. Costs ~0.5% per taxed order.
+    #   'none'   - no tax (tests and local runs).
+    # (A free fixed Utah rate was tried: Stripe no longer accepts per-state "dynamic" tax
+    # rates in Checkout, so it can't skip out-of-state orders.)
     tax_mode: str = "none"
     reservation_minutes: int = 30
     # Order alerts. Empty = no alerts (the URL is a secret: never log it).
@@ -74,8 +79,16 @@ class Settings:
         return "live" if "_live_" in self.stripe_secret_key else "test"
 
     @property
+    def tax_problem(self) -> str:
+        """Why the tax setting can't be used, or '' when it's fine. Checkout stays off while
+        there is a problem, so a mistyped mode can't quietly sell without tax."""
+        if self.tax_mode not in ("none", "stripe"):
+            return f"STOREFRONT_TAX_MODE={self.tax_mode!r} is not 'none' or 'stripe'."
+        return ""
+
+    @property
     def checkout_enabled(self) -> bool:
-        if not self.stripe_secret_key:
+        if not self.stripe_secret_key or self.tax_problem:
             return False
         return self.stripe_mode == "test" or self.allow_live
 

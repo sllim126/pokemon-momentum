@@ -196,10 +196,11 @@ class ApiRouteTests(unittest.TestCase):
     @patch.object(api, "db_has_table", return_value=True)
     @patch.object(api, "q")
     def test_graded_prices_returns_latest_with_pricecharting_link(self, q_mock, _has_table):
-        cols = ["snapshot_date", "pc_id", "set_name", "product_name", "ungraded", "grade9", "grade9_5", "psa10", "cgc10", "bgs10", "sgc10", "sales_volume"]
+        cols = ["snapshot_date", "pc_id", "set_name", "product_name", "ungraded", "grade9", "grade9_5", "psa10", "cgc10", "bgs10", "sgc10", "sales_volume", "grade7", "grade8"]
         q_mock.return_value = (cols, [
-            ("2026-10-08", 42, "Pokemon Base Set", "Charizard #4", 300.0, 900.0, None, 9000.0, 1200.0, None, None, 50),
-            ("2026-10-09", 42, "Pokemon Base Set", "Charizard #4", 310.0, 950.0, None, 9100.0, 1250.0, None, None, 51),
+            ("2026-10-08", 42, "Pokemon Base Set", "Charizard #4", 300.0, 900.0, None, 9000.0, 1200.0, None, None, 50, 500.0, 700.0),
+            # Grade 7 above grade 8 on purpose: the ladder passes prices through as they are.
+            ("2026-10-09", 42, "Pokemon Base Set", "Charizard #4", 310.0, 950.0, None, 9100.0, 1250.0, None, None, 51, 720.0, 700.0),
         ])
 
         body = self.client.get("/graded_prices?productId=1&subTypeName=Unlimited Holofoil").json()
@@ -208,6 +209,7 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(body["url"], "https://www.pricecharting.com/game/42")
         self.assertEqual(body["snapshot_date"], "2026-10-09")
         self.assertEqual(body["prices"]["psa10"], 9100.0)
+        self.assertEqual((body["prices"]["grade7"], body["prices"]["grade8"]), (720.0, 700.0))
         self.assertEqual(len(body["history"]), 2)
 
     def test_hold_check_route_rejects_unknown_channel(self):

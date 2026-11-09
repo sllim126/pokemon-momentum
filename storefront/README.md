@@ -12,10 +12,14 @@ Nothing is public: robots are blocked and every page says `noindex` until
 ## Run it
 
 ```sh
-docker-compose up -d --build storefront      # first time, or after editing requirements.txt
-docker-compose restart storefront            # after Python, template or Markdown page changes
-make test-storefront                         # 46 tests, synthetic data only
+deploy/update_storefront.sh                  # run the store on :8010 from the latest main
+make test-storefront                         # synthetic data only
 ```
+
+The store on :8010 runs from its own clone, `~/poke6s-store`, which only holds `main`, so
+coding sessions switching branches in the repo folder don't change it. The script pulls `main`
+into the clone, rebuilds the image if needed, restarts and checks `/healthz`. To try a branch,
+run a second container from a copy of `data/storefront` on another port instead.
 
 The container (`poke6s-storefront`, port 8010) sees only:
 - `storefront/` (the code, mounted, so no rebuild for code changes);
@@ -96,7 +100,7 @@ Existing article files are kept unless `--force` is given.
 How it works: `app/orders.py` (module docstring), plan "Checkout and orders".
 
 **Switch it on.** Put the Stripe **test** keys in `.env` (never in code or chat), then
-`docker-compose up -d storefront` (an `up`, not a `restart`, so the new settings are read):
+`deploy/update_storefront.sh` (it recreates the container, so the new settings are read):
 
 ```
 STRIPE_SECRET_KEY=sk_test_...         # Stripe dashboard > Developers > API keys (test mode)
@@ -107,9 +111,17 @@ Live keys (`sk_live_...`) are refused unless `STOREFRONT_ALLOW_LIVE=1`; going li
 owner's call. Other settings (all optional, defaults in `app/settings.py`):
 `STOREFRONT_FREE_SHIPPING_OVER_CENTS` (15000), `STOREFRONT_SHIP_<CLASS>_CENTS` (placeholders:
 small sealed 500, large sealed 900, accessory 500, single 500), `STOREFRONT_TAX_MODE`
-(`none`, or `stripe` for Stripe Tax; decision D2), `STOREFRONT_DISCORD_WEBHOOK_URL` (order
+(decision D2: `stripe` = Stripe Tax adds Utah sales tax on top at checkout, once Utah is
+registered under Tax -> Registrations in the Stripe dashboard; `none` = no tax, the default;
+anything else keeps checkout off), `STOREFRONT_DISCORD_WEBHOOK_URL` (order
 alerts; off when empty), `STOREFRONT_SMTP_HOST` / `_USER` / `_PASSWORD` (Microsoft 365, port
 587). Without SMTP, order emails are written to `data/storefront/outbox/*.eml`.
+
+Order emails (confirmation and shipped) have a plain-text part and a designed HTML part,
+`app/templates/email/order.html`: tables and inline styles only, because email apps ignore most
+CSS. The logo is attached to the email itself (`cid:`), so it shows before the site is public.
+The shipped email links USPS, UPS, FedEx and DHL numbers to the carrier's tracking page
+(`notify.TRACKING_URLS`; other carriers show the number without a button).
 
 **A test order.** Add something to the cart, Checkout, and pay on Stripe's page with card
 `4242 4242 4242 4242`, any future date, any CVC, any US address. Orders are numbered
@@ -143,7 +155,7 @@ stock by hand until the Phase 3 admin.
 | `app/main.py` | FastAPI app: routes, 404 + redirect handling, security headers, reconcile loop |
 | `app/orders.py` | Cart pricing, checkout, reservations, payment, expiry, refunds, disputes, shipping |
 | `app/stripe_api.py` | The Stripe calls (Checkout Sessions) over HTTPS; webhook signature check |
-| `app/notify.py` | Discord order alerts; order and shipping emails (SMTP or the outbox folder) |
+| `app/notify.py` | Discord order alerts; order and shipping emails (SMTP or the outbox folder; HTML in `templates/email/order.html`) |
 | `app/orders_cli.py` | `list`, `show`, `ship`, `reconcile` from the command line |
 | `app/catalog.py` | Read-only queries: filters, search, facets, product, sets, sitemap |
 | `app/importer.py` | Squarespace export + intake CSVs → database |
@@ -201,6 +213,6 @@ reviews them before launch, then removes the line.
 
 ## Not yet (later phases)
 
-Sales tax by our own Utah table (if chosen for D2), live keys (owner); LAN-only admin, exports,
+Utah registration in live-mode Stripe Tax and live keys (owner); LAN-only admin, exports,
 signature confirmation on large orders and backups (Phase 3); Google Merchant feed, per-article social cards, newsletter (Phase 4). See
 the plan.

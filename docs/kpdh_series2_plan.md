@@ -1,6 +1,6 @@
 # KPDH Binder Planner: Series 2 Plan
 
-Last reviewed: 2026-11-05
+Last reviewed: 2026-11-06
 
 This document records the source policy, implementation and deployment checks used to add
 Kayou KPop Demon Hunters Energy Edition Series 2 and Classic Edition Series 2 to the
@@ -17,7 +17,23 @@ its unrelated dashboard and operations commits.
 - Compatibility: existing Series 1 IDs and the `kpdh-master-binder-v2` browser key are
   unchanged. Catalog v4 migrates the nine provisional Energy CR IDs from `CR-001`–`009`
   to the confirmed continuous range `CR-007`–`015` without losing quantities.
-- Verification: the full test suite passed (241 tests and 33 subtests); the local and public
+- Promo evidence: all eight known Series 1 promos now have owner-supplied 600 DPI front and
+  back scans. Catalog v5 corrects their printed suffixes from the provisional three-digit
+  form to `-01`–`-03`, corrects PR2-02 from Rumi to Zoey, and migrates existing quantities.
+  The published crops retain the sealed sleeves; the archival PDFs remain ignored under
+  `data/kpdh_scan_intake/`. Detail views can switch between each card's front and back.
+  Deployed 2026-11-06; every front and back was verified through the public `/kpdh/` route.
+  Later that day, all eight fronts and backs were independently straightened to the physical
+  5:7 or 7:5 card ratio. Live review then found that rotation-only crops could still hide a
+  sleeve edge; PR1-01 through PR1-03 and convention promos PR-01/PR-02 now use measured
+  four-corner perspective correction with a narrow, even outer margin. This fixed Mira's
+  notably tilted PR1-02 scans and the convention promos' off-center backs without altering
+  the card artwork.
+  On 2026-11-07, individual scans 331-341 and 343 replaced the available multi-card-sheet
+  crops. Scan 337 is the physically identical back shared by all three PR2 promos; scan 342
+  is an unused duplicate of the selected Zoey front in scan 335. The original PR-01/PR-02
+  backs remain because those sides were not included in the individual rescan pass.
+- Verification: the full test suite passed (266 tests and 33 subtests); the local and public
   planner, catalog, representative Series 1/2 assets, redirects, noindex/security headers,
   root market page and container logs were checked after deployment.
 - Rollback: the prior local Docker image is tagged
@@ -25,7 +41,13 @@ its unrelated dashboard and operations commits.
   2026-10-28 CR renumbering is tagged
   `kpdh-binder-planner:rollback-20261028-pre-cr-renumber`; the image immediately before
   the 2026-10-29 lime evidence markers is tagged
-  `kpdh-binder-planner:rollback-20261029-pre-evidence-markers`.
+  `kpdh-binder-planner:rollback-20261029-pre-evidence-markers`. The image immediately before
+  the physical promo scans is tagged `kpdh-binder-planner:rollback-20261106-pre-promo-scans`;
+  the first unstraightened promo deployment is tagged
+  `kpdh-binder-planner:rollback-20261106-pre-square-scans`; the image before perspective
+  correction is tagged `kpdh-binder-planner:rollback-20261106-pre-centered-pr1`; and the
+  PR1-corrected image before the convention promos were corrected is tagged
+  `kpdh-binder-planner:rollback-20261106-pr1-centered`.
 
 ## Confirmed release information
 
@@ -110,8 +132,10 @@ counts and last verification date. This makes release information auditable with
 duplicating it on every card.
 
 Do not overwrite Series 1 records. Series 1 uses `KPDH01`, Mini Series 1 uses `KPDHM01`,
-and Series 2 uses `KPDH02`. The eight existing promo records remain a separate, explicitly
-`partially verified` group until official sources or physical evidence are recorded.
+and Series 2 uses `KPDH02`. The eight existing promo records remain a separate group. Their
+printed codes, character names, orientations and fronts/backs were physically verified from
+owner-owned cards on 2026-11-06. The reproducible crop map is in
+`kpdh-binder/scripts/build_promo_scans.py`; raw scanner PDFs stay outside Git under `data/`.
 
 Energy and Classic share some Series 2 cards. Confirm sharing by comparing printed code and
 official artwork; do not assume that matching rarity/index means the cards are identical.

@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-09 (milestone: homelab-machines)
+Last updated: 2026-11-09 (milestone: homelab-machines; main merged in for market insights)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -47,6 +47,26 @@ Recently Completed
   deploy/monitoring/zfs/); each waits on one owner step, listed under Monitoring below.
 - 2026-11-08 Slowheim (Valheim machine) in Grafana: data sources for its own Prometheus and
   Loki, and the owner's dashboard imported as Home lab: Slowheim (Valheim).
+- 2026-11-07 KPDH individual promo rescans: integrated scans 331-341 and 343 as
+  replacements for the older multi-card sheets, used scan 337 for all three identical PR2
+  backs, and left the unlisted duplicate Zoey-front scan 342 archived but unused. The builder
+  preserves the convention-promo backs from the first scan set and rotates PR2 after cropping.
+- 2026-11-06: Market insights, on branch `feature/market-insights` (owner: "start a branch and do
+  all of them; if I don't like it we can trim the branch"). Ideas from a look at similar sites,
+  built from data we already have (no new costs):
+  Market Stats gains Market mood (`/market_mood`; nightly step "Build <market> market mood
+  snapshot", soft), Track record (`/track_record`; picks recorded at site start into
+  `list_pick_history`; Budget Builder history now kept 400 days so it can be scored too) and
+  Releases (`/releases`; hand-kept `scripts/common/upcoming_sets.json`). Cards get the full
+  PriceCharting grade ladder (Graded tab; a "See all grades" dropdown under the four price boxes since
+  2026-11-07, at the owner's request) and price records (Full data). An Embed chart for
+  other sites was built and removed on 2026-11-07 (owner didn't want it). Search understands
+  16 collector nicknames. Desktop and phone; tests in
+  `tests/test_market_insights.py`. A population-based "graded market cap" was dropped: we have
+  no population counts (PriceCharting has prices and a sales count only).
+- 2026-11-07: Track record "By price, after fees" (same branch, owner agreed): each 7/14/30-day
+  result also gets an after-fees figure (resold at the later price minus `FEE_PCT` = 13% of the
+  sale, `pick_tracker.py`), and the summary is split at $40 entry price (`PRICE_BAND_SPLIT`).
 - 2026-11-06 More home lab machines in Grafana (Home lab: Servers): Proxmox Backup Server and
   the OpenMediaVault storage server (node-exporter), Plex (web check of its /identity page),
   and the Synology NAS Laomedeia over SNMP (snmp-exporter container, "Synology NAS" table).
@@ -57,14 +77,51 @@ Recently Completed
 - 2026-11-05: Budget Builder picks rotate day to day (owner: "just for fun"). Prices move
   little overnight, so the same cards won several days running. Cards shown by default on the
   last three price dates lose 25 / 15 / 8 points (`BUDGET_ROTATION_PENALTIES` in api.py; history
-  in `budget_pick_history`, tracking SQLite, kept 30 days). Only default views are recorded
+  in `budget_pick_history`, tracking SQLite, kept 400 days since 2026-11-06 for the Track record). Only default views are recorded
   (not Keep or "New picks"), and only earlier dates count, so a day's picks hold all day. Both
   builders (graded rotates per card across grades); "Picked recently" reason; How it works
   updated; tests use a temporary tracking database. Simulated on 2026-11-04 prices: the next
   day's $100 list shares no cards with today's.
+- 2026-11-06 KPDH PR1 promo scan centering: replaced rotation-plus-center-crop with
+  four-corner perspective correction for all six PR1 front/back assets. Every sleeve edge
+  now remains visible with an even scanner-bed margin; Rumi's back and both Mira sides were
+  individually reviewed against the owner's screenshots.
+- 2026-11-06 KPDH convention promo centering: extended four-corner perspective correction
+  to both sides of PR-01 and PR-02 after live review found excess whitespace and clipped
+  sleeve edges in the older center crops.
+- 2026-11-06 KPDH promo scan alignment: independently straightened all eight fronts and
+  eight backs, standardized crops to the physical portrait/landscape ratios, and corrected
+  the PR2 back-sheet bounds so rotation does not clip the Kayou logo. Mira PR1-02 uses
+  separate measured corrections for its front (3.3° clockwise) and back (2.0° counter-clockwise).
+  Deployed the same day; all 16 public assets verified, with Mira checked byte-for-byte.
+- 2026-11-06 KPDH promo physical-card update: all eight front/back 600 DPI scans received
+  and reviewed; corrected provisional promo IDs and PR2-02's name, added catalog-v5 quantity
+  migration, optimized individual assets, reproducible crops and a front/back detail toggle.
+  Raw PDFs remain ignored under `data/kpdh_scan_intake/`. Branch:
+  `feature/kpdh-promo-scans`; review passed with 266 tests and 33 subtests; merged locally
+  after owner approval. Deployed 2026-11-06; all eight fronts and backs verified publicly.
+- 2026-11-06 Storefront order emails redesigned (owner): HTML version with the logo, order
+  table, totals, "Track package" button (USPS/UPS/FedEx/DHL) and "View your order" button; the
+  plain-text version stays for mail apps that don't show HTML.
+- 2026-11-06 Storefront Phase 2 checked by the owner on :8010 from computers, iPad and phone:
+  Utah order taxed by Stripe Tax ($18.68 on $250.80), Arizona order untaxed, shipped email works.
+- 2026-11-05 Storefront sales tax (D2, owner): Stripe Tax adds Utah sales tax on top at
+  checkout; Utah registered in the Stripe sandbox and checked (South Jordan rate 7.45% on any
+  Utah address, $0 out of state). A free fixed-rate version was tried; Stripe no longer allows
+  per-state rates in Checkout.
+- 2026-11-05 Storefront runs from its own clone (`~/poke6s-store`, `main` only) via
+  `deploy/update_storefront.sh`, so branch switches in the repo folder no longer change :8010.
+- 2026-11-05 Branch clean-up: deleted 8 local branches already in `main`. Kept the unmerged
+  ones (KPDH, Lorcana plan, chat history, mobile note, budget rotation) for their owners.
 
 High Priority
 -------------
+
+- [next] Pin a known-compatible DuckDB version in the root `requirements.txt`. A clean
+  Docker build on 2026-11-06 resolved the unpinned dependency to DuckDB 2.0.0, which exits
+  with `Illegal instruction` on this server during import. The established project image
+  remains compatible and passed all 266 tests and 33 subtests; this does not affect the
+  separately built static KPDH nginx container.
 
 Monitoring with Grafana (owner, 2026-11-05): "show me everything, then we scale it down".
 Dashboards on http://192.168.1.240:3000 in folders "Pokemon Momentum" and "Home lab";
@@ -137,6 +194,28 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   comes from the last Squarespace export, so refresh that rule from the new store's stock then.
 - [next] Check the Budget Builder on 2026-11-06 shows different picks from 2026-11-05 (first day of
   rotation; today's default views were recorded for price date 2026-11-04).
+- [next] Market insights: owner approved and merged to `main` on 2026-11-07 (embed removed, grade
+  list moved into a dropdown). The live site runs from the checkout's branch, so it goes live
+  when that checkout is on `main` (or a branch with it) and the site restarts. Then check that the next nightly builds
+  `pokemon_market_mood_snapshot` (log line "Build Pokemon market mood snapshot") and that the
+  site log shows "Track record: recorded N picks" for the new date. The first 7-day results show
+  on 2026-11-11 (picks recorded since 2026-11-05; budget picks since 2026-11-04).
+- [idea] Track record: also record the Japanese lists' Budget Builder and the Graded Budget
+  Builder (scored on PriceCharting history). Only raw English budget picks are scored today.
+- [idea] Desktop card column at 1366 px: when a card has "Our TCGplayer store", the action bar
+  is wider than the column and "Full data" is clipped (seen 2026-11-06, also on main).
+- [planned] Track record: a downloadable CSV of every scored pick (date, list, card, entry and
+  day-30 price, return, after-fees return), free to reuse with credit. Owner agreed 2026-11-07;
+  wait until picks have 30-day results (from 2026-12-05).
+- [planned] Set heatmap: every set's 7/30/90-day move on one grid (Research → Sets), from the
+  group signal snapshot. Owner agreed 2026-11-07.
+- [planned] Market mood: a chart of the breadth reading over time (share of singles up over 60
+  days), from `<slug>_market_mood_snapshot`. Owner agreed 2026-11-07.
+- [planned] Track record: "how much of the move comes early", the share of a pick's 30-day move
+  already made by day 7 and day 14. Needs scored picks first (from 2026-12-05). Owner agreed
+  2026-11-07.
+- [idea] FastAPI warns that `@app.on_event("startup")` (api.py, Track record start-up job) is
+  deprecated; moving to a lifespan handler means passing it when `app` is created.
 - [next] Check the 2026-11-06 02:00 nightly update is green: first run with the snapshot
   builders reading through `prices_by_current_group`. If it fails, see docs/data_flow.txt step 5.
 - [next] Owner, before 2026-11-14: domain forwarding stopgap (plan decision D5) (the Squarespace
@@ -162,25 +241,22 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     review. Old text for comparison is in the saved site copy. Remove `draft: true` when done.
   - [idea] JP products without a TCGplayer mapping (e.g. JP-AE-BB) show no market price;
     add them to `data/squarespace_tcgplayer_mapping.csv`.
-- [in progress] Phase 2: cart + Stripe Checkout, test mode (Claude, 2026-11-05; merged to
-  `main` at the storefront-phase2 milestone; guide `storefront/README.md` "Checkout"). Built and
-  tested with a fake Stripe (88 storefront tests) and with the owner's real Stripe sandbox: one
-  test order paid end to end on a side copy of the store. Live keys are refused unless
-  STOREFRONT_ALLOW_LIVE=1. **Stopped at:** the running store on :8010 serves whatever branch the
-  live folder `/opt/pokemon-momentum` is on; it was on `plan/lorcana-market` at this milestone,
-  so Phase 2 reaches :8010 only once that folder is back on `main` and
-  `docker-compose up -d storefront` is run (picks up the new environment variables; the
-  `002_orders` migration applies at start-up). Left:
-  - [next] Once :8010 runs Phase 2: one test order there, then `orders_cli ship` it to see the
-    shipped email (the side-copy test didn't try shipping, back-out or a declined card).
+- [in progress] Phase 2: cart + Stripe Checkout, test mode (Claude, 2026-11-05; guide
+  `storefront/README.md` "Checkout"). Built, merged and running on :8010 from the store's own
+  clone (`~/poke6s-store`, updated by `deploy/update_storefront.sh`). Tested with a fake Stripe
+  and the owner's Stripe sandbox (one paid test order). Sales tax (D2): Stripe Tax, Utah
+  registered in the sandbox. Live keys are refused unless STOREFRONT_ALLOW_LIVE=1. Left:
+  - Owner tests on :8010 passed 2026-11-06 (computers, iPad, phone): Arizona order paid with no
+    tax; Utah order paid with $18.68 tax on $250.80 (7.45%); both marked shipped and the shipped
+    email was received (sent by hand from admin@poke6s.com, SMTP not set up yet).
+  - [planned] `orders_cli ship` says "email sent" even when it only went to the outbox; say
+    which. Its order-status link uses STOREFRONT_BASE_URL (localhost until launch).
   - [planned] STRIPE_WEBHOOK_SECRET: needs a public address Stripe can reach (Cloudflare
     Tunnel, paused by the owner) or the Stripe CLI. Until then the thanks page and the 15-minute
     reconcile job confirm payments.
   - [waiting] Owner: Stripe activation (business profile, bank, statement descriptor POKE6S)
-    before live payments. Use the new Stripe account, not the Squarespace-managed one.
-  - [waiting] D2 sales tax: owner calls the Utah State Tax Commission again (the first call
-    was cut off by a "too busy, call later" message). `STOREFRONT_TAX_MODE=stripe` is ready if Stripe Tax
-    is chosen; our own Utah table would be built behind the same switch.
+    before live payments, and Tax -> Registrations -> Utah in live mode. Use the new Stripe
+    account, not the Squarespace-managed one.
   - [planned] Microsoft 365 SMTP for order emails (SMTP AUTH may need switching on for
     admin@poke6s.com); until then emails are files in `data/storefront/outbox/`.
   - [planned] Decide where order alerts go (STOREFRONT_DISCORD_WEBHOOK_URL; off by default).

@@ -87,7 +87,9 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     market = MarketReference(settings.market_reference_path)
     pages = load_pages()
     articles = Articles(articles_dir or ARTICLES_DIR)
-    if settings.stripe_secret_key and not settings.checkout_enabled:
+    if settings.stripe_secret_key and settings.tax_problem:
+        log.warning("Checkout off: %s", settings.tax_problem)
+    elif settings.stripe_secret_key and not settings.checkout_enabled:
         log.warning("Live Stripe key refused: set STOREFRONT_ALLOW_LIVE=1 to take real payments.")
     if stripe is None and settings.checkout_enabled:
         stripe = stripe_api.StripeClient(settings.stripe_secret_key)
@@ -127,7 +129,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
     templates = Jinja2Templates(directory=APP_DIR / "templates")
     env = templates.env
-    env.globals.update(settings=settings, checkout_enabled=settings.checkout_enabled, year=datetime.now(UTC).year, sort_labels=catalog.SORT_LABELS,
+    env.globals.update(settings=settings, checkout_enabled=settings.checkout_enabled, tax_note=orders.tax_note(settings), year=datetime.now(UTC).year, sort_labels=catalog.SORT_LABELS,
                        type_labels=classify.PRODUCT_TYPE_LABELS, language_labels=classify.LANGUAGE_LABELS,
                        ship_class_labels=classify.SHIP_CLASS_LABELS, footer_pages=pages,
                        social_links=seo.SOCIAL_LINKS)

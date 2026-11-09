@@ -1,0 +1,140 @@
+{#- Order emails (confirmation and shipped), HTML part. Built by notify.py; the plain-text part
+    says the same thing for mail apps that don't show HTML.
+
+    Email apps support far less than browsers, so this uses tables for layout and inline styles
+    only (no <style> classes, no web fonts, no CSS variables). Light body, so it reads well in
+    every app and in dark mode; the navy header matches the logo's own background (#000a1b).
+    The logo is attached to the email itself (cid:), so it shows before the site is public.
+
+    Variables: kind ('confirmed' | 'shipped'), order, status_url, site_url, contact_email,
+    logo_cid, placed, tracking_url, test. -#}
+{%- set navy = "#000a1b" -%}
+{%- set accent = "#1f7ae0" -%}
+{%- set text = "#1b2533" -%}
+{%- set muted = "#5b6b82" -%}
+{%- set line = "#e3e8f0" -%}
+{%- set font = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" -%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>{{ subject }}</title>
+</head>
+<body style="margin:0; padding:0; background:#eef2f7;">
+{#- Preview line shown next to the subject in the inbox, hidden in the email itself. #}
+<div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">{{ preheader }}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef2f7;">
+<tr><td align="center" style="padding:24px 12px;">
+
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
+       style="width:100%; max-width:600px; background:#ffffff; border-radius:12px; overflow:hidden; font-family:{{ font }}; color:{{ text }};">
+
+  {%- if test %}
+  <tr><td style="background:#fff4d6; color:#7a5a00; font-size:13px; font-weight:600; text-align:center; padding:8px 16px;">
+    TEST ORDER: no real payment was taken.
+  </td></tr>
+  {%- endif %}
+
+  <tr><td align="center" style="background:{{ navy }}; padding:22px 24px;">
+    <a href="{{ site_url }}" style="text-decoration:none;"><img src="cid:{{ logo_cid }}" width="180" height="63" alt="Poke6s"
+       style="display:block; border:0; width:180px; height:auto; color:#4da3ff; font-size:28px; font-weight:700;"></a>
+  </td></tr>
+
+  <tr><td style="padding:32px 32px 8px;">
+    <h1 style="margin:0 0 8px; font-size:24px; line-height:1.3; font-weight:700; color:{{ text }};">
+      {%- if kind == "shipped" %}Your order is on its way{% else %}Thanks for your order!{% endif -%}
+    </h1>
+    <p style="margin:0; font-size:15px; line-height:1.5; color:{{ muted }};">
+      {%- if kind == "shipped" -%}
+        Good news: order <strong style="color:{{ text }};">{{ order.number }}</strong> has shipped.
+      {%- else -%}
+        Order <strong style="color:{{ text }};">{{ order.number }}</strong>, placed {{ placed }}.
+        We'll email you again with tracking as soon as it ships.
+      {%- endif -%}
+    </p>
+  </td></tr>
+
+  {%- if kind == "shipped" and order.tracking_number %}
+  <tr><td style="padding:20px 32px 4px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f4f8fd; border:1px solid {{ line }}; border-radius:10px;">
+      <tr><td style="padding:16px 18px;">
+        <div style="font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:{{ muted }};">{{ order.carrier or "Tracking" }} tracking number</div>
+        <div style="font-size:17px; font-weight:600; padding-top:4px; word-break:break-all;">{{ order.tracking_number }}</div>
+        {%- if tracking_url %}
+        <div style="padding-top:12px;"><a href="{{ tracking_url }}" style="display:inline-block; background:{{ accent }}; color:#ffffff; text-decoration:none; font-weight:600; font-size:14px; padding:10px 18px; border-radius:8px;">Track package</a></div>
+        {%- endif %}
+      </td></tr>
+    </table>
+  </td></tr>
+  {%- endif %}
+
+  <tr><td style="padding:24px 32px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:15px;">
+      <tr>
+        <td style="padding:0 0 8px; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:{{ muted }}; border-bottom:1px solid {{ line }};">Item</td>
+        <td align="right" style="padding:0 0 8px; font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:{{ muted }}; border-bottom:1px solid {{ line }};">Price</td>
+      </tr>
+      {%- for item in order["items"] %}
+      <tr>
+        <td style="padding:12px 12px 12px 0; border-bottom:1px solid {{ line }}; line-height:1.4;">
+          {{ item.title }}
+          <div style="font-size:13px; color:{{ muted }}; padding-top:2px;">Qty {{ item.quantity }}{% if item.quantity > 1 %} × {{ item.unit_price_cents | money }}{% endif %}</div>
+        </td>
+        <td align="right" valign="top" style="padding:12px 0; border-bottom:1px solid {{ line }}; white-space:nowrap;">{{ (item.unit_price_cents * item.quantity) | money }}</td>
+      </tr>
+      {%- endfor %}
+    </table>
+  </td></tr>
+
+  <tr><td style="padding:12px 32px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:15px;">
+      <tr><td style="padding:4px 0; color:{{ muted }};">Subtotal</td><td align="right" style="padding:4px 0;">{{ order.subtotal_cents | money }}</td></tr>
+      {%- if order.discount_cents %}
+      <tr><td style="padding:4px 0; color:{{ muted }};">Discount</td><td align="right" style="padding:4px 0; color:#1a8f5a;">−{{ order.discount_cents | money }}</td></tr>
+      {%- endif %}
+      <tr><td style="padding:4px 0; color:{{ muted }};">Shipping</td><td align="right" style="padding:4px 0;">{% if order.shipping_cents %}{{ order.shipping_cents | money }}{% else %}Free{% endif %}</td></tr>
+      {%- if order.tax_cents %}
+      <tr><td style="padding:4px 0; color:{{ muted }};">Sales tax</td><td align="right" style="padding:4px 0;">{{ order.tax_cents | money }}</td></tr>
+      {%- endif %}
+      <tr><td style="padding:12px 0 0; font-size:17px; font-weight:700; border-top:1px solid {{ line }};">Total</td>
+          <td align="right" style="padding:12px 0 0; font-size:17px; font-weight:700; border-top:1px solid {{ line }};">{{ order.total_cents | money }}</td></tr>
+    </table>
+  </td></tr>
+
+  <tr><td align="center" style="padding:28px 32px 4px;">
+    <a href="{{ status_url }}" style="display:inline-block; background:{{ navy }}; color:#ffffff; text-decoration:none; font-weight:600; font-size:15px; padding:12px 26px; border-radius:8px;">View your order</a>
+  </td></tr>
+
+  <tr><td style="padding:24px 32px 28px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px; line-height:1.5;">
+      <tr>
+        {%- if address_lines %}
+        <td valign="top" width="50%" style="padding-right:12px;">
+          <div style="font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:{{ muted }}; padding-bottom:4px;">Shipping to</div>
+          {%- for part in address_lines %}{{ part }}{% if not loop.last %}<br>{% endif %}{% endfor %}
+        </td>
+        {%- endif %}
+        <td valign="top" style="padding-left:{{ 12 if address_lines else 0 }}px;">
+          <div style="font-size:12px; letter-spacing:0.06em; text-transform:uppercase; color:{{ muted }}; padding-bottom:4px;">Questions?</div>
+          Reply to this email or write to<br><a href="mailto:{{ contact_email }}" style="color:{{ accent }}; text-decoration:none;">{{ contact_email }}</a>
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+  <tr><td style="background:#f6f8fb; border-top:1px solid {{ line }}; padding:18px 32px; font-size:12px; line-height:1.6; color:{{ muted }}; text-align:center;">
+    Poke6s · Pokémon TCG sealed product · South Jordan, Utah<br>
+    <a href="{{ site_url }}/shipping" style="color:{{ muted }};">Shipping</a> ·
+    <a href="{{ site_url }}/returns" style="color:{{ muted }};">Returns</a> ·
+    <a href="{{ site_url }}" style="color:{{ muted }};">poke6s.com</a>
+  </td></tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>
