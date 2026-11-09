@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-11-06
+Last reviewed: 2026-11-09
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -26,7 +26,10 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   website, jobs, data downloads, server, containers, todo list and bug reports; Prometheus
   collects it. Also the Proxmox cluster, the UniFi network, and visitors per day for each site
   (counted by the apps themselves, no cookies). The Proxmox, network and server dashboards
-  sit in a separate "Home lab" folder. Runbook section "Monitoring"; files in
+  sit in a separate "Home lab" folder, which also covers the backup server (and its backups,
+  once its API token is saved), the OpenMediaVault storage server and its ZFS pool, Plex
+  (streams and libraries), a Synology NAS (SNMP) and the Valheim servers on Slowheim (read from
+  that machine's own Prometheus and Loki). Runbook section "Monitoring"; files in
   `deploy/monitoring/`, `scripts/monitoring/`
 - Alerts: nightly update, Squarespace price sync, the other-games archive, the archive
   backfill and the catalogue crawl post summaries to Discord

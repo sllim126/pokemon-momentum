@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-07 (market insights merged)
+Last updated: 2026-11-09 (milestone: homelab-machines)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -43,6 +43,17 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-08 Backups and ZFS health in Grafana: code done (PBS section of collect_status.py,
+  deploy/monitoring/zfs/); each waits on one owner step, listed under Monitoring below.
+- 2026-11-08 Slowheim (Valheim machine) in Grafana: data sources for its own Prometheus and
+  Loki, and the owner's dashboard imported as Home lab: Slowheim (Valheim).
+- 2026-11-06 More home lab machines in Grafana (Home lab: Servers): Proxmox Backup Server and
+  the OpenMediaVault storage server (node-exporter), Plex (web check of its /identity page),
+  and the Synology NAS Laomedeia over SNMP (snmp-exporter container, "Synology NAS" table).
+  Then: the Backup Server moved to its own row on Home lab: Proxmox cluster (nodes.yml label
+  group: proxmox), and a "ZFS pools (RAID health)" table for the OMV pool (node_zfs_zpool_state).
+  And a Plex row (streams, transcodes, items per library) from collect_status.py, using the
+  owner's Plex token in /etc/momentum-monitoring/plex-token.
 - 2026-11-07 KPDH individual promo rescans: integrated scans 331-341 and 343 as
   replacements for the older multi-card sheets, used scan 337 for all three identical PR2
   backs, and left the unlisted duplicate Zoey-front scan 342 archived but unused. The builder
@@ -104,39 +115,6 @@ Recently Completed
   `deploy/update_storefront.sh`, so branch switches in the repo folder no longer change :8010.
 - 2026-11-05 Branch clean-up: deleted 8 local branches already in `main`. Kept the unmerged
   ones (KPDH, Lorcana plan, chat history, mobile note, budget rotation) for their owners.
-- 2026-11-05: Retired unused files, after checking nothing reads or runs them (no code, cron,
-  systemd or doc reference; none open; the only reads since March were one bulk scan). Moved
-  to `data/backups/retired_2026-11-05/` (2.2 GB, gitignored): the March CSVs in
-  `data/extracted/` (`pokemon*_prices_all_days.csv`, `top200_*.csv`, unprefixed
-  `product_signal_snapshot.csv` / `group_signal_snapshot.csv`, `roc_snapshot_7_30_90.csv`) and
-  `unused_scripts.tar.gz` with the 8 scripts removed from the repo (`scripts/extract/
-  build_pokemon_prices_csv.py`, `extract_ids_from_prices.py`, `read_one_prices_file.py`,
-  `scripts/utilities/List_sybtypes.py`, `date_check.py`, `get_pokemon_groups.py`,
-  `scripts/download/download_groups_lookup.py`, `test_env.py`). Delete the folder after
-  ~2026-11-19 with the database backup if nothing missed them.
-- 2026-11-05: Comment and docs review. Every file the site or the nightly runs now opens with a
-  header saying what it is and where it fits (api.py has a map of its routes and data paths),
-  and their 15+ line functions have docstrings, each checked against the code (64 added;
-  the signal lists' rules are spelled out). The 18 longer uncommented functions in the
-  desktop and phone pages got comments. Docs checked for dead file references and review
-  dates; `data_flow.txt` dated. Not covered: `storefront/` (its own session; ~200 functions
-  without docstrings, see below) and the Squarespace scripts being retired after 2026-11-14.
-- 2026-11-05: Price database cleaned up and compacted, 13.87 GB -> 7.96 GB. Left out the dead
-  `prices` table (30.5M rows, last written 2026-03-02), the `top200_*` tables and the old
-  unprefixed snapshot and `groups` tables; every kept table hash-checked identical. Removed the
-  21 legacy scripts that wrote them. New `scripts/utilities/compact_duckdb.py`; procedure in
-  `docs/operator_runbook.txt` ("Compacting the price database"). `data/backups/` gitignored.
-- 2026-11-05 Home lab dashboards in their own Grafana folder: "Home lab: Proxmox cluster",
-  "Home lab: Network (UniFi)" and "Home lab: Servers" (with "Other machines") moved out of
-  "Pokemon Momentum", since they serve more than the Pokemon sites. Old links still work;
-  every dashboard has "Pokemon Momentum" and "Home lab" drop-downs.
-- 2026-11-05 Grafana's home page is now the owner's cross-project "Everything" dashboard (kept
-  in a private repository); install.sh no longer resets it to Overview, and every dashboard
-  here has a Home link.
-- 2026-11-05 Job metrics fix (milestone job-metrics-fix): node-exporter was dropping the systemd
-  jobs' results (nightly update, other-games archive, weekly refreshes) because run_job.py and
-  collect_status.py gave the same metrics different help text. Both now share one table
-  (run_job.JOB_HELP), with a test; all four jobs that have run show in "Did the jobs run?".
 
 High Priority
 -------------
@@ -150,6 +128,16 @@ High Priority
 Monitoring with Grafana (owner, 2026-11-05): "show me everything, then we scale it down".
 Dashboards on http://192.168.1.240:3000 in folders "Pokemon Momentum" and "Home lab";
 runbook section "Monitoring".
+- [waiting] PBS backups (Home lab: Proxmox cluster, "Proxmox Backup Server" row): the owner
+  makes a read-only API token and saves it to /etc/momentum-monitoring/pbs-token (runbook,
+  "Proxmox Backup Server backups"). The certificate for verified TLS is already saved.
+- [waiting] ZFS scrubs and disk errors (Home lab: Servers, ZFS pools table): the owner runs
+  `deploy/monitoring/zfs/install_on_host.sh root@192.168.1.155` (runbook, "ZFS on OMV").
+- [idea] Slowheim: /opt/valheim-private/server.log isn't in logrotate (7 MB since 2026-09-22).
+- [waiting] Slowheim: the daily world backup cron (/etc/cron.d/valheim-backup, running
+  /usr/local/bin/vh-backup.sh at 04:25) is gone; newest archive ~2026-10-28. Owner to restore it
+  (or confirm it moved). The Slowheim dashboard could show the newest archive's age.
+- [idea] OMV ran at 88% CPU and 83% memory on 2026-11-06 (worth a look).
 - [idea] Grafana loads the dashboards straight from this working checkout, so switching the
   checkout to a branch without `deploy/monitoring/grafana/homelab/` (anything older than
   2026-11-05) makes the Home lab dashboards vanish until switched back. Consider having

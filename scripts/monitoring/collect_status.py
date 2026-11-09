@@ -21,6 +21,13 @@ What it reports (all metric names start with ``momentum_``):
 * Bug reports from Discord (tracking.sqlite3): reports per status, newest report time.
 * Git: current branch, uncommitted project files, commits not yet pushed.
 * A reminder while the temporary sudo file from the monitoring build-out still exists.
+* Plex (home lab, since 2026-11-06): streams now, how many transcode, and items per library,
+  from the Plex server's own API. Needs the owner's Plex token in PLEX_TOKEN_FILE (mode 600,
+  outside the repo); without that file the section publishes nothing.
+* Proxmox Backup Server (home lab, since 2026-11-08): datastore space, each backed-up guest's
+  newest backup, snapshot count and verify result, and the outcome of backup, verify, prune
+  and garbage-collection tasks. Needs a read-only (Audit) API token in PBS_TOKEN_FILE; TLS is
+  verified against PBS's own certificate (PBS_CERT_FILE). Without the token, nothing.
 
 Every section is fenced off with its own try/except: one failing check (say, a locked
 database) is reported as ``momentum_collector_errors{section=...}`` and the rest still
@@ -48,6 +55,21 @@ OUTPUT = TEXTFILE_DIR / "momentum_status.prom"
 # Remembers when each systemd job last succeeded, because systemd only keeps the latest run.
 STATE_FILE = TEXTFILE_DIR / ".momentum_status_state.json"
 SUDOERS_REMINDER = Path("/etc/sudoers.d/90-claude-buildout")
+
+# Plex: the token gives full access to the owner's Plex account, so it lives only in this
+# root-made, adam-only file and is never logged or put in a metric.
+PLEX_URL = os.environ.get("MOMENTUM_PLEX_URL", "http://192.168.1.219:32400")
+PLEX_TOKEN_FILE = Path(os.environ.get("MOMENTUM_PLEX_TOKEN_FILE", "/etc/momentum-monitoring/plex-token"))
+
+# Proxmox Backup Server. The token file holds "user@realm!tokenname:secret" (an API token
+# with the Audit role only); PBS_CERT_FILE is PBS's self-signed certificate, saved from
+# the server once (runbook "Proxmox Backup Server"). The certificate names the server
+# "72pbs", not its IP, so the TLS check uses that name.
+PBS_HOST = os.environ.get("MOMENTUM_PBS_HOST", "192.168.1.72")
+PBS_CERT_NAME = os.environ.get("MOMENTUM_PBS_CERT_NAME", "72pbs")
+PBS_TOKEN_FILE = Path(os.environ.get("MOMENTUM_PBS_TOKEN_FILE", "/etc/momentum-monitoring/pbs-token"))
+PBS_CERT_FILE = Path(os.environ.get("MOMENTUM_PBS_CERT_FILE", "/etc/momentum-monitoring/pbs-cert.pem"))
+PBS_TASK_TYPES = ("backup", "verify", "verificationjob", "prune", "prunejob", "garbage_collection", "syncjob")
 
 DAY = 86400
 # job name -> (how it runs, expected interval in seconds). "systemd:<unit>" units are read
@@ -278,6 +300,118 @@ def reminders(m: Metrics) -> None:
           "1 while /etc/sudoers.d/90-claude-buildout exists (remove it after the monitoring build-out)")
 
 
+def _plex_get(path: str, token: str, count_only: bool = False) -> dict:
+    """GET a Plex API path as JSON. count_only asks for zero rows, so Plex just returns
+    totalSize (cheap even for a library of thousands of items)."""
+    import urllib.request
+
+    headers = {"X-Plex-Token": token, "Accept": "application/json"}
+    if count_only:
+        headers |= {"X-Plex-Container-Start": "0", "X-Plex-Container-Size": "0"}
+    with urllib.request.urlopen(urllib.request.Request(PLEX_URL + path, headers=headers), timeout=10) as resp:
+        return json.load(resp)["MediaContainer"]
+
+
+def plex(m: Metrics) -> None:
+    """Streams and library sizes on the home lab Plex server (Home lab: Servers dashboard).
+    Library names come from Plex itself; show libraries also report their episode count."""
+    if not PLEX_TOKEN_FILE.exists():
+        return
+    token = PLEX_TOKEN_FILE.read_text().strip()
+    sessions = _plex_get("/status/sessions", token).get("Metadata", [])
+    states: dict[str, int] = {"playing": 0, "paused": 0, "buffering": 0}
+    for item in sessions:
+        state = item.get("Player", {}).get("state", "playing")
+        states[state] = states.get(state, 0) + 1
+    for state, count in states.items():
+        m.add("momentum_plex_streams", count, "Plex streams now, by player state", state=state)
+    m.add("momentum_plex_transcodes", sum(1 for item in sessions if "TranscodeSession" in item),
+          "Plex streams being transcoded now (the rest play directly)")
+    for lib in _plex_get("/library/sections", token).get("Directory", []):
+        key, kind, title = lib["key"], lib.get("type", ""), lib.get("title", "")
+        items = _plex_get(f"/library/sections/{key}/all", token, count_only=True).get("totalSize")
+        m.add("momentum_plex_library_items", items,
+              "Items in each Plex library (movies, shows, artists or photos)", library=title, type=kind)
+        if kind == "show":  # type=4 counts episodes rather than shows
+            episodes = _plex_get(f"/library/sections/{key}/all?type=4", token, count_only=True).get("totalSize")
+            m.add("momentum_plex_library_episodes", episodes, "Episodes in each Plex TV library", library=title)
+    m.add("momentum_plex_up", 1, "1 when collect_status.py could read the Plex API")
+
+
+def _pbs_get(path: str, token: str) -> list | dict:
+    """GET /api2/json<path> from PBS and return its "data". Connects to PBS_HOST but checks
+    the certificate (pinned file, hostname PBS_CERT_NAME) as normal TLS would."""
+    import http.client
+    import socket
+    import ssl
+
+    ctx = ssl.create_default_context(cafile=str(PBS_CERT_FILE))
+
+    class Conn(http.client.HTTPSConnection):
+        def connect(self) -> None:
+            sock = socket.create_connection((self.host, self.port), self.timeout)
+            self.sock = ctx.wrap_socket(sock, server_hostname=PBS_CERT_NAME)
+
+    conn = Conn(PBS_HOST, 8007, timeout=15)
+    try:
+        conn.request("GET", "/api2/json" + path, headers={"Authorization": f"PBSAPIToken={token}"})
+        resp = conn.getresponse()
+        body = resp.read()
+        if resp.status != 200:
+            raise RuntimeError(f"PBS {path}: HTTP {resp.status}")  # never include the token
+        return json.loads(body)["data"]
+    finally:
+        conn.close()
+
+
+def _pbs_task_ok(task: dict) -> bool:
+    """PBS task status is "OK", "WARNINGS: <n>" (still a success) or the error message."""
+    return str(task.get("status", "")).startswith(("OK", "WARNINGS"))
+
+
+def pbs(m: Metrics, now: float | None = None) -> None:
+    """Backups on the Proxmox Backup Server (Home lab: Proxmox cluster dashboard)."""
+    if not PBS_TOKEN_FILE.exists():
+        return
+    token = PBS_TOKEN_FILE.read_text().strip()
+    now = now or time.time()
+    for ds in _pbs_get("/status/datastore-usage", token):
+        store = ds["store"]
+        for kind in ("total", "used", "avail"):
+            m.add("momentum_pbs_datastore_bytes", ds.get(kind), "PBS datastore space (kind: total, used, avail)",
+                  store=store, kind=kind)
+        # The newest snapshot of each group carries the verify result we care about.
+        newest: dict[tuple, dict] = {}
+        for snap in _pbs_get(f"/admin/datastore/{store}/snapshots", token):
+            key = (snap["backup-type"], snap["backup-id"])
+            if key not in newest or snap["backup-time"] > newest[key]["backup-time"]:
+                newest[key] = snap
+        for group in _pbs_get(f"/admin/datastore/{store}/groups", token):
+            key = (group["backup-type"], group["backup-id"])
+            labels = dict(store=store, type=key[0], id=key[1], guest=(group.get("comment") or "").strip())
+            m.add("momentum_pbs_group_last_backup_timestamp_seconds", group.get("last-backup"),
+                  "Newest backup of each guest (backup group) on PBS", **labels)
+            m.add("momentum_pbs_group_snapshots", group.get("backup-count"),
+                  "Backups kept for each guest on PBS", **labels)
+            state = (newest.get(key, {}).get("verification") or {}).get("state")
+            m.add("momentum_pbs_group_last_verify", {"ok": 1, "failed": 0}.get(state, 2),
+                  "Verify result of each guest's newest backup: 1 ok, 0 failed, 2 not verified yet", **labels)
+    # Task history for the last 7 days. Running tasks have no endtime yet and are skipped.
+    tasks = _pbs_get(f"/nodes/localhost/tasks?since={int(now - 7 * DAY)}&limit=5000", token)
+    for kind in PBS_TASK_TYPES:
+        done = sorted((t for t in tasks if t.get("worker_type") == kind and t.get("endtime")),
+                      key=lambda t: t["endtime"])
+        failures = sum(1 for t in done if not _pbs_task_ok(t))
+        m.add("momentum_pbs_task_failures_7d", failures, "PBS tasks that failed in the last 7 days, by type",
+              type=kind)
+        if done:
+            m.add("momentum_pbs_task_last_end_timestamp_seconds", done[-1]["endtime"],
+                  "When the newest finished PBS task of each type ended", type=kind)
+            m.add("momentum_pbs_task_last_ok", 1 if _pbs_task_ok(done[-1]) else 0,
+                  "1 when the newest finished PBS task of each type succeeded", type=kind)
+    m.add("momentum_pbs_up", 1, "1 when collect_status.py could read the PBS API")
+
+
 # --- main ----------------------------------------------------------------------------------
 
 
@@ -298,6 +432,8 @@ def main() -> int:
         "bug_reports": lambda: bug_reports(m),
         "git": lambda: git(m),
         "reminders": lambda: reminders(m),
+        "plex": lambda: plex(m),
+        "pbs": lambda: pbs(m),
     }
     errors = {}
     for name, section in sections.items():

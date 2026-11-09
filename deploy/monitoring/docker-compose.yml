@@ -82,3 +82,22 @@ services:
     ports:
       - "127.0.0.1:9130:9130"
     restart: unless-stopped
+
+  # snmp-exporter: reads Synology NAS units over SNMP (DSM's built-in SNMP service, v2c).
+  #   The image's own snmp.yml has a "synology" module (volumes, RAID, disks, temperatures,
+  #   fans, DSM updates). The community string is in /etc/momentum-monitoring/snmp-auth.yml
+  #   (auth name "synology", mode 600, owned by adam), passed as a second config file; the
+  #   container runs as adam's uid so it can read that file and nothing else.
+  #   Prometheus calls /snmp?target=<ip>&auth=synology&module=... (job "synology").
+  snmp-exporter:
+    image: prom/snmp-exporter:v0.28.0
+    container_name: snmp-exporter
+    user: "1000:1000"
+    command:
+      - --config.file=/etc/snmp_exporter/snmp.yml
+      - --config.file=/etc/snmp_exporter/auth.yml
+    volumes:
+      - /etc/momentum-monitoring/snmp-auth.yml:/etc/snmp_exporter/auth.yml:ro
+    ports:
+      - "127.0.0.1:9116:9116"
+    restart: unless-stopped

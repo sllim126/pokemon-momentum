@@ -1,0 +1,15 @@
+# ZFS pool health for Prometheus (deploy/monitoring/zfs/zfs_status.py). Runs as root because
+# zpool needs /dev/zfs; everything else is locked down: no network, read-only system, writes
+# only to node-exporter's text-file folder.
+[Unit]
+Description=ZFS pool health for Prometheus (zfs_status.py)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /usr/local/lib/zfs-status/zfs_status.py
+PrivateNetwork=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/prometheus/node-exporter
+NoNewPrivileges=yes
+PrivateTmp=yes

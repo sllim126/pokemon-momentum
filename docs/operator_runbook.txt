@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-06
+Last reviewed: 2026-11-09 (Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -165,13 +165,88 @@ Adding another machine (it appears in Home lab: Servers, "Other machines"):
    - Windows: the windows_exporter installer (.msi) from
      github.com/prometheus-community/windows_exporter/releases (port 9182). Allow inbound
      9182 from 192.168.1.240 in Windows Defender Firewall.
-   - Synology: Container Manager, image `prom/node-exporter`, network "host", with the
-     whole disk mounted read-only at /host and the argument `--path.rootfs=/host` (port 9100).
+   - Synology: use SNMP instead (see "Synology NAS" below); nothing to install on the NAS.
    Check from this server: `curl -s http://<ip>:9100/metrics | head` (9182 for Windows).
 2. Add it to `deploy/monitoring/nodes.yml`, for example
-   `- targets: ["192.168.1.30:9100"]` and `labels: {machine: caddy-host, os: linux}`, then
+   `- targets: ["192.168.1.30:9100"]` and `labels: {machine: caddy-host, os: linux, role: web}`
+   (role is shown as a column), then
    `sudo install -m 644 deploy/monitoring/nodes.yml /etc/prometheus/momentum_nodes.yml`
    (or rerun install.sh). Prometheus picks it up within two minutes; no restart.
+
+In it since 2026-11-05: the Proxmox Backup Server (192.168.1.72, which already ran
+node-exporter; labelled `group: proxmox`, so it shows in its own row on Home lab: Proxmox
+cluster rather than under "Other machines") and the OpenMediaVault storage server (192.168.1.155; the same server also
+answers on .9 and .229; its ZFS pool "zfs" is in the "ZFS pools (RAID health)" table from
+node-exporter's node_zfs_zpool_state: Online is fine, Degraded means a disk is out). Home lab web services are checked by the blackbox exporter (`probe: homelab`
+in `prometheus_momentum.yml`, "Home lab services" table): Plex at 192.168.1.219:32400/identity.
+
+Plex (since 2026-11-06; "Plex" row on Home lab: Servers): the plex section of
+`scripts/monitoring/collect_status.py` reads streams now, transcodes and items per library from
+the Plex API every minute. It needs the owner's Plex token in /etc/momentum-monitoring/plex-token
+(owner adam, mode 600; never in the repo, a log or a metric). To set or replace it:
+`read -rs T && echo "$T" | sudo tee /etc/momentum-monitoring/plex-token >/dev/null && sudo chown adam: /etc/momentum-monitoring/plex-token && sudo chmod 600 /etc/momentum-monitoring/plex-token && unset T`.
+Without the file the section publishes nothing; a wrong token shows as
+momentum_collector_errors{section="plex"} = 1 ("Status collector" table). To stop it, delete the file.
+
+Proxmox Backup Server backups (since 2026-11-08; "Proxmox Backup Server" row on Home lab:
+Proxmox cluster): the pbs section of `scripts/monitoring/collect_status.py` reads datastore space,
+each guest's newest backup, backups kept and verify result, and the last 7 days of backup, verify,
+prune, garbage-collection and sync tasks. It needs:
+
+- an API token with the Audit role only, in /etc/momentum-monitoring/pbs-token as
+  `user@realm!tokenname:secret` (owner adam, mode 600; never in the repo or a log). Make it in
+  the PBS web UI: Configuration > Access Control > API Token > Add (user root@pam, name grafana,
+  "Privilege Separation" ticked), then Permissions > Add > API Token Permission: path /, the
+  token, role Audit. Save it with the same `read -rs T` line as the Plex token, writing to
+  pbs-token instead.
+- PBS's certificate in /etc/momentum-monitoring/pbs-cert.pem, so TLS is verified (saved
+  2026-11-08; SHA-256 fingerprint E1:97:8E:40:...:99:E9:59:4F, matching PBS's Dashboard >
+  "Show Fingerprint"). The certificate names the server 72pbs, which the collector checks. If PBS
+  gets a new certificate, save it again:
+  `echo | openssl s_client -connect 192.168.1.72:8007 2>/dev/null | openssl x509 > /etc/momentum-monitoring/pbs-cert.pem`
+  (then compare the fingerprint with the PBS dashboard).
+
+Without the token the section publishes nothing; a failure shows as
+momentum_collector_errors{section="pbs"} = 1.
+
+ZFS on OMV (since 2026-11-08; the scrub and error columns of "ZFS pools (RAID health)"):
+`deploy/monitoring/zfs/zfs_status.py` runs as root on the OpenMediaVault server every 5 minutes
+(zfs-status.timer; no network, read-only system) and writes zfs_status.prom for its node-exporter:
+pool size and use, last scrub and its errors, scrub or resilver running, read/write/checksum
+errors per disk, and data errors. Install or update it from this server with
+`deploy/monitoring/zfs/install_on_host.sh root@192.168.1.155` (asks for OMV's SSH password unless
+a key is set up). Any other ZFS machine with node-exporter works the same way. To remove it, on
+the machine: `systemctl disable --now zfs-status.timer`, delete the two unit files in
+/etc/systemd/system, /usr/local/lib/zfs-status and /var/lib/prometheus/node-exporter/zfs_status.prom.
+
+Slowheim, the Valheim machine (192.168.1.187; since 2026-11-08; dashboard Home lab: Slowheim
+(Valheim)): it runs its own Prometheus (:9090, jobs node, valheim and prometheus) and Loki
+(:3100, server logs with event labels join, disconnect, death_or_spawn and world_save), set up by
+the owner on that machine (/home/adam/slowheim-monitoring there). Grafana here only reads them,
+through the data sources "Slowheim Prometheus" and "Slowheim Loki" (uids slowheim-prometheus and
+slowheim-loki in deploy/monitoring/grafana/provisioning/datasources.yml; plain HTTP on the LAN,
+no auth). Its dashboard is the owner's own export, kept unchanged in
+deploy/monitoring/grafana/imported/slowheim_source.json; build_dashboards.py fills in the data
+sources and the Home lab top bar. To update it, copy Slowheim's grafana-dashboard.json over that
+file and rerun build_dashboards.py. Note (2026-11-08): /etc/cron.d/valheim-backup, the daily
+world backup the Slowheim notes describe, is missing there; the newest archive in
+/opt/valheim-backups was about 10 days old.
+
+Synology NAS (since 2026-11-06; "Synology NAS" table on Home lab: Servers):
+
+- Read over SNMP by the snmp-exporter container (127.0.0.1:9116, `docker-compose.yml`), using
+  the image's built-in "synology" module: system status, volumes and RAID, every disk's status,
+  health and temperature, fans, DSM version and updates, CPU, memory, uptime.
+- On the NAS: DSM > Control Panel > Terminal & SNMP > SNMP: enable SNMP, SNMPv1/v2c, and a
+  community word (not "public"). On this server the same word sits in
+  `/etc/momentum-monitoring/snmp-auth.yml` (mode 600, owner adam; the container runs as adam):
+  `auths: {synology: {community: <word>, version: 2}}`. It is never in the repository.
+- Add a NAS: a target with a `nas` label under job `synology` in `prometheus_momentum.yml`, then
+  `sudo install -m 644 deploy/monitoring/prometheus_momentum.yml /etc/prometheus/momentum_scrape.yml`
+  and `sudo systemctl reload prometheus`. Laomedeia (DS920+, 192.168.1.119) is in it. Other
+  units the owner tracks elsewhere are scraped from a private file listed under
+  `scrape_config_files` in prometheus.yml; leave that line in place.
+- Check: `curl -s "http://127.0.0.1:9116/snmp?target=<ip>&auth=synology&module=system" | grep sysName`.
 
 The old training-server targets (10.0.4.45, 172.26.10.4) were removed 2026-11-05: offline or
 no longer used. Backups of prometheus.yml from each change are next to it (`.bak-<time>`). If a job is missing from "Did the jobs run?" although it ran, check node-exporter's log (the

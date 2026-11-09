@@ -10,7 +10,7 @@
 #   3. Prometheus: copy prometheus_momentum.yml to /etc/prometheus/momentum_scrape.yml and
 #      make prometheus.yml load it (a dated backup of prometheus.yml is kept first).
 #   4. Grafana: install the data source and dashboard provisioning files.
-#   5. cAdvisor container (docker-compose.yml in this folder).
+#   5. Exporter containers: cAdvisor, pve-exporter, UnPoller, snmp-exporter (docker-compose.yml here).
 # The crontab lines (collector every minute, run_job.py around each cron job) are separate:
 # see deploy/crontab.txt.
 set -euo pipefail

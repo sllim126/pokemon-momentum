@@ -1752,11 +1752,11 @@
     {
       "type": "table",
       "title": "Machines",
-      "description": "Empty until a machine is added to deploy/monitoring/nodes.yml (runbook 'Monitoring', 'Adding another machine').",
+      "description": "Empty until a machine is added to deploy/monitoring/nodes.yml (runbook 'Monitoring', 'Adding another machine'). Proxmox machines are on the Proxmox cluster dashboard.",
       "gridPos": {
         "x": 0,
         "y": 44,
-        "w": 24,
+        "w": 17,
         "h": 8
       },
       "datasource": {
@@ -1766,7 +1766,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "max by (instance, machine) (up{job=\"machines\"})",
+          "expr": "max by (instance, machine, role) (up{job=\"machines\",group!=\"proxmox\"})",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1778,7 +1778,7 @@
         },
         {
           "refId": "B",
-          "expr": "(100 * (1 - avg by (instance, machine) (rate(node_cpu_seconds_total{job=\"machines\",mode=\"idle\"}[5m])))) or (100 * (1 - avg by (instance, machine) (rate(windows_cpu_time_total{job=\"machines\",mode=\"idle\"}[5m]))))",
+          "expr": "(100 * (1 - avg by (instance, machine, role) (rate(node_cpu_seconds_total{job=\"machines\",group!=\"proxmox\",mode=\"idle\"}[5m])))) or (100 * (1 - avg by (instance, machine, role) (rate(windows_cpu_time_total{job=\"machines\",group!=\"proxmox\",mode=\"idle\"}[5m]))))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1790,7 +1790,7 @@
         },
         {
           "refId": "C",
-          "expr": "(max by (instance, machine) (100 * (1 - node_memory_MemAvailable_bytes{job=\"machines\"} / node_memory_MemTotal_bytes{job=\"machines\"}))) or (max by (instance, machine) (100 * (1 - windows_os_physical_memory_free_bytes{job=\"machines\"} / windows_cs_physical_memory_bytes{job=\"machines\"})))",
+          "expr": "(max by (instance, machine, role) (100 * (1 - node_memory_MemAvailable_bytes{job=\"machines\",group!=\"proxmox\"} / node_memory_MemTotal_bytes{job=\"machines\",group!=\"proxmox\"}))) or (max by (instance, machine, role) (100 * (1 - windows_os_physical_memory_free_bytes{job=\"machines\",group!=\"proxmox\"} / windows_cs_physical_memory_bytes{job=\"machines\",group!=\"proxmox\"})))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1802,7 +1802,7 @@
         },
         {
           "refId": "D",
-          "expr": "(max by (instance, machine) (100 * (1 - node_filesystem_avail_bytes{job=\"machines\",fstype!~\"tmpfs|overlay|squashfs|ramfs|rootfs\"} / node_filesystem_size_bytes{job=\"machines\",fstype!~\"tmpfs|overlay|squashfs|ramfs|rootfs\"}))) or (max by (instance, machine) (100 * (1 - windows_logical_disk_free_bytes{job=\"machines\"} / windows_logical_disk_size_bytes{job=\"machines\"})))",
+          "expr": "(max by (instance, machine, role) (100 * (1 - node_filesystem_avail_bytes{job=\"machines\",group!=\"proxmox\",fstype!~\"tmpfs|overlay|squashfs|ramfs|rootfs\"} / node_filesystem_size_bytes{job=\"machines\",group!=\"proxmox\",fstype!~\"tmpfs|overlay|squashfs|ramfs|rootfs\"}))) or (max by (instance, machine, role) (100 * (1 - windows_logical_disk_free_bytes{job=\"machines\",group!=\"proxmox\"} / windows_logical_disk_size_bytes{job=\"machines\",group!=\"proxmox\"})))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1814,7 +1814,7 @@
         },
         {
           "refId": "E",
-          "expr": "max by (instance, machine) (time() - node_boot_time_seconds{job=\"machines\"}) or max by (instance, machine) (windows_system_system_up_time{job=\"machines\"})",
+          "expr": "max by (instance, machine, role) (time() - node_boot_time_seconds{job=\"machines\",group!=\"proxmox\"}) or max by (instance, machine, role) (windows_system_system_up_time{job=\"machines\",group!=\"proxmox\"})",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1835,6 +1835,7 @@
           "options": {
             "renameByName": {
               "machine": "Machine",
+              "role": "Role",
               "instance": "Address",
               "Value #A": "Up",
               "Value #B": "CPU",
@@ -1844,12 +1845,13 @@
             },
             "indexByName": {
               "machine": 0,
-              "instance": 1,
-              "Value #A": 2,
-              "Value #B": 3,
-              "Value #C": 4,
-              "Value #D": 5,
-              "Value #E": 6
+              "role": 1,
+              "instance": 2,
+              "Value #A": 3,
+              "Value #B": 4,
+              "Value #C": 5,
+              "Value #D": 6,
+              "Value #E": 7
             },
             "excludeByName": {
               "Time": true,
@@ -1860,6 +1862,7 @@
             },
             "includeByName": {
               "machine": true,
+              "role": true,
               "instance": true,
               "Value #A": true,
               "Value #B": true,
@@ -2052,6 +2055,1497 @@
         "sortBy": []
       },
       "id": 24
+    },
+    {
+      "type": "table",
+      "title": "Home lab services",
+      "description": "Web checks of home lab services (blackbox-http job, probe=homelab in deploy/monitoring/prometheus_momentum.yml). Plex: its /identity page.",
+      "gridPos": {
+        "x": 17,
+        "y": 44,
+        "w": 7,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "probe_success{probe=\"homelab\"}",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "expr": "probe_duration_seconds{probe=\"homelab\"}",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "service": "Service",
+              "Value #A": "Up",
+              "Value #B": "Response"
+            },
+            "indexByName": {
+              "service": 0,
+              "Value #A": 1,
+              "Value #B": 2
+            },
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "runner": true
+            },
+            "includeByName": {
+              "service": true,
+              "Value #A": true,
+              "Value #B": true
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-text"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "UP",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "0": {
+                        "text": "DOWN",
+                        "color": "red",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #B"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": []
+      },
+      "id": 25
+    },
+    {
+      "type": "table",
+      "title": "ZFS pools (RAID health)",
+      "description": "Degraded: the pool runs without one of its disks; replace it soon. Disk errors are read, write and checksum counters summed over every disk: any above 0 deserves `zpool status -v` on the server. Scrubs should run at least monthly. Data errors are files ZFS couldn't repair.",
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 24,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by (machine, zpool, state) (node_zfs_zpool_state{job=\"machines\"} == 1)",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "expr": "max by (machine, zpool) (100 * zfs_pool_allocated_bytes{job=\"machines\"} / zfs_pool_size_bytes{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "C",
+          "expr": "max by (machine, zpool) (zfs_pool_free_bytes{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "D",
+          "expr": "max by (machine, zpool) (time() - zfs_pool_scrub_last_end_timestamp_seconds{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "E",
+          "expr": "max by (machine, zpool) (zfs_pool_scan_in_progress{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "F",
+          "expr": "max by (machine, zpool) (zfs_pool_scrub_last_errors{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "G",
+          "expr": "sum by (machine, zpool) (zfs_pool_device_errors{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "H",
+          "expr": "sum by (machine, zpool) (1 - zfs_pool_device_online{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "I",
+          "expr": "max by (machine, zpool) (zfs_pool_data_errors{job=\"machines\"})",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "machine": "Machine",
+              "zpool": "Pool",
+              "state": "State",
+              "Value #B": "Used",
+              "Value #C": "Free",
+              "Value #D": "Last scrub",
+              "Value #E": "Scrub/resilver running",
+              "Value #F": "Scrub errors",
+              "Value #G": "Disk errors",
+              "Value #H": "Disks not online",
+              "Value #I": "Data errors"
+            },
+            "indexByName": {
+              "machine": 0,
+              "zpool": 1,
+              "state": 2,
+              "Value #B": 3,
+              "Value #C": 4,
+              "Value #D": 5,
+              "Value #E": 6,
+              "Value #F": 7,
+              "Value #G": 8,
+              "Value #H": 9,
+              "Value #I": 10
+            },
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "runner": true
+            },
+            "includeByName": {
+              "machine": true,
+              "zpool": true,
+              "state": true,
+              "Value #B": true,
+              "Value #C": true,
+              "Value #D": true,
+              "Value #E": true,
+              "Value #F": true,
+              "Value #G": true,
+              "Value #H": true,
+              "Value #I": true
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-text"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "state"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "online": {
+                        "text": "Online",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "degraded": {
+                        "text": "Degraded (a disk is missing or failed)",
+                        "color": "red",
+                        "index": 1
+                      },
+                      "faulted": {
+                        "text": "Faulted",
+                        "color": "red",
+                        "index": 2
+                      },
+                      "offline": {
+                        "text": "Offline",
+                        "color": "red",
+                        "index": 3
+                      },
+                      "removed": {
+                        "text": "Removed",
+                        "color": "red",
+                        "index": 4
+                      },
+                      "unavail": {
+                        "text": "Unavailable",
+                        "color": "red",
+                        "index": 5
+                      },
+                      "suspended": {
+                        "text": "Suspended",
+                        "color": "red",
+                        "index": 6
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #B"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 80
+                    },
+                    {
+                      "color": "red",
+                      "value": 90
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #C"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "bytes"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #D"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 3024000
+                    },
+                    {
+                      "color": "red",
+                      "value": 5184000
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #E"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "Yes",
+                        "color": "orange",
+                        "index": 0
+                      },
+                      "0": {
+                        "text": "No",
+                        "color": "text",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #F"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #G"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #H"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #I"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": []
+      },
+      "id": 26
+    },
+    {
+      "type": "row",
+      "title": "Plex (192.168.1.219)",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 56,
+        "w": 24,
+        "h": 1
+      },
+      "id": 27
+    },
+    {
+      "type": "stat",
+      "title": "Streams now",
+      "description": "Everyone watching or listening, paused streams included.",
+      "gridPos": {
+        "x": 0,
+        "y": 57,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(momentum_plex_streams) or vector(0)",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "wideLayout": true
+      },
+      "id": 28
+    },
+    {
+      "type": "stat",
+      "title": "Transcoding",
+      "description": "Streams the server converts on the fly (the rest play directly). Each one costs CPU on the Plex machine.",
+      "gridPos": {
+        "x": 0,
+        "y": 61,
+        "w": 4,
+        "h": 4
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "momentum_plex_transcodes or vector(0)",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 3
+              }
+            ]
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center",
+        "wideLayout": true
+      },
+      "id": 29
+    },
+    {
+      "type": "table",
+      "title": "Libraries",
+      "description": "Items: movies, shows or artists, as Plex counts them. Episodes: TV libraries only.",
+      "gridPos": {
+        "x": 4,
+        "y": 57,
+        "w": 9,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by (library, type) (momentum_plex_library_items)",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "expr": "max by (library, type) (label_replace(momentum_plex_library_episodes, \"type\", \"show\", \"\", \"\"))",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "library": "Library",
+              "type": "Kind",
+              "Value #A": "Items",
+              "Value #B": "Episodes"
+            },
+            "indexByName": {
+              "library": 0,
+              "type": 1,
+              "Value #A": 2,
+              "Value #B": 3
+            },
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "runner": true
+            },
+            "includeByName": {
+              "library": true,
+              "type": true,
+              "Value #A": true,
+              "Value #B": true
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-text"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": [
+          {
+            "displayName": "Items",
+            "desc": true
+          }
+        ]
+      },
+      "id": 30
+    },
+    {
+      "type": "timeseries",
+      "title": "Streams",
+      "description": "",
+      "gridPos": {
+        "x": 13,
+        "y": 57,
+        "w": 11,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(momentum_plex_streams)",
+          "legendFormat": "streams",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "momentum_plex_transcodes",
+          "legendFormat": "transcoding",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "spanNulls": true,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "id": 31
+    },
+    {
+      "type": "row",
+      "title": "Synology NAS (SNMP; deploy/monitoring/prometheus_momentum.yml, job synology)",
+      "collapsed": false,
+      "panels": [],
+      "gridPos": {
+        "x": 0,
+        "y": 65,
+        "w": 24,
+        "h": 1
+      },
+      "id": 32
+    },
+    {
+      "type": "table",
+      "title": "Synology NAS",
+      "description": "Volumes not normal: degraded, crashed, or busy (sync, scrub, expand). Disks not normal: status or health other than normal. Update: DSM update waiting.",
+      "gridPos": {
+        "x": 0,
+        "y": 66,
+        "w": 24,
+        "h": 6
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(max by (nas) (systemStatus{job=\"synology\"})) * on (nas) group_left (modelName, version) (max by (nas, modelName) (modelName{job=\"synology\"}) * on (nas) group_left (version) max by (nas, version) (version{job=\"synology\"}))",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "B",
+          "expr": "(max by (nas) (100 * (1 - raidFreeSize{job=\"synology\"} / raidTotalSize{job=\"synology\"}))) * on (nas) group_left (modelName, version) (max by (nas, modelName) (modelName{job=\"synology\"}) * on (nas) group_left (version) max by (nas, version) (version{job=\"synology\"}))",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "C",
+          "expr": "(count by (nas) (raidStatus{job=\"synology\"} != 1) or max by (nas) (systemStatus{job=\"synology\"}) * 0) * on (nas) group_left (modelName, version) (max by (nas, modelName) (modelName{job=\"synology\"}) * on (nas) group_left (version) max by (nas, version) (version{job=\"synology\"}))",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "D",
+          "expr": "((count by (nas) ((max by (nas, diskID) (diskStatus{job=\"synology\"} != bool 1) + max by (nas, diskID) (diskHealthStatus{job=\"synology\"} != bool 1)) > 0)) or max by (nas) (systemStatus{job=\"synology\"}) * 0) * on (nas) group_left (modelName, version) (max by (nas, modelName) (modelName{job=\"synology\"}) * on (nas) group_left (version) max by (nas, version) (version{job=\"synology\"}))",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "E",
+          "expr": "(max by (nas) (temperature{job=\"synology\"})) * on (nas) group_left (modelName, version) (max by (nas, modelName) (modelName{job=\"synology\"}) * on (nas) group_left (version) max by (nas, version) (version{job=\"synology\"}))",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "F",
+          "expr": "(max by (nas) (diskTemperature{job=\"synology\"})) * on (nas) group_left (modelName, version) (max by (nas, modelName) (modelName{job=\"synology\"}) * on (nas) group_left (version) max by (nas, version) (version{job=\"synology\"}))",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "G",
+          "expr": "(max by (nas) (upgradeAvailable{job=\"synology\"})) * on (nas) group_left (modelName, version) (max by (nas, modelName) (modelName{job=\"synology\"}) * on (nas) group_left (version) max by (nas, version) (version{job=\"synology\"}))",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "H",
+          "expr": "(max by (nas) (100 - ssCpuIdle{job=\"synology\"})) * on (nas) group_left (modelName, version) (max by (nas, modelName) (modelName{job=\"synology\"}) * on (nas) group_left (version) max by (nas, version) (version{job=\"synology\"}))",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "I",
+          "expr": "(max by (nas) (100 * (1 - (memAvailReal{job=\"synology\"} + memBuffer{job=\"synology\"} + memCached{job=\"synology\"}) / memTotalReal{job=\"synology\"}))) * on (nas) group_left (modelName, version) (max by (nas, modelName) (modelName{job=\"synology\"}) * on (nas) group_left (version) max by (nas, version) (version{job=\"synology\"}))",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "refId": "J",
+          "expr": "(max by (nas) (hrSystemUptime{job=\"synology\"}) / 100) * on (nas) group_left (modelName, version) (max by (nas, modelName) (modelName{job=\"synology\"}) * on (nas) group_left (version) max by (nas, version) (version{job=\"synology\"}))",
+          "legendFormat": "",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "nas": "NAS",
+              "modelName": "Model",
+              "version": "DSM",
+              "Value #A": "System",
+              "Value #B": "Fullest volume",
+              "Value #C": "Volumes not normal",
+              "Value #D": "Disks not normal",
+              "Value #E": "System temp",
+              "Value #F": "Hottest disk",
+              "Value #G": "DSM update",
+              "Value #H": "CPU",
+              "Value #I": "Memory",
+              "Value #J": "Up for"
+            },
+            "indexByName": {
+              "nas": 0,
+              "modelName": 1,
+              "version": 2,
+              "Value #A": 3,
+              "Value #B": 4,
+              "Value #C": 5,
+              "Value #D": 6,
+              "Value #E": 7,
+              "Value #F": 8,
+              "Value #G": 9,
+              "Value #H": 10,
+              "Value #I": 11,
+              "Value #J": 12
+            },
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "runner": true
+            },
+            "includeByName": {
+              "nas": true,
+              "modelName": true,
+              "version": true,
+              "Value #A": true,
+              "Value #B": true,
+              "Value #C": true,
+              "Value #D": true,
+              "Value #E": true,
+              "Value #F": true,
+              "Value #G": true,
+              "Value #H": true,
+              "Value #I": true,
+              "Value #J": true
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "color-text"
+            }
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "Normal",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "2": {
+                        "text": "FAILED",
+                        "color": "red",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #B"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 80
+                    },
+                    {
+                      "color": "red",
+                      "value": 90
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #C"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #D"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #E"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "celsius"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 60
+                    },
+                    {
+                      "color": "red",
+                      "value": 70
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #F"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "celsius"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 50
+                    },
+                    {
+                      "color": "red",
+                      "value": 60
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #G"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "1": {
+                        "text": "Available",
+                        "color": "orange",
+                        "index": 0
+                      },
+                      "2": {
+                        "text": "Up to date",
+                        "color": "green",
+                        "index": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #H"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 80
+                    },
+                    {
+                      "color": "red",
+                      "value": 95
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #I"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "text",
+                      "value": null
+                    },
+                    {
+                      "color": "orange",
+                      "value": 85
+                    },
+                    {
+                      "color": "red",
+                      "value": 95
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #J"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dtdurations"
+              },
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "sortBy": []
+      },
+      "id": 33
     }
   ],
   "templating": {
