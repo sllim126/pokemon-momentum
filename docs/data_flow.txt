@@ -84,7 +84,8 @@ Recent Data/Serving Changes (March 2026)
 - synced tracking users are stored in the lightweight SQLite tracking store using the Google email
   as the account identity key
 - dashboard TCGplayer links now wrap product-specific destination URLs with the configured Impact
-  affiliate base link
+  affiliate base link (Near Mint preselected except on reverse holos; no wrapper for a
+  signed-in admin, so the owner's own purchases are never self-referred)
 - Expected result:
   - account sync stays separate from the main market-history pipeline
   - outbound marketplace clicks preserve exact product landing pages while using affiliate tracking

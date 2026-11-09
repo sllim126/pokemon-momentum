@@ -1,6 +1,6 @@
 # New mobile app: plan
 
-Last reviewed: 2026-11-06
+Last reviewed: 2026-11-09
 
 The owner asked on 2026-10-21 for a full rebuild of the phone site: same features as today,
 in the desktop app's look, and a layout that fills any screen from a phone in portrait to a
@@ -94,7 +94,7 @@ asking price), and the browsing lists moved to the menu.
 | Today (old mobile page) | New app |
 | --- | --- |
 | Search box, English/Japanese, Singles/Sealed | Keep (step 1.1) |
-| Home feed of cards with sparklines | Discover lists, opening on Top Movers like desktop (1.1) |
+| Home feed of cards with sparklines | Discover lists, opening on Top Movers (1.1; desktop opens on Consistent Movers since 2026-11-09) |
 | Menu "Trending": Top Movers, Early Movers, Pullbacks, Under the Radar, Confirmed Movers, Consistent Movers, Breakouts | Keep, plus Small Dips and Whole-set Dips (1.1) |
 | Selected card: picture, price, trend, Stats / Graph / Insight tabs | Card view (1.1, 1.2) |
 | Deal Checker | Keep; it is the core phone tool (1.2) |

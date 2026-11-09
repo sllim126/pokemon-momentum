@@ -765,6 +765,7 @@
       { key: "track_research", group: "My lists", track: true, tag: "research", label: "Needs Review", desc: "Items you flagged to look into." },
     ];
     const TCGPLAYER_AFFILIATE_BASE = "https://partner.tcgplayer.com/jR1OJb";
+    let ownerSignedIn = false;  // true once /tracking/session confirms an admin; see tcgplayerUrl()
     // Saved lists and price targets: the same storage and account sync as the desktop app
     // (desktop_home.html), so a card saved on one shows up on the other.
     const SAVE_TAGS = [["favorite", "Favorite"], ["watchlist", "Watchlist"], ["research", "Needs Review"], ["owned", "Buy List"]];
@@ -819,7 +820,7 @@
     const OLD_TABS = { group_products: "set", group_signals: "sets", browse_species: "species", time_to_buy: "sets" };
     // The last Discover list opened, for the tab bar's Discover button.
     const DISCOVER_KEY = "poke6s-mnext-discover-list";
-    const WINDOWS = [[30, "30D"], [90, "90D"], [365, "1Y"], [5000, "All"]];
+    const WINDOWS = [[7, "7D"], [30, "30D"], [90, "90D"], [365, "1Y"], [5000, "All"]];  // 7D: owner, 2026-11-09
     // Deal Checker rules (see judgeDeal). Percentages compare the asking price with market.
     const DEAL = {
       keepBuyPct: 10,       // To keep: 10%+ under market is a buy...
@@ -972,6 +973,7 @@
         $("accountLabel").textContent = "Account";
         $("accountBtn").setAttribute("aria-label", "Account");
         if (!payload.user?.is_admin) return;
+        ownerSignedIn = true;  // TCGplayer links drawn from now on skip the affiliate wrapper
         const draft = readStore(REVIEW_DRAFT_KEY, {});
         $("reviewNoteTitle").value = draft.title || "";
         $("reviewDetails").value = draft.details || "";
@@ -2233,14 +2235,20 @@
       if (open) openCardScreen();
       syncUrl();
     }
-    // TCGplayer product link (language and printing preselected), wrapped in the affiliate link.
+    // TCGplayer product link (language, printing and Near Mint preselected), wrapped in the
+    // affiliate link. Near Mint is the owner's default (2026-03-22, confirmed 2026-11-09); it is
+    // left off for reverse holos, where TCGplayer's combined filter often shows no listings. The
+    // owner's own clicks skip the affiliate wrapper so his purchases are never self-referred
+    // (ownerSignedIn is set once /tracking/session says the user is an admin).
     function tcgplayerUrl(card) {
       const target = new URL(`https://www.tcgplayer.com/product/${card.productId}`);
       if (card.productKind !== "sealed") {
         target.searchParams.set("Language", state.market === "JP" ? "Japanese" : "English");
         const printing = { "reverse holofoil": "Reverse Holofoil", "1st edition": "1st Edition", "unlimited holofoil": "Unlimited Holofoil", "1st edition holofoil": "1st Edition Holofoil" }[card.subTypeName.toLowerCase()];
         if (printing) target.searchParams.set("Printing", printing);
+        if (printing !== "Reverse Holofoil") target.searchParams.set("Condition", "Near Mint");
       }
+      if (ownerSignedIn) return target.toString();
       const affiliate = new URL(TCGPLAYER_AFFILIATE_BASE);
       affiliate.searchParams.set("u", target.toString());
       return affiliate.toString();

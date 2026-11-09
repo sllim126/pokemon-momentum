@@ -1327,6 +1327,27 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("tcgplayer", row["channels"])
         self.assertGreater(row["channels"]["ebay"]["required_price_for_target_margin"], row["channels"]["site"]["required_price_for_target_margin"])
 
+    @patch.object(api, "load_latest_market_targets", return_value={"JP-TEST-BOX": {"market_price": "120.00", "target_price": "125.00", "title": "Test Set Box"}})
+    @patch.object(api, "load_current_store_mapping", return_value={"JP-TEST-BOX": {"current_price": "129.99", "title": "Test Set Box"}})
+    @patch.object(api, "load_latest_supplier_quotes", return_value=([{"sku": "JP-TEST-BOX", "cost_jpy": "6500", "quote_date": "2026-04-27", "supplier_name": "Test Supplier", "item_name_raw": "Test Set Box"}], []))
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
+    def test_supplier_disbursement_fee_is_split_across_the_order(self, *_mocks):
+        """The $15 disbursement fee is per supplier order, so 10 boxes carry $1.50 each."""
+        def landed(box_count):
+            response = self.client.post(
+                "/supplier-profitability/data",
+                json={"jpy_per_usd": 100, "import_duty_pct": 0, "inbound_shipping_mode": "manual",
+                      "inbound_shipping_usd": 0, "handling_cost_usd": 0, "outbound_shipping_usd": 8,
+                      "disbursement_fee_usd": 15, "order_box_count": box_count},
+                cookies={"pm_tracking_token": "token"},
+            )
+            self.assertEqual(response.status_code, 200)
+            payload = response.json()
+            return payload["rows"][0]["landed_cost_usd"], payload["assumptions"]["disbursement_fee_per_unit_usd"]
+
+        self.assertEqual(landed(10), (66.5, 1.5))  # 6,500 JPY at 100 = $65.00, plus $1.50
+        self.assertEqual(landed(0), (80.0, 15.0))  # no box count: the whole fee
+
     @patch.object(api, "list_bug_reports", return_value=[{"id": 1, "title": "Example"}])
     def test_bug_report_list_route_returns_items(self, list_bug_reports_mock):
         with patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})()):
