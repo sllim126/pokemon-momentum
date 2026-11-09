@@ -20,8 +20,10 @@ def test_sitemap_lists_visible_products_and_pages(client):
     assert "https://shop.test/c/booster-boxes" in locs
     assert "https://shop.test/sets/black-bolt" in locs
     assert not any("surging-sparks-elite" in loc for loc in locs)  # hidden
-    # Draft text pages stay out of the sitemap until the owner approves them.
-    assert "https://shop.test/returns" not in locs
+    # Text pages are listed once the owner approves them (no "draft: true"; all were approved
+    # 2026-11-09). A page marked draft would stay out of the sitemap.
+    assert "https://shop.test/returns" in locs
+    assert "https://shop.test/shipping" in locs
 
 
 def test_product_structured_data(client):

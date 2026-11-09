@@ -1,7 +1,6 @@
 ---
 title: Terms & conditions
 description: The terms that apply to purchases from Poke6s.
-draft: true
 ---
 These terms apply to purchases from poke6s.com, a store run by Poke6s LLC.
 
