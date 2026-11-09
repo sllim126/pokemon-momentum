@@ -1262,6 +1262,8 @@ Affiliate outbound links:
 - current TCGplayer affiliate base:
   - `https://partner.tcgplayer.com/jR1OJb`
 - dashboard TCGplayer links wrap the product destination with the Impact `u=` target parameter
+- links preselect Near Mint (except reverse holos); a signed-in admin gets the plain TCGplayer
+  link with no affiliate wrapper, so run the smoke test signed out (or in a private window)
 - smoke test:
   - click one singles `Buy` link
   - click one sealed TCGplayer link
