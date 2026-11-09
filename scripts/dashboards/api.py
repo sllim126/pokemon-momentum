@@ -168,6 +168,7 @@ EOD_DASHBOARD_HTML = SCRIPT_DIR / "eod_dashboard.html"
 EMBED_DASHBOARD_HTML = SCRIPT_DIR / "embed_dashboard.html"
 BUG_REPORTS_HTML = SCRIPT_DIR / "bug_reports.html"
 REVIEW_NOTE_ATTACHMENTS_DIR = REPO_ROOT / "data" / "review_note_attachments"
+REVIEW_NOTE_PAGES = {"/m-next", "/"}  # pages with the owner's Note tab (phone app, desktop app)
 PRICING_UPLOAD_HTML = SCRIPT_DIR / "pricing_upload.html"
 SINGLE_LISTINGS_UPLOAD_HTML = SCRIPT_DIR / "single_listings_upload.html"
 SUPPLIER_PRICING_HTML = SCRIPT_DIR / "supplier_pricing.html"
@@ -4792,7 +4793,11 @@ async def submit_mobile_review_note(
     authorization: str | None = Header(default=None),
     tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
 ):
-    """Save one owner's in-place /m-next review note and any attached files.
+    """Save one owner's in-place review note and any attached files.
+
+    Used by the owner-only Note tab on the phone app (/m-next) and on the desktop app at /
+    (context "page_path"), so either can be reviewed on a phone, tablet or touchscreen.
+    Unknown page paths are recorded as /m-next.
 
     This intentionally has none of the anonymous feedback endpoint's frequency or file-type
     limits: access is restricted to the exact configured admin account. Stored filenames are
@@ -4833,21 +4838,22 @@ async def submit_mobile_review_note(
                 "url": f"/m-next/review-attachments/{stored_name}",
             })
 
-        page_url = str(context.get("page_url") or "/m-next")
+        page_path = context.get("page_path") if context.get("page_path") in REVIEW_NOTE_PAGES else "/m-next"
+        page_url = str(context.get("page_url") or page_path)
         context.update({
             "review_note": True,
             "attachments": attachments,
         })
         report_id = create_bug_report({
             "reporter_username": admin_user.username,
-            "page_path": "/m-next",
+            "page_path": page_path,
             "page_url": page_url,
             "category_id": context.get("category_id"),
             "tab": context.get("list") or "check",
             "segment": context.get("kind"),
             "product_key": context.get("product_key"),
             "search_query": context.get("search_query"),
-            "title": str(form.get("title") or "").strip() or "M-next review note",
+            "title": str(form.get("title") or "").strip() or "Review note",
             "details": details,
             "context_json": json.dumps(context, ensure_ascii=True),
         })
