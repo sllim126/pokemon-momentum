@@ -132,9 +132,10 @@ runbook section "Monitoring".
 - [waiting] ZFS scrubs and disk errors (Home lab: Servers, ZFS pools table): the owner runs
   `deploy/monitoring/zfs/install_on_host.sh root@192.168.1.155` (runbook, "ZFS on OMV").
 - [idea] Slowheim: /opt/valheim-private/server.log isn't in logrotate (7 MB since 2026-09-22).
-- [waiting] Slowheim: the daily world backup cron (/etc/cron.d/valheim-backup, running
-  /usr/local/bin/vh-backup.sh at 04:25) is gone; newest archive ~2026-10-28. Owner to restore it
-  (or confirm it moved). The Slowheim dashboard could show the newest archive's age.
+- [waiting] Slowheim's disk is 93% full (3.9 GB free of 56 GB, 2026-11-09). Most of it is the
+  rolling world snapshots (19 GB, /opt/valheim-backups/rolling/; pruning works, but they grow
+  with the world). Owner to choose: grow the VM disk in Proxmox, or keep fewer hourly
+  snapshots (168 -> 72 frees about 6.5 GB). The Slowheim dashboard's Disk used gauge shows it.
 - [idea] OMV ran at 88% CPU and 83% memory on 2026-11-06 (worth a look).
 - [idea] Grafana loads the dashboards straight from this working checkout, so switching the
   checkout to a branch without `deploy/monitoring/grafana/homelab/` (anything older than

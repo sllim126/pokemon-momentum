@@ -228,9 +228,10 @@ slowheim-loki in deploy/monitoring/grafana/provisioning/datasources.yml; plain H
 no auth). Its dashboard is the owner's own export, kept unchanged in
 deploy/monitoring/grafana/imported/slowheim_source.json; build_dashboards.py fills in the data
 sources and the Home lab top bar. To update it, copy Slowheim's grafana-dashboard.json over that
-file and rerun build_dashboards.py. Note (2026-11-08): /etc/cron.d/valheim-backup, the daily
-world backup the Slowheim notes describe, is missing there; the newest archive in
-/opt/valheim-backups was about 10 days old.
+file and rerun build_dashboards.py. World backups there are systemd timers (slowheim-*.timer and
+slowheim-private-*.timer: every 15 minutes, hourly and daily, keeping 96 / 168 / 30 snapshots in
+/opt/valheim-backups/rolling/, about 19 GB); they replaced the older /etc/cron.d/valheim-backup
+that Slowheim's own SLOWHEIM-OPERATIONS.md still describes.
 
 Synology NAS (since 2026-11-06; "Synology NAS" table on Home lab: Servers):
 
