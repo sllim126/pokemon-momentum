@@ -1,7 +1,6 @@
 ---
 title: Privacy
 description: What Poke6s keeps about you, why, and for how long.
-draft: true
 ---
 ## What we keep
 

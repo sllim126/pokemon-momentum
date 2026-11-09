@@ -1,7 +1,6 @@
 ---
 title: Shipping
 description: How and when Poke6s ships orders.
-draft: true
 ---
 ## Where we ship
 
@@ -15,16 +14,23 @@ checkout before you pay. Orders over $150 ship free in the US.
 
 ## Handling time
 
-Orders are packed and shipped within **[owner: number] business days** of payment. You'll get
+Orders are packed and shipped within **1 business day** of payment. You'll get
 an email with the tracking number when your order ships.
 
 ## Packing
 
 Sealed product is packed in a box with padding so corners and shrink wrap arrive intact.
-Higher-value orders ship with **signature confirmation**.
+Orders over $150 ship with **signature confirmation**.
 
 ## Damaged or lost packages
 
 If your order arrives damaged, email [admin@poke6s.com](mailto:admin@poke6s.com) within
-48 hours of delivery with photos of the box and the item. If tracking shows no movement for
-7 days, email us and we'll open a claim with the carrier.
+48 hours of delivery with photos of the box and the item.
+
+**Lost in transit.** If tracking shows no movement for 7 days, email us and we'll open a claim
+with the carrier. If the package is lost (tracking never shows it delivered), we'll send a
+replacement or a full refund, your choice.
+
+**Marked delivered but missing.** Check with neighbors and your local post office first.
+Once tracking shows a package delivered we can't replace it, but we'll help you with the
+carrier claim. Orders over $150 need a signature on delivery for this reason.

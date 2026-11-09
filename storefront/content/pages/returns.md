@@ -1,7 +1,6 @@
 ---
 title: Returns & cancellations
 description: Our returns window, conditions and refund process.
-draft: true
 ---
 ## Returns
 

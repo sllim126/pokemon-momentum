@@ -1348,6 +1348,24 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(landed(10), (66.5, 1.5))  # 6,500 JPY at 100 = $65.00, plus $1.50
         self.assertEqual(landed(0), (80.0, 15.0))  # no box count: the whole fee
 
+    @patch.object(api, "create_bug_report", return_value=43)
+    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
+    def test_review_note_records_the_desktop_app_page_and_ignores_unknown_pages(self, _get_session_user_mock, create_mock):
+        for page_path, expected in (("/", "/"), ("/admin", "/m-next")):
+            response = self.client.post(
+                "/m-next/review-notes",
+                headers={"Authorization": "Bearer token"},
+                data={"details": "Tooltip needs a tap on iPad.", "context": f'{{"page_path":"{page_path}","list":"sma30_holds"}}'},
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(create_mock.call_args[0][0]["page_path"], expected)
+
+    def test_desktop_app_has_the_owner_review_note_tab(self):
+        html = (Path(__file__).resolve().parents[1] / "scripts" / "dashboards" / "desktop_home.html").read_text(encoding="utf-8")
+        self.assertIn('id="reviewTab"', html)
+        self.assertIn("showReviewTab();", html)
+        self.assertIn('page_path: "/"', html)
+
     @patch.object(api, "list_bug_reports", return_value=[{"id": 1, "title": "Example"}])
     def test_bug_report_list_route_returns_items(self, list_bug_reports_mock):
         with patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})()):

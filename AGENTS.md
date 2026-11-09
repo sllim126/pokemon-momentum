@@ -53,6 +53,10 @@ coding agent. Read this first, then `docs/todo.txt`.
   dashboard (`dashboard.html`) were deleted on 2026-10-31; git tag
   `backup/before-mobile-cleanup-2026-10-31` holds the last copy.
 - **Bug reports go to Discord** (`#bug-reports`). Don't add on-site bug forms to new pages.
+- **Private folders, never committed:** `docs/chat_history/` (past Codex and ChatGPT chats, for
+  background; older decisions there may have been reversed since, and the docs win) and
+  `docs/private/` (the owner's store rules and business ideas). Both are git-ignored. Read them
+  when useful, but never copy their business details into committed files.
 - **Documentation is part of the job.** A human must be able to review the code: comment
   the non-obvious parts and update the docs a change affects, in the same commit.
 

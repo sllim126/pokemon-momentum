@@ -1320,12 +1320,21 @@ UI checks:
 The mobile Support > Feedback form still saves into the same `/bug_reports` queue. Review it
 (and older bug reports) at the admin-only `/bug-reports` page.
 
-Owner review notes (since 2026-10-25): signed in as an admin, the new mobile app (`/m-next`)
-shows a floating Note tab. A note goes into the same queue with the screen's context (card,
+Owner review notes (since 2026-10-25): signed in as an admin, the phone app (`/m-next`) and,
+since 2026-11-09, the desktop app at `/` (for testing on an iPad, which gets the desktop site)
+show a floating Note tab. The note records which app it came from (`page_path` `/m-next` or `/`). A note goes into the same queue with the screen's context (card,
 list, search, device). Attached files are saved under random names in
 `data/review_note_attachments/` (git-ignored, not served publicly) and open from the
 `/bug-reports` page through the admin-only `/m-next/review-attachments/<name>` route. There
 are no size or count limits on purpose (admin only), so check that folder's size now and then.
+
+Past AI chats (private): `docs/chat_history/` holds copies of the Codex and ChatGPT chats about
+this project, for background (git-ignored: they contain business plans). Refresh them on the
+host, not in the container:
+- Codex: `python3 scripts/utilities/export_codex_history.py` (reads `~/.codex`; replaces any
+  value from `.env`, and anything that looks like a credential, with `[REDACTED:...]`).
+- ChatGPT: list the chats to copy in `docs/chat_history/chatgpt/selection.tsv`, then
+  `python3 scripts/utilities/import_chatgpt_history.py <converted export folder>`.
 
 Discord reports are copied onto the server (since 2026-10-16): every 15 minutes (adam's
 crontab) `scripts/utilities/import_discord_bug_reports.py` runs in the container, reads new

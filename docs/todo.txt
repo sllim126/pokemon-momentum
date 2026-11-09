@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-09 (Oct 27 fixes merged; live branch feature/homelab-machines)
+Last updated: 2026-11-09 (store policy pages; October leftovers; live branch feature/homelab-machines)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -43,11 +43,24 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-09 Store rules reviewed with the owner, one at a time: the new store ships within 1
+  business day, signature on orders over $150, insurance over $100, lost in transit = replacement
+  or full refund (marked delivered = help with the carrier claim). All seven storefront text
+  pages approved and no longer drafts. The full rules (with margins and store history) moved
+  to the git-ignored `docs/private/store_operations.md`; decisions in `docs/storefront_plan.md`.
+- 2026-11-09 October leftovers reviewed with the owner one item at a time (from the old
+  `chat-history-review` / `codex/kpdh-binder-order` branches). Restored: the desktop owner-only
+  Note tab (now sharing the admin check with the TCGplayer links) and the chat-history scripts
+  (`scripts/utilities/export_codex_history.py`, `import_chatgpt_history.py`, which now takes
+  its source folder as an argument). Store rules and three business ideas moved to the new
+  git-ignored `docs/private/`. Kept ideas are listed under High Priority. Dropped: binder colour
+  notes, ChatGPT re-import, popular-character dip list, gift bundles, supplier price feed,
+  quick-save pills, logo link to the store, Squarespace-only items.
 - 2026-11-09 Branch clean-up: deleted 12 local branches (eight already in main, three October
   branches contained in `codex/kpdh-binder-order`, and `plan/lorcana-market`, whose plan is
   newer on `plan/lorcana-plan` and whose monitoring commits are in main) and two clean /tmp
-  worktrees. Left: `main`, the live `feature/homelab-machines`, `plan/lorcana-plan` and
-  `codex/kpdh-binder-order` (see "Old branches" under High Priority).
+  worktrees. Then, once its leftovers were reviewed and merged, `codex/kpdh-binder-order` too.
+  Left: `main`, the live `feature/homelab-machines` and `plan/lorcana-plan`.
 - 2026-11-09 Brought back six fixes from the unmerged 2026-10-27 branch (`chat-history-review`),
   each re-confirmed by the owner one at a time: desktop opens on Consistent Movers (`DEFAULT_LIST`,
   `/discover` too); 7D chart window (desktop and phone); TCGplayer links preselect Near Mint
@@ -131,13 +144,35 @@ Recently Completed
 High Priority
 -------------
 
-- [waiting] Old branches, reviewed 2026-11-09. The leftovers of the October chain now live only on
-  `codex/kpdh-binder-order` (the other three October branches were deleted 2026-11-09; every
-  commit is on this one). Owner to decide what to keep: the desktop owner-only Note tab
-  (ed1e476), two binder colour-direction notes (89df6eb, 3c55198), `docs/store_operations.md`,
-  the chat-history export/import scripts and 17 todo ideas (1f9eb66), and a parked proposal
-  (1c43a2d). Check each for business plans before anything goes in this public repo, then
-  delete the branch. Its KPDH work is already in main.
+- [planned] Phone app conveniences the old phone page had (owner, 2026-10-27; confirmed
+  2026-11-09). Copy the behaviour from `mobile_dashboard.html` in git tag
+  `backup/before-mobile-cleanup-2026-10-31`:
+  - pull to refresh on lists;
+  - swipe left/right between cards, and swipe **up** to close the card view (owner's change;
+    the old page pulled down);
+  - Quick Buy Targets: the 95% / 90% / ... / 60% of market ladder next to the Deal Checker's
+    "pay up to".
+- [planned] Privacy policy and terms pages for the market site (Google sign-in's consent screen
+  needs a privacy policy URL). Codex drafted both in March 2026; owner to review the wording,
+  then publish and link them in the desktop and phone footers. Confirmed 2026-11-09.
+- [planned] Cost-based minimum price for English sealed in the new storefront (owner,
+  2026-07-29; confirmed 2026-10-27 and 2026-11-09): list price = max(market target, cost +
+  shipping the store pays + fees + profit). Needs a cost per English item; today only Japanese
+  boxes with a supplier quote have a floor.
+- [idea] Releases page: each product type's "typical cheapest window" after release, from the
+  price history (owner, 2026-11-09). First look on 2026-11-09 (English, sets since Feb 2024,
+  median vs the first two weeks): booster boxes are cheapest in months 1-2 (-3.5% at month 1,
+  back above launch by month 3), ETBs in months 2-5 (-11% at month 2), booster bundles in
+  months 1-4 (about -7%); almost nothing is still below launch after month 8. Small samples
+  (11 boxes, 20 ETBs, 18 bundles) from a rising market; recompute as sets build history.
+- [idea] Let signed-in users choose which list the app opens on (owner, 2026-10-27; kept
+  2026-11-09).
+- [idea] Japanese indexes for older eras (only jp_pokemon100 and jp_sv100 exist).
+- [idea] Supplier calculator: show the most you can pay to break even and to hit the target
+  margin.
+- [idea] Storefront: a shelf / box / binder-page location for each stock item, to find it
+  quickly when it sells.
+- [idea] An "Overheated / watch for exit" list: cards that rose too far, too fast.
 - [next] Pin a known-compatible DuckDB version in the root `requirements.txt`. A clean
   Docker build on 2026-11-06 resolved the unpinned dependency to DuckDB 2.0.0, which exits
   with `Illegal instruction` on this server during import. The established project image
