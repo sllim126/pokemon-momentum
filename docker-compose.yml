@@ -68,7 +68,9 @@ services:
   # are set in the Cloudflare dashboard under Networking > Tunnels > poke6s-home > Routes.
   # CLOUDFLARE_TUNNEL_TOKEN lives in .env only (it lets anyone run the tunnel: never print it).
   cloudflared:
-    image: cloudflare/cloudflared:2025.9.1
+    # Cloudflare supports connector versions for one year after release (the dashboard marks
+    # older ones "Unsupported"): bump this tag at least yearly, then `up -d cloudflared`.
+    image: cloudflare/cloudflared:2026.10.7
     container_name: cloudflared
     command: tunnel --no-autoupdate run
     environment:
