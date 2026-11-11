@@ -245,7 +245,14 @@ Live now:
   - Owner (2026-11-11): listing above market is fine as long as no sale loses money, so the five
     products first hidden (three booster boxes, Greninja ex Premium Collection, Abyss Eye) are
     shown again at break-even. Don't use --hide-above-market by default.
-- [owner] 4. Test orders lowered real stock on 4 products. Count the shelf and set stock from it.
+- [in progress] 4. Stock set from the owner's Nov 2 inventory (owner: accurate for all sealed on
+  hand), which also undoes the test orders: 11 products adjusted 2026-11-11 (stock_movements
+  reason 'adjustment', reference inventory-2026-11-02; backup store.before-stock-2026-11-11.db).
+  Left: sleeved packs, where the store sells some as 4-pack art sets (Destined Rivals: 22 packs
+  vs 2 loose + 4 sets; Perfect Order: 20 vs 4 sets; Phantasmal Flames, Mega Evolution, Journey
+  Together 4 each, store 0; Pitch Black and Chaos Rising 4 each, no store product). Also not on
+  the store: Prismatic Evolutions bundle, Treasure chest tin. 18 in-stock products are hidden
+  (hidden on Squarespace); owner to say which to show.
 - [owner] 5. "Buy on TCGplayer" goes to the store's front page for every product. Decide where it
   should go, given sealed may not be listed there.
 - [next] 6. Handle odd input cleanly in the store (page numbers, order links, webhook signature)
