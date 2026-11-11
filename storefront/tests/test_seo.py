@@ -33,7 +33,8 @@ def test_product_structured_data(client):
     assert product["sku"] == "ENG-BB-BB"
     assert product["offers"]["price"] == "79.99"
     assert product["offers"]["priceCurrency"] == "USD"
-    assert product["offers"]["availability"] == "https://schema.org/InStock"
+    # Checkout is off in this client (catalog mode): no "InStock" claim.
+    assert "availability" not in product["offers"]
     assert product["offers"]["itemCondition"] == "https://schema.org/NewCondition"
     crumbs = next(b for b in blocks if b["@type"] == "BreadcrumbList")
     assert [i["name"] for i in crumbs["itemListElement"]][:3] == ["Home", "Shop", "Booster bundles"]
@@ -60,3 +61,20 @@ def test_footer_and_organization_list_the_social_accounts(client):
     home = client.get("/").text
     assert 'aria-label="Community"' in home and "https://discord.gg/AejcWHkCG" in home
     assert '"sameAs": [' in home and "https://www.youtube.com/@Poke6s_TCG" in home
+
+
+def test_catalog_mode_hides_stock_and_checkout_mode_shows_it(imported):
+    import dataclasses
+    from fastapi.testclient import TestClient
+    from storefront.app.main import create_app
+
+    path = "/p/black-bolt-booster-bundle-english"
+    with TestClient(create_app(imported)) as off:
+        html = off.get(path).text
+        assert "In stock" not in html and " left<" not in html
+    on = dataclasses.replace(imported, stripe_secret_key="sk_test_fake", stripe_webhook_secret="whsec_x")
+    with TestClient(create_app(on)) as shop:
+        html = shop.get(path).text
+        product = next(b for b in jsonld_blocks(html) if b["@type"] == "Product")
+        assert product["offers"]["availability"] == "https://schema.org/InStock"
+        assert "In stock" in html or " left<" in html
