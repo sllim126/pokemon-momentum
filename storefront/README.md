@@ -8,6 +8,8 @@ the home network at `http://<server>:8010`. Cart and checkout switch on when
 `STOREFRONT_CHECKOUT=1` and a Stripe **test** key are in `.env` (see "Checkout" below);
 otherwise product pages link to the TCGplayer store. The public launch (2026-11-11) is
 catalog-only: `STOREFRONT_CHECKOUT` is unset, which means off.
+While checkout is off, product pages show no stock counts (only "Sold out") and the structured
+data leaves out `availability` instead of claiming `InStock` (owner, 2026-11-11).
 Nothing is public: robots are blocked and every page says `noindex` until
 `STOREFRONT_ALLOW_INDEXING=1` at launch.
 
@@ -61,6 +63,27 @@ Re-running updates existing SKUs but keeps their slugs. Once products are edited
 (Phase 3), use `--only-new`.
 
 The market reference is rebuilt daily at 03:00 UTC by cron (after the 02:00 market update).
+
+## Prices
+
+`tools/reprice.py` sets prices at or near today's market and never below break-even (owner,
+2026-11-11): each product's rule in `data/store_price_rules.csv` (usually 5% under market,
+ending in .99) applied to the market price the product page shows, raised to break-even when
+that's higher. Break-even is the unit cost plus Stripe's fees (2.9% + 30¢, plus 0.5% for
+Stripe Tax), and the label and packing too when the price alone reaches free shipping ($150).
+With `--hide-above-market`, products whose break-even is above market are hidden instead.
+Costs are private: they come from a CSV the owner keeps outside this repository (`--costs`),
+and the output never shows them. Dry run unless `--apply`; standard library only, run on the
+host:
+
+```
+python3 storefront/tools/reprice.py --costs <store_sku_costs.csv> --hide-above-market
+python3 storefront/tools/reprice.py --costs <store_sku_costs.csv> --hide-above-market --apply
+python3 storefront/tools/reprice.py --costs <store_sku_costs.csv> --show ENG-PO-BOX --apply
+```
+
+Products without a rule, a market price or a cost are left alone and listed. Re-running the
+Squarespace importer resets prices and visibility, so run this again after any import.
 
 ## Save a copy of the old Squarespace site
 
@@ -172,6 +195,7 @@ stock by hand until the Phase 3 admin.
 | `app/templates/`, `app/static/` | Jinja2 pages, CSS (market site's colours, D4), small JS |
 | `app/articles.py`, `app/article_import.py` | Articles (Markdown, loaded at start-up); import of the old blog posts |
 | `content/articles/*.md` | The articles |
+| `tools/reprice.py` | Prices at or near market, never below break-even; hides products that can't be (see "Prices") |
 | `tools/archive_squarespace_site.py` | One-off copy of the old site's pages, blog posts and images |
 | `content/pages/*.md` | About, FAQ, Shipping, Returns, Terms, Privacy, Contact |
 | `tests/` | pytest suite with synthetic fixtures |

@@ -40,12 +40,15 @@
     </div>
     {% endif %}
 
+    {#- Catalog mode (checkout off): no stock counts, since nothing can be bought here yet. #}
+    {% if not product.in_stock %}<p class="stock"><span class="out">Sold out</span></p>
+    {% elif checkout_enabled %}
     <p class="stock">
-      {% if not product.in_stock %}<span class="out">Sold out</span>
-      {% elif not product.track_stock %}<span class="ok">Available</span>
+      {% if not product.track_stock %}<span class="ok">Available</span>
       {% elif product.stock <= 3 %}<span class="low">Only {{ product.stock }} left</span>
       {% else %}<span class="ok">In stock</span>{% endif %}
     </p>
+    {% endif %}
 
     <div class="buy-box">
       {% if checkout_enabled and product.in_stock %}
