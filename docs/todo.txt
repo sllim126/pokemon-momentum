@@ -44,6 +44,8 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-11 Store order alerts go to Discord channel 1569946385548050533: webhook saved in
+  `.env` by the owner, store restarted, test alert accepted by Discord.
 - 2026-11-11 Shipping set (owner, plan decision D3): $10 flat for singles, accessories and small
   sealed, $20 for large sealed, still free over $150. Every order now ships with tracking and
   signature confirmation (was over $150); the Shipping page says so. Sales tax (D2) was decided
@@ -285,12 +287,10 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - [waiting] Owner: Stripe activation (business profile, bank, statement descriptor POKE6S)
     before live payments, and Tax -> Registrations -> Utah in live mode. Use the new Stripe
     account, not the Squarespace-managed one.
-  - [planned] Microsoft 365 SMTP for order emails (SMTP AUTH may need switching on for
-    admin@poke6s.com); until then emails are files in `data/storefront/outbox/`.
-  - [waiting] Order alerts: the owner chose Discord channel 1569946385548050533 (2026-11-11).
-    Owner: in that channel, Edit Channel > Integrations > Webhooks > New Webhook > Copy URL,
-    and save it in `.env` as STOREFRONT_DISCORD_WEBHOOK_URL (never in git). Then restart the
-    store and check a test alert arrives.
+  - [next] Order emails through Microsoft Graph, not SMTP (Microsoft turns password SMTP off by
+    default from December 2026, MC786329). Owner: shared mailbox orders@poke6s.com, an Entra
+    app with Mail.Send limited to that mailbox, three values in `.env`. Claude: Graph sender in
+    `storefront/app/notify.py`. Until then emails are files in `data/storefront/outbox/`.
   - [planned] Once real orders exist, stop re-running the Squarespace importer (it resets
     stock); the Phase 3 admin takes over stock changes.
 - [next] Phase 3: LAN-only admin (orders, ship with tracking, refunds, stock), exports (Pirate
