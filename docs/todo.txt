@@ -354,6 +354,8 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   submit https://poke6s.com/sitemap.xml.
 - [planned] Switch checkout on: Stripe live activation, live keys in .env, STOREFRONT_CHECKOUT=1,
   STOREFRONT_ALLOW_LIVE=1, webhook, a refunded live test order. Then the market site's buy button.
+- [planned] Yearly, by 2027-10: bump the cloudflared image tag in docker-compose.yml (2026.10.7
+  pinned 2026-11-11; Cloudflare supports a connector version for one year).
 - [planned] Move market.poke6s.com onto the Cloudflare Tunnel too (route to
   http://pokemon-momentum:8001; check the Caddy/visitor-IP path), then close the router port.
 - [planned] After launch: retire `scripts/squarespace_price_sync.py` from cron
