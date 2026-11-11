@@ -44,6 +44,9 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-11 SMART disk health on OMV (owner ran the installer): 12 disks report (11 Seagate
+  Exos X18, 1 SanDisk SSD), all PASSED, no pending, uncorrectable, reallocated or cable errors,
+  35-40 °C. Shown in Home lab: Servers, SMART table.
 - 2026-11-11 Temporary sudo file /etc/sudoers.d/90-claude-buildout removed (owner's request):
   sudo asks for a password again, so agents can't run sudo steps themselves; the owner runs them.
 - 2026-11-11 poke6s.com launched catalog-only on the new store (owner): DNS on Cloudflare,
@@ -159,8 +162,6 @@ runbook section "Monitoring".
   and 152 uncorrectable sectors (2026-11-09; unchanged 2026-11-10). Owner, 2026-11-11: known and
   ignored on purpose. Its pool isn't used and holds nothing needed; backups and other machines
   are not at risk. It just hasn't been pulled yet. Its red row in Grafana's SMART table is expected.
-- [waiting] SMART for OMV: the owner runs `deploy/monitoring/smart/install_on_host.sh
-  root@192.168.1.155` (runbook "SMART disk health").
 - [idea] SMART for the three Proxmox nodes: they don't run node-exporter yet. Install it
   (apt), add them to nodes.yml, then run the SMART installer on each.
 - [idea] Internet speed test once a day (one small container), if wanted.
