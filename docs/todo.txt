@@ -44,6 +44,8 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-11 Temporary sudo file /etc/sudoers.d/90-claude-buildout removed (owner's request):
+  sudo asks for a password again, so agents can't run sudo steps themselves; the owner runs them.
 - 2026-11-11 poke6s.com launched catalog-only on the new store (owner): DNS on Cloudflare,
   Cloudflare Tunnel to the storefront container, www redirects to https://poke6s.com,
   checkout switched off (STOREFRONT_CHECKOUT), Google indexing on. Squarespace site replaced;
@@ -153,9 +155,10 @@ runbook section "Monitoring".
   2026-11-09 in the private ISI-Knowledge repo (scripts/monitoring/today/); the owner runs its
   install.sh (sudo: Infinity plugin, a 127.0.0.1-only feed service, a cron line). Chat review
   steps: AGENTS.md, "Reviewing past chats".
-- [owner] PBS disk /dev/sdc (WD Blue 6 TB, serial WD-WX21DA5FN43K) is failing: 2,100 pending
-  and 152 uncorrectable sectors (2026-11-09), though SMART still says PASSED. Check which
-  datastore it holds (likely sixTB) and replace it; copy anything worth keeping off first.
+- [parked] PBS disk /dev/sdc (WD Blue 6 TB, serial WD-WX21DA5FN43K) is failing: 2,100 pending
+  and 152 uncorrectable sectors (2026-11-09; unchanged 2026-11-10). Owner, 2026-11-11: known and
+  ignored on purpose. Its pool isn't used and holds nothing needed; backups and other machines
+  are not at risk. It just hasn't been pulled yet. Its red row in Grafana's SMART table is expected.
 - [waiting] SMART for OMV: the owner runs `deploy/monitoring/smart/install_on_host.sh
   root@192.168.1.155` (runbook "SMART disk health").
 - [idea] SMART for the three Proxmox nodes: they don't run node-exporter yet. Install it
@@ -172,8 +175,6 @@ runbook section "Monitoring".
   2026-11-05) makes the Home lab dashboards vanish until switched back. Consider having
   install.sh copy the JSON to /var/lib/grafana/dashboards/ instead, as the private ISI
   dashboards already do.
-- [next] Owner: remove the temporary sudo file now that the build-out is merged:
-  `sudo rm /etc/sudoers.d/90-claude-buildout` (the Overview's "Temporary sudo" tile turns green).
 - [waiting] Owner: two UniFi access points are offline (2026-11-05): Garage/patio U6-Lite
   (192.168.1.10) and Living room U6-Lite (192.168.1.14). This is UniFi's Wi-Fi "warning". The
   VPN area shows "error" (no VPN server running?). Expected, or worth a look?
