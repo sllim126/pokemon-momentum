@@ -44,6 +44,9 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-11 Store review item 2: the Privacy page named Cloudflare Web Analytics, which the site
+  doesn't use. It now describes the store's own visit counting and says traffic passes through
+  Cloudflare (owner approved the wording; 4192166, deployed, checked live).
 - 2026-11-11 Store review item 1: the trailing-slash redirect could send a poke6s.com link to
   another site. Fixed with a test (fc2fc78), merged to main and deployed; checked live.
 - 2026-11-11 SMART disk health on OMV (owner ran the installer): 12 disks report (11 Seagate
@@ -224,8 +227,7 @@ backend; market site not included. How to reproduce each one: docs/private/secur
 
 Live now:
 - [done 2026-11-11] 1. Unsafe redirect fixed (see Recently Completed).
-- [owner] 2. Privacy page names an analytics tool the site doesn't use. Correct how visits are
-  counted, and say Cloudflare carries the traffic.
+- [done 2026-11-11] 2. Privacy page corrected (see Recently Completed).
 - [owner] 3. Listed prices and stock are frozen at the Oct 31 import, while the same stock sells
   elsewhere. Decide: update them, hide stock counts, or list only what is really for sale here.
 - [owner] 4. Test orders lowered real stock on 4 products. Count the shelf and set stock from it.
