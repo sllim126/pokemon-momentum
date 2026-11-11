@@ -87,7 +87,9 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     market = MarketReference(settings.market_reference_path)
     pages = load_pages()
     articles = Articles(articles_dir or ARTICLES_DIR)
-    if settings.stripe_secret_key and settings.tax_problem:
+    if not settings.checkout_switch:
+        log.info("Checkout switched off (STOREFRONT_CHECKOUT=0): catalog only.")
+    elif settings.stripe_secret_key and settings.tax_problem:
         log.warning("Checkout off: %s", settings.tax_problem)
     elif settings.stripe_secret_key and not settings.checkout_enabled:
         log.warning("Live Stripe key refused: set STOREFRONT_ALLOW_LIVE=1 to take real payments.")

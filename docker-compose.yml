@@ -35,7 +35,10 @@ services:
       # Local address until launch; robots stay blocked until STOREFRONT_ALLOW_INDEXING=1.
       STOREFRONT_BASE_URL: ${STOREFRONT_BASE_URL:-http://localhost:8010}
       STOREFRONT_ALLOW_INDEXING: ${STOREFRONT_ALLOW_INDEXING:-0}
-      # Checkout (Phase 2). Values come from .env; with no STRIPE_SECRET_KEY checkout stays off.
+      # Checkout (Phase 2). Off unless STOREFRONT_CHECKOUT=1: the public site runs catalog-only
+      # until live payments are set up, so test-mode checkout is never reachable from outside.
+      STOREFRONT_CHECKOUT: ${STOREFRONT_CHECKOUT:-0}
+      # Values come from .env; with no STRIPE_SECRET_KEY checkout stays off as well.
       # Test keys only (sk_test_...) unless STOREFRONT_ALLOW_LIVE=1, which is the owner's call.
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}

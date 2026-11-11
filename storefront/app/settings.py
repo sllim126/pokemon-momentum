@@ -51,6 +51,10 @@ class Settings:
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
     allow_live: bool = False
+    # Master switch (STOREFRONT_CHECKOUT). Off = catalog only: no cart, product pages send
+    # buyers to the TCGplayer store, even with Stripe keys in .env. The public site launched
+    # catalog-only (owner, 2026-11-11); turn it on when Stripe is activated for live payments.
+    checkout_switch: bool = True
     ship_rates_cents: dict = field(default_factory=lambda: dict(DEFAULT_SHIP_RATES))
     free_shipping_over_cents: int = 15000      # owner, 2026-11-05: free over $150
     # Ask the card's bank for 3-D Secure at or above this order total (plan "Checkout").
@@ -88,7 +92,7 @@ class Settings:
 
     @property
     def checkout_enabled(self) -> bool:
-        if not self.stripe_secret_key or self.tax_problem:
+        if not self.checkout_switch or not self.stripe_secret_key or self.tax_problem:
             return False
         return self.stripe_mode == "test" or self.allow_live
 
@@ -120,6 +124,7 @@ def load_settings() -> Settings:
         stripe_secret_key=os.getenv("STRIPE_SECRET_KEY", "").strip(),
         stripe_webhook_secret=os.getenv("STRIPE_WEBHOOK_SECRET", "").strip(),
         allow_live=_bool(os.getenv("STOREFRONT_ALLOW_LIVE"), False),
+        checkout_switch=_bool(os.getenv("STOREFRONT_CHECKOUT"), True),
         ship_rates_cents={name: _int(f"STOREFRONT_SHIP_{name.upper().replace('-', '_')}_CENTS", cents)
                           for name, cents in DEFAULT_SHIP_RATES.items()},
         free_shipping_over_cents=_int("STOREFRONT_FREE_SHIPPING_OVER_CENTS", 15000),
