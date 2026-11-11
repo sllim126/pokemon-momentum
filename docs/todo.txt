@@ -904,6 +904,19 @@ Future Ideas
   tracking (see the master set guide idea below); where its prices come from and how it
   explains trends. Note what's worth borrowing, and send the maker honest feedback.
 
+- [idea] One Poke6s account for the whole site (owner, 2026-11-11): the store on poke6s.com and
+  the market site on market.poke6s.com share one sign-in, so a customer keeps their cart, saved
+  lists, targets and order history across devices and both sites. The market site already has
+  Google sign-in (`/account-settings`: synced lists, saved views, account deletion); the store
+  has none (guest checkout, cart in the browser; docs/storefront_plan.md lists accounts as "Not
+  planned", so this reverses that if agreed). To decide: one shared account service vs the
+  store trusting the market site's sign-in (a cookie on .poke6s.com, or a sign-in hand-off);
+  sign-in methods (Google only, or an email link too); keep guest checkout either way. When
+  built, update the store's Privacy page in the same change: a necessary sign-in cookie (so
+  "no tracking cookies" needs a line), what an account keeps (email, saved cart, addresses,
+  orders, lists), how to delete it and what stays for tax records, and Google as a sign-in
+  provider. The market site's own privacy wording needs the same review.
+
 Learn and collector tools (owner, 2026-10-23; "nothing tonight"):
 
 - [idea] Learn as its own landing page: "How to use this site" plus the detail on every
