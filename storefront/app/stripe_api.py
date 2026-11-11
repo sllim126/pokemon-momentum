@@ -90,7 +90,10 @@ def verify_webhook(payload: bytes, signature_header: str, secret: str,
     except (KeyError, ValueError):
         raise ValueError("bad signature header") from None
     expected = hmac.new(secret.encode(), f"{timestamp}.".encode() + payload, hashlib.sha256).hexdigest()
-    if not any(hmac.compare_digest(expected, sig) for sig in parts.get("v1", [])):
+    # Compared as bytes: compare_digest raises TypeError on non-ASCII text, which would be a 500
+    # instead of the ValueError the webhook handler answers with 400.
+    if not any(hmac.compare_digest(expected.encode(), sig.encode("utf-8", "replace"))
+               for sig in parts.get("v1", [])):
         raise ValueError("signature mismatch")
     if abs((now or time.time()) - timestamp) > tolerance:
         raise ValueError("timestamp outside tolerance")
