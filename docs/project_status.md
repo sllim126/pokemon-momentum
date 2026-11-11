@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-11-09
+Last reviewed: 2026-11-11
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -10,6 +10,10 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
 ## Current state
 
 - Production entry point: `https://market.poke6s.com/`
+- Store: `https://poke6s.com/` is our own storefront, self-hosted on this server since
+  2026-11-11 (Cloudflare DNS and Tunnel, free plan; catalog only, checkout off until Stripe
+  goes live). Squarespace's website plan ends 2026-11-14. Hosting and recovery steps:
+  runbook "poke6s.com hosting"
 - Primary branch: `main`
 - Market data: daily English and Japanese TCGCSV-backed updates, fetched per set. TCGCSV's
   daily archive was offline 2026-09-16 to 2026-10-31; it returned on 2026-11-01 and the
@@ -24,12 +28,15 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
 - Graded data: nightly PriceCharting snapshot, kept as our own history
 - Monitoring: Grafana on this host (http://192.168.1.240:3000, since 2026-11-05) shows the
   website, jobs, data downloads, server, containers, todo list and bug reports; Prometheus
-  collects it. Also the Proxmox cluster, the UniFi network, and visitors per day for each site
-  (counted by the apps themselves, no cookies). The Proxmox, network and server dashboards
-  sit in a separate "Home lab" folder, which also covers the backup server (and its backups,
-  once its API token is saved), the OpenMediaVault storage server and its ZFS pool, Plex
-  (streams and libraries), a Synology NAS (SNMP) and the Valheim servers on Slowheim (read from
-  that machine's own Prometheus and Loki). Runbook section "Monitoring"; files in
+  collects it. Also the Proxmox cluster, the UniFi network, visitors per day for each site
+  (counted by the apps themselves, no cookies), and a Store dashboard for the new storefront's
+  orders, sales and stock (live orders only by default), with poke6s.com's Google search numbers
+  from Search Console (clicks, searches, pages indexed). The Proxmox, network and server
+  dashboards sit in a separate "Home lab" folder, which also covers the backup server and its
+  backups, the OpenMediaVault storage server and its ZFS pool (scrubs and disk errors), SMART
+  disk health, internet uptime (this server's own probes), Plex (streams and libraries), a
+  Synology NAS (SNMP) and the Valheim servers on Slowheim (read from that machine's own
+  Prometheus and Loki). Runbook section "Monitoring"; files in
   `deploy/monitoring/`, `scripts/monitoring/`
 - Alerts: nightly update, Squarespace price sync, the other-games archive, the archive
   backfill and the catalogue crawl post summaries to Discord
@@ -39,10 +46,11 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
 - Frontend: static HTML/CSS/JavaScript pages served by FastAPI; a new single-page desktop
   app (`/` on desktop, `docs/desktop_app.md`) covers Buy, Discover, Research, Track and Learn
 - Accounts: Google-backed lightweight tracking accounts with saved tags and views
-- Commerce: Squarespace storefront linking, price synchronization, listing intake, and supplier-profitability workflows
-  (the Squarespace plan ends 2026-11-14; our own store replaces it: `docs/storefront_plan.md`)
-- Own storefront (poke6s.com, in progress): separate `storefront` container on port 8010, LAN
-  only until launch. Phase 1 (catalog, browse, SEO, redirects) runs locally since 2026-10-31.
+- Commerce: listing intake and supplier-profitability workflows. The Squarespace storefront
+  linking and price sync retire with the Squarespace plan on 2026-11-14 (todo "2026-11-14")
+- Own storefront (poke6s.com, live catalog-only since 2026-11-11): separate `storefront`
+  container on port 8010, published through the Cloudflare Tunnel (container `cloudflared`),
+  code from its own clone `~/poke6s-store`. Phase 1 (catalog, browse, SEO, redirects) since 2026-10-31.
   Phase 2 (cart and Stripe Checkout, test mode; orders in `store.db`) merged 2026-11-05; checkout
   stays off without `STRIPE_SECRET_KEY` and refuses live keys unless `STOREFRONT_ALLOW_LIVE=1`.
   Articles (the old Squarespace blog) at `/articles`. Guide: `storefront/README.md`

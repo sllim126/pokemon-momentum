@@ -1581,7 +1581,7 @@
     {
       "type": "stat",
       "title": "Stalest backup",
-      "description": "Age of the oldest 'newest backup' over all guests. Over a day means a guest missed its backup.",
+      "description": "Over the cluster's current guests (templates left out), the age of the oldest 'newest backup', any datastore. Over a day means a guest missed its backup, or isn't in a backup job (see Backups by guest).",
       "gridPos": {
         "x": 3,
         "y": 31,
@@ -1595,7 +1595,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "time() - min(momentum_pbs_group_last_backup_timestamp_seconds)",
+          "expr": "time() - min(max by (type, id) (momentum_pbs_group_last_backup_timestamp_seconds) and on (type, id) max by (type, id, name) (label_replace(label_replace(label_replace(pve_guest_info{template!=\"1\"}, \"id\", \"$2\", \"id\", \"(qemu|lxc)/(.*)\"), \"type\", \"vm\", \"type\", \"qemu\"), \"type\", \"ct\", \"type\", \"lxc\")))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -1864,7 +1864,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "count(label_replace(pve_guest_info{template!=\"1\"}, \"vmid\", \"$2\", \"id\", \"(qemu|lxc)/(.*)\") unless on (vmid) label_replace(momentum_pbs_group_last_backup_timestamp_seconds, \"vmid\", \"$1\", \"id\", \"(.*)\")) or vector(0)",
+          "expr": "count(max by (type, id, name) (label_replace(label_replace(label_replace(pve_guest_info{template!=\"1\"}, \"id\", \"$2\", \"id\", \"(qemu|lxc)/(.*)\"), \"type\", \"vm\", \"type\", \"qemu\"), \"type\", \"ct\", \"type\", \"lxc\")) unless on (type, id) momentum_pbs_group_last_backup_timestamp_seconds) or vector(0)",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -2294,7 +2294,7 @@
     {
       "type": "table",
       "title": "Backups by guest",
-      "description": "One row per backup group on PBS. Guest is the backup's note (normally the guest's name).",
+      "description": "One row per backup group on PBS. Guest is the name in Proxmox; a blank Guest is a backup of a guest that no longer exists (or whose VMID now belongs to a guest of the other type). Old groups in a datastore no longer backed up to stay until pruned by hand.",
       "gridPos": {
         "x": 0,
         "y": 39,
@@ -2308,7 +2308,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "max by (store, type, id, guest) (time() - momentum_pbs_group_last_backup_timestamp_seconds)",
+          "expr": "max by (store, type, id, guest, name) ((time() - momentum_pbs_group_last_backup_timestamp_seconds) * on (type, id) group_left (name) max by (type, id, name) (label_replace(label_replace(label_replace(pve_guest_info, \"id\", \"$2\", \"id\", \"(qemu|lxc)/(.*)\"), \"type\", \"vm\", \"type\", \"qemu\"), \"type\", \"ct\", \"type\", \"lxc\")) or ((time() - momentum_pbs_group_last_backup_timestamp_seconds) unless on (type, id) max by (type, id, name) (label_replace(label_replace(label_replace(pve_guest_info, \"id\", \"$2\", \"id\", \"(qemu|lxc)/(.*)\"), \"type\", \"vm\", \"type\", \"qemu\"), \"type\", \"ct\", \"type\", \"lxc\"))))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -2320,7 +2320,7 @@
         },
         {
           "refId": "B",
-          "expr": "max by (store, type, id, guest) (momentum_pbs_group_snapshots)",
+          "expr": "max by (store, type, id, guest, name) ((momentum_pbs_group_snapshots) * on (type, id) group_left (name) max by (type, id, name) (label_replace(label_replace(label_replace(pve_guest_info, \"id\", \"$2\", \"id\", \"(qemu|lxc)/(.*)\"), \"type\", \"vm\", \"type\", \"qemu\"), \"type\", \"ct\", \"type\", \"lxc\")) or ((momentum_pbs_group_snapshots) unless on (type, id) max by (type, id, name) (label_replace(label_replace(label_replace(pve_guest_info, \"id\", \"$2\", \"id\", \"(qemu|lxc)/(.*)\"), \"type\", \"vm\", \"type\", \"qemu\"), \"type\", \"ct\", \"type\", \"lxc\"))))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -2332,7 +2332,7 @@
         },
         {
           "refId": "C",
-          "expr": "max by (store, type, id, guest) (momentum_pbs_group_last_verify)",
+          "expr": "max by (store, type, id, guest, name) ((momentum_pbs_group_last_verify) * on (type, id) group_left (name) max by (type, id, name) (label_replace(label_replace(label_replace(pve_guest_info, \"id\", \"$2\", \"id\", \"(qemu|lxc)/(.*)\"), \"type\", \"vm\", \"type\", \"qemu\"), \"type\", \"ct\", \"type\", \"lxc\")) or ((momentum_pbs_group_last_verify) unless on (type, id) max by (type, id, name) (label_replace(label_replace(label_replace(pve_guest_info, \"id\", \"$2\", \"id\", \"(qemu|lxc)/(.*)\"), \"type\", \"vm\", \"type\", \"qemu\"), \"type\", \"ct\", \"type\", \"lxc\"))))",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -2352,7 +2352,8 @@
           "id": "organize",
           "options": {
             "renameByName": {
-              "guest": "Guest",
+              "name": "Guest",
+              "guest": "Backup note",
               "type": "Type",
               "id": "ID",
               "store": "Datastore",
@@ -2361,13 +2362,14 @@
               "Value #C": "Newest verified"
             },
             "indexByName": {
-              "guest": 0,
-              "type": 1,
-              "id": 2,
-              "store": 3,
-              "Value #A": 4,
-              "Value #B": 5,
-              "Value #C": 6
+              "name": 0,
+              "guest": 1,
+              "type": 2,
+              "id": 3,
+              "store": 4,
+              "Value #A": 5,
+              "Value #B": 6,
+              "Value #C": 7
             },
             "excludeByName": {
               "Time": true,
@@ -2377,6 +2379,7 @@
               "runner": true
             },
             "includeByName": {
+              "name": true,
               "guest": true,
               "type": true,
               "id": true,

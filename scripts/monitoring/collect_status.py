@@ -28,6 +28,14 @@ What it reports (all metric names start with ``momentum_``):
   newest backup, snapshot count and verify result, and the outcome of backup, verify, prune
   and garbage-collection tasks. Needs a read-only (Audit) API token in PBS_TOKEN_FILE; TLS is
   verified against PBS's own certificate (PBS_CERT_FILE). Without the token, nothing.
+* Storefront (since 2026-11-09): orders by mode and status, sales, orders and items per
+  local day for 30 days, orders waiting to ship, products and stock, and the visible products
+  that are nearly sold out, read-only from data/storefront/store.db. Counts and sums only; no
+  customer details.
+* Google Search Console (since 2026-11-11): poke6s.com's clicks, impressions and position per
+  day, top searches and pages, sitemap status and which sitemap pages Google has indexed. The
+  API work and its cache live in search_console.py (see its docstring); without the key file
+  in secrets/, nothing.
 
 Every section is fenced off with its own try/except: one failing check (say, a locked
 database) is reported as ``momentum_collector_errors{section=...}`` and the rest still
@@ -50,6 +58,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from run_job import JOB_HELP  # noqa: E402  (same help text in both scripts; see run_job.py)
+import search_console  # noqa: E402
 TEXTFILE_DIR = Path(os.environ.get("MOMENTUM_TEXTFILE_DIR", "/var/lib/prometheus/node-exporter"))
 OUTPUT = TEXTFILE_DIR / "momentum_status.prom"
 # Remembers when each systemd job last succeeded, because systemd only keeps the latest run.
@@ -338,6 +347,105 @@ def plex(m: Metrics) -> None:
     m.add("momentum_plex_up", 1, "1 when collect_status.py could read the Plex API")
 
 
+STORE_DB = Path(os.environ.get("MOMENTUM_STORE_DB", str(ROOT / "data" / "storefront" / "store.db")))
+STORE_TZ = "America/Denver"  # the shop's business day, for "today" and the daily sales bars
+STORE_DAYS = 30
+STORE_LOW_STOCK = 2  # a visible, stock-tracked product with this many or fewer left is "low"
+# Orders that brought money in. Pending, expired and cancelled checkouts never did; refunds
+# are subtracted through refunded_cents.
+STORE_SOLD = ("paid", "shipped", "partially_refunded", "refunded", "disputed")
+
+
+def storefront(m: Metrics, now: float | None = None) -> None:
+    """Orders, sales and stock from the new storefront's database (the "Store" dashboard).
+
+    Read-only: the database is opened with mode=ro, so the collector can never change an order.
+    Every order metric carries mode (test or live); the dashboard shows live only, so the
+    test orders made while building the shop never count as sales. Money is in dollars, net
+    of refunds; days are the shop's local days (STORE_TZ). No customer names, emails or
+    addresses ever leave the database: only counts, sums, and product SKUs and titles.
+    """
+    from zoneinfo import ZoneInfo
+
+    if not STORE_DB.exists():
+        return
+    now = now or time.time()
+    tz = ZoneInfo(STORE_TZ)
+    today = datetime.fromtimestamp(now, tz).date()
+    con = sqlite3.connect(f"file:{STORE_DB}?mode=ro", uri=True, timeout=10)
+    try:
+        for mode, status, count in con.execute("SELECT mode, status, COUNT(*) FROM orders GROUP BY 1, 2"):
+            m.add("momentum_store_orders", count, "Storefront orders by mode (test or live) and status",
+                  mode=mode, status=status)
+
+        # Sales per local day, from when each order was paid. Every day of the window is
+        # written (0 when nothing sold) so the bar chart has no gaps.
+        sold = ",".join("?" * len(STORE_SOLD))
+        rows = con.execute(
+            f"SELECT o.mode, o.paid_at, o.total_cents - o.refunded_cents, "
+            f"(SELECT COALESCE(SUM(quantity), 0) FROM order_items WHERE order_id = o.id) "
+            f"FROM orders o WHERE o.status IN ({sold}) AND o.paid_at IS NOT NULL", STORE_SOLD).fetchall()
+        days = [(today.toordinal() - i) for i in range(STORE_DAYS)]
+        totals = {(mode, d): [0, 0, 0] for mode in ("live", "test") for d in days}  # cents, orders, units
+        for mode, paid_at, cents, units in rows:
+            day = datetime.fromtimestamp(_iso(paid_at), tz).date().toordinal()
+            if (mode, day) in totals:
+                t = totals[(mode, day)]
+                t[0] += cents
+                t[1] += 1
+                t[2] += units
+        for (mode, day), (cents, orders, units) in totals.items():
+            label = datetime.fromordinal(day).strftime("%Y-%m-%d")
+            m.add("momentum_store_daily_sales_dollars", cents / 100,
+                  "Storefront sales per local day, net of refunds", mode=mode, day=label)
+            m.add("momentum_store_daily_orders", orders, "Storefront paid orders per local day", mode=mode, day=label)
+            m.add("momentum_store_daily_units", units, "Items sold per local day", mode=mode, day=label)
+        # The same totals over today, the last 7 and the last 30 local days (today included),
+        # because PromQL can't tell which day label is "today".
+        for mode in ("live", "test"):
+            for window, n in (("today", 1), ("7d", 7), ("30d", 30)):
+                cents, orders, units = (sum(totals[(mode, d)][i] for d in days[:n]) for i in range(3))
+                m.add("momentum_store_sales_dollars", cents / 100, "Storefront sales net of refunds, by window",
+                      mode=mode, window=window)
+                m.add("momentum_store_paid_orders", orders, "Storefront paid orders, by window",
+                      mode=mode, window=window)
+                m.add("momentum_store_units_sold", units, "Items sold, by window", mode=mode, window=window)
+
+        # Orders waiting to ship, and how long the oldest has waited since payment.
+        for mode in ("live", "test"):
+            waiting = con.execute("SELECT COUNT(*), MIN(paid_at) FROM orders WHERE mode = ? AND status = 'paid'",
+                                  (mode,)).fetchone()
+            m.add("momentum_store_orders_to_ship", waiting[0], "Paid orders not yet shipped", mode=mode)
+            if waiting[1]:
+                m.add("momentum_store_oldest_unshipped_seconds", now - _iso(waiting[1]),
+                      "Time since the oldest paid-but-unshipped order was paid", mode=mode)
+
+        # Catalog and stock. Untracked products (made to order, supplier-backed) have no count.
+        for kind, visible, tracked, count, in_stock, units, value in con.execute(
+                "SELECT kind, visible, track_stock, COUNT(*), SUM(stock > 0), SUM(stock), "
+                "SUM(stock * price_cents) FROM products GROUP BY 1, 2, 3"):
+            state = "visible" if visible else "hidden"
+            stock = "tracked" if tracked else "untracked"
+            m.add("momentum_store_products", count, "Products by kind, visible or hidden, stock tracked or not",
+                  kind=kind, state=state, stock=stock)
+            if tracked:
+                m.add("momentum_store_products_in_stock", in_stock or 0,
+                      "Stock-tracked products with at least one in stock", kind=kind, state=state)
+                m.add("momentum_store_stock_units", units or 0, "Units in stock (tracked products)",
+                      kind=kind, state=state)
+                m.add("momentum_store_stock_value_dollars", (value or 0) / 100,
+                      "Units in stock times their shop price (tracked products)", kind=kind, state=state)
+        # The products about to sell out (or sold out) that customers can see, one series each.
+        for sku, title, stock in con.execute(
+                "SELECT sku, title, stock FROM products WHERE visible = 1 AND track_stock = 1 AND stock <= ? "
+                "ORDER BY stock, title LIMIT 50", (STORE_LOW_STOCK,)):
+            m.add("momentum_store_low_stock", stock, f"Visible products with {STORE_LOW_STOCK} or fewer in stock",
+                  sku=sku, title=title)
+    finally:
+        con.close()
+    m.add("momentum_store_up", 1, "1 when collect_status.py could read the storefront database")
+
+
 def _pbs_get(path: str, token: str) -> list | dict:
     """GET /api2/json<path> from PBS and return its "data". Connects to PBS_HOST but checks
     the certificate (pinned file, hostname PBS_CERT_NAME) as normal TLS would."""
@@ -434,6 +542,9 @@ def main() -> int:
         "reminders": lambda: reminders(m),
         "plex": lambda: plex(m),
         "pbs": lambda: pbs(m),
+        "storefront": lambda: storefront(m),
+        # Last: on some runs it waits on Google's API (up to ~15 s); see search_console.py.
+        "search_console": lambda: search_console.collect(m),
     }
     errors = {}
     for name, section in sections.items():

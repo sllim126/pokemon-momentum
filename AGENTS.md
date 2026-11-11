@@ -57,6 +57,14 @@ coding agent. Read this first, then `docs/todo.txt`.
   background; older decisions there may have been reversed since, and the docs win) and
   `docs/private/` (the owner's store rules and business ideas). Both are git-ignored. Read them
   when useful, but never copy their business details into committed files.
+- **Reviewing past chats.** Grafana's home page lists Claude Code and Codex chats nobody has
+  reviewed yet. When the owner asks for a review: list them with
+  `python3 /home/adam/Downloads/ISI-Knowledge/scripts/monitoring/today/today_feed.py chats --domain pokemon`
+  (each line gives the chat's file), read each one, and put its decisions and open items where they
+  belong: website work in `docs/todo.txt`, Poke6s business in `/home/adam/poke6s-books/Records/TODO.md`.
+  Then mark it: `... today_feed.py mark <id> reviewed --by <your tool> --note "what moved where"`
+  (or `skipped` when there was nothing to keep). The marks go in
+  `docs/chat_history/review_ledger.tsv` (git-ignored). Details: that script's folder, `README.md`.
 - **Documentation is part of the job.** A human must be able to review the code: comment
   the non-obvious parts and update the docs a change affects, in the same commit.
 

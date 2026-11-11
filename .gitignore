@@ -264,3 +264,6 @@ docs/private/
 
 # Database backups made before maintenance (e.g. compact_duckdb.py); never commit.
 data/backups/
+
+# Service-account keys and other credential files (e.g. Search Console read access). Never committed.
+secrets/

@@ -1,7 +1,10 @@
 """Host-side monitoring scripts (scripts/monitoring/, deploy/monitoring/zfs/): todo counts,
-job status files, Plex, PBS and ZFS pool parsing."""
+job status files, Plex, PBS, the storefront, Search Console and ZFS pool parsing."""
 
 import importlib.util
+import json
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -27,6 +30,7 @@ def _load_from(folder, name):
 
 collect_status = _load("collect_status")
 run_job = _load("run_job")
+search_console = _load("search_console")
 
 
 class TodoCountTests(unittest.TestCase):
@@ -180,6 +184,173 @@ class ZfsStatusTests(unittest.TestCase):
         self.assertEqual(status["in_progress"], "scrub")
         self.assertIsNone(status["scrub_end"])
         self.assertEqual(status["data_errors"], 0)
+
+
+class StorefrontTests(unittest.TestCase):
+    """The storefront section against a scratch database built from the store's own migrations."""
+
+    NOW = 1_800_000_000  # 2027-01-15 08:00 UTC = 01:00 in Denver, so "today" there is the 15th
+
+    def _db(self, tmp):
+        import sqlite3
+
+        path = Path(tmp) / "store.db"
+        con = sqlite3.connect(path)
+        migrations = Path(__file__).resolve().parents[1] / "storefront" / "app" / "migrations"
+        for sql in sorted(migrations.glob("*.sql")):
+            con.executescript(sql.read_text())
+        t = "2027-01-01T00:00:00Z"
+        products = [  # sku, kind, visible, track_stock, stock, price_cents
+            ("BOX", "sealed", 1, 1, 0, 10000), ("ETB", "sealed", 1, 1, 2, 5000),
+            ("TIN", "sealed", 1, 1, 9, 2000), ("HIDDEN", "sealed", 0, 1, 4, 1000),
+            ("SLEEVES", "accessory", 1, 0, 0, 500)]
+        for i, (sku, kind, visible, tracked, stock, price) in enumerate(products, 1):
+            con.execute("INSERT INTO products (id, sku, slug, title, kind, visible, track_stock, stock, price_cents, "
+                        "created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (i, sku, sku.lower(), f"{sku} title", kind, visible, tracked, stock, price, t, t))
+        orders = [  # number, mode, status, total, refunded, paid_at
+            ("L1", "live", "shipped", 12000, 0, "2027-01-15T07:30:00Z"),            # 00:30 Denver, the 15th
+            ("L2", "live", "paid", 5000, 0, "2027-01-15T06:30:00Z"),                # 23:30 Denver, the 14th
+            ("L3", "live", "partially_refunded", 8000, 3000, "2026-12-30T12:00:00Z"),  # 16 days back
+            ("L4", "live", "expired", 9000, 0, None),
+            ("T1", "test", "shipped", 99900, 0, "2027-01-15T07:00:00Z")]
+        for i, (number, mode, status, total, refunded, paid_at) in enumerate(orders, 1):
+            con.execute("INSERT INTO orders (id, number, access_token, status, mode, ship_class, total_cents, "
+                        "refunded_cents, created_at, paid_at) VALUES (?, ?, 'k', ?, ?, 'single', ?, ?, ?, ?)",
+                        (i, number, status, mode, total, refunded, "2027-01-01T00:00:00Z", paid_at))
+            con.execute("INSERT INTO order_items (order_id, sku, title, unit_price_cents, quantity) "
+                        "VALUES (?, 'X', 'x', 100, 2)", (i,))
+        con.commit()
+        con.close()
+        return path
+
+    def _run(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            collect_status.STORE_DB = self._db(tmp)
+            m = collect_status.Metrics()
+            collect_status.storefront(m, now=self.NOW)
+        return [line for line in m.lines if not line.startswith("#")]
+
+    def test_sales_use_local_days_net_of_refunds_and_keep_test_orders_apart(self):
+        lines = self._run()
+        self.assertIn('momentum_store_sales_dollars{mode="live",window="today"} 120.0', lines)
+        self.assertIn('momentum_store_daily_sales_dollars{mode="live",day="2027-01-14"} 50.0', lines)
+        self.assertIn('momentum_store_sales_dollars{mode="live",window="7d"} 170.0', lines)
+        self.assertIn('momentum_store_sales_dollars{mode="live",window="30d"} 220.0', lines)  # 120 + 50 + (80 - 30 refunded)
+        self.assertIn('momentum_store_paid_orders{mode="live",window="30d"} 3.0', lines)  # expired never counts
+        self.assertIn('momentum_store_units_sold{mode="live",window="30d"} 6.0', lines)
+        self.assertIn('momentum_store_sales_dollars{mode="test",window="today"} 999.0', lines)
+        self.assertIn('momentum_store_orders_to_ship{mode="live"} 1.0', lines)
+        self.assertIn('momentum_store_oldest_unshipped_seconds{mode="live"} 5400.0', lines)
+        self.assertIn('momentum_store_orders{mode="live",status="expired"} 1.0', lines)
+
+    def test_stock_counts_and_low_stock_list_only_visible_tracked_products(self):
+        lines = self._run()
+        self.assertIn('momentum_store_products_in_stock{kind="sealed",state="visible"} 2.0', lines)
+        self.assertIn('momentum_store_stock_units{kind="sealed",state="visible"} 11.0', lines)
+        self.assertIn('momentum_store_stock_value_dollars{kind="sealed",state="visible"} 280.0', lines)
+        self.assertIn('momentum_store_products{kind="accessory",state="visible",stock="untracked"} 1.0', lines)
+        low = [line for line in lines if line.startswith("momentum_store_low_stock")]
+        self.assertEqual(low, ['momentum_store_low_stock{sku="BOX",title="BOX title"} 0.0',
+                               'momentum_store_low_stock{sku="ETB",title="ETB title"} 2.0'])
+
+    def test_no_customer_details_in_the_metrics(self):
+        text = "\n".join(self._run())
+        for field in ("email", "name=", "shipping", "access_token"):
+            self.assertNotIn(field, text)
+
+
+class SearchConsoleTests(unittest.TestCase):
+    """search_console.py: signing, what each run asks Google for, and the metrics. No real API."""
+
+    NOW = 1794355200.0  # 2026-11-11 00:00 UTC
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        key = Path(self.tmp.name) / "key.json"
+        key.write_text(json.dumps({"client_email": "x@example.iam.gserviceaccount.com",
+                                   "token_uri": "https://oauth2.example/token", "private_key": "unused"}))
+        self.saved = {n: getattr(search_console, n) for n in ("KEY_FILE", "fetch_summary", "inspect")}
+        self.addCleanup(lambda: [setattr(search_console, n, v) for n, v in self.saved.items()])
+        search_console.KEY_FILE = key
+        self.calls = []
+
+        def fetch_summary(client, today):
+            self.calls.append(("summary", today.isoformat()))
+            return {"start": "2026-11-01", "end": "2026-11-11",
+                    "daily": {"2026-11-02": {"clicks": 1, "impressions": 10, "position": 4.0},
+                              "2026-11-08": {"clicks": 3, "impressions": 30, "position": 8.0}},
+                    "queries": [{"key": 'a "quoted" search', "clicks": 1, "impressions": 5, "position": 2.0}],
+                    "pages": [{"key": "/", "clicks": 4, "impressions": 40, "position": 7.0}],
+                    "devices": [], "sitemaps": [{"path": "https://poke6s.com/sitemap.xml",
+                                                 "last_read": "2026-11-10T02:24:48.823Z", "pending": False,
+                                                 "errors": 0, "warnings": 0, "submitted": 3}]}
+
+        def inspect(client, path):
+            self.calls.append(("inspect", path))
+            if path == "/broken":
+                raise search_console.SearchConsoleError("HTTP 500")
+            return {"verdict": "PASS" if path == "/" else "NEUTRAL",
+                    "coverage": "Submitted and indexed" if path == "/" else "URL is unknown to Google",
+                    "last_crawl": "2026-11-03T00:18:56Z" if path == "/" else None}
+
+        search_console.fetch_summary = fetch_summary
+        search_console.inspect = inspect
+
+    def _update(self, cache, now, pages=("/", "/shop", "/about")):
+        return search_console.update(cache, now, token_for=lambda key: "token", sitemap=lambda: list(pages))
+
+    @unittest.skipUnless(shutil.which("openssl"), "needs the openssl command")
+    def test_jwt_signature_verifies_with_the_public_key(self):
+        folder = Path(self.tmp.name)
+        pem = subprocess.run(["openssl", "genrsa", "2048"], capture_output=True, text=True, check=True).stdout
+        (folder / "pub.pem").write_text(subprocess.run(["openssl", "rsa", "-pubout"], input=pem, capture_output=True,
+                                                       text=True, check=True).stdout)
+        (folder / "sig").write_bytes(search_console._sign_rs256(b"header.claims", pem))
+        result = subprocess.run(["openssl", "dgst", "-sha256", "-verify", str(folder / "pub.pem"), "-signature",
+                                 str(folder / "sig")], input=b"header.claims", capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_summary_every_six_hours_and_two_inspections_per_run(self):
+        cache = self._update({}, self.NOW)
+        self.assertEqual([c[0] for c in self.calls], ["summary", "inspect", "inspect"])
+        self.assertEqual(set(cache["pages"]), {"/", "/shop", "/about"})
+        self.calls.clear()
+        self._update(cache, self.NOW + 60)  # summary still fresh; the third page's turn
+        self.assertEqual([c[0] for c in self.calls], ["inspect"])
+        self.calls.clear()
+        self._update(cache, self.NOW + 120)  # everything checked within the day: no calls
+        self.assertEqual(self.calls, [])
+        self._update(cache, self.NOW + search_console.REFRESH_SECONDS, pages=("/", "/new"))
+        self.assertEqual(set(cache["pages"]), {"/", "/new"})  # follows the sitemap
+        self.assertIn(("inspect", "/new"), self.calls)
+
+    def test_a_failure_waits_an_hour_before_trying_again(self):
+        cache = {}
+        with self.assertRaises(search_console.SearchConsoleError):
+            self._update(cache, self.NOW, pages=("/broken",))
+        self.assertIn("HTTP 500", cache["error"])
+        self.calls.clear()
+        self._update(cache, self.NOW + 600, pages=("/broken",))
+        self.assertEqual(self.calls, [])
+        search_console.inspect = lambda client, path: {"verdict": "PASS", "coverage": "ok", "last_crawl": None}
+        self._update(cache, self.NOW + search_console.RETRY_SECONDS, pages=("/broken",))
+        self.assertNotIn("error", cache)
+
+    def test_metrics_fill_missing_days_and_weight_position(self):
+        cache = self._update({}, self.NOW)
+        self._update(cache, self.NOW + 60)
+        m = collect_status.Metrics()
+        search_console.metrics(m, cache, self.NOW + 60)
+        text = m.text()
+        self.assertIn('momentum_search_daily_impressions{day="2026-11-05"} 0', text)  # gap filled
+        self.assertNotIn('day="2026-11-09"', text)  # after Google's newest day: no false zero
+        self.assertIn('momentum_search_impressions{window="28d"} 40', text)
+        self.assertIn('momentum_search_position{window="28d"} 7.0', text)  # (4*10 + 8*30) / 40
+        self.assertIn('momentum_search_top_query_clicks{query="a \\"quoted\\" search"} 1', text)
+        self.assertIn("momentum_search_pages_indexed 1", text)
+        self.assertIn('momentum_search_page_indexed{path="/shop",coverage="URL is unknown to Google"} 0', text)
 
 
 class RunJobTests(unittest.TestCase):
