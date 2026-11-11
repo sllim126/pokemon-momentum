@@ -258,10 +258,12 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
                         media_type="application/xml")
 
     @app.get("/media/{width}/{name}.webp")
-    def media(width: int, name: str):
-        if width not in images.SIZES or not MEDIA_NAME.match(name):
+    def media(width: str, name: str):
+        # width is read as text so a non-number is a 404 page, not FastAPI's 422 JSON.
+        if not (width.isascii() and width.isdigit()) or int(width) not in images.SIZES \
+                or not MEDIA_NAME.match(name):
             raise HTTPException(404)
-        path = settings.images_dir / str(width) / f"{name}.webp"
+        path = settings.images_dir / width / f"{name}.webp"
         if not path.is_file():
             raise HTTPException(404)
         # File names carry a content hash (images.py), so they can be cached for a year.
@@ -392,7 +394,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
             # rather than after the 30-minute hold.
             with writer() as conn:
                 order = orders.get_order(conn, cancelled)
-                if order and order["status"] == "pending" and hmac.compare_digest(order["access_token"], k):
+                if order and order["status"] == "pending" and _token_matches(order["access_token"], k):
                     if stripe is not None and order["stripe_session_id"]:
                         try:
                             stripe.expire_session(order["stripe_session_id"])
@@ -500,7 +502,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     def order_status(request: Request, number: str, k: str = ""):
         with db() as conn:
             order = orders.get_order(conn, number)
-        if order is None or not k or not hmac.compare_digest(order["access_token"], k):
+        if order is None or not _token_matches(order["access_token"], k):
             raise HTTPException(404)
         return order_page(request, order, thanks=False)
 
@@ -543,8 +545,16 @@ def _long_date(value: str) -> str:
 
 
 def _page_number(request: Request) -> int:
+    # Plain ASCII digits only, at most 6: str.isdigit() also accepts "²", which int() refuses,
+    # and a 5,000-digit number is too long for int() (both were 500 errors).
     value = request.query_params.get("page", "1")
-    return int(value) if value.isdigit() else 1
+    return int(value) if value.isascii() and value.isdigit() and len(value) <= 6 else 1
+
+
+def _token_matches(expected: str, given: str) -> bool:
+    """Constant-time check of an order link's secret. Compared as bytes: compare_digest raises
+    TypeError on non-ASCII text, and the token comes from the address bar."""
+    return bool(given) and hmac.compare_digest(expected.encode(), given.encode("utf-8", "replace"))
 
 
 def query_for(filters: catalog.Filters, fixed: tuple[str, ...], **changes) -> str:
