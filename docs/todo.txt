@@ -48,7 +48,7 @@ Recently Completed
   pages show no stock counts and don't tell Google "InStock" (b69231f). New
   `storefront/tools/reprice.py` (101f5c9) prices at the store's rules (5% under market, .99) and
   never below break-even from a private costs file; products whose break-even is above market
-  are hidden. Applied: 21 prices changed, 5 products hidden, 25 shown (backup:
+  were hidden, then shown again at break-even (owner). Applied: 21 prices changed, all 30 shown (backup:
   data/storefront/store.before-reprice-2026-11-11.db). Abyss Eye linked to TCGplayer 695112 in
   the store and in data/squarespace_tcgplayer_mapping.csv (data file, not committed).
 - 2026-11-11 Store review item 2: the Privacy page named Cloudflare Web Analytics, which the site
@@ -236,15 +236,15 @@ Live now:
 - [done 2026-11-11] 1. Unsafe redirect fixed (see Recently Completed).
 - [done 2026-11-11] 2. Privacy page corrected (see Recently Completed).
 - [done 2026-11-11] 3. Catalog mode and repricing (see Recently Completed). Follow-ups:
-  - [planned] Run `storefront/tools/reprice.py --hide-above-market --apply` nightly after the
+  - [planned] Run `storefront/tools/reprice.py --apply` nightly (no --hide-above-market) after the
     03:00 market reference job, so prices follow the market (needs a crontab line; the costs
     file path is the owner's). Until then, run it by hand now and then.
   - [owner] Check three cost matches marked "check" in the private costs file (Destined Rivals
     pack and 4-pack art set, Poke Ball Tin H24), and add costs for anything newly listed;
     products without a cost are never repriced.
-  - [owner] Five products are hidden because break-even is above market (three booster boxes,
-    Greninja ex Premium Collection, Abyss Eye). The tool lists them when they could sell at or
-    under market again; show them with `--show SKU --apply`.
+  - Owner (2026-11-11): listing above market is fine as long as no sale loses money, so the five
+    products first hidden (three booster boxes, Greninja ex Premium Collection, Abyss Eye) are
+    shown again at break-even. Don't use --hide-above-market by default.
 - [owner] 4. Test orders lowered real stock on 4 products. Count the shelf and set stock from it.
 - [owner] 5. "Buy on TCGplayer" goes to the store's front page for every product. Decide where it
   should go, given sealed may not be listed there.
