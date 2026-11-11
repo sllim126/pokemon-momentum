@@ -90,7 +90,6 @@ JOBS = {
     "weekly-placeholder-refresh": ("systemd:pokemon-momentum-weekly-placeholder-refresh", 7 * DAY),
     "storefront-market-reference": ("cron", DAY),
     "placeholder-sync": ("cron", DAY),
-    "squarespace-price-sync": ("cron", DAY),
     "tcgcsv-catalogue": ("cron", DAY),
     "archive-backfill": ("cron", DAY),
     "discord-bug-import": ("cron", 15 * 60),

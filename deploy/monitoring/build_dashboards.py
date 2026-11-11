@@ -264,7 +264,7 @@ def overview():
               description="market.poke6s.com/health, checked every minute through the internet and Caddy.")),
         ("poke6s.com (public)", 'probe_success{instance="https://poke6s.com/"}',
          dict(mappings=UP_DOWN, thresholds=steps("red", (1, "green")),
-              description="The shop's public address (Squarespace until 2026-11-14).")),
+              description="The shop's public address (self-hosted through a Cloudflare Tunnel).")),
         ("New storefront (local)", 'probe_success{instance="http://localhost:8010/healthz"}',
          dict(mappings=UP_DOWN, thresholds=steps("red", (1, "green")),
               description="The new storefront container, checked on this host (not public yet).")),

@@ -210,6 +210,35 @@ runbook section "Monitoring".
   `squarespace-price-sync` from JOBS in scripts/monitoring/collect_status.py and the probe of
   https://poke6s.com/ changes meaning (it becomes the new store once launched).
 
+Store review 2026-11-11 (for the owner to go through tonight). Whole storefront, public and
+backend; market site not included. How to reproduce each one: docs/private/security_review_2026-11-11.md
+(git-ignored, because this repo is public). Same numbers in both.
+
+Live now:
+- [next] 1. Fix an unsafe redirect in the store's trailing-slash handling (storefront/app/main.py).
+- [owner] 2. Privacy page names an analytics tool the site doesn't use. Correct how visits are
+  counted, and say Cloudflare carries the traffic.
+- [owner] 3. Listed prices and stock are frozen at the Oct 31 import, while the same stock sells
+  elsewhere. Decide: update them, hide stock counts, or list only what is really for sale here.
+- [owner] 4. Test orders lowered real stock on 4 products. Count the shelf and set stock from it.
+- [owner] 5. "Buy on TCGplayer" goes to the store's front page for every product. Decide where it
+  should go, given sealed may not be listed there.
+- [next] 6. Handle odd input cleanly in the store (page numbers, order links, webhook signature)
+  instead of a 500 error; a bad image address should be a 404.
+- [next] 7. Tighten who can read credentials on the server, and give the market container only
+  the folders it needs. Owner: delete the spare tunnel token copy in poke6s-books.
+- [owner] 8. Cloudflare account: turn on two-factor login and save the recovery codes.
+
+Required before checkout goes live:
+- [planned] 9. Store database backup and a tested restore (Phase 3 work; do it first).
+- [planned] 10. Limit how much stock one visitor can hold at checkout.
+- [planned] 11. Treat the Stripe webhook as required: refunds and disputes depend on it.
+- [planned] 12. Order emails: alert when one fails, allow a resend, set up DKIM for the domain.
+- [planned] 13. Remove test orders and leftover test files.
+- [planned] 14. Pin the store's package versions and base image; keep test tools out of production.
+- [planned] 15. Phase 3 admin must run on its own app and port, never the port the tunnel serves.
+- [idea] 16. Smaller hardening: extra security headers, request size limits, database file mode.
+
 Own storefront on poke6s.com, replacing Squarespace (owner, 2026-10-31). Plan, costs, phases
 and open decisions: `docs/storefront_plan.md` (progress log at its end). What the Squarespace
 site has today: `docs/storefront_current_site.md`. Our own site, hosted on the owner's server
@@ -294,8 +323,6 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
 - [next] Phase 3: LAN-only admin (orders, ship with tracking, refunds, stock), exports (Pirate
   Ship, sales tax, bookkeeping, TCGplayer reconciliation), signature confirmation over ~$250,
   backups.
-- [owner] Cloudflare: turn on SSL/TLS > Edge Certificates > "Always Use HTTPS" (free).
-  http://poke6s.com/ answers 200 over plain http instead of redirecting (checked 2026-11-11).
 - [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
   too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
 - [planned] Switch checkout on: Stripe live activation, live keys in .env, STOREFRONT_CHECKOUT=1,
@@ -304,8 +331,9 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   pinned 2026-11-11; Cloudflare supports a connector version for one year).
 - [planned] Move market.poke6s.com onto the Cloudflare Tunnel too (route to
   http://pokemon-momentum:8001; check the Caddy/visitor-IP path), then close the router port.
-- [planned] After launch: retire `scripts/squarespace_price_sync.py` from cron
-  (`deploy/crontab.txt`) and switch the market site's "Poke6s" buy button to the new store.
+- [planned] Retire the Squarespace-only scripts when the tools in api.py go. The daily price sync
+  stopped 2026-11-11 (owner; removed from cron). Keep the market site's "Our store" button on
+  TCGplayer until checkout is on (owner, 2026-11-11), then point it at the store's product pages.
 
 New mobile app (owner, 2026-10-21). Plan: `docs/mobile_app_plan.md`. The phone site now uses
 `scripts/dashboards/mobile_app.html` at `/`, `/mobile` and `/m-next`, in the desktop app's look,
