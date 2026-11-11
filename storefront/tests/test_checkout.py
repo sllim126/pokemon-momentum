@@ -22,6 +22,7 @@ from fastapi.testclient import TestClient
 from storefront.app import orders
 from storefront.app.db import connect
 from storefront.app.main import create_app
+from storefront.app.settings import load_settings
 from storefront.app.stripe_api import StripeError, form_encode, sign_payload, verify_webhook
 
 WEBHOOK_SECRET = "whsec_test_secret"
@@ -421,6 +422,24 @@ def test_with_a_test_key_products_have_add_to_cart(app_client):
     page = app_client.get("/p/pokemon-booster-pack-japanese").text
     assert "Add to cart" in page and 'href="/cart"' in page
     assert app_client.get("/cart").status_code == 200
+
+
+def test_checkout_switch_off_means_catalog_only_even_with_keys(shop, fake):
+    # The public launch runs with STOREFRONT_CHECKOUT=0 while the test keys stay in .env.
+    off = dataclasses.replace(shop, checkout_switch=False)
+    assert not off.checkout_enabled
+    with TestClient(create_app(off, stripe=fake), follow_redirects=False) as client:
+        assert client.post("/checkout", json=cart(("JP-PACK-A", 1))).status_code == 503
+        page = client.get("/p/pokemon-booster-pack-japanese").text
+        assert "Buy on TCGplayer" in page and "Add to cart" not in page
+    assert not fake.sessions
+
+
+def test_checkout_switch_reads_storefront_checkout(monkeypatch):
+    monkeypatch.setenv("STOREFRONT_CHECKOUT", "0")
+    assert load_settings().checkout_switch is False
+    monkeypatch.delenv("STOREFRONT_CHECKOUT")
+    assert load_settings().checkout_switch is True
 
 
 def test_live_keys_are_refused_unless_allowed(imported):

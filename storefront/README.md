@@ -4,8 +4,10 @@ Our own shop, replacing Squarespace. The plan, decisions and progress log are in
 `docs/storefront_plan.md`; this file is the developer guide for the code in `storefront/`.
 
 **Status (2026-11-05): Phase 2 built, local only, Stripe test mode.** The catalog browses on
-the home network at `http://<server>:8010`. Cart and checkout switch on when a Stripe **test**
-key is in `.env` (see "Checkout" below); without one, product pages link to the TCGplayer store.
+the home network at `http://<server>:8010`. Cart and checkout switch on when
+`STOREFRONT_CHECKOUT=1` and a Stripe **test** key are in `.env` (see "Checkout" below);
+otherwise product pages link to the TCGplayer store. The public launch (2026-11-11) is
+catalog-only: `STOREFRONT_CHECKOUT` is unset, which means off.
 Nothing is public: robots are blocked and every page says `noindex` until
 `STOREFRONT_ALLOW_INDEXING=1` at launch.
 
@@ -103,6 +105,7 @@ How it works: `app/orders.py` (module docstring), plan "Checkout and orders".
 `deploy/update_storefront.sh` (it recreates the container, so the new settings are read):
 
 ```
+STOREFRONT_CHECKOUT=1                 # master switch; unset or 0 = catalog only (the default)
 STRIPE_SECRET_KEY=sk_test_...         # Stripe dashboard > Developers > API keys (test mode)
 STRIPE_WEBHOOK_SECRET=whsec_...       # from `stripe listen` or the dashboard webhook (optional)
 ```

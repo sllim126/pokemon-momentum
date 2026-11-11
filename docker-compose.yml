@@ -35,7 +35,10 @@ services:
       # Local address until launch; robots stay blocked until STOREFRONT_ALLOW_INDEXING=1.
       STOREFRONT_BASE_URL: ${STOREFRONT_BASE_URL:-http://localhost:8010}
       STOREFRONT_ALLOW_INDEXING: ${STOREFRONT_ALLOW_INDEXING:-0}
-      # Checkout (Phase 2). Values come from .env; with no STRIPE_SECRET_KEY checkout stays off.
+      # Checkout (Phase 2). Off unless STOREFRONT_CHECKOUT=1: the public site runs catalog-only
+      # until live payments are set up, so test-mode checkout is never reachable from outside.
+      STOREFRONT_CHECKOUT: ${STOREFRONT_CHECKOUT:-0}
+      # Values come from .env; with no STRIPE_SECRET_KEY checkout stays off as well.
       # Test keys only (sk_test_...) unless STOREFRONT_ALLOW_LIVE=1, which is the owner's call.
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
@@ -58,4 +61,18 @@ services:
       - ${STOREFRONT_CODE_DIR:-./storefront}:/app/storefront
       - ./data:/app/data:ro
       - ./data/storefront:/app/data/storefront
+    restart: unless-stopped
+
+  # Cloudflare Tunnel connector (storefront plan, "Hosting"). It dials out to Cloudflare, so
+  # the router needs no open ports; the public hostnames (poke6s.com -> http://storefront:8010)
+  # are set in the Cloudflare dashboard under Networking > Tunnels > poke6s-home > Routes.
+  # CLOUDFLARE_TUNNEL_TOKEN lives in .env only (it lets anyone run the tunnel: never print it).
+  cloudflared:
+    image: cloudflare/cloudflared:2025.9.1
+    container_name: cloudflared
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      - storefront
     restart: unless-stopped
