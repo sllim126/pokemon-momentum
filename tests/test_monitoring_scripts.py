@@ -1,7 +1,10 @@
 """Host-side monitoring scripts (scripts/monitoring/, deploy/monitoring/zfs/): todo counts,
-job status files, Plex, PBS, the storefront and ZFS pool parsing."""
+job status files, Plex, PBS, the storefront, Search Console and ZFS pool parsing."""
 
 import importlib.util
+import json
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -27,6 +30,7 @@ def _load_from(folder, name):
 
 collect_status = _load("collect_status")
 run_job = _load("run_job")
+search_console = _load("search_console")
 
 
 class TodoCountTests(unittest.TestCase):
@@ -254,6 +258,99 @@ class StorefrontTests(unittest.TestCase):
         text = "\n".join(self._run())
         for field in ("email", "name=", "shipping", "access_token"):
             self.assertNotIn(field, text)
+
+
+class SearchConsoleTests(unittest.TestCase):
+    """search_console.py: signing, what each run asks Google for, and the metrics. No real API."""
+
+    NOW = 1794355200.0  # 2026-11-11 00:00 UTC
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        key = Path(self.tmp.name) / "key.json"
+        key.write_text(json.dumps({"client_email": "x@example.iam.gserviceaccount.com",
+                                   "token_uri": "https://oauth2.example/token", "private_key": "unused"}))
+        self.saved = {n: getattr(search_console, n) for n in ("KEY_FILE", "fetch_summary", "inspect")}
+        self.addCleanup(lambda: [setattr(search_console, n, v) for n, v in self.saved.items()])
+        search_console.KEY_FILE = key
+        self.calls = []
+
+        def fetch_summary(client, today):
+            self.calls.append(("summary", today.isoformat()))
+            return {"start": "2026-11-01", "end": "2026-11-11",
+                    "daily": {"2026-11-02": {"clicks": 1, "impressions": 10, "position": 4.0},
+                              "2026-11-08": {"clicks": 3, "impressions": 30, "position": 8.0}},
+                    "queries": [{"key": 'a "quoted" search', "clicks": 1, "impressions": 5, "position": 2.0}],
+                    "pages": [{"key": "/", "clicks": 4, "impressions": 40, "position": 7.0}],
+                    "devices": [], "sitemaps": [{"path": "https://poke6s.com/sitemap.xml",
+                                                 "last_read": "2026-11-10T02:24:48.823Z", "pending": False,
+                                                 "errors": 0, "warnings": 0, "submitted": 3}]}
+
+        def inspect(client, path):
+            self.calls.append(("inspect", path))
+            if path == "/broken":
+                raise search_console.SearchConsoleError("HTTP 500")
+            return {"verdict": "PASS" if path == "/" else "NEUTRAL",
+                    "coverage": "Submitted and indexed" if path == "/" else "URL is unknown to Google",
+                    "last_crawl": "2026-11-03T00:18:56Z" if path == "/" else None}
+
+        search_console.fetch_summary = fetch_summary
+        search_console.inspect = inspect
+
+    def _update(self, cache, now, pages=("/", "/shop", "/about")):
+        return search_console.update(cache, now, token_for=lambda key: "token", sitemap=lambda: list(pages))
+
+    @unittest.skipUnless(shutil.which("openssl"), "needs the openssl command")
+    def test_jwt_signature_verifies_with_the_public_key(self):
+        folder = Path(self.tmp.name)
+        pem = subprocess.run(["openssl", "genrsa", "2048"], capture_output=True, text=True, check=True).stdout
+        (folder / "pub.pem").write_text(subprocess.run(["openssl", "rsa", "-pubout"], input=pem, capture_output=True,
+                                                       text=True, check=True).stdout)
+        (folder / "sig").write_bytes(search_console._sign_rs256(b"header.claims", pem))
+        result = subprocess.run(["openssl", "dgst", "-sha256", "-verify", str(folder / "pub.pem"), "-signature",
+                                 str(folder / "sig")], input=b"header.claims", capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_summary_every_six_hours_and_two_inspections_per_run(self):
+        cache = self._update({}, self.NOW)
+        self.assertEqual([c[0] for c in self.calls], ["summary", "inspect", "inspect"])
+        self.assertEqual(set(cache["pages"]), {"/", "/shop", "/about"})
+        self.calls.clear()
+        self._update(cache, self.NOW + 60)  # summary still fresh; the third page's turn
+        self.assertEqual([c[0] for c in self.calls], ["inspect"])
+        self.calls.clear()
+        self._update(cache, self.NOW + 120)  # everything checked within the day: no calls
+        self.assertEqual(self.calls, [])
+        self._update(cache, self.NOW + search_console.REFRESH_SECONDS, pages=("/", "/new"))
+        self.assertEqual(set(cache["pages"]), {"/", "/new"})  # follows the sitemap
+        self.assertIn(("inspect", "/new"), self.calls)
+
+    def test_a_failure_waits_an_hour_before_trying_again(self):
+        cache = {}
+        with self.assertRaises(search_console.SearchConsoleError):
+            self._update(cache, self.NOW, pages=("/broken",))
+        self.assertIn("HTTP 500", cache["error"])
+        self.calls.clear()
+        self._update(cache, self.NOW + 600, pages=("/broken",))
+        self.assertEqual(self.calls, [])
+        search_console.inspect = lambda client, path: {"verdict": "PASS", "coverage": "ok", "last_crawl": None}
+        self._update(cache, self.NOW + search_console.RETRY_SECONDS, pages=("/broken",))
+        self.assertNotIn("error", cache)
+
+    def test_metrics_fill_missing_days_and_weight_position(self):
+        cache = self._update({}, self.NOW)
+        self._update(cache, self.NOW + 60)
+        m = collect_status.Metrics()
+        search_console.metrics(m, cache, self.NOW + 60)
+        text = m.text()
+        self.assertIn('momentum_search_daily_impressions{day="2026-11-05"} 0', text)  # gap filled
+        self.assertNotIn('day="2026-11-09"', text)  # after Google's newest day: no false zero
+        self.assertIn('momentum_search_impressions{window="28d"} 40', text)
+        self.assertIn('momentum_search_position{window="28d"} 7.0', text)  # (4*10 + 8*30) / 40
+        self.assertIn('momentum_search_top_query_clicks{query="a \\"quoted\\" search"} 1', text)
+        self.assertIn("momentum_search_pages_indexed 1", text)
+        self.assertIn('momentum_search_page_indexed{path="/shop",coverage="URL is unknown to Google"} 0', text)
 
 
 class RunJobTests(unittest.TestCase):

@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-09 (Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store)
+Last reviewed: 2026-11-11 (Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -254,6 +254,19 @@ refunds and counted on the day each order was paid, in the shop's local time (Am
 The "Orders" picker at the top shows live orders by default; test shows the Stripe test-mode
 orders from building the shop. Only counts, sums, and product SKUs and titles reach Prometheus,
 never customer names, emails or addresses. Low stock means 2 or fewer left (STORE_LOW_STOCK).
+
+Google search row (since 2026-11-11; bottom of the Store dashboard): poke6s.com's Search
+Console numbers, from scripts/monitoring/search_console.py, which collect_status.py calls
+every minute. It signs in as the Google Cloud service account of project market-poke6s, added
+to the Search Console property https://poke6s.com/ as a Restricted (read-only) user. Its JSON
+key is secrets/market-poke6s-*.json (git-ignored, mode 600); secrets/search-console.json is a
+symlink to it (or set MOMENTUM_SEARCH_CONSOLE_KEY). Totals, top searches, pages and the
+sitemap are fetched every 6 hours; 2 sitemap pages per run go through URL Inspection, so each
+page's index status is checked about once a day. A failed call waits an hour before trying
+again; the error lands in logs/monitoring_collector.log and the "Search data updated" tile
+ages. Answers are cached in data/search_console/cache.json (not committed). Google's numbers
+run 2-3 days behind. The host has no Google libraries: the sign-in token is signed with the
+openssl command, the key passed through a pipe. To switch it off, remove the symlink.
 
 Slowheim, the Valheim machine (192.168.1.187; since 2026-11-08; dashboard Home lab: Slowheim
 (Valheim)): it runs its own Prometheus (:9090, jobs node, valheim and prometheus) and Loki

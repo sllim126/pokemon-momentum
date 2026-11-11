@@ -32,6 +32,10 @@ What it reports (all metric names start with ``momentum_``):
   local day for 30 days, orders waiting to ship, products and stock, and the visible products
   that are nearly sold out, read-only from data/storefront/store.db. Counts and sums only; no
   customer details.
+* Google Search Console (since 2026-11-11): poke6s.com's clicks, impressions and position per
+  day, top searches and pages, sitemap status and which sitemap pages Google has indexed. The
+  API work and its cache live in search_console.py (see its docstring); without the key file
+  in secrets/, nothing.
 
 Every section is fenced off with its own try/except: one failing check (say, a locked
 database) is reported as ``momentum_collector_errors{section=...}`` and the rest still
@@ -54,6 +58,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from run_job import JOB_HELP  # noqa: E402  (same help text in both scripts; see run_job.py)
+import search_console  # noqa: E402
 TEXTFILE_DIR = Path(os.environ.get("MOMENTUM_TEXTFILE_DIR", "/var/lib/prometheus/node-exporter"))
 OUTPUT = TEXTFILE_DIR / "momentum_status.prom"
 # Remembers when each systemd job last succeeded, because systemd only keeps the latest run.
@@ -538,6 +543,8 @@ def main() -> int:
         "plex": lambda: plex(m),
         "pbs": lambda: pbs(m),
         "storefront": lambda: storefront(m),
+        # Last: on some runs it waits on Google's API (up to ~15 s); see search_console.py.
+        "search_console": lambda: search_console.collect(m),
     }
     errors = {}
     for name, section in sections.items():

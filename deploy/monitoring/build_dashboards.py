@@ -1260,13 +1260,15 @@ def visitors():
 STORE_MODE = '"$mode"'
 
 
-def store_daily_barchart(title, metrics, pos, unit="none", decimals=0, description=""):
-    """Bars per local day from day-labelled series. metrics: (metric name, legend) pairs."""
+def store_daily_barchart(title, metrics, pos, unit="none", decimals=0, description="", by_mode=True):
+    """Bars per day from day-labelled series. metrics: (metric name, legend) pairs. by_mode
+    filters on the Orders picker (store sales); the Google search bars have no mode."""
     refs = "ABCDEF"
     names = {"day": "Day", **{f"Value #{refs[i]}": legend for i, (_, legend) in enumerate(metrics)}}
     return {
         "type": "barchart", "title": title, "gridPos": pos, "datasource": DS, "description": description,
-        "targets": [target(f"max by (day) ({name}{{mode={STORE_MODE}}})", ref=refs[i], instant=True, table=True)
+        "targets": [target(f"max by (day) ({name}{{mode={STORE_MODE}}})" if by_mode else f"max by (day) ({name})",
+                           ref=refs[i], instant=True, table=True)
                     for i, (name, _) in enumerate(metrics)],
         "transformations": [
             {"id": "merge", "options": {}},
@@ -1360,6 +1362,7 @@ def store():
                     "Value #B": "Units"},
                    description="Untracked: made to order or supplier-backed, with no stock count.",
                    cell_color=False, sort=("Products", True)))
+    p += search_row(28)
     board = dashboard("momentum-store", "Pokemon Momentum: Store", p, time_from="now-30d", tags=("store",))
     board["templating"]["list"].append({
         "type": "custom", "name": "mode", "label": "Orders", "query": "live,test",
@@ -1368,6 +1371,72 @@ def store():
         "description": "live: real orders. test: orders from Stripe test mode while building the shop.",
     })
     return board
+
+
+SEARCH_CONSOLE = ("Search Console", "https://search.google.com/search-console?resource_id=https%3A%2F%2Fpoke6s.com%2F")
+
+
+def search_row(y):
+    """Google search for poke6s.com, from Search Console (scripts/monitoring/search_console.py).
+    Google's numbers run 2-3 days behind; the collector refreshes them every 6 hours."""
+    p = [row("Google search (poke6s.com, from Search Console; Google's numbers run 2-3 days behind)", y)]
+    sw = lambda name, w: f'{name}{{window="{w}"}}'
+    tiles = [
+        ("Clicks, 7 days", sw("momentum_search_clicks", "7d"),
+         dict(description="Clicks from Google search results to poke6s.com.")),
+        ("Clicks, 28 days", sw("momentum_search_clicks", "28d"), {}),
+        ("Shown in results, 28 days", sw("momentum_search_impressions", "28d"),
+         dict(description="Impressions: times a poke6s.com page appeared in someone's Google results.")),
+        ("Click rate, 28 days",
+         f'{sw("momentum_search_clicks", "28d")} / ({sw("momentum_search_impressions", "28d")} > 0)',
+         dict(unit="percentunit", decimals=1, description="Clicks divided by times shown.")),
+        ("Average position, 28 days", sw("momentum_search_position", "28d"),
+         dict(decimals=1, thresholds=steps("green", (10.5, "orange"), (20.5, "red")),
+              description="Where poke6s.com ranked on average, weighted by times shown. 1 is the top "
+                          "result; 1-10 is Google's first page. Lower is better.")),
+        ("Pages indexed", "momentum_search_pages_indexed",
+         dict(description="Pages from the store's sitemap that Google has indexed (can show up in search). "
+                          "Each page is checked about once a day; the table below lists the rest.")),
+        ("Sitemap last read", "time() - max(momentum_search_sitemap_last_read_timestamp_seconds)",
+         dict(unit="dtdurations", decimals=0, thresholds=steps("green", (7 * DAY, "orange")),
+              description="When Google last read https://poke6s.com/sitemap.xml.")),
+        ("Search data updated", "time() - momentum_search_updated_timestamp_seconds",
+         dict(unit="dtdurations", decimals=0, thresholds=steps("green", (7 * 3600, "orange"), (DAY, "red")),
+              description="When the collector last fetched from Search Console (every 6 hours). Older than "
+                          "a day: check logs/monitoring_collector.log.", link=SEARCH_CONSOLE)),
+    ]
+    p += [stat(t, e, g(i * 3, y + 1, 3, 4), **kw) for i, (t, e, kw) in enumerate(tiles)]
+    p.append(store_daily_barchart(
+        "Google search per day",
+        [("momentum_search_daily_impressions", "Shown in results"), ("momentum_search_daily_clicks", "Clicks")],
+        g(0, y + 5, 12, 9), by_mode=False,
+        description="Per UTC day, last 28 days. The newest 2-3 days are still filling in."))
+    p.append(table(
+        "Top searches, 28 days",
+        [target(f"max by (query) (momentum_search_top_query_{k})", ref=r, instant=True, table=True)
+         for r, k in (("A", "impressions"), ("B", "clicks"), ("C", "position"))],
+        g(12, y + 5, 12, 9),
+        {"query": "Search", "Value #A": "Shown", "Value #B": "Clicks", "Value #C": "Position"},
+        description="The 20 searches that showed poke6s.com most. Google hides searches made by very "
+                    "few people, so these don't add up to the totals.",
+        overrides=[col("Value #C", decimals=1)], cell_color=False, sort=("Shown", True)))
+    p.append(table(
+        "Top pages, 28 days",
+        [target(f"max by (page) (momentum_search_top_page_{k})", ref=r, instant=True, table=True)
+         for r, k in (("A", "impressions"), ("B", "clicks"), ("C", "position"))],
+        g(0, y + 14, 12, 10),
+        {"page": "Page", "Value #A": "Shown", "Value #B": "Clicks", "Value #C": "Position"},
+        overrides=[col("Value #C", decimals=1)], cell_color=False, sort=("Shown", True)))
+    p.append(table(
+        "Sitemap pages not indexed yet",
+        [target("max by (path, coverage) (momentum_search_page_indexed == 0)", ref="A", instant=True,
+                table=True)],
+        g(12, y + 14, 12, 10), {"path": "Page", "coverage": "Google says"},
+        description="Google's own wording. 'Discovered - currently not indexed': Google knows the page and "
+                    "will crawl it when it gets round to it. 'URL is unknown to Google': not found yet. "
+                    "New sites take days to weeks; nothing to fix unless a page stays out for a month.",
+        cell_color=False, sort=("Google says", False)))
+    return p
 
 
 SLOWHEIM_SOURCE =Path(__file__).resolve().parent / "grafana" / "imported" / "slowheim_source.json"

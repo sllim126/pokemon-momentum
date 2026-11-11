@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-11-09
+Last reviewed: 2026-11-11
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -26,7 +26,8 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   website, jobs, data downloads, server, containers, todo list and bug reports; Prometheus
   collects it. Also the Proxmox cluster, the UniFi network, visitors per day for each site
   (counted by the apps themselves, no cookies), and a Store dashboard for the new storefront's
-  orders, sales and stock (live orders only by default). The Proxmox, network and server
+  orders, sales and stock (live orders only by default), with poke6s.com's Google search numbers
+  from Search Console (clicks, searches, pages indexed). The Proxmox, network and server
   dashboards sit in a separate "Home lab" folder, which also covers the backup server and its
   backups, the OpenMediaVault storage server and its ZFS pool (scrubs and disk errors), SMART
   disk health, internet uptime (this server's own probes), Plex (streams and libraries), a

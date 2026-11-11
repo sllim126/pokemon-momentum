@@ -47,6 +47,11 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-11 Google search row on Grafana's Store dashboard: clicks, times shown, click rate,
+  average position, top searches and pages, sitemap status and which sitemap pages Google has
+  indexed (scripts/monitoring/search_console.py, called by collect_status.py; runbook "Google
+  search row"). The owner added poke6s.com to Search Console, submitted the sitemap and created
+  the read-only service account.
 - 2026-11-09 Store rules reviewed with the owner, one at a time: the new store ships within 1
   business day, signature on orders over $150, insurance over $100, lost in transit = replacement
   or full refund (marked delivered = help with the carrier claim). All seven storefront text
@@ -350,8 +355,12 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
 - [next] Phase 3: LAN-only admin (orders, ship with tracking, refunds, stock), exports (Pirate
   Ship, sales tax, bookkeeping, TCGplayer reconciliation), signature confirmation over ~$250,
   backups.
-- [next] Owner: add poke6s.com to Google Search Console (DNS check through Cloudflare) and
-  submit https://poke6s.com/sitemap.xml.
+- [owner] poke6s.com (the bare domain) still points at Squarespace: Cloudflare's own DNS
+  answers with Squarespace's A records (198.49.23.144/145, 198.185.159.144/145), checked
+  2026-11-11 02:50 UTC, while www goes through the tunnel and redirects to it. Google read the new
+  store's sitemap at 02:24, so it pointed at the tunnel earlier. In Cloudflare DNS, replace the
+  apex A records with the tunnel's proxied CNAME (or add poke6s.com as a public hostname on
+  tunnel poke6s-home). Before 2026-11-14, when the Squarespace site goes away.
 - [planned] Switch checkout on: Stripe live activation, live keys in .env, STOREFRONT_CHECKOUT=1,
   STOREFRONT_ALLOW_LIVE=1, webhook, a refunded live test order. Then the market site's buy button.
 - [planned] Yearly, by 2027-10: bump the cloudflared image tag in docker-compose.yml (2026.10.7
