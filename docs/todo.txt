@@ -44,6 +44,11 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-11 Store review item 5 (owner's choice): while checkout is off, "Buy on TCGplayer"
+  opens the product's own TCGplayer page through the owner's affiliate link (disclosed on the
+  page), a "we're rebuilding" note sits under the header, and product pages and /notify take an
+  email for a one-time "we're open" message (notify_signups table, migration 003; Privacy page
+  says what is kept). 52aac12, deployed, checked live.
 - 2026-11-11 Store review item 4: store stock set from the owner's Nov 2 inventory (11 products,
   undoing the test orders), then packs split as the owner approved: Destined Rivals 2 art sets +
   10 loose, Perfect Order 3 art sets + 4 loose (new product ENG-PO-PACK, $5.99), Silver Tempest 11
@@ -262,8 +267,13 @@ Live now:
   - ENG-PO-PACK was added by hand (source 'manual:2026-11-11'), with a price rule added to
     data/store_price_rules.csv (data file, not committed). Re-running the Squarespace importer
     would not know it.
-- [owner] 5. "Buy on TCGplayer" goes to the store's front page for every product. Decide where it
-  should go, given sealed may not be listed there.
+- [done 2026-11-11] 5. "Buy on TCGplayer" now opens the product's TCGplayer page through the
+  affiliate link, plus a "we're rebuilding" note and an "email me when we open" list (see
+  Recently Completed). Follow-ups:
+  - [planned] When checkout opens: email the notify_signups list once (set notified_at), then
+    the note and form go away on their own (they show only while checkout is off).
+  - [planned] The list has no unsubscribe link yet; the one "we're open" email must include a
+    way to opt out (CAN-SPAM) and the sender's postal address.
 - [next] 6. Handle odd input cleanly in the store (page numbers, order links, webhook signature)
   instead of a 500 error; a bad image address should be a 404.
 - [next] 7. Tighten who can read credentials on the server, and give the market container only
