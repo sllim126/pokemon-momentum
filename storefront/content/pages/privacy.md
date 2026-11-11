@@ -22,6 +22,12 @@ to Stripe and never reach our servers.
 Order records are kept for as long as tax law requires (currently up to seven years), then
 deleted.
 
+## Email list
+
+If you join our list to hear when the store opens, we keep your email address, the page you
+signed up from and the date. We use it only to tell you when checkout opens, and we never share
+it. Email [admin@poke6s.com](mailto:admin@poke6s.com) and we'll remove it.
+
 ## Cookies and visit counts
 
 This site sets no tracking cookies and runs no tracking scripts. Your cart is kept in your

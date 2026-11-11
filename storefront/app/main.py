@@ -34,7 +34,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import catalog, classify, images, orders, redirects, seo, stripe_api
+from . import catalog, classify, images, notify_list, orders, redirects, seo, stripe_api
 from .articles import Articles
 from .db import connect, latest_migration, migrate
 from .market import MarketReference
@@ -51,6 +51,8 @@ RECONCILE_EVERY_SECONDS = 15 * 60
 # Checkout attempts per visitor per hour. Each attempt holds stock for 30 minutes, so this keeps
 # one visitor from tying up the shelf.
 CHECKOUTS_PER_HOUR = 10
+# Sign-ups for the "email me when the store opens" list, per visitor per hour.
+SIGNUPS_PER_HOUR = 5
 log = logging.getLogger("storefront")
 
 SECURITY_HEADERS = {
@@ -96,6 +98,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     if stripe is None and settings.checkout_enabled:
         stripe = stripe_api.StripeClient(settings.stripe_secret_key)
     checkout_attempts: dict[str, deque] = defaultdict(deque)
+    signup_attempts: dict[str, deque] = defaultdict(deque)
 
     def reconcile_once() -> None:
         with writer() as conn:
@@ -164,6 +167,20 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         if any(host in settings.base_url for host in ("://localhost", "://127.0.0.1")):
             return str(request.base_url).rstrip("/")
         return settings.base_url
+
+    def tcgplayer_link(item: dict) -> str:
+        """Where "Buy on TCGplayer" goes: the product's own listing link if one is set, else its
+        TCGplayer product page (first TCGplayer ID) through the affiliate link (owner,
+        2026-11-11), else the TCGplayer store's front page."""
+        if item.get("tcgplayer_url"):
+            return item["tcgplayer_url"]
+        ids = [pid.strip() for pid in (item.get("tcgplayer_product_ids") or "").split("|") if pid.strip()]
+        if not ids or not ids[0].isdigit():
+            return settings.tcgplayer_store_url
+        target = f"https://www.tcgplayer.com/product/{ids[0]}"
+        if not settings.tcgplayer_affiliate_base:
+            return target
+        return f"{settings.tcgplayer_affiliate_base}?{urlencode({'u': target})}"
 
     def visitor(request: Request) -> str:
         # Behind Cloudflare (at launch) the real address is in CF-Connecting-IP.
@@ -335,7 +352,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         description = f"{item['title']} for {seo.money(item['price_cents'])} USD at Poke6s."
         return page(request, "product.html", title=item["title"], product=item, market=summary,
                     below_market=below_market, related=others, crumbs=crumbs,
-                    buy_url=item["tcgplayer_url"] or settings.tcgplayer_store_url,
+                    buy_url=tcgplayer_link(item),
                     og_image=seo.image_url(settings, item["image"]), og_type="product",
                     description=description,
                     jsonld=[seo.product_jsonld(settings, item), seo.breadcrumbs_jsonld(settings, crumbs)])
@@ -387,6 +404,37 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
                         free_over=settings.free_shipping_over_cents)
         response.headers["Cache-Control"] = "no-store"
         return response
+
+    # --- "email me when the store opens" list (while checkout is off) ----------------------
+
+    @app.get("/notify", response_class=HTMLResponse)
+    def notify_page(request: Request, joined: str = "", error: str = ""):
+        return page(request, "notify.html", title="Get an email when we open",
+                    description="Join the list and we'll email you when checkout opens on poke6s.com.",
+                    joined=joined == "1", error=error == "1")
+
+    @app.post("/notify")
+    async def notify_join(request: Request):
+        form = await request.form()
+        # Bots fill every field; people never see "website" (hidden with CSS).
+        if str(form.get("website") or ""):
+            return RedirectResponse("/notify?joined=1", status_code=303)
+        email = notify_list.clean_email(str(form.get("email") or ""))
+        if email is None:
+            return RedirectResponse("/notify?error=1", status_code=303)
+        now = time.monotonic()
+        if len(signup_attempts) > 1000:   # forget visitors with nothing in the last hour
+            for key in [k for k, v in signup_attempts.items() if not v or now - v[-1] > 3600]:
+                del signup_attempts[key]
+        attempts = signup_attempts[visitor(request)]
+        while attempts and now - attempts[0] > 3600:
+            attempts.popleft()
+        if len(attempts) >= SIGNUPS_PER_HOUR:
+            return PlainTextResponse("Too many sign-ups from here. Please try again later.", status_code=429)
+        attempts.append(now)
+        with writer() as conn:
+            notify_list.add(conn, email, str(form.get("source") or ""))
+        return RedirectResponse("/notify?joined=1", status_code=303)
 
     @app.post("/cart/quote")
     async def cart_quote(request: Request):

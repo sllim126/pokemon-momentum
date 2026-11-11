@@ -45,6 +45,9 @@ class Settings:
     market_base_url: str
     tcgplayer_store_url: str
     contact_email: str
+    # TCGplayer affiliate link (the same one market.poke6s.com uses). A product's TCGplayer page
+    # is wrapped in it: <base>?u=<product page>. Empty = plain product links.
+    tcgplayer_affiliate_base: str = "https://partner.tcgplayer.com/jR1OJb"
 
     # --- checkout (Phase 2) --------------------------------------------------------------
     # Stripe keys. Checkout is switched on only when a secret key is set, and refuses live
@@ -122,6 +125,8 @@ def load_settings() -> Settings:
         market_base_url=os.getenv("STOREFRONT_MARKET_URL", "https://market.poke6s.com").rstrip("/"),
         tcgplayer_store_url=os.getenv("STOREFRONT_TCGPLAYER_URL", "https://poke6s.tcgplayerpro.com/"),
         contact_email=os.getenv("STOREFRONT_CONTACT_EMAIL", "admin@poke6s.com"),
+        tcgplayer_affiliate_base=os.getenv("STOREFRONT_TCGPLAYER_AFFILIATE",
+                                           "https://partner.tcgplayer.com/jR1OJb").strip(),
         stripe_secret_key=os.getenv("STRIPE_SECRET_KEY", "").strip(),
         stripe_webhook_secret=os.getenv("STRIPE_WEBHOOK_SECRET", "").strip(),
         allow_live=_bool(os.getenv("STOREFRONT_ALLOW_LIVE"), False),
