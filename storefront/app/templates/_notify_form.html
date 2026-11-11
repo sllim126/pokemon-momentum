@@ -1,0 +1,12 @@
+{#- One-field sign-up for the "email me when we open" list (POST /notify, notify_list.py). The
+    "website" field is a trap for bots: hidden from people, ignored when filled. #}
+<form class="notify-form" action="/notify" method="post">
+  <label for="notify-email">Email me when the store opens</label>
+  <div class="notify-row">
+    <input id="notify-email" type="email" name="email" required maxlength="254" autocomplete="email" placeholder="you@example.com">
+    <button type="submit" class="btn">Join the list</button>
+  </div>
+  <input type="hidden" name="source" value="{{ path }}">
+  <div class="trap" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+  <p class="small muted">One email when we open. <a href="/privacy">Privacy</a>.</p>
+</form>

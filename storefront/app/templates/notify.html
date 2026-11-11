@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="notify-page">
+  <h1>Get an email when we open</h1>
+  {% if joined %}
+  <p class="notice good" role="status"><strong>You're on the list.</strong> We'll email you once when
+    checkout opens on poke6s.com.</p>
+  <p><a class="btn" href="/shop">Keep browsing</a></p>
+  {% else %}
+  {% if error %}<p class="notice bad" role="alert">That email address doesn't look right. Please check it and try again.</p>{% endif %}
+  <p>We're rebuilding our store. You can browse everything now; checkout opens here soon. Want
+    something today? Each product links to it on TCGplayer.</p>
+  {% include "_notify_form.html" %}
+  {% endif %}
+</section>
+{% endblock %}
