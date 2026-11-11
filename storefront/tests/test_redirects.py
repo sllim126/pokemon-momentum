@@ -42,3 +42,15 @@ def test_every_csv_target_is_a_real_route():
     for old, new in redirects.load().items():
         assert new == "/" or new.startswith(prefixes), (old, new)
         assert redirects.normalize(old) == old
+
+
+def test_www_redirects_to_the_public_address(imported):
+    import dataclasses
+    from fastapi.testclient import TestClient
+    from storefront.app.main import create_app
+    live = dataclasses.replace(imported, base_url="https://poke6s.com")
+    with TestClient(create_app(live), follow_redirects=False) as client:
+        moved = client.get("/shop?sort=new", headers={"host": "www.poke6s.com"})
+        assert moved.status_code == 301
+        assert moved.headers["location"] == "https://poke6s.com/shop?sort=new"
+        assert client.get("/healthz", headers={"host": "poke6s.com"}).status_code == 200
