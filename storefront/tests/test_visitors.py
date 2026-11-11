@@ -17,3 +17,13 @@ def test_page_views_are_counted_and_published(imported):
     assert 'site_today_total{app="storefront",kind="pageviews"} 1.0' in text
     assert 'site_today_total{app="storefront",kind="visitors"} 1.0' in text
     assert (imported.data_dir / "visitors.sqlite3").exists()
+
+
+def test_client_ip_prefers_cloudflare_header_from_the_tunnel():
+    from storefront.app.visitors import client_ip
+    scope = {"client": ("172.22.0.5", 40000),
+             "headers": [(b"cf-connecting-ip", b"203.0.113.9"), (b"x-forwarded-for", b"203.0.113.9")]}
+    assert client_ip(scope) == "203.0.113.9"
+    # From the internet directly, the header is not trusted.
+    scope["client"] = ("198.51.100.1", 40000)
+    assert client_ip(scope) == "198.51.100.1"
