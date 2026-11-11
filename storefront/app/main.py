@@ -206,7 +206,10 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
             target = articles.redirect_for(path) or redirects.lookup(path)
             if target is None and len(path) > 1 and path.endswith("/"):
                 query = f"?{request.url.query}" if request.url.query else ""
-                return RedirectResponse(path.rstrip("/") + query, status_code=301)
+                # Collapse leading slashes (and backslashes, which browsers treat the same):
+                # "//example.com/" must stay on this site, not become a link to example.com.
+                clean = "/" + path.lstrip("/\\").rstrip("/")
+                return RedirectResponse(clean + query, status_code=301)
             if target is None and request.url.path.lower().startswith("/shop/p/"):
                 with db() as conn:
                     target = catalog.product_redirect(conn, redirects.normalize(request.url.path)) or "/shop"

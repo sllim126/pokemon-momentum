@@ -44,11 +44,19 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-11 Store review item 1: the trailing-slash redirect could send a poke6s.com link to
+  another site. Fixed with a test (fc2fc78), merged to main and deployed; checked live.
 - 2026-11-11 SMART disk health on OMV (owner ran the installer): 12 disks report (11 Seagate
   Exos X18, 1 SanDisk SSD), all PASSED, no pending, uncorrectable, reallocated or cable errors,
   35-40 °C. Shown in Home lab: Servers, SMART table.
 - 2026-11-11 Temporary sudo file /etc/sudoers.d/90-claude-buildout removed (owner's request):
   sudo asks for a password again, so agents can't run sudo steps themselves; the owner runs them.
+- 2026-11-11 Store order alerts go to Discord channel 1569946385548050533: webhook saved in
+  `.env` by the owner, store restarted, test alert accepted by Discord.
+- 2026-11-11 Shipping set (owner, plan decision D3): $10 flat for singles, accessories and small
+  sealed, $20 for large sealed, still free over $150. Every order now ships with tracking and
+  signature confirmation (was over $150); the Shipping page says so. Sales tax (D2) was decided
+  earlier: Stripe Tax, Utah only. Cloudflare "Always Use HTTPS" is on (owner; http now 301s).
 - 2026-11-11 poke6s.com launched catalog-only on the new store (owner): DNS on Cloudflare,
   Cloudflare Tunnel to the storefront container, www redirects to https://poke6s.com,
   checkout switched off (STOREFRONT_CHECKOUT), Google indexing on. Squarespace site replaced;
@@ -215,7 +223,7 @@ backend; market site not included. How to reproduce each one: docs/private/secur
 (git-ignored, because this repo is public). Same numbers in both.
 
 Live now:
-- [next] 1. Fix an unsafe redirect in the store's trailing-slash handling (storefront/app/main.py).
+- [done 2026-11-11] 1. Unsafe redirect fixed (see Recently Completed).
 - [owner] 2. Privacy page names an analytics tool the site doesn't use. Correct how visits are
   counted, and say Cloudflare carries the traffic.
 - [owner] 3. Listed prices and stock are frozen at the Oct 31 import, while the same stock sells
@@ -281,9 +289,6 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   2026-10-31 export is the last). Products, orders and customers/subscribers were exported 2026-10-31; page text, blog
   posts and images were saved by script the same day. No site changes are expected before the
   plan ends other than the daily price sync (owner), so no second copy is needed.
-- [waiting] Plan decision D2 (sales tax method) after the Utah call (to be retried). D3: free
-  shipping over $150 (owner, 2026-11-05); flat-rate amounts from the owner's Pirate Ship costs
-  later, live Pirate Ship rates possibly after launch. D1, D4-D9 decided 2026-10-31.
 - [parked] Phase 0 (owner + Claude), paused by the owner 2026-10-31 (no online changes for
   now): Cloudflare DNS move (copy the Microsoft 365 mail records
   exactly), Tunnel (replaces the home-IP item below), Stripe test account.
@@ -315,14 +320,15 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - [waiting] Owner: Stripe activation (business profile, bank, statement descriptor POKE6S)
     before live payments, and Tax -> Registrations -> Utah in live mode. Use the new Stripe
     account, not the Squarespace-managed one.
-  - [planned] Microsoft 365 SMTP for order emails (SMTP AUTH may need switching on for
-    admin@poke6s.com); until then emails are files in `data/storefront/outbox/`.
-  - [planned] Decide where order alerts go (STOREFRONT_DISCORD_WEBHOOK_URL; off by default).
+  - [next] Order emails through Microsoft Graph, not SMTP (Microsoft turns password SMTP off by
+    default from December 2026, MC786329). Owner: shared mailbox orders@poke6s.com, an Entra
+    app with Mail.Send limited to that mailbox, three values in `.env`. Claude: Graph sender in
+    `storefront/app/notify.py`. Until then emails are files in `data/storefront/outbox/`.
   - [planned] Once real orders exist, stop re-running the Squarespace importer (it resets
     stock); the Phase 3 admin takes over stock changes.
 - [next] Phase 3: LAN-only admin (orders, ship with tracking, refunds, stock), exports (Pirate
-  Ship, sales tax, bookkeeping, TCGplayer reconciliation), signature confirmation over ~$250,
-  backups.
+  Ship, sales tax, bookkeeping, TCGplayer reconciliation; the Pirate Ship export should ask for
+  signature confirmation on every order), backups.
 - [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
   too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
 - [planned] Switch checkout on: Stripe live activation, live keys in .env, STOREFRONT_CHECKOUT=1,
