@@ -47,6 +47,12 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-11 Owner pointed the bare poke6s.com at the tunnel: the new store answers at
+  https://poke6s.com/ (sitemap 68 pages; old Squarespace paths 301 to the new ones). Note:
+  plain DNS (port 53) queries from this server still got Squarespace's old A records, even
+  when sent to 1.1.1.1 or Cloudflare's nameservers, while DNS over HTTPS and the system resolver
+  gave Cloudflare's. Something on the home network answers port-53 queries from a cache, so
+  check DNS with DNS over HTTPS (dns.google/resolve), not dig.
 - 2026-11-11 Google search row on Grafana's Store dashboard: clicks, times shown, click rate,
   average position, top searches and pages, sitemap status and which sitemap pages Google has
   indexed (scripts/monitoring/search_console.py, called by collect_status.py; runbook "Google
@@ -355,12 +361,10 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
 - [next] Phase 3: LAN-only admin (orders, ship with tracking, refunds, stock), exports (Pirate
   Ship, sales tax, bookkeeping, TCGplayer reconciliation), signature confirmation over ~$250,
   backups.
-- [owner] poke6s.com (the bare domain) still points at Squarespace: Cloudflare's own DNS
-  answers with Squarespace's A records (198.49.23.144/145, 198.185.159.144/145), checked
-  2026-11-11 02:50 UTC, while www goes through the tunnel and redirects to it. Google read the new
-  store's sitemap at 02:24, so it pointed at the tunnel earlier. In Cloudflare DNS, replace the
-  apex A records with the tunnel's proxied CNAME (or add poke6s.com as a public hostname on
-  tunnel poke6s-home). Before 2026-11-14, when the Squarespace site goes away.
+- [owner] Cloudflare: turn on SSL/TLS > Edge Certificates > "Always Use HTTPS" (free).
+  http://poke6s.com/ answers 200 over plain http instead of redirecting (checked 2026-11-11).
+- [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
+  too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
 - [planned] Switch checkout on: Stripe live activation, live keys in .env, STOREFRONT_CHECKOUT=1,
   STOREFRONT_ALLOW_LIVE=1, webhook, a refunded live test order. Then the market site's buy button.
 - [planned] Yearly, by 2027-10: bump the cloudflared image tag in docker-compose.yml (2026.10.7
