@@ -22,10 +22,20 @@ to Stripe and never reach our servers.
 Order records are kept for as long as tax law requires (currently up to seven years), then
 deleted.
 
-## Cookies and analytics
+## Cookies and visit counts
 
-This site sets no tracking cookies. Your cart is kept in your own browser. We count visits with
-Cloudflare Web Analytics, which doesn't use cookies or identify you.
+This site sets no tracking cookies and runs no tracking scripts. Your cart is kept in your
+own browser.
+
+To see how the site is used, our own server keeps daily totals: how many people visited,
+which pages were viewed, the kind of device (phone, tablet or computer), and the website
+that linked you here, if any. To count each person once a day, it makes a scrambled code
+from your IP address and browser. That code is deleted at the end of the day and can't be
+traced back to you, and your IP address isn't stored with the totals. The totals are kept
+for about a year.
+
+Traffic to this site passes through [Cloudflare](https://www.cloudflare.com/privacypolicy/),
+which protects it and delivers the pages. Cloudflare sees your IP address to do that.
 
 ## Your choices
 
