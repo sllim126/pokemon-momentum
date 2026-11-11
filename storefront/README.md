@@ -8,6 +8,8 @@ the home network at `http://<server>:8010`. Cart and checkout switch on when
 `STOREFRONT_CHECKOUT=1` and a Stripe **test** key are in `.env` (see "Checkout" below);
 otherwise product pages link to the TCGplayer store. The public launch (2026-11-11) is
 catalog-only: `STOREFRONT_CHECKOUT` is unset, which means off.
+While checkout is off, product pages show no stock counts (only "Sold out") and the structured
+data leaves out `availability` instead of claiming `InStock` (owner, 2026-11-11).
 Nothing is public: robots are blocked and every page says `noindex` until
 `STOREFRONT_ALLOW_INDEXING=1` at launch.
 

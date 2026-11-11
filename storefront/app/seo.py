@@ -25,10 +25,14 @@ def image_url(settings: Settings, file_name: str | None, width: int = 1200) -> s
 
 def product_jsonld(settings: Settings, product: dict) -> dict:
     url = f"{settings.base_url}/p/{product['slug']}"
-    if product["in_stock"]:
+    # Catalog mode (checkout off, owner 2026-11-11): nothing can be bought here, so don't tell
+    # search engines "InStock". Sold-out items still say OutOfStock, which stays true.
+    if not product["in_stock"]:
+        availability = "https://schema.org/OutOfStock"
+    elif settings.checkout_enabled:
         availability = "https://schema.org/InStock"
     else:
-        availability = "https://schema.org/OutOfStock"
+        availability = None
     data = {
         "@context": "https://schema.org",
         "@type": "Product",
@@ -49,6 +53,8 @@ def product_jsonld(settings: Settings, product: dict) -> dict:
             "seller": {"@type": "Organization", "name": "Poke6s"},
         },
     }
+    if availability is None:
+        del data["offers"]["availability"]
     if product.get("gtin"):
         data["gtin"] = product["gtin"]
     if product.get("description_md"):
