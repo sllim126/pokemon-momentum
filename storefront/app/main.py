@@ -181,6 +181,14 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
 
     @app.middleware("http")
     async def headers(request: Request, call_next):
+        # www.poke6s.com reaches the store through the same tunnel; send it to the one
+        # public address (STOREFRONT_BASE_URL) so search engines see a single site.
+        host = request.headers.get("host", "").split(":")[0].lower()
+        if host.startswith("www.") and settings.base_url.startswith("https://"):
+            target = f"{settings.base_url}{request.url.path}"
+            if request.url.query:
+                target += f"?{request.url.query}"
+            return RedirectResponse(target, status_code=301)
         response = await call_next(request)
         for key, value in SECURITY_HEADERS.items():
             response.headers.setdefault(key, value)
