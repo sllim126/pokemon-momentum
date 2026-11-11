@@ -44,6 +44,11 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-11 Store review item 4: store stock set from the owner's Nov 2 inventory (11 products,
+  undoing the test orders), then packs split as the owner approved: Destined Rivals 2 art sets +
+  10 loose, Perfect Order 3 art sets + 4 loose (new product ENG-PO-PACK, $5.99), Silver Tempest 11
+  loose; one art set of each kept off the store. Recorded as stock_movements 'adjustment'
+  (inventory-2026-11-02, packs-2026-11-11); backups store.before-stock-/before-packs-2026-11-11.db.
 - 2026-11-11 Store review item 3 (owner's choice): catalog mode, so with checkout off product
   pages show no stock counts and don't tell Google "InStock" (b69231f). New
   `storefront/tools/reprice.py` (101f5c9) prices at the store's rules (5% under market, .99) and
@@ -245,14 +250,18 @@ Live now:
   - Owner (2026-11-11): listing above market is fine as long as no sale loses money, so the five
     products first hidden (three booster boxes, Greninja ex Premium Collection, Abyss Eye) are
     shown again at break-even. Don't use --hide-above-market by default.
-- [in progress] 4. Stock set from the owner's Nov 2 inventory (owner: accurate for all sealed on
-  hand), which also undoes the test orders: 11 products adjusted 2026-11-11 (stock_movements
-  reason 'adjustment', reference inventory-2026-11-02; backup store.before-stock-2026-11-11.db).
-  Left: sleeved packs, where the store sells some as 4-pack art sets (Destined Rivals: 22 packs
-  vs 2 loose + 4 sets; Perfect Order: 20 vs 4 sets; Phantasmal Flames, Mega Evolution, Journey
-  Together 4 each, store 0; Pitch Black and Chaos Rising 4 each, no store product). Also not on
-  the store: Prismatic Evolutions bundle, Treasure chest tin. 18 in-stock products are hidden
-  (hidden on Squarespace); owner to say which to show.
+- [done 2026-11-11] 4. Stock set from the owner's Nov 2 inventory (see Recently Completed).
+  Still open:
+  - [owner] 18 in-stock products are hidden (hidden on Squarespace: ETBs, Pokemon Center ETBs,
+    Costco 2-packs, premium collections, tins...). Say which to show; each needs a cost row in
+    the private costs file before reprice.py will price it.
+  - [idea] Not on the store at all: Prismatic Evolutions bundle (1), Treasure chest tin (1).
+  - Packs kept off the store on purpose (owner keeps one complete art set of each): Phantasmal
+    Flames, Mega Evolution, Journey Together, Pitch Black, Chaos Rising (4 each), plus one
+    Destined Rivals and one Perfect Order set. Silver Tempest packs aren't an art set; all loose.
+  - ENG-PO-PACK was added by hand (source 'manual:2026-11-11'), with a price rule added to
+    data/store_price_rules.csv (data file, not committed). Re-running the Squarespace importer
+    would not know it.
 - [owner] 5. "Buy on TCGplayer" goes to the store's front page for every product. Decide where it
   should go, given sealed may not be listed there.
 - [next] 6. Handle odd input cleanly in the store (page numbers, order links, webhook signature)
