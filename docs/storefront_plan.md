@@ -319,8 +319,8 @@ Decided by the owner on 2026-11-05, after the Utah State Tax Commission call (D2
   
   The cart uses the largest class present. Rates and the free-shipping threshold are settings
   (decision D3).
-- **Signature confirmation** on orders over **$150** (owner, 2026-11-09; chosen when buying the
-  label, so it isn't a store setting), to protect against "never arrived" disputes. Shipping
+- **Signature confirmation and tracking on every order** (owner, 2026-11-11; was orders over $150
+  from 2026-11-09; chosen when buying the label, so it isn't a store setting), to protect against "never arrived" disputes. Shipping
   insurance for the full value on orders over $100 (owner, 2026-11-09), also chosen per label.
 - **Handling time:** orders ship within **1 business day** of payment (owner, 2026-11-09).
 - **Lost packages** (owner, 2026-11-09): lost in transit (never shown delivered) gets a
@@ -449,7 +449,7 @@ Reviewed with the owner on 2026-10-31. D2 decided 2026-11-05.
 |---|---|---|
 | D1 | Which stock is listed here and which on TCGplayer | **Decided:** our site lists sealed product and accessories; singles stay on TCGplayer. Revisit after launch |
 | D2 | Sales tax method | **Decided (owner, 2026-11-05):** Stripe Tax adds tax on top at checkout; registered in Utah only, so out-of-state orders pay none. See "Sales tax" |
-| D3 | Shipping | **Decided:** flat rate by shipping class, free shipping over a threshold. Free shipping over **$150** (owner, 2026-11-05, matching PokeNE). Flat-rate amounts stay placeholders (small sealed $5, large sealed $9) until the owner sets them from Pirate Ship costs; live Pirate Ship rates at checkout are a later option |
+| D3 | Shipping | **Decided:** flat rate by shipping class, free shipping over a threshold. Free shipping over **$150** (owner, 2026-11-05, matching PokeNE). Flat rates (owner, 2026-11-11, from Pirate Ship costs with tracking and signature): **$10** for singles, accessories and small sealed, **$20** for large sealed; live Pirate Ship rates at checkout are a later option |
 | D4 | Look and feel | **Decided:** match market.poke6s.com (`scripts/dashboards/desktop_theme.css`) |
 | D5 | poke6s.com from 2026-11-14 until launch | **Decided:** forward to `poke6s.tcgplayerpro.com` in the Squarespace Domains panel |
 | D6 | When to move DNS to Cloudflare | **Decided:** soon (within a week or two), with Claude walking the owner through it, mail records double-checked |
@@ -492,3 +492,4 @@ Reviewed with the owner on 2026-10-31. D2 decided 2026-11-05.
 | 2026-11-09 | Claude | Owner reviewed the store rules and the text pages: all seven pages (About, Contact, FAQ, Privacy, Returns, Shipping, Terms) approved and no longer drafts, so they show without the draft note and are in the sitemap. Shipping filled in: ships in 1 business day, signature over $150, lost-package rules. Internal rules (insurance over $100, compliance, pricing) kept in the git-ignored `docs/private/store_operations.md` | Launch steps as planned |
 | 2026-11-11 | Claude | **Catalog-only launch (owner).** DNS moved to Cloudflare (free plan; all records copied, mail records DNS-only and checked); Cloudflare Tunnel `poke6s-home` (connector = `cloudflared` service in docker-compose, token in `.env`) routes poke6s.com and www to `http://storefront:8010`; www and http redirect to https://poke6s.com. Checkout is off (`STOREFRONT_CHECKOUT` unset), so products show "coming soon" + Buy on TCGplayer. `STOREFRONT_BASE_URL=https://poke6s.com`; Google indexing on; visitor counts read CF-Connecting-IP. market.poke6s.com still reaches the home IP directly (DNS only) | Owner: Search Console (sitemap). Later: market.poke6s.com through the tunnel, Stripe activation + `STOREFRONT_CHECKOUT=1`, SMTP, Phase 3 admin |
 | 2026-11-11 | Claude | Bare poke6s.com now on the tunnel (owner; www and apex both reach the store, old Squarespace paths 301). Google Search Console set up by the owner (property https://poke6s.com/, sitemap read: 68 pages); its numbers feed the "Google search" row of Grafana's Store dashboard (`scripts/monitoring/search_console.py`, read-only service account). Hosting and recovery steps in the runbook, "poke6s.com hosting" | Owner: Cloudflare "Always Use HTTPS". Storefront: answer HEAD requests. Then Stripe activation + `STOREFRONT_CHECKOUT=1` |
+| 2026-11-11 | Claude | Shipping rates set (owner, D3): $10 singles, accessories and small sealed; $20 large sealed; free over $150. Tracking and signature confirmation on every order (Shipping page updated). Cloudflare "Always Use HTTPS" on. Order alerts to Discord channel 1569946385548050533 once its webhook URL is in `.env` | Owner: Discord webhook URL, Stripe activation, Microsoft 365 sending. Claude: backups, Stripe webhook, Phase 3 admin |

@@ -112,8 +112,8 @@ STRIPE_WEBHOOK_SECRET=whsec_...       # from `stripe listen` or the dashboard we
 
 Live keys (`sk_live_...`) are refused unless `STOREFRONT_ALLOW_LIVE=1`; going live is the
 owner's call. Other settings (all optional, defaults in `app/settings.py`):
-`STOREFRONT_FREE_SHIPPING_OVER_CENTS` (15000), `STOREFRONT_SHIP_<CLASS>_CENTS` (placeholders:
-small sealed 500, large sealed 900, accessory 500, single 500), `STOREFRONT_TAX_MODE`
+`STOREFRONT_FREE_SHIPPING_OVER_CENTS` (15000), `STOREFRONT_SHIP_<CLASS>_CENTS` (small sealed
+1000, large sealed 2000, accessory 1000, single 1000), `STOREFRONT_TAX_MODE`
 (decision D2: `stripe` = Stripe Tax adds Utah sales tax on top at checkout, once Utah is
 registered under Tax -> Registrations in the Stripe dashboard; `none` = no tax, the default;
 anything else keeps checkout off), `STOREFRONT_DISCORD_WEBHOOK_URL` (order

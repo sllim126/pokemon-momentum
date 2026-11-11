@@ -20,7 +20,8 @@ an email with the tracking number when your order ships.
 ## Packing
 
 Sealed product is packed in a box with padding so corners and shrink wrap arrive intact.
-Orders over $150 ship with **signature confirmation**.
+Every order ships with **tracking** and **signature confirmation**, so someone needs to be
+there to sign for it.
 
 ## Damaged or lost packages
 
@@ -33,4 +34,4 @@ replacement or a full refund, your choice.
 
 **Marked delivered but missing.** Check with neighbors and your local post office first.
 Once tracking shows a package delivered we can't replace it, but we'll help you with the
-carrier claim. Orders over $150 need a signature on delivery for this reason.
+carrier claim. Every order needs a signature on delivery for this reason.

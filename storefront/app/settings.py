@@ -26,9 +26,10 @@ def _bool(value: str | None, default: bool = False) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-# Placeholder flat shipping rates by class, in cents, until the owner sets them from Pirate
-# Ship costs (plan decision D3). Override each with STOREFRONT_SHIP_<CLASS>_CENTS.
-DEFAULT_SHIP_RATES = {"single": 500, "accessory": 500, "small-sealed": 500, "large-sealed": 900}
+# Flat shipping rates by class, in cents (plan decision D3; owner, 2026-11-11, from Pirate Ship
+# costs: about $7.50 for a small box and $15-25 for a large one, plus tracking and signature
+# confirmation on every order). Override each with STOREFRONT_SHIP_<CLASS>_CENTS.
+DEFAULT_SHIP_RATES = {"single": 1000, "accessory": 1000, "small-sealed": 1000, "large-sealed": 2000}
 
 
 @dataclass(frozen=True)
