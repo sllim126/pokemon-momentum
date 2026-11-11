@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-11 (poke6s.com catalog-only launch; live branch feature/homelab-machines)
+Last updated: 2026-11-11 (milestone: self-hosted; poke6s.com on our own server)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -21,12 +21,8 @@ Status tags used below:
 
 When you finish an item, move it to Recently Completed with the date and commit, then
 archive older Recently Completed entries at the next milestone.
-- 2026-11-11 poke6s.com launched catalog-only on the new store (owner): DNS on Cloudflare,
-  Cloudflare Tunnel to the storefront container, www/http redirect to https://poke6s.com,
-  checkout switched off (STOREFRONT_CHECKOUT), Google indexing on. Squarespace site replaced;
-  the D5 forwarding stopgap is no longer needed. Log: docs/storefront_plan.md.
 
-Current Focus (2026-11-04)
+Current Focus (2026-11-11)
 --------------------------
 
 - Desktop: the single-page desktop app at `/` (desktop home since 2026-10-12) holds all five areas (Buy,
@@ -35,9 +31,10 @@ Current Focus (2026-11-04)
 - Mobile: the new phone app is live at `/`, `/mobile` and `/m-next` (owner switched it early,
   2026-10-31; plan and remaining stages in `docs/mobile_app_plan.md`). The old phone and research
   dashboards were deleted; tag `backup/before-mobile-cleanup-2026-10-31` holds their last copy.
-- Storefront: our own store on poke6s.com replaces Squarespace (plan ends 2026-11-14). Plan,
-  phases and progress log: `docs/storefront_plan.md`. Phase 1 running locally (2026-10-31);
-  online changes (Cloudflare, DNS) paused by the owner.
+- Storefront: our own store is live on https://poke6s.com/ (catalog only, self-hosted through a
+  Cloudflare Tunnel since 2026-11-11; Squarespace plan ends 2026-11-14). Next: switch checkout on
+  (Stripe live), then Phase 3 admin. Plan and log: `docs/storefront_plan.md`; hosting and
+  recovery: runbook "poke6s.com hosting".
 - Bug reports go to the Discord `#bug-reports` channel. New pages get no on-site bug form.
 - Dates: Pokémon Black Friday on TCGplayer ~Nov 25 - Dec 1; Squarespace plan ends Nov 14;
   first monthly TCGCSV archive torrent is due Dec 2.
@@ -47,6 +44,10 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
+- 2026-11-11 poke6s.com launched catalog-only on the new store (owner): DNS on Cloudflare,
+  Cloudflare Tunnel to the storefront container, www redirects to https://poke6s.com,
+  checkout switched off (STOREFRONT_CHECKOUT), Google indexing on. Squarespace site replaced;
+  the D5 forwarding stopgap is no longer needed. Log: docs/storefront_plan.md.
 - 2026-11-11 Owner pointed the bare poke6s.com at the tunnel: the new store answers at
   https://poke6s.com/ (sitemap 68 pages; old Squarespace paths 301 to the new ones). Note:
   plain DNS (port 53) queries from this server still got Squarespace's old A records, even
@@ -92,76 +93,6 @@ Recently Completed
   pool "zfs" (raidz2, 10 disks) all online, no errors; a scrub was running at install.
 - 2026-11-09 PBS backups live in Grafana (token root@pam!Grafana, Audit). The stalest-backup and
   no-backup tiles now count only current guests, and the table shows each guest's Proxmox name.
-- 2026-11-08 Backups and ZFS health in Grafana: code done (PBS section of collect_status.py,
-  deploy/monitoring/zfs/); each waits on one owner step, listed under Monitoring below.
-- 2026-11-08 Slowheim (Valheim machine) in Grafana: data sources for its own Prometheus and
-  Loki, and the owner's dashboard imported as Home lab: Slowheim (Valheim).
-- 2026-11-07 KPDH individual promo rescans: integrated scans 331-341 and 343 as
-  replacements for the older multi-card sheets, used scan 337 for all three identical PR2
-  backs, and left the unlisted duplicate Zoey-front scan 342 archived but unused. The builder
-  preserves the convention-promo backs from the first scan set and rotates PR2 after cropping.
-- 2026-11-06: Market insights, on branch `feature/market-insights` (owner: "start a branch and do
-  all of them; if I don't like it we can trim the branch"). Ideas from a look at similar sites,
-  built from data we already have (no new costs):
-  Market Stats gains Market mood (`/market_mood`; nightly step "Build <market> market mood
-  snapshot", soft), Track record (`/track_record`; picks recorded at site start into
-  `list_pick_history`; Budget Builder history now kept 400 days so it can be scored too) and
-  Releases (`/releases`; hand-kept `scripts/common/upcoming_sets.json`). Cards get the full
-  PriceCharting grade ladder (Graded tab; a "See all grades" dropdown under the four price boxes since
-  2026-11-07, at the owner's request) and price records (Full data). An Embed chart for
-  other sites was built and removed on 2026-11-07 (owner didn't want it). Search understands
-  16 collector nicknames. Desktop and phone; tests in
-  `tests/test_market_insights.py`. A population-based "graded market cap" was dropped: we have
-  no population counts (PriceCharting has prices and a sales count only).
-- 2026-11-07: Track record "By price, after fees" (same branch, owner agreed): each 7/14/30-day
-  result also gets an after-fees figure (resold at the later price minus `FEE_PCT` = 13% of the
-  sale, `pick_tracker.py`), and the summary is split at $40 entry price (`PRICE_BAND_SPLIT`).
-- 2026-11-06 More home lab machines in Grafana (Home lab: Servers): Proxmox Backup Server and
-  the OpenMediaVault storage server (node-exporter), Plex (web check of its /identity page),
-  and the Synology NAS Laomedeia over SNMP (snmp-exporter container, "Synology NAS" table).
-  Then: the Backup Server moved to its own row on Home lab: Proxmox cluster (nodes.yml label
-  group: proxmox), and a "ZFS pools (RAID health)" table for the OMV pool (node_zfs_zpool_state).
-  And a Plex row (streams, transcodes, items per library) from collect_status.py, using the
-  owner's Plex token in /etc/momentum-monitoring/plex-token.
-- 2026-11-05: Budget Builder picks rotate day to day (owner: "just for fun"). Prices move
-  little overnight, so the same cards won several days running. Cards shown by default on the
-  last three price dates lose 25 / 15 / 8 points (`BUDGET_ROTATION_PENALTIES` in api.py; history
-  in `budget_pick_history`, tracking SQLite, kept 400 days since 2026-11-06 for the Track record). Only default views are recorded
-  (not Keep or "New picks"), and only earlier dates count, so a day's picks hold all day. Both
-  builders (graded rotates per card across grades); "Picked recently" reason; How it works
-  updated; tests use a temporary tracking database. Simulated on 2026-11-04 prices: the next
-  day's $100 list shares no cards with today's.
-- 2026-11-06 KPDH PR1 promo scan centering: replaced rotation-plus-center-crop with
-  four-corner perspective correction for all six PR1 front/back assets. Every sleeve edge
-  now remains visible with an even scanner-bed margin; Rumi's back and both Mira sides were
-  individually reviewed against the owner's screenshots.
-- 2026-11-06 KPDH convention promo centering: extended four-corner perspective correction
-  to both sides of PR-01 and PR-02 after live review found excess whitespace and clipped
-  sleeve edges in the older center crops.
-- 2026-11-06 KPDH promo scan alignment: independently straightened all eight fronts and
-  eight backs, standardized crops to the physical portrait/landscape ratios, and corrected
-  the PR2 back-sheet bounds so rotation does not clip the Kayou logo. Mira PR1-02 uses
-  separate measured corrections for its front (3.3° clockwise) and back (2.0° counter-clockwise).
-  Deployed the same day; all 16 public assets verified, with Mira checked byte-for-byte.
-- 2026-11-06 KPDH promo physical-card update: all eight front/back 600 DPI scans received
-  and reviewed; corrected provisional promo IDs and PR2-02's name, added catalog-v5 quantity
-  migration, optimized individual assets, reproducible crops and a front/back detail toggle.
-  Raw PDFs remain ignored under `data/kpdh_scan_intake/`. Branch:
-  `feature/kpdh-promo-scans`; review passed with 266 tests and 33 subtests; merged locally
-  after owner approval. Deployed 2026-11-06; all eight fronts and backs verified publicly.
-- 2026-11-06 Storefront order emails redesigned (owner): HTML version with the logo, order
-  table, totals, "Track package" button (USPS/UPS/FedEx/DHL) and "View your order" button; the
-  plain-text version stays for mail apps that don't show HTML.
-- 2026-11-06 Storefront Phase 2 checked by the owner on :8010 from computers, iPad and phone:
-  Utah order taxed by Stripe Tax ($18.68 on $250.80), Arizona order untaxed, shipped email works.
-- 2026-11-05 Storefront sales tax (D2, owner): Stripe Tax adds Utah sales tax on top at
-  checkout; Utah registered in the Stripe sandbox and checked (South Jordan rate 7.45% on any
-  Utah address, $0 out of state). A free fixed-rate version was tried; Stripe no longer allows
-  per-state rates in Checkout.
-- 2026-11-05 Storefront runs from its own clone (`~/poke6s-store`, `main` only) via
-  `deploy/update_storefront.sh`, so branch switches in the repo folder no longer change :8010.
-- 2026-11-05 Branch clean-up: deleted 8 local branches already in `main`. Kept the unmerged
-  ones (KPDH, Lorcana plan, chat history, mobile note, budget rotation) for their owners.
 
 High Priority
 -------------

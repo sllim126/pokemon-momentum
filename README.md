@@ -11,7 +11,8 @@ It combines:
 - a family of English and Japanese market indexes
 - collector placeholder/checklist resources
 - Google-based synced tracking auth
-- Squarespace pricing and listing operations
+- our own storefront on poke6s.com (separate container, self-hosted through a Cloudflare Tunnel;
+  `storefront/README.md`), plus the Squarespace pricing scripts until that plan ends 2026-11-14
 
 The goal is simple: make it easier to spot what is moving, what may be starting to move, and which sets or products deserve attention.
 

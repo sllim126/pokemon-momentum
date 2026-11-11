@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-11 (Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search)
+Last reviewed: 2026-11-11 (Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -450,6 +450,40 @@ Run the focused catalog checks after any KPDH catalog, image or layout change:
 ```bash
 docker-compose exec -T pokemon-momentum python -m pytest -q -p no:cacheprovider tests/test_kpdh_series2.py
 ```
+
+
+poke6s.com hosting (self-hosted since 2026-11-11)
+-------------------------------------------------
+poke6s.com is the owner's own store, running on this server; Squarespace's website plan ends
+2026-11-14 and is not renewed (the domain registration stays). The path a visitor takes:
+
+  visitor -> Cloudflare (DNS, HTTPS certificate, free plan) -> Cloudflare Tunnel "poke6s-home"
+          -> container cloudflared (outbound connection only; no port opened on the router)
+          -> container poke6s-storefront (http://storefront:8010)
+
+- DNS for poke6s.com is in Cloudflare. poke6s.com and www are proxied records for the tunnel;
+  www redirects to https://poke6s.com/. Mail records are DNS-only and must stay that way.
+  market.poke6s.com still points at the home IP directly (DNS only), not through the tunnel.
+- The connector's token is CLOUDFLARE_TUNNEL_TOKEN in .env (never print it). The image tag is
+  pinned in docker-compose.yml; bump it at least yearly (Cloudflare supports a connector
+  version for one year), then `docker-compose up -d cloudflared`.
+- The store's code runs from its own clone, ~/poke6s-store, which holds `main` only. After
+  storefront work is merged to main: deploy/update_storefront.sh. Settings that matter in
+  .env: STOREFRONT_BASE_URL=https://poke6s.com, STOREFRONT_ALLOW_INDEXING=1. Checkout is off
+  (STOREFRONT_CHECKOUT unset): products show "coming soon" and a Buy on TCGplayer link.
+- Monitoring: Grafana's Store dashboard ("Store up (local)" tile, orders, stock, Google search).
+- Checking DNS: use DNS over HTTPS, e.g.
+  `curl -s 'https://dns.google/resolve?name=poke6s.com&type=A'`. Plain dig (port 53) from
+  this server got Squarespace's old answers on 2026-11-11 even from 1.1.1.1 and Cloudflare's
+  own nameservers: something on the home network answers port-53 queries from a cache.
+
+If poke6s.com is down:
+  1. `curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8010/healthz`; not 200: the store
+     itself. `docker logs --tail 50 poke6s-storefront`, then deploy/update_storefront.sh.
+  2. Store fine locally: `docker logs --tail 50 cloudflared` (look for "Registered tunnel
+     connection"); `docker-compose up -d cloudflared`. The Cloudflare dashboard's Zero Trust >
+     Networks > Tunnels page shows whether poke6s-home is healthy.
+  3. Both fine: the DNS records in Cloudflare (check with DNS over HTTPS, above).
 
 
 Store Pricing Ops

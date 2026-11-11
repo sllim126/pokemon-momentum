@@ -1,8 +1,10 @@
 # New storefront for poke6s.com: plan
 
-Last reviewed: 2026-11-09
-**Status: Phase 1 under way (local only), started 2026-10-31.** Cloudflare and all other online
-changes are paused by the owner (2026-10-31): build and run locally, Stripe test mode only.
+Last reviewed: 2026-11-11
+**Status: live catalog-only on https://poke6s.com/ since 2026-11-11**, self-hosted on the owner's
+server through a Cloudflare Tunnel (runbook "poke6s.com hosting"). Phases 1 and 2 built;
+checkout stays off (Stripe test mode only) until the owner activates live payments. Google
+Search Console is set up, and its numbers are on Grafana's Store dashboard.
 Developer guide for the code: `storefront/README.md`. See "Progress log" at the end.
 
 The owner decided on 2026-10-31 to replace the Squarespace store with our own storefront on
@@ -489,3 +491,4 @@ Reviewed with the owner on 2026-10-31. D2 decided 2026-11-05.
 | 2026-11-05 | Claude | D2 decided: Stripe Tax (`STOREFRONT_TAX_MODE=stripe`), Utah registered in the sandbox and checked ($130 to any Utah address adds $9.69; Nevada $0). Unknown tax modes keep checkout off; cart and Terms say tax is added for Utah orders; checkout idempotency key made unique when order numbers repeat | Owner: register Utah in live-mode Stripe Tax at activation |
 | 2026-11-09 | Claude | Owner reviewed the store rules and the text pages: all seven pages (About, Contact, FAQ, Privacy, Returns, Shipping, Terms) approved and no longer drafts, so they show without the draft note and are in the sitemap. Shipping filled in: ships in 1 business day, signature over $150, lost-package rules. Internal rules (insurance over $100, compliance, pricing) kept in the git-ignored `docs/private/store_operations.md` | Launch steps as planned |
 | 2026-11-11 | Claude | **Catalog-only launch (owner).** DNS moved to Cloudflare (free plan; all records copied, mail records DNS-only and checked); Cloudflare Tunnel `poke6s-home` (connector = `cloudflared` service in docker-compose, token in `.env`) routes poke6s.com and www to `http://storefront:8010`; www and http redirect to https://poke6s.com. Checkout is off (`STOREFRONT_CHECKOUT` unset), so products show "coming soon" + Buy on TCGplayer. `STOREFRONT_BASE_URL=https://poke6s.com`; Google indexing on; visitor counts read CF-Connecting-IP. market.poke6s.com still reaches the home IP directly (DNS only) | Owner: Search Console (sitemap). Later: market.poke6s.com through the tunnel, Stripe activation + `STOREFRONT_CHECKOUT=1`, SMTP, Phase 3 admin |
+| 2026-11-11 | Claude | Bare poke6s.com now on the tunnel (owner; www and apex both reach the store, old Squarespace paths 301). Google Search Console set up by the owner (property https://poke6s.com/, sitemap read: 68 pages); its numbers feed the "Google search" row of Grafana's Store dashboard (`scripts/monitoring/search_console.py`, read-only service account). Hosting and recovery steps in the runbook, "poke6s.com hosting" | Owner: Cloudflare "Always Use HTTPS". Storefront: answer HEAD requests. Then Stripe activation + `STOREFRONT_CHECKOUT=1` |
