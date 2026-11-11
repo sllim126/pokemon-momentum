@@ -66,9 +66,13 @@
       <p><a class="btn" href="{{ buy_url }}">TCGplayer store</a>
          <a class="btn" href="mailto:{{ settings.contact_email }}?subject={{ ('Restock: ' ~ product.title) | urlencode }}">Email us</a></p>
       {% else %}
-      <p><strong>Checkout on poke6s.com is coming soon.</strong> Until then, buy from our TCGplayer store or email us.</p>
-      <p><a class="btn primary" href="{{ buy_url }}">Buy on TCGplayer</a>
-         <a class="btn" href="mailto:{{ settings.contact_email }}?subject={{ ('Question about ' ~ product.title) | urlencode }}">Email us</a></p>
+      {#- Checkout off (owner, 2026-11-11): TCGplayer for anyone who wants it now, or the email list. #}
+      <p><strong>We're rebuilding our store right now.</strong> If you'd like this today, buy it on
+        TCGplayer. Otherwise, join the list and we'll email you when checkout opens here.</p>
+      <p><a class="btn primary" href="{{ buy_url }}" rel="sponsored noopener">Buy on TCGplayer</a></p>
+      {% include "_notify_form.html" %}
+      <p class="small muted">TCGplayer links are affiliate links: Poke6s may earn a small commission.
+        Questions? <a href="mailto:{{ settings.contact_email }}?subject={{ ('Question about ' ~ product.title) | urlencode }}">Email us</a>.</p>
       {% endif %}
     </div>
 

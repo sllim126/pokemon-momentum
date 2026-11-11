@@ -10,6 +10,12 @@ otherwise product pages link to the TCGplayer store. The public launch (2026-11-
 catalog-only: `STOREFRONT_CHECKOUT` is unset, which means off.
 While checkout is off, product pages show no stock counts (only "Sold out") and the structured
 data leaves out `availability` instead of claiming `InStock` (owner, 2026-11-11).
+Also while it is off (owner, 2026-11-11): a "we're rebuilding" note under the header, and product
+pages offer "Buy on TCGplayer" (the product's TCGplayer page through the affiliate link,
+`STOREFRONT_TCGPLAYER_AFFILIATE`; a product's own `tcgplayer_url` wins) plus an "email me when
+the store opens" form. Sign-ups go to the `notify_signups` table (`app/notify_list.py`); list
+them with
+`sqlite3 data/storefront/store.db "SELECT email, source, created_at FROM notify_signups"`.
 Nothing is public: robots are blocked and every page says `noindex` until
 `STOREFRONT_ALLOW_INDEXING=1` at launch.
 
@@ -178,6 +184,7 @@ stock by hand until the Phase 3 admin.
 
 | File | What it does |
 |---|---|
+| `app/notify_list.py` | The "email me when the store opens" list (POST /notify) |
 | `app/main.py` | FastAPI app: routes, 404 + redirect handling, security headers, reconcile loop |
 | `app/orders.py` | Cart pricing, checkout, reservations, payment, expiry, refunds, disputes, shipping |
 | `app/stripe_api.py` | The Stripe calls (Checkout Sessions) over HTTPS; webhook signature check |

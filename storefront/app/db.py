@@ -18,8 +18,9 @@ def connect(db_path: Path, *, readonly: bool = False, writer: bool = False) -> s
     """Open the store database.
 
     The public pages open it read-only, so a bug in a page handler can't change products or
-    orders. Only checkout, the Stripe webhook and the reconcile job (orders.py) open a
-    `writer`: autocommit mode, so orders.py controls each transaction with BEGIN IMMEDIATE.
+    orders. Only checkout, the Stripe webhook, the reconcile job (orders.py) and the
+    "email me when we open" sign-up (notify_list.py) open a `writer`: autocommit mode, so
+    orders.py controls each transaction with BEGIN IMMEDIATE.
     """
     if writer:
         conn = sqlite3.connect(db_path, check_same_thread=False, isolation_level=None)
