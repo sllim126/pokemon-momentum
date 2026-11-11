@@ -1067,6 +1067,9 @@ though qBittorrent still uploads on connections it opens itself.
   to it over the LAN only (libtorrent with DHT and trackers off, port 6891) and point
   qBittorrent at `192.168.1.240:6891` (`/api/v2/torrents/addPeers`). That's how 2024 and 2025
   were loaded on 2026-11-02.
+- Planned (2026-11-11): a monthly product-data torrent, built from the catalogue crawl's
+  `data/tcgcsv_catalogue/` as one `.tar.zst` (~33 MB). See docs/todo.txt, "TCGCSV
+  product-data torrent". Not built yet.
 - Info hashes: 2024 `b4e6415457ba8f5a841cceb149242d48542f58de`,
   2025 `90554b38726121571b352ae75fd1143aff4a5064`.
 

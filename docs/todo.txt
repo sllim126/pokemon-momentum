@@ -543,6 +543,18 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   Next: [planned] automate it before 2026-12-02 (build here, push to qBittorrent with the
   LAN seed step, post the magnet link to Discord); needs libtorrent in a host venv and a
   crontab line the owner adds. Until then, build and add by hand on the 2nd.
+- [planned] TCGCSV product-data torrent (owner, 2026-11-11): binaryalias asked in the TCGCSV
+  Discord for the full product list as a torrent, for people's first download; CptSpaceToaster
+  doesn't keep product data in the archives and said to go ahead. We already hold it: the
+  catalogue crawl (`data/tcgcsv_catalogue/`) is complete, 94 games, 93 set lists, 4,733 product
+  files, 655 MB, fetched 2026-11-02 to 11-04 and refreshed every 30 days. As one `.tar.zst`
+  (zstd -19) it is 33 MB. About an hour: add `--catalogue` to
+  `scripts/torrents/build_archive_torrent.py` (one dated `tcgcsv-products-<date>.tar.zst`,
+  README with fetch dates and layout, SHA256SUMS), seed it the same way as the price torrents,
+  reply in the #useful-shares thread. Then a new snapshot each month next to the monthly price
+  torrent (the crawl's next refresh is ~2026-12-02 to 12-04). README must say it is a starting
+  point (sets added since the snapshot are missing; top up from TCGCSV) and has no prices (those
+  are in the archive torrents). Same promise: take it down if CptSpaceToaster asks.
 - [idea] Help TCGCSV by seeding a torrent of the price archive (owner offered in the TCGCSV
   Discord #development, 2026-10-19; CptSpaceToaster can't torrent and said "hopefully some
   enterprising folks" would). Archive is about 1 GB, all categories, prices only. Before
