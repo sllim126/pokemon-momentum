@@ -93,6 +93,11 @@ def client_ip(scope) -> str:
         from_private = any(ipaddress.ip_address(peer) in net for net in _PRIVATE)
     except ValueError:
         from_private = False
+    # Since launch (2026-11-11) public traffic arrives through the Cloudflare Tunnel connector
+    # (a container on the private Docker network), which passes the visitor in CF-Connecting-IP.
+    cf_ip = headers.get(b"cf-connecting-ip", b"").decode("latin-1").strip()
+    if cf_ip and from_private:
+        return cf_ip
     if forwarded and from_private:
         # Caddy appends the address it saw, so the last entry is the one to trust.
         return forwarded.split(",")[-1].strip()

@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-09 (store policy pages; October leftovers)
+Last updated: 2026-11-11 (poke6s.com catalog-only launch)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -21,6 +21,10 @@ Status tags used below:
 
 When you finish an item, move it to Recently Completed with the date and commit, then
 archive older Recently Completed entries at the next milestone.
+- 2026-11-11 poke6s.com launched catalog-only on the new store (owner): DNS on Cloudflare,
+  Cloudflare Tunnel to the storefront container, www/http redirect to https://poke6s.com,
+  checkout switched off (STOREFRONT_CHECKOUT), Google indexing on. Squarespace site replaced;
+  the D5 forwarding stopgap is no longer needed. Log: docs/storefront_plan.md.
 
 Current Focus (2026-11-04)
 --------------------------
@@ -271,7 +275,7 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   deprecated; moving to a lifespan handler means passing it when `app` is created.
 - [next] Check the 2026-11-06 02:00 nightly update is green: first run with the snapshot
   builders reading through `prices_by_current_group`. If it fails, see docs/data_flow.txt step 5.
-- [next] Owner, before 2026-11-14: domain forwarding stopgap (plan decision D5) (the Squarespace
+- [done 2026-11-11, not needed: the new store launched catalog-only] Owner, before 2026-11-14: domain forwarding stopgap (plan decision D5) (the Squarespace
   website plan is cancelled, ending 2026-11-14, confirmed 2026-10-31); no final products export needed (owner, 2026-11-05: no new products; the
   2026-10-31 export is the last). Products, orders and customers/subscribers were exported 2026-10-31; page text, blog
   posts and images were saved by script the same day. No site changes are expected before the
@@ -304,8 +308,8 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     email was received (sent by hand from admin@poke6s.com, SMTP not set up yet).
   - [planned] `orders_cli ship` says "email sent" even when it only went to the outbox; say
     which. Its order-status link uses STOREFRONT_BASE_URL (localhost until launch).
-  - [planned] STRIPE_WEBHOOK_SECRET: needs a public address Stripe can reach (Cloudflare
-    Tunnel, paused by the owner) or the Stripe CLI. Until then the thanks page and the 15-minute
+  - [planned] STRIPE_WEBHOOK_SECRET: the Tunnel is up since 2026-11-11, so add a Stripe
+    webhook to https://poke6s.com/stripe/webhook when checkout is switched on. Until then the thanks page and the 15-minute
     reconcile job confirm payments.
   - [waiting] Owner: Stripe activation (business profile, bank, statement descriptor POKE6S)
     before live payments, and Tax -> Registrations -> Utah in live mode. Use the new Stripe
@@ -318,6 +322,12 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
 - [next] Phase 3: LAN-only admin (orders, ship with tracking, refunds, stock), exports (Pirate
   Ship, sales tax, bookkeeping, TCGplayer reconciliation), signature confirmation over ~$250,
   backups.
+- [next] Owner: add poke6s.com to Google Search Console (DNS check through Cloudflare) and
+  submit https://poke6s.com/sitemap.xml.
+- [planned] Switch checkout on: Stripe live activation, live keys in .env, STOREFRONT_CHECKOUT=1,
+  STOREFRONT_ALLOW_LIVE=1, webhook, a refunded live test order. Then the market site's buy button.
+- [planned] Move market.poke6s.com onto the Cloudflare Tunnel too (route to
+  http://pokemon-momentum:8001; check the Caddy/visitor-IP path), then close the router port.
 - [planned] After launch: retire `scripts/squarespace_price_sync.py` from cron
   (`deploy/crontab.txt`) and switch the market site's "Poke6s" buy button to the new store.
 
