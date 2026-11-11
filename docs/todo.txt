@@ -44,6 +44,10 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-11 Store review item 6: odd page numbers, non-ASCII order-link tokens and webhook
+  signatures, and non-numeric image widths now get a page or a 404, not a 500 or 422
+  (f182035, deployed, checked live). Not yet pushed to GitHub: SSH to github.com:22 timed out
+  that night (HTTPS fine); local main has it, so `git push origin main` once SSH is back.
 - 2026-11-11 Store review item 5 (owner's choice): while checkout is off, "Buy on TCGplayer"
   opens the product's own TCGplayer page through the owner's affiliate link (disclosed on the
   page), a "we're rebuilding" note sits under the header, and product pages and /notify take an
@@ -274,8 +278,7 @@ Live now:
     the note and form go away on their own (they show only while checkout is off).
   - [planned] The list has no unsubscribe link yet; the one "we're open" email must include a
     way to opt out (CAN-SPAM) and the sender's postal address.
-- [next] 6. Handle odd input cleanly in the store (page numbers, order links, webhook signature)
-  instead of a 500 error; a bad image address should be a 404.
+- [done 2026-11-11] 6. Odd addresses no longer cause 500 errors (see Recently Completed).
 - [next] 7. Tighten who can read credentials on the server, and give the market container only
   the folders it needs. Owner: delete the spare tunnel token copy in poke6s-books.
 - [owner] 8. Cloudflare account: turn on two-factor login and save the recovery codes.
