@@ -24,8 +24,16 @@ Nothing is public: robots are blocked and every page says `noindex` until
 
 ```sh
 deploy/update_storefront.sh                  # run the store on :8010 from the latest main
-make test-storefront                         # synthetic data only
+make test-storefront                         # synthetic data only, in the "test" image
 ```
+
+**Package versions are pinned** (since 2026-11-12): `requirements.txt` (what the store uses),
+`requirements-dev.txt` (pytest and httpx, test image only) and `constraints.txt` (every package
+underneath, exact). The base image is pinned to `python:3.12.16-slim-trixie`. The served image
+(Dockerfile stage `runtime`) has no test tools; `make test-storefront` builds stage `test`. To
+upgrade anything: change the version, `make test-storefront`, refresh `constraints.txt` from
+`docker run --rm poke6s-storefront-test pip freeze`, commit, deploy. Bump the base image about
+monthly for security fixes.
 
 The store on :8010 runs from its own clone, `~/poke6s-store`, which only holds `main`, so
 coding sessions switching branches in the repo folder don't change it. The script pulls `main`

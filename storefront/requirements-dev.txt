@@ -1,0 +1,4 @@
+# Test tools, installed only in the test image (Dockerfile, stage "test"), never in the one
+# that serves the public site.
+pytest==9.2.0
+httpx==0.28.1
