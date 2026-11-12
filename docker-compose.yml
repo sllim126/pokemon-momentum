@@ -71,7 +71,11 @@ services:
       STOREFRONT_SMTP_USER: ${STOREFRONT_SMTP_USER:-}
       STOREFRONT_SMTP_PASSWORD: ${STOREFRONT_SMTP_PASSWORD:-}
     ports:
-      - "8010:8010"
+      # This machine only (security review 2026-11-11, item 10): the public site comes in
+      # through the tunnel (cloudflared, on the Docker network), and monitoring, the deploy
+      # script and Search Console use localhost. LAN devices can't reach it or fake the
+      # visitor-address header.
+      - "127.0.0.1:8010:8010"
     volumes:
       - ${STOREFRONT_CODE_DIR:-./storefront}:/app/storefront
       - ./data:/app/data:ro

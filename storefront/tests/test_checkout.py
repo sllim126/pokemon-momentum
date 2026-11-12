@@ -450,3 +450,42 @@ def test_live_keys_are_refused_unless_allowed(imported):
 
 def test_stripe_form_encoding():
     assert form_encode({"a": {"b": [1, {"c": True}]}, "n": None}) == [("a[b][0]", "1"), ("a[b][1][c]", "true")]
+
+
+# --- what one visitor can hold (security review item 10) ---------------------------------
+
+def test_one_visitor_can_hold_only_three_open_checkouts(app_client, shop, fake):
+    sessions = [start(app_client, ("JP-PACK-A", 1)) for _ in range(3)]
+    fourth = app_client.post("/checkout", json=cart(("JP-PACK-A", 1)))
+    assert fourth.status_code == 429 and "finish or cancel" in fourth.json()["error"]
+    # Cancelling one (back from Stripe without paying) frees a place straight away.
+    cancel_url = fake.sessions[sessions[0]]["params"]["cancel_url"]
+    app_client.get(cancel_url.replace("http://testserver", ""))
+    start(app_client, ("JP-PACK-A", 1))
+    assert_stock_matches_movements(shop)
+
+
+def test_one_visitor_can_hold_only_twelve_units(app_client, shop):
+    start(app_client, ("JP-PACK-A", 10))
+    too_many = app_client.post("/checkout", json=cart(("JP-AE-BB", 3)))
+    assert too_many.status_code == 429
+    assert stock(shop, "JP-AE-BB") == 3      # nothing reserved by the refused attempt
+    start(app_client, ("JP-AE-BB", 2))       # 12 in all is allowed
+
+
+def test_paid_checkouts_stop_counting(app_client, shop, fake):
+    sessions = [start(app_client, ("JP-PACK-A", 1)) for _ in range(3)]
+    fake.pay(sessions[0])
+    app_client.get(f"/order/thanks?session_id={sessions[0]}")
+    start(app_client, ("JP-PACK-A", 1))
+
+
+def test_a_faked_visitor_header_doesnt_get_round_the_cap(app_client):
+    # The test client isn't a private-network peer, so CF-Connecting-IP is ignored: all four
+    # attempts are the same visitor however the header is set.
+    for n in range(3):
+        response = app_client.post("/checkout", json=cart(("JP-PACK-A", 1)),
+                                   headers={"CF-Connecting-IP": f"203.0.113.{n}"})
+        assert response.status_code == 200
+    fourth = app_client.post("/checkout", json=cart(("JP-PACK-A", 1)), headers={"CF-Connecting-IP": "203.0.113.9"})
+    assert fourth.status_code == 429

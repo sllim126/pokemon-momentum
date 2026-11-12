@@ -551,8 +551,9 @@ Recommended operator flow when adding a new SKU:
 New storefront (poke6s.com, local only)
 ---------------------------------------
 
-The replacement for Squarespace runs in its own container, `poke6s-storefront`, on port 8010
-(home network only; not published until launch). Details: `storefront/README.md`.
+The replacement for Squarespace runs in its own container, `poke6s-storefront`, on port 8010,
+which listens on this machine only (`127.0.0.1`, since 2026-11-12): the public reaches it through
+the Cloudflare Tunnel. Details: `storefront/README.md`.
 
 - The store runs from its own copy of the code, `~/poke6s-store` (a clone holding `main`
   only), not from this folder, so coding sessions switching branches here don't change it.
