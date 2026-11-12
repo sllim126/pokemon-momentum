@@ -43,7 +43,10 @@ class FakeMicrosoft:
         assert headers["Authorization"] == "Bearer tok" and headers["Content-Type"] == "text/plain"
         if self.down:
             return Reply(503, {"error": {"code": "ServiceUnavailable"}})
-        self.sent.append(message_from_bytes(base64.b64decode(data), policy=policy.default))
+        raw = base64.b64decode(data)
+        # Like Exchange: the MIME text must use CRLF line endings throughout (no bare LF).
+        assert b"\n" not in raw.replace(b"\r\n", b""), "bare LF line endings"
+        self.sent.append(message_from_bytes(raw, policy=policy.default))
         return Reply(202)
 
 
@@ -141,3 +144,11 @@ def test_cli_test_email(graph, microsoft, monkeypatch, capsys):
     assert orders_cli.main(["test-email", "--to", "me@example.com"]) == 0
     assert "sent via graph" in capsys.readouterr().out
     assert microsoft.sent[0]["To"] == "me@example.com"
+
+
+def test_a_long_line_arrives_whole(graph, microsoft, alerts):
+    line = "This is a test from the poke6s.com store. If you can read it, order emails will arrive too."
+    notify.send_email(graph, "buyer@example.com", "Hello", line, "<p>" + "x" * 300 + "</p>")
+    sent = microsoft.sent[0]
+    assert sent.get_body(("plain",)).get_content().strip() == line
+    assert "x" * 300 in sent.get_body(("html",)).get_content()
