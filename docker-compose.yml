@@ -35,7 +35,10 @@ services:
   storefront:
     # The code comes from the store's own clone (STOREFRONT_CODE_DIR, set by
     # deploy/update_storefront.sh) so branch switches in this folder don't change the store.
-    build: ${STOREFRONT_CODE_DIR:-./storefront}
+    build:
+      context: ${STOREFRONT_CODE_DIR:-./storefront}
+      # The image that serves the site: pinned packages, no test tools (storefront/Dockerfile).
+      target: runtime
     container_name: poke6s-storefront
     # Run as the host user, so the database, photos and article files the store and its
     # importers write stay owned by (and editable for) the owner, not root.

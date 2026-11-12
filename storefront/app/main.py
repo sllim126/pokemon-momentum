@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import hmac
+import json
 import logging
 import re
 import sqlite3
@@ -71,7 +72,15 @@ SECURITY_HEADERS = {
         "default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self'; "
         "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
     ),
+    # Security review 2026-11-11, item 16. Browsers remember to use HTTPS for a year (the site
+    # is HTTPS-only behind Cloudflare). No includeSubDomains: other poke6s.com names (mail)
+    # aren't ours to promise.
+    "Strict-Transport-Security": "max-age=31536000",
+    # No page needs the camera, microphone, location or USB; Stripe's checkout is its own page.
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), usb=()",
 }
+# Largest cart or checkout request accepted (item 16). A full cart (50 lines) is about 3 KB.
+MAX_CART_BODY_BYTES = 32 * 1024
 
 
 def load_pages() -> dict[str, dict]:
@@ -189,6 +198,15 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         if not settings.tcgplayer_affiliate_base:
             return target
         return f"{settings.tcgplayer_affiliate_base}?{urlencode({'u': target})}"
+
+    async def cart_json(request: Request):
+        """The request's JSON, read only up to MAX_CART_BODY_BYTES (ValueError beyond that)."""
+        body = bytearray()
+        async for chunk in request.stream():
+            body += chunk
+            if len(body) > MAX_CART_BODY_BYTES:
+                raise ValueError("request too large")
+        return json.loads(body)
 
     def visitor(request: Request) -> str:
         # The visitor's address. CF-Connecting-IP (set by the Cloudflare Tunnel) is believed
@@ -469,7 +487,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     @app.post("/cart/quote")
     async def cart_quote(request: Request):
         try:
-            cart_items = orders.parse_cart(await request.json())
+            cart_items = orders.parse_cart(await cart_json(request))
         except (orders.CartError, ValueError):
             return JSONResponse({"error": "The cart is not readable."}, status_code=400)
         with db() as conn:
@@ -489,7 +507,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         if len(attempts) >= CHECKOUTS_PER_HOUR:
             return JSONResponse({"error": "Too many checkout attempts. Please try again later."}, status_code=429)
         try:
-            cart_items = orders.parse_cart(await request.json())
+            cart_items = orders.parse_cart(await cart_json(request))
         except (orders.CartError, ValueError):
             return JSONResponse({"error": "The cart is not readable."}, status_code=400)
         with db() as conn:
