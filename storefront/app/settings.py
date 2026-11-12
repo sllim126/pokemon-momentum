@@ -76,7 +76,7 @@ class Settings:
     discord_webhook_url: str = ""
     # Order emails through Microsoft 365: Microsoft Graph, signed in as the app registration
     # "poke6s-store-mail" (security review item 12; Microsoft is retiring password SMTP), which
-    # Exchange lets send only as admin@poke6s.com. The secret is never logged. SMTP below is the
+    # Exchange lets send only as orders@poke6s.com (a free shared mailbox). The secret is never logged. SMTP below is the
     # older fallback. With neither, emails are written to data/storefront/outbox/ instead of
     # sent, which is what tests and local runs use.
     graph_tenant_id: str = ""
@@ -86,7 +86,7 @@ class Settings:
     smtp_port: int = 587
     smtp_user: str = ""
     smtp_password: str = ""
-    mail_from: str = "Poke6s <admin@poke6s.com>"
+    mail_from: str = "Poke6s <orders@poke6s.com>"
 
     @property
     def stripe_mode(self) -> str:
@@ -171,5 +171,5 @@ def load_settings() -> Settings:
         smtp_port=_int("STOREFRONT_SMTP_PORT", 587),
         smtp_user=os.getenv("STOREFRONT_SMTP_USER", "").strip(),
         smtp_password=os.getenv("STOREFRONT_SMTP_PASSWORD", ""),
-        mail_from=os.getenv("STOREFRONT_MAIL_FROM", "Poke6s <admin@poke6s.com>"),
+        mail_from=os.getenv("STOREFRONT_MAIL_FROM", "Poke6s <orders@poke6s.com>"),
     )
