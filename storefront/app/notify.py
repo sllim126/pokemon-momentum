@@ -119,8 +119,11 @@ def _deliver(settings: Settings, message: EmailMessage) -> None:
             sender = parseaddr(str(message["From"]))[1]
             response = requests.post(
                 f"{GRAPH}/users/{quote(sender)}/sendMail",
-                # Graph takes the whole MIME message, base64-encoded, as text/plain.
-                data=base64.b64encode(bytes(message)),
+                # Graph takes the whole MIME message, base64-encoded, as text/plain. It must use
+                # the email standard's CRLF line endings: with bare LF, Exchange misreads the
+                # quoted-printable soft line breaks and a long line arrives as "wi=l" (seen on
+                # the first test email, 2026-11-12).
+                data=base64.b64encode(message.as_bytes(policy=policy.SMTP)),
                 headers={"Authorization": f"Bearer {_graph_access_token(settings)}", "Content-Type": "text/plain"},
                 timeout=30)
             if response.status_code != 202:
