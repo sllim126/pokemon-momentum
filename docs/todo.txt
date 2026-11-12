@@ -48,6 +48,9 @@ Recently Completed
   cron 03:15, job `storefront-backup`) into data/backups/storefront/, 30 days, checked with
   integrity_check; restore command with a practice mode. Drill done: restored copy matched
   the live counts and a throwaway store ran on it. Runbook: "Store backups".
+- 2026-11-12 The store backup is also mirrored nightly to the Synology's Backup share
+  (Poke6s folder; encrypted SMB mount at /mnt/synology-backup, owner's account in a
+  root-only credentials file). A restore from that copy was tested.
 - 2026-11-12 market.poke6s.com now follows the home IP by itself: scripts/utilities/
   update_market_dns.py runs every 5 minutes (cron job `market-dns`, logs/market_dns.log) and
   moves the Cloudflare `market` A record when the IP changes, with a Discord note. Token:
@@ -299,9 +302,11 @@ Live now:
 - [done 2026-11-12] 8. Cloudflare account: email two-factor and a passkey set up by the owner.
 
 Required before checkout goes live:
-- [done 2026-11-12] 9. Store backup and tested restore (see Recently Completed). Next step:
-  [waiting] a nightly copy to the Synology NAS (192.168.1.120), once the owner sets up a
-  backup share and user there.
+- [done 2026-11-12] 9. Store backup and tested restore, mirrored nightly to the Synology
+  (see Recently Completed).
+- [next] Owner: change the PlexVault (192.168.1.155) password, which sits in plain text in
+  /etc/fstab (seen 2026-11-12); then move it into a root-only credentials file like
+  /etc/samba/synology-backup.cred.
 - [planned] 10. Limit how much stock one visitor can hold at checkout.
 - [planned] 11. Treat the Stripe webhook as required: refunds and disputes depend on it.
 - [planned] 12. Order emails: alert when one fails, allow a resend, set up DKIM for the domain.
