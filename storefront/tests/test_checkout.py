@@ -565,3 +565,19 @@ def test_oversized_cart_requests_are_refused(app_client, path):
     response = app_client.post(path, content=json.dumps({"items": [], "pad": padding}),
                                headers={"Content-Type": "application/json"})
     assert response.status_code == 400
+
+
+def test_order_page_links_to_the_carriers_tracking(app_client, shop, fake):
+    session_id = start(app_client, ("JP-PACK-A", 1))
+    send_event(app_client, {"id": "evt_t", "type": "checkout.session.completed",
+                            "data": {"object": fake.pay(session_id)}})
+    number = number_of(fake, session_id)
+    conn = connect(shop.db_path, writer=True)
+    try:
+        orders.mark_shipped(conn, shop, number, "USPS", "9400100000000000000000", "https://shop.test")
+    finally:
+        conn.close()
+    order = order_row(shop, number)
+    page = app_client.get(f"/order/{number}?k={order['access_token']}")
+    assert "https://tools.usps.com/go/TrackConfirmAction?tLabels=9400100000000000000000" in page.text
+    assert "Track package" in page.text

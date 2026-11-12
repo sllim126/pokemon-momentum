@@ -279,3 +279,6 @@ ul.notice { list-style: none; }
 .notice.good { border-left-color: var(--good); }
 .notice.bad { border-left-color: var(--bad); }
 .notify-page { max-width: 640px; }
+
+/* Order page: the tracking number and its "Track package" button (carrier's site). */
+.tracking { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }

@@ -537,7 +537,9 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         return {"url": result["url"]}
 
     def order_page(request: Request, order: dict, thanks: bool) -> HTMLResponse:
-        response = page(request, "order.html", title=f"Order {order['number']}", order=order, thanks=thanks)
+        # The carrier's own tracking page, the same link as the shipping email's button.
+        response = page(request, "order.html", title=f"Order {order['number']}", order=order, thanks=thanks,
+                        tracking_url=notify.tracking_url(order.get("carrier"), order.get("tracking_number")))
         response.headers["Cache-Control"] = "no-store"
         return response
 
