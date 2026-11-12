@@ -50,7 +50,7 @@ DATA_DIR = ROOT / "data" / "storefront"
 BACKUP_DIR = ROOT / "data" / "backups" / "storefront"
 DATABASES = ("store.db", "visitors.sqlite3")
 CONTAINER = "poke6s-storefront"
-HEALTH_URL = "http://localhost:8010/health"
+HEALTH_URL = "http://localhost:8010/healthz"
 # Tables whose row counts go in the manifest, so a restore can be compared at a glance.
 COUNTED_TABLES = ("products", "orders", "order_items", "notify_signups", "stock_movements")
 
