@@ -63,7 +63,7 @@ What the current Squarespace site has and does: `docs/storefront_current_site.md
   │        |   reads market prices from data/storefront/         │
   │        |   market_reference.json (written by the market      │
   │        |   app's jobs)                                       │
-  │  store admin (same container, separate port, LAN only)       │
+  │  store admin (own app and port, LAN only, no tunnel route)   │
   └──────────────────────────────────────────────────────────────┘
               |  Checkout Session          ^ webhooks / polling
               v                            |
@@ -87,7 +87,17 @@ What the current Squarespace site has and does: `docs/storefront_current_site.md
   Squarespace). The Microsoft 365 mail records must be copied exactly. See Phase 0.
 - **The admin pages run on a separate port, reachable only on the home network.** They're never
   published through the tunnel. Remote access later would go through Cloudflare Access, which is
-  free for small teams.
+  free for small teams. Concretely (security review 2026-11-11, item 15), because everything on
+  port 8010 is public:
+  - the admin is **its own app** (its own FastAPI app and uvicorn process, e.g. a
+    `storefront-admin` service on port 8011), never routes added to the public app.
+    `storefront/tests/test_public_surface.py` fails if the public app gains `/admin` pages or
+    any new write route;
+  - its port is published to the LAN address only (e.g. `192.168.1.240:8011:8011`), and the
+    tunnel never gets a route to it;
+  - it refuses any request that came through Cloudflare (a `CF-Connecting-IP` or `CF-Ray`
+    header), so a mistaken tunnel route still can't expose it;
+  - it still requires a sign-in and CSRF tokens on forms, even on the home network.
 - **Later option, if home uptime becomes a problem:** publish the catalog as static files to
   Cloudflare Pages (free) and run the checkout step as a Cloudflare Function. Orders then wait at
   Stripe until the server comes back. Not part of the first build; the design shouldn't rule it
@@ -425,7 +435,8 @@ owner has reviewed this plan. **Phase 0 needs the owner** (accounts and DNS), so
   order record match.
 
 **Phase 3: admin and operations (Codex)**
-- LAN-only admin: products and photos, stock adjustments, orders, ship with tracking, refunds.
+- LAN-only admin: products and photos, stock adjustments, orders, ship with tracking, refunds. Rules: "How it fits
+  together" (own app, own LAN-only port, refuses tunnel traffic).
 - Exports: Pirate Ship CSV, packing slips, TCGplayer reconciliation, sales-tax report,
   bookkeeping CSV.
 - Nightly backup and restore steps; runbook section; cron or systemd entries in `deploy/`.
