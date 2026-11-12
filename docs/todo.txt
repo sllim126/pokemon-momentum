@@ -44,6 +44,11 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-12 Store review item 12: order emails go through Microsoft Graph as the app
+  poke6s-store-mail, which Exchange lets send only as the new free shared mailbox
+  orders@poke6s.com (the alias moved off admin@; owner has full access and send-as). Failed
+  sends queue, retry for 24 h and alert Discord; orders_cli resend / test-email. DKIM CNAMEs
+  added in Cloudflare. Test to Gmail: inbox, SPF/DKIM/DMARC pass; sending as admin@ refused.
 - 2026-11-12 Store review item 15: the plan now pins the admin to its own app and LAN-only
   port, never routed through the tunnel, refusing Cloudflare traffic, signed in; a new test
   fails if the public app gains /admin pages or write routes beyond the four known (eec16c7).
@@ -333,7 +338,11 @@ Required before checkout goes live:
 - [done 2026-11-12] 11. Stripe webhook required, missed events caught up (see Recently
   Completed). When checkout opens: owner adds the webhook endpoint in Stripe and puts its
   signing secret in .env (steps: storefront/README.md, "Checkout").
-- [planned] 12. Order emails: alert when one fails, allow a resend, set up DKIM for the domain.
+- [done 2026-11-12] 12. Order emails through Microsoft Graph from orders@poke6s.com, with
+  retry, alerts, resend and DKIM (see Recently Completed). Entra client secret expires
+  2028-11: renew it before then (Entra > App registrations > poke6s-store-mail).
+- [idea] Tighten DMARC from p=none to p=quarantine once a few weeks of mail all pass.
+- [idea] Owner: should the site's contact address (now admin@) become orders@ too?
 - [done 2026-11-12] 13. Test data removed (see Recently Completed). After the test-mode
   rehearsal, remove its orders the same way; a rehearsal "sale" should put the stock back
   (it never left the shelf), unlike the Nov 2 test orders, which the count already covered.
