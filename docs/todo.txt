@@ -44,6 +44,10 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-12 Store review item 10: one visitor can hold at most 3 unpaid checkouts and 12
+  units at once (on top of 10 attempts an hour); the visitor address follows visitors.py's
+  rule; port 8010 listens on localhost only (LAN can't reach it or fake the header); the
+  per-visitor tables are tidied. 129 store tests pass; deployed (4a3060a), monitoring OK.
 - 2026-11-12 Store review item 9: nightly store backup (storefront/tools/backup_store.py,
   cron 03:15, job `storefront-backup`) into data/backups/storefront/, 30 days, checked with
   integrity_check; restore command with a practice mode. Drill done: restored copy matched
@@ -307,7 +311,7 @@ Required before checkout goes live:
 - [next] Owner: change the PlexVault (192.168.1.155) password, which sits in plain text in
   /etc/fstab (seen 2026-11-12); then move it into a root-only credentials file like
   /etc/samba/synology-backup.cred.
-- [planned] 10. Limit how much stock one visitor can hold at checkout.
+- [done 2026-11-12] 10. Checkout hold cap per visitor (see Recently Completed).
 - [planned] 11. Treat the Stripe webhook as required: refunds and disputes depend on it.
 - [planned] 12. Order emails: alert when one fails, allow a resend, set up DKIM for the domain.
 - [planned] 13. Remove test orders and leftover test files.
