@@ -44,6 +44,9 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-12 Store review item 15: the plan now pins the admin to its own app and LAN-only
+  port, never routed through the tunnel, refusing Cloudflare traffic, signed in; a new test
+  fails if the public app gains /admin pages or write routes beyond the four known (eec16c7).
 - 2026-11-12 Store review item 13: the 4 test orders, their 7 lines and 10 stock records
   deleted; their test "sales" folded into the Nov 2 inventory adjustments, so stock on hand
   is unchanged (checked product by product, and stock equals its history). Test emails in
@@ -335,7 +338,8 @@ Required before checkout goes live:
   rehearsal, remove its orders the same way; a rehearsal "sale" should put the stock back
   (it never left the shelf), unlike the Nov 2 test orders, which the count already covered.
 - [done 2026-11-12] 14. Store packages and base image pinned; test tools only in the test image (see Recently Completed).
-- [planned] 15. Phase 3 admin must run on its own app and port, never the port the tunnel serves.
+- [done 2026-11-12] 15. Admin placement rule written into the plan ("How it fits together")
+  and guarded by storefront/tests/test_public_surface.py. Applies when Phase 3 starts.
 - [done 2026-11-12] 16. HSTS and Permissions-Policy headers, 32 KB cap on cart/checkout bodies, store.db mode 600 (see Recently Completed).
 
 Own storefront on poke6s.com, replacing Squarespace (owner, 2026-10-31). Plan, costs, phases
