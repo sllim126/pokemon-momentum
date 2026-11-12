@@ -176,8 +176,9 @@ are written to `data/storefront/outbox/*.eml`, and live checkout refuses to open
 A failed send is queued in `outbox/retry/`, Discord is told, and the 15-minute job retries it for
 24 hours before moving it to `outbox/failed/` with a "gave up" alert. Check the setup with
 `orders_cli test-email --to <you>`; resend an order's email with `orders_cli resend <number>`.
-DKIM for poke6s.com: Microsoft 365 signs the mail once its two `selector*._domainkey` CNAMEs are in
-Cloudflare (DNS only) and DKIM is switched on (Defender portal > Email authentication > DKIM).
+DKIM for poke6s.com is on (2026-11-12): two `selector*._domainkey` CNAMEs in Cloudflare (DNS only),
+and the first test email to Gmail showed SPF, DKIM (poke6s.com) and DMARC all passing. The app is
+refused when it tries to send as any other mailbox (checked: 403 for admin@).
 
 Order emails (confirmation and shipped) have a plain-text part and a designed HTML part,
 `app/templates/email/order.html`: tables and inline styles only, because email apps ignore most
