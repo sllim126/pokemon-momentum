@@ -44,6 +44,8 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-12 Store review item 8: the owner set up email two-factor and a passkey on the
+  Cloudflare login.
 - 2026-11-12 Store review item 7: `.env` and `secrets/` are now mode 600/700 (only the owner
   and root). The market container no longer sees `.env` or `secrets/` (masked in
   docker-compose.yml) and gets only the three settings its jobs use. The Stripe test key is
@@ -285,7 +287,7 @@ Live now:
 - [done 2026-11-11] 6. Odd addresses no longer cause 500 errors (see Recently Completed).
 - [done 2026-11-12] 7. Credentials tightened (see Recently Completed). Still open for the
   owner: delete the spare tunnel token copy in poke6s-books.
-- [owner] 8. Cloudflare account: turn on two-factor login and save the recovery codes.
+- [done 2026-11-12] 8. Cloudflare account: email two-factor and a passkey set up by the owner.
 
 Required before checkout goes live:
 - [planned] 9. Store database backup and a tested restore (Phase 3 work; do it first).
