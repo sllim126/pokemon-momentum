@@ -579,9 +579,12 @@ the Cloudflare Tunnel. Details: `storefront/README.md`.
   checkout stays off, `docker logs poke6s-storefront | grep "Checkout off"` says why. Sales tax: `STOREFRONT_TAX_MODE=stripe` (Stripe Tax; Utah
   registered in the Stripe dashboard, sandbox done 2026-11-05). Test card 4242 4242 4242 4242. Orders:
   `docker-compose exec storefront python -m storefront.app.orders_cli list` (also `show`,
-  `ship <number> --tracking <n>`, `reconcile`). Pending checkouts are checked against Stripe at
-  start-up and every 15 minutes. Without SMTP settings, order emails go to
-  `data/storefront/outbox/`. Live keys are refused unless `STOREFRONT_ALLOW_LIVE=1` (owner).
+  `ship <number> --tracking <n>`, `reconcile`, `resend <number>`, `test-email --to <you>`).
+  Pending checkouts are checked against Stripe at start-up and every 15 minutes. Order emails go
+  through Microsoft Graph (`STOREFRONT_GRAPH_*` in `.env`; setup in `storefront/README.md`,
+  "Order emails"); without it they go to `data/storefront/outbox/` and live checkout stays off.
+  A failed email is retried for 24 hours (Discord says so); after "GAVE UP", fix sending and
+  `orders_cli resend <number>`. Live keys are refused unless `STOREFRONT_ALLOW_LIVE=1` (owner).
   Don't re-run the Squarespace importer once real orders exist: it resets stock.
 - Data (never committed): `data/storefront/` holds `store.db` (products and orders),
   `images/`, `outbox/` and `market_reference.json`. Backed up nightly (below).
