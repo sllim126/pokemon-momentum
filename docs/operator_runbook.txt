@@ -602,11 +602,14 @@ Proxmox Backup Server copies this VM (qemu/133), `data/backups` included.
   2. `python3 storefront/tools/backup_store.py restore --date YYYY-MM-DD` (or leave out
      `--date` for the newest). The database it replaces is kept as
      `data/storefront/store.before-restore-<time>.db`.
-  3. `docker start poke6s-storefront`, then `curl -s localhost:8010/health`.
+  3. `docker start poke6s-storefront`, then `curl -s localhost:8010/healthz`.
   Orders placed after that backup are lost from the database; recover them from Stripe
   (dashboard, Payments) and the order emails.
 - Photos or the visit counts: copy them back by hand from the mirror or a dated folder, with
   the store stopped.
+- Last restore drill: 2026-11-12. The first night's backup was restored to a spare path, its
+  counts matched the live database, and a throwaway store container ran on it (`/healthz` ok,
+  31 products, shop page loads). Repeat after big changes to the database.
 
 Storefront linking (`Poke6s` button)
 ------------------------------------
