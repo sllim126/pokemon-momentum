@@ -139,7 +139,7 @@ so the container holds no Stripe key; uncomment it when checkout opens:
 ```
 STOREFRONT_CHECKOUT=1                 # master switch; unset or 0 = catalog only (the default)
 STRIPE_SECRET_KEY=sk_test_...         # Stripe dashboard > Developers > API keys (test mode)
-STRIPE_WEBHOOK_SECRET=whsec_...       # from `stripe listen` or the dashboard webhook (optional)
+STRIPE_WEBHOOK_SECRET=whsec_...       # the webhook's signing secret (required: checkout stays off without it)
 ```
 
 **Limits per visitor** (`main.py`): 10 checkout attempts an hour, and at most 3 unpaid
@@ -166,11 +166,20 @@ The shipped email links USPS, UPS, FedEx and DHL numbers to the carrier's tracki
 `4242 4242 4242 4242`, any future date, any CVC, any US address. Orders are numbered
 `P6T-2026-0001` in test mode (`P6-...` live).
 
-**Webhooks are optional locally.** Payment is confirmed three ways, whichever comes first: the
-webhook (`POST /stripe/webhook`), the thanks page asking Stripe directly, and the reconcile job
-(start-up and every 15 minutes) that checks every pending order. To test webhooks, run the
-Stripe CLI (`stripe listen --forward-to localhost:8010/stripe/webhook`) and put the `whsec_...`
-it prints in `.env`.
+**The webhook is required** (since 2026-11-12, security review item 11): without
+`STRIPE_WEBHOOK_SECRET` checkout stays off and the log says why. Set it up in the Stripe
+dashboard under Developers > Webhooks > Add endpoint: URL `https://poke6s.com/stripe/webhook`,
+events `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+`checkout.session.expired`, `checkout.session.async_payment_failed`, `charge.refunded` and
+`charge.dispute.created`; then copy its signing secret (`whsec_...`) into `.env`. Test mode and
+live mode each have their own endpoint and secret. For local testing, the Stripe CLI works too
+(`stripe listen --forward-to localhost:8010/stripe/webhook` prints a `whsec_...`).
+
+Payment is confirmed three ways, whichever comes first: the webhook, the thanks page asking
+Stripe directly, and the reconcile job (start-up and every 15 minutes), which checks every
+pending order and then applies the last 3 days of Stripe events the webhook may have missed
+(server or tunnel down). That last step is the only other way a refund or dispute on a paid
+order is recorded; each event is applied once, whichever route brings it.
 
 **Orders from the command line** (until the Phase 3 admin):
 
