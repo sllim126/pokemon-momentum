@@ -65,7 +65,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{order['number']} marked shipped; tracking email sent to {order['email']}.")
         elif args.command == "reconcile":
             if not settings.checkout_enabled:
-                print("Checkout is off (no Stripe key), nothing to reconcile.")
+                print(f"Checkout is off ({settings.setup_problem or 'no Stripe key'}), nothing to reconcile.")
                 return 0
             print(orders.reconcile(conn, settings, stripe_api.StripeClient(settings.stripe_secret_key),
                                    settings.base_url))

@@ -572,9 +572,11 @@ the Cloudflare Tunnel. Details: `storefront/README.md`.
   `python3 storefront/tools/archive_squarespace_site.py --out <folder> --products-csv <export>`.
 - Articles: Markdown files in `storefront/content/articles/`; restart the container after
   adding or editing one. How to write one: `storefront/README.md` "Articles".
-- Checkout (Phase 2, Stripe test mode): on when `STRIPE_SECRET_KEY=sk_test_...` is in `.env`
-  (commented out while catalog-only, so the store holds no Stripe key), then
-  `deploy/update_storefront.sh`. Sales tax: `STOREFRONT_TAX_MODE=stripe` (Stripe Tax; Utah
+- Checkout (Phase 2, Stripe test mode): on when `STOREFRONT_CHECKOUT=1`,
+  `STRIPE_SECRET_KEY=sk_test_...` (commented out while catalog-only, so the store holds no
+  Stripe key) and `STRIPE_WEBHOOK_SECRET=whsec_...` (required; endpoint setup in
+  `storefront/README.md`, "Checkout") are in `.env`, then `deploy/update_storefront.sh`. If
+  checkout stays off, `docker logs poke6s-storefront | grep "Checkout off"` says why. Sales tax: `STOREFRONT_TAX_MODE=stripe` (Stripe Tax; Utah
   registered in the Stripe dashboard, sandbox done 2026-11-05). Test card 4242 4242 4242 4242. Orders:
   `docker-compose exec storefront python -m storefront.app.orders_cli list` (also `show`,
   `ship <number> --tracking <n>`, `reconcile`). Pending checkouts are checked against Stripe at

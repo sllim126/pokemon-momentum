@@ -33,6 +33,8 @@ class FakeStripe:
         self.sessions: dict[str, dict] = {}
         self.fail = False
         self.expired_calls: list[str] = []
+        self.events: list[dict] = []          # what list_events returns (Stripe's event log)
+        self.events_fail = False
 
     def create_session(self, params: dict, idempotency_key: str) -> dict:
         if self.fail:
@@ -51,6 +53,11 @@ class FakeStripe:
         self.expired_calls.append(session_id)
         self.sessions[session_id]["status"] = "expired"
         return self.sessions[session_id]
+
+    def list_events(self, types: list[str], since: int) -> list[dict]:
+        if self.events_fail:
+            raise StripeError("Stripe is down")
+        return [e for e in self.events if e["type"] in types and e.get("created", since) >= since]
 
     def pay(self, session_id: str, tax: int = 0) -> dict:
         """What Stripe's session looks like after the shopper pays."""
@@ -221,7 +228,8 @@ def test_stripe_failure_releases_the_reservation(app_client, shop, fake):
 
 
 def test_stripe_tax_mode_asks_stripe_to_add_tax(imported, fake):
-    settings = dataclasses.replace(imported, stripe_secret_key="sk_test_fake", tax_mode="stripe")
+    settings = dataclasses.replace(imported, stripe_secret_key="sk_test_fake", tax_mode="stripe",
+                                   stripe_webhook_secret=WEBHOOK_SECRET)
     with TestClient(create_app(settings, stripe=fake)) as client:
         params = fake.sessions[start(client, ("JP-PACK-A", 1))]["params"]
     assert params["automatic_tax"] == {"enabled": True}
@@ -443,7 +451,7 @@ def test_checkout_switch_reads_storefront_checkout(monkeypatch):
 
 
 def test_live_keys_are_refused_unless_allowed(imported):
-    live = dataclasses.replace(imported, stripe_secret_key="sk_live_x")
+    live = dataclasses.replace(imported, stripe_secret_key="sk_live_x", stripe_webhook_secret=WEBHOOK_SECRET)
     assert not live.checkout_enabled
     assert dataclasses.replace(live, allow_live=True).checkout_enabled
 
@@ -489,3 +497,54 @@ def test_a_faked_visitor_header_doesnt_get_round_the_cap(app_client):
         assert response.status_code == 200
     fourth = app_client.post("/checkout", json=cart(("JP-PACK-A", 1)), headers={"CF-Connecting-IP": "203.0.113.9"})
     assert fourth.status_code == 429
+
+
+# --- the webhook is required, and missed events are caught up (security review item 11) --
+
+def test_checkout_stays_off_without_a_webhook_secret(imported):
+    no_hook = dataclasses.replace(imported, stripe_secret_key="sk_test_fake")
+    assert not no_hook.checkout_enabled and "STRIPE_WEBHOOK_SECRET" in no_hook.setup_problem
+    assert dataclasses.replace(no_hook, stripe_webhook_secret=WEBHOOK_SECRET).checkout_enabled
+
+
+def reconcile_now(shop, fake):
+    conn = connect(shop.db_path, writer=True)
+    try:
+        return orders.reconcile(conn, shop, fake, "https://shop.test")
+    finally:
+        conn.close()
+
+
+def test_reconcile_records_a_refund_the_webhook_missed(app_client, shop, fake):
+    session_id = start(app_client, ("JP-AE-BB", 1))
+    send_event(app_client, {"id": "evt_p", "type": "checkout.session.completed",
+                            "data": {"object": fake.pay(session_id)}})
+    number, intent = number_of(fake, session_id), f"pi_{session_id}"
+    # Refunded in the Stripe dashboard while the tunnel was down: only Stripe's event log has it.
+    fake.events.append({"id": "evt_r", "type": "charge.refunded", "data": {"object": {
+        "payment_intent": intent, "amount": 8099, "amount_refunded": 8099}}})
+    assert reconcile_now(shop, fake)["events"] == 1
+    assert order_row(shop, number)["status"] == "refunded"
+    assert reconcile_now(shop, fake)["events"] == 0          # applied once only
+    # The webhook delivering it late changes nothing either.
+    assert send_event(app_client, {"id": "evt_r", "type": "charge.refunded", "data": {"object": {
+        "payment_intent": intent, "amount": 8099, "amount_refunded": 8099}}}).status_code == 200
+    assert order_row(shop, number)["refunded_cents"] == 8099
+
+
+def test_reconcile_records_a_missed_dispute(app_client, shop, fake):
+    session_id = start(app_client, ("JP-AE-BB", 1))
+    fake.pay(session_id)
+    reconcile_now(shop, fake)                                   # payment caught up
+    fake.events.append({"id": "evt_d", "type": "charge.dispute.created", "data": {"object": {
+        "payment_intent": f"pi_{session_id}", "amount": 8099, "reason": "fraudulent"}}})
+    reconcile_now(shop, fake)
+    assert order_row(shop, number_of(fake, session_id))["status"] == "disputed"
+
+
+def test_an_unreachable_event_log_is_counted_not_fatal(app_client, shop, fake):
+    session_id = start(app_client, ("JP-PACK-A", 1))
+    fake.pay(session_id)
+    fake.events_fail = True
+    counts = reconcile_now(shop, fake)
+    assert counts["paid"] == 1 and counts["errors"] == 1
