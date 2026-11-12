@@ -39,7 +39,7 @@ class FakeMicrosoft:
             self.tokens += 1
             assert data["client_secret"] == "secret" and data["grant_type"] == "client_credentials"
             return Reply(200, {"access_token": "tok", "expires_in": 3600})
-        assert url == "https://graph.microsoft.com/v1.0/users/admin%40poke6s.com/sendMail"
+        assert url == "https://graph.microsoft.com/v1.0/users/orders%40poke6s.com/sendMail"
         assert headers["Authorization"] == "Bearer tok" and headers["Content-Type"] == "text/plain"
         if self.down:
             return Reply(503, {"error": {"code": "ServiceUnavailable"}})
@@ -79,7 +79,7 @@ def test_graph_sends_the_whole_message_and_reuses_the_token(graph, microsoft, al
     assert notify.send_email(graph, "buyer@example.com", "Again", "Second", ref="P6-2026-0002")
     assert microsoft.tokens == 1
     first = microsoft.sent[0]
-    assert (first["To"], first["Subject"], first["From"]) == ("buyer@example.com", "Hello", "Poke6s <admin@poke6s.com>")
+    assert (first["To"], first["Subject"], first["From"]) == ("buyer@example.com", "Hello", "Poke6s <orders@poke6s.com>")
     assert "Plain body" in first.get_body(("plain",)).get_content()
     assert alerts == []
 

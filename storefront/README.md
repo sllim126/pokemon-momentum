@@ -167,8 +167,9 @@ alerts; off when empty), and the order-email settings below.
 password SMTP by default at the end of 2026). Settings: `STOREFRONT_GRAPH_TENANT_ID`,
 `STOREFRONT_GRAPH_CLIENT_ID`, `STOREFRONT_GRAPH_CLIENT_SECRET`, from the Entra app registration
 `poke6s-store-mail`. That app has no Mail.Send permission in Entra; instead Exchange Online
-(RBAC for Applications: a management scope on admin@poke6s.com plus the "Application
-Mail.Send" role) lets it send only as admin@poke6s.com, so a leaked secret can't send as any
+(RBAC for Applications: a management scope on orders@poke6s.com plus the "Application
+Mail.Send" role) lets it send only as orders@poke6s.com (a free shared mailbox that shows up in
+the owner's Outlook; replies land there), so a leaked secret can't send as any
 other mailbox. The client secret expires after 24 months (renew it in Entra and update `.env`).
 `STOREFRONT_SMTP_HOST` / `_USER` / `_PASSWORD` still work as a fallback. With neither, emails
 are written to `data/storefront/outbox/*.eml`, and live checkout refuses to open.

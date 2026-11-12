@@ -5,7 +5,8 @@ client secret nor the SMTP password is ever logged.
 
 How emails leave (settings.email_transport):
 - graph:  Microsoft Graph sendMail, signed in as the app registration (client credentials).
-          Exchange lets that app send only as admin@poke6s.com. Copies land in its Sent Items.
+          Exchange lets that app send only as orders@poke6s.com (a shared mailbox the owner
+          sees in Outlook). Copies land in its Sent Items.
 - smtp:   the older SMTP AUTH path (Microsoft turns password SMTP off by default end of 2026).
 - outbox: no sending set up; written as .eml files to data/storefront/outbox/, so local and
           test-mode runs can be checked without sending anything. Live checkout refuses to
