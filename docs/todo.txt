@@ -489,14 +489,13 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
-- [planned] Stop the site going dark when the home IP changes. On 2026-10-16, after the
-  power cut, the ISP gave a new public IP (136.38.8.95 -> 136.38.242.146) and
-  market.poke6s.com pointed at the old one until the owner edited the `market` A record in
-  Squarespace Domains (DNS: ns-cloud-d*.googledomains.com). Options: Cloudflare Tunnel
-  (recommended; no public IP or port-forward needed) or dynamic DNS (needs a DNS provider
-  with an API; Squarespace Domains has none). Until then: after any outage, compare
-  `curl -s https://api.ipify.org` with the answer from
-  `https://dns.google/resolve?name=market.poke6s.com&type=A` (local dig is cached).
+- [waiting] Stop market.poke6s.com going dark when the home IP changes (2026-10-16 it did).
+  Built 2026-11-12: scripts/utilities/update_market_dns.py moves the Cloudflare `market` A
+  record to the current IP every 5 minutes (owner chose this over moving market onto the
+  tunnel; the router port stays open for the other sites on that Caddy anyway). Waiting on
+  the owner: create a Cloudflare API token ("Edit zone DNS" template, poke6s.com only) and add
+  CLOUDFLARE_DNS_API_TOKEN to .env. Then: run it once by hand, and add the deploy/crontab.txt
+  line to the live crontab.
 - [idea] User testing of the desktop app, including touch screens (owner, 2026-10-21). Touch
   laptops get the desktop app (phones and tablets get the mobile page), and several things there
   rely on a mouse: double-click a picture for the full card page (the "Full data" button is the

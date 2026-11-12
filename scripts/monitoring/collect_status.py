@@ -93,6 +93,7 @@ JOBS = {
     "tcgcsv-catalogue": ("cron", DAY),
     "archive-backfill": ("cron", DAY),
     "discord-bug-import": ("cron", 15 * 60),
+    "market-dns": ("cron", 5 * 60),
     "discord-weekly": ("cron", 7 * DAY),
 }
 

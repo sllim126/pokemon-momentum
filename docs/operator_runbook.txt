@@ -18,6 +18,7 @@ crontab changes). Each job is explained further down in this file.
 | Daily 04:30 | Placeholder Library sync (new Mega-era sets and promos) | cron: `scripts/utilities/sync_placeholder_library.py` | `logs/placeholder_sync.log` |
 | Daily 12:00 | TCGCSV catalogue crawl (sets and products for every game, at most 4,000 requests a day; Discord summary) | cron: `scripts/pipeline/run_tcgcsv_catalogue_host.sh` | `logs/tcgcsv_catalogue.log` |
 | Daily 21:30 | TCGCSV archive backfill, from 2026-11-01 (one request a night while the archive is offline; downloads the gap when it returns; Discord summary) | cron: `scripts/pipeline/run_archive_backfill_host.sh` | `logs/archive_backfill.log` |
+| Every 5 min | Keep market.poke6s.com's A record on the current home IP (Cloudflare API; Discord note when it changes) | cron: `scripts/utilities/update_market_dns.py` | `logs/market_dns.log` |
 | Every 15 min | Copy Discord #bug-reports into the review queue | cron: `scripts/utilities/import_discord_bug_reports.py` | `logs/discord_bug_import.log` |
 | Fri 15:00 | Weekly Discord posts | cron: `scripts/utilities/post_weekly_discord.py` | `logs/discord_weekly.log` |
 | Sun 11:00 | Weekly full metadata refresh | `pokemon-momentum-weekly-refresh.timer` | journal |
@@ -462,7 +463,8 @@ poke6s.com is the owner's own store, running on this server; Squarespace's websi
 
 - DNS for poke6s.com is in Cloudflare. poke6s.com and www are proxied records for the tunnel;
   www redirects to https://poke6s.com/. Mail records are DNS-only and must stay that way.
-  market.poke6s.com still points at the home IP directly (DNS only), not through the tunnel.
+  market.poke6s.com still points at the home IP directly (DNS only), not through the tunnel;
+  update_market_dns.py keeps that record on the current IP (see "After a power cut").
 - The connector's token is CLOUDFLARE_TUNNEL_TOKEN in .env (never print it). The image tag is
   pinned in docker-compose.yml; bump it at least yearly (Cloudflare supports a connector
   version for one year), then `docker-compose up -d cloudflared`.
@@ -1143,10 +1145,14 @@ Check (the morning after):
 - Discord: a green "Nightly market update" and "Other games price archive" for the day
 - `curl -s localhost:8001/health?category_id=3` and `...=85`: `latest` should be yesterday
 
-Check the public address too: the ISP can hand out a new public IP after a power cut
-(2026-10-16). If `curl -s https://api.ipify.org` differs from `dig +short market.poke6s.com`,
-update the `market` A record in Squarespace Domains (poke6s.com → DNS) to the new IP. The
-site itself is fine meanwhile (`curl localhost:8001/health?category_id=3`).
+The public address: the ISP can hand out a new public IP after a power cut (2026-10-16).
+Since 2026-11-12 `scripts/utilities/update_market_dns.py` (cron, every 5 minutes) moves the
+`market` A record in Cloudflare to the new IP by itself and posts a note to Discord; poke6s.com
+goes through the tunnel and isn't affected. If market is still unreachable, check
+`logs/market_dns.log` (an "ERROR" line says why) and run the script by hand
+(`--dry-run` shows what it would change). Its token is CLOUDFLARE_DNS_API_TOKEN in .env, a
+Cloudflare API token from the "Edit zone DNS" template limited to poke6s.com (never print it).
+The site itself is fine meanwhile (`curl localhost:8001/health?category_id=3`).
 To see what the internet sees, ask over HTTPS:
 `curl -s "https://dns.google/resolve?name=market.poke6s.com&type=A"`. Plain `dig` from this
 network, even `@ns-cloud-d1.googledomains.com`, is answered by a cache on the way out and keeps
