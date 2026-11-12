@@ -39,7 +39,7 @@ from .articles import Articles
 from .db import connect, latest_migration, migrate
 from .market import MarketReference
 from .metrics import install_metrics
-from .visitors import install_visitor_counting
+from .visitors import client_ip, install_visitor_counting
 from .markdown import render, split_front_matter
 from .settings import STOREFRONT_DIR, Settings, load_settings
 
@@ -48,9 +48,15 @@ PAGES_DIR = STOREFRONT_DIR / "content" / "pages"
 ARTICLES_DIR = STOREFRONT_DIR / "content" / "articles"
 MEDIA_NAME = re.compile(r"^[a-z0-9-]+$")
 RECONCILE_EVERY_SECONDS = 15 * 60
-# Checkout attempts per visitor per hour. Each attempt holds stock for 30 minutes, so this keeps
-# one visitor from tying up the shelf.
+# Checkout attempts per visitor per hour. Each attempt holds stock for 30 minutes.
 CHECKOUTS_PER_HOUR = 10
+# What one visitor may hold at once in unpaid checkouts (security review 2026-11-11, item 10):
+# without these, 10 checkouts an hour could reserve the whole shelf. Paid, cancelled and
+# expired checkouts stop counting straight away. Visitors are told to finish or cancel first.
+OPEN_CHECKOUTS_PER_VISITOR = 3
+UNITS_HELD_PER_VISITOR = 12
+# The per-visitor tables are tidied once they pass this many visitors.
+VISITOR_TABLE_TIDY_AT = 1000
 # Sign-ups for the "email me when the store opens" list, per visitor per hour.
 SIGNUPS_PER_HOUR = 5
 log = logging.getLogger("storefront")
@@ -99,6 +105,8 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         stripe = stripe_api.StripeClient(settings.stripe_secret_key)
     checkout_attempts: dict[str, deque] = defaultdict(deque)
     signup_attempts: dict[str, deque] = defaultdict(deque)
+    # Order numbers of each visitor's checkouts, to count what they still hold (held_by).
+    open_checkouts: dict[str, set[str]] = defaultdict(set)
 
     def reconcile_once() -> None:
         with writer() as conn:
@@ -183,8 +191,30 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         return f"{settings.tcgplayer_affiliate_base}?{urlencode({'u': target})}"
 
     def visitor(request: Request) -> str:
-        # Behind Cloudflare (at launch) the real address is in CF-Connecting-IP.
-        return request.headers.get("cf-connecting-ip") or (request.client.host if request.client else "?")
+        # The visitor's address. CF-Connecting-IP (set by the Cloudflare Tunnel) is believed
+        # only from a private-network peer, the same rule as the visit counter (visitors.py);
+        # the port itself only listens on this machine (docker-compose.yml).
+        return client_ip(request.scope) or "?"
+
+    def tidy(table: dict, stale) -> None:
+        """Forget visitors with nothing current, so the tables can't grow forever."""
+        if len(table) > VISITOR_TABLE_TIDY_AT:
+            for key in [k for k, v in table.items() if stale(v)]:
+                del table[key]
+
+    def held_by(conn: sqlite3.Connection, key: str) -> tuple[int, int]:
+        """(open checkouts, units reserved) for one visitor; drops their finished checkouts."""
+        numbers = open_checkouts.get(key)
+        if not numbers:
+            return 0, 0
+        marks = ",".join("?" * len(numbers))
+        rows = conn.execute(
+            f"""SELECT o.number, COALESCE(SUM(CASE WHEN i.reserved THEN i.quantity END), 0) AS units
+                FROM orders o LEFT JOIN order_items i ON i.order_id = o.id
+                WHERE o.number IN ({marks}) AND o.status = 'pending' AND o.reserved_until > ?
+                GROUP BY o.number""", (*numbers, orders.now_iso())).fetchall()
+        numbers.intersection_update(r["number"] for r in rows)
+        return len(rows), sum(r["units"] for r in rows)
 
     def page(request: Request, template: str, status_code: int = 200, **context) -> HTMLResponse:
         with db() as conn:
@@ -425,9 +455,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         if email is None:
             return RedirectResponse("/notify?error=1", status_code=303)
         now = time.monotonic()
-        if len(signup_attempts) > 1000:   # forget visitors with nothing in the last hour
-            for key in [k for k, v in signup_attempts.items() if not v or now - v[-1] > 3600]:
-                del signup_attempts[key]
+        tidy(signup_attempts, lambda v: not v or now - v[-1] > 3600)
         attempts = signup_attempts[visitor(request)]
         while attempts and now - attempts[0] > 3600:
             attempts.popleft()
@@ -452,21 +480,32 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     async def checkout(request: Request):
         if not settings.checkout_enabled or stripe is None:
             return JSONResponse({"error": "Checkout isn't open yet."}, status_code=503)
-        attempts, now = checkout_attempts[visitor(request)], time.monotonic()
+        key, now = visitor(request), time.monotonic()
+        tidy(checkout_attempts, lambda v: not v or now - v[-1] > 3600)
+        tidy(open_checkouts, lambda v: not v)
+        attempts = checkout_attempts[key]
         while attempts and now - attempts[0] > 3600:
             attempts.popleft()
         if len(attempts) >= CHECKOUTS_PER_HOUR:
             return JSONResponse({"error": "Too many checkout attempts. Please try again later."}, status_code=429)
-        attempts.append(now)
         try:
             cart_items = orders.parse_cart(await request.json())
         except (orders.CartError, ValueError):
             return JSONResponse({"error": "The cart is not readable."}, status_code=400)
+        with db() as conn:
+            open_count, units = held_by(conn, key)
+        wanted = sum(quantity for _, quantity in cart_items)
+        if open_count >= OPEN_CHECKOUTS_PER_VISITOR or units + wanted > UNITS_HELD_PER_VISITOR:
+            return JSONResponse({"error": "You already have checkouts waiting for payment. Please finish or "
+                                          "cancel them first, or try again in 30 minutes."}, status_code=429)
+        attempts.append(now)
         base = site_url(request)
 
         def run() -> dict:
             with writer() as conn:
-                return orders.start_checkout(conn, stripe, settings, cart_items, base)
+                result = orders.start_checkout(conn, stripe, settings, cart_items, base)
+            open_checkouts[key].add(result["number"])
+            return result
 
         try:
             result = await asyncio.to_thread(run)

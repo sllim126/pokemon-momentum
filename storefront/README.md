@@ -3,8 +3,9 @@
 Our own shop, replacing Squarespace. The plan, decisions and progress log are in
 `docs/storefront_plan.md`; this file is the developer guide for the code in `storefront/`.
 
-**Status (2026-11-05): Phase 2 built, local only, Stripe test mode.** The catalog browses on
-the home network at `http://<server>:8010`. Cart and checkout switch on when
+**Status (2026-11-05): Phase 2 built, local only, Stripe test mode.** Port 8010 listens on the
+server itself only (since 2026-11-12; the public site arrives through the Cloudflare Tunnel), so
+from another computer use https://poke6s.com or an SSH tunnel (`ssh -L 8010:localhost:8010 <server>`). Cart and checkout switch on when
 `STOREFRONT_CHECKOUT=1` and a Stripe **test** key are in `.env` (see "Checkout" below);
 otherwise product pages link to the TCGplayer store. The public launch (2026-11-11) is
 catalog-only: `STOREFRONT_CHECKOUT` is unset, which means off.
@@ -140,6 +141,10 @@ STOREFRONT_CHECKOUT=1                 # master switch; unset or 0 = catalog only
 STRIPE_SECRET_KEY=sk_test_...         # Stripe dashboard > Developers > API keys (test mode)
 STRIPE_WEBHOOK_SECRET=whsec_...       # from `stripe listen` or the dashboard webhook (optional)
 ```
+
+**Limits per visitor** (`main.py`): 10 checkout attempts an hour, and at most 3 unpaid
+checkouts and 12 units held at once (paid, cancelled and expired ones stop counting). The
+visitor is the CF-Connecting-IP address when the request comes from the tunnel, as in `visitors.py`.
 
 Live keys (`sk_live_...`) are refused unless `STOREFRONT_ALLOW_LIVE=1`; going live is the
 owner's call. Other settings (all optional, defaults in `app/settings.py`):
