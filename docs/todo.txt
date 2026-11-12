@@ -44,6 +44,11 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-12 market.poke6s.com now follows the home IP by itself: scripts/utilities/
+  update_market_dns.py runs every 5 minutes (cron job `market-dns`, logs/market_dns.log) and
+  moves the Cloudflare `market` A record when the IP changes, with a Discord note. Token:
+  CLOUDFLARE_DNS_API_TOKEN in .env (DNS edit, poke6s.com only, no expiry, no IP filter).
+  Owner chose this over moving market onto the tunnel.
 - 2026-11-12 Store review item 8: the owner set up email two-factor and a passkey on the
   Cloudflare login.
 - 2026-11-12 Store review item 7: `.env` and `secrets/` are now mode 600/700 (only the owner
@@ -489,13 +494,6 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
-- [waiting] Stop market.poke6s.com going dark when the home IP changes (2026-10-16 it did).
-  Built 2026-11-12: scripts/utilities/update_market_dns.py moves the Cloudflare `market` A
-  record to the current IP every 5 minutes (owner chose this over moving market onto the
-  tunnel; the router port stays open for the other sites on that Caddy anyway). Waiting on
-  the owner: create a Cloudflare API token ("Edit zone DNS" template, poke6s.com only) and add
-  CLOUDFLARE_DNS_API_TOKEN to .env. Then: run it once by hand, and add the deploy/crontab.txt
-  line to the live crontab.
 - [idea] User testing of the desktop app, including touch screens (owner, 2026-10-21). Touch
   laptops get the desktop app (phones and tablets get the mobile page), and several things there
   rely on a mouse: double-click a picture for the full card page (the "Full data" button is the
