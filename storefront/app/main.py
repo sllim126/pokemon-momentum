@@ -35,7 +35,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import catalog, classify, images, notify_list, orders, redirects, seo, stripe_api
+from . import catalog, classify, images, notify, notify_list, orders, redirects, seo, stripe_api
 from .articles import Articles
 from .db import connect, latest_migration, migrate
 from .market import MarketReference
@@ -120,6 +120,8 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     def reconcile_once() -> None:
         with writer() as conn:
             counts = orders.reconcile(conn, settings, stripe, settings.base_url)
+        # Order emails that failed earlier get another try (notify.py, review item 12).
+        counts.update({f"email_{k}": v for k, v in notify.retry_queued(settings).items()})
         if any(counts.values()):
             log.info("Reconcile: %s", counts)
 

@@ -74,8 +74,14 @@ class Settings:
     reservation_minutes: int = 30
     # Order alerts. Empty = no alerts (the URL is a secret: never log it).
     discord_webhook_url: str = ""
-    # Order emails through Microsoft 365. Without a host, emails are written to
-    # data/storefront/outbox/ instead of sent, which is what tests and local runs use.
+    # Order emails through Microsoft 365: Microsoft Graph, signed in as the app registration
+    # "poke6s-store-mail" (security review item 12; Microsoft is retiring password SMTP), which
+    # Exchange lets send only as admin@poke6s.com. The secret is never logged. SMTP below is the
+    # older fallback. With neither, emails are written to data/storefront/outbox/ instead of
+    # sent, which is what tests and local runs use.
+    graph_tenant_id: str = ""
+    graph_client_id: str = ""
+    graph_client_secret: str = ""
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_user: str = ""
@@ -95,6 +101,13 @@ class Settings:
         return ""
 
     @property
+    def email_transport(self) -> str:
+        """How order emails leave: 'graph', 'smtp' or 'outbox' (saved, not sent)."""
+        if self.graph_tenant_id and self.graph_client_id and self.graph_client_secret:
+            return "graph"
+        return "smtp" if self.smtp_host else "outbox"
+
+    @property
     def setup_problem(self) -> str:
         """Why checkout can't open with these settings ('' when it can). The webhook secret is
         required (security review 2026-11-11, item 11): refunds and disputes reach the shop only
@@ -103,6 +116,9 @@ class Settings:
             return self.tax_problem
         if not self.stripe_webhook_secret:
             return "STRIPE_WEBHOOK_SECRET is not set (Stripe dashboard > Developers > Webhooks)."
+        if self.stripe_mode == "live" and self.email_transport == "outbox":
+            # Real customers must get their confirmation and tracking emails (item 12).
+            return "No email sending is set up (STOREFRONT_GRAPH_*): customers would get no order emails."
         return ""
 
     @property
@@ -148,6 +164,9 @@ def load_settings() -> Settings:
         three_d_secure_over_cents=_int("STOREFRONT_3DS_OVER_CENTS", 15000),
         tax_mode=os.getenv("STOREFRONT_TAX_MODE", "none").strip().lower() or "none",
         discord_webhook_url=os.getenv("STOREFRONT_DISCORD_WEBHOOK_URL", "").strip(),
+        graph_tenant_id=os.getenv("STOREFRONT_GRAPH_TENANT_ID", "").strip(),
+        graph_client_id=os.getenv("STOREFRONT_GRAPH_CLIENT_ID", "").strip(),
+        graph_client_secret=os.getenv("STOREFRONT_GRAPH_CLIENT_SECRET", "").strip(),
         smtp_host=os.getenv("STOREFRONT_SMTP_HOST", "").strip(),
         smtp_port=_int("STOREFRONT_SMTP_PORT", 587),
         smtp_user=os.getenv("STOREFRONT_SMTP_USER", "").strip(),
