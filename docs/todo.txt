@@ -44,6 +44,11 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-12 Store review items 14 and 16: requirements pinned (requirements.txt,
+  requirements-dev.txt, constraints.txt), base image python:3.12.16-slim-trixie, served
+  image has no test tools (make test-storefront builds the "test" stage); HSTS and
+  Permissions-Policy headers, 32 KB cap on cart/checkout bodies, store data files mode 600
+  (f3c6934). 136 store tests pass.
 - 2026-11-12 Store review item 11: checkout stays off without STRIPE_WEBHOOK_SECRET; the
   15-minute reconcile also applies the last 3 days of Stripe events (payments, expiries,
   refunds, disputes), each once, so missed deliveries still land. Checked against Stripe
@@ -321,9 +326,9 @@ Required before checkout goes live:
   signing secret in .env (steps: storefront/README.md, "Checkout").
 - [planned] 12. Order emails: alert when one fails, allow a resend, set up DKIM for the domain.
 - [planned] 13. Remove test orders and leftover test files.
-- [planned] 14. Pin the store's package versions and base image; keep test tools out of production.
+- [done 2026-11-12] 14. Store packages and base image pinned; test tools only in the test image (see Recently Completed).
 - [planned] 15. Phase 3 admin must run on its own app and port, never the port the tunnel serves.
-- [idea] 16. Smaller hardening: extra security headers, request size limits, database file mode.
+- [done 2026-11-12] 16. HSTS and Permissions-Policy headers, 32 KB cap on cart/checkout bodies, store.db mode 600 (see Recently Completed).
 
 Own storefront on poke6s.com, replacing Squarespace (owner, 2026-10-31). Plan, costs, phases
 and open decisions: `docs/storefront_plan.md` (progress log at its end). What the Squarespace
