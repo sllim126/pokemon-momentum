@@ -569,8 +569,9 @@ The replacement for Squarespace runs in its own container, `poke6s-storefront`, 
   `python3 storefront/tools/archive_squarespace_site.py --out <folder> --products-csv <export>`.
 - Articles: Markdown files in `storefront/content/articles/`; restart the container after
   adding or editing one. How to write one: `storefront/README.md` "Articles".
-- Checkout (Phase 2, Stripe test mode): on when `STRIPE_SECRET_KEY=sk_test_...` is in `.env`,
-  then `deploy/update_storefront.sh`. Sales tax: `STOREFRONT_TAX_MODE=stripe` (Stripe Tax; Utah
+- Checkout (Phase 2, Stripe test mode): on when `STRIPE_SECRET_KEY=sk_test_...` is in `.env`
+  (commented out while catalog-only, so the store holds no Stripe key), then
+  `deploy/update_storefront.sh`. Sales tax: `STOREFRONT_TAX_MODE=stripe` (Stripe Tax; Utah
   registered in the Stripe dashboard, sandbox done 2026-11-05). Test card 4242 4242 4242 4242. Orders:
   `docker-compose exec storefront python -m storefront.app.orders_cli list` (also `show`,
   `ship <number> --tracking <n>`, `reconcile`). Pending checkouts are checked against Stripe at
@@ -1186,7 +1187,9 @@ Admin pages (`/admin` and the tools it links to) require a Google sign-in whose 
 exactly matches `POKEMON_MOMENTUM_ADMIN_USERS` (comma-separated; default
 `sllim126@gmail.com`). There is no partial or domain matching. The website only receives
 the variables listed under `environment:` in `docker-compose.yml`, and this one is not
-listed yet, so today the default applies; to change the admins, add it there and restart. The old PIN sign-in is
+listed yet, so today the default applies; to change the admins, add it there and restart.
+The website container can't read `.env` or `secrets/` (they're hidden from it, 2026-11-12):
+a new setting a container job needs must be added under `environment:` too. The old PIN sign-in is
 retired and answers 410. Admin links on the site only appear for admins, and every admin
 page checks access again on the server.
 
