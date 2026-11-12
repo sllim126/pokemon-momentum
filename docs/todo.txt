@@ -44,6 +44,10 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-12 Store review item 11: checkout stays off without STRIPE_WEBHOOK_SECRET; the
+  15-minute reconcile also applies the last 3 days of Stripe events (payments, expiries,
+  refunds, disputes), each once, so missed deliveries still land. Checked against Stripe
+  test mode (d3bb39b). 133 store tests pass.
 - 2026-11-12 Store review item 10: one visitor can hold at most 3 unpaid checkouts and 12
   units at once (on top of 10 attempts an hour); the visitor address follows visitors.py's
   rule; port 8010 listens on localhost only (LAN can't reach it or fake the header); the
@@ -312,7 +316,9 @@ Required before checkout goes live:
   /etc/fstab (seen 2026-11-12); then move it into a root-only credentials file like
   /etc/samba/synology-backup.cred.
 - [done 2026-11-12] 10. Checkout hold cap per visitor (see Recently Completed).
-- [planned] 11. Treat the Stripe webhook as required: refunds and disputes depend on it.
+- [done 2026-11-12] 11. Stripe webhook required, missed events caught up (see Recently
+  Completed). When checkout opens: owner adds the webhook endpoint in Stripe and puts its
+  signing secret in .env (steps: storefront/README.md, "Checkout").
 - [planned] 12. Order emails: alert when one fails, allow a resend, set up DKIM for the domain.
 - [planned] 13. Remove test orders and leftover test files.
 - [planned] 14. Pin the store's package versions and base image; keep test tools out of production.
