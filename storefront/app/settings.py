@@ -95,8 +95,19 @@ class Settings:
         return ""
 
     @property
+    def setup_problem(self) -> str:
+        """Why checkout can't open with these settings ('' when it can). The webhook secret is
+        required (security review 2026-11-11, item 11): refunds and disputes reach the shop only
+        through Stripe's events, and the webhook is how they arrive promptly."""
+        if self.tax_problem:
+            return self.tax_problem
+        if not self.stripe_webhook_secret:
+            return "STRIPE_WEBHOOK_SECRET is not set (Stripe dashboard > Developers > Webhooks)."
+        return ""
+
+    @property
     def checkout_enabled(self) -> bool:
-        if not self.checkout_switch or not self.stripe_secret_key or self.tax_problem:
+        if not self.checkout_switch or not self.stripe_secret_key or self.setup_problem:
             return False
         return self.stripe_mode == "test" or self.allow_live
 
