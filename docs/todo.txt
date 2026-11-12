@@ -44,6 +44,12 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-12 Store review item 13: the 4 test orders, their 7 lines and 10 stock records
+  deleted; their test "sales" folded into the Nov 2 inventory adjustments, so stock on hand
+  is unchanged (checked product by product, and stock equals its history). Test emails in
+  the outbox and store.before-phase2-2026-11-05.db deleted. Copy taken first:
+  data/storefront/store.before-testcleanup-2026-11-12.db (delete with the other before-*
+  copies around 2026-11-19). The one email-list sign-up (06:13 UTC) is a visitor: kept.
 - 2026-11-12 Store review items 14 and 16: requirements pinned (requirements.txt,
   requirements-dev.txt, constraints.txt), base image python:3.12.16-slim-trixie, served
   image has no test tools (make test-storefront builds the "test" stage); HSTS and
@@ -325,7 +331,9 @@ Required before checkout goes live:
   Completed). When checkout opens: owner adds the webhook endpoint in Stripe and puts its
   signing secret in .env (steps: storefront/README.md, "Checkout").
 - [planned] 12. Order emails: alert when one fails, allow a resend, set up DKIM for the domain.
-- [planned] 13. Remove test orders and leftover test files.
+- [done 2026-11-12] 13. Test data removed (see Recently Completed). After the test-mode
+  rehearsal, remove its orders the same way; a rehearsal "sale" should put the stock back
+  (it never left the shelf), unlike the Nov 2 test orders, which the count already covered.
 - [done 2026-11-12] 14. Store packages and base image pinned; test tools only in the test image (see Recently Completed).
 - [planned] 15. Phase 3 admin must run on its own app and port, never the port the tunnel serves.
 - [done 2026-11-12] 16. HSTS and Permissions-Policy headers, 32 KB cap on cart/checkout bodies, store.db mode 600 (see Recently Completed).
