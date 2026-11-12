@@ -14,6 +14,7 @@ crontab changes). Each job is explained further down in this file.
 | --- | --- | --- | --- |
 | Daily 02:00 | Nightly market update: TCGCSV prices, metadata, snapshots, parquet, PriceCharting, indexes; restarts the app; Discord summary | `pokemon-momentum-daily-update.timer` | `logs/daily_update.log` |
 | Daily 03:00 | Storefront market prices (`data/storefront/market_reference.json`, read by the new shop's product pages) | cron: `scripts/build_storefront_market_reference.py` | `logs/storefront_market_reference.log` |
+| Daily 03:15 | Store backup: `store.db`, visit counts, outbox and photos into `data/backups/storefront/` (30 days; see "Store backups") | cron: `storefront/tools/backup_store.py backup` | `logs/storefront_backup.log` |
 | Daily 03:30 | Other games price archive (collect only) | `pokemon-momentum-tcgcsv-collect.timer` | see "Other games archive" |
 | Daily 04:30 | Placeholder Library sync (new Mega-era sets and promos) | cron: `scripts/utilities/sync_placeholder_library.py` | `logs/placeholder_sync.log` |
 | Daily 09:15 | Squarespace price sync (reaches the live store; retire when Squarespace closes 2026-11-14) | cron: `scripts/run_squarespace_price_sync.sh` | `logs/squarespace_price_sync_cron.log` |
@@ -581,7 +582,31 @@ The replacement for Squarespace runs in its own container, `poke6s-storefront`, 
   `data/storefront/outbox/`. Live keys are refused unless `STOREFRONT_ALLOW_LIVE=1` (owner).
   Don't re-run the Squarespace importer once real orders exist: it resets stock.
 - Data (never committed): `data/storefront/` holds `store.db` (products and orders),
-  `images/`, `outbox/` and `market_reference.json`. Backups arrive in Phase 3.
+  `images/`, `outbox/` and `market_reference.json`. Backed up nightly (below).
+
+Store backups
+-------------
+Every night at 03:15 (cron job `storefront-backup`, log `logs/storefront_backup.log`)
+`storefront/tools/backup_store.py backup` copies, into `data/backups/storefront/<date>/`:
+`store.db` and `visitors.sqlite3` (SQLite online backup, safe while the store runs, then
+`PRAGMA integrity_check`), the `outbox/` emails, and a `manifest.json` of row counts. Photos go
+into one mirror, `data/backups/storefront/images/`, which never deletes. 30 nightly folders are
+kept. The folder is mode 700: it holds customers' names and addresses. Off the machine: the
+Proxmox Backup Server copies this VM (qemu/133), `data/backups` included.
+
+- See what's there: `python3 storefront/tools/backup_store.py list`
+- Practice run (doesn't touch the store): `python3 storefront/tools/backup_store.py restore --to /tmp/check.db`,
+  then compare its counts with `list`, and delete the file.
+- Real restore of `store.db` (refuses while the store runs):
+  1. `docker stop poke6s-storefront`
+  2. `python3 storefront/tools/backup_store.py restore --date YYYY-MM-DD` (or leave out
+     `--date` for the newest). The database it replaces is kept as
+     `data/storefront/store.before-restore-<time>.db`.
+  3. `docker start poke6s-storefront`, then `curl -s localhost:8010/health`.
+  Orders placed after that backup are lost from the database; recover them from Stripe
+  (dashboard, Payments) and the order emails.
+- Photos or the visit counts: copy them back by hand from the mirror or a dated folder, with
+  the store stopped.
 
 Storefront linking (`Poke6s` button)
 ------------------------------------

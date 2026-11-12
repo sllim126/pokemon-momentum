@@ -250,5 +250,5 @@ reviews them before launch, then removes the line.
 ## Not yet (later phases)
 
 Utah registration in live-mode Stripe Tax and live keys (owner); LAN-only admin, exports,
-signature confirmation on large orders and backups (Phase 3); Google Merchant feed, per-article social cards, newsletter (Phase 4). See
+signature confirmation on large orders (Phase 3; nightly backups already run, see `tools/backup_store.py`); Google Merchant feed, per-article social cards, newsletter (Phase 4). See
 the plan.
