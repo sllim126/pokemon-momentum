@@ -9,10 +9,22 @@ services:
       POKEMON_MOMENTUM_PSA_ACCESS_TOKEN: ${POKEMON_MOMENTUM_PSA_ACCESS_TOKEN:-}
       POKEMON_MOMENTUM_PSA_CACHE_TTL_DAYS: ${POKEMON_MOMENTUM_PSA_CACHE_TTL_DAYS:-30}
       POKE6S_TCGCSV_USER_AGENT: ${POKE6S_TCGCSV_USER_AGENT:-}
+      # The only .env secrets this container's jobs use: the nightly PriceCharting download,
+      # the Discord bug-report import and the placeholder-sync alert. The scripts read the
+      # environment first, so they don't need the file itself (hidden below).
+      PRICECHARTING_API_TOKEN: ${PRICECHARTING_API_TOKEN:-}
+      POKE6S_DISCORD_BOT_TOKEN: ${POKE6S_DISCORD_BOT_TOKEN:-}
+      POKE6S_DISCORD_WEBHOOK_URL: ${POKE6S_DISCORD_WEBHOOK_URL:-}
     ports:
       - "8001:8001"
     volumes:
       - ./:/app
+      # Hide the repo's .env and secrets/ from the public market app (security review
+      # 2026-11-11, item 7): a file-read bug here must not reach the Stripe key, tunnel token,
+      # Squarespace key or Search Console key. Host scripts still read both as normal.
+      - /dev/null:/app/.env:ro
+    tmpfs:
+      - /app/secrets
     stdin_open: true
     tty: true
     restart: unless-stopped
@@ -39,6 +51,8 @@ services:
       # until live payments are set up, so test-mode checkout is never reachable from outside.
       STOREFRONT_CHECKOUT: ${STOREFRONT_CHECKOUT:-0}
       # Values come from .env; with no STRIPE_SECRET_KEY checkout stays off as well.
+      # While the store is catalog-only, keep STRIPE_SECRET_KEY commented out in .env so this
+      # container holds no Stripe key at all (security review 2026-11-11, item 7).
       # Test keys only (sk_test_...) unless STOREFRONT_ALLOW_LIVE=1, which is the owner's call.
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}

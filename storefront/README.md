@@ -131,7 +131,9 @@ Existing article files are kept unless `--force` is given.
 How it works: `app/orders.py` (module docstring), plan "Checkout and orders".
 
 **Switch it on.** Put the Stripe **test** keys in `.env` (never in code or chat), then
-`deploy/update_storefront.sh` (it recreates the container, so the new settings are read):
+`deploy/update_storefront.sh` (it recreates the container, so the new settings are read).
+While the store is catalog-only the key line stays commented out (`# STRIPE_SECRET_KEY=...`),
+so the container holds no Stripe key; uncomment it when checkout opens:
 
 ```
 STOREFRONT_CHECKOUT=1                 # master switch; unset or 0 = catalog only (the default)
