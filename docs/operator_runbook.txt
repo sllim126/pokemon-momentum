@@ -591,7 +591,13 @@ Every night at 03:15 (cron job `storefront-backup`, log `logs/storefront_backup.
 `PRAGMA integrity_check`), the `outbox/` emails, and a `manifest.json` of row counts. Photos go
 into one mirror, `data/backups/storefront/images/`, which never deletes. 30 nightly folders are
 kept. The folder is mode 700: it holds customers' names and addresses. Off the machine: the
-Proxmox Backup Server copies this VM (qemu/133), `data/backups` included.
+Proxmox Backup Server copies this VM (qemu/133), `data/backups` included, and each night's run
+also mirrors the folder to the Synology (`--copy-to /mnt/synology-backup/Poke6s`): its `Backup`
+share, mounted over encrypted SMB (`seal`) by /etc/fstab with the owner's account in
+/etc/samba/synology-backup.cred (root only, mode 600; never print it). If the share isn't
+mounted the job fails after the local backup ("is the NAS share mounted?"): `sudo mount
+/mnt/synology-backup`. To restore from the Synology copy, point `--backup-dir` at it:
+`python3 storefront/tools/backup_store.py --backup-dir /mnt/synology-backup/Poke6s restore ...`.
 
 - See what's there: `python3 storefront/tools/backup_store.py list`
 - Practice run (doesn't touch the store): `python3 storefront/tools/backup_store.py restore --to /tmp/check.db`,

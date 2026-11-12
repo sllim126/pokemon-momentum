@@ -88,3 +88,22 @@ def test_live_restore_keeps_the_replaced_database(store, monkeypatch):
     assert rows(data / "store.db") == 2
     kept = list(data.glob("store.before-restore-*.db"))
     assert len(kept) == 1 and rows(kept[0]) == 3
+
+
+def test_copy_to_nas_mirrors_and_prunes(store, tmp_path):
+    data, backups, _ = store
+    nas = tmp_path / "nas"
+    nas.mkdir()
+    (nas / "2026-09-01").mkdir()  # pruned here long ago, so it goes there too
+    bs.backup(data, backups, keep_days=30, today=date(2026, 11, 12))
+    bs.copy_off(backups, nas)
+    assert rows(nas / "2026-11-12" / "store.db") == 2
+    assert (nas / "images" / "p" / "a.webp").exists()
+    assert not (nas / "2026-09-01").exists()
+
+
+def test_copy_to_missing_share_fails(store, tmp_path):
+    data, backups, _ = store
+    bs.backup(data, backups, keep_days=30, today=date(2026, 11, 12))
+    with pytest.raises(bs.BackupError, match="mounted"):
+        bs.copy_off(backups, tmp_path / "not-mounted")
