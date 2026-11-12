@@ -548,3 +548,19 @@ def test_an_unreachable_event_log_is_counted_not_fatal(app_client, shop, fake):
     fake.events_fail = True
     counts = reconcile_now(shop, fake)
     assert counts["paid"] == 1 and counts["errors"] == 1
+
+
+# --- smaller hardening (security review item 16) -----------------------------------------
+
+def test_security_headers_include_hsts_and_permissions_policy(app_client):
+    headers = app_client.get("/").headers
+    assert headers["strict-transport-security"] == "max-age=31536000"
+    assert "camera=()" in headers["permissions-policy"]
+
+
+@pytest.mark.parametrize("path", ["/cart/quote", "/checkout"])
+def test_oversized_cart_requests_are_refused(app_client, path):
+    padding = "x" * (40 * 1024)
+    response = app_client.post(path, content=json.dumps({"items": [], "pad": padding}),
+                               headers={"Content-Type": "application/json"})
+    assert response.status_code == 400
