@@ -342,6 +342,12 @@ Required before checkout goes live:
   retry, alerts, resend and DKIM (see Recently Completed). Entra client secret expires
   2028-11: renew it before then (Entra > App registrations > poke6s-store-mail).
 - [idea] Tighten DMARC from p=none to p=quarantine once a few weeks of mail all pass.
+- [idea] Live parcel tracking on the order page (owner, 2026-11-12): show the carrier's latest
+  status ("In transit, Salt Lake City") instead of only linking out. USPS, UPS and FedEx each
+  have a free developer API (USPS: developers.usps.com, OAuth client; UPS and FedEx: developer
+  accounts with keys), so it's three integrations, keys in .env, and a cache so pages don't call
+  the carriers on every view. Worth it once there's order volume. Today the email and order
+  page link to the carrier's own tracking page.
 - [idea] Contact address stays admin@poke6s.com (owner, 2026-11-12: help@ or admin@ both fine).
   To switch to help@: add it as an alias in Microsoft 365, set STOREFRONT_CONTACT_EMAIL.
 - [done 2026-11-12] 13. Test data removed (see Recently Completed). After the test-mode
