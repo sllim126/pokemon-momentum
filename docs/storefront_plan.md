@@ -342,7 +342,7 @@ Decided by the owner on 2026-11-05, after the Utah State Tax Commission call (D2
   - document the restore steps in `docs/operator_runbook.txt`.
   - Done 2026-11-12 (security review item 9, ahead of Phase 3): `storefront/tools/backup_store.py`,
     cron 03:15, into `data/backups/storefront/`; off the machine through the Proxmox Backup
-    Server's VM backups. A copy to the Synology NAS is the next step.
+    Server's VM backups and a nightly mirror to the Synology NAS.
 - Look and feel: decision D4. Default: the market site's colors and type
   (`scripts/dashboards/desktop_theme.css`), so the two sites feel like one brand.
 

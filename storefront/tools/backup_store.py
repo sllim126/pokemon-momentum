@@ -18,6 +18,11 @@ customers' names and addresses. It lives outside the store container's writable 
 the store can't damage its own backups, and the Proxmox Backup Server copies this VM
 (data/backups included) off the machine.
 
+With --copy-to DIR the backup folder is then copied to a second device as well (the cron
+line uses /mnt/synology-backup/Poke6s, the Synology's Backup share mounted over encrypted
+SMB). It mirrors: dated folders pruned here are removed there too, photos never are. DIR
+must already exist, so an unmounted share is an error rather than a copy onto this disk.
+
 Usage (standard library only; runs on the host's Python, cron at 03:15 through
 scripts/monitoring/run_job.py as `storefront-backup`):
 
@@ -214,6 +219,22 @@ def restore(backup_dir: Path, data_dir: Path, day: str, to: Path | None) -> Path
     return target
 
 
+def copy_off(backup_dir: Path, dest: Path) -> None:
+    """Mirror the backup folder onto a second device (see the module docstring)."""
+    if not dest.is_dir():
+        raise BackupError(f"{dest} doesn't exist: is the NAS share mounted? The local backup is fine.")
+    local = {path.name for _, path in dated_folders(backup_dir)}
+    copied = 0
+    for name in sorted(local):
+        copied += mirror(backup_dir / name, dest / name)
+    for _, path in dated_folders(dest):
+        if path.name not in local:
+            shutil.rmtree(path)
+    if (backup_dir / "images").is_dir():
+        copied += mirror(backup_dir / "images", dest / "images")
+    print(f"COPIED to {dest}: {len(local)} nightly folders, {copied} files updated")
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--data-dir", type=Path, default=DATA_DIR)
@@ -221,6 +242,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     sub = parser.add_subparsers(dest="command", required=True)
     b = sub.add_parser("backup", help="Take tonight's backup and delete old ones.")
     b.add_argument("--keep", type=int, default=30, help="Days of nightly folders to keep (30).")
+    b.add_argument("--copy-to", type=Path, help="Also mirror the backups to this folder (a NAS share).")
     sub.add_parser("list", help="List the backups and their row counts.")
     r = sub.add_parser("restore", help="Restore store.db from a backup.")
     r.add_argument("--date", default="latest", help="YYYY-MM-DD, or latest (default).")
@@ -233,6 +255,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.command == "backup":
             backup(args.data_dir, args.backup_dir, args.keep)
+            if args.copy_to:
+                copy_off(args.backup_dir, args.copy_to)
         elif args.command == "list":
             for day, path in dated_folders(args.backup_dir):
                 try:
