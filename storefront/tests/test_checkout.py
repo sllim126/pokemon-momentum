@@ -451,7 +451,8 @@ def test_checkout_switch_reads_storefront_checkout(monkeypatch):
 
 
 def test_live_keys_are_refused_unless_allowed(imported):
-    live = dataclasses.replace(imported, stripe_secret_key="sk_live_x", stripe_webhook_secret=WEBHOOK_SECRET)
+    live = dataclasses.replace(imported, stripe_secret_key="sk_live_x", stripe_webhook_secret=WEBHOOK_SECRET,
+                               graph_tenant_id="t", graph_client_id="c", graph_client_secret="s")
     assert not live.checkout_enabled
     assert dataclasses.replace(live, allow_live=True).checkout_enabled
 

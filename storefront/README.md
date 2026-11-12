@@ -161,8 +161,22 @@ owner's call. Other settings (all optional, defaults in `app/settings.py`):
 (decision D2: `stripe` = Stripe Tax adds Utah sales tax on top at checkout, once Utah is
 registered under Tax -> Registrations in the Stripe dashboard; `none` = no tax, the default;
 anything else keeps checkout off), `STOREFRONT_DISCORD_WEBHOOK_URL` (order
-alerts; off when empty), `STOREFRONT_SMTP_HOST` / `_USER` / `_PASSWORD` (Microsoft 365, port
-587). Without SMTP, order emails are written to `data/storefront/outbox/*.eml`.
+alerts; off when empty), and the order-email settings below.
+
+**Order emails** go out through Microsoft Graph (since 2026-11-12; Microsoft turns off
+password SMTP by default at the end of 2026). Settings: `STOREFRONT_GRAPH_TENANT_ID`,
+`STOREFRONT_GRAPH_CLIENT_ID`, `STOREFRONT_GRAPH_CLIENT_SECRET`, from the Entra app registration
+`poke6s-store-mail`. That app has no Mail.Send permission in Entra; instead Exchange Online
+(RBAC for Applications: a management scope on admin@poke6s.com plus the "Application
+Mail.Send" role) lets it send only as admin@poke6s.com, so a leaked secret can't send as any
+other mailbox. The client secret expires after 24 months (renew it in Entra and update `.env`).
+`STOREFRONT_SMTP_HOST` / `_USER` / `_PASSWORD` still work as a fallback. With neither, emails
+are written to `data/storefront/outbox/*.eml`, and live checkout refuses to open.
+A failed send is queued in `outbox/retry/`, Discord is told, and the 15-minute job retries it for
+24 hours before moving it to `outbox/failed/` with a "gave up" alert. Check the setup with
+`orders_cli test-email --to <you>`; resend an order's email with `orders_cli resend <number>`.
+DKIM for poke6s.com: Microsoft 365 signs the mail once its two `selector*._domainkey` CNAMEs are in
+Cloudflare (DNS only) and DKIM is switched on (Defender portal > Email authentication > DKIM).
 
 Order emails (confirmation and shipped) have a plain-text part and a designed HTML part,
 `app/templates/email/order.html`: tables and inline styles only, because email apps ignore most
@@ -212,7 +226,7 @@ stock by hand until the Phase 3 admin.
 | `app/main.py` | FastAPI app: routes, 404 + redirect handling, security headers, reconcile loop |
 | `app/orders.py` | Cart pricing, checkout, reservations, payment, expiry, refunds, disputes, shipping |
 | `app/stripe_api.py` | The Stripe calls (Checkout Sessions) over HTTPS; webhook signature check |
-| `app/notify.py` | Discord order alerts; order and shipping emails (SMTP or the outbox folder; HTML in `templates/email/order.html`) |
+| `app/notify.py` | Discord order alerts; order and shipping emails (Microsoft Graph, SMTP or the outbox folder; retry queue; HTML in `templates/email/order.html`) |
 | `app/orders_cli.py` | `list`, `show`, `ship`, `reconcile` from the command line |
 | `app/catalog.py` | Read-only queries: filters, search, facets, product, sets, sitemap |
 | `app/importer.py` | Squarespace export + intake CSVs → database |
