@@ -28,17 +28,34 @@ git -C "$STORE" checkout -q --detach FETCH_HEAD
 # The compose file comes from the clone, so its settings match the code. --project-directory
 # keeps the same compose project, .env and ./data paths as the repo folder.
 export STOREFRONT_CODE_DIR="$STORE/storefront"
-docker-compose --project-directory "$REPO" -f "$STORE/docker-compose.yml" up -d --build storefront
+docker-compose --project-directory "$REPO" -f "$STORE/docker-compose.yml" up -d --build storefront storefront-admin
 # Code is mounted, not baked in: restart so a code-only change is picked up too.
-docker-compose --project-directory "$REPO" -f "$STORE/docker-compose.yml" restart storefront
+docker-compose --project-directory "$REPO" -f "$STORE/docker-compose.yml" restart storefront storefront-admin
 
+store_ok=""
 for _ in $(seq 1 20); do
   if health=$(curl -fsS localhost:8010/healthz 2>/dev/null); then
-    echo "Store updated to $(git -C "$STORE" log -1 --format='%h %s')"
-    echo "Health: $health"
-    exit 0
+    store_ok=1
+    break
   fi
   sleep 1
 done
-echo "The store did not answer /healthz within 20 s: docker logs poke6s-storefront" >&2
+if [ -z "$store_ok" ]; then
+  echo "The store did not answer /healthz within 20 s: docker logs poke6s-storefront" >&2
+  exit 1
+fi
+echo "Store updated to $(git -C "$STORE" log -1 --format='%h %s')"
+echo "Health: $health"
+
+# The admin answers on the LAN address it's published on (docker port), never localhost.
+admin_addr=$(docker port poke6s-storefront-admin 8011 2>/dev/null | head -1)
+for _ in $(seq 1 20); do
+  if [ -n "$admin_addr" ] && admin_health=$(curl -fsS "http://$admin_addr/healthz" 2>/dev/null); then
+    echo "Admin: http://$admin_addr/  $admin_health"
+    exit 0
+  fi
+  sleep 1
+  admin_addr=$(docker port poke6s-storefront-admin 8011 2>/dev/null | head -1)
+done
+echo "The admin did not answer within 20 s: docker logs poke6s-storefront-admin" >&2
 exit 1

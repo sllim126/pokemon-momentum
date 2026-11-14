@@ -44,6 +44,11 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-14 Store admin, Phase 3 step 1: separate app and container on :8011 (LAN address
+  only, own Docker network, refuses Cloudflare and non-private addresses), password sign-in
+  with lockout, Overview page (to ship, month net sales, email queue, backups, disputes,
+  sold-out products, set-up). Owner decisions D10 (no singles on poke6s.com) and D11 (market
+  admin tools: two retired, supplier tools stay). Checked at 1920x1080, 1366x768 and phone.
 - 2026-11-14 Marketing emails (owner): one template for future news to the email list
   (storefront/app/mailing.py, templates/email/marketing.html), sent with `orders_cli mailing`
   (preview, --test-to, --send). Every email has the reason the reader gets it, a one-click
@@ -430,9 +435,25 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - [done 2026-11-12] Order emails through Microsoft Graph from orders@poke6s.com.
   - [planned] Once real orders exist, stop re-running the Squarespace importer (it resets
     stock); the Phase 3 admin takes over stock changes.
-- [next] Phase 3: LAN-only admin (orders, ship with tracking, refunds, stock), exports (Pirate
-  Ship, sales tax, bookkeeping, TCGplayer reconciliation; the Pirate Ship export should ask for
-  signature confirmation on every order), backups.
+- [in progress] Phase 3: store admin, built in 8 steps (plan "Phase 3"; Claude, branch
+  `storefront/phase3-admin`). Step 1 (foundation: app on http://192.168.1.240:8011/, network
+  walls, sign-in, Overview) done 2026-11-14. Next:
+  - [owner] Set the admin password on the server: `python3 -m storefront.admin.passwd`, then
+    `bash deploy/update_storefront.sh`, then open http://192.168.1.240:8011/.
+  - [next] Step 2, Orders: list and detail, mark shipped with tracking, resend, notes.
+  - [planned] Step 3, Shipping: Pirate Ship CSV export (signature confirmation on every
+    order), tracking upload, packing slips.
+  - [planned] Step 4, Refunds through Stripe with optional restock (also covers the "restock
+    command for returns" item below). Needs a second restricted Stripe key for the admin with
+    Refunds write (owner creates it); the public store's key stays unable to refund.
+  - [planned] Steps 5-7: products and stock, pricing (reprice.py as a page), reports (sales
+    tax, TCGplayer reconciliation, bookkeeping columns agreed with the owner first).
+  - [planned] Step 8 (D11): retire the market site's Squarespace Export Upload and Singles
+    Listing Intake (D10: no singles on poke6s.com), point Supplier Profitability's store price
+    at the store database, update the market Admin page.
+  - [idea] The admin is home-network only. Tailscale is already on the server, so reaching it
+    away from home later would need only binding it to the Tailscale address too and allowing
+    that range in refuse_reason(). Not without the owner asking.
 - [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
   too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
 - [next] Owner's notes on individual store listings (owner has them, 2026-11-14): go through

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block main %}
+<section class="panel login">
+  <h1>Sign in</h1>
+  {% if not ready %}
+  <p>Sign-in isn't set up yet. On the server, from the repo folder, run:</p>
+  <pre>python3 -m storefront.admin.passwd
+bash deploy/update_storefront.sh</pre>
+  <p class="muted small">The first sets the password (it's saved as a hash in .env); the second reloads the admin.</p>
+  {% else %}
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" action="/login">
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+    <button type="submit">Sign in</button>
+  </form>
+  <p class="muted small">This device stays signed in for 30 days. Home network only.</p>
+  {% endif %}
+</section>
+{% endblock %}

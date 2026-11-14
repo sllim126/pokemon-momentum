@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}Admin{% endblock %} · Poke6s admin</title>
+  <link rel="icon" href="/store-static/img/favicon.png">
+  <link rel="stylesheet" href="/static/admin.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/"><img src="/store-static/img/logo.png" alt="Poke6s" width="110" height="39"><span>Admin</span></a>
+    {% if signed_in %}
+    <nav aria-label="Admin">
+      <a href="/" {% if active == 'overview' %}aria-current="page"{% endif %}>Overview</a>
+    </nav>
+    <div class="top-right">
+      <a class="muted small" href="{{ settings.base_url }}" target="_blank" rel="noopener">Open the store ↗</a>
+      <form method="post" action="/logout">
+        <input type="hidden" name="form_token" value="{{ form_token }}">
+        <button class="link" type="submit">Sign out</button>
+      </form>
+    </div>
+    {% endif %}
+  </header>
+  <main>
+    {% block main %}{% endblock %}
+  </main>
+</body>
+</html>

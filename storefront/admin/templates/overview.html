@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% macro order_table(rows, empty, show_wait=False) %}
+  {% if rows %}
+  <table>
+    <thead><tr><th>Order</th><th>Customer</th><th class="num">Items</th><th class="num">Total</th>
+      <th>{% if show_wait %}Paid{% else %}Status{% endif %}</th></tr></thead>
+    <tbody>
+    {% for o in rows %}
+      <tr{% if o.late %} class="late"{% endif %}>
+        <td><strong>{{ o.number }}</strong>{% if o.mode == 'test' %} <span class="badge">test</span>{% endif %}</td>
+        <td>{{ o.name or '—' }}</td>
+        <td class="num">{{ o['items'] }}</td>
+        <td class="num">{{ o.total_cents | money }}</td>
+        {% if show_wait %}
+        <td>{{ o.paid_at | when }}{% if o.late %} <span class="badge bad">{{ o.waiting_hours | hours }} waiting</span>{% endif %}</td>
+        {% else %}
+        <td><span class="status s-{{ o.status }}">{{ o.status | replace('_', ' ') }}</span> <span class="muted small">{{ o.created_at | when }}</span></td>
+        {% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">{{ empty }}</p>
+  {% endif %}
+{% endmacro %}
+{% block main %}
+{% set d = data %}
+<h1 class="sr-only">Overview</h1>
+
+<section class="tiles" aria-label="At a glance">
+  <div class="tile{% if d.to_ship %} warn{% endif %}">
+    <span class="label">To ship</span>
+    <strong>{{ d.to_ship | length }}</strong>
+    <span class="muted small">{% set late = d.to_ship | selectattr('late') | list %}{% if late %}{{ late | length }} past 1 business day{% else %}paid, not yet shipped{% endif %}</span>
+  </div>
+  <div class="tile">
+    <span class="label">{{ d.month.month }}</span>
+    <strong>{{ d.month.net | money }}</strong>
+    <span class="muted small">{{ d.month.orders }} live order{{ '' if d.month.orders == 1 else 's' }}{% if d.month.refunded %} · {{ d.month.sales | money }} less {{ d.month.refunded | money }} refunded{% endif %}</span>
+  </div>
+  <div class="tile{% if d.emails.failed %} bad{% elif d.emails.retrying %} warn{% endif %}">
+    <span class="label">Order emails</span>
+    <strong>{% if d.emails.failed %}{{ d.emails.failed }} failed{% elif d.emails.retrying %}{{ d.emails.retrying }} retrying{% else %}OK{% endif %}</strong>
+    <span class="muted small">sent by {{ d.status.email }}</span>
+  </div>
+  <div class="tile{% if d.backup.stale %} bad{% endif %}">
+    <span class="label">Last backup</span>
+    <strong>{% if d.backup.found %}{{ d.backup.hours | hours }} ago{% else %}none found{% endif %}</strong>
+    <span class="muted small">{% if d.backup.found %}{% set n = d.backup.rows.get('orders', 0) %}{{ d.backup.day }} · {{ n }} order{{ '' if n == 1 else 's' }}, {{ d.backup.rows.get('products', 0) }} products{% else %}nightly at 03:15{% endif %}</span>
+  </div>
+</section>
+
+<div class="columns">
+  <section class="panel">
+    <h2>To ship</h2>
+    {{ order_table(d.to_ship, "Nothing to ship. Paid orders appear here until they're marked shipped.", show_wait=True) }}
+    <p class="muted small">Until the Orders page arrives (next step), mark an order shipped on the server:
+      <code>docker exec poke6s-storefront python -m storefront.app.orders_cli ship NUMBER --carrier USPS --tracking …</code></p>
+  </section>
+
+  <aside>
+    <section class="panel">
+      <h2>Needs attention</h2>
+      <ul class="checks">
+        {% for o in d.disputed %}<li class="bad">Dispute on {{ o.number }} ({{ o.total_cents | money }}): answer it in the Stripe dashboard.</li>{% endfor %}
+        {% if d.emails.failed %}<li class="bad">{{ d.emails.failed }} order email{{ '' if d.emails.failed == 1 else 's' }} gave up after a day of retries. Resend with <code>orders_cli resend NUMBER</code>.</li>{% endif %}
+        {% if d.emails.retrying %}<li class="warn">{{ d.emails.retrying }} order email{{ '' if d.emails.retrying == 1 else 's' }} waiting to retry (every 15 minutes).</li>{% endif %}
+        {% if d.backup.stale %}<li class="bad">{% if d.backup.found %}The last backup is {{ d.backup.hours | hours }} old: the nightly job may have failed.{% else %}No backup found.{% endif %} See the runbook, "Store backups".</li>{% endif %}
+        {% if not d.status.checkout_on %}<li class="warn">Checkout is {{ d.status.checkout | trim('.') }}.</li>{% endif %}
+        {% if not (d.disputed or d.emails.failed or d.emails.retrying or d.backup.stale or not d.status.checkout_on) %}<li class="good">All clear.</li>{% endif %}
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2>Stock</h2>
+      {% if d.sold_out %}
+      <p class="small">Sold out but still on show:</p>
+      <ul class="plain">
+        {% for p in d.sold_out %}<li><span class="count zero">0</span> {{ p.title }}</li>{% endfor %}
+      </ul>
+      {% else %}<p class="muted">Nothing on show is sold out.</p>{% endif %}
+      {% if d.last_one %}<p class="muted small">{{ d.last_one }} product{{ '' if d.last_one == 1 else 's' }} down to the last one.</p>{% endif %}
+      {% if d.held %}<p class="muted small">{{ d.held }} unit{{ '' if d.held == 1 else 's' }} held by checkouts in progress.</p>{% endif %}
+    </section>
+
+    <section class="panel">
+      <h2>Store set-up</h2>
+      <dl class="facts">
+        <dt>Checkout</dt><dd>{{ d.status.checkout }}</dd>
+        <dt>Payments</dt><dd>Stripe {{ d.status.stripe_mode }}</dd>
+        <dt>Sales tax</dt><dd>{{ 'Stripe Tax (Utah)' if d.status.tax == 'stripe' else d.status.tax }}</dd>
+        <dt>Emails</dt><dd>{{ d.status.email }}</dd>
+      </dl>
+    </section>
+  </aside>
+</div>
+
+<section class="panel">
+  <h2>Recent orders</h2>
+  {{ order_table(d.recent, "No orders yet.") }}
+</section>
+{% endblock %}
