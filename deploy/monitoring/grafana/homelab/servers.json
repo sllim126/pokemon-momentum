@@ -422,7 +422,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(apt_upgrades_pending) or vector(0)",
+          "expr": "sum(apt_upgrades_pending{instance=\"localhost:9100\"}) or vector(0)",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",
@@ -488,7 +488,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "max(node_reboot_required) or vector(0)",
+          "expr": "max(node_reboot_required{instance=\"localhost:9100\"}) or vector(0)",
           "legendFormat": "",
           "datasource": {
             "type": "prometheus",

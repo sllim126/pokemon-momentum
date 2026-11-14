@@ -91,7 +91,6 @@ JOBS = {
     "storefront-market-reference": ("cron", DAY),
     "storefront-backup": ("cron", DAY),
     "placeholder-sync": ("cron", DAY),
-    "squarespace-price-sync": ("cron", DAY),
     "tcgcsv-catalogue": ("cron", DAY),
     "archive-backfill": ("cron", DAY),
     "discord-bug-import": ("cron", 15 * 60),
