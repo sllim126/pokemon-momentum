@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-11 (milestone: self-hosted; poke6s.com on our own server)
+Last updated: 2026-11-13 (checkout live)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -31,9 +31,9 @@ Current Focus (2026-11-11)
 - Mobile: the new phone app is live at `/`, `/mobile` and `/m-next` (owner switched it early,
   2026-10-31; plan and remaining stages in `docs/mobile_app_plan.md`). The old phone and research
   dashboards were deleted; tag `backup/before-mobile-cleanup-2026-10-31` holds their last copy.
-- Storefront: our own store is live on https://poke6s.com/ (catalog only, self-hosted through a
-  Cloudflare Tunnel since 2026-11-11; Squarespace plan ends 2026-11-14). Next: switch checkout on
-  (Stripe live), then Phase 3 admin. Plan and log: `docs/storefront_plan.md`; hosting and
+- Storefront: our own store is live on https://poke6s.com/ (self-hosted through a Cloudflare
+  Tunnel since 2026-11-11; checkout live with Stripe since 2026-11-13). Next: point the market
+  site's buy button at it, email the waiting list, then Phase 3 admin. Plan and log: `docs/storefront_plan.md`; hosting and
   recovery: runbook "poke6s.com hosting".
 - Bug reports go to the Discord `#bug-reports` channel. New pages get no on-site bug form.
 - Dates: Pokémon Black Friday on TCGplayer ~Nov 25 - Dec 1; Squarespace plan ends Nov 14;
@@ -43,6 +43,14 @@ Current Focus (2026-11-11)
 
 Recently Completed
 ------------------
+
+- 2026-11-13 Checkout live on poke6s.com (owner + Claude). Stripe live account activated; live
+  webhook poke6s-store-live; restricted live key (rk_live_: Checkout Sessions write; Charges,
+  PaymentIntents, Events, Tax Registrations read); STOREFRONT_ALLOW_LIVE=1, STOREFRONT_CHECKOUT=1.
+  Utah registration in Stripe Tax active from 2026-11-13 (the dashboard had scheduled it for
+  2027-01-01; recreated through the API with active_from=now). Real order P6-2026-0001 (one
+  DR pack, $9.99 + $10 shipping + $0.74 Utah tax) paid, webhook received, then refunded via
+  webhook; stock put back by hand (refunds don't restock, D8). The order stays as a record.
 
 - 2026-11-12 Test-mode rehearsal on the live site (owner + Claude): checkout, Stripe Tax (Utah),
   thanks page, real webhook through the tunnel, stock reserved and sold, confirmation and
@@ -447,9 +455,6 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - [planned] STRIPE_WEBHOOK_SECRET: the Tunnel is up since 2026-11-11, so add a Stripe
     webhook to https://poke6s.com/stripe/webhook when checkout is switched on. Until then the thanks page and the 15-minute
     reconcile job confirm payments.
-  - [waiting] Owner: Stripe activation (business profile, bank, statement descriptor POKE6S)
-    before live payments, and Tax -> Registrations -> Utah in live mode. Use the new Stripe
-    account, not the Squarespace-managed one.
   - [next] Order emails through Microsoft Graph, not SMTP (Microsoft turns password SMTP off by
     default from December 2026, MC786329). Owner: shared mailbox orders@poke6s.com, an Entra
     app with Mail.Send limited to that mailbox, three values in `.env`. Claude: Graph sender in
@@ -461,8 +466,12 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   signature confirmation on every order), backups.
 - [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
   too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
-- [planned] Switch checkout on: Stripe live activation, live keys in .env, STOREFRONT_CHECKOUT=1,
-  STOREFRONT_ALLOW_LIVE=1, webhook, a refunded live test order. Then the market site's buy button.
+- [next] Now that checkout is live (2026-11-13): point the market site's "Our store" button at
+  poke6s.com, and send the waiting-list email (see item 5's follow-ups).
+- [planned] A cheaper shipping rate for single packs? Small sealed is $10 flat (a $9.99 pack
+  cost $20.73 with tax). Owner's call.
+- [planned] A restock command for returns (D8: refunds don't put stock back; done by hand in
+  SQL for P6-2026-0001). Belongs in the Phase 3 admin.
 - [planned] Yearly, by 2027-10: bump the cloudflared image tag in docker-compose.yml (2026.10.7
   pinned 2026-11-11; Cloudflare supports a connector version for one year).
 - [planned] Move market.poke6s.com onto the Cloudflare Tunnel too (route to
