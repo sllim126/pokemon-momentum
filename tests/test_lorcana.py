@@ -3,6 +3,7 @@ history unpacking and the Lorcast image plan."""
 
 import argparse
 import io
+import json
 import shutil
 import subprocess
 import tarfile
@@ -17,7 +18,9 @@ from scripts.common.lorcana_rarity import lorcana_rarity_tier, lorcana_rarity_ti
 from scripts.common.product_classification import get_product_kind_sql
 from scripts.download import collect_tcgcsv_categories, fetch_lorcast_images
 from scripts.extract import extract_category_from_archives as extract
+from scripts.indicators import build_lorcana_card_attributes as attributes
 from scripts.pipeline import notify_discord, run_daily_update
+from scripts.utilities import export_products_for_my_groups as product_export
 
 
 class LorcanaCategoryTests(unittest.TestCase):
@@ -155,6 +158,101 @@ class LorcastImagePlanTests(unittest.TestCase):
             self.assertEqual([key for key, _ in todo], ["200", "300"])
             self.assertEqual(sorted(new_manifest), ["100", "200", "300"])
             self.assertEqual(new_manifest["300"]["file"], "large/300.avif")
+
+
+class LorcanaCardAttributeTests(unittest.TestCase):
+    def product(self, product_id, **fields):
+        return {"productId": product_id, "extendedData": [{"name": k, "value": v} for k, v in fields.items()]}
+
+    def test_card_fields_are_read_and_sealed_products_left_out(self):
+        card = self.product(1, Property="Frozen", InkType="Amber;Steel", CardType="Character",
+                            Rarity="Enchanted", **{"Cost Ink": "5", "Lore Value": "2"})
+        row = attributes.attribute_row(24740, card)
+        self.assertEqual((row["property"], row["ink"], row["inks"]), ("Frozen", "Amber", "Amber;Steel"))
+        self.assertEqual((row["cost"], row["lore"], row["strength"]), (5, 2, None))
+        self.assertEqual(row["rarity_tier"], "chase")
+        self.assertIsNone(attributes.attribute_row(24740, self.product(2)))  # a booster box
+
+    def test_newer_copy_of_a_set_wins(self):
+        import os
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            (tmp / "catalogue" / "10").mkdir(parents=True)
+            (tmp / "catalogue" / "11").mkdir(parents=True)
+            (tmp / "raw").mkdir()
+            old = tmp / "catalogue" / "10" / "products.json"
+            new = tmp / "raw" / "10.json"
+            only = tmp / "catalogue" / "11" / "products.json"
+            for path in (old, new, only):
+                path.write_text('{"results": []}')
+            os.utime(old, (1, 1))
+            files = attributes.newest_product_files(tmp / "raw", tmp / "catalogue")
+            self.assertEqual(files, {10: new, 11: only})
+
+    def test_build_writes_table(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            path = tmp / "1.json"
+            path.write_text(json.dumps({"results": [self.product(5, Property="Moana", InkType="Ruby")]}))
+            rows = attributes.build_rows({1: path})
+            attributes.write_outputs(rows, tmp / "a.csv", tmp / "db.duckdb")
+            got = duckdb.connect(str(tmp / "db.duckdb")).execute(
+                "SELECT productId, groupId, property, ink FROM lorcana_card_attributes").fetchall()
+            self.assertEqual(got, [(5, 1, "Moana", "Ruby")])
+
+    def test_metadata_step_keeps_raw_lists_for_lorcana_only(self):
+        self.assertEqual(product_export.RAW_PRODUCT_CATEGORIES, {71})
+        with tempfile.TemporaryDirectory() as tmp:
+            original = product_export.DATA_DIR
+            product_export.DATA_DIR = tmp
+            try:
+                product_export.save_raw_products(get_category_config(71), 9, [{"productId": 1}])
+            finally:
+                product_export.DATA_DIR = original
+            saved = json.loads((Path(tmp) / "lorcana_products_raw" / "9.json").read_text())
+            self.assertEqual(saved, {"results": [{"productId": 1}]})
+
+    def test_nightly_runs_it_for_lorcana_only(self):
+        def names(category_id):
+            args = argparse.Namespace(
+                category_id=category_id, skip_download=True, skip_metadata=False, skip_analytics=True,
+                skip_parquet=True, full_metadata_refresh=False, workers=1, refresh_csv=False,
+                limit_days=0, latest_first=False,
+            )
+            return [name for name, _ in run_daily_update.build_steps(args)]
+        self.assertIn("Build Lorcana card attributes", names(71))
+        self.assertNotIn("Build Lorcana card attributes", names(3))
+        self.assertTrue(run_daily_update.can_fall_back_to_cached_metadata("Build Lorcana card attributes"))
+
+
+class LorcanaImageRouteTests(unittest.TestCase):
+    """/lorcana/images/<productId>.avif: admin-only while Lorcana is internal."""
+
+    @classmethod
+    def setUpClass(cls):
+        from fastapi.testclient import TestClient
+        from scripts.dashboards import api
+        cls.api = api
+        cls.client = TestClient(api.app)
+
+    def test_needs_a_sign_in(self):
+        self.assertEqual(self.client.get("/lorcana/images/123.avif").status_code, 401)
+
+    def test_admin_gets_the_image_or_404(self):
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "123.avif").write_bytes(b"avif-bytes")
+            with patch.object(self.api, "require_admin_user", new=lambda **_: None), \
+                    patch.object(self.api, "LORCANA_IMAGE_DIR", Path(tmp)):
+                found = self.client.get("/lorcana/images/123.avif")
+                missing = self.client.get("/lorcana/images/456.avif")
+                not_a_number = self.client.get("/lorcana/images/..%2Fsecret.avif")
+        self.assertEqual(found.status_code, 200)
+        self.assertEqual(found.content, b"avif-bytes")
+        self.assertEqual(found.headers["content-type"], "image/avif")
+        self.assertTrue(found.headers["cache-control"].startswith("private"))
+        self.assertEqual(missing.status_code, 404)
+        self.assertIn(not_a_number.status_code, (404, 422))
 
 
 if __name__ == "__main__":

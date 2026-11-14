@@ -142,6 +142,22 @@ def groups_with_placeholder_rows(existing_rows: dict[tuple[int, int], tuple]) ->
     return groups
 
 
+# Categories whose fetched product lists are also kept whole, because their pages need
+# fields this script drops (Lorcana's film, ink, card type and promo type are read by
+# scripts/indicators/build_lorcana_card_attributes.py). No extra requests: these are the
+# answers already fetched below. Saved as data/extracted/<slug>_products_raw/<groupId>.json.
+RAW_PRODUCT_CATEGORIES = {71}
+
+
+def save_raw_products(category, group_id: int, products: list[dict]) -> None:
+    """Keep one set's fetched product list as TCGCSV sent it (written whole, then renamed)."""
+    folder = Path(DATA_DIR) / f"{category.slug}_products_raw"
+    folder.mkdir(parents=True, exist_ok=True)
+    tmp = folder / f"{group_id}.json.part"
+    tmp.write_text(json.dumps({"results": products}), encoding="utf-8")
+    tmp.replace(folder / f"{group_id}.json")
+
+
 def products_path(category_id: int, group_id: int) -> str:
     """TCGCSV path of one set's product list (also its key in the manifest)."""
     return f"/tcgplayer/{category_id}/{group_id}/products"
@@ -307,6 +323,8 @@ def main() -> int:
             failed_groups.append(gid)
             continue
 
+        if category.category_id in RAW_PRODUCT_CATEGORIES:
+            save_raw_products(category, gid, products)
         if manifest is not None and current_hash(gid) is not None:
             fetched_hashes[gid] = current_hash(gid)
         for key in [key for key in rows_by_key if key[0] == gid]:

@@ -1,6 +1,6 @@
 # Site routes
 
-Last reviewed: 2026-11-06
+Last reviewed: 2026-11-14
 
 Every route served by `scripts/dashboards/api.py` (FastAPI, port 8001 in the container,
 public at market.poke6s.com). `tests/test_api_routes.py::test_every_route_is_in_the_route_reference`
@@ -119,3 +119,4 @@ or the `pm_tracking_token` cookie); **admin** = signed in with an address listed
 | `POST /single-listings/intake-upload`, `/single-listings/source-upload`, `/single-listings/draft-upload` | admin | Singles workflow uploads |
 | `POST /supplier-pricing/enrich`, `POST /supplier-pricing/save` | admin | Match OCR-read supplier rows to SKUs and market prices; save reviewed quotes |
 | `POST /supplier-profitability/data`, `GET /supplier-profitability/fx` | admin | Profit rows per SKU; latest JPY-per-USD rate |
+| `/lorcana/images/{product_id}.avif` | admin | Lorcana card image downloaded from Lorcast (`data/lorcana_images/large/`); 404 when there is none, so pages use TCGplayer's image. Admin-only while Lorcana is internal (`docs/lorcana_market_plan.md`) |

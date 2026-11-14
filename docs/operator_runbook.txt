@@ -1252,7 +1252,13 @@ No website pages yet (Phase 1).
   `docker-compose run --rm -T pokemon-momentum python scripts/extract/extract_category_from_archives.py --category-id 71`
   It only adds Lorcana to days that already have a day folder, and the next nightly run
   loads them. 2026-09-07 and 09-08 have empty archive files, so no day has them
+- card attributes: `lorcana_card_attributes` (film, ink, card type, promo type, stats) is
+  rebuilt nightly by `scripts/indicators/build_lorcana_card_attributes.py` from the product lists
+  in `data/extracted/lorcana_products_raw/` (kept by the product refresh) or, for sets not
+  fetched yet, the catalogue crawl's copies. A soft step: a failure warns and keeps yesterday's
+  table
 - card images: `data/lorcana_images/large/<productId>.avif` (674x940) and `manifest.json`,
+  served admin-only at `/lorcana/images/<productId>.avif`,
   from Lorcast (free, no key; owner's choice over Scrydex, whose terms forbid mirroring).
   3,369 images, 208 MB, downloaded 2026-11-14. Get new cards' images (only what's missing
   is fetched; card lists are cached for 7 days):

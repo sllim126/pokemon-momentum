@@ -1229,6 +1229,31 @@ def admin_hub(authorization: str | None = Header(default=None), tracking_token: 
     return FileResponse(ADMIN_HUB_HTML)
 
 
+# Lorcana card images downloaded once from Lorcast (scripts/download/fetch_lorcast_images.py),
+# named by TCGplayer productId. Lorcana is internal until the owner publishes it
+# (docs/lorcana_market_plan.md), so this route is admin-only like the rest of Lorcana.
+LORCANA_IMAGE_DIR = SCRIPT_DIR.parents[1] / "data" / "lorcana_images" / "large"
+LORCANA_IMAGE_CACHE_SECONDS = 7 * 24 * 3600
+
+
+@app.get("/lorcana/images/{product_id}.avif")
+def lorcana_card_image(
+    product_id: int,
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    """One Lorcana card image (674x940 AVIF). 404 when Lorcast has none: pages then use
+    TCGplayer's imageUrl. product_id is an int, so the path can't leave the folder."""
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    path = LORCANA_IMAGE_DIR / f"{product_id}.avif"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="No Lorcana image for this product")
+    response = FileResponse(path, media_type="image/avif")
+    # private: the route needs a sign-in, so shared caches must not keep a copy.
+    response.headers["Cache-Control"] = f"private, max-age={LORCANA_IMAGE_CACHE_SECONDS}"
+    return response
+
+
 def resolve_image_path(filename: str) -> Path | None:
     relative = Path(unquote(filename))
     if relative.is_absolute() or ".." in relative.parts:
