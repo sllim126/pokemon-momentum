@@ -130,7 +130,10 @@ about 4 minutes longer while the history loads.
 `lorcana_card_attributes` (film, ink, card type, promo type, stats, rarity tier; nightly, from
 the product lists the metadata step already fetches) and the admin-only image route
 `/lorcana/images/<productId>.avif`. "Internal" is done with the admin sign-in, since every route
-on the app is reachable at market.poke6s.com.
+on the app is reachable at market.poke6s.com. A gate in `api.py` (`INTERNAL_CATEGORY_IDS`)
+also answers 404 to any `?category_id=71` request from someone who isn't a signed-in admin, so
+the public market-data routes don't show Lorcana either. Publishing (Phase 3) means taking 71
+out of that set.
 - The game is chosen by host name, or by a `game` setting for LAN testing, rather than
   separate copies of each page. Pokemon stays the default, and `market.poke6s.com` must
   stay exactly as it is.

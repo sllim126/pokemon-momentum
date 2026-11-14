@@ -58,7 +58,7 @@ import pandas as pd
 import requests
 from fastapi import Cookie, FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from scripts.build_squarespace_single_listing_drafts import (
     DEFAULT_CREATED_CSV as SINGLE_LISTINGS_CREATED_CSV,
     DEFAULT_EXPORT_CSV as SINGLE_LISTINGS_EXPORT_CSV,
@@ -836,6 +836,34 @@ def desktop_app_redirect(request: Request) -> str | None:
         return _app_url(list_key, market=market, kind=kind, product=params.get("product"),
                         set=group_id if list_key == "set" else None)
     return None
+
+
+# Games whose data is loaded but not published yet (Lorcana: docs/lorcana_market_plan.md).
+# Every market-data route takes ?category_id=, so without this gate anyone could read them at
+# market.poke6s.com. Signed-in admins get the data; everyone else gets the same 404 as an
+# unknown route. Remove a game from this set when the owner publishes it.
+INTERNAL_CATEGORY_IDS = frozenset({"71"})
+
+
+def _is_admin_request(request: Request) -> bool:
+    """Whether the request carries a signed-in admin's token (header or cookie)."""
+    try:
+        require_admin_user(
+            authorization=request.headers.get("authorization"),
+            tracking_token=request.cookies.get("pm_tracking_token"),
+        )
+    except HTTPException:
+        return False
+    return True
+
+
+@app.middleware("http")
+async def hide_internal_categories(request: Request, call_next):
+    """404 for ?category_id=<an unpublished game> unless an admin is signed in."""
+    requested = (request.query_params.get("category_id") or "").strip()
+    if requested in INTERNAL_CATEGORY_IDS and not _is_admin_request(request):
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
+    return await call_next(request)
 
 
 @app.middleware("http")

@@ -255,5 +255,33 @@ class LorcanaImageRouteTests(unittest.TestCase):
         self.assertIn(not_a_number.status_code, (404, 422))
 
 
+class InternalCategoryGateTests(unittest.TestCase):
+    """Lorcana market data stays hidden from the public until the owner publishes it."""
+
+    @classmethod
+    def setUpClass(cls):
+        from fastapi.testclient import TestClient
+        from scripts.dashboards import api
+        cls.api = api
+        cls.client = TestClient(api.app)
+
+    def test_public_requests_for_lorcana_get_404(self):
+        for path in ("/top_movers?category_id=71", "/health?category_id=71", "/universe?category_id=%2071"):
+            self.assertEqual(self.client.get(path).status_code, 404, path)
+
+    def test_pokemon_requests_pass_the_gate(self):
+        from unittest.mock import patch
+        # The gate must not even look at the sign-in for Pokemon requests.
+        with patch.object(self.api, "_is_admin_request", side_effect=AssertionError("checked")):
+            response = self.client.get("/health?category_id=3")
+        self.assertNotEqual(response.status_code, 404)
+
+    def test_admins_pass_the_gate(self):
+        from unittest.mock import patch
+        with patch.object(self.api, "_is_admin_request", return_value=True):
+            response = self.client.get("/health?category_id=71")
+        self.assertNotEqual(response.content, b'{"detail":"Not Found"}')
+
+
 if __name__ == "__main__":
     unittest.main()

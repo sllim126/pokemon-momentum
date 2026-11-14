@@ -48,7 +48,9 @@ Recently Completed
   (film, ink(s), card type, classifications, promo type, cost, lore, strength, willpower, rarity
   tier; 3,657 cards from local files, no extra TCGCSV requests), built nightly after the product
   refresh, which now keeps Lorcana's fetched product lists whole. Admin-only image route
-  `/lorcana/images/<productId>.avif` (404 -> pages use TCGplayer's image).
+  `/lorcana/images/<productId>.avif` (404 -> pages use TCGplayer's image). Gate: every
+  `?category_id=71` request is 404 unless an admin is signed in (`INTERNAL_CATEGORY_IDS`).
+  Merge this before Lorcana's first nightly run, or its data shows on the public JSON routes.
 - 2026-11-14 Lorcana Phase 0 built (merged 2026-11-14, milestone lorcana-phase0): category 71, history
   unpacker (7z archives and collect-only tarballs; real `data/extracted/` filled for all 1,008
   stored days), nightly Lorcana pass after Pokemon (no index step), collect-only job without
@@ -968,6 +970,7 @@ only; Scrydex (paid) and PriceCharting graded are out of scope.
   footer credit and "not endorsed by Disney or Ravensburger" disclaimer.
 - [planned] Phase 2: Lorcana 100, Chase and Sealed indexes; Sealed Deals after the pack
   counts in the plan are checked against product pages.
+- [waiting] Phase 3: publishing includes removing 71 from `INTERNAL_CATEGORY_IDS` in `api.py`.
 - [waiting] Phase 3: owner picks brand and domain (subdomain of poke6s.com or a game-neutral
   domain); avoid a name that starts with the Lorcana trademark.
 

@@ -11,6 +11,10 @@ Access: **public** = anyone; **signed in** = a Google sign-in token (`pokemon-mo
 or the `pm_tracking_token` cookie); **admin** = signed in with an address listed in
 `POKEMON_MOMENTUM_ADMIN_USERS` (`require_admin_user`; 401/403 otherwise).
 
+Unpublished games: any request with `?category_id=` in `INTERNAL_CATEGORY_IDS` (in `api.py`;
+`71`, Lorcana, since 2026-11-14) answers 404 unless an admin is signed in, whatever the route.
+The public routes below are public for Pokemon (3 and 85) only until a game is published.
+
 ## Pages
 
 | Route | Page file | Access | What it is |
