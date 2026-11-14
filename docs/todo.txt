@@ -290,9 +290,9 @@ runbook section "Monitoring".
   the owner adds it later.
 - [waiting] `grafana.tail6217f2.ts.net` (Tailscale serve) forwards to port 8086, where nothing
   listens; Grafana is on 3000. Point it at 3000?
-- [planned] 2026-11-14: when the Squarespace price sync is retired, drop
-  `squarespace-price-sync` from JOBS in scripts/monitoring/collect_status.py and the probe of
-  https://poke6s.com/ changes meaning (it becomes the new store once launched).
+- [next] Due now (the Squarespace price sync left cron 2026-11-11 and the plan ended
+  2026-11-14): drop `squarespace-price-sync` from JOBS in scripts/monitoring/collect_status.py,
+  so Grafana stops expecting it. The https://poke6s.com/ probe already checks the new store.
 
 Store review 2026-11-11 (for the owner to go through tonight). Whole storefront, public and
 backend; market site not included. How to reproduce each one: docs/private/security_review_2026-11-11.md
@@ -441,6 +441,11 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - [owner] Set the admin password on the server: `python3 -m storefront.admin.passwd`, then
     `bash deploy/update_storefront.sh`, then open http://192.168.1.240:8011/.
   - [next] Step 2, Orders: list and detail, mark shipped with tracking, resend, notes.
+  - [owner] Before step 3: one Pirate Ship export of shipments with tracking numbers, and the
+    column layout Pirate Ship's "import orders" upload accepts (a sample file; names and
+    addresses can be made up), so the export and upload match exactly.
+  - [owner] Before step 7: the columns your books use for a month of sales (QuickBooks import
+    or the ledger in poke6s-books), so the bookkeeping export fits without retyping.
   - [planned] Step 3, Shipping: Pirate Ship CSV export (signature confirmation on every
     order), tracking upload, packing slips.
   - [planned] Step 4, Refunds through Stripe with optional restock (also covers the "restock
@@ -471,9 +476,9 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   pinned 2026-11-11; Cloudflare supports a connector version for one year).
 - [planned] Move market.poke6s.com onto the Cloudflare Tunnel too (route to
   http://pokemon-momentum:8001; check the Caddy/visitor-IP path), then close the router port.
-- [planned] Retire the Squarespace-only scripts when the tools in api.py go. The daily price sync
-  stopped 2026-11-11 (owner; removed from cron). Keep the market site's "Our store" button on
-  TCGplayer until checkout is on (owner, 2026-11-11), then point it at the store's product pages.
+- [planned] Retire the Squarespace-only scripts together with the market tools that use them
+  (store admin step 8, D11). The daily price sync stopped 2026-11-11 (owner; removed from
+  cron). The market site's store button already points at poke6s.com (2026-11-14).
 
 New mobile app (owner, 2026-10-21). Plan: `docs/mobile_app_plan.md`. The phone site now uses
 `scripts/dashboards/mobile_app.html` at `/`, `/mobile` and `/m-next`, in the desktop app's look,
