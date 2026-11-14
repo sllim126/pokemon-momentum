@@ -44,6 +44,12 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-14 Lorcana Phase 0 built (`feature/lorcana-phase0`, not merged yet): category 71, history
+  unpacker (7z archives and collect-only tarballs; real `data/extracted/` filled for all 1,008
+  stored days), nightly Lorcana pass after Pokemon (no index step), collect-only job without
+  Lorcana, Discord line, rarity tiers, Lorcast image downloader (3,369 images, 208 MB, all
+  matched by TCGplayer id). Tested on a copy of the database: 1,007 days and 3.8 million rows
+  in 4.5 minutes, Pokemon unchanged. Fixed the "tin" rule that called 15 Lorcana cards sealed.
 - 2026-11-14 Lorcana market plan merged (`docs/lorcana_market_plan.md`, written 2026-11-05):
   research-only Lorcana site, internal first; data on hand, source rules checked (TCGCSV,
   Lorcast, Scrydex, PriceCharting, Ravensburger), rarity tiers, indexes, sealed pack counts,
@@ -796,12 +802,17 @@ Plan: `docs/lorcana_market_plan.md`. Research only (no store or listings), Engli
 until the owner decides on a public address. No new costs: TCGCSV/TCGplayer data and images
 only; Scrydex (paid) and PriceCharting graded are out of scope.
 
-- [next] Phase 0 (on a fresh branch): add category 71 (`lorcana`) to `category_config.py`; load history from
-  `data/raw` archives (Lorcana is in them back to 2024-02-08); add 71 to the nightly per-set
-  fetch and snapshots, then drop it from the collect-only job; download Lorcast card images
-  once and host them ourselves (owner agreed 2026-11-05; Scrydex terms forbid mirroring);
-  Lorcana rarity tiers and printings; Discord summary line. Add `data/lorcana_images/` to
-  `.gitignore` before the first download.
+- [waiting] Phase 0 go-live: built and tested on branch `feature/lorcana-phase0` (see Recently
+  Completed). Lorcana starts the first night after the branch is merged and
+  `/opt/pokemon-momentum` is on `main` (it was on `feature/homelab-machines` on 2026-11-14).
+  Watch that night's Discord summary for the Lorcana line; the run is about 4 minutes longer.
+  If the code was off for a while first, run `extract_category_from_archives.py --category-id 71`
+  to fill the gap from the collect-only tarballs (runbook "Lorcana market").
+- [planned] Phase 1 data: product metadata keeps only rarity and number. Lorcana pages need
+  `Property` (film), `InkType`, `CardType` and `PromoType` from TCGCSV's extendedData: add them
+  for category 71 in `export_products_for_my_groups.py` (a `lorcana_products` column or a side table).
+- [planned] Phase 1: serve `data/lorcana_images/` (read-only route or static mount, cache headers)
+  with TCGplayer's `imageUrl` as the fallback; a weekly `fetch_lorcast_images.py` run for new sets.
 - [planned] Phase 1: game chosen by host name (Pokemon stays the default and unchanged);
   Discover, Research by set / franchise (`Property`) / ink, card page, Track; desktop first;
   footer credit and "not endorsed by Disney or Ravensburger" disclaimer.

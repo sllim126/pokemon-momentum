@@ -189,7 +189,8 @@ python scripts/pipeline/validate_pipeline.py
 This started while TCGCSV's daily archive was offline (2026-09-16 to 2026-10-31). The archive
 is back and `data/raw` now holds every game's prices for every day, so this nightly
 collection overlaps it; it is kept running for now. `scripts/pipeline/run_tcgcsv_collect_host.sh` (systemd timer, 03:30 UTC, user `adam`) saves
-Magic (1), Yu-Gi-Oh (2), One Piece (68) and Lorcana (71) every night, one
+Magic (1), Yu-Gi-Oh (2) and One Piece (68) every night (Lorcana (71) until 2026-11-14,
+when it moved into the nightly update; see `docs/lorcana_market_plan.md`), one
 `data/tcgcsv_archive/<date>/tcgcsv-<date>-<categoryId>.tar.gz` per game, with the files
 exactly as TCGCSV served them (product lists on Sundays). Nothing is loaded into DuckDB and
 the website keeps running. The games and details are in

@@ -25,7 +25,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 EXTRACTED_DIR = ROOT / "data" / "extracted"
-CATEGORIES = {3: ("English", "pokemon"), 85: ("Japanese", "pokemon_jp")}  # id -> (label, file slug)
+# id -> (label, file slug). Lorcana (71) runs in the same nightly job since 2026-11-14.
+CATEGORIES = {3: ("English", "pokemon"), 85: ("Japanese", "pokemon_jp"), 71: ("Lorcana", "lorcana")}
 STALE_AFTER_DAYS = 2  # newest price older than this turns a success orange
 GREEN, ORANGE, RED = 0x2ECC71, 0xE67E22, 0xE74C3C  # embed colors: ok / warning / failed
 GREY = 0x95A5A6  # nothing wrong, nothing done (TCGCSV archive still offline): no mention

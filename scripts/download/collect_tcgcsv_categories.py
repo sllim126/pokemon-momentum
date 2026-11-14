@@ -3,7 +3,7 @@
 Started while TCGCSV's daily price archive was offline (2026-09-16 to 2026-10-31), when a
 game's price history only existed from the day we saved it. The archive is back (data/raw
 holds every game's prices), so this overlaps it; kept running until the owner decides. This job saves one day of TCGCSV data per game
-(Magic, Yu-Gi-Oh, One Piece, Lorcana by default) exactly as served, so a future site for
+(Magic, Yu-Gi-Oh and One Piece by default; Lorcana until 2026-11-14) exactly as served, so a future site for
 those games can be built on real history. Nothing here touches DuckDB or the website.
 
 For each game and day it writes one compressed file:
@@ -48,13 +48,14 @@ from scripts.download.fetch_tcgcsv_prices import MAX_SNAPSHOT_AGE_HOURS, fetch_s
 from scripts.utilities.tcgcsv_client import TcgcsvBlockedError, build_tcgcsv_session, tcgcsv_get
 
 # TCGplayer category ids (confirmed against https://tcgcsv.com/tcgplayer/categories on
-# 2026-10-12). Pokemon (3) and Pokemon Japan (85) are not here: the nightly pipeline
-# already downloads and loads them.
+# 2026-10-12). Pokemon (3), Pokemon Japan (85) and, since 2026-11-14, Disney Lorcana (71) are
+# not here: the nightly pipeline downloads and loads them, and collecting them here too would
+# fetch the same TCGCSV files twice a day. Lorcana's archives from 2026-10-11 to 2026-11-13
+# stay in data/tcgcsv_archive/.
 COLLECT_CATEGORIES = {
     1: "Magic: The Gathering",
     2: "Yu-Gi-Oh",
     68: "One Piece Card Game",
-    71: "Disney Lorcana",
 }
 
 ARCHIVE_ROOT = Path("/app/data/tcgcsv_archive")

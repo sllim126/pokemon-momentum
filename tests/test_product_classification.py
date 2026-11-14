@@ -23,8 +23,10 @@ class ProductClassificationTests(unittest.TestCase):
     def test_product_kind_sql_uses_safer_tin_patterns(self):
         sql = get_product_kind_sql("item")
 
-        self.assertIn("% tin%", sql)
-        self.assertIn("tin %", sql)
+        # Whole-word match since 2026-11-14: "% tin%" also caught "Tinker Bell" and "Tiny".
+        # Behaviour is tested in tests/test_lorcana.py (TinPatternTests).
+        self.assertIn(r"regexp_matches(lower(COALESCE(item.name, '')), '\btins?\b')", sql)
+        self.assertNotIn("% tin%", sql)
         self.assertNotIn("LIKE 'tin%'", sql)
 
     def test_card_fallback_depends_on_number_or_rarity(self):

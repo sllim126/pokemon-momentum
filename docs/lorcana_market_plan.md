@@ -1,6 +1,6 @@
 # Lorcana Market Plan (working name "Lorcana6s")
 
-Last reviewed: 2026-11-14
+Last reviewed: 2026-11-14 (Phase 0 built)
 
 A Disney Lorcana version of the Pokemon market research site: prices, movers, set and card
 history, indexes and saved lists. **Research only.** No store, listings, buying or
@@ -100,18 +100,31 @@ checklist like `data/sealed_pack_checklist.csv`:
 
 ## Phases
 
-**Phase 0: data foundation (no pages).**
-1. Add category 71 to `category_config.py` (slug `lorcana`, label "Disney Lorcana").
-2. Load Lorcana history from the `data/raw` daily archives into the `lorcana_*` tables and
-   Parquet history, with the same loader the Pokemon backfill uses.
-3. Download Lorcast card images once into `data/lorcana_images/` (polite pacing, resumable,
-   skips files already saved), matched to TCGplayer products by set and card number.
-4. Add category 71 to the nightly per-set TCGCSV fetch and snapshot builds, inside the
-   DuckDB memory caps (`scripts/common/duckdb_settings.py`). Once that's running, take 71
-   out of the collect-only job so the same file isn't fetched twice a day.
-5. Add the Lorcana rarity tiers and printing handling where the pipeline uses Pokemon
-   rarity names.
-6. Add Lorcana pass/fail to the nightly Discord summary.
+**Phase 0: data foundation (no pages). Built 2026-11-14.**
+1. Category 71 in `category_config.py` (slug `lorcana`, label "Lorcana").
+2. History: `scripts/extract/extract_category_from_archives.py` fills Lorcana into
+   `data/extracted/` from the `data/raw` 7z archives and the collect-only tarballs. Done for
+   every stored day (2024-02-08 on; 2026-09-07 and 09-08 have empty archive files, the same
+   gap Pokemon has). The loader is the Pokemon one (`build_pokemon_prices_all_days.py`).
+3. Images: `scripts/download/fetch_lorcast_images.py` saved 3,369 images (208 MB) to
+   `data/lorcana_images/large/<productId>.avif`. Lorcast's `tcgplayer_id` matched our
+   productId for every one of them, so no matching by set and number was needed. TCGplayer
+   lists about 3,800 Lorcana cards; the rest use TCGplayer's image.
+4. Nightly: Lorcana is a last pass of the nightly update (`EXTRA_CATEGORY_IDS`), with the index
+   step skipped (`INDEX_CATEGORY_IDS`). The collect-only job no longer fetches 71. Tested on a
+   copy of the database: the first run loaded 1,007 days (3.8 million rows) in 4.5 minutes,
+   all snapshots built, and Pokemon's rows were unchanged.
+5. Rarity tiers: `scripts/common/lorcana_rarity.py` (Python and SQL). Nothing in the pipeline
+   uses rarity names, so the website (Phase 1) is the first user.
+6. Discord: Lorcana gets its own freshness line in the nightly summary.
+
+Also fixed on the way: the shared product rules called 15 Lorcana cards "sealed", because the
+"tin" pattern matched "Tinker Bell" and "Tiny". It now matches the whole word only; Pokemon
+results are unchanged.
+
+**Going live:** the nightly job runs the code in `/opt/pokemon-momentum`, so Lorcana starts
+the first night after this work is merged and that folder is on `main`. That night runs
+about 4 minutes longer while the history loads.
 
 **Phase 1: internal research site (LAN only).**
 - The game is chosen by host name, or by a `game` setting for LAN testing, rather than

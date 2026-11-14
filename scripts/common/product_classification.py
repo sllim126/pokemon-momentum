@@ -1,4 +1,10 @@
-"""Shared product classification rules used by snapshots and API queries."""
+"""Shared product classification rules used by snapshots and API queries.
+
+"tin" is matched as a whole word (`\\btins?\\b`), not as `% tin%`: the old pattern also
+caught Lorcana cards such as "Tinker Bell - ..." and "... - Tiny Tactician" and called them
+sealed. On 2026-11-14 both forms matched exactly the same Pokemon products (708 English,
+3 Japanese), so Pokemon is unchanged.
+"""
 
 
 def _name_expr(alias: str) -> str:
@@ -36,8 +42,7 @@ CASE
     OR {name} LIKE '%binder collection case%'
     OR {name} LIKE '%binder collection%'
     OR {name} LIKE '%mini tin%'
-    OR {name} LIKE '% tin%'
-    OR {name} LIKE 'tin %'
+    OR regexp_matches({name}, '\\btins?\\b')
     OR {name} LIKE '%blister case%'
     OR {name} LIKE '%blister%'
     OR {name} LIKE '%premium figure collection%'
@@ -82,8 +87,7 @@ CASE
     OR {name} LIKE '%binder collection case%'
     OR {name} LIKE '%binder collection%'
     OR {name} LIKE '%mini tin%'
-    OR {name} LIKE '% tin%'
-    OR {name} LIKE 'tin %'
+    OR regexp_matches({name}, '\\btins?\\b')
     OR {name} LIKE '%blister case%'
     OR {name} LIKE '%blister%'
     OR {name} LIKE '%premium figure collection%'

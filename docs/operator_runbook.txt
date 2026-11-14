@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-11 (Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
+Last reviewed: 2026-11-14 (Lorcana in the nightly update; collect-only job drops Lorcana; Lorcana images)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -12,10 +12,10 @@ crontab changes). Each job is explained further down in this file.
 
 | When | Job | How it runs | Log |
 | --- | --- | --- | --- |
-| Daily 02:00 | Nightly market update: TCGCSV prices, metadata, snapshots, parquet, PriceCharting, indexes; restarts the app; Discord summary | `pokemon-momentum-daily-update.timer` | `logs/daily_update.log` |
+| Daily 02:00 | Nightly market update: TCGCSV prices, metadata, snapshots, parquet, PriceCharting, indexes for Pokemon English and Japanese, then Lorcana (no indexes yet); restarts the app; Discord summary | `pokemon-momentum-daily-update.timer` | `logs/daily_update.log` |
 | Daily 03:00 | Storefront market prices (`data/storefront/market_reference.json`, read by the new shop's product pages) | cron: `scripts/build_storefront_market_reference.py` | `logs/storefront_market_reference.log` |
 | Daily 03:15 | Store backup: `store.db`, visit counts, outbox and photos into `data/backups/storefront/` (30 days; see "Store backups") | cron: `storefront/tools/backup_store.py backup` | `logs/storefront_backup.log` |
-| Daily 03:30 | Other games price archive (collect only) | `pokemon-momentum-tcgcsv-collect.timer` | see "Other games archive" |
+| Daily 03:30 | Other games price archive (collect only: Magic, Yu-Gi-Oh, One Piece) | `pokemon-momentum-tcgcsv-collect.timer` | see "Other games archive" |
 | Daily 04:30 | Placeholder Library sync (new Mega-era sets and promos) | cron: `scripts/utilities/sync_placeholder_library.py` | `logs/placeholder_sync.log` |
 | Daily 09:15 | Squarespace price sync (reaches the live store; retire when Squarespace closes 2026-11-14) | cron: `scripts/run_squarespace_price_sync.sh` | `logs/squarespace_price_sync_cron.log` |
 | Daily 12:00 | TCGCSV catalogue crawl (sets and products for every game, at most 4,000 requests a day; Discord summary) | cron: `scripts/pipeline/run_tcgcsv_catalogue_host.sh` | `logs/tcgcsv_catalogue.log` |
@@ -1211,8 +1211,8 @@ Other games archive (collect only)
 Every night at 03:30 UTC (systemd timer `pokemon-momentum-tcgcsv-collect.timer`, runs as
 adam and catches up after downtime; unit files in `deploy/systemd/`)
 `scripts/pipeline/run_tcgcsv_collect_host.sh`
-saves one day of TCGCSV data for Magic (1), Yu-Gi-Oh (2), One Piece (68) and Lorcana (71)
-into `data/tcgcsv_archive/<date>/tcgcsv-<date>-<categoryId>.tar.gz`, exactly as served. It
+saves one day of TCGCSV data for Magic (1), Yu-Gi-Oh (2) and One Piece (68) (Lorcana (71)
+until 2026-11-14, when it moved into the nightly update; its tarballs stay) into `data/tcgcsv_archive/<date>/tcgcsv-<date>-<categoryId>.tar.gz`, exactly as served. It
 waits for the Pokemon nightly update to finish first. It never stops the website or touches
 DuckDB.
 
@@ -1225,6 +1225,32 @@ DuckDB.
 - exit 3 in the log means TCGCSV blocked or throttled us: don't retry, check the TCGCSV
   Discord first
 - the archive is ignored by git; back it up with the rest of `data/`
+
+
+Lorcana market (research only, internal; docs/lorcana_market_plan.md)
+----------------------------------------------------------------------
+Lorcana (TCGplayer category 71) runs through the same nightly update as Pokemon, as a last
+pass after the Pokemon passes and the store audit (`EXTRA_CATEGORY_IDS`, default `71`, in
+`scripts/pipeline/run_daily_update_host.sh`). A Lorcana failure can't stop or delay Pokemon,
+but it marks the run failed in Discord. Its prices share the `pokemon_prices` table and the
+parquet store (`category-71.parquet` files); its own tables are `lorcana_*`. No index step yet.
+No website pages yet (Phase 1).
+
+- switch Lorcana off for a night: run the host script with `EXTRA_CATEGORY_IDS=""`
+- price history: `data/extracted/` holds Lorcana from 2024-02-08 (filled 2026-11-14). The
+  first nightly run that includes Lorcana loads all of it: about 3.5 minutes and 3.8 million
+  rows (tested on a copy of the database); later nights take about a minute
+- fill missing Lorcana days from the stored archives (data/raw 7z files, then the
+  collect-only tarballs), for example after the code was off for a while:
+  `docker-compose run --rm -T pokemon-momentum python scripts/extract/extract_category_from_archives.py --category-id 71`
+  It only adds Lorcana to days that already have a day folder, and the next nightly run
+  loads them. 2026-09-07 and 09-08 have empty archive files, so no day has them
+- card images: `data/lorcana_images/large/<productId>.avif` (674x940) and `manifest.json`,
+  from Lorcast (free, no key; owner's choice over Scrydex, whose terms forbid mirroring).
+  3,369 images, 208 MB, downloaded 2026-11-14. Get new cards' images (only what's missing
+  is fetched; card lists are cached for 7 days):
+  `docker-compose run --rm -T pokemon-momentum python scripts/download/fetch_lorcast_images.py`
+  Exit 3 means Lorcast blocked or throttled us: don't retry. The folder is git-ignored.
 
 
 Admin access

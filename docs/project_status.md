@@ -40,9 +40,11 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   `deploy/monitoring/`, `scripts/monitoring/`
 - Alerts: nightly update, Squarespace price sync, the other-games archive, the archive
   backfill and the catalogue crawl post summaries to Discord
-- Other games: Magic, Yu-Gi-Oh, One Piece and Lorcana prices are archived nightly
+- Other games: Magic, Yu-Gi-Oh and One Piece prices are archived nightly
   (collect only, since 2026-10-12; no site yet) in `data/tcgcsv_archive/`
-- Lorcana research site: planned, internal first, research only (`docs/lorcana_market_plan.md`)
+- Lorcana research site (`docs/lorcana_market_plan.md`, internal first, research only):
+  Phase 0 data foundation built 2026-11-14 (nightly Lorcana pass, history from 2024-02-08,
+  3,369 Lorcast card images); no pages yet
 - Storage: DuckDB working database, partitioned Parquet history, and generated snapshots
 - Frontend: static HTML/CSS/JavaScript pages served by FastAPI; a new single-page desktop
   app (`/` on desktop, `docs/desktop_app.md`) covers Buy, Discover, Research, Track and Learn

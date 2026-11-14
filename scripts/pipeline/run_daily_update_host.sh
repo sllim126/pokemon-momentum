@@ -6,11 +6,14 @@
 # 1. stops the website container (DuckDB allows only one writer),
 # 2. runs scripts/pipeline/run_daily_update.py for each category (English, then Japanese),
 # 3. runs the store pricing coverage audit (a warning, never a failure),
-# 4. restarts the website and posts a pass/fail summary to Discord, even if a step failed.
+# 4. runs the extra markets (Lorcana, docs/lorcana_market_plan.md) last, so a failure there
+#    can't stop or delay Pokemon; it still marks the run failed,
+# 5. restarts the website and posts a pass/fail summary to Discord, even if a step failed.
 #
 # Manual run: sudo systemctl start pokemon-momentum-daily-update.service (or run this script).
 # Output is appended to logs/daily_update.log. Optional env: DAILY_WORKERS,
-# PIPELINE_ARGS (extra flags for every category), DAILY_CATEGORY_IDS, NOTIFY_TITLE.
+# PIPELINE_ARGS (extra flags for every category), DAILY_CATEGORY_IDS, EXTRA_CATEGORY_IDS
+# (default "71"; set it to "" to switch Lorcana off), NOTIFY_TITLE.
 set -euo pipefail
 
 ROOT="/opt/pokemon-momentum"
@@ -23,6 +26,8 @@ SERVICE_NAME="pokemon-momentum"
 DAILY_WORKERS="${DAILY_WORKERS:-4}"
 PIPELINE_ARGS="${PIPELINE_ARGS:-}"
 DAILY_CATEGORY_IDS="${DAILY_CATEGORY_IDS:-3 85}"
+# ${VAR-default} (no colon): an empty EXTRA_CATEGORY_IDS="" really means none.
+EXTRA_CATEGORY_IDS="${EXTRA_CATEGORY_IDS-71}"
 
 mkdir -p "$LOG_DIR" "$LOCK_DIR"
 
@@ -106,5 +111,22 @@ if ! docker-compose run --rm -T "$SERVICE_NAME" bash -lc "
   echo "[$AUDIT_STAMP] Warning: store pricing coverage audit reported missing_unexpected SKUs" | tee -a "$LOG_DIR/daily_update.log"
 fi
 
+# Expected result: extra markets update after Pokemon is safely done. A failure is logged and
+# remembered, the other extra markets still run, and the job exits 1 at the end.
+EXTRA_FAILED=0
+for CATEGORY_ID in $EXTRA_CATEGORY_IDS; do
+  echo "[$STAMP] Running pipeline for category ${CATEGORY_ID}"
+  if ! docker-compose run --rm -T "$SERVICE_NAME" bash -lc "
+    set -euo pipefail
+    cd /app
+    python scripts/pipeline/run_daily_update.py --category-id ${CATEGORY_ID} --workers ${DAILY_WORKERS} ${PIPELINE_ARGS}
+  " 2>&1 | tee -a "$LOG_DIR/daily_update.log"; then
+    echo "[$STAMP] ERROR: pipeline for category ${CATEGORY_ID} failed" | tee -a "$LOG_DIR/daily_update.log"
+    EXTRA_FAILED=1
+  fi
+done
+
 END_STAMP="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "[$END_STAMP] Daily update finished"
+# The EXIT trap restarts the site and reports this status to Discord.
+exit "$EXTRA_FAILED"
