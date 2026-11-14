@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-05 (milestone: grafana-monitoring)
+Last updated: 2026-11-14 (milestone: lorcana-plan)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -22,7 +22,7 @@ Status tags used below:
 When you finish an item, move it to Recently Completed with the date and commit, then
 archive older Recently Completed entries at the next milestone.
 
-Current Focus (2026-11-04)
+Current Focus (2026-11-11)
 --------------------------
 
 - Desktop: the single-page desktop app at `/` (desktop home since 2026-10-12) holds all five areas (Buy,
@@ -31,9 +31,10 @@ Current Focus (2026-11-04)
 - Mobile: the new phone app is live at `/`, `/mobile` and `/m-next` (owner switched it early,
   2026-10-31; plan and remaining stages in `docs/mobile_app_plan.md`). The old phone and research
   dashboards were deleted; tag `backup/before-mobile-cleanup-2026-10-31` holds their last copy.
-- Storefront: our own store on poke6s.com replaces Squarespace (plan ends 2026-11-14). Plan,
-  phases and progress log: `docs/storefront_plan.md`. Phase 1 running locally (2026-10-31);
-  online changes (Cloudflare, DNS) paused by the owner.
+- Storefront: our own store is live on https://poke6s.com/ (catalog only, self-hosted through a
+  Cloudflare Tunnel since 2026-11-11; Squarespace plan ends 2026-11-14). Next: switch checkout on
+  (Stripe live), then Phase 3 admin. Plan and log: `docs/storefront_plan.md`; hosting and
+  recovery: runbook "poke6s.com hosting".
 - Bug reports go to the Discord `#bug-reports` channel. New pages get no on-site bug form.
 - Dates: Pokémon Black Friday on TCGplayer ~Nov 25 - Dec 1; Squarespace plan ends Nov 14;
   first monthly TCGCSV archive torrent is due Dec 2.
@@ -43,43 +44,150 @@ Current Focus (2026-11-04)
 Recently Completed
 ------------------
 
-- 2026-11-05 Lorcana market plan written (`docs/lorcana_market_plan.md`): data on hand,
-  source rules checked (TCGCSV, Lorcast, Scrydex, PriceCharting, Ravensburger), rarity
-  tiers, indexes, sealed pack counts and phases. No code yet.
-- 2026-11-05 Storefront Phase 2: cart and Stripe Checkout (test mode). Owner's own Stripe
-  account made (separate from the Squarespace-managed one), test key in `.env`, and a real test
-  order placed end to end on a side copy of the store (paid, free shipping over $150, stock
-  taken, confirmation email written to the outbox). What's left: the Phase 2 item below.
-- 2026-11-05 Storefront: owner checked the shop on a phone and read the 10 articles ("good for
-  now"). Squarespace saves finished: email subscribers, form submitters and the two form sheets
-  (newsletter sign-ups, pre-order interest) saved in the owner's private records; no final
-  products export needed. Shipping decision D3: free over $150 (Shipping page and plan updated).
-- 2026-11-05 Visitor counting for both sites (no cookies) and a Visitors dashboard; the
-  Overview's "Requests / min" tile became "Visitors today".
-- 2026-11-05 Grafana monitoring (milestone grafana-monitoring): six dashboards on
-  http://192.168.1.240:3000 (Overview, Website, Servers, Jobs & work, Home lab, Visitors).
-  Request metrics on both apps (private `/metrics`), outside probes, container metrics, a
-  status collector and cron-job wrapper (crontab installed by the owner), Proxmox (read-only
-  API token) and UniFi (View Only local account) exporters with verified HTTPS, dead home-lab
-  targets removed, AIOS Experiments placeholders. Root disk grown to 598 GB through Proxmox
-  (was 90% full, now 45%). Runbook section "Monitoring".
+- 2026-11-14 Lorcana market plan merged (`docs/lorcana_market_plan.md`, written 2026-11-05):
+  research-only Lorcana site, internal first; data on hand, source rules checked (TCGCSV,
+  Lorcast, Scrydex, PriceCharting, Ravensburger), rarity tiers, indexes, sealed pack counts,
+  phases. Card images: download from Lorcast and host ourselves (owner). No code yet.
+- 2026-11-11 Store order alerts go to Discord channel 1569946385548050533: webhook saved in
+  `.env` by the owner, store restarted, test alert accepted by Discord.
+- 2026-11-11 Shipping set (owner, plan decision D3): $10 flat for singles, accessories and small
+  sealed, $20 for large sealed, still free over $150. Every order now ships with tracking and
+  signature confirmation (was over $150); the Shipping page says so. Sales tax (D2) was decided
+  earlier: Stripe Tax, Utah only. Cloudflare "Always Use HTTPS" is on (owner; http now 301s).
+- 2026-11-11 poke6s.com launched catalog-only on the new store (owner): DNS on Cloudflare,
+  Cloudflare Tunnel to the storefront container, www redirects to https://poke6s.com,
+  checkout switched off (STOREFRONT_CHECKOUT), Google indexing on. Squarespace site replaced;
+  the D5 forwarding stopgap is no longer needed. Log: docs/storefront_plan.md.
+- 2026-11-11 Owner pointed the bare poke6s.com at the tunnel: the new store answers at
+  https://poke6s.com/ (sitemap 68 pages; old Squarespace paths 301 to the new ones). Note:
+  plain DNS (port 53) queries from this server still got Squarespace's old A records, even
+  when sent to 1.1.1.1 or Cloudflare's nameservers, while DNS over HTTPS and the system resolver
+  gave Cloudflare's. Something on the home network answers port-53 queries from a cache, so
+  check DNS with DNS over HTTPS (dns.google/resolve), not dig.
+- 2026-11-11 Google search row on Grafana's Store dashboard: clicks, times shown, click rate,
+  average position, top searches and pages, sitemap status and which sitemap pages Google has
+  indexed (scripts/monitoring/search_console.py, called by collect_status.py; runbook "Google
+  search row"). The owner added poke6s.com to Search Console, submitted the sitemap and created
+  the read-only service account.
+- 2026-11-09 Store rules reviewed with the owner, one at a time: the new store ships within 1
+  business day, signature on orders over $150, insurance over $100, lost in transit = replacement
+  or full refund (marked delivered = help with the carrier claim). All seven storefront text
+  pages approved and no longer drafts. The full rules (with margins and store history) moved
+  to the git-ignored `docs/private/store_operations.md`; decisions in `docs/storefront_plan.md`.
+- 2026-11-09 October leftovers reviewed with the owner one item at a time (from the old
+  `chat-history-review` / `codex/kpdh-binder-order` branches). Restored: the desktop owner-only
+  Note tab (now sharing the admin check with the TCGplayer links) and the chat-history scripts
+  (`scripts/utilities/export_codex_history.py`, `import_chatgpt_history.py`, which now takes
+  its source folder as an argument). Store rules and three business ideas moved to the new
+  git-ignored `docs/private/`. Kept ideas are listed under High Priority. Dropped: binder colour
+  notes, ChatGPT re-import, popular-character dip list, gift bundles, supplier price feed,
+  quick-save pills, logo link to the store, Squarespace-only items.
+- 2026-11-09 Branch clean-up: deleted 12 local branches (eight already in main, three October
+  branches contained in `codex/kpdh-binder-order`, and `plan/lorcana-market`, whose plan is
+  newer on `plan/lorcana-plan` and whose monitoring commits are in main) and two clean /tmp
+  worktrees. Then, once its leftovers were reviewed and merged, `codex/kpdh-binder-order` too.
+  Left: `main`, the live `feature/homelab-machines` and `plan/lorcana-plan`.
+- 2026-11-09 Brought back six fixes from the unmerged 2026-10-27 branch (`chat-history-review`),
+  each re-confirmed by the owner one at a time: desktop opens on Consistent Movers (`DEFAULT_LIST`,
+  `/discover` too); 7D chart window (desktop and phone); TCGplayer links preselect Near Mint
+  except reverse holos; a signed-in admin's TCGplayer links skip the affiliate wrapper; the
+  supplier calculator splits the per-order disbursement fee across Boxes in Order; rows without
+  a picture use an 11 KB logo copy (`images/Logo-thumb.png`). The phone's Discover tab starts on Consistent
+  Movers too (owner, same day). Declined: square-padded
+  Squarespace images, price-sync path change (both retire with Squarespace on 2026-11-14), and
+  the calculator's $0 outbound-shipping default and typed-0 handling.
+- 2026-11-09 Grafana: Store dashboard (orders to ship, sales per day, stock, nearly sold out;
+  live orders by default), internet uptime row on Home lab: Network (TCP probes to the router,
+  1.1.1.1 and 8.8.8.8 every 30 s), and a SMART disk-health table on Home lab: Servers.
+- 2026-11-09 ZFS scrubs and disk errors live in Grafana: zfs-status.timer installed on OMV;
+  pool "zfs" (raidz2, 10 disks) all online, no errors; a scrub was running at install.
+- 2026-11-09 PBS backups live in Grafana (token root@pam!Grafana, Audit). The stalest-backup and
+  no-backup tiles now count only current guests, and the table shows each guest's Proxmox name.
 
 High Priority
 -------------
 
+- [planned] Phone app conveniences the old phone page had (owner, 2026-10-27; confirmed
+  2026-11-09). Copy the behaviour from `mobile_dashboard.html` in git tag
+  `backup/before-mobile-cleanup-2026-10-31`:
+  - pull to refresh on lists;
+  - swipe left/right between cards, and swipe **up** to close the card view (owner's change;
+    the old page pulled down);
+  - Quick Buy Targets: the 95% / 90% / ... / 60% of market ladder next to the Deal Checker's
+    "pay up to".
+- [planned] Privacy policy and terms pages for the market site (Google sign-in's consent screen
+  needs a privacy policy URL). Codex drafted both in March 2026; owner to review the wording,
+  then publish and link them in the desktop and phone footers. Confirmed 2026-11-09.
+- [planned] Cost-based minimum price for English sealed in the new storefront (owner,
+  2026-07-29; confirmed 2026-10-27 and 2026-11-09): list price = max(market target, cost +
+  shipping the store pays + fees + profit). Needs a cost per English item; today only Japanese
+  boxes with a supplier quote have a floor.
+- [idea] Releases page: each product type's "typical cheapest window" after release, from the
+  price history (owner, 2026-11-09). First look on 2026-11-09 (English, sets since Feb 2024,
+  median vs the first two weeks): booster boxes are cheapest in months 1-2 (-3.5% at month 1,
+  back above launch by month 3), ETBs in months 2-5 (-11% at month 2), booster bundles in
+  months 1-4 (about -7%); almost nothing is still below launch after month 8. Small samples
+  (11 boxes, 20 ETBs, 18 bundles) from a rising market; recompute as sets build history.
+- [idea] Let signed-in users choose which list the app opens on (owner, 2026-10-27; kept
+  2026-11-09).
+- [idea] Japanese indexes for older eras (only jp_pokemon100 and jp_sv100 exist).
+- [idea] Supplier calculator: show the most you can pay to break even and to hit the target
+  margin.
+- [idea] Storefront: a shelf / box / binder-page location for each stock item, to find it
+  quickly when it sells.
+- [idea] An "Overheated / watch for exit" list: cards that rose too far, too fast.
+- [idea] Simplified Chinese cards as a third market, via the PikaQian API
+  (https://pikaqian.com/docs/). Owner, 2026-11-09: keep in mind; Chinese product is slowly
+  getting easier to buy and more popular in the US. Checked 2026-11-09: 60+ Simplified Chinese
+  sets (Sun & Moon to Mega Evolution), 13,000+ cards; prices from eBay sales of the Chinese
+  cards. Free tier ($0, 500 calls/month) is card and set details only; Hobby ($20/month, 5,000
+  calls) adds raw prices, enough for a daily refresh; Pro ($60/month) adds graded prices,
+  population reports and sealed. Paid, so it needs the owner's OK (AGENTS.md: no new costs).
+  Read their Terms of Service first: attribution is required on Free and Hobby, and public
+  display rights aren't stated on the docs or pricing pages.
+- [next] Pin a known-compatible DuckDB version in the root `requirements.txt`. A clean
+  Docker build on 2026-11-06 resolved the unpinned dependency to DuckDB 2.0.0, which exits
+  with `Illegal instruction` on this server during import. The established project image
+  remains compatible and passed all 266 tests and 33 subtests; this does not affect the
+  separately built static KPDH nginx container.
+
 Monitoring with Grafana (owner, 2026-11-05): "show me everything, then we scale it down".
-Six dashboards on http://192.168.1.240:3000; runbook section "Monitoring".
-- [next] Branch clean-up for whoever continues the Lorcana plan: `plan/lorcana-market` also
-  carries the monitoring commits (two sessions shared one checkout on 2026-11-05). Those are
-  now on main (cherry-picked), so merge main into it, or rebuild it from main plus its own two
-  commits (cddec53 "Plan a Lorcana market research site", 3a24c99 "sharper card images").
-  The stale `monitoring/grafana` branch holds none of the work and can be deleted.
+Dashboards on http://192.168.1.240:3000 in folders "Pokemon Momentum" and "Home lab";
+runbook section "Monitoring".
+- [owner] PBS: four guests haven't been backed up in 43 to 85 days (2026-11-09): 122
+  Linux-MInt, 112 SophosXG, 115 YNAB, 113 Windows-11-1. Add them to the nightly threeTB job, or
+  accept it (the "Stalest backup" tile stays red until then). Also decide whether to prune the
+  20 backup groups of deleted or retyped guests, mostly in sixTB, and delete the unused
+  admin@pbs!Grafana token (it has no permissions).
+- [waiting] Today row on Grafana's Everything dashboard (to-do lists and chats to review): built
+  2026-11-09 in the private ISI-Knowledge repo (scripts/monitoring/today/); the owner runs its
+  install.sh (sudo: Infinity plugin, a 127.0.0.1-only feed service, a cron line). Chat review
+  steps: AGENTS.md, "Reviewing past chats".
+- [owner] PBS disk /dev/sdc (WD Blue 6 TB, serial WD-WX21DA5FN43K) is failing: 2,100 pending
+  and 152 uncorrectable sectors (2026-11-09), though SMART still says PASSED. Check which
+  datastore it holds (likely sixTB) and replace it; copy anything worth keeping off first.
+- [waiting] SMART for OMV: the owner runs `deploy/monitoring/smart/install_on_host.sh
+  root@192.168.1.155` (runbook "SMART disk health").
+- [idea] SMART for the three Proxmox nodes: they don't run node-exporter yet. Install it
+  (apt), add them to nodes.yml, then run the SMART installer on each.
+- [idea] Internet speed test once a day (one small container), if wanted.
+- [idea] Slowheim: /opt/valheim-private/server.log isn't in logrotate (7 MB since 2026-09-22).
+- [waiting] Slowheim's disk is 93% full (3.9 GB free of 56 GB, 2026-11-09). Most of it is the
+  rolling world snapshots (19 GB, /opt/valheim-backups/rolling/; pruning works, but they grow
+  with the world). Owner to choose: grow the VM disk in Proxmox, or keep fewer hourly
+  snapshots (168 -> 72 frees about 6.5 GB). The Slowheim dashboard's Disk used gauge shows it.
+- [idea] OMV ran at 88% CPU and 83% memory on 2026-11-06 (worth a look).
+- [idea] Grafana loads the dashboards straight from this working checkout, so switching the
+  checkout to a branch without `deploy/monitoring/grafana/homelab/` (anything older than
+  2026-11-05) makes the Home lab dashboards vanish until switched back. Consider having
+  install.sh copy the JSON to /var/lib/grafana/dashboards/ instead, as the private ISI
+  dashboards already do.
 - [next] Owner: remove the temporary sudo file now that the build-out is merged:
   `sudo rm /etc/sudoers.d/90-claude-buildout` (the Overview's "Temporary sudo" tile turns green).
 - [waiting] Owner: two UniFi access points are offline (2026-11-05): Garage/patio U6-Lite
   (192.168.1.10) and Living room U6-Lite (192.168.1.14). This is UniFi's Wi-Fi "warning". The
   VPN area shows "error" (no VPN server running?). Expected, or worth a look?
-- [idea] Physical disk health on the Home lab dashboard: the Proxmox API lists every disk's
+- [idea] Physical disk health on the Home lab: Proxmox cluster dashboard: the Proxmox API lists every disk's
   SMART verdict and wear (all fine on 2026-11-05; two hardware RAID volumes show UNKNOWN).
   The collector could read it with the existing token.
 - [planned] AIOS Experiments row (Overview, collapsed, placeholders only; 2026-11-05). Keep the
@@ -120,16 +228,38 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   the new store's `/p/<slug>` pages. Since 2026-10-31 it opens the TCGplayer Pro store (owner:
   sell there until the new store launches, after Black Friday); which products show it still
   comes from the last Squarespace export, so refresh that rule from the new store's stock then.
+- [next] Check the Budget Builder on 2026-11-06 shows different picks from 2026-11-05 (first day of
+  rotation; today's default views were recorded for price date 2026-11-04).
+- [next] Market insights: owner approved and merged to `main` on 2026-11-07; live since
+  2026-11-09 (main merged into `feature/homelab-machines`, which the site runs from). Picks are
+  recorded for price dates 11-05, 11-06 and 11-08 (English) and 11-05 and 11-08 (Japanese);
+  11-07 was missed while it wasn't live and can't be rebuilt. Check that the next nightly builds
+  `pokemon_market_mood_snapshot` (log line "Build Pokemon market mood snapshot") and that the
+  site log shows "Track record: recorded N picks" for the new date. The first 7-day results show
+  on 2026-11-11 (picks recorded since 2026-11-05; budget picks since 2026-11-04).
+- [idea] Track record: also record the Japanese lists' Budget Builder and the Graded Budget
+  Builder (scored on PriceCharting history). Only raw English budget picks are scored today.
+- [idea] Desktop card column at 1366 px: when a card has "Our TCGplayer store", the action bar
+  is wider than the column and "Full data" is clipped (seen 2026-11-06, also on main).
+- [planned] Track record: a downloadable CSV of every scored pick (date, list, card, entry and
+  day-30 price, return, after-fees return), free to reuse with credit. Owner agreed 2026-11-07;
+  wait until picks have 30-day results (from 2026-12-05).
+- [planned] Set heatmap: every set's 7/30/90-day move on one grid (Research → Sets), from the
+  group signal snapshot. Owner agreed 2026-11-07.
+- [planned] Market mood: a chart of the breadth reading over time (share of singles up over 60
+  days), from `<slug>_market_mood_snapshot`. Owner agreed 2026-11-07.
+- [planned] Track record: "how much of the move comes early", the share of a pick's 30-day move
+  already made by day 7 and day 14. Needs scored picks first (from 2026-12-05). Owner agreed
+  2026-11-07.
+- [idea] FastAPI warns that `@app.on_event("startup")` (api.py, Track record start-up job) is
+  deprecated; moving to a lifespan handler means passing it when `app` is created.
 - [next] Check the 2026-11-06 02:00 nightly update is green: first run with the snapshot
   builders reading through `prices_by_current_group`. If it fails, see docs/data_flow.txt step 5.
-- [next] Owner, before 2026-11-14: domain forwarding stopgap (plan decision D5) (the Squarespace
+- [done 2026-11-11, not needed: the new store launched catalog-only] Owner, before 2026-11-14: domain forwarding stopgap (plan decision D5) (the Squarespace
   website plan is cancelled, ending 2026-11-14, confirmed 2026-10-31); no final products export needed (owner, 2026-11-05: no new products; the
   2026-10-31 export is the last). Products, orders and customers/subscribers were exported 2026-10-31; page text, blog
   posts and images were saved by script the same day. No site changes are expected before the
   plan ends other than the daily price sync (owner), so no second copy is needed.
-- [waiting] Plan decision D2 (sales tax method) after the Utah call (to be retried). D3: free
-  shipping over $150 (owner, 2026-11-05); flat-rate amounts from the owner's Pirate Ship costs
-  later, live Pirate Ship rates possibly after launch. D1, D4-D9 decided 2026-10-31.
 - [parked] Phase 0 (owner + Claude), paused by the owner 2026-10-31 (no online changes for
   now): Cloudflare DNS move (copy the Microsoft 365 mail records
   exactly), Tunnel (replaces the home-IP item below), Stripe test account.
@@ -145,33 +275,39 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     review. Old text for comparison is in the saved site copy. Remove `draft: true` when done.
   - [idea] JP products without a TCGplayer mapping (e.g. JP-AE-BB) show no market price;
     add them to `data/squarespace_tcgplayer_mapping.csv`.
-- [in progress] Phase 2: cart + Stripe Checkout, test mode (Claude, 2026-11-05; merged to
-  `main` at the storefront-phase2 milestone; guide `storefront/README.md` "Checkout"). Built and
-  tested with a fake Stripe (88 storefront tests) and with the owner's real Stripe sandbox: one
-  test order paid end to end on a side copy of the store. Live keys are refused unless
-  STOREFRONT_ALLOW_LIVE=1. **Stopped at:** the running store on :8010 serves whatever branch the
-  live folder `/opt/pokemon-momentum` is on; it was on `plan/lorcana-market` at this milestone,
-  so Phase 2 reaches :8010 only once that folder is back on `main` and
-  `docker-compose up -d storefront` is run (picks up the new environment variables; the
-  `002_orders` migration applies at start-up). Left:
-  - [next] Once :8010 runs Phase 2: one test order there, then `orders_cli ship` it to see the
-    shipped email (the side-copy test didn't try shipping, back-out or a declined card).
-  - [planned] STRIPE_WEBHOOK_SECRET: needs a public address Stripe can reach (Cloudflare
-    Tunnel, paused by the owner) or the Stripe CLI. Until then the thanks page and the 15-minute
+- [in progress] Phase 2: cart + Stripe Checkout, test mode (Claude, 2026-11-05; guide
+  `storefront/README.md` "Checkout"). Built, merged and running on :8010 from the store's own
+  clone (`~/poke6s-store`, updated by `deploy/update_storefront.sh`). Tested with a fake Stripe
+  and the owner's Stripe sandbox (one paid test order). Sales tax (D2): Stripe Tax, Utah
+  registered in the sandbox. Live keys are refused unless STOREFRONT_ALLOW_LIVE=1. Left:
+  - Owner tests on :8010 passed 2026-11-06 (computers, iPad, phone): Arizona order paid with no
+    tax; Utah order paid with $18.68 tax on $250.80 (7.45%); both marked shipped and the shipped
+    email was received (sent by hand from admin@poke6s.com, SMTP not set up yet).
+  - [planned] `orders_cli ship` says "email sent" even when it only went to the outbox; say
+    which. Its order-status link uses STOREFRONT_BASE_URL (localhost until launch).
+  - [planned] STRIPE_WEBHOOK_SECRET: the Tunnel is up since 2026-11-11, so add a Stripe
+    webhook to https://poke6s.com/stripe/webhook when checkout is switched on. Until then the thanks page and the 15-minute
     reconcile job confirm payments.
   - [waiting] Owner: Stripe activation (business profile, bank, statement descriptor POKE6S)
-    before live payments. Use the new Stripe account, not the Squarespace-managed one.
-  - [waiting] D2 sales tax: owner calls the Utah State Tax Commission again (the first call
-    was cut off by a "too busy, call later" message). `STOREFRONT_TAX_MODE=stripe` is ready if Stripe Tax
-    is chosen; our own Utah table would be built behind the same switch.
-  - [planned] Microsoft 365 SMTP for order emails (SMTP AUTH may need switching on for
-    admin@poke6s.com); until then emails are files in `data/storefront/outbox/`.
-  - [planned] Decide where order alerts go (STOREFRONT_DISCORD_WEBHOOK_URL; off by default).
+    before live payments, and Tax -> Registrations -> Utah in live mode. Use the new Stripe
+    account, not the Squarespace-managed one.
+  - [next] Order emails through Microsoft Graph, not SMTP (Microsoft turns password SMTP off by
+    default from December 2026, MC786329). Owner: shared mailbox orders@poke6s.com, an Entra
+    app with Mail.Send limited to that mailbox, three values in `.env`. Claude: Graph sender in
+    `storefront/app/notify.py`. Until then emails are files in `data/storefront/outbox/`.
   - [planned] Once real orders exist, stop re-running the Squarespace importer (it resets
     stock); the Phase 3 admin takes over stock changes.
 - [next] Phase 3: LAN-only admin (orders, ship with tracking, refunds, stock), exports (Pirate
-  Ship, sales tax, bookkeeping, TCGplayer reconciliation), signature confirmation over ~$250,
-  backups.
+  Ship, sales tax, bookkeeping, TCGplayer reconciliation; the Pirate Ship export should ask for
+  signature confirmation on every order), backups.
+- [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
+  too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
+- [planned] Switch checkout on: Stripe live activation, live keys in .env, STOREFRONT_CHECKOUT=1,
+  STOREFRONT_ALLOW_LIVE=1, webhook, a refunded live test order. Then the market site's buy button.
+- [planned] Yearly, by 2027-10: bump the cloudflared image tag in docker-compose.yml (2026.10.7
+  pinned 2026-11-11; Cloudflare supports a connector version for one year).
+- [planned] Move market.poke6s.com onto the Cloudflare Tunnel too (route to
+  http://pokemon-momentum:8001; check the Caddy/visitor-IP path), then close the router port.
 - [planned] After launch: retire `scripts/squarespace_price_sync.py` from cron
   (`deploy/crontab.txt`) and switch the market site's "Poke6s" buy button to the new store.
 
@@ -271,14 +407,13 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
-- [planned] Stop the site going dark when the home IP changes. On 2026-10-16, after the
-  power cut, the ISP gave a new public IP (136.38.8.95 -> 136.38.242.146) and
-  market.poke6s.com pointed at the old one until the owner edited the `market` A record in
-  Squarespace Domains (DNS: ns-cloud-d*.googledomains.com). Options: Cloudflare Tunnel
-  (recommended; no public IP or port-forward needed) or dynamic DNS (needs a DNS provider
-  with an API; Squarespace Domains has none). Until then: after any outage, compare
-  `curl -s https://api.ipify.org` with the answer from
-  `https://dns.google/resolve?name=market.poke6s.com&type=A` (local dig is cached).
+- [waiting] Stop market.poke6s.com going dark when the home IP changes (2026-10-16 it did).
+  Built 2026-11-12: scripts/utilities/update_market_dns.py moves the Cloudflare `market` A
+  record to the current IP every 5 minutes (owner chose this over moving market onto the
+  tunnel; the router port stays open for the other sites on that Caddy anyway). Waiting on
+  the owner: create a Cloudflare API token ("Edit zone DNS" template, poke6s.com only) and add
+  CLOUDFLARE_DNS_API_TOKEN to .env. Then: run it once by hand, and add the deploy/crontab.txt
+  line to the live crontab.
 - [idea] User testing of the desktop app, including touch screens (owner, 2026-10-21). Touch
   laptops get the desktop app (phones and tablets get the mobile page), and several things there
   rely on a mouse: double-click a picture for the full card page (the "Full data" button is the
@@ -387,9 +522,10 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   under the 10,000/day limit in the new usage guidelines.
 - [planned] Check the size of `data/tcgcsv_archive/` after a month and decide how many
   games to keep collecting.
-- [idea] Sites for other games (magic6s, yugi6s, lorcana6s...) once 6-12 months of history
+- [idea] Sites for other games (Magic, Yu-Gi-Oh, One Piece) once 6-12 months of history
   exist. They would need their own rarity rules, set eras, sealed product types and
   screener tuning; PriceCharting graded prices would need a separate download and permission.
+  Lorcana is first, with its own plan (`docs/lorcana_market_plan.md`, "Lorcana Market" below).
 
 - [planned] Graded tab follow-up: where TCGplayer and PriceCharting's ungraded prices are far
   apart (Pikachu, EX Power Keepers: TCGplayer 429.99 vs PriceCharting 100.81), check whether
@@ -484,6 +620,44 @@ already be covered.
 
 Active Queue
 ------------
+
+- [planned] Performance review (2026-11-05): the design is sound (nightly snapshot tables, one
+  shared read-only DuckDB connection; phone pages answer in 5-95 ms). Fix 1 (dead tables) is
+  done, see Recently Completed. Still to do:
+  1. Delete `data/backups/prices_db_before_cleanup_2026-11-05.duckdb` (13.9 GB) and
+     `data/backups/retired_2026-11-05/` (2.2 GB) once the site and nightly have run well
+     without them for a week or two (~2026-11-19).
+  2. Graded Budget Builder takes ~0.9 s on every load: it recomputes 30-day trends over 1.2M
+     PriceCharting rows per request. Build a small daily snapshot after the PriceCharting
+     download (target ~50 ms), like the other snapshots.
+  3. `/top_movers` takes ~1 s on the first request after a restart (~35 ms when cached). Warm
+     it at start-up or snapshot it. Minor.
+  4. `scripts/dashboards/api.py` is 8,567 lines with 112 routes. Split it by area (store,
+     research, budget, indexes) when working in each area. For people reviewing it; it isn't
+     a speed problem.
+  5. The "named" export (`join_prices_to_names.py`, nightly step "Rebuild joined price/name
+     export") rebuilds `pokemon_prices_named` / `pokemon_jp_prices_named` (56M rows) and 5.4 GB
+     of CSV every night (~95 s + ~17 s), and nothing reads them: no route, page or later
+     step (validate_pipeline only checks they exist). Ask the owner, then drop the step or make
+     it opt-in.
+- [planned] Storefront code comments: `storefront/` has ~200 functions without docstrings (42
+  of them 15+ lines, e.g. `app/importer.py`, `app/orders.py`, `app/main.py`). Document them
+  in the storefront work, using the same rule as the 2026-11-05 review: a header per file,
+  docstrings on long functions, every claim checked against the code.
+- [waiting] Split `scripts/dashboards/api.py` (8,567 lines) into a few modules by area, early
+  December: after the Squarespace tools leave it (plan ends 2026-11-14, about a quarter of the
+  file) and after Black Friday (~Nov 25 - Dec 1). Recommended 2026-11-05; owner to decide.
+  A move only, no behaviour changes; ~40 tests patch `api.<name>` and need their targets
+  updated. Suggested files: sign-in/tracking, admin research (EOD), market data, Discover
+  lists, index overview. (Item 4 of the performance review.)
+- [idea] Nightly speed (English run ~12 min on 2026-11-05): ~4-5 min is network (TCGCSV
+  prices 36 s, product metadata 185 s, PriceCharting 74 s); the compute is joined export
+  95 s, product signal 103 s, series 92 s, index overview 75 s. DuckDB is capped at 4 threads
+  (`scripts/common/duckdb_settings.py`) on an 8-core host; try 6-8 threads overnight, and
+  make the series/signal snapshots incremental (only cards with new prices). GPU (the LLM
+  server, .217) considered and rejected: the work is SQL group-by/window scans that are
+  memory-bound, the code would need a cuDF rewrite, data would cross the network, and it
+  would compete with the LLM for VRAM, for a few minutes saved at 2 AM.
 
 - [planned] Search ranking can put a promo above the main printing (example: "charizard 199").
 - [waiting] Confirm the fee and shipping numbers marked ESTIMATE in
@@ -622,11 +796,12 @@ Plan: `docs/lorcana_market_plan.md`. Research only (no store or listings), Engli
 until the owner decides on a public address. No new costs: TCGCSV/TCGplayer data and images
 only; Scrydex (paid) and PriceCharting graded are out of scope.
 
-- [planned] Phase 0: add category 71 (`lorcana`) to `category_config.py`; load history from
+- [next] Phase 0 (on a fresh branch): add category 71 (`lorcana`) to `category_config.py`; load history from
   `data/raw` archives (Lorcana is in them back to 2024-02-08); add 71 to the nightly per-set
   fetch and snapshots, then drop it from the collect-only job; download Lorcast card images
   once and host them ourselves (owner agreed 2026-11-05; Scrydex terms forbid mirroring);
-  Lorcana rarity tiers and printings; Discord summary line.
+  Lorcana rarity tiers and printings; Discord summary line. Add `data/lorcana_images/` to
+  `.gitignore` before the first download.
 - [planned] Phase 1: game chosen by host name (Pokemon stays the default and unchanged);
   Discover, Research by set / franchise (`Property`) / ink, card page, Track; desktop first;
   footer credit and "not endorsed by Disney or Ravensburger" disclaimer.

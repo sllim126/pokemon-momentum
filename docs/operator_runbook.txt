@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-05
+Last reviewed: 2026-11-11 (Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -14,17 +14,29 @@ crontab changes). Each job is explained further down in this file.
 | --- | --- | --- | --- |
 | Daily 02:00 | Nightly market update: TCGCSV prices, metadata, snapshots, parquet, PriceCharting, indexes; restarts the app; Discord summary | `pokemon-momentum-daily-update.timer` | `logs/daily_update.log` |
 | Daily 03:00 | Storefront market prices (`data/storefront/market_reference.json`, read by the new shop's product pages) | cron: `scripts/build_storefront_market_reference.py` | `logs/storefront_market_reference.log` |
+| Daily 03:15 | Store backup: `store.db`, visit counts, outbox and photos into `data/backups/storefront/` (30 days; see "Store backups") | cron: `storefront/tools/backup_store.py backup` | `logs/storefront_backup.log` |
 | Daily 03:30 | Other games price archive (collect only) | `pokemon-momentum-tcgcsv-collect.timer` | see "Other games archive" |
 | Daily 04:30 | Placeholder Library sync (new Mega-era sets and promos) | cron: `scripts/utilities/sync_placeholder_library.py` | `logs/placeholder_sync.log` |
 | Daily 09:15 | Squarespace price sync (reaches the live store; retire when Squarespace closes 2026-11-14) | cron: `scripts/run_squarespace_price_sync.sh` | `logs/squarespace_price_sync_cron.log` |
 | Daily 12:00 | TCGCSV catalogue crawl (sets and products for every game, at most 4,000 requests a day; Discord summary) | cron: `scripts/pipeline/run_tcgcsv_catalogue_host.sh` | `logs/tcgcsv_catalogue.log` |
 | Daily 21:30 | TCGCSV archive backfill, from 2026-11-01 (one request a night while the archive is offline; downloads the gap when it returns; Discord summary) | cron: `scripts/pipeline/run_archive_backfill_host.sh` | `logs/archive_backfill.log` |
+| Every 5 min | Keep market.poke6s.com's A record on the current home IP (Cloudflare API; Discord note when it changes) | cron: `scripts/utilities/update_market_dns.py` | `logs/market_dns.log` |
 | Every 15 min | Copy Discord #bug-reports into the review queue | cron: `scripts/utilities/import_discord_bug_reports.py` | `logs/discord_bug_import.log` |
 | Fri 15:00 | Weekly Discord posts | cron: `scripts/utilities/post_weekly_discord.py` | `logs/discord_weekly.log` |
 | Sun 11:00 | Weekly full metadata refresh | `pokemon-momentum-weekly-refresh.timer` | journal |
 | Mon 11:00 | Weekly placeholder-name cleanup (product metadata + snapshot) | `pokemon-momentum-weekly-placeholder-refresh.timer` | journal |
 
 Check timers with `systemctl list-timers | grep pokemon`.
+
+After every website start (so after each nightly update) the site records the day's Track
+record picks in the background. Check it in the container log: `docker-compose logs
+pokemon-momentum | grep "Track record"` should show "recorded N picks for <date>" for
+category 3 and 85 once per price date ("recorded 0" on a second start the same day is fine).
+
+Release calendar: sets TCGplayer already lists appear by themselves. Sets not listed yet come
+from `scripts/common/upcoming_sets.json`, kept by hand: add an entry with name, market (EN or
+JP), release_date (YYYY-MM-DD), status (`confirmed` once The Pokemon Company announces it,
+`reported` before) and a source link, and update "checked". Past dates drop off on their own.
 
 Every cron job above runs through `scripts/monitoring/run_job.py`, and
 `scripts/monitoring/collect_status.py` runs every minute; both feed Grafana (see Monitoring).
@@ -34,21 +46,36 @@ Monitoring (Grafana)
 
 Added 2026-11-05. Grafana shows the website and its visitors, the jobs, the data downloads,
 this server and its containers, the Proxmox cluster, the UniFi network and the work list on
-six dashboards. Everything is free software on this host; nothing is sent outside.
+seven dashboards in two folders. Everything is free software on this host; nothing is sent
+outside. Every dashboard's top bar has a Home link and "Pokemon Momentum" and "Home lab"
+drop-downs. Grafana's home page is the owner's "Everything" dashboard (headline tiles for
+every project), installed from a private repository; `install.sh` leaves an existing home
+page alone and sets Overview only when none is set.
 
 Open: http://192.168.1.240:3000 (LAN; sign in as `admin`). Folder "Pokemon Momentum":
 
-- Overview (Grafana's home page): status tiles, "Did the jobs run?", data ages, trends
+- Overview: status tiles, "Did the jobs run?", data ages, trends
   At its bottom, a collapsed "AIOS Experiments" row of placeholders: a display layer for
   the AIOS task registry, not a task list (`docs/aios_grafana_experiments.md`)
 - Website: requests, errors and response times per app and route; outside probes
-- Servers: CPU, memory, disks, network, updates, SMART, every Docker container
 - Jobs & work: jobs, downloads, log files, docs/todo.txt, bug reports, git
 - Visitors: people and page views per day for market.poke6s.com and the new storefront, top
   pages, where visitors came from, phone vs desktop (see "Visitor counting" below)
-- Home lab: the Proxmox cluster (3 nodes, every VM and container, storage pools) and the
-  UniFi network (gateway, switches, access points, clients, internet link), and any other
-  machine listed in `deploy/monitoring/nodes.yml`
+- Store: the new storefront's orders to ship, sales per day, products, stock and what's nearly
+  sold out (see "Store dashboard" below)
+
+Folder "Home lab" (moved out of "Pokemon Momentum" on 2026-11-05: these serve more than the
+Pokemon sites):
+
+- Proxmox cluster: 3 nodes, every VM and container, storage pools
+- Network: internet uptime from this server's own probes, then the UniFi gateway, switches,
+  access points, clients and internet link
+- Servers: this host's CPU, memory, disks, network, updates, every Docker container, "Other
+  machines" (any machine listed in `deploy/monitoring/nodes.yml`), ZFS pools, and SMART disk
+  health for every machine that reports it
+
+The JSON for the two folders lives in `deploy/monitoring/grafana/dashboards/` and
+`deploy/monitoring/grafana/homelab/`, both written by `deploy/monitoring/build_dashboards.py`.
 
 How the numbers get there (Prometheus on localhost:9090 collects all of it):
 
@@ -56,11 +83,11 @@ How the numbers get there (Prometheus on localhost:9090 collects all of it):
 | --- | --- | --- |
 | node-exporter (:9100, apt) | host CPU, memory, disks, network, apt, SMART | already installed |
 | `/metrics` on :8001 and :8010 | requests, errors, timings per route; price-data date | `scripts/dashboards/metrics.py`, `storefront/app/metrics.py` |
-| blackbox exporter (127.0.0.1:9115, apt) | site up and response time, certificate expiry | `deploy/monitoring/prometheus_momentum.yml` |
+| blackbox exporter (127.0.0.1:9115, apt) | site up and response time, certificate expiry; internet uptime (job internet) | `deploy/monitoring/prometheus_momentum.yml` |
 | cAdvisor (127.0.0.1:8098, container) | per-container CPU, memory, restarts | `deploy/monitoring/docker-compose.yml` |
-| `collect_status.py` (cron, every minute) | systemd job results, data download ages, logs, todo counts, bug reports, git | writes `/var/lib/prometheus/node-exporter/momentum_status.prom` |
-| pve-exporter (127.0.0.1:9221, container) | Proxmox nodes, VMs, containers, storage (Home lab dashboard) | `deploy/monitoring/docker-compose.yml`; token and CA in `/etc/momentum-monitoring/` |
-| UnPoller (127.0.0.1:9130, container) | UniFi network: devices, clients, internet link, Wi-Fi (Home lab dashboard) | `deploy/monitoring/docker-compose.yml`; account and certificate in `/etc/momentum-monitoring/` |
+| `collect_status.py` (cron, every minute) | systemd job results, data download ages, logs, todo counts, bug reports, git, Plex, PBS backups, storefront orders and stock | writes `/var/lib/prometheus/node-exporter/momentum_status.prom` |
+| pve-exporter (127.0.0.1:9221, container) | Proxmox nodes, VMs, containers, storage (Home lab: Proxmox cluster) | `deploy/monitoring/docker-compose.yml`; token and CA in `/etc/momentum-monitoring/` |
+| UnPoller (127.0.0.1:9130, container) | UniFi network: devices, clients, internet link, Wi-Fi (Home lab: Network) | `deploy/monitoring/docker-compose.yml`; account and certificate in `/etc/momentum-monitoring/` |
 | `run_job.py` (wraps each cron job) | exit code, start/finish, duration, last success | writes `momentum_job_<name>.prom` in the same folder |
 
 `/metrics` is private: it answers only requests from the host or Docker without proxy
@@ -80,7 +107,7 @@ its command in the crontab and `deploy/crontab.txt`. A systemd job needs nothing
 Install or repair (needs sudo; safe to rerun): `bash deploy/monitoring/install.sh`. It sets
 the text-file folder to group `adam`, keeps the blackbox exporter on localhost, copies the
 scrape jobs to `/etc/prometheus/momentum_scrape.yml` (loaded via `scrape_config_files` in
-`prometheus.yml`, backup kept), installs the Grafana provisioning, sets the home dashboard
+`prometheus.yml`, backup kept), installs the Grafana provisioning, sets the home dashboard (only if none is set)
 and starts cAdvisor. The crontab is separate: `crontab deploy/crontab.txt` (compare with
 `crontab -l` first).
 
@@ -91,6 +118,7 @@ curl -s 'localhost:9090/api/v1/targets?state=active' | grep -o '"health":"[a-z]*
 curl -s localhost:8001/metrics | head          # 200 from the host
 curl -s -o /dev/null -w '%{http_code}\n' https://market.poke6s.com/metrics   # 404
 tail logs/monitoring_collector.log              # collector errors, if any
+journalctl -u prometheus-node-exporter --since -10min | grep -c 'error gathering'   # 0 expected
 ```
 
 Proxmox (added 2026-11-05): the pve-exporter container reads the Proxmox API at
@@ -100,7 +128,7 @@ untick privilege separation: on a root@pam token that would give full root. The 
 is in `/etc/momentum-monitoring/secrets.env` (mode 600, outside the repo; names PVE_USER,
 PVE_TOKEN_NAME, PVE_TOKEN_VALUE). HTTPS is verified against Proxmox's own CA, saved as
 `/etc/momentum-monitoring/pve-root-ca.pem` (valid until 2032; SHA-256 fingerprint starts
-C7:72:A8). If the Home lab tile "Exporter can read Proxmox" is DOWN: `docker logs
+C7:72:A8). If the Proxmox cluster tile "Exporter can read Proxmox" is DOWN: `docker logs
 pve-exporter`; 401 = token wrong or deleted, 403 = permission missing, SSL error = the
 Proxmox CA changed (fetch it again from Datacenter > node > System > Certificates).
 To revoke: delete the token in Proxmox (Datacenter > Permissions > API Tokens).
@@ -115,7 +143,7 @@ UP_UNIFI_DEFAULT_PASS). HTTPS is verified against the gateway's own self-signed 
 container reaches the gateway as `unifi.local` and trusts only that certificate. When UniFi
 renews it, UnPoller fails with an x509 error; save the new one with
 `echo | openssl s_client -connect 192.168.1.1:443 2>/dev/null | openssl x509 > /etc/momentum-monitoring/unifi-cert.pem`
-(check it is the gateway first) and `docker restart unpoller`. If the Home lab tile
+(check it is the gateway first) and `docker restart unpoller`. If the Network tile
 "UnPoller can read UniFi" is DOWN: `docker logs unpoller`. To revoke: delete `grafana-ro` in
 UniFi. Two PDUs share the name "USP PDU Pro", so the Devices table shows them as one row;
 rename one in UniFi to separate them.
@@ -133,7 +161,7 @@ only from the private network); this was checked on 2026-11-05. Requests without
 as one; days are UTC. www.poke6s.com is still Squarespace until 2026-11-14 (its numbers are in
 Squarespace's own analytics); the storefront counts only LAN visits until it is public.
 
-Adding another machine (it appears in Home lab, "Other machines"):
+Adding another machine (it appears in Home lab: Servers, "Other machines"):
 
 1. Install an exporter on it. It serves read-only system numbers on one port; nothing is
    sent anywhere. Allow that port only from this server (192.168.1.240).
@@ -143,16 +171,139 @@ Adding another machine (it appears in Home lab, "Other machines"):
    - Windows: the windows_exporter installer (.msi) from
      github.com/prometheus-community/windows_exporter/releases (port 9182). Allow inbound
      9182 from 192.168.1.240 in Windows Defender Firewall.
-   - Synology: Container Manager, image `prom/node-exporter`, network "host", with the
-     whole disk mounted read-only at /host and the argument `--path.rootfs=/host` (port 9100).
+   - Synology: use SNMP instead (see "Synology NAS" below); nothing to install on the NAS.
    Check from this server: `curl -s http://<ip>:9100/metrics | head` (9182 for Windows).
 2. Add it to `deploy/monitoring/nodes.yml`, for example
-   `- targets: ["192.168.1.30:9100"]` and `labels: {machine: caddy-host, os: linux}`, then
+   `- targets: ["192.168.1.30:9100"]` and `labels: {machine: caddy-host, os: linux, role: web}`
+   (role is shown as a column), then
    `sudo install -m 644 deploy/monitoring/nodes.yml /etc/prometheus/momentum_nodes.yml`
    (or rerun install.sh). Prometheus picks it up within two minutes; no restart.
 
+In it since 2026-11-05: the Proxmox Backup Server (192.168.1.72, which already ran
+node-exporter; labelled `group: proxmox`, so it shows in its own row on Home lab: Proxmox
+cluster rather than under "Other machines") and the OpenMediaVault storage server (192.168.1.155; the same server also
+answers on .9 and .229; its ZFS pool "zfs" is in the "ZFS pools (RAID health)" table from
+node-exporter's node_zfs_zpool_state: Online is fine, Degraded means a disk is out). Home lab web services are checked by the blackbox exporter (`probe: homelab`
+in `prometheus_momentum.yml`, "Home lab services" table): Plex at 192.168.1.219:32400/identity.
+
+Plex (since 2026-11-06; "Plex" row on Home lab: Servers): the plex section of
+`scripts/monitoring/collect_status.py` reads streams now, transcodes and items per library from
+the Plex API every minute. It needs the owner's Plex token in /etc/momentum-monitoring/plex-token
+(owner adam, mode 600; never in the repo, a log or a metric). To set or replace it:
+`read -rs T && echo "$T" | sudo tee /etc/momentum-monitoring/plex-token >/dev/null && sudo chown adam: /etc/momentum-monitoring/plex-token && sudo chmod 600 /etc/momentum-monitoring/plex-token && unset T`.
+Without the file the section publishes nothing; a wrong token shows as
+momentum_collector_errors{section="plex"} = 1 ("Status collector" table). To stop it, delete the file.
+
+Proxmox Backup Server backups (since 2026-11-08; "Proxmox Backup Server" row on Home lab:
+Proxmox cluster): the pbs section of `scripts/monitoring/collect_status.py` reads datastore space,
+each guest's newest backup, backups kept and verify result, and the last 7 days of backup, verify,
+prune, garbage-collection and sync tasks. It needs:
+
+- an API token with the Audit role only, in /etc/momentum-monitoring/pbs-token as
+  `user@realm!tokenname:secret` (owner adam, mode 600; never in the repo or a log). Make it in
+  the PBS web UI: Configuration > Access Control > API Token > Add (user root@pam, name grafana,
+  "Privilege Separation" ticked), then Permissions > Add > API Token Permission: path /, the
+  token, role Audit. Save it with the same `read -rs T` line as the Plex token, writing to
+  pbs-token instead.
+- PBS's certificate in /etc/momentum-monitoring/pbs-cert.pem, so TLS is verified (saved
+  2026-11-08; SHA-256 fingerprint E1:97:8E:40:...:99:E9:59:4F, matching PBS's Dashboard >
+  "Show Fingerprint"). The certificate names the server 72pbs, which the collector checks. If PBS
+  gets a new certificate, save it again:
+  `echo | openssl s_client -connect 192.168.1.72:8007 2>/dev/null | openssl x509 > /etc/momentum-monitoring/pbs-cert.pem`
+  (then compare the fingerprint with the PBS dashboard).
+
+Without the token the section publishes nothing; a failure shows as
+momentum_collector_errors{section="pbs"} = 1. A token with no permission still signs in but
+sees nothing: PBS answers with empty lists, so the row stays blank with no error. The live
+token (2026-11-09) is root@pam!Grafana.
+
+Reading the row: PBS keeps backup groups of deleted guests, and older copies in the sixTB
+datastore from before the nightly job moved to threeTB, until they are pruned by hand. So the
+"Stalest backup" and "Guests with no backup" tiles only count the cluster's current guests
+(templates left out), matched by type and VMID, each by its newest backup in any datastore. The
+"Backups by guest" table lists every group; a blank Guest means its guest no longer exists.
+
+ZFS on OMV (since 2026-11-08; the scrub and error columns of "ZFS pools (RAID health)"):
+`deploy/monitoring/zfs/zfs_status.py` runs as root on the OpenMediaVault server every 5 minutes
+(zfs-status.timer; no network, read-only system) and writes zfs_status.prom for its node-exporter:
+pool size and use, last scrub and its errors, scrub or resilver running, read/write/checksum
+errors per disk, and data errors. Install or update it from this server with
+`deploy/monitoring/zfs/install_on_host.sh root@192.168.1.155` (asks for OMV's SSH password unless
+a key is set up). Any other ZFS machine with node-exporter works the same way. To remove it, on
+the machine: `systemctl disable --now zfs-status.timer`, delete the two unit files in
+/etc/systemd/system, /usr/local/lib/zfs-status and /var/lib/prometheus/node-exporter/zfs_status.prom.
+
+SMART disk health (since 2026-11-09; "Disk health (SMART)" on Home lab: Servers): Debian's
+prometheus-node-exporter-collectors package runs smartctl on every disk every 15 minutes
+(prometheus-node-exporter-smartmon.timer) and writes smartmon.prom for node-exporter. The Backup
+Server already had it; turn it on for another Debian machine in nodes.yml (OMV, or a Proxmox node
+once it runs node-exporter) with `deploy/monitoring/smart/install_on_host.sh root@<ip>`. Read the
+table by its counters, not the PASSED verdict, which flips only when a disk is nearly dead: any
+pending or uncorrectable sector means replace the disk. On 2026-11-09 the Backup Server's
+/dev/sdc (WD Blue 6 TB, serial WD-WX21DA5FN43K) had 2,100 pending and 152 uncorrectable sectors.
+To remove it from a machine: `systemctl disable --now prometheus-node-exporter-smartmon.timer`.
+
+Internet uptime (since 2026-11-09; top row of Home lab: Network): Prometheus job `internet` in
+prometheus_momentum.yml has the blackbox exporter open a TCP connection to port 443 on the router
+(192.168.1.1), Cloudflare (1.1.1.1) and Google (8.8.8.8) every 30 s. TCP rather than ping,
+because the exporter runs unprivileged. The internet counts as up when either outside address
+answers; router up with internet down points at the ISP or modem. Uptime starts from 2026-11-09.
+No speed test yet (it would need one more small container, and uses bandwidth every run).
+
+Store dashboard (since 2026-11-09; Pokemon Momentum: Store): the storefront section of
+collect_status.py reads data/storefront/store.db read-only every minute. Sales are net of
+refunds and counted on the day each order was paid, in the shop's local time (America/Denver).
+The "Orders" picker at the top shows live orders by default; test shows the Stripe test-mode
+orders from building the shop. Only counts, sums, and product SKUs and titles reach Prometheus,
+never customer names, emails or addresses. Low stock means 2 or fewer left (STORE_LOW_STOCK).
+
+Google search row (since 2026-11-11; bottom of the Store dashboard): poke6s.com's Search
+Console numbers, from scripts/monitoring/search_console.py, which collect_status.py calls
+every minute. It signs in as the Google Cloud service account of project market-poke6s, added
+to the Search Console property https://poke6s.com/ as a Restricted (read-only) user. Its JSON
+key is secrets/market-poke6s-*.json (git-ignored, mode 600); secrets/search-console.json is a
+symlink to it (or set MOMENTUM_SEARCH_CONSOLE_KEY). Totals, top searches, pages and the
+sitemap are fetched every 6 hours; 2 sitemap pages per run go through URL Inspection, so each
+page's index status is checked about once a day. A failed call waits an hour before trying
+again; the error lands in logs/monitoring_collector.log and the "Search data updated" tile
+ages. Answers are cached in data/search_console/cache.json (not committed). Google's numbers
+run 2-3 days behind. The host has no Google libraries: the sign-in token is signed with the
+openssl command, the key passed through a pipe. To switch it off, remove the symlink.
+
+Slowheim, the Valheim machine (192.168.1.187; since 2026-11-08; dashboard Home lab: Slowheim
+(Valheim)): it runs its own Prometheus (:9090, jobs node, valheim and prometheus) and Loki
+(:3100, server logs with event labels join, disconnect, death_or_spawn and world_save), set up by
+the owner on that machine (/home/adam/slowheim-monitoring there). Grafana here only reads them,
+through the data sources "Slowheim Prometheus" and "Slowheim Loki" (uids slowheim-prometheus and
+slowheim-loki in deploy/monitoring/grafana/provisioning/datasources.yml; plain HTTP on the LAN,
+no auth). Its dashboard is the owner's own export, kept unchanged in
+deploy/monitoring/grafana/imported/slowheim_source.json; build_dashboards.py fills in the data
+sources and the Home lab top bar. To update it, copy Slowheim's grafana-dashboard.json over that
+file and rerun build_dashboards.py. World backups there are systemd timers (slowheim-*.timer and
+slowheim-private-*.timer: every 15 minutes, hourly and daily, keeping 96 / 168 / 30 snapshots in
+/opt/valheim-backups/rolling/, about 19 GB); they replaced the older /etc/cron.d/valheim-backup
+that Slowheim's own SLOWHEIM-OPERATIONS.md still describes.
+
+Synology NAS (since 2026-11-06; "Synology NAS" table on Home lab: Servers):
+
+- Read over SNMP by the snmp-exporter container (127.0.0.1:9116, `docker-compose.yml`), using
+  the image's built-in "synology" module: system status, volumes and RAID, every disk's status,
+  health and temperature, fans, DSM version and updates, CPU, memory, uptime.
+- On the NAS: DSM > Control Panel > Terminal & SNMP > SNMP: enable SNMP, SNMPv1/v2c, and a
+  community word (not "public"). On this server the same word sits in
+  `/etc/momentum-monitoring/snmp-auth.yml` (mode 600, owner adam; the container runs as adam):
+  `auths: {synology: {community: <word>, version: 2}}`. It is never in the repository.
+- Add a NAS: a target with a `nas` label under job `synology` in `prometheus_momentum.yml`, then
+  `sudo install -m 644 deploy/monitoring/prometheus_momentum.yml /etc/prometheus/momentum_scrape.yml`
+  and `sudo systemctl reload prometheus`. Laomedeia (DS920+, 192.168.1.119) is in it. Other
+  units the owner tracks elsewhere are scraped from a private file listed under
+  `scrape_config_files` in prometheus.yml; leave that line in place.
+- Check: `curl -s "http://127.0.0.1:9116/snmp?target=<ip>&auth=synology&module=system" | grep sysName`.
+
 The old training-server targets (10.0.4.45, 172.26.10.4) were removed 2026-11-05: offline or
-no longer used. Backups of prometheus.yml from each change are next to it (`.bak-<time>`). A job shows "No run recorded yet" until it has run
+no longer used. Backups of prometheus.yml from each change are next to it (`.bak-<time>`). If a job is missing from "Did the jobs run?" although it ran, check node-exporter's log (the
+last check above): it drops a metric when two text files describe it differently. The job
+metrics' help text lives in one place, `JOB_HELP` in `scripts/monitoring/run_job.py`. A job shows "No run recorded yet" until it has run
 once under monitoring (systemd forgets runs at reboot; the weekly jobs fall back to the timer's
 last trigger time). Overdue = no success for 1.5 x the job's interval plus an hour.
 
@@ -303,6 +454,41 @@ docker-compose exec -T pokemon-momentum python -m pytest -q -p no:cacheprovider 
 ```
 
 
+poke6s.com hosting (self-hosted since 2026-11-11)
+-------------------------------------------------
+poke6s.com is the owner's own store, running on this server; Squarespace's website plan ends
+2026-11-14 and is not renewed (the domain registration stays). The path a visitor takes:
+
+  visitor -> Cloudflare (DNS, HTTPS certificate, free plan) -> Cloudflare Tunnel "poke6s-home"
+          -> container cloudflared (outbound connection only; no port opened on the router)
+          -> container poke6s-storefront (http://storefront:8010)
+
+- DNS for poke6s.com is in Cloudflare. poke6s.com and www are proxied records for the tunnel;
+  www redirects to https://poke6s.com/. Mail records are DNS-only and must stay that way.
+  market.poke6s.com still points at the home IP directly (DNS only), not through the tunnel;
+  update_market_dns.py keeps that record on the current IP (see "After a power cut").
+- The connector's token is CLOUDFLARE_TUNNEL_TOKEN in .env (never print it). The image tag is
+  pinned in docker-compose.yml; bump it at least yearly (Cloudflare supports a connector
+  version for one year), then `docker-compose up -d cloudflared`.
+- The store's code runs from its own clone, ~/poke6s-store, which holds `main` only. After
+  storefront work is merged to main: deploy/update_storefront.sh. Settings that matter in
+  .env: STOREFRONT_BASE_URL=https://poke6s.com, STOREFRONT_ALLOW_INDEXING=1. Checkout is off
+  (STOREFRONT_CHECKOUT unset): products show "coming soon" and a Buy on TCGplayer link.
+- Monitoring: Grafana's Store dashboard ("Store up (local)" tile, orders, stock, Google search).
+- Checking DNS: use DNS over HTTPS, e.g.
+  `curl -s 'https://dns.google/resolve?name=poke6s.com&type=A'`. Plain dig (port 53) from
+  this server got Squarespace's old answers on 2026-11-11 even from 1.1.1.1 and Cloudflare's
+  own nameservers: something on the home network answers port-53 queries from a cache.
+
+If poke6s.com is down:
+  1. `curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8010/healthz`; not 200: the store
+     itself. `docker logs --tail 50 poke6s-storefront`, then deploy/update_storefront.sh.
+  2. Store fine locally: `docker logs --tail 50 cloudflared` (look for "Registered tunnel
+     connection"); `docker-compose up -d cloudflared`. The Cloudflare dashboard's Zero Trust >
+     Networks > Tunnels page shows whether poke6s-home is healthy.
+  3. Both fine: the DNS records in Cloudflare (check with DNS over HTTPS, above).
+
+
 Store Pricing Ops
 -----------------
 The store pricing workflow now has three admin pages that work together:
@@ -366,10 +552,15 @@ Recommended operator flow when adding a new SKU:
 New storefront (poke6s.com, local only)
 ---------------------------------------
 
-The replacement for Squarespace runs in its own container, `poke6s-storefront`, on port 8010
-(home network only; not published until launch). Details: `storefront/README.md`.
+The replacement for Squarespace runs in its own container, `poke6s-storefront`, on port 8010,
+which listens on this machine only (`127.0.0.1`, since 2026-11-12): the public reaches it through
+the Cloudflare Tunnel. Details: `storefront/README.md`.
 
-- Start or restart: `docker-compose up -d storefront` / `docker-compose restart storefront`.
+- The store runs from its own copy of the code, `~/poke6s-store` (a clone holding `main`
+  only), not from this folder, so coding sessions switching branches here don't change it.
+  Update it after a merge to `main`, and to start or restart it: `deploy/update_storefront.sh`
+  (pulls `main` into the clone, rebuilds if needed, restarts, checks /healthz). Plain
+  `docker-compose up -d storefront` here would run this folder's code instead; use the script.
 - Health: `curl -s localhost:8010/healthz` (visible products, schema version, market date).
 - Market prices on product pages refresh daily at 03:00 UTC (cron, approved by the owner
   2026-10-31). By hand:
@@ -382,15 +573,55 @@ The replacement for Squarespace runs in its own container, `poke6s-storefront`, 
   `python3 storefront/tools/archive_squarespace_site.py --out <folder> --products-csv <export>`.
 - Articles: Markdown files in `storefront/content/articles/`; restart the container after
   adding or editing one. How to write one: `storefront/README.md` "Articles".
-- Checkout (Phase 2, Stripe test mode): on when `STRIPE_SECRET_KEY=sk_test_...` is in `.env`,
-  then `docker-compose up -d storefront`. Test card 4242 4242 4242 4242. Orders:
+- Checkout (Phase 2, Stripe test mode): on when `STOREFRONT_CHECKOUT=1`,
+  `STRIPE_SECRET_KEY=sk_test_...` (commented out while catalog-only, so the store holds no
+  Stripe key) and `STRIPE_WEBHOOK_SECRET=whsec_...` (required; endpoint setup in
+  `storefront/README.md`, "Checkout") are in `.env`, then `deploy/update_storefront.sh`. If
+  checkout stays off, `docker logs poke6s-storefront | grep "Checkout off"` says why. Sales tax: `STOREFRONT_TAX_MODE=stripe` (Stripe Tax; Utah
+  registered in the Stripe dashboard, sandbox done 2026-11-05). Test card 4242 4242 4242 4242. Orders:
   `docker-compose exec storefront python -m storefront.app.orders_cli list` (also `show`,
-  `ship <number> --tracking <n>`, `reconcile`). Pending checkouts are checked against Stripe at
-  start-up and every 15 minutes. Without SMTP settings, order emails go to
-  `data/storefront/outbox/`. Live keys are refused unless `STOREFRONT_ALLOW_LIVE=1` (owner).
+  `ship <number> --tracking <n>`, `reconcile`, `resend <number>`, `test-email --to <you>`).
+  Pending checkouts are checked against Stripe at start-up and every 15 minutes. Order emails go
+  through Microsoft Graph (`STOREFRONT_GRAPH_*` in `.env`; setup in `storefront/README.md`,
+  "Order emails"); without it they go to `data/storefront/outbox/` and live checkout stays off.
+  A failed email is retried for 24 hours (Discord says so); after "GAVE UP", fix sending and
+  `orders_cli resend <number>`. Live keys are refused unless `STOREFRONT_ALLOW_LIVE=1` (owner).
   Don't re-run the Squarespace importer once real orders exist: it resets stock.
 - Data (never committed): `data/storefront/` holds `store.db` (products and orders),
-  `images/`, `outbox/` and `market_reference.json`. Backups arrive in Phase 3.
+  `images/`, `outbox/` and `market_reference.json`. Backed up nightly (below).
+
+Store backups
+-------------
+Every night at 03:15 (cron job `storefront-backup`, log `logs/storefront_backup.log`)
+`storefront/tools/backup_store.py backup` copies, into `data/backups/storefront/<date>/`:
+`store.db` and `visitors.sqlite3` (SQLite online backup, safe while the store runs, then
+`PRAGMA integrity_check`), the `outbox/` emails, and a `manifest.json` of row counts. Photos go
+into one mirror, `data/backups/storefront/images/`, which never deletes. 30 nightly folders are
+kept. The folder is mode 700: it holds customers' names and addresses. Off the machine: the
+Proxmox Backup Server copies this VM (qemu/133), `data/backups` included, and each night's run
+also mirrors the folder to the Synology (`--copy-to /mnt/synology-backup/Poke6s`): its `Backup`
+share, mounted over encrypted SMB (`seal`) by /etc/fstab with the owner's account in
+/etc/samba/synology-backup.cred (root only, mode 600; never print it). If the share isn't
+mounted the job fails after the local backup ("is the NAS share mounted?"): `sudo mount
+/mnt/synology-backup`. To restore from the Synology copy, point `--backup-dir` at it:
+`python3 storefront/tools/backup_store.py --backup-dir /mnt/synology-backup/Poke6s restore ...`.
+
+- See what's there: `python3 storefront/tools/backup_store.py list`
+- Practice run (doesn't touch the store): `python3 storefront/tools/backup_store.py restore --to /tmp/check.db`,
+  then compare its counts with `list`, and delete the file.
+- Real restore of `store.db` (refuses while the store runs):
+  1. `docker stop poke6s-storefront`
+  2. `python3 storefront/tools/backup_store.py restore --date YYYY-MM-DD` (or leave out
+     `--date` for the newest). The database it replaces is kept as
+     `data/storefront/store.before-restore-<time>.db`.
+  3. `docker start poke6s-storefront`, then `curl -s localhost:8010/healthz`.
+  Orders placed after that backup are lost from the database; recover them from Stripe
+  (dashboard, Payments) and the order emails.
+- Photos or the visit counts: copy them back by hand from the mirror or a dated folder, with
+  the store stopped.
+- Last restore drill: 2026-11-12. The first night's backup was restored to a spare path, its
+  counts matched the live database, and a throwaway store container ran on it (`/healthz` ok,
+  31 products, shop page loads). Repeat after big changes to the database.
 
 Storefront linking (`Poke6s` button)
 ------------------------------------
@@ -952,10 +1183,14 @@ Check (the morning after):
 - Discord: a green "Nightly market update" and "Other games price archive" for the day
 - `curl -s localhost:8001/health?category_id=3` and `...=85`: `latest` should be yesterday
 
-Check the public address too: the ISP can hand out a new public IP after a power cut
-(2026-10-16). If `curl -s https://api.ipify.org` differs from `dig +short market.poke6s.com`,
-update the `market` A record in Squarespace Domains (poke6s.com → DNS) to the new IP. The
-site itself is fine meanwhile (`curl localhost:8001/health?category_id=3`).
+The public address: the ISP can hand out a new public IP after a power cut (2026-10-16).
+Since 2026-11-12 `scripts/utilities/update_market_dns.py` (cron, every 5 minutes) moves the
+`market` A record in Cloudflare to the new IP by itself and posts a note to Discord; poke6s.com
+goes through the tunnel and isn't affected. If market is still unreachable, check
+`logs/market_dns.log` (an "ERROR" line says why) and run the script by hand
+(`--dry-run` shows what it would change). Its token is CLOUDFLARE_DNS_API_TOKEN in .env, a
+Cloudflare API token from the "Edit zone DNS" template limited to poke6s.com (never print it).
+The site itself is fine meanwhile (`curl localhost:8001/health?category_id=3`).
 To see what the internet sees, ask over HTTPS:
 `curl -s "https://dns.google/resolve?name=market.poke6s.com&type=A"`. Plain `dig` from this
 network, even `@ns-cloud-d1.googledomains.com`, is answered by a cache on the way out and keeps
@@ -998,7 +1233,9 @@ Admin pages (`/admin` and the tools it links to) require a Google sign-in whose 
 exactly matches `POKEMON_MOMENTUM_ADMIN_USERS` (comma-separated; default
 `sllim126@gmail.com`). There is no partial or domain matching. The website only receives
 the variables listed under `environment:` in `docker-compose.yml`, and this one is not
-listed yet, so today the default applies; to change the admins, add it there and restart. The old PIN sign-in is
+listed yet, so today the default applies; to change the admins, add it there and restart.
+The website container can't read `.env` or `secrets/` (they're hidden from it, 2026-11-12):
+a new setting a container job needs must be added under `environment:` too. The old PIN sign-in is
 retired and answers 410. Admin links on the site only appear for admins, and every admin
 page checks access again on the server.
 
@@ -1157,6 +1394,8 @@ Affiliate outbound links:
 - current TCGplayer affiliate base:
   - `https://partner.tcgplayer.com/jR1OJb`
 - dashboard TCGplayer links wrap the product destination with the Impact `u=` target parameter
+- links preselect Near Mint (except reverse holos); a signed-in admin gets the plain TCGplayer
+  link with no affiliate wrapper, so run the smoke test signed out (or in a private window)
 - smoke test:
   - click one singles `Buy` link
   - click one sealed TCGplayer link
@@ -1213,12 +1452,21 @@ UI checks:
 The mobile Support > Feedback form still saves into the same `/bug_reports` queue. Review it
 (and older bug reports) at the admin-only `/bug-reports` page.
 
-Owner review notes (since 2026-10-25): signed in as an admin, the new mobile app (`/m-next`)
-shows a floating Note tab. A note goes into the same queue with the screen's context (card,
+Owner review notes (since 2026-10-25): signed in as an admin, the phone app (`/m-next`) and,
+since 2026-11-09, the desktop app at `/` (for testing on an iPad, which gets the desktop site)
+show a floating Note tab. The note records which app it came from (`page_path` `/m-next` or `/`). A note goes into the same queue with the screen's context (card,
 list, search, device). Attached files are saved under random names in
 `data/review_note_attachments/` (git-ignored, not served publicly) and open from the
 `/bug-reports` page through the admin-only `/m-next/review-attachments/<name>` route. There
 are no size or count limits on purpose (admin only), so check that folder's size now and then.
+
+Past AI chats (private): `docs/chat_history/` holds copies of the Codex and ChatGPT chats about
+this project, for background (git-ignored: they contain business plans). Refresh them on the
+host, not in the container:
+- Codex: `python3 scripts/utilities/export_codex_history.py` (reads `~/.codex`; replaces any
+  value from `.env`, and anything that looks like a credential, with `[REDACTED:...]`).
+- ChatGPT: list the chats to copy in `docs/chat_history/chatgpt/selection.tsv`, then
+  `python3 scripts/utilities/import_chatgpt_history.py <converted export folder>`.
 
 Discord reports are copied onto the server (since 2026-10-16): every 15 minutes (adam's
 crontab) `scripts/utilities/import_discord_bug_reports.py` runs in the container, reads new
@@ -1466,6 +1714,37 @@ sudo docker-compose stop pokemon-momentum
 sudo docker-compose run --rm pokemon-momentum bash -lc 'python scripts/pipeline/run_daily_update.py --skip-download --workers 4'
 sudo docker-compose up -d pokemon-momentum
 ```
+
+
+Compacting the price database
+-----------------------------
+DuckDB never shrinks `data/processed/prices_db.duckdb`: tables the nightly update replaces
+leave free space behind, and dropping a table gives nothing back. Writing a fresh copy does.
+Done on 2026-11-05: 13.87 GB -> 7.96 GB (also left out the old `prices` table, last written
+2026-03-02, and the unused `top200_*` and unprefixed snapshot tables). Pre-clean-up backup:
+`data/backups/prices_db_before_cleanup_2026-11-05.duckdb` (gitignored; delete once the site has
+run well for a week or two).
+
+Do it well away from the 02:00 UTC update (about 5 minutes in all):
+
+```bash
+cd /opt/pokemon-momentum
+# 1. Back up (1-2 min). The site only reads, so the file is consistent while it runs.
+cp data/processed/prices_db.duckdb data/backups/prices_db_before_compact_$(date +%F).duckdb
+# 2. Copy into a new file (~3 min); checks every table's row count. Add --drop <table> to leave
+#    a table out.
+docker exec pokemon-momentum python scripts/utilities/compact_duckdb.py \
+  --source /app/data/backups/prices_db_before_compact_$(date +%F).duckdb \
+  --dest /app/data/processed/prices_db.compact.duckdb
+# 3. Swap it in (about 10 seconds of downtime) and give the file back to adam.
+docker-compose stop pokemon-momentum
+mv data/processed/prices_db.compact.duckdb data/processed/prices_db.duckdb
+docker-compose start pokemon-momentum
+docker exec pokemon-momentum chown 1000:1000 /app/data/processed/prices_db.duckdb
+```
+
+Expected: the script ends with "Row counts match", and the site's pages answer as before. To
+undo, stop the site and copy the backup back over `prices_db.duckdb`.
 
 
 If Japanese category loads no history

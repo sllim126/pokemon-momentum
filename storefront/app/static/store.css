@@ -265,3 +265,20 @@ ul.notice { list-style: none; }
 .lines tfoot th { font-weight: 500; color: var(--muted); text-align: right; }
 .lines .total th, .lines .total td { font-weight: 800; color: var(--text); }
 .address { line-height: 1.5; }
+
+/* While checkout is off (owner, 2026-11-11): the "we're rebuilding" note under the header and
+   the "email me when we open" form (templates/_notify_form.html, notify.html). */
+.rebuild-note { background: var(--accent-soft); border-bottom: 1px solid var(--line-strong);
+  font-size: 0.9rem; padding: 8px 0; }
+.notify-form { margin: 12px 0; }
+.notify-form label { display: block; font-weight: 600; margin-bottom: 6px; }
+.notify-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.notify-row input { flex: 1 1 200px; min-width: 0; padding: 8px 12px; border-radius: 10px;
+  border: 1px solid var(--line-strong); background: var(--panel-3); color: var(--text); font: inherit; }
+.notify-form .trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.notice.good { border-left-color: var(--good); }
+.notice.bad { border-left-color: var(--bad); }
+.notify-page { max-width: 640px; }
+
+/* Order page: the tracking number and its "Track package" button (carrier's site). */
+.tracking { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }

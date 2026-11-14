@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import hmac
+import json
 import logging
 import re
 import sqlite3
@@ -34,12 +35,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import catalog, classify, images, orders, redirects, seo, stripe_api
+from . import catalog, classify, images, notify, notify_list, orders, redirects, seo, stripe_api
 from .articles import Articles
 from .db import connect, latest_migration, migrate
 from .market import MarketReference
 from .metrics import install_metrics
-from .visitors import install_visitor_counting
+from .visitors import client_ip, install_visitor_counting
 from .markdown import render, split_front_matter
 from .settings import STOREFRONT_DIR, Settings, load_settings
 
@@ -48,9 +49,17 @@ PAGES_DIR = STOREFRONT_DIR / "content" / "pages"
 ARTICLES_DIR = STOREFRONT_DIR / "content" / "articles"
 MEDIA_NAME = re.compile(r"^[a-z0-9-]+$")
 RECONCILE_EVERY_SECONDS = 15 * 60
-# Checkout attempts per visitor per hour. Each attempt holds stock for 30 minutes, so this keeps
-# one visitor from tying up the shelf.
+# Checkout attempts per visitor per hour. Each attempt holds stock for 30 minutes.
 CHECKOUTS_PER_HOUR = 10
+# What one visitor may hold at once in unpaid checkouts (security review 2026-11-11, item 10):
+# without these, 10 checkouts an hour could reserve the whole shelf. Paid, cancelled and
+# expired checkouts stop counting straight away. Visitors are told to finish or cancel first.
+OPEN_CHECKOUTS_PER_VISITOR = 3
+UNITS_HELD_PER_VISITOR = 12
+# The per-visitor tables are tidied once they pass this many visitors.
+VISITOR_TABLE_TIDY_AT = 1000
+# Sign-ups for the "email me when the store opens" list, per visitor per hour.
+SIGNUPS_PER_HOUR = 5
 log = logging.getLogger("storefront")
 
 SECURITY_HEADERS = {
@@ -63,7 +72,15 @@ SECURITY_HEADERS = {
         "default-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self'; "
         "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
     ),
+    # Security review 2026-11-11, item 16. Browsers remember to use HTTPS for a year (the site
+    # is HTTPS-only behind Cloudflare). No includeSubDomains: other poke6s.com names (mail)
+    # aren't ours to promise.
+    "Strict-Transport-Security": "max-age=31536000",
+    # No page needs the camera, microphone, location or USB; Stripe's checkout is its own page.
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), usb=()",
 }
+# Largest cart or checkout request accepted (item 16). A full cart (50 lines) is about 3 KB.
+MAX_CART_BODY_BYTES = 32 * 1024
 
 
 def load_pages() -> dict[str, dict]:
@@ -87,15 +104,24 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     market = MarketReference(settings.market_reference_path)
     pages = load_pages()
     articles = Articles(articles_dir or ARTICLES_DIR)
-    if settings.stripe_secret_key and not settings.checkout_enabled:
+    if not settings.checkout_switch:
+        log.info("Checkout switched off (STOREFRONT_CHECKOUT=0): catalog only.")
+    elif settings.stripe_secret_key and settings.setup_problem:
+        log.warning("Checkout off: %s", settings.setup_problem)
+    elif settings.stripe_secret_key and not settings.checkout_enabled:
         log.warning("Live Stripe key refused: set STOREFRONT_ALLOW_LIVE=1 to take real payments.")
     if stripe is None and settings.checkout_enabled:
         stripe = stripe_api.StripeClient(settings.stripe_secret_key)
     checkout_attempts: dict[str, deque] = defaultdict(deque)
+    signup_attempts: dict[str, deque] = defaultdict(deque)
+    # Order numbers of each visitor's checkouts, to count what they still hold (held_by).
+    open_checkouts: dict[str, set[str]] = defaultdict(set)
 
     def reconcile_once() -> None:
         with writer() as conn:
             counts = orders.reconcile(conn, settings, stripe, settings.base_url)
+        # Order emails that failed earlier get another try (notify.py, review item 12).
+        counts.update({f"email_{k}": v for k, v in notify.retry_queued(settings).items()})
         if any(counts.values()):
             log.info("Reconcile: %s", counts)
 
@@ -127,7 +153,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
     templates = Jinja2Templates(directory=APP_DIR / "templates")
     env = templates.env
-    env.globals.update(settings=settings, checkout_enabled=settings.checkout_enabled, year=datetime.now(UTC).year, sort_labels=catalog.SORT_LABELS,
+    env.globals.update(settings=settings, checkout_enabled=settings.checkout_enabled, tax_note=orders.tax_note(settings), year=datetime.now(UTC).year, sort_labels=catalog.SORT_LABELS,
                        type_labels=classify.PRODUCT_TYPE_LABELS, language_labels=classify.LANGUAGE_LABELS,
                        ship_class_labels=classify.SHIP_CLASS_LABELS, footer_pages=pages,
                        social_links=seo.SOCIAL_LINKS)
@@ -161,9 +187,54 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
             return str(request.base_url).rstrip("/")
         return settings.base_url
 
+    def tcgplayer_link(item: dict) -> str:
+        """Where "Buy on TCGplayer" goes: the product's own listing link if one is set, else its
+        TCGplayer product page (first TCGplayer ID) through the affiliate link (owner,
+        2026-11-11), else the TCGplayer store's front page."""
+        if item.get("tcgplayer_url"):
+            return item["tcgplayer_url"]
+        ids = [pid.strip() for pid in (item.get("tcgplayer_product_ids") or "").split("|") if pid.strip()]
+        if not ids or not ids[0].isdigit():
+            return settings.tcgplayer_store_url
+        target = f"https://www.tcgplayer.com/product/{ids[0]}"
+        if not settings.tcgplayer_affiliate_base:
+            return target
+        return f"{settings.tcgplayer_affiliate_base}?{urlencode({'u': target})}"
+
+    async def cart_json(request: Request):
+        """The request's JSON, read only up to MAX_CART_BODY_BYTES (ValueError beyond that)."""
+        body = bytearray()
+        async for chunk in request.stream():
+            body += chunk
+            if len(body) > MAX_CART_BODY_BYTES:
+                raise ValueError("request too large")
+        return json.loads(body)
+
     def visitor(request: Request) -> str:
-        # Behind Cloudflare (at launch) the real address is in CF-Connecting-IP.
-        return request.headers.get("cf-connecting-ip") or (request.client.host if request.client else "?")
+        # The visitor's address. CF-Connecting-IP (set by the Cloudflare Tunnel) is believed
+        # only from a private-network peer, the same rule as the visit counter (visitors.py);
+        # the port itself only listens on this machine (docker-compose.yml).
+        return client_ip(request.scope) or "?"
+
+    def tidy(table: dict, stale) -> None:
+        """Forget visitors with nothing current, so the tables can't grow forever."""
+        if len(table) > VISITOR_TABLE_TIDY_AT:
+            for key in [k for k, v in table.items() if stale(v)]:
+                del table[key]
+
+    def held_by(conn: sqlite3.Connection, key: str) -> tuple[int, int]:
+        """(open checkouts, units reserved) for one visitor; drops their finished checkouts."""
+        numbers = open_checkouts.get(key)
+        if not numbers:
+            return 0, 0
+        marks = ",".join("?" * len(numbers))
+        rows = conn.execute(
+            f"""SELECT o.number, COALESCE(SUM(CASE WHEN i.reserved THEN i.quantity END), 0) AS units
+                FROM orders o LEFT JOIN order_items i ON i.order_id = o.id
+                WHERE o.number IN ({marks}) AND o.status = 'pending' AND o.reserved_until > ?
+                GROUP BY o.number""", (*numbers, orders.now_iso())).fetchall()
+        numbers.intersection_update(r["number"] for r in rows)
+        return len(rows), sum(r["units"] for r in rows)
 
     def page(request: Request, template: str, status_code: int = 200, **context) -> HTMLResponse:
         with db() as conn:
@@ -177,6 +248,14 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
 
     @app.middleware("http")
     async def headers(request: Request, call_next):
+        # www.poke6s.com reaches the store through the same tunnel; send it to the one
+        # public address (STOREFRONT_BASE_URL) so search engines see a single site.
+        host = request.headers.get("host", "").split(":")[0].lower()
+        if host.startswith("www.") and settings.base_url.startswith("https://"):
+            target = f"{settings.base_url}{request.url.path}"
+            if request.url.query:
+                target += f"?{request.url.query}"
+            return RedirectResponse(target, status_code=301)
         response = await call_next(request)
         for key, value in SECURITY_HEADERS.items():
             response.headers.setdefault(key, value)
@@ -194,7 +273,10 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
             target = articles.redirect_for(path) or redirects.lookup(path)
             if target is None and len(path) > 1 and path.endswith("/"):
                 query = f"?{request.url.query}" if request.url.query else ""
-                return RedirectResponse(path.rstrip("/") + query, status_code=301)
+                # Collapse leading slashes (and backslashes, which browsers treat the same):
+                # "//example.com/" must stay on this site, not become a link to example.com.
+                clean = "/" + path.lstrip("/\\").rstrip("/")
+                return RedirectResponse(clean + query, status_code=301)
             if target is None and request.url.path.lower().startswith("/shop/p/"):
                 with db() as conn:
                     target = catalog.product_redirect(conn, redirects.normalize(request.url.path)) or "/shop"
@@ -226,10 +308,12 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
                         media_type="application/xml")
 
     @app.get("/media/{width}/{name}.webp")
-    def media(width: int, name: str):
-        if width not in images.SIZES or not MEDIA_NAME.match(name):
+    def media(width: str, name: str):
+        # width is read as text so a non-number is a 404 page, not FastAPI's 422 JSON.
+        if not (width.isascii() and width.isdigit()) or int(width) not in images.SIZES \
+                or not MEDIA_NAME.match(name):
             raise HTTPException(404)
-        path = settings.images_dir / str(width) / f"{name}.webp"
+        path = settings.images_dir / width / f"{name}.webp"
         if not path.is_file():
             raise HTTPException(404)
         # File names carry a content hash (images.py), so they can be cached for a year.
@@ -320,7 +404,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         description = f"{item['title']} for {seo.money(item['price_cents'])} USD at Poke6s."
         return page(request, "product.html", title=item["title"], product=item, market=summary,
                     below_market=below_market, related=others, crumbs=crumbs,
-                    buy_url=item["tcgplayer_url"] or settings.tcgplayer_store_url,
+                    buy_url=tcgplayer_link(item),
                     og_image=seo.image_url(settings, item["image"]), og_type="product",
                     description=description,
                     jsonld=[seo.product_jsonld(settings, item), seo.breadcrumbs_jsonld(settings, crumbs)])
@@ -360,7 +444,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
             # rather than after the 30-minute hold.
             with writer() as conn:
                 order = orders.get_order(conn, cancelled)
-                if order and order["status"] == "pending" and hmac.compare_digest(order["access_token"], k):
+                if order and order["status"] == "pending" and _token_matches(order["access_token"], k):
                     if stripe is not None and order["stripe_session_id"]:
                         try:
                             stripe.expire_session(order["stripe_session_id"])
@@ -373,10 +457,39 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         response.headers["Cache-Control"] = "no-store"
         return response
 
+    # --- "email me when the store opens" list (while checkout is off) ----------------------
+
+    @app.get("/notify", response_class=HTMLResponse)
+    def notify_page(request: Request, joined: str = "", error: str = ""):
+        return page(request, "notify.html", title="Get an email when we open",
+                    description="Join the list and we'll email you when checkout opens on poke6s.com.",
+                    joined=joined == "1", error=error == "1")
+
+    @app.post("/notify")
+    async def notify_join(request: Request):
+        form = await request.form()
+        # Bots fill every field; people never see "website" (hidden with CSS).
+        if str(form.get("website") or ""):
+            return RedirectResponse("/notify?joined=1", status_code=303)
+        email = notify_list.clean_email(str(form.get("email") or ""))
+        if email is None:
+            return RedirectResponse("/notify?error=1", status_code=303)
+        now = time.monotonic()
+        tidy(signup_attempts, lambda v: not v or now - v[-1] > 3600)
+        attempts = signup_attempts[visitor(request)]
+        while attempts and now - attempts[0] > 3600:
+            attempts.popleft()
+        if len(attempts) >= SIGNUPS_PER_HOUR:
+            return PlainTextResponse("Too many sign-ups from here. Please try again later.", status_code=429)
+        attempts.append(now)
+        with writer() as conn:
+            notify_list.add(conn, email, str(form.get("source") or ""))
+        return RedirectResponse("/notify?joined=1", status_code=303)
+
     @app.post("/cart/quote")
     async def cart_quote(request: Request):
         try:
-            cart_items = orders.parse_cart(await request.json())
+            cart_items = orders.parse_cart(await cart_json(request))
         except (orders.CartError, ValueError):
             return JSONResponse({"error": "The cart is not readable."}, status_code=400)
         with db() as conn:
@@ -387,21 +500,32 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     async def checkout(request: Request):
         if not settings.checkout_enabled or stripe is None:
             return JSONResponse({"error": "Checkout isn't open yet."}, status_code=503)
-        attempts, now = checkout_attempts[visitor(request)], time.monotonic()
+        key, now = visitor(request), time.monotonic()
+        tidy(checkout_attempts, lambda v: not v or now - v[-1] > 3600)
+        tidy(open_checkouts, lambda v: not v)
+        attempts = checkout_attempts[key]
         while attempts and now - attempts[0] > 3600:
             attempts.popleft()
         if len(attempts) >= CHECKOUTS_PER_HOUR:
             return JSONResponse({"error": "Too many checkout attempts. Please try again later."}, status_code=429)
-        attempts.append(now)
         try:
-            cart_items = orders.parse_cart(await request.json())
+            cart_items = orders.parse_cart(await cart_json(request))
         except (orders.CartError, ValueError):
             return JSONResponse({"error": "The cart is not readable."}, status_code=400)
+        with db() as conn:
+            open_count, units = held_by(conn, key)
+        wanted = sum(quantity for _, quantity in cart_items)
+        if open_count >= OPEN_CHECKOUTS_PER_VISITOR or units + wanted > UNITS_HELD_PER_VISITOR:
+            return JSONResponse({"error": "You already have checkouts waiting for payment. Please finish or "
+                                          "cancel them first, or try again in 30 minutes."}, status_code=429)
+        attempts.append(now)
         base = site_url(request)
 
         def run() -> dict:
             with writer() as conn:
-                return orders.start_checkout(conn, stripe, settings, cart_items, base)
+                result = orders.start_checkout(conn, stripe, settings, cart_items, base)
+            open_checkouts[key].add(result["number"])
+            return result
 
         try:
             result = await asyncio.to_thread(run)
@@ -413,7 +537,9 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         return {"url": result["url"]}
 
     def order_page(request: Request, order: dict, thanks: bool) -> HTMLResponse:
-        response = page(request, "order.html", title=f"Order {order['number']}", order=order, thanks=thanks)
+        # The carrier's own tracking page, the same link as the shipping email's button.
+        response = page(request, "order.html", title=f"Order {order['number']}", order=order, thanks=thanks,
+                        tracking_url=notify.tracking_url(order.get("carrier"), order.get("tracking_number")))
         response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -437,7 +563,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     def order_status(request: Request, number: str, k: str = ""):
         with db() as conn:
             order = orders.get_order(conn, number)
-        if order is None or not k or not hmac.compare_digest(order["access_token"], k):
+        if order is None or not _token_matches(order["access_token"], k):
             raise HTTPException(404)
         return order_page(request, order, thanks=False)
 
@@ -480,8 +606,16 @@ def _long_date(value: str) -> str:
 
 
 def _page_number(request: Request) -> int:
+    # Plain ASCII digits only, at most 6: str.isdigit() also accepts "²", which int() refuses,
+    # and a 5,000-digit number is too long for int() (both were 500 errors).
     value = request.query_params.get("page", "1")
-    return int(value) if value.isdigit() else 1
+    return int(value) if value.isascii() and value.isdigit() and len(value) <= 6 else 1
+
+
+def _token_matches(expected: str, given: str) -> bool:
+    """Constant-time check of an order link's secret. Compared as bytes: compare_digest raises
+    TypeError on non-ASCII text, and the token comes from the address bar."""
+    return bool(given) and hmac.compare_digest(expected.encode(), given.encode("utf-8", "replace"))
 
 
 def query_for(filters: catalog.Filters, fixed: tuple[str, ...], **changes) -> str:

@@ -22,6 +22,7 @@ from fastapi.testclient import TestClient
 from storefront.app import orders
 from storefront.app.db import connect
 from storefront.app.main import create_app
+from storefront.app.settings import load_settings
 from storefront.app.stripe_api import StripeError, form_encode, sign_payload, verify_webhook
 
 WEBHOOK_SECRET = "whsec_test_secret"
@@ -32,6 +33,8 @@ class FakeStripe:
         self.sessions: dict[str, dict] = {}
         self.fail = False
         self.expired_calls: list[str] = []
+        self.events: list[dict] = []          # what list_events returns (Stripe's event log)
+        self.events_fail = False
 
     def create_session(self, params: dict, idempotency_key: str) -> dict:
         if self.fail:
@@ -50,6 +53,11 @@ class FakeStripe:
         self.expired_calls.append(session_id)
         self.sessions[session_id]["status"] = "expired"
         return self.sessions[session_id]
+
+    def list_events(self, types: list[str], since: int) -> list[dict]:
+        if self.events_fail:
+            raise StripeError("Stripe is down")
+        return [e for e in self.events if e["type"] in types and e.get("created", since) >= since]
 
     def pay(self, session_id: str, tax: int = 0) -> dict:
         """What Stripe's session looks like after the shopper pays."""
@@ -138,9 +146,9 @@ def test_quote_prices_come_from_the_database(app_client):
 
 
 @pytest.mark.parametrize("items, ship_class, shipping", [
-    ((("JP-PACK-A", 1),), "small-sealed", 500),
-    ((("JP-PACK-A", 1), ("ENG-G25-TIN", 1)), "large-sealed", 900),     # the largest class wins
-    ((("111", 1),), "accessory", 500),
+    ((("JP-PACK-A", 1),), "small-sealed", 1000),
+    ((("JP-PACK-A", 1), ("ENG-G25-TIN", 1)), "large-sealed", 2000),     # the largest class wins
+    ((("111", 1),), "accessory", 1000),
     ((("JP-AE-BB", 3),), "large-sealed", 0),                            # $215.97: free over $150
 ])
 def test_shipping_class_and_free_shipping(app_client, items, ship_class, shipping):
@@ -220,11 +228,29 @@ def test_stripe_failure_releases_the_reservation(app_client, shop, fake):
 
 
 def test_stripe_tax_mode_asks_stripe_to_add_tax(imported, fake):
-    settings = dataclasses.replace(imported, stripe_secret_key="sk_test_fake", tax_mode="stripe")
+    settings = dataclasses.replace(imported, stripe_secret_key="sk_test_fake", tax_mode="stripe",
+                                   stripe_webhook_secret=WEBHOOK_SECRET)
     with TestClient(create_app(settings, stripe=fake)) as client:
         params = fake.sessions[start(client, ("JP-PACK-A", 1))]["params"]
     assert params["automatic_tax"] == {"enabled": True}
     assert params["line_items"][0]["price_data"]["tax_behavior"] == "exclusive"
+    with TestClient(create_app(settings, stripe=fake)) as client:
+        assert 'data-tax-note="Utah orders: sales tax is added on the next page."' in client.get("/cart").text
+
+
+def test_unknown_tax_mode_keeps_checkout_off(imported):
+    settings = dataclasses.replace(imported, stripe_secret_key="sk_test_fake", tax_mode="included")
+    assert not settings.checkout_enabled and "STOREFRONT_TAX_MODE" in settings.tax_problem
+
+
+def test_checkout_key_survives_reused_order_numbers(app_client, fake):
+    """Stripe remembers idempotency keys for 24 hours; a rebuilt test database starts at -0001
+    again, so the key must include more than the order number."""
+    key_holder = []
+    original = fake.create_session
+    fake.create_session = lambda params, idempotency_key: key_holder.append(idempotency_key) or original(params, idempotency_key)
+    start(app_client, ("JP-PACK-A", 1))
+    assert key_holder[0].startswith("checkout-P6T-") and len(key_holder[0]) > len("checkout-P6T-2026-0001-")
 
 
 # --- payment, webhooks and reconciliation ---------------------------------------------------
@@ -236,7 +262,7 @@ def test_paid_webhook_turns_the_reservation_into_a_sale(app_client, shop, fake):
     number = number_of(fake, session_id)
     order = order_row(shop, number)
     assert order["status"] == "paid" and order["email"] == "buyer@example.com"
-    assert order["tax_cents"] == 500 and order["total_cents"] == 7199 + 900 + 500
+    assert order["tax_cents"] == 500 and order["total_cents"] == 7199 + 2000 + 500
     assert order["shipping"]["address"]["state"] == "UT"
     with connect(shop.db_path) as conn:
         reasons = [r[0] for r in conn.execute("SELECT reason FROM stock_movements WHERE reference = ?", (number,))]
@@ -378,6 +404,17 @@ def test_shipping_an_order_emails_tracking(app_client, shop, fake):
     assert order["status"] == "shipped"
     shipped = [p.read_text() for p in shop.outbox_dir.glob("*.eml") if "has shipped" in p.read_text()]
     assert len(shipped) == 1 and "9400111899223817461234" in shipped[0]
+    # The designed (HTML) version: logo attached to the email, tracking button to USPS.
+    from email import policy
+    from email.parser import BytesParser
+    path = next(p for p in shop.outbox_dir.glob("*.eml") if "has shipped" in p.read_text())
+    message = BytesParser(policy=policy.default).parsebytes(path.read_bytes())
+    html = message.get_body(("html",)).get_content()
+    assert "Your order is on its way" in html and "TEST ORDER" in html
+    assert "https://tools.usps.com/go/TrackConfirmAction?tLabels=9400111899223817461234" in html
+    logo = [part for part in message.walk() if part.get_content_type() == "image/png"]
+    assert len(logo) == 1 and f'cid:{logo[0]["Content-ID"].strip("<>")}' in html
+    assert "9400111899223817461234" in message.get_body(("plain",)).get_content()
 
 
 # --- switches -----------------------------------------------------------------------------
@@ -395,11 +432,152 @@ def test_with_a_test_key_products_have_add_to_cart(app_client):
     assert app_client.get("/cart").status_code == 200
 
 
+def test_checkout_switch_off_means_catalog_only_even_with_keys(shop, fake):
+    # The public launch runs with STOREFRONT_CHECKOUT=0 while the test keys stay in .env.
+    off = dataclasses.replace(shop, checkout_switch=False)
+    assert not off.checkout_enabled
+    with TestClient(create_app(off, stripe=fake), follow_redirects=False) as client:
+        assert client.post("/checkout", json=cart(("JP-PACK-A", 1))).status_code == 503
+        page = client.get("/p/pokemon-booster-pack-japanese").text
+        assert "Buy on TCGplayer" in page and "Add to cart" not in page
+    assert not fake.sessions
+
+
+def test_checkout_switch_reads_storefront_checkout(monkeypatch):
+    monkeypatch.setenv("STOREFRONT_CHECKOUT", "0")
+    assert load_settings().checkout_switch is False
+    monkeypatch.delenv("STOREFRONT_CHECKOUT")
+    assert load_settings().checkout_switch is True
+
+
 def test_live_keys_are_refused_unless_allowed(imported):
-    live = dataclasses.replace(imported, stripe_secret_key="sk_live_x")
+    live = dataclasses.replace(imported, stripe_secret_key="sk_live_x", stripe_webhook_secret=WEBHOOK_SECRET,
+                               graph_tenant_id="t", graph_client_id="c", graph_client_secret="s")
     assert not live.checkout_enabled
     assert dataclasses.replace(live, allow_live=True).checkout_enabled
 
 
 def test_stripe_form_encoding():
     assert form_encode({"a": {"b": [1, {"c": True}]}, "n": None}) == [("a[b][0]", "1"), ("a[b][1][c]", "true")]
+
+
+# --- what one visitor can hold (security review item 10) ---------------------------------
+
+def test_one_visitor_can_hold_only_three_open_checkouts(app_client, shop, fake):
+    sessions = [start(app_client, ("JP-PACK-A", 1)) for _ in range(3)]
+    fourth = app_client.post("/checkout", json=cart(("JP-PACK-A", 1)))
+    assert fourth.status_code == 429 and "finish or cancel" in fourth.json()["error"]
+    # Cancelling one (back from Stripe without paying) frees a place straight away.
+    cancel_url = fake.sessions[sessions[0]]["params"]["cancel_url"]
+    app_client.get(cancel_url.replace("http://testserver", ""))
+    start(app_client, ("JP-PACK-A", 1))
+    assert_stock_matches_movements(shop)
+
+
+def test_one_visitor_can_hold_only_twelve_units(app_client, shop):
+    start(app_client, ("JP-PACK-A", 10))
+    too_many = app_client.post("/checkout", json=cart(("JP-AE-BB", 3)))
+    assert too_many.status_code == 429
+    assert stock(shop, "JP-AE-BB") == 3      # nothing reserved by the refused attempt
+    start(app_client, ("JP-AE-BB", 2))       # 12 in all is allowed
+
+
+def test_paid_checkouts_stop_counting(app_client, shop, fake):
+    sessions = [start(app_client, ("JP-PACK-A", 1)) for _ in range(3)]
+    fake.pay(sessions[0])
+    app_client.get(f"/order/thanks?session_id={sessions[0]}")
+    start(app_client, ("JP-PACK-A", 1))
+
+
+def test_a_faked_visitor_header_doesnt_get_round_the_cap(app_client):
+    # The test client isn't a private-network peer, so CF-Connecting-IP is ignored: all four
+    # attempts are the same visitor however the header is set.
+    for n in range(3):
+        response = app_client.post("/checkout", json=cart(("JP-PACK-A", 1)),
+                                   headers={"CF-Connecting-IP": f"203.0.113.{n}"})
+        assert response.status_code == 200
+    fourth = app_client.post("/checkout", json=cart(("JP-PACK-A", 1)), headers={"CF-Connecting-IP": "203.0.113.9"})
+    assert fourth.status_code == 429
+
+
+# --- the webhook is required, and missed events are caught up (security review item 11) --
+
+def test_checkout_stays_off_without_a_webhook_secret(imported):
+    no_hook = dataclasses.replace(imported, stripe_secret_key="sk_test_fake")
+    assert not no_hook.checkout_enabled and "STRIPE_WEBHOOK_SECRET" in no_hook.setup_problem
+    assert dataclasses.replace(no_hook, stripe_webhook_secret=WEBHOOK_SECRET).checkout_enabled
+
+
+def reconcile_now(shop, fake):
+    conn = connect(shop.db_path, writer=True)
+    try:
+        return orders.reconcile(conn, shop, fake, "https://shop.test")
+    finally:
+        conn.close()
+
+
+def test_reconcile_records_a_refund_the_webhook_missed(app_client, shop, fake):
+    session_id = start(app_client, ("JP-AE-BB", 1))
+    send_event(app_client, {"id": "evt_p", "type": "checkout.session.completed",
+                            "data": {"object": fake.pay(session_id)}})
+    number, intent = number_of(fake, session_id), f"pi_{session_id}"
+    # Refunded in the Stripe dashboard while the tunnel was down: only Stripe's event log has it.
+    fake.events.append({"id": "evt_r", "type": "charge.refunded", "data": {"object": {
+        "payment_intent": intent, "amount": 8099, "amount_refunded": 8099}}})
+    assert reconcile_now(shop, fake)["events"] == 1
+    assert order_row(shop, number)["status"] == "refunded"
+    assert reconcile_now(shop, fake)["events"] == 0          # applied once only
+    # The webhook delivering it late changes nothing either.
+    assert send_event(app_client, {"id": "evt_r", "type": "charge.refunded", "data": {"object": {
+        "payment_intent": intent, "amount": 8099, "amount_refunded": 8099}}}).status_code == 200
+    assert order_row(shop, number)["refunded_cents"] == 8099
+
+
+def test_reconcile_records_a_missed_dispute(app_client, shop, fake):
+    session_id = start(app_client, ("JP-AE-BB", 1))
+    fake.pay(session_id)
+    reconcile_now(shop, fake)                                   # payment caught up
+    fake.events.append({"id": "evt_d", "type": "charge.dispute.created", "data": {"object": {
+        "payment_intent": f"pi_{session_id}", "amount": 8099, "reason": "fraudulent"}}})
+    reconcile_now(shop, fake)
+    assert order_row(shop, number_of(fake, session_id))["status"] == "disputed"
+
+
+def test_an_unreachable_event_log_is_counted_not_fatal(app_client, shop, fake):
+    session_id = start(app_client, ("JP-PACK-A", 1))
+    fake.pay(session_id)
+    fake.events_fail = True
+    counts = reconcile_now(shop, fake)
+    assert counts["paid"] == 1 and counts["errors"] == 1
+
+
+# --- smaller hardening (security review item 16) -----------------------------------------
+
+def test_security_headers_include_hsts_and_permissions_policy(app_client):
+    headers = app_client.get("/").headers
+    assert headers["strict-transport-security"] == "max-age=31536000"
+    assert "camera=()" in headers["permissions-policy"]
+
+
+@pytest.mark.parametrize("path", ["/cart/quote", "/checkout"])
+def test_oversized_cart_requests_are_refused(app_client, path):
+    padding = "x" * (40 * 1024)
+    response = app_client.post(path, content=json.dumps({"items": [], "pad": padding}),
+                               headers={"Content-Type": "application/json"})
+    assert response.status_code == 400
+
+
+def test_order_page_links_to_the_carriers_tracking(app_client, shop, fake):
+    session_id = start(app_client, ("JP-PACK-A", 1))
+    send_event(app_client, {"id": "evt_t", "type": "checkout.session.completed",
+                            "data": {"object": fake.pay(session_id)}})
+    number = number_of(fake, session_id)
+    conn = connect(shop.db_path, writer=True)
+    try:
+        orders.mark_shipped(conn, shop, number, "USPS", "9400100000000000000000", "https://shop.test")
+    finally:
+        conn.close()
+    order = order_row(shop, number)
+    page = app_client.get(f"/order/{number}?k={order['access_token']}")
+    assert "https://tools.usps.com/go/TrackConfirmAction?tLabels=9400100000000000000000" in page.text
+    assert "Track package" in page.text

@@ -21,6 +21,21 @@ What it reports (all metric names start with ``momentum_``):
 * Bug reports from Discord (tracking.sqlite3): reports per status, newest report time.
 * Git: current branch, uncommitted project files, commits not yet pushed.
 * A reminder while the temporary sudo file from the monitoring build-out still exists.
+* Plex (home lab, since 2026-11-06): streams now, how many transcode, and items per library,
+  from the Plex server's own API. Needs the owner's Plex token in PLEX_TOKEN_FILE (mode 600,
+  outside the repo); without that file the section publishes nothing.
+* Proxmox Backup Server (home lab, since 2026-11-08): datastore space, each backed-up guest's
+  newest backup, snapshot count and verify result, and the outcome of backup, verify, prune
+  and garbage-collection tasks. Needs a read-only (Audit) API token in PBS_TOKEN_FILE; TLS is
+  verified against PBS's own certificate (PBS_CERT_FILE). Without the token, nothing.
+* Storefront (since 2026-11-09): orders by mode and status, sales, orders and items per
+  local day for 30 days, orders waiting to ship, products and stock, and the visible products
+  that are nearly sold out, read-only from data/storefront/store.db. Counts and sums only; no
+  customer details.
+* Google Search Console (since 2026-11-11): poke6s.com's clicks, impressions and position per
+  day, top searches and pages, sitemap status and which sitemap pages Google has indexed. The
+  API work and its cache live in search_console.py (see its docstring); without the key file
+  in secrets/, nothing.
 
 Every section is fenced off with its own try/except: one failing check (say, a locked
 database) is reported as ``momentum_collector_errors{section=...}`` and the rest still
@@ -41,11 +56,29 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from run_job import JOB_HELP  # noqa: E402  (same help text in both scripts; see run_job.py)
+import search_console  # noqa: E402
 TEXTFILE_DIR = Path(os.environ.get("MOMENTUM_TEXTFILE_DIR", "/var/lib/prometheus/node-exporter"))
 OUTPUT = TEXTFILE_DIR / "momentum_status.prom"
 # Remembers when each systemd job last succeeded, because systemd only keeps the latest run.
 STATE_FILE = TEXTFILE_DIR / ".momentum_status_state.json"
 SUDOERS_REMINDER = Path("/etc/sudoers.d/90-claude-buildout")
+
+# Plex: the token gives full access to the owner's Plex account, so it lives only in this
+# root-made, adam-only file and is never logged or put in a metric.
+PLEX_URL = os.environ.get("MOMENTUM_PLEX_URL", "http://192.168.1.219:32400")
+PLEX_TOKEN_FILE = Path(os.environ.get("MOMENTUM_PLEX_TOKEN_FILE", "/etc/momentum-monitoring/plex-token"))
+
+# Proxmox Backup Server. The token file holds "user@realm!tokenname:secret" (an API token
+# with the Audit role only); PBS_CERT_FILE is PBS's self-signed certificate, saved from
+# the server once (runbook "Proxmox Backup Server"). The certificate names the server
+# "72pbs", not its IP, so the TLS check uses that name.
+PBS_HOST = os.environ.get("MOMENTUM_PBS_HOST", "192.168.1.72")
+PBS_CERT_NAME = os.environ.get("MOMENTUM_PBS_CERT_NAME", "72pbs")
+PBS_TOKEN_FILE = Path(os.environ.get("MOMENTUM_PBS_TOKEN_FILE", "/etc/momentum-monitoring/pbs-token"))
+PBS_CERT_FILE = Path(os.environ.get("MOMENTUM_PBS_CERT_FILE", "/etc/momentum-monitoring/pbs-cert.pem"))
+PBS_TASK_TYPES = ("backup", "verify", "verificationjob", "prune", "prunejob", "garbage_collection", "syncjob")
 
 DAY = 86400
 # job name -> (how it runs, expected interval in seconds). "systemd:<unit>" units are read
@@ -56,11 +89,13 @@ JOBS = {
     "weekly-refresh": ("systemd:pokemon-momentum-weekly-refresh", 7 * DAY),
     "weekly-placeholder-refresh": ("systemd:pokemon-momentum-weekly-placeholder-refresh", 7 * DAY),
     "storefront-market-reference": ("cron", DAY),
+    "storefront-backup": ("cron", DAY),
     "placeholder-sync": ("cron", DAY),
     "squarespace-price-sync": ("cron", DAY),
     "tcgcsv-catalogue": ("cron", DAY),
     "archive-backfill": ("cron", DAY),
     "discord-bug-import": ("cron", 15 * 60),
+    "market-dns": ("cron", 5 * 60),
     "discord-weekly": ("cron", 7 * DAY),
 }
 
@@ -104,6 +139,9 @@ def _newest_mtime(path: Path, pattern: str = "*") -> float | None:
 
 
 def systemd_jobs(m: Metrics, state: dict) -> None:
+    """Metrics for each systemd job in JOBS: last start and finish, exit code, last success, running
+    now, and whether its timer is active and when it fires next (read with systemctl show).
+    """
     for job, (kind, interval) in JOBS.items():
         m.add("momentum_job_expected_interval_seconds", interval,
               "How often the job should run", task=job, runner=kind.split(":")[0])
@@ -119,20 +157,20 @@ def systemd_jobs(m: Metrics, state: dict) -> None:
             started = _unix(timer.get("LastTriggerUSec"))
         finished = _unix(props.get("ExecMainExitTimestamp"))
         running = props.get("ActiveState") in {"active", "activating"}
-        m.add("momentum_job_running", 1 if running else 0, "1 while the job is running", task=job)
-        m.add("momentum_job_last_start_timestamp_seconds", started, "When the job last started", task=job)
+        m.add("momentum_job_running", 1 if running else 0, JOB_HELP["momentum_job_running"], task=job)
+        m.add("momentum_job_last_start_timestamp_seconds", started, JOB_HELP["momentum_job_last_start_timestamp_seconds"], task=job)
         if finished:
             code = int(props.get("ExecMainStatus") or 0)
             ok = props.get("Result") == "success" and code == 0
-            m.add("momentum_job_last_run_timestamp_seconds", finished, "When the job last finished", task=job)
-            m.add("momentum_job_last_exit_code", code, "Exit code of the last run (0 = ok)", task=job)
+            m.add("momentum_job_last_run_timestamp_seconds", finished, JOB_HELP["momentum_job_last_run_timestamp_seconds"], task=job)
+            m.add("momentum_job_last_exit_code", code, JOB_HELP["momentum_job_last_exit_code"], task=job)
             if started:
                 m.add("momentum_job_last_duration_seconds", max(0.0, finished - started),
-                      "How long the last run took", task=job)
+                      JOB_HELP["momentum_job_last_duration_seconds"], task=job)
             if ok:
                 state[job] = finished
         m.add("momentum_job_last_success_timestamp_seconds", state.get(job),
-              "When the job last finished without an error", task=job)
+              JOB_HELP["momentum_job_last_success_timestamp_seconds"], task=job)
         m.add("momentum_job_next_run_timestamp_seconds", _unix(timer.get("NextElapseUSecRealtime")),
               "When the systemd timer fires next", task=job)
         m.add("momentum_job_timer_active", 1 if timer.get("ActiveState") == "active" else 0,
@@ -162,6 +200,10 @@ def _unix(value: str | None) -> float | None:
 
 
 def data_downloads(m: Metrics) -> None:
+    """When each data source last changed (PriceCharting CSV, TCGCSV archive and catalogue, parquet,
+    market prices CSV, storefront market reference), so
+    Grafana can show a feed that stopped arriving.
+    """
     help_text = "When this data source was last downloaded or rebuilt"
     sources = {
         "pricecharting_csv": _newest_mtime(ROOT / "data/pricecharting/raw"),
@@ -198,6 +240,7 @@ def logs(m: Metrics) -> None:
 
 
 def todo(m: Metrics) -> None:
+    """Count docs/todo.txt items per status tag ([next], [planned], ...), leaving out Recently Completed."""
     path = ROOT / "docs/todo.txt"
     text = path.read_text(encoding="utf-8")
     # Count list items ("- [next] ...", at any indent) in every section except "Recently
@@ -241,6 +284,9 @@ def _iso(value: str) -> float:
 
 
 def git(m: Metrics) -> None:
+    """Repository health: on main or not, uncommitted project files (data files excluded),
+    commits not pushed to origin, and when main last changed.
+    """
     def run(*args: str) -> str:
         return subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True, timeout=20).stdout
 
@@ -265,10 +311,224 @@ def reminders(m: Metrics) -> None:
           "1 while /etc/sudoers.d/90-claude-buildout exists (remove it after the monitoring build-out)")
 
 
+def _plex_get(path: str, token: str, count_only: bool = False) -> dict:
+    """GET a Plex API path as JSON. count_only asks for zero rows, so Plex just returns
+    totalSize (cheap even for a library of thousands of items)."""
+    import urllib.request
+
+    headers = {"X-Plex-Token": token, "Accept": "application/json"}
+    if count_only:
+        headers |= {"X-Plex-Container-Start": "0", "X-Plex-Container-Size": "0"}
+    with urllib.request.urlopen(urllib.request.Request(PLEX_URL + path, headers=headers), timeout=10) as resp:
+        return json.load(resp)["MediaContainer"]
+
+
+def plex(m: Metrics) -> None:
+    """Streams and library sizes on the home lab Plex server (Home lab: Servers dashboard).
+    Library names come from Plex itself; show libraries also report their episode count."""
+    if not PLEX_TOKEN_FILE.exists():
+        return
+    token = PLEX_TOKEN_FILE.read_text().strip()
+    sessions = _plex_get("/status/sessions", token).get("Metadata", [])
+    states: dict[str, int] = {"playing": 0, "paused": 0, "buffering": 0}
+    for item in sessions:
+        state = item.get("Player", {}).get("state", "playing")
+        states[state] = states.get(state, 0) + 1
+    for state, count in states.items():
+        m.add("momentum_plex_streams", count, "Plex streams now, by player state", state=state)
+    m.add("momentum_plex_transcodes", sum(1 for item in sessions if "TranscodeSession" in item),
+          "Plex streams being transcoded now (the rest play directly)")
+    for lib in _plex_get("/library/sections", token).get("Directory", []):
+        key, kind, title = lib["key"], lib.get("type", ""), lib.get("title", "")
+        items = _plex_get(f"/library/sections/{key}/all", token, count_only=True).get("totalSize")
+        m.add("momentum_plex_library_items", items,
+              "Items in each Plex library (movies, shows, artists or photos)", library=title, type=kind)
+        if kind == "show":  # type=4 counts episodes rather than shows
+            episodes = _plex_get(f"/library/sections/{key}/all?type=4", token, count_only=True).get("totalSize")
+            m.add("momentum_plex_library_episodes", episodes, "Episodes in each Plex TV library", library=title)
+    m.add("momentum_plex_up", 1, "1 when collect_status.py could read the Plex API")
+
+
+STORE_DB = Path(os.environ.get("MOMENTUM_STORE_DB", str(ROOT / "data" / "storefront" / "store.db")))
+STORE_TZ = "America/Denver"  # the shop's business day, for "today" and the daily sales bars
+STORE_DAYS = 30
+STORE_LOW_STOCK = 2  # a visible, stock-tracked product with this many or fewer left is "low"
+# Orders that brought money in. Pending, expired and cancelled checkouts never did; refunds
+# are subtracted through refunded_cents.
+STORE_SOLD = ("paid", "shipped", "partially_refunded", "refunded", "disputed")
+
+
+def storefront(m: Metrics, now: float | None = None) -> None:
+    """Orders, sales and stock from the new storefront's database (the "Store" dashboard).
+
+    Read-only: the database is opened with mode=ro, so the collector can never change an order.
+    Every order metric carries mode (test or live); the dashboard shows live only, so the
+    test orders made while building the shop never count as sales. Money is in dollars, net
+    of refunds; days are the shop's local days (STORE_TZ). No customer names, emails or
+    addresses ever leave the database: only counts, sums, and product SKUs and titles.
+    """
+    from zoneinfo import ZoneInfo
+
+    if not STORE_DB.exists():
+        return
+    now = now or time.time()
+    tz = ZoneInfo(STORE_TZ)
+    today = datetime.fromtimestamp(now, tz).date()
+    con = sqlite3.connect(f"file:{STORE_DB}?mode=ro", uri=True, timeout=10)
+    try:
+        for mode, status, count in con.execute("SELECT mode, status, COUNT(*) FROM orders GROUP BY 1, 2"):
+            m.add("momentum_store_orders", count, "Storefront orders by mode (test or live) and status",
+                  mode=mode, status=status)
+
+        # Sales per local day, from when each order was paid. Every day of the window is
+        # written (0 when nothing sold) so the bar chart has no gaps.
+        sold = ",".join("?" * len(STORE_SOLD))
+        rows = con.execute(
+            f"SELECT o.mode, o.paid_at, o.total_cents - o.refunded_cents, "
+            f"(SELECT COALESCE(SUM(quantity), 0) FROM order_items WHERE order_id = o.id) "
+            f"FROM orders o WHERE o.status IN ({sold}) AND o.paid_at IS NOT NULL", STORE_SOLD).fetchall()
+        days = [(today.toordinal() - i) for i in range(STORE_DAYS)]
+        totals = {(mode, d): [0, 0, 0] for mode in ("live", "test") for d in days}  # cents, orders, units
+        for mode, paid_at, cents, units in rows:
+            day = datetime.fromtimestamp(_iso(paid_at), tz).date().toordinal()
+            if (mode, day) in totals:
+                t = totals[(mode, day)]
+                t[0] += cents
+                t[1] += 1
+                t[2] += units
+        for (mode, day), (cents, orders, units) in totals.items():
+            label = datetime.fromordinal(day).strftime("%Y-%m-%d")
+            m.add("momentum_store_daily_sales_dollars", cents / 100,
+                  "Storefront sales per local day, net of refunds", mode=mode, day=label)
+            m.add("momentum_store_daily_orders", orders, "Storefront paid orders per local day", mode=mode, day=label)
+            m.add("momentum_store_daily_units", units, "Items sold per local day", mode=mode, day=label)
+        # The same totals over today, the last 7 and the last 30 local days (today included),
+        # because PromQL can't tell which day label is "today".
+        for mode in ("live", "test"):
+            for window, n in (("today", 1), ("7d", 7), ("30d", 30)):
+                cents, orders, units = (sum(totals[(mode, d)][i] for d in days[:n]) for i in range(3))
+                m.add("momentum_store_sales_dollars", cents / 100, "Storefront sales net of refunds, by window",
+                      mode=mode, window=window)
+                m.add("momentum_store_paid_orders", orders, "Storefront paid orders, by window",
+                      mode=mode, window=window)
+                m.add("momentum_store_units_sold", units, "Items sold, by window", mode=mode, window=window)
+
+        # Orders waiting to ship, and how long the oldest has waited since payment.
+        for mode in ("live", "test"):
+            waiting = con.execute("SELECT COUNT(*), MIN(paid_at) FROM orders WHERE mode = ? AND status = 'paid'",
+                                  (mode,)).fetchone()
+            m.add("momentum_store_orders_to_ship", waiting[0], "Paid orders not yet shipped", mode=mode)
+            if waiting[1]:
+                m.add("momentum_store_oldest_unshipped_seconds", now - _iso(waiting[1]),
+                      "Time since the oldest paid-but-unshipped order was paid", mode=mode)
+
+        # Catalog and stock. Untracked products (made to order, supplier-backed) have no count.
+        for kind, visible, tracked, count, in_stock, units, value in con.execute(
+                "SELECT kind, visible, track_stock, COUNT(*), SUM(stock > 0), SUM(stock), "
+                "SUM(stock * price_cents) FROM products GROUP BY 1, 2, 3"):
+            state = "visible" if visible else "hidden"
+            stock = "tracked" if tracked else "untracked"
+            m.add("momentum_store_products", count, "Products by kind, visible or hidden, stock tracked or not",
+                  kind=kind, state=state, stock=stock)
+            if tracked:
+                m.add("momentum_store_products_in_stock", in_stock or 0,
+                      "Stock-tracked products with at least one in stock", kind=kind, state=state)
+                m.add("momentum_store_stock_units", units or 0, "Units in stock (tracked products)",
+                      kind=kind, state=state)
+                m.add("momentum_store_stock_value_dollars", (value or 0) / 100,
+                      "Units in stock times their shop price (tracked products)", kind=kind, state=state)
+        # The products about to sell out (or sold out) that customers can see, one series each.
+        for sku, title, stock in con.execute(
+                "SELECT sku, title, stock FROM products WHERE visible = 1 AND track_stock = 1 AND stock <= ? "
+                "ORDER BY stock, title LIMIT 50", (STORE_LOW_STOCK,)):
+            m.add("momentum_store_low_stock", stock, f"Visible products with {STORE_LOW_STOCK} or fewer in stock",
+                  sku=sku, title=title)
+    finally:
+        con.close()
+    m.add("momentum_store_up", 1, "1 when collect_status.py could read the storefront database")
+
+
+def _pbs_get(path: str, token: str) -> list | dict:
+    """GET /api2/json<path> from PBS and return its "data". Connects to PBS_HOST but checks
+    the certificate (pinned file, hostname PBS_CERT_NAME) as normal TLS would."""
+    import http.client
+    import socket
+    import ssl
+
+    ctx = ssl.create_default_context(cafile=str(PBS_CERT_FILE))
+
+    class Conn(http.client.HTTPSConnection):
+        def connect(self) -> None:
+            sock = socket.create_connection((self.host, self.port), self.timeout)
+            self.sock = ctx.wrap_socket(sock, server_hostname=PBS_CERT_NAME)
+
+    conn = Conn(PBS_HOST, 8007, timeout=15)
+    try:
+        conn.request("GET", "/api2/json" + path, headers={"Authorization": f"PBSAPIToken={token}"})
+        resp = conn.getresponse()
+        body = resp.read()
+        if resp.status != 200:
+            raise RuntimeError(f"PBS {path}: HTTP {resp.status}")  # never include the token
+        return json.loads(body)["data"]
+    finally:
+        conn.close()
+
+
+def _pbs_task_ok(task: dict) -> bool:
+    """PBS task status is "OK", "WARNINGS: <n>" (still a success) or the error message."""
+    return str(task.get("status", "")).startswith(("OK", "WARNINGS"))
+
+
+def pbs(m: Metrics, now: float | None = None) -> None:
+    """Backups on the Proxmox Backup Server (Home lab: Proxmox cluster dashboard)."""
+    if not PBS_TOKEN_FILE.exists():
+        return
+    token = PBS_TOKEN_FILE.read_text().strip()
+    now = now or time.time()
+    for ds in _pbs_get("/status/datastore-usage", token):
+        store = ds["store"]
+        for kind in ("total", "used", "avail"):
+            m.add("momentum_pbs_datastore_bytes", ds.get(kind), "PBS datastore space (kind: total, used, avail)",
+                  store=store, kind=kind)
+        # The newest snapshot of each group carries the verify result we care about.
+        newest: dict[tuple, dict] = {}
+        for snap in _pbs_get(f"/admin/datastore/{store}/snapshots", token):
+            key = (snap["backup-type"], snap["backup-id"])
+            if key not in newest or snap["backup-time"] > newest[key]["backup-time"]:
+                newest[key] = snap
+        for group in _pbs_get(f"/admin/datastore/{store}/groups", token):
+            key = (group["backup-type"], group["backup-id"])
+            labels = dict(store=store, type=key[0], id=key[1], guest=(group.get("comment") or "").strip())
+            m.add("momentum_pbs_group_last_backup_timestamp_seconds", group.get("last-backup"),
+                  "Newest backup of each guest (backup group) on PBS", **labels)
+            m.add("momentum_pbs_group_snapshots", group.get("backup-count"),
+                  "Backups kept for each guest on PBS", **labels)
+            state = (newest.get(key, {}).get("verification") or {}).get("state")
+            m.add("momentum_pbs_group_last_verify", {"ok": 1, "failed": 0}.get(state, 2),
+                  "Verify result of each guest's newest backup: 1 ok, 0 failed, 2 not verified yet", **labels)
+    # Task history for the last 7 days. Running tasks have no endtime yet and are skipped.
+    tasks = _pbs_get(f"/nodes/localhost/tasks?since={int(now - 7 * DAY)}&limit=5000", token)
+    for kind in PBS_TASK_TYPES:
+        done = sorted((t for t in tasks if t.get("worker_type") == kind and t.get("endtime")),
+                      key=lambda t: t["endtime"])
+        failures = sum(1 for t in done if not _pbs_task_ok(t))
+        m.add("momentum_pbs_task_failures_7d", failures, "PBS tasks that failed in the last 7 days, by type",
+              type=kind)
+        if done:
+            m.add("momentum_pbs_task_last_end_timestamp_seconds", done[-1]["endtime"],
+                  "When the newest finished PBS task of each type ended", type=kind)
+            m.add("momentum_pbs_task_last_ok", 1 if _pbs_task_ok(done[-1]) else 0,
+                  "1 when the newest finished PBS task of each type succeeded", type=kind)
+    m.add("momentum_pbs_up", 1, "1 when collect_status.py could read the PBS API")
+
+
 # --- main ----------------------------------------------------------------------------------
 
 
 def main() -> int:
+    """Collect every section into one metrics file. A section that fails is reported (as a metric and
+    on stderr) without stopping the others; both output files are written atomically.
+    """
     m = Metrics()
     try:
         state = json.loads(STATE_FILE.read_text())
@@ -282,6 +542,11 @@ def main() -> int:
         "bug_reports": lambda: bug_reports(m),
         "git": lambda: git(m),
         "reminders": lambda: reminders(m),
+        "plex": lambda: plex(m),
+        "pbs": lambda: pbs(m),
+        "storefront": lambda: storefront(m),
+        # Last: on some runs it waits on Google's API (up to ~15 s); see search_console.py.
+        "search_console": lambda: search_console.collect(m),
     }
     errors = {}
     for name, section in sections.items():

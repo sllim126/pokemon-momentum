@@ -9,10 +9,22 @@ services:
       POKEMON_MOMENTUM_PSA_ACCESS_TOKEN: ${POKEMON_MOMENTUM_PSA_ACCESS_TOKEN:-}
       POKEMON_MOMENTUM_PSA_CACHE_TTL_DAYS: ${POKEMON_MOMENTUM_PSA_CACHE_TTL_DAYS:-30}
       POKE6S_TCGCSV_USER_AGENT: ${POKE6S_TCGCSV_USER_AGENT:-}
+      # The only .env secrets this container's jobs use: the nightly PriceCharting download,
+      # the Discord bug-report import and the placeholder-sync alert. The scripts read the
+      # environment first, so they don't need the file itself (hidden below).
+      PRICECHARTING_API_TOKEN: ${PRICECHARTING_API_TOKEN:-}
+      POKE6S_DISCORD_BOT_TOKEN: ${POKE6S_DISCORD_BOT_TOKEN:-}
+      POKE6S_DISCORD_WEBHOOK_URL: ${POKE6S_DISCORD_WEBHOOK_URL:-}
     ports:
       - "8001:8001"
     volumes:
       - ./:/app
+      # Hide the repo's .env and secrets/ from the public market app (security review
+      # 2026-11-11, item 7): a file-read bug here must not reach the Stripe key, tunnel token,
+      # Squarespace key or Search Console key. Host scripts still read both as normal.
+      - /dev/null:/app/.env:ro
+    tmpfs:
+      - /app/secrets
     stdin_open: true
     tty: true
     restart: unless-stopped
@@ -21,7 +33,12 @@ services:
   # container so a crash or heavy job in the market app can't take the shop down.
   # It sees only its code, the data folder read-only, and its own data/storefront folder.
   storefront:
-    build: ./storefront
+    # The code comes from the store's own clone (STOREFRONT_CODE_DIR, set by
+    # deploy/update_storefront.sh) so branch switches in this folder don't change the store.
+    build:
+      context: ${STOREFRONT_CODE_DIR:-./storefront}
+      # The image that serves the site: pinned packages, no test tools (storefront/Dockerfile).
+      target: runtime
     container_name: poke6s-storefront
     # Run as the host user, so the database, photos and article files the store and its
     # importers write stay owned by (and editable for) the owner, not root.
@@ -33,25 +50,57 @@ services:
       # Local address until launch; robots stay blocked until STOREFRONT_ALLOW_INDEXING=1.
       STOREFRONT_BASE_URL: ${STOREFRONT_BASE_URL:-http://localhost:8010}
       STOREFRONT_ALLOW_INDEXING: ${STOREFRONT_ALLOW_INDEXING:-0}
-      # Checkout (Phase 2). Values come from .env; with no STRIPE_SECRET_KEY checkout stays off.
+      # Checkout (Phase 2). Off unless STOREFRONT_CHECKOUT=1: the public site runs catalog-only
+      # until live payments are set up, so test-mode checkout is never reachable from outside.
+      STOREFRONT_CHECKOUT: ${STOREFRONT_CHECKOUT:-0}
+      # Values come from .env; with no STRIPE_SECRET_KEY checkout stays off as well.
+      # While the store is catalog-only, keep STRIPE_SECRET_KEY commented out in .env so this
+      # container holds no Stripe key at all (security review 2026-11-11, item 7).
       # Test keys only (sk_test_...) unless STOREFRONT_ALLOW_LIVE=1, which is the owner's call.
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       STOREFRONT_ALLOW_LIVE: ${STOREFRONT_ALLOW_LIVE:-0}
+      # Sales tax: 'stripe' = Stripe Tax adds it at checkout (Utah registration set up in the
+      # Stripe dashboard first); 'none' = no tax. Anything else keeps checkout off.
       STOREFRONT_TAX_MODE: ${STOREFRONT_TAX_MODE:-none}
       STOREFRONT_FREE_SHIPPING_OVER_CENTS: ${STOREFRONT_FREE_SHIPPING_OVER_CENTS:-15000}
-      STOREFRONT_SHIP_SMALL_SEALED_CENTS: ${STOREFRONT_SHIP_SMALL_SEALED_CENTS:-500}
-      STOREFRONT_SHIP_LARGE_SEALED_CENTS: ${STOREFRONT_SHIP_LARGE_SEALED_CENTS:-900}
-      STOREFRONT_SHIP_ACCESSORY_CENTS: ${STOREFRONT_SHIP_ACCESSORY_CENTS:-500}
-      STOREFRONT_SHIP_SINGLE_CENTS: ${STOREFRONT_SHIP_SINGLE_CENTS:-500}
+      # Shipping overrides, empty unless set in .env: the rates themselves are in app/settings.py.
+      STOREFRONT_SHIP_SMALL_SEALED_CENTS: ${STOREFRONT_SHIP_SMALL_SEALED_CENTS:-}
+      STOREFRONT_SHIP_LARGE_SEALED_CENTS: ${STOREFRONT_SHIP_LARGE_SEALED_CENTS:-}
+      STOREFRONT_SHIP_ACCESSORY_CENTS: ${STOREFRONT_SHIP_ACCESSORY_CENTS:-}
+      STOREFRONT_SHIP_SINGLE_CENTS: ${STOREFRONT_SHIP_SINGLE_CENTS:-}
       STOREFRONT_DISCORD_WEBHOOK_URL: ${STOREFRONT_DISCORD_WEBHOOK_URL:-}
+      # Order emails through Microsoft Graph (storefront/README.md, "Order emails").
+      STOREFRONT_GRAPH_TENANT_ID: ${STOREFRONT_GRAPH_TENANT_ID:-}
+      STOREFRONT_GRAPH_CLIENT_ID: ${STOREFRONT_GRAPH_CLIENT_ID:-}
+      STOREFRONT_GRAPH_CLIENT_SECRET: ${STOREFRONT_GRAPH_CLIENT_SECRET:-}
       STOREFRONT_SMTP_HOST: ${STOREFRONT_SMTP_HOST:-}
       STOREFRONT_SMTP_USER: ${STOREFRONT_SMTP_USER:-}
       STOREFRONT_SMTP_PASSWORD: ${STOREFRONT_SMTP_PASSWORD:-}
     ports:
-      - "8010:8010"
+      # This machine only (security review 2026-11-11, item 10): the public site comes in
+      # through the tunnel (cloudflared, on the Docker network), and monitoring, the deploy
+      # script and Search Console use localhost. LAN devices can't reach it or fake the
+      # visitor-address header.
+      - "127.0.0.1:8010:8010"
     volumes:
-      - ./storefront:/app/storefront
+      - ${STOREFRONT_CODE_DIR:-./storefront}:/app/storefront
       - ./data:/app/data:ro
       - ./data/storefront:/app/data/storefront
+    restart: unless-stopped
+
+  # Cloudflare Tunnel connector (storefront plan, "Hosting"). It dials out to Cloudflare, so
+  # the router needs no open ports; the public hostnames (poke6s.com -> http://storefront:8010)
+  # are set in the Cloudflare dashboard under Networking > Tunnels > poke6s-home > Routes.
+  # CLOUDFLARE_TUNNEL_TOKEN lives in .env only (it lets anyone run the tunnel: never print it).
+  cloudflared:
+    # Cloudflare supports connector versions for one year after release (the dashboard marks
+    # older ones "Unsupported"): bump this tag at least yearly, then `up -d cloudflared`.
+    image: cloudflare/cloudflared:2026.10.7
+    container_name: cloudflared
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      - storefront
     restart: unless-stopped

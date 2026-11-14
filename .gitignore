@@ -259,3 +259,11 @@ data/torrents/
 data/review_note_attachments/
 # The owner's exported ChatGPT/Codex conversations: private business notes, never committed
 docs/chat_history/
+# Owner's private notes (store rules, business ideas): never committed. See AGENTS.md.
+docs/private/
+
+# Database backups made before maintenance (e.g. compact_duckdb.py); never commit.
+data/backups/
+
+# Service-account keys and other credential files (e.g. Search Console read access). Never committed.
+secrets/

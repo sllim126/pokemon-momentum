@@ -24,7 +24,8 @@
   </p>
 
   {% if order.status == 'shipped' and order.tracking_number %}
-  <p><strong>Tracking:</strong> {{ order.carrier or '' }} {{ order.tracking_number }}</p>
+  <p class="tracking"><strong>Tracking:</strong> {{ order.carrier or '' }} {{ order.tracking_number }}
+    {%- if tracking_url %} <a class="btn primary" href="{{ tracking_url }}" rel="noopener" target="_blank">Track package</a>{% endif %}</p>
   {% endif %}
 
   <table class="lines">

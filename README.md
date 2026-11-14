@@ -11,7 +11,8 @@ It combines:
 - a family of English and Japanese market indexes
 - collector placeholder/checklist resources
 - Google-based synced tracking auth
-- Squarespace pricing and listing operations
+- our own storefront on poke6s.com (separate container, self-hosted through a Cloudflare Tunnel;
+  `storefront/README.md`), plus the Squarespace pricing scripts until that plan ends 2026-11-14
 
 The goal is simple: make it easier to spot what is moving, what may be starting to move, and which sets or products deserve attention.
 
@@ -308,7 +309,7 @@ repo, and the "milestone" wrap-up routine) and [docs/todo.txt](/opt/pokemon-mome
 
 ## Notes
 
-- This project has moved beyond the old `top200` prototype workflow.
+- The old `top200` prototype scripts and tables were removed on 2026-11-05 (still in git history).
 - The application currently spans market research, collector tools, and protected
   Squarespace/store operations; `docs/project_status.md` is the concise project map.
 - Generated-artifact handling is defined in `docs/project_status.md`; runtime outputs stay

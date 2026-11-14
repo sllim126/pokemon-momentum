@@ -1,12 +1,15 @@
 # Storefront service (poke6s.com). Kept separate from the market app's requirements so the
 # shop's image stays small and can move to another machine on its own.
-fastapi
-uvicorn
-jinja2
-markdown-it-py
-pillow
-requests
-python-multipart
-prometheus-client
-pytest
-httpx
+#
+# Exact versions (security review 2026-11-11, item 14): a rebuild must run the same code that
+# was tested. Every package underneath these is pinned in constraints.txt. To upgrade: change
+# a version here, rebuild the test image and run the tests (`make test-storefront`), refresh
+# constraints.txt (`docker run --rm poke6s-storefront-test pip freeze`), then deploy.
+fastapi==0.162.0
+uvicorn==0.54.0
+jinja2==3.1.6
+markdown-it-py==4.2.0
+pillow==13.0.0
+requests==2.34.2
+python-multipart==0.0.33
+prometheus-client==0.26.0

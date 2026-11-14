@@ -22,6 +22,7 @@ from scripts.dashboards.api import (
 
 
 def parse_args() -> argparse.Namespace:
+    """--category-id, and optional --index keys to rebuild only those indexes (default: every index of the category)."""
     parser = argparse.ArgumentParser(
         description="Build persisted index overview payload snapshots for one category."
     )
@@ -41,6 +42,11 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """Build and save the payload of each requested index (api._build_index_overview_payload).
+
+    Reads parquet and writes JSON files only, so it is safe to run while the site is up (about
+    2.5 minutes for both markets). Returns 1 if the category has no indexes.
+    """
     args = parse_args()
     requested_indexes = [str(value or "").strip().lower() for value in args.index if str(value or "").strip()]
     index_keys = requested_indexes or index_overview_keys_for_category(args.category_id)

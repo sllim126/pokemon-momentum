@@ -1,6 +1,6 @@
 # New mobile app: plan
 
-Last reviewed: 2026-10-31
+Last reviewed: 2026-11-09
 
 The owner asked on 2026-10-21 for a full rebuild of the phone site: same features as today,
 in the desktop app's look, and a layout that fills any screen from a phone in portrait to a
@@ -19,7 +19,8 @@ phone the site is a quick "is this a good deal?" tool at a card table, not a res
 - The mobile page is a fixed-width column (about 430 px). In landscape it leaves empty space on
   both sides, and the Save / Full Data bar overlaps the card.
 - Many desktop views are missing on phones: Small Dips, Whole-set Dips, Budget Builder, Sets,
-  Pokémon, Market Stats (indexes and set values) and How it works.
+  Pokémon, Market Stats (indexes, set values, and since 2026-11-06 market mood, track record
+  and releases) and How it works.
 
 ## How it is built
 
@@ -93,7 +94,7 @@ asking price), and the browsing lists moved to the menu.
 | Today (old mobile page) | New app |
 | --- | --- |
 | Search box, English/Japanese, Singles/Sealed | Keep (step 1.1) |
-| Home feed of cards with sparklines | Discover lists, opening on Top Movers like desktop (1.1) |
+| Home feed of cards with sparklines | Discover lists; the Discover tab starts on Consistent Movers like desktop (2026-11-09), then remembers the last list opened (1.1) |
 | Menu "Trending": Top Movers, Early Movers, Pullbacks, Under the Radar, Confirmed Movers, Consistent Movers, Breakouts | Keep, plus Small Dips and Whole-set Dips (1.1) |
 | Selected card: picture, price, trend, Stats / Graph / Insight tabs | Card view (1.1, 1.2) |
 | Deal Checker | Keep; it is the core phone tool (1.2) |

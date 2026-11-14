@@ -89,6 +89,12 @@ def seven_zip(*args: str) -> bool:
 
 
 def main() -> int:
+    """Fetch each missing archive day in the range (default: from the day after the newest archive we hold to yesterday).
+
+    A day already asked for today is skipped, and the attempt is recorded before the request,
+    so a file is never requested twice in one UTC day (TCGCSV's rule). --dry-run lists what it
+    would fetch.
+    """
     args = parse_args()
     start = args.start or default_start()
     end = args.end or (datetime.now(timezone.utc).date() - timedelta(days=1))

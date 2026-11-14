@@ -153,6 +153,10 @@ def nearest_set(number: int, known: dict[int, str]) -> str | None:
 
 
 def sync_era(era: dict, dry_run: bool) -> dict:
+    """Compare one era's catalog sets and promos with the hand-edited CSVs and write what's missing
+    (new sets to the release-date catalog, new promos to the era's auto_*_promos.csv). Returns
+    what it found for the summary. With dry_run nothing is written.
+    """
     sets, promos = catalog(era)
     hand_rows = read_csv(era["hand_file"])
 
@@ -240,6 +244,9 @@ def discord_message(results: list[dict]) -> str | None:
 
 
 def main() -> int:
+    """Sync every era in ERAS, print what was added, rebuild the library, and post a summary to
+    Discord when something new was found (unless --no-discord). --dry-run reports only.
+    """
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--dry-run", action="store_true", help="Report only; write and rebuild nothing.")
     parser.add_argument("--no-discord", action="store_true", help="Don't post the summary to Discord.")

@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-11-05
+Last reviewed: 2026-11-14
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -10,6 +10,10 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
 ## Current state
 
 - Production entry point: `https://market.poke6s.com/`
+- Store: `https://poke6s.com/` is our own storefront, self-hosted on this server since
+  2026-11-11 (Cloudflare DNS and Tunnel, free plan; catalog only, checkout off until Stripe
+  goes live). Squarespace's website plan ends 2026-11-14. Hosting and recovery steps:
+  runbook "poke6s.com hosting"
 - Primary branch: `main`
 - Market data: daily English and Japanese TCGCSV-backed updates, fetched per set. TCGCSV's
   daily archive was offline 2026-09-16 to 2026-10-31; it returned on 2026-11-01 and the
@@ -24,8 +28,15 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
 - Graded data: nightly PriceCharting snapshot, kept as our own history
 - Monitoring: Grafana on this host (http://192.168.1.240:3000, since 2026-11-05) shows the
   website, jobs, data downloads, server, containers, todo list and bug reports; Prometheus
-  collects it. Also the Proxmox cluster, the UniFi network, and visitors per day for each site
-  (counted by the apps themselves, no cookies). Runbook section "Monitoring"; files in
+  collects it. Also the Proxmox cluster, the UniFi network, visitors per day for each site
+  (counted by the apps themselves, no cookies), and a Store dashboard for the new storefront's
+  orders, sales and stock (live orders only by default), with poke6s.com's Google search numbers
+  from Search Console (clicks, searches, pages indexed). The Proxmox, network and server
+  dashboards sit in a separate "Home lab" folder, which also covers the backup server and its
+  backups, the OpenMediaVault storage server and its ZFS pool (scrubs and disk errors), SMART
+  disk health, internet uptime (this server's own probes), Plex (streams and libraries), a
+  Synology NAS (SNMP) and the Valheim servers on Slowheim (read from that machine's own
+  Prometheus and Loki). Runbook section "Monitoring"; files in
   `deploy/monitoring/`, `scripts/monitoring/`
 - Alerts: nightly update, Squarespace price sync, the other-games archive, the archive
   backfill and the catalogue crawl post summaries to Discord
@@ -36,16 +47,20 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
 - Frontend: static HTML/CSS/JavaScript pages served by FastAPI; a new single-page desktop
   app (`/` on desktop, `docs/desktop_app.md`) covers Buy, Discover, Research, Track and Learn
 - Accounts: Google-backed lightweight tracking accounts with saved tags and views
-- Commerce: Squarespace storefront linking, price synchronization, listing intake, and supplier-profitability workflows
-  (the Squarespace plan ends 2026-11-14; our own store replaces it: `docs/storefront_plan.md`)
-- Own storefront (poke6s.com, in progress): separate `storefront` container on port 8010, LAN
-  only until launch. Phase 1 (catalog, browse, SEO, redirects) runs locally since 2026-10-31.
+- Commerce: listing intake and supplier-profitability workflows. The Squarespace storefront
+  linking and price sync retire with the Squarespace plan on 2026-11-14 (todo "2026-11-14")
+- Own storefront (poke6s.com, live catalog-only since 2026-11-11): separate `storefront`
+  container on port 8010, published through the Cloudflare Tunnel (container `cloudflared`),
+  code from its own clone `~/poke6s-store`. Phase 1 (catalog, browse, SEO, redirects) since 2026-10-31.
   Phase 2 (cart and Stripe Checkout, test mode; orders in `store.db`) merged 2026-11-05; checkout
   stays off without `STRIPE_SECRET_KEY` and refuses live keys unless `STOREFRONT_ALLOW_LIVE=1`.
   Articles (the old Squarespace blog) at `/articles`. Guide: `storefront/README.md`
 - Collector resources: generated placeholder libraries, checklists, print pages, review queues, and downloads
 - Standalone binder planners: ATLA and KPDH are served by separate read-only nginx
-  containers at `/atla/` and `/kpdh/`; collection state stays in each visitor's browser
+  containers at `/atla/` and `/kpdh/`; collection state stays in each visitor's browser.
+  KPDH includes owner-scanned fronts and backs for all eight known Series 1 promos; the
+  portrait promo scans use measured perspective correction so complete card/sleeve edges
+  remain visible in the detail viewer.
 
 At the 2026-10-12 review, the health snapshot reported 39,285,648 English and 13,660,254
 Japanese price rows, both with latest data dated 2026-10-11. The daily pipeline,
@@ -120,6 +135,11 @@ The following pages require a Google sign-in listed in `POKEMON_MOMENTUM_ADMIN_U
 - English/Japanese market index family
 - Squarespace price sync and inventory audit
 - Singles listing workflow with cached, square-padded Scrydex artwork
+- Clean-up and code review (2026-11-05): the price database was compacted from 13.9 GB to
+  8.0 GB after dropping the old pre-March tables, and 29 unused scripts were removed
+  (`scripts/utilities/compact_duckdb.py` does future compactions; runbook "Compacting the price
+  database"). Every file the site and the nightly run now has a header and documented
+  functions; `scripts/dashboards/api.py`'s header maps its routes and data paths.
 - Collector Hub and generated placeholder/checklist workflow
 
 Added 2026-10:
@@ -136,6 +156,11 @@ Added 2026-10:
   and Learn (How it works), plus a legal footer
 - Collector Hub, Placeholder Library and Account restyled on a shared desktop stylesheet
 - Index snapshots now build after the parquet export, so indexes are no longer a day behind
+- Market Stats additions (2026-11-06, desktop and phone): Market mood (0-100 breadth gauge
+  with two years of history, nightly `<slug>_market_mood_snapshot`), Track record (each
+  Discover list's daily top 25 scored after 7/14/30 days against the whole market) and
+  Releases (upcoming and recent sets); on cards, a "See all grades" dropdown on the Graded tab and price records;
+  collector nicknames in search
 - The desktop app is the desktop home page at `/`; older desktop addresses forward to it
   (phones unchanged); the older research dashboard is retired on desktop (2026-10-16) and
   `dashboard.html` was deleted on 2026-10-31 once the mobile app covered its last views
@@ -179,7 +204,9 @@ Added 2026-10:
   8091 and reached through the same Caddy proxy. Energy and Classic Series 2 are live;
   the planner preserves Series 1 collection IDs, offers premium-first or base-first binder
   order, uses the confirmed continuous Series 2 CR numbering, and outlines the nine
-  Energy CR cards in lime while physical-card confirmation is pending
+  Energy CR cards in lime while physical-card confirmation is pending. All eight known
+  Series 1 promos have physically verified two-digit codes and owner-supplied 600 DPI
+  front/back scans; catalog v5 migrates their former provisional IDs without losing counts
 - Confirmed and Consistent Movers show how many days each card has been in the list (sortable);
   Set values' top-hit card opens in the side pane; browser Back closes the full card page
 - Binder planners on phones (2026-10-21/22): cards near the top, sideways page strip with a
@@ -210,7 +237,7 @@ The repository currently uses three artifact classes:
    they remain versioned until deployment builds them independently. They are marked as
    generated in `.gitattributes` and should be committed separately from builder changes.
 3. Local runtime artifacts: `output/`, `data/raw/`, `data/extracted/`, `data/processed/`,
-   `logs/`, and `.locks/`. These remain ignored and must not be committed.
+   `data/backups/`, `logs/`, and `.locks/`. These remain ignored and must not be committed.
 
 Cached files under `images/cards/` are deployable binary assets used by Squarespace and
 storefront workflows. Keep their commits separate from application logic when practical.

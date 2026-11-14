@@ -358,7 +358,9 @@
 
     /* ---------- Research (step 1.4): Sets, one set, Pokémon, Market Stats, one index ---------- */
     .up-btn { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 6px 12px; min-height: 38px; margin-bottom: 8px; color: var(--muted); font-weight: 600; }
-    .stats-tabs { margin: 0 14px 10px; }
+    /* Five tabs since 2026-11-06: one row that scrolls sideways rather than wrapping words. */
+    .stats-tabs { margin: 0 14px 10px; max-width: calc(100% - 28px); overflow-x: auto; scrollbar-width: none; }
+    .stats-tabs button { white-space: nowrap; }
     .list-chart { height: 170px; margin: 0 14px 10px; }
     .list-chart-note { margin: -6px 14px 10px; color: var(--faint); font-size: 12px; }
     .tools-2 { padding-top: 0; }
@@ -393,6 +395,28 @@
     .suggest button { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 6px 12px; font-size: 14px; }
     .guide { padding: 0 14px calc(20px + var(--safe-b)); color: var(--muted); font-size: 14px; }
     .guide h3 { color: var(--text); font-size: 16px; margin: 20px 0 6px; }
+    /* Market Stats > Market mood, Track record, Releases (rendered into .guide by loadInsight) */
+    .mood-head { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+    .mood-score { font-size: 40px; font-weight: 700; color: var(--text); line-height: 1; }
+    .mood-label { font-size: 17px; font-weight: 600; color: var(--text); }
+    .mood-bar { position: relative; height: 9px; border-radius: 5px; margin: 12px 0 4px;
+      background: linear-gradient(90deg, #c2410c, #ca8a04 30%, #8a94a6 50%, #16a34a 70%, #0d9488); }
+    .mood-bar i { position: absolute; top: -4px; width: 4px; height: 17px; border-radius: 2px; background: var(--text); transform: translateX(-2px); }
+    .mood-scale { display: flex; justify-content: space-between; font-size: 10px; }
+    .ins-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .ins-table th, .ins-table td { padding: 7px 4px; border-bottom: 1px solid var(--line); text-align: left; }
+    .ins-table th { font-weight: 600; font-size: 11px; }
+    .ins-table .r { text-align: right; font-variant-numeric: tabular-nums; }
+    .ins-table td strong { color: var(--text); }
+    .ins-table .vs { display: block; font-size: 10px; }
+    .ins-list { list-style: none; margin: 0; padding: 0; }
+    .ins-list li { display: flex; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); }
+    .ins-list li[role=button] { cursor: pointer; }
+    .ins-list img { width: 34px; height: 47px; object-fit: cover; border-radius: 3px; flex: none; }
+    .ins-list .grow { flex: 1; min-width: 0; }
+    .ins-list strong { color: var(--text); display: block; }
+    .ins-list .r { text-align: right; font-variant-numeric: tabular-nums; }
+    .ins-chart { height: 150px; margin: 6px 0; }
     .guide dt { color: var(--text); font-weight: 650; margin-top: 10px; }
     .guide dd { margin: 2px 0 0; }
     .deal-note { color: var(--faint); font-size: 12px; line-height: 1.4; margin: 10px 0 0; }
@@ -558,6 +582,9 @@
       <div class="switch stats-tabs" id="statsTabs" role="group" aria-label="Market Stats" hidden>
         <button type="button" data-stats="indexes">Indexes</button>
         <button type="button" data-stats="set_values">Set values</button>
+        <button type="button" data-stats="mood">Mood</button>
+        <button type="button" data-stats="track_record">Track record</button>
+        <button type="button" data-stats="releases">Releases</button>
       </div>
       <div class="chart list-chart" id="listChart" hidden></div>
       <div class="list-chart-note" id="listChartNote" hidden></div>
@@ -714,6 +741,13 @@
         desc: "Each index follows the most valuable cards of an era, like a stock index. Every index started at 1,000." },
       { key: "set_values", group: "Research", research: true, kindless: true, hidden: true, view: "set_values", label: "Market Stats",
         desc: "What it costs to buy every card in a set, and how much of that value sits in its top cards." },
+      // Market Stats tabs added 2026-11-06, as on desktop (loadInsight draws them into the guide area).
+      { key: "mood", group: "Research", research: true, kindless: true, hidden: true, view: "insight", label: "Market Stats",
+        desc: "How broadly card prices are rising: one number from 0 to 100." },
+      { key: "track_record", group: "Research", research: true, kindless: true, hidden: true, view: "insight", label: "Market Stats",
+        desc: "How each list's picks did 7, 14 and 30 days later, next to the whole market. Misses included." },
+      { key: "releases", group: "Research", research: true, kindless: true, hidden: true, view: "insight", label: "Market Stats",
+        desc: "New sets and how their cards are settling, plus what's coming next." },
       { key: "index", group: "Research", research: true, kindless: true, hidden: true, parent: "indexes", label: "Index", desc: "", price: "marketPrice", change: "", changeLabel: "" },
       // Buy and Learn (step 1.5). Same keys and wording as desktop_home.html.
       { key: "sealed_deals", group: "Buy", buy: true, kindless: true, label: "Sealed Deals", price: "latest_price", change: "vs_loose_pct", changeLabel: "vs loose packs",
@@ -731,6 +765,7 @@
       { key: "track_research", group: "My lists", track: true, tag: "research", label: "Needs Review", desc: "Items you flagged to look into." },
     ];
     const TCGPLAYER_AFFILIATE_BASE = "https://partner.tcgplayer.com/jR1OJb";
+    let ownerSignedIn = false;  // true once /tracking/session confirms an admin; see tcgplayerUrl()
     // Saved lists and price targets: the same storage and account sync as the desktop app
     // (desktop_home.html), so a card saved on one shows up on the other.
     const SAVE_TAGS = [["favorite", "Favorite"], ["watchlist", "Watchlist"], ["research", "Needs Review"], ["owned", "Buy List"]];
@@ -778,13 +813,17 @@
       "near 30d trend": "Near its 30-day average", "active movement": "Trades often", "under the radar": "Under the radar",
       "early uptrend": "Early mover", "good buy setup": "Pullback entry", "popular pokemon": "Popular Pokémon",
       "steady climb": "Steady climb", "sells often": "Sells often", "near average": "Near its recent average",
+      "picked recently": "Picked recently, still strong",
     };
     const SPECIES_SUGGESTIONS = ["Charizard", "Pikachu", "Umbreon", "Gengar", "Mew", "Rayquaza", "Lugia", "Eevee"];
     // Old phone-page and dashboard links (?tab=...) that now have a view here.
     const OLD_TABS = { group_products: "set", group_signals: "sets", browse_species: "species", time_to_buy: "sets" };
     // The last Discover list opened, for the tab bar's Discover button.
     const DISCOVER_KEY = "poke6s-mnext-discover-list";
-    const WINDOWS = [[30, "30D"], [90, "90D"], [365, "1Y"], [5000, "All"]];
+    // The Discover tab's first list, until the user opens another (then DISCOVER_KEY remembers
+    // it): Consistent Movers, as on desktop (owner, 2026-11-09).
+    const DEFAULT_DISCOVER_LIST = "sma30_holds";
+    const WINDOWS = [[7, "7D"], [30, "30D"], [90, "90D"], [365, "1Y"], [5000, "All"]];  // 7D: owner, 2026-11-09
     // Deal Checker rules (see judgeDeal). Percentages compare the asking price with market.
     const DEAL = {
       keepBuyPct: 10,       // To keep: 10%+ under market is a buy...
@@ -897,6 +936,8 @@
       $("reviewTab").hidden = false;
       $("reviewTab").setAttribute("aria-expanded", "false");
     }
+    // Owner review notes: what's on screen (page, market, list, search, open card, Deal Checker
+    // input, scroll positions, screen size), attached to a note so it can be reproduced later.
     function reviewContext() {
       const search = state.list === "check" ? ($("homeSearch").value || $("searchInput").value) : $("filterInput").value;
       return {
@@ -922,6 +963,8 @@
     function saveReviewDraft() {
       writeStore(REVIEW_DRAFT_KEY, { title: $("reviewNoteTitle").value, details: $("reviewDetails").value });
     }
+    // Show the owner-only review-note tab when the signed-in user is an admin. Everyone else, and
+    // anyone signed out or offline, never sees it.
     async function enableOwnerReviewNotes() {
       try {
         const response = await fetch("/tracking/session");
@@ -933,6 +976,7 @@
         $("accountLabel").textContent = "Account";
         $("accountBtn").setAttribute("aria-label", "Account");
         if (!payload.user?.is_admin) return;
+        ownerSignedIn = true;  // TCGplayer links drawn from now on skip the affiliate wrapper
         const draft = readStore(REVIEW_DRAFT_KEY, {});
         $("reviewNoteTitle").value = draft.title || "";
         $("reviewDetails").value = draft.details || "";
@@ -1090,8 +1134,8 @@
       const tab = event.target.closest("button[data-tab]")?.dataset.tab;
       if (!tab) return;
       if (tab === "menu") return openMenu();
-      const key = tab === "check" ? "check" : tab === "mine" ? "track_all" : readStore(DISCOVER_KEY, "top_movers");
-      openList(LISTS.some((l) => l.key === key) || key === "check" ? key : "top_movers");
+      const key = tab === "check" ? "check" : tab === "mine" ? "track_all" : readStore(DISCOVER_KEY, DEFAULT_DISCOVER_LIST);
+      openList(LISTS.some((l) => l.key === key) || key === "check" ? key : DEFAULT_DISCOVER_LIST);
       $("listPane")?.scrollTo?.(0, 0);
     });
     $("scrim").addEventListener("click", () => goBackFrom("menu"));
@@ -1198,6 +1242,108 @@
       }
       return listCache.get(cacheKey);
     }
+    // ---------- Market Stats: mood, track record, releases ----------
+    // Same data as the desktop app (/market_mood, /track_record, /releases), drawn compactly.
+    const INSIGHT_VIEWS = ["mood", "track_record", "releases"];
+    const sharePct = (v) => (Number.isFinite(v) ? `${Math.round(v)}%` : "—");
+    async function loadInsight(key, seq) {
+      const view = $("guideView");
+      view.replaceChildren(el("p", { class: "note", text: "Loading…" }));
+      const path = { mood: "/market_mood", track_record: "/track_record", releases: "/releases" }[key];
+      try {
+        const p = await cached(`${key}:${state.market}`, () => getJson(`${path}?category_id=${categoryId()}`));
+        if (seq !== listSeq) return;
+        if (key === "mood") renderMood(p); else if (key === "track_record") renderTrackRecord(p); else renderReleases(p);
+      } catch (_err) {
+        if (seq === listSeq) view.replaceChildren(el("p", { class: "note", text: "Couldn't load this. Check your connection and try again." }));
+      }
+    }
+    function renderMood(p) {
+      const view = $("guideView");
+      if (!p.available) {
+        listCache.delete(`mood:${state.market}`);
+        view.replaceChildren(el("p", { class: "note", text: p.computing ? "The mood is being worked out for the first time today. Check back in a minute." : "No mood reading yet." }));
+        return;
+      }
+      const l = p.latest;
+      const chart = el("div", { class: "ins-chart" });
+      view.replaceChildren(
+        el("div", { class: "mood-head" }, el("div", { class: "mood-score", text: String(Math.round(l.mood)) }),
+          el("div", {}, el("div", { class: "mood-label", text: l.label }), el("div", { text: l.meaning }))),
+        el("div", { class: "mood-bar" }, el("i", { style: `left:${Math.max(0, Math.min(100, l.mood))}%` })),
+        el("div", { class: "mood-scale" }, ...["Cold", "Cool", "Neutral", "Warm", "Hot"].map((t) => el("span", { text: t }))),
+        el("p", { text: [Number.isFinite(p.week_ago) ? `A week ago ${Math.round(p.week_ago)}` : null, Number.isFinite(p.month_ago) ? `a month ago ${Math.round(p.month_ago)}` : null, `as of ${fmtDate(l.date)}`].filter(Boolean).join(" · ") }),
+        el("table", { class: "ins-table" }, el("tbody", {},
+          el("tr", {}, el("td", { text: "Above their 30-day average" }), el("td", { class: "r", text: sharePct(l.above_avg) })),
+          el("tr", {}, el("td", { text: `Up over 7 days (${l.up_7d.toLocaleString()} up, ${l.down_7d.toLocaleString()} down)` }), el("td", { class: "r", text: sharePct(l.rising) })),
+          el("tr", {}, el("td", { text: `New 90-day highs vs lows (${l.new_highs_count} / ${l.new_lows_count})` }), el("td", { class: "r", text: sharePct(l.new_highs) })))),
+        el("h3", { text: "The last two years" }), chart,
+        el("p", { text: `Every single priced $${p.min_price} or more counts once, whatever it costs (${l.cards.toLocaleString()} today). The mood is the average of the three shares; cards whose price didn't move are left out. It shows how broad a move is, not how big.` }));
+      requestAnimationFrame(() => drawChart(chart, p.history.map((h) => ({ date: h.date, price: h.mood, sma30: NaN })), (v) => String(Math.round(v))));
+    }
+    function renderTrackRecord(p) {
+      const view = $("guideView");
+      const [h1, , h3] = p.horizons || [7, 14, 30];
+      const lists = [{ ...p.all, label: "All lists" }, ...(p.lists || []).filter((l) => l.picks > 0)];
+      const cell = (mine, market, fmt = sharePct) => el("td", { class: "r" }, fmt(mine), el("span", { class: "vs", text: Number.isFinite(market) ? `mkt ${fmt(market)}` : "" }));
+      const scoredAny = (p.lists || []).some((l) => l[`d${h1}`]?.scored);
+      const firstResult = p.first_pick_date ? new Date(Date.parse(p.first_pick_date) + h1 * 864e5).toISOString().slice(0, 10) : null;
+      const recent = (p.recent || []).slice(0, 25);
+      const bands = [{ ...p.all, label: "All prices" }, ...(p.bands || [])].filter((b) => b.picks > 0);
+      view.replaceChildren(
+        el("p", { text: `Each day the top ${p.picks_per_list} of every list are saved with their price, and checked ${h1} and ${h3} days later next to all singles priced $5 or more (“mkt”). Price changes before fees, except where marked.` }),
+        !scoredAny && firstResult ? el("p", { text: `First ${h1}-day results on ${fmtDate(firstResult)}. Until then, “Open” shows how the picks are moving so far.` }) : null,
+        el("table", { class: "ins-table" },
+          el("thead", {}, el("tr", {}, el("th", { text: "List" }), el("th", { class: "r", text: `Up ${h1}d` }), el("th", { class: "r", text: `Up ${h3}d` }), el("th", { class: "r", text: `Median ${h3}d` }), el("th", { class: "r", text: "Open" }))),
+          el("tbody", {}, ...lists.map((l) => el("tr", {},
+            el("td", {}, el("strong", { text: l.label }), el("span", { class: "vs", text: `${l.picks} picks` })),
+            cell(l[`d${h1}`]?.up_share, l[`d${h1}`]?.market_up_share),
+            cell(l[`d${h3}`]?.up_share, l[`d${h3}`]?.market_up_share),
+            cell(l[`d${h3}`]?.median_pct, l[`d${h3}`]?.market_median_pct, pct),
+            el("td", { class: "r", text: l.open ? pct(l.open_median_pct) : "—" }))))),
+        // By price, after fees (see pick_tracker.py): profit share and median once fees come off.
+        bands.length && p.fee_pct != null ? el("h3", { text: "By price, after fees" }) : null,
+        bands.length && p.fee_pct != null ? el("table", { class: "ins-table" },
+          el("thead", {}, el("tr", {}, el("th", { text: "Price" }), el("th", { class: "r", text: `Up ${h3}d` }), el("th", { class: "r", text: "Profit after fees" }), el("th", { class: "r", text: "Median after fees" }))),
+          el("tbody", {}, ...bands.map((b) => el("tr", {},
+            el("td", {}, el("strong", { text: b.label }), el("span", { class: "vs", text: `${b.picks} picks` })),
+            el("td", { class: "r", text: sharePct(b[`d${h3}`]?.up_share) }),
+            el("td", { class: "r", text: sharePct(b[`d${h3}`]?.net_up_share) }),
+            el("td", { class: "r", text: pct(b[`d${h3}`]?.net_median_pct) }))))) : null,
+        bands.length && p.fee_pct != null ? el("p", { text: `After about ${p.fee_pct}% marketplace fees, before shipping. ${h3}-day results only.` }) : null,
+        recent.length ? el("h3", { text: "Latest picks" }) : null,
+        recent.length ? el("ul", { class: "ins-list" }, ...recent.map((r) => {
+          const li = el("li", { role: "button", tabindex: "0" },
+            r.imageUrl ? el("img", { src: r.imageUrl, alt: "", loading: "lazy" }) : null,
+            el("div", { class: "grow" }, el("strong", { text: r.productName || `Product ${r.product_id}` }), el("span", { text: `${r.list_label} · ${fmtDate(r.price_date)}` })),
+            el("div", { class: "r" }, el("strong", { text: money(r.now_price) }), el("span", { text: Number.isFinite(r[`d${h3}_pct`]) ? `${h3}d ${pct(r[`d${h3}_pct`])}` : pct(r.now_pct) })));
+          li.addEventListener("click", () => openProductFromLink(`${r.product_id}||${r.sub_type_name}`));
+          return li;
+        })) : null);
+    }
+    function renderReleases(p) {
+      const view = $("guideView");
+      const statusText = { listed: "On TCGplayer", confirmed: "Confirmed", reported: "Reported" };
+      view.replaceChildren(
+        el("h3", { text: "Coming up" }),
+        (p.upcoming || []).length ? el("ul", { class: "ins-list" }, ...p.upcoming.map((u) => el("li", {},
+          el("div", { class: "grow" }, el("strong", { text: u.name }), el("span", { text: [statusText[u.status] || u.status, u.note].filter(Boolean).join(" · ") })),
+          el("div", { class: "r" }, el("strong", { text: fmtDate(u.release_date) }), el("span", { text: u.days_away <= 1 ? "now" : `in ${u.days_away} days` }))))) : el("p", { text: "Nothing announced yet." }),
+        el("p", { text: "“Reported” dates come from news sites and aren't official yet." }),
+        el("h3", { text: `Released in the last ${p.days} days` }),
+        el("ul", { class: "ins-list" }, ...(p.recent || []).map((r) => {
+          const li = el("li", { role: "button", tabindex: "0" },
+            r.top_image ? el("img", { src: r.top_image, alt: "", loading: "lazy" }) : null,
+            el("div", { class: "grow" }, el("strong", { text: r.groupName }), el("span", { text: `${fmtDate(r.release_date)} · top: ${r.top_name || "—"} ${money(r.top_price)}` })),
+            el("div", { class: "r" }, el("strong", { text: pct(r.avg_30d_pct) }), el("span", { text: "30 days" })));
+          li.addEventListener("click", () => openSet(r.groupId, r.groupName, "sets"));
+          return li;
+        })),
+        el("p", { text: "The 30-day figure is the average move of the set's singles priced $5 or more. New sets often fall for a few weeks while boxes are opened, then settle." }));
+    }
+
+    // Load the rows for any list: one fetcher per list type (saved lists, sets, indexes, budget
+    // builders...); everything else is a Discover screener route (/top_movers, ...).
     function fetchList(list) {
       if (list.track) return fetchTracked().then((rows) => (list.tag === "all" ? rows : rows.filter((r) => tagsFor(r.key).has(list.tag))));
       if (list.key === "sets") return fetchSets();
@@ -1205,6 +1351,7 @@
       if (list.key === "species") return fetchSpecies();
       if (list.key === "indexes") return fetchIndexes();
       if (list.key === "set_values") return fetchSetValues();
+      if (INSIGHT_VIEWS.includes(list.key)) return Promise.resolve([]);
       if (list.key === "sealed_deals") return fetchSealedDeals();
       if (isBudgetList(list.key)) return fetchBudget(list);
       if (list.key === "guide") return Promise.resolve([]);
@@ -1518,6 +1665,8 @@
       $("typeSelect").value = state.productType;
     }
     $("typeSelect").addEventListener("change", () => { state.productType = $("typeSelect").value; syncUrl(); renderRows(); });
+    // Budget Builder controls: budget presets, the grade picker (graded builder only) and the
+    // source line (PriceCharting history so far, for graded).
     function renderBudgetControls() {
       const graded = state.list === "graded_budget";
       const presets = BUDGET_PRESETS[state.list] || BUDGET_PRESETS.budget;
@@ -1656,10 +1805,13 @@
           ["Sets", "Every set ranked by how broadly its cards are rising. Tap a set to see its cards, then narrow to hits or a rarity."],
           ["Pokémon", "Every printing of one Pokémon across all sets."],
           ["Market Stats", "Indexes track the most valuable cards of each era as one number, like a stock index: each started at 1,000, so 2,000 means that group of cards has doubled. Set values show what a full set costs and how much of it sits in the top cards."],
+          ["Market mood", "One number from 0 (cold) to 100 (hot) for how broadly prices are rising: cards above their 30-day average, rising over 7 days, and at new highs rather than lows."],
+          ["Track record", "Every day the top 25 of each list are saved with their price and checked 7, 14 and 30 days later, next to all cards. The misses stay in."],
+          ["Releases", "Sets coming up and sets out in the last four months, with their top card and how their prices are settling."],
         ]),
         section("Buy", "", [
           ["Sealed Deals", "Boxes, ETBs, bundles and blisters compared with buying the same booster packs loose. A negative figure means the sealed product is the cheaper way to get those packs; “—” means not every pack inside has a loose price."],
-          ["Budget Builder", "Pick a budget and get a spread of the strongest actively traded hits that fit it, at most two per set by default. Already own one? “I have this, swap it” finds a replacement. Like some of them? Keep those, and “New picks” fills the rest of the budget with cards you haven't seen yet."],
+          ["Budget Builder", "Pick a budget and get a spread of the strongest actively traded hits that fit it, at most two per set by default. Already own one? “I have this, swap it” finds a replacement. Like some of them? Keep those, and “New picks” fills the rest of the budget with cards you haven't seen yet. The picks change each day: cards picked on the last few days sit out for a while so others get a turn, and come back if they're still strong."],
           ["Graded Budget Builder (Beta)", "The same idea for graded slabs: PSA 10s, 9s and 10s, or 8s to 10s, scored on each grade's own PriceCharting price (climbing, steady and selling) with every price linking to PriceCharting. New and still being tuned; just for fun, not advice."],
         ]),
         section("Saving cards", "♡ Save adds a card to your Buy List, Watchlist, Favorites or Needs Review. Saved cards stay on this phone, and sync to your account when you're signed in, so they also show on the desktop site."),
@@ -1672,7 +1824,7 @@
     // A set or an index is a level below its list: it gets a "drill" history entry, so the
     // phone's Back (or the ← button) returns to the list.
     const parentOf = (list) => (list?.key === "set" ? state.setFrom : list?.parent) || null;
-    const menuKey = () => (state.list === "set_values" ? "indexes" : parentOf(currentList()) === "set_values" ? "indexes" : parentOf(currentList()) || state.list);
+    const menuKey = () => (state.list === "set_values" || INSIGHT_VIEWS.includes(state.list) ? "indexes" : parentOf(currentList()) === "set_values" ? "indexes" : parentOf(currentList()) || state.list);
     function openChild(key) {
       if (!twoPane.matches) state.selected = null;
       if (history.state?.m !== "drill") history.pushState({ m: "drill" }, "", location.href);
@@ -1738,8 +1890,13 @@
       const parent = parentOf(list);
       $("upBtn").hidden = !parent;
       $("upBtn").textContent = parent ? `← ${parent === "set_values" ? "Set values" : LISTS.find((l) => l.key === parent).label}` : "";
-      $("statsTabs").hidden = !["indexes", "set_values"].includes(list.key);
+      $("statsTabs").hidden = !["indexes", "set_values", ...INSIGHT_VIEWS].includes(list.key);
       document.querySelectorAll("#statsTabs button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.stats === list.key)));
+      // The tab row scrolls sideways on narrow phones: bring the open tab into view.
+      if (!$("statsTabs").hidden) {
+        const tab = $("statsTabs").querySelector('[aria-pressed="true"]');
+        if (tab) $("statsTabs").scrollLeft = tab.offsetLeft - ($("statsTabs").clientWidth - tab.offsetWidth) / 2;
+      }
       $("kindSwitch").hidden = Boolean(list.kindless);
       $("listChart").hidden = true;
       $("listChartNote").hidden = true;
@@ -1751,7 +1908,7 @@
       $("typeSelect").hidden = list.key !== "sealed_deals";
       $("tools2").hidden = $("eraSelect").hidden && $("setFilter").hidden && $("typeSelect").hidden;
       $("budgetBox").hidden = !isBudgetList(list.key);
-      $("tools1").hidden = isBudgetList(list.key) || list.key === "guide";
+      $("tools1").hidden = isBudgetList(list.key) || list.key === "guide" || list.view === "insight";
       if (isBudgetList(list.key) && state.budgetFor !== list.key) {
         // Raw and graded picks have different keys and price ranges: switching between the two
         // builders starts fresh (the first visit keeps whatever the link brought).
@@ -1762,8 +1919,8 @@
         }
         state.budgetFor = list.key;
       }
-      $("guideView").hidden = list.key !== "guide";
-      $("rows").hidden = list.key === "guide";
+      $("guideView").hidden = list.key !== "guide" && list.view !== "insight";
+      $("rows").hidden = list.key === "guide" || list.view === "insight";
       $("suggest").hidden = true;
       renderSwapped();
       if (isBudgetList(list.key)) renderBudgetControls();
@@ -1779,6 +1936,10 @@
         renderGuide();
         syncUrl();
         return;
+      }
+      if (list.view === "insight") {
+        syncUrl();
+        return loadInsight(list.key, seq);
       }
       if (list.key === "species" && state.species.trim().length < 2) {
         state.rows = [];
@@ -1895,9 +2056,11 @@
       if (sort === "price_asc") rows.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
       return rows;
     }
+    // Draw the current list. Lists with their own view (sets, indexes, guide...) render themselves;
+    // the rest become card rows, with Keep buttons on the budget builders.
     function renderRows() {
       const list = currentList();
-      if (list.view === "guide") return;
+      if (list.view === "guide" || list.view === "insight") return;
       if (list.view) {
         const items = researchRows(list);
         const noun = list.view === "indexes" ? "indexes" : "sets";
@@ -2009,6 +2172,8 @@
     document.addEventListener("pointerdown", (event) => {
       if (!event.target.closest(".search")) searchResults.hidden = true;
     });
+    // Search as you type (2+ characters). searchSeq drops answers that arrive after a newer
+    // keystroke, so results never jump back to an older query.
     async function runSearch() {
       const query = searchInput.value.trim();
       const seq = ++searchSeq;
@@ -2073,18 +2238,26 @@
       if (open) openCardScreen();
       syncUrl();
     }
-    // TCGplayer product link (language and printing preselected), wrapped in the affiliate link.
+    // TCGplayer product link (language, printing and Near Mint preselected), wrapped in the
+    // affiliate link. Near Mint is the owner's default (2026-03-22, confirmed 2026-11-09); it is
+    // left off for reverse holos, where TCGplayer's combined filter often shows no listings. The
+    // owner's own clicks skip the affiliate wrapper so his purchases are never self-referred
+    // (ownerSignedIn is set once /tracking/session says the user is an admin).
     function tcgplayerUrl(card) {
       const target = new URL(`https://www.tcgplayer.com/product/${card.productId}`);
       if (card.productKind !== "sealed") {
         target.searchParams.set("Language", state.market === "JP" ? "Japanese" : "English");
         const printing = { "reverse holofoil": "Reverse Holofoil", "1st edition": "1st Edition", "unlimited holofoil": "Unlimited Holofoil", "1st edition holofoil": "1st Edition Holofoil" }[card.subTypeName.toLowerCase()];
         if (printing) target.searchParams.set("Printing", printing);
+        if (printing !== "Reverse Holofoil") target.searchParams.set("Condition", "Near Mint");
       }
+      if (ownerSignedIn) return target.toString();
       const affiliate = new URL(TCGPLAYER_AFFILIATE_BASE);
       affiliate.searchParams.set("u", target.toString());
       return affiliate.toString();
     }
+    // The card page: image, price, chart, Deal Checker, graded prices, targets and tags.
+    // cardSeq drops late answers for a card the user has already left.
     function renderCard() {
       const card = state.selected;
       const pane = $("cardPane");
@@ -2217,6 +2390,8 @@
       clearTimeout(holdTimer);
       holdTimer = setTimeout(() => loadHold(cardSeq), 450);
     }
+    // Deal Checker's 6-Month Hold: how this card did historically after a buy at this price
+    // (/hold_check), then redraw the verdict.
     async function loadHold(seq) {
       const card = deal.card;
       const query = new URLSearchParams({ productId: card.productId, subTypeName: card.subTypeName, category_id: String(categoryId()) });
@@ -2297,6 +2472,7 @@
       else if (tone === "good" && falling) [tone, title] = ["fair", "Careful: the price is falling"];
       return { tone, title, offers, notes, spike };
     }
+    // Deal Checker verdict for the asking price entered (judgeDeal), coloured by tone.
     function renderVerdict() {
       if (!deal || !$("verdict")) return;
       const result = judgeDeal({ ask: deal.ask, market: deal.card.price, mode: state.mode, details: deal.details, hold: deal.hold });
@@ -2349,6 +2525,7 @@
       const buy = Number.parseFloat(raw.buy), sell = Number.parseFloat(raw.sell);
       return { buy: buy > 0 ? buy : null, sell: sell > 0 ? sell : null };
     }
+    // Buy/sell target prices for a card, kept in this browser's storage (TARGETS_KEY).
     function targetsSection(card) {
       const { buy, sell } = targetFor(card);
       const field = (id, label, value, example) => el("label", {}, el("span", { text: label }),
@@ -2448,6 +2625,8 @@
         }),
         el("div", { class: "caption", text: syncedTags ? "Synced to your account." : "Saved on this phone. Sign in (menu → Account) to sync with your account." }));
     }
+    // Put a tag (Watching, Own...) on a card or take it off: on the server when signed in, in this
+    // browser otherwise. Then refresh saved-list counts and any saved list on screen.
     async function toggleTag(card, tag, enabled) {
       const token = trackingToken();
       if (token && syncedTags) {

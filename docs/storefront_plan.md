@@ -1,8 +1,10 @@
 # New storefront for poke6s.com: plan
 
-Last reviewed: 2026-11-05
-**Status: Phase 1 under way (local only), started 2026-10-31.** Cloudflare and all other online
-changes are paused by the owner (2026-10-31): build and run locally, Stripe test mode only.
+Last reviewed: 2026-11-11
+**Status: live catalog-only on https://poke6s.com/ since 2026-11-11**, self-hosted on the owner's
+server through a Cloudflare Tunnel (runbook "poke6s.com hosting"). Phases 1 and 2 built;
+checkout stays off (Stripe test mode only) until the owner activates live payments. Google
+Search Console is set up, and its numbers are on Grafana's Store dashboard.
 Developer guide for the code: `storefront/README.md`. See "Progress log" at the end.
 
 The owner decided on 2026-10-31 to replace the Squarespace store with our own storefront on
@@ -61,7 +63,7 @@ What the current Squarespace site has and does: `docs/storefront_current_site.md
   │        |   reads market prices from data/storefront/         │
   │        |   market_reference.json (written by the market      │
   │        |   app's jobs)                                       │
-  │  store admin (same container, separate port, LAN only)       │
+  │  store admin (own app and port, LAN only, no tunnel route)   │
   └──────────────────────────────────────────────────────────────┘
               |  Checkout Session          ^ webhooks / polling
               v                            |
@@ -85,7 +87,17 @@ What the current Squarespace site has and does: `docs/storefront_current_site.md
   Squarespace). The Microsoft 365 mail records must be copied exactly. See Phase 0.
 - **The admin pages run on a separate port, reachable only on the home network.** They're never
   published through the tunnel. Remote access later would go through Cloudflare Access, which is
-  free for small teams.
+  free for small teams. Concretely (security review 2026-11-11, item 15), because everything on
+  port 8010 is public:
+  - the admin is **its own app** (its own FastAPI app and uvicorn process, e.g. a
+    `storefront-admin` service on port 8011), never routes added to the public app.
+    `storefront/tests/test_public_surface.py` fails if the public app gains `/admin` pages or
+    any new write route;
+  - its port is published to the LAN address only (e.g. `192.168.1.240:8011:8011`), and the
+    tunnel never gets a route to it;
+  - it refuses any request that came through Cloudflare (a `CF-Connecting-IP` or `CF-Ray`
+    header), so a mistaken tunnel route still can't expose it;
+  - it still requires a sign-in and CSRF tokens on forms, even on the home network.
 - **Later option, if home uptime becomes a problem:** publish the catalog as static files to
   Cloudflare Pages (free) and run the checkout step as a Cloudflare Function. Orders then wait at
   Stripe until the server comes back. Not part of the first build; the design shouldn't rule it
@@ -288,21 +300,23 @@ is refunded.
 
 ## Sales tax
 
-- **Out-of-state orders:** no Utah tax. Other states don't require us to collect until sales into
-  them are far above our size; recheck yearly.
-- **Utah orders: we must collect Utah sales tax.** Utah rates vary by city and county. Whether the
-  buyer's local rate applies to shipped orders is being confirmed with the Utah State Tax
-  Commission on 2026-11-02, along with whether the price may include tax.
-- **Two ways to do it (decision D2, after that call):**
-  - **A. Stripe Tax:** Stripe works out the tax from the shipping address at checkout. Simplest
-    and always correct, but costs 0.5% per transaction where it calculates.
-  - **B. Our own rate table:**
-    - load Utah's published rate file into the database;
-    - ask for state and ZIP in the cart before checkout, and add a "Utah sales tax" line item;
-    - after payment, check the Stripe shipping address against what was entered, and flag a
-      mismatch for the owner.
-    - No fee, more code.
-- **Either way, the admin sales-tax report** produces the figures for each TAP filing period.
+Decided by the owner on 2026-11-05, after the Utah State Tax Commission call (D2):
+
+- **Stripe Tax adds sales tax on top at checkout** (`STOREFRONT_TAX_MODE=stripe`). Prices on the
+  site are before tax. Stripe charges tax only where the account is registered: Utah.
+- **Utah orders:** Stripe uses Utah's sourcing rule, which taxes in-state sales at the seller's
+  location, so every Utah order pays the South Jordan rate. Checked in the sandbox on
+  2026-11-05: $130 to South Jordan or Salt Lake City adds $9.69 (7.45%); to Las Vegas, $0.
+- **Out-of-state orders:** no tax. Other states don't require us to collect until sales into
+  them are far above our size; recheck yearly (Stripe Tax shows how close each state is).
+- **Cost:** about 0.5% of each taxed order (owner OK'd Stripe handling tax, 2026-11-05).
+- **Set-up, once per mode** (sandbox done 2026-11-05; live at activation): business address and
+  default product type (General - Tangible Goods), then Tax -> Registrations -> United States ->
+  Utah. Without the registration Stripe calculates $0.
+- **Tried and dropped:** a free fixed Utah rate. Checkout no longer accepts per-state "dynamic"
+  tax rates, so it can't skip out-of-state orders.
+- **Records:** each order stores the tax charged (`orders.tax_cents`); Stripe Tax's reports give
+  the figures for the Utah return (likely annual). The Phase 3 admin report totals them too.
 
 ## Shipping
 
@@ -315,8 +329,13 @@ is refunded.
   
   The cart uses the largest class present. Rates and the free-shipping threshold are settings
   (decision D3).
-- **Signature confirmation** above a set order value (setting; about $250 to start), to protect
-  against "never arrived" disputes.
+- **Signature confirmation and tracking on every order** (owner, 2026-11-11; was orders over $150
+  from 2026-11-09; chosen when buying the label, so it isn't a store setting), to protect against "never arrived" disputes. Shipping
+  insurance for the full value on orders over $100 (owner, 2026-11-09), also chosen per label.
+- **Handling time:** orders ship within **1 business day** of payment (owner, 2026-11-09).
+- **Lost packages** (owner, 2026-11-09): lost in transit (never shown delivered) gets a
+  replacement or a full refund, the customer's choice; marked delivered but missing gets help
+  with the carrier claim, not a replacement.
 - Policies on `/shipping` and `/returns` state handling time, carriers, damage claims, returns
   window and condition rules.
 
@@ -331,6 +350,9 @@ is refunded.
     second disk;
   - keep 30 days;
   - document the restore steps in `docs/operator_runbook.txt`.
+  - Done 2026-11-12 (security review item 9, ahead of Phase 3): `storefront/tools/backup_store.py`,
+    cron 03:15, into `data/backups/storefront/`; off the machine through the Proxmox Backup
+    Server's VM backups and a nightly mirror to the Synology NAS.
 - Look and feel: decision D4. Default: the market site's colors and type
   (`scripts/dashboards/desktop_theme.css`), so the two sites feel like one brand.
 
@@ -413,7 +435,8 @@ owner has reviewed this plan. **Phase 0 needs the owner** (accounts and DNS), so
   order record match.
 
 **Phase 3: admin and operations (Codex)**
-- LAN-only admin: products and photos, stock adjustments, orders, ship with tracking, refunds.
+- LAN-only admin: products and photos, stock adjustments, orders, ship with tracking, refunds. Rules: "How it fits
+  together" (own app, own LAN-only port, refuses tunnel traffic).
 - Exports: Pirate Ship CSV, packing slips, TCGplayer reconciliation, sales-tax report,
   bookkeeping CSV.
 - Nightly backup and restore steps; runbook section; cron or systemd entries in `deploy/`.
@@ -434,13 +457,13 @@ live test order, Search Console and Merchant Center, then the "After launch" ste
 
 ## Owner decisions
 
-Reviewed with the owner on 2026-10-31. D2 waits for the 2026-11-02 Utah call.
+Reviewed with the owner on 2026-10-31. D2 decided 2026-11-05.
 
 | # | Decision | Answer |
 |---|---|---|
 | D1 | Which stock is listed here and which on TCGplayer | **Decided:** our site lists sealed product and accessories; singles stay on TCGplayer. Revisit after launch |
-| D2 | Sales tax method | **Open:** decide after the 2026-11-02 call. Stripe Tax for a fast launch, our own Utah table if the fee matters. Build the tax step behind one interface so either can be plugged in |
-| D3 | Shipping | **Decided:** flat rate by shipping class, free shipping over a threshold. Free shipping over **$150** (owner, 2026-11-05, matching PokeNE). Flat-rate amounts stay placeholders (small sealed $5, large sealed $9) until the owner sets them from Pirate Ship costs; live Pirate Ship rates at checkout are a later option |
+| D2 | Sales tax method | **Decided (owner, 2026-11-05):** Stripe Tax adds tax on top at checkout; registered in Utah only, so out-of-state orders pay none. See "Sales tax" |
+| D3 | Shipping | **Decided:** flat rate by shipping class, free shipping over a threshold. Free shipping over **$150** (owner, 2026-11-05, matching PokeNE). Flat rates (owner, 2026-11-11, from Pirate Ship costs with tracking and signature): **$10** for singles, accessories and small sealed, **$20** for large sealed; live Pirate Ship rates at checkout are a later option |
 | D4 | Look and feel | **Decided:** match market.poke6s.com (`scripts/dashboards/desktop_theme.css`) |
 | D5 | poke6s.com from 2026-11-14 until launch | **Decided:** forward to `poke6s.tcgplayerpro.com` in the Squarespace Domains panel |
 | D6 | When to move DNS to Cloudflare | **Decided:** soon (within a week or two), with Claude walking the owner through it, mail records double-checked |
@@ -479,3 +502,8 @@ Reviewed with the owner on 2026-10-31. D2 waits for the 2026-11-02 Utah call.
 | 2026-10-31 | Claude | Saved the old site before the plan ends (`storefront/tools/archive_squarespace_site.py`): page text, 10 Resources blog posts (missed in the first site survey) and 256 images, in the owner's records outside the repo. `docs/storefront_current_site.md` corrected; redirects added for `/new-page-1` and `/pre-order-interest` | Owner: where the blog posts go at launch (todo); compare draft policies with the old ones (6% cancellation fee). Re-run the script on the last day |
 | 2026-10-31 | Claude | Articles brought forward from Phase 4 (owner): `/articles` list with category and tag filters, `/articles/<slug>` pages with BlogPosting JSON-LD, home page "Latest articles", sitemap; the 10 Squarespace posts imported to `storefront/content/articles/` (`app/article_import.py`) with their pictures; every old `/resources/...` address 301s to its new one. Storefront container now runs as the host user. 52 tests pass | Owner: read through the imported articles. Full review of all policy pages, terms and FAQs (they were adapted from another shop's, with permission) |
 | 2026-11-05 | Claude | Phase 2 built locally on branch `storefront/phase2-cart` (migration `002_orders`): cart in the browser priced by the server (`POST /cart/quote`), `POST /checkout` with 30-minute stock reservations and a Stripe Checkout Session (US shipping, flat rate by largest class, free over $150, promotion codes, 3-D Secure from $150, Stripe Tax behind `STOREFRONT_TAX_MODE`), webhook with signature check and repeat protection, reconcile job (start-up + 15 min), thanks and order status pages, Discord alerts, order and shipping emails (SMTP or outbox), `orders_cli` (list/show/ship/reconcile). Checkout is off without a Stripe key and refuses live keys. 88 storefront tests pass (34 new); checked at 1920×1080, 1366×768 and phone | Owner: Stripe account (tonight), test keys in `.env`, one test order with card 4242…; D2 after the Utah call; shipping amounts (D3); Microsoft 365 SMTP for real emails. Then Phase 3 (admin) |
+| 2026-11-05 | Claude | D2 decided: Stripe Tax (`STOREFRONT_TAX_MODE=stripe`), Utah registered in the sandbox and checked ($130 to any Utah address adds $9.69; Nevada $0). Unknown tax modes keep checkout off; cart and Terms say tax is added for Utah orders; checkout idempotency key made unique when order numbers repeat | Owner: register Utah in live-mode Stripe Tax at activation |
+| 2026-11-09 | Claude | Owner reviewed the store rules and the text pages: all seven pages (About, Contact, FAQ, Privacy, Returns, Shipping, Terms) approved and no longer drafts, so they show without the draft note and are in the sitemap. Shipping filled in: ships in 1 business day, signature over $150, lost-package rules. Internal rules (insurance over $100, compliance, pricing) kept in the git-ignored `docs/private/store_operations.md` | Launch steps as planned |
+| 2026-11-11 | Claude | **Catalog-only launch (owner).** DNS moved to Cloudflare (free plan; all records copied, mail records DNS-only and checked); Cloudflare Tunnel `poke6s-home` (connector = `cloudflared` service in docker-compose, token in `.env`) routes poke6s.com and www to `http://storefront:8010`; www and http redirect to https://poke6s.com. Checkout is off (`STOREFRONT_CHECKOUT` unset), so products show "coming soon" + Buy on TCGplayer. `STOREFRONT_BASE_URL=https://poke6s.com`; Google indexing on; visitor counts read CF-Connecting-IP. market.poke6s.com still reaches the home IP directly (DNS only) | Owner: Search Console (sitemap). Later: market.poke6s.com through the tunnel, Stripe activation + `STOREFRONT_CHECKOUT=1`, SMTP, Phase 3 admin |
+| 2026-11-11 | Claude | Bare poke6s.com now on the tunnel (owner; www and apex both reach the store, old Squarespace paths 301). Google Search Console set up by the owner (property https://poke6s.com/, sitemap read: 68 pages); its numbers feed the "Google search" row of Grafana's Store dashboard (`scripts/monitoring/search_console.py`, read-only service account). Hosting and recovery steps in the runbook, "poke6s.com hosting" | Owner: Cloudflare "Always Use HTTPS". Storefront: answer HEAD requests. Then Stripe activation + `STOREFRONT_CHECKOUT=1` |
+| 2026-11-11 | Claude | Shipping rates set (owner, D3): $10 singles, accessories and small sealed; $20 large sealed; free over $150. Tracking and signature confirmation on every order (Shipping page updated). Cloudflare "Always Use HTTPS" on. Order alerts to Discord channel 1569946385548050533 once its webhook URL is in `.env` | Owner: Discord webhook URL, Stripe activation, Microsoft 365 sending. Claude: backups, Stripe webhook, Phase 3 admin |

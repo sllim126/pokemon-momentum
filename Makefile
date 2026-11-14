@@ -15,9 +15,11 @@ test-api:
 check-fastapi:
 	$(DC) exec -T $(APP_SERVICE) python -c "import fastapi; print(fastapi.__version__)"
 
-# Storefront (poke6s.com) tests run in their own container; see storefront/README.md.
-STORE_SERVICE ?= storefront
-
+# Storefront (poke6s.com) tests; see storefront/README.md. The image that serves the site has
+# no test tools (storefront/Dockerfile), so the tests run in its "test" stage, built from this
+# folder's storefront/ and given the code read-only.
 .PHONY: test-storefront
 test-storefront:
-	$(DC) exec -T $(STORE_SERVICE) python -m pytest -q -p no:cacheprovider storefront/tests
+	docker build -q --target test -t poke6s-storefront-test storefront >/dev/null
+	docker run --rm --user $$(id -u):$$(id -g) -v $(CURDIR)/storefront:/app/storefront:ro -w /app \
+		poke6s-storefront-test python -m pytest -q -p no:cacheprovider storefront/tests

@@ -1,7 +1,6 @@
 ---
 title: About
 description: Poke6s is a small shop for sealed Pokémon TCG product, and the team behind market.poke6s.com.
-draft: true
 ---
 Poke6s is a small shop for sealed Pokémon Trading Card Game product: booster
 boxes, bundles, Elite Trainer Boxes and collection boxes, in English and Japanese.

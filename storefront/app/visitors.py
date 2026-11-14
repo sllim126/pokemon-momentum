@@ -17,9 +17,12 @@ What counts:
   Referer header, or "(direct)") and the kind of device (phone, tablet, desktop). For each
   page view it notes the page path (no query string).
 
-The real visitor address: public traffic comes through the Caddy proxy (192.168.1.30), which
-puts it last in X-Forwarded-For. That header is trusted only when the request itself comes
-from the private network, since nobody on the internet can reach this server directly.
+The real visitor address: since 2026-11-11 public traffic comes through the Cloudflare Tunnel
+connector, which passes it in CF-Connecting-IP (before that, the Caddy proxy at 192.168.1.30
+put it last in X-Forwarded-For; both are still read). These headers are trusted only when the
+request itself comes from the private network, since nobody on the internet can reach this
+server directly. The store's Privacy page (content/pages/privacy.md) describes this counting;
+keep it in step.
 
 Limits worth knowing: people behind the same router with the same browser count as one;
 someone who switches from Wi-Fi to phone data counts twice. Fine for "how many people came
@@ -93,6 +96,11 @@ def client_ip(scope) -> str:
         from_private = any(ipaddress.ip_address(peer) in net for net in _PRIVATE)
     except ValueError:
         from_private = False
+    # Since launch (2026-11-11) public traffic arrives through the Cloudflare Tunnel connector
+    # (a container on the private Docker network), which passes the visitor in CF-Connecting-IP.
+    cf_ip = headers.get(b"cf-connecting-ip", b"").decode("latin-1").strip()
+    if cf_ip and from_private:
+        return cf_ip
     if forwarded and from_private:
         # Caddy appends the address it saw, so the last entry is the one to trust.
         return forwarded.split(",")[-1].strip()

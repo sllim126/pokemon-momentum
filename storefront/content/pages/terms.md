@@ -1,7 +1,6 @@
 ---
 title: Terms & conditions
 description: The terms that apply to purchases from Poke6s.
-draft: true
 ---
 These terms apply to purchases from poke6s.com, a store run by Poke6s LLC.
 
@@ -17,7 +16,8 @@ Payments are processed by Stripe. We never see or store your card details.
 
 ## Sales tax
 
-Sales tax is added at checkout where we are required to collect it.
+Prices don't include sales tax. Where we are required to collect it (currently orders shipped
+to a Utah address), it is added at checkout and shown on your receipt.
 
 ## Shipping and returns
 

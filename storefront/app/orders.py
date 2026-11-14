@@ -224,7 +224,9 @@ def start_checkout(conn: sqlite3.Connection, stripe, settings: Settings, cart: l
     order = get_order(conn, number)
     params = session_params(settings, quote, order, base_url, expires)
     try:
-        session = stripe.create_session(params, idempotency_key=f"checkout-{number}")
+        # The order's secret token makes the key unique even if order numbers repeat (a test
+        # database rebuilt, or a copy of the store): Stripe refuses a reused key with new details.
+        session = stripe.create_session(params, idempotency_key=f"checkout-{number}-{order['access_token'][:12]}")
     except (StripeError, OSError) as exc:
         log.warning("Stripe session for %s failed: %s", number, exc)
         release(conn, number, "cancelled", now=now, note="Stripe checkout could not start")
@@ -232,6 +234,13 @@ def start_checkout(conn: sqlite3.Connection, stripe, settings: Settings, cart: l
     conn.execute("UPDATE orders SET stripe_session_id = ? WHERE number = ?", (session["id"], number))
     conn.commit()
     return {"url": session["url"], "number": number}
+
+
+def tax_note(settings: Settings) -> str:
+    """One line for the cart about sales tax, matching the tax mode."""
+    if settings.tax_mode == "stripe":
+        return "Utah orders: sales tax is added on the next page."
+    return ""
 
 
 def session_params(settings: Settings, quote: Quote, order: dict, base_url: str, expires: datetime) -> dict:
@@ -476,15 +485,40 @@ def handle_event(conn: sqlite3.Connection, settings: Settings, event: dict, base
     return result
 
 
+# The events handle_event acts on. reconcile() asks Stripe for the last few days of these, so a
+# delivery missed while the server or tunnel was down is still applied (security review item 11:
+# without this, a refund or dispute on a paid order was only ever recorded by the webhook).
+CATCH_UP_EVENTS = ("checkout.session.completed", "checkout.session.async_payment_succeeded",
+                   "checkout.session.expired", "checkout.session.async_payment_failed",
+                   "charge.refunded", "charge.dispute.created")
+# Stripe retries a failed webhook delivery for up to 3 days; look back that far.
+CATCH_UP_DAYS = 3
+
+
+def catch_up_events(conn: sqlite3.Connection, settings: Settings, stripe, base_url: str,
+                    now: datetime | None = None) -> int:
+    """Apply recent Stripe events the webhook hasn't (already-handled ones are skipped by
+    handle_event's webhook_events check). Returns how many changed something."""
+    now = now or datetime.now(UTC)
+    since = int((now - timedelta(days=CATCH_UP_DAYS)).timestamp())
+    applied = 0
+    for event in stripe.list_events(list(CATCH_UP_EVENTS), since):
+        if handle_event(conn, settings, event, base_url) not in ("duplicate", "ignored", "no change"):
+            applied += 1
+    return applied
+
+
 def reconcile(conn: sqlite3.Connection, settings: Settings, stripe, base_url: str,
               now: datetime | None = None) -> dict[str, int]:
-    """Catch up on anything a missed webhook would have done, for every pending order.
+    """Catch up on anything a missed webhook would have done.
 
     Runs at start-up and every 15 minutes (main.py). A pending order whose Stripe session was
     paid is marked paid; one whose session expired (or ran past its reservation) is released.
+    Then the last CATCH_UP_DAYS of Stripe events are applied (catch_up_events), which is what
+    records a refund or dispute on an order that was already paid.
     """
     now = now or datetime.now(UTC)
-    counts = {"paid": 0, "released": 0, "errors": 0}
+    counts = {"paid": 0, "released": 0, "events": 0, "errors": 0}
     pending = conn.execute("SELECT number, stripe_session_id, reserved_until FROM orders "
                            "WHERE status = 'pending' ORDER BY id").fetchall()
     for row in pending:
@@ -508,4 +542,9 @@ def reconcile(conn: sqlite3.Connection, settings: Settings, stripe, base_url: st
         except (StripeError, OSError) as exc:
             counts["errors"] += 1
             log.warning("Reconcile %s: %s", row["number"], exc)
+    try:
+        counts["events"] = catch_up_events(conn, settings, stripe, base_url, now=now)
+    except (StripeError, OSError) as exc:
+        counts["errors"] += 1
+        log.warning("Reconcile events: %s", exc)
     return counts

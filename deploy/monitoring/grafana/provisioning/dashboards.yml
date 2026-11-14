@@ -1,6 +1,8 @@
-# Loads every dashboard JSON in deploy/monitoring/grafana/dashboards/ into a "Pokemon
-# Momentum" folder. Installed to /etc/grafana/provisioning/dashboards/ by install.sh.
-# Grafana rereads the folder every 30 s. Edits made in the Grafana UI are not saved back:
+# Loads the dashboard JSON into two Grafana folders: deploy/monitoring/grafana/dashboards/ →
+# "Pokemon Momentum", deploy/monitoring/grafana/homelab/ → "Home lab" (the Proxmox cluster,
+# the UniFi network and the servers, which serve more than the Pokemon sites).
+# Installed to /etc/grafana/provisioning/dashboards/ by install.sh. Grafana rereads the folders
+# every 30 s; a new provider needs a restart. Edits made in the Grafana UI are not saved back:
 # change build_dashboards.py instead and rerun it (allowUiUpdates lets you experiment).
 apiVersion: 1
 providers:
@@ -11,3 +13,10 @@ providers:
     updateIntervalSeconds: 30
     options:
       path: /opt/pokemon-momentum/deploy/monitoring/grafana/dashboards
+  - name: homelab
+    folder: Home lab
+    type: file
+    allowUiUpdates: true
+    updateIntervalSeconds: 30
+    options:
+      path: /opt/pokemon-momentum/deploy/monitoring/grafana/homelab

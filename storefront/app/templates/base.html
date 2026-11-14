@@ -52,6 +52,10 @@
     </nav>
   </header>
 
+  {% if not checkout_enabled and path != '/notify' %}
+  <div class="rebuild-note" role="note"><div class="wrap">We're rebuilding our store: checkout opens here soon.
+    Want something now? Each product links to it on TCGplayer, or <a href="/notify">get an email when we open</a>.</div></div>
+  {% endif %}
   <main id="main" class="wrap">
     {% if crumbs %}
     <nav class="crumbs" aria-label="Breadcrumb"><ol>

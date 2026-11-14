@@ -1,3 +1,18 @@
+"""Shared query helpers for the web server (api.py): the database connection, table pickers and SQL builders.
+
+- get_con() / q(sql): one shared read-only DuckDB connection for the whole server (each call
+  uses its own cursor); q returns (columns, rows) with values made JSON-safe.
+- *_from(category_id): the table a route should read for a market (prices, products, groups,
+  each nightly snapshot), falling back to a CSV under data/extracted when the table is
+  missing. Table names come from scripts/common/category_config.py.
+- build_metadata_cte, build_generation_case, build_pullback_sql, build_set_basket_filter...:
+  SQL fragments shared by several routes (names and images, era of a set, Pullbacks rules).
+- gap_scaled_threshold / recent_feed_dates: lower activity bars when the price feed missed
+  days, so lists don't empty out after an outage.
+
+Paths are container paths (/app/...): run this inside the pokemon-momentum container.
+"""
+
 import csv
 import math
 import threading
@@ -441,6 +456,10 @@ def add_release_dates(cols: list, rows: list, category_id: int, group_column: st
 
 
 def to_jsonable(value):
+    """Turn a query value into something json.dumps accepts: missing values (None, NaN, NaT) to
+    None, pandas timestamps to ISO text, numpy scalars to plain Python numbers, and lists,
+    tuples and dicts converted item by item. Anything else is returned unchanged.
+    """
     if isinstance(value, dict):
         return {str(k): to_jsonable(v) for k, v in value.items()}
     if isinstance(value, list):

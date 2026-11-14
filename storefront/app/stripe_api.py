@@ -1,6 +1,7 @@
 """The few Stripe calls the shop makes, over plain HTTPS (no Stripe library needed).
 
 - create_session / retrieve_session / expire_session: Checkout Sessions.
+- list_events: recent events, so reconcile() can apply any webhook delivery that was missed.
 - verify_webhook: checks the Stripe-Signature header on webhook deliveries.
 
 Tests swap StripeClient for a fake with the same methods (tests/test_checkout.py). The secret
@@ -71,6 +72,18 @@ class StripeClient:
     def expire_session(self, session_id: str) -> dict:
         return self._call("POST", f"/checkout/sessions/{session_id}/expire")
 
+    def list_events(self, types: list[str], since: int) -> list[dict]:
+        """Events of these types created at or after `since` (unix time), oldest first."""
+        events: list[dict] = []
+        params: dict = {"types": types, "created": {"gte": since}, "limit": 100}
+        while True:
+            page = self._call("GET", "/events", params)
+            events += page.get("data", [])
+            if not page.get("has_more") or not page.get("data"):
+                break
+            params["starting_after"] = page["data"][-1]["id"]   # Stripe lists newest first
+        return list(reversed(events))
+
 
 def verify_webhook(payload: bytes, signature_header: str, secret: str,
                    tolerance: int = 300, now: float | None = None) -> dict:
@@ -90,7 +103,10 @@ def verify_webhook(payload: bytes, signature_header: str, secret: str,
     except (KeyError, ValueError):
         raise ValueError("bad signature header") from None
     expected = hmac.new(secret.encode(), f"{timestamp}.".encode() + payload, hashlib.sha256).hexdigest()
-    if not any(hmac.compare_digest(expected, sig) for sig in parts.get("v1", [])):
+    # Compared as bytes: compare_digest raises TypeError on non-ASCII text, which would be a 500
+    # instead of the ValueError the webhook handler answers with 400.
+    if not any(hmac.compare_digest(expected.encode(), sig.encode("utf-8", "replace"))
+               for sig in parts.get("v1", [])):
         raise ValueError("signature mismatch")
     if abs((now or time.time()) - timestamp) > tolerance:
         raise ValueError("timestamp outside tolerance")

@@ -16,3 +16,7 @@
 0 3 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin /usr/bin/python3 scripts/monitoring/run_job.py storefront-market-reference -- docker-compose exec -T pokemon-momentum python scripts/build_storefront_market_reference.py >> logs/storefront_market_reference.log 2>&1
 30 21 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin /usr/bin/python3 scripts/monitoring/run_job.py archive-backfill -- scripts/pipeline/run_archive_backfill_host.sh
 0 12 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin /usr/bin/python3 scripts/monitoring/run_job.py tcgcsv-catalogue -- scripts/pipeline/run_tcgcsv_catalogue_host.sh
+# Keep market.poke6s.com on the current home IP (needs CLOUDFLARE_DNS_API_TOKEN in .env).
+*/5 * * * * cd /opt/pokemon-momentum && /usr/bin/python3 scripts/monitoring/run_job.py market-dns -- /usr/bin/python3 scripts/utilities/update_market_dns.py >> logs/market_dns.log 2>&1
+# Nightly store backup (storefront/tools/backup_store.py; restore steps in the runbook).
+15 3 * * * cd /opt/pokemon-momentum && /usr/bin/python3 scripts/monitoring/run_job.py storefront-backup -- /usr/bin/python3 storefront/tools/backup_store.py backup --copy-to /mnt/synology-backup/Poke6s >> logs/storefront_backup.log 2>&1

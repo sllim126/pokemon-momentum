@@ -22,4 +22,8 @@
 # Local scans for cards without bundled art.
 !cards/promo/*.png
 !cards/promo/*.jpg
+!cards/backs/
+!cards/backs/promo/*.jpg
+!cards/thumbs/backs/
+!cards/thumbs/backs/promo/*.webp
 !cards/*/*.jpg

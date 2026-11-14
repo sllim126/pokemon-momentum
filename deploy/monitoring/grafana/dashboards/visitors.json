@@ -17,12 +17,29 @@
   },
   "links": [
     {
+      "title": "Home",
+      "type": "link",
+      "url": "/",
+      "icon": "dashboard",
+      "targetBlank": false
+    },
+    {
       "title": "Pokemon Momentum",
       "type": "dashboards",
       "tags": [
         "pokemon-momentum"
       ],
-      "asDropdown": false,
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true
+    },
+    {
+      "title": "Home lab",
+      "type": "dashboards",
+      "tags": [
+        "homelab"
+      ],
+      "asDropdown": true,
       "includeVars": false,
       "keepTime": true
     }

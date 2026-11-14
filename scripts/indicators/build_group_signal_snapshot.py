@@ -1,3 +1,11 @@
+"""Nightly step: the set (group) signal snapshot behind Set Strength.
+
+Aggregates the product signal snapshot per set: average 7/30/90-day change, cards vs sealed,
+the share of cards above their 30-day average or at a 90-day high, and breadth_score (a
+weighted mix of those). Writes <slug>_group_signal_snapshot and a CSV copy. Run after
+build_product_signal_snapshot.py (it reads that table).
+"""
+
 import argparse
 import sys
 from pathlib import Path

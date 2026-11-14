@@ -1,0 +1,694 @@
+{
+  "title": "Home lab: Slowheim (Valheim)",
+  "uid": "homelab-slowheim",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "refresh": "30s",
+  "tags": [
+    "homelab",
+    "valheim"
+  ],
+  "panels": [
+    {
+      "type": "row",
+      "title": "Valheim",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [],
+      "id": 1
+    },
+    {
+      "type": "stat",
+      "title": "Players online",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slowheim-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "valheim_players_online",
+          "refId": "A",
+          "legendFormat": "{{server}}",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name"
+      },
+      "id": 2
+    },
+    {
+      "type": "stat",
+      "title": "Server status",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slowheim-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "node_systemd_unit_state{name=~\"valheim(-private)?\\\\.service\",state=\"active\"}",
+          "refId": "A",
+          "legendFormat": "{{name}}",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "gridPos": {
+        "x": 6,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "DOWN",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "UP",
+                  "color": "green"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value_and_name"
+      },
+      "id": 3
+    },
+    {
+      "type": "stat",
+      "title": "Since last world save",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slowheim-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "time() - valheim_last_world_save_timestamp_seconds",
+          "refId": "A",
+          "legendFormat": "{{server}}",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1800
+              },
+              {
+                "color": "red",
+                "value": 3600
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name"
+      },
+      "id": 4
+    },
+    {
+      "type": "stat",
+      "title": "Server restarts (range)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slowheim-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "increase(valheim_server_starts_total[$__range])",
+          "refId": "A",
+          "legendFormat": "{{server}}",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 5
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value_and_name"
+      },
+      "id": 5
+    },
+    {
+      "type": "table",
+      "title": "Who's online now",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slowheim-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "time() - valheim_player_online_since_seconds",
+          "refId": "A",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 6,
+        "w": 8,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Session length"
+              }
+            ]
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "host": true
+            }
+          }
+        }
+      ],
+      "id": 6
+    },
+    {
+      "type": "timeseries",
+      "title": "Players online over time",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slowheim-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "valheim_players_online",
+          "refId": "A",
+          "legendFormat": "{{server}}"
+        }
+      ],
+      "gridPos": {
+        "x": 8,
+        "y": 6,
+        "w": 16,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "custom": {
+            "lineInterpolation": "stepAfter",
+            "fillOpacity": 15
+          }
+        },
+        "overrides": []
+      },
+      "id": 7
+    },
+    {
+      "type": "table",
+      "title": "Joins & deaths (selected range)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slowheim-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "sum by (server, player) (increase(valheim_player_joins_total[$__range]))",
+          "refId": "A",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "sum by (server, player) (increase(valheim_player_deaths_total[$__range]))",
+          "refId": "B",
+          "legendFormat": "",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 8,
+        "h": 10
+      },
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "__name__": true,
+              "instance": true,
+              "job": true,
+              "host": true
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "Value #A": "Joins",
+              "Value #B": "Deaths"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "id": 8
+    },
+    {
+      "type": "logs",
+      "title": "Player events",
+      "datasource": {
+        "type": "loki",
+        "uid": "slowheim-loki"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "slowheim-loki"
+          },
+          "expr": "{job=\"valheim\", event=~\"join|disconnect|death_or_spawn\"}",
+          "refId": "A",
+          "legendFormat": ""
+        }
+      ],
+      "gridPos": {
+        "x": 8,
+        "y": 15,
+        "w": 16,
+        "h": 10
+      },
+      "options": {
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "id": 9
+    },
+    {
+      "type": "row",
+      "title": "Host",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 25,
+        "w": 24,
+        "h": 1
+      },
+      "panels": [],
+      "id": 10
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU %",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slowheim-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "100 * (1 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])))",
+          "refId": "A",
+          "legendFormat": "cpu"
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "id": 11
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory used",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slowheim-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
+          "refId": "A",
+          "legendFormat": "used"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "node_memory_MemTotal_bytes",
+          "refId": "B",
+          "legendFormat": "total"
+        }
+      ],
+      "gridPos": {
+        "x": 8,
+        "y": 26,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "id": 12
+    },
+    {
+      "type": "timeseries",
+      "title": "Network",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slowheim-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "rate(node_network_receive_bytes_total{device!=\"lo\"}[5m])",
+          "refId": "A",
+          "legendFormat": "rx {{device}}"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "-rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m])",
+          "refId": "B",
+          "legendFormat": "tx {{device}}"
+        }
+      ],
+      "gridPos": {
+        "x": 16,
+        "y": 26,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "id": 13
+    },
+    {
+      "type": "gauge",
+      "title": "Disk used",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slowheim-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "100 * (1 - node_filesystem_avail_bytes{fstype!~\"tmpfs|overlay|squashfs\"} / node_filesystem_size_bytes{fstype!~\"tmpfs|overlay|squashfs\"})",
+          "refId": "A",
+          "legendFormat": "{{mountpoint}}",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 8,
+        "h": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "id": 14
+    },
+    {
+      "type": "timeseries",
+      "title": "Load average",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slowheim-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "node_load1",
+          "refId": "A",
+          "legendFormat": "1m"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "node_load5",
+          "refId": "B",
+          "legendFormat": "5m"
+        }
+      ],
+      "gridPos": {
+        "x": 8,
+        "y": 34,
+        "w": 8,
+        "h": 6
+      },
+      "id": 15
+    },
+    {
+      "type": "stat",
+      "title": "Uptime",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "slowheim-prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "slowheim-prometheus"
+          },
+          "expr": "time() - node_boot_time_seconds",
+          "refId": "A",
+          "legendFormat": "",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "gridPos": {
+        "x": 16,
+        "y": 34,
+        "w": 8,
+        "h": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "id": 16
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "links": [
+    {
+      "title": "Home",
+      "type": "link",
+      "url": "/",
+      "icon": "dashboard",
+      "targetBlank": false
+    },
+    {
+      "title": "Pokemon Momentum",
+      "type": "dashboards",
+      "tags": [
+        "pokemon-momentum"
+      ],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true
+    },
+    {
+      "title": "Home lab",
+      "type": "dashboards",
+      "tags": [
+        "homelab"
+      ],
+      "asDropdown": true,
+      "includeVars": false,
+      "keepTime": true
+    }
+  ]
+}

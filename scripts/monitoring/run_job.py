@@ -27,6 +27,23 @@ from pathlib import Path
 
 TEXTFILE_DIR = Path(os.environ.get("MOMENTUM_TEXTFILE_DIR", "/var/lib/prometheus/node-exporter"))
 
+# Help text for the job metrics, shared with collect_status.py (which imports it). Both
+# scripts write these metrics into the same text-file folder, and node-exporter drops a
+# metric entirely when two files give it different HELP or TYPE lines; on 2026-11-05 that
+# hid the systemd jobs' results. So every file declares them identically, from here.
+JOB_HELP = {
+    "momentum_job_last_start_timestamp_seconds": "When the job last started",
+    "momentum_job_last_run_timestamp_seconds": "When the job last finished",
+    "momentum_job_last_duration_seconds": "How long the last run took",
+    "momentum_job_last_exit_code": "Exit code of the last run (0 = ok)",
+    "momentum_job_running": "1 while the job is running",
+    "momentum_job_last_success_timestamp_seconds": "When the job last finished without an error",
+}
+
+
+def job_metric_lines(name: str, task: str, value: float) -> list[str]:
+    return [f"# HELP {name} {JOB_HELP[name]}", f"# TYPE {name} gauge", f'{name}{{task="{task}"}} {value}']
+
 
 def _previous_success(path: Path, job: str) -> float | None:
     """Carry the last success time over from the previous file when this run failed."""
@@ -39,20 +56,21 @@ def _previous_success(path: Path, job: str) -> float | None:
 
 
 def _write(job: str, started: float, finished: float, code: int) -> None:
+    """Write this job's metrics file (start, finish, duration, exit code, last success). A failed run
+    keeps the previous last-success time, read back from the old file.
+    """
     path = TEXTFILE_DIR / f"momentum_job_{job}.prom"
     success = finished if code == 0 else _previous_success(path, job)
-    label = f'{{task="{job}"}}'
-    lines = [
-        f"momentum_job_last_start_timestamp_seconds{label} {started}",
-        f"momentum_job_last_run_timestamp_seconds{label} {finished}",
-        f"momentum_job_last_duration_seconds{label} {finished - started}",
-        f"momentum_job_last_exit_code{label} {code}",
-        f"momentum_job_running{label} 0",
-    ]
-    if success is not None:
-        lines.append(f"momentum_job_last_success_timestamp_seconds{label} {success}")
-    # No HELP/TYPE lines: collect_status.py declares these metrics, and node-exporter
-    # rejects the scrape if two files give the same metric different HELP text.
+    values = {
+        "momentum_job_last_start_timestamp_seconds": started,
+        "momentum_job_last_run_timestamp_seconds": finished,
+        "momentum_job_last_duration_seconds": finished - started,
+        "momentum_job_last_exit_code": code,
+        "momentum_job_running": 0,
+        "momentum_job_last_success_timestamp_seconds": success,
+    }
+    lines = [line for name, value in values.items() if value is not None
+             for line in job_metric_lines(name, job, value)]
     tmp = path.with_name(f".{path.name}.tmp")
     tmp.write_text("\n".join(lines) + "\n")
     tmp.chmod(0o644)
@@ -60,6 +78,11 @@ def _write(job: str, started: float, finished: float, code: int) -> None:
 
 
 def main(argv: list[str]) -> int:
+    """Run the command after `--`, record its metrics, and exit with the command's own exit code.
+
+    Exit code 2 for bad usage; a command that can't start is recorded with exit code 127. A problem
+    writing the metrics is printed but never changes the job's exit code.
+    """
     if len(argv) < 3 or argv[1] != "--" or not re.fullmatch(r"[a-z0-9-]+", argv[0]):
         print("usage: run_job.py <job-name> -- <command> [args...]", file=sys.stderr)
         return 2

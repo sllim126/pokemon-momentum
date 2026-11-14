@@ -182,6 +182,12 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    """Import new #bug-reports messages as bug reports, then react ✅ to each one saved.
+
+    Needs POKE6S_DISCORD_BOT_TOKEN. Skips bot and system messages, empty messages and anything
+    already saved. A failed reaction is a warning: the report is still saved. --dry-run lists
+    what it would import.
+    """
     args = parse_args()
     token = setting("POKE6S_DISCORD_BOT_TOKEN")
     channel_id = setting("POKE6S_DISCORD_BUG_CHANNEL_ID", DEFAULT_CHANNEL_ID)

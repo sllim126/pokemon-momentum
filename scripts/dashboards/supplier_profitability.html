@@ -258,9 +258,9 @@
               </div>
             </div>
             <div class="field"><label for="handlingCostUsd">Packaging / Handling USD</label><input id="handlingCostUsd" type="number" step="0.01" value="0.75"></div>
-            <div class="field"><label for="disbursementFeeUsd">Disbursement Fee USD</label><input id="disbursementFeeUsd" type="number" step="0.01" value="15.00"></div>
+            <div class="field"><label for="disbursementFeeUsd">Disbursement Fee USD (per order)</label><input id="disbursementFeeUsd" type="number" step="0.01" value="15.00"></div>
           </div>
-          <div class="helper" id="shippingModeHelp">Order estimate mode allocates shipping per item as `total JPY shipping / boxes in order`, then converts that to USD. Disbursement sits here too, since you’re treating it as part of import / FedEx landing cost.</div>
+          <div class="helper" id="shippingModeHelp">Order estimate mode allocates shipping per item as `total JPY shipping / boxes in order`, then converts that to USD. The disbursement fee is charged once per order, so it is split across Boxes in Order.</div>
         </div>
         <div class="subpanel">
           <div class="subpanel-title">Shared Selling Costs</div>
@@ -469,11 +469,11 @@
     function updateShippingModeHelp() {
       const mode = inboundShippingMode.value;
       document.getElementById("orderShippingJpy").disabled = mode !== "order-estimate";
-      document.getElementById("orderBoxCount").disabled = mode !== "order-estimate";
+      // Boxes in Order stays on in both modes: it also splits the per-order disbursement fee.
       document.getElementById("inboundShippingUsd").disabled = mode !== "manual";
       shippingModeHelp.textContent = mode === "order-estimate"
-        ? "Order estimate mode uses `total JPY shipping / boxes in order`, then converts that to USD per item. Great for pre-buy planning."
-        : "Manual mode uses the per-item inbound shipping USD you enter, which is handy once you know the real landed number.";
+        ? "Order estimate mode uses `total JPY shipping / boxes in order`, then converts that to USD per item. Great for pre-buy planning. The disbursement fee is split across the same boxes."
+        : "Manual mode uses the per-item inbound shipping USD you enter, which is handy once you know the real landed number. Boxes in Order still splits the per-order disbursement fee.";
     }
 
     function inboundShippingForManualQuote(jpyPerUsd) {
@@ -558,7 +558,10 @@
       const supplierCostUsd = currency === "jpy" ? (jpyPerUsd > 0 ? costValue / jpyPerUsd : 0) : costValue;
       const importCostUsd = supplierCostUsd * (num("importDutyPct") / 100);
       const inboundShippingUsd = inboundShippingForManualQuote(jpyPerUsd);
-      const landedCostUsd = supplierCostUsd + importCostUsd + inboundShippingUsd + num("handlingCostUsd") + num("disbursementFeeUsd");
+      // Same rule as the server: the disbursement fee is per order, spread over the boxes in it.
+      const boxCount = num("orderBoxCount");
+      const disbursementPerUnitUsd = boxCount > 0 ? num("disbursementFeeUsd") / boxCount : num("disbursementFeeUsd");
+      const landedCostUsd = supplierCostUsd + importCostUsd + inboundShippingUsd + num("handlingCostUsd") + disbursementPerUnitUsd;
       const fixedCostsUsd = landedCostUsd + num("outboundShippingUsd") - num("shippingCreditUsd");
       const sitePrice = optionalNum("manualSitePrice");
       const ebayPrice = optionalNum("manualEbayPrice");

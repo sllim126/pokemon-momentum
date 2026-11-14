@@ -1,3 +1,11 @@
+"""One place that names every per-market table and file, so English and Japanese never drift apart.
+
+A market is a TCGplayer category: 3 = Pokemon (English, slug "pokemon"), 85 = Pokemon Japan
+(slug "pokemon_jp"). Every table is "<slug>_<name>" (pokemon_prices is the exception: one
+price table holds both, filtered by categoryId). Use get_category_config(id) rather than
+writing a table name by hand; tests/test_category_config.py pins the names.
+"""
+
 from dataclasses import dataclass
 
 
@@ -83,6 +91,10 @@ class CategoryConfig:
     @property
     def long_series_snapshot_csv(self) -> str:
         return f"{self.slug}_long_series_snapshot.csv"
+
+    @property
+    def market_mood_snapshot_table(self) -> str:
+        return f"{self.slug}_market_mood_snapshot"
 
     @property
     def screener_snapshot_table(self) -> str:

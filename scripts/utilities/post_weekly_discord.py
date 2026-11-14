@@ -134,6 +134,7 @@ def sealed_vs_loose(limit: int = 3) -> list[dict]:
 
 
 def post_buy(today: dt.date) -> str:
+    """The #what-should-i-buy post: sealed deals, top Pullbacks and a $100 Budget Builder pull."""
     lines = [f"**What should I buy? Picks for the week of {today:%b} {today.day}**", ""]
     deals = sealed_vs_loose()
     if deals:
@@ -163,6 +164,9 @@ def post_buy(today: dt.date) -> str:
 # ---- #market-talk -----------------------------------------------------------------------
 
 def post_market(today: dt.date, week: int) -> str:
+    """The #market-talk post: Top 151 vs the Mega and Scarlet & Violet indexes, cooling sets and a
+    weekly conversation question (rotates by week number).
+    """
     lines = [f"**Market snapshot: {today:%b} {today.day}** 📊", "The Poke6s indexes each started at 1,000:"]
     for key in ("pokemon100", "mega100", "sv100"):
         data = get("/index-overview-data", index=key, category_id=3)
@@ -188,6 +192,7 @@ def post_market(today: dt.date, week: int) -> str:
 # ---- #set-breakdowns --------------------------------------------------------------------
 
 def post_set(week: int) -> str:
+    """The #set-breakdowns post: a set of the week, rotating through the newest English sets by week number."""
     sets = rows(get("/set_baskets", category_id=3, limit=2000, min_cards=60))
     skip = re.compile(r"promo|prize pack|trainer gallery|galarian gallery|shiny vault|miscellaneous|mcdonald|trick or trade|energies", re.I)
     recent = sorted((s for s in sets if s.get("release_date") and not skip.search(s["groupName"])),
@@ -228,6 +233,9 @@ def spotlight_card(week: int) -> tuple[dict, str]:
 
 
 def post_spotlight(week: int) -> str:
+    """The #card-spotlight post: a card on the rise (Top Movers) or on sale (Pullbacks), alternating
+    weekly, with its graded prices from PriceCharting when we have them.
+    """
     card, label = spotlight_card(week)
     pid, sub = card["productId"], card["subTypeName"]
     title = f"{card['productName']}, {short_set(card['groupName'])}" + (f" {card['number']}" if card.get("number") else "")
@@ -268,6 +276,12 @@ def discord_post(token: str, channel_id: str, content: str) -> str:
 
 
 def main() -> int:
+    """Build every post and send it to its channel, once per ISO week.
+
+    A post that fails to build is skipped with a warning so the others still go out; a post over
+    Discord's 2,000-character limit is cut at the last line break before 1,990 characters. --dry-run prints instead of posting; --force posts
+    again in a week that was already posted.
+    """
     parser = argparse.ArgumentParser(description="Post the weekly Poke6s Discord updates.")
     parser.add_argument("--dry-run", action="store_true", help="Print the posts; post nothing.")
     parser.add_argument("--force", action="store_true", help="Post even if this week was already posted.")

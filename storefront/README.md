@@ -3,19 +3,42 @@
 Our own shop, replacing Squarespace. The plan, decisions and progress log are in
 `docs/storefront_plan.md`; this file is the developer guide for the code in `storefront/`.
 
-**Status (2026-11-05): Phase 2 built, local only, Stripe test mode.** The catalog browses on
-the home network at `http://<server>:8010`. Cart and checkout switch on when a Stripe **test**
-key is in `.env` (see "Checkout" below); without one, product pages link to the TCGplayer store.
+**Status (2026-11-05): Phase 2 built, local only, Stripe test mode.** Port 8010 listens on the
+server itself only (since 2026-11-12; the public site arrives through the Cloudflare Tunnel), so
+from another computer use https://poke6s.com or an SSH tunnel (`ssh -L 8010:localhost:8010 <server>`). Cart and checkout switch on when
+`STOREFRONT_CHECKOUT=1` and a Stripe **test** key are in `.env` (see "Checkout" below);
+otherwise product pages link to the TCGplayer store. The public launch (2026-11-11) is
+catalog-only: `STOREFRONT_CHECKOUT` is unset, which means off.
+While checkout is off, product pages show no stock counts (only "Sold out") and the structured
+data leaves out `availability` instead of claiming `InStock` (owner, 2026-11-11).
+Also while it is off (owner, 2026-11-11): a "we're rebuilding" note under the header, and product
+pages offer "Buy on TCGplayer" (the product's TCGplayer page through the affiliate link,
+`STOREFRONT_TCGPLAYER_AFFILIATE`; a product's own `tcgplayer_url` wins) plus an "email me when
+the store opens" form. Sign-ups go to the `notify_signups` table (`app/notify_list.py`); list
+them with
+`sqlite3 data/storefront/store.db "SELECT email, source, created_at FROM notify_signups"`.
 Nothing is public: robots are blocked and every page says `noindex` until
 `STOREFRONT_ALLOW_INDEXING=1` at launch.
 
 ## Run it
 
 ```sh
-docker-compose up -d --build storefront      # first time, or after editing requirements.txt
-docker-compose restart storefront            # after Python, template or Markdown page changes
-make test-storefront                         # 46 tests, synthetic data only
+deploy/update_storefront.sh                  # run the store on :8010 from the latest main
+make test-storefront                         # synthetic data only, in the "test" image
 ```
+
+**Package versions are pinned** (since 2026-11-12): `requirements.txt` (what the store uses),
+`requirements-dev.txt` (pytest and httpx, test image only) and `constraints.txt` (every package
+underneath, exact). The base image is pinned to `python:3.12.16-slim-trixie`. The served image
+(Dockerfile stage `runtime`) has no test tools; `make test-storefront` builds stage `test`. To
+upgrade anything: change the version, `make test-storefront`, refresh `constraints.txt` from
+`docker run --rm poke6s-storefront-test pip freeze`, commit, deploy. Bump the base image about
+monthly for security fixes.
+
+The store on :8010 runs from its own clone, `~/poke6s-store`, which only holds `main`, so
+coding sessions switching branches in the repo folder don't change it. The script pulls `main`
+into the clone, rebuilds the image if needed, restarts and checks `/healthz`. To try a branch,
+run a second container from a copy of `data/storefront` on another port instead.
 
 The container (`poke6s-storefront`, port 8010) sees only:
 - `storefront/` (the code, mounted, so no rebuild for code changes);
@@ -55,6 +78,27 @@ Re-running updates existing SKUs but keeps their slugs. Once products are edited
 (Phase 3), use `--only-new`.
 
 The market reference is rebuilt daily at 03:00 UTC by cron (after the 02:00 market update).
+
+## Prices
+
+`tools/reprice.py` sets prices at or near today's market and never below break-even (owner,
+2026-11-11): each product's rule in `data/store_price_rules.csv` (usually 5% under market,
+ending in .99) applied to the market price the product page shows, raised to break-even when
+that's higher. Break-even is the unit cost plus Stripe's fees (2.9% + 30¢, plus 0.5% for
+Stripe Tax), and the label and packing too when the price alone reaches free shipping ($150).
+With `--hide-above-market`, products whose break-even is above market are hidden instead.
+Costs are private: they come from a CSV the owner keeps outside this repository (`--costs`),
+and the output never shows them. Dry run unless `--apply`; standard library only, run on the
+host:
+
+```
+python3 storefront/tools/reprice.py --costs <store_sku_costs.csv> --hide-above-market
+python3 storefront/tools/reprice.py --costs <store_sku_costs.csv> --hide-above-market --apply
+python3 storefront/tools/reprice.py --costs <store_sku_costs.csv> --show ENG-PO-BOX --apply
+```
+
+Products without a rule, a market price or a cost are left alone and listed. Re-running the
+Squarespace importer resets prices and visibility, so run this again after any import.
 
 ## Save a copy of the old Squarespace site
 
@@ -96,30 +140,70 @@ Existing article files are kept unless `--force` is given.
 How it works: `app/orders.py` (module docstring), plan "Checkout and orders".
 
 **Switch it on.** Put the Stripe **test** keys in `.env` (never in code or chat), then
-`docker-compose up -d storefront` (an `up`, not a `restart`, so the new settings are read):
+`deploy/update_storefront.sh` (it recreates the container, so the new settings are read).
+While the store is catalog-only the key line stays commented out (`# STRIPE_SECRET_KEY=...`),
+so the container holds no Stripe key; uncomment it when checkout opens:
 
 ```
+STOREFRONT_CHECKOUT=1                 # master switch; unset or 0 = catalog only (the default)
 STRIPE_SECRET_KEY=sk_test_...         # Stripe dashboard > Developers > API keys (test mode)
-STRIPE_WEBHOOK_SECRET=whsec_...       # from `stripe listen` or the dashboard webhook (optional)
+STRIPE_WEBHOOK_SECRET=whsec_...       # the webhook's signing secret (required: checkout stays off without it)
 ```
+
+**Limits per visitor** (`main.py`): 10 checkout attempts an hour, and at most 3 unpaid
+checkouts and 12 units held at once (paid, cancelled and expired ones stop counting). The
+visitor is the CF-Connecting-IP address when the request comes from the tunnel, as in `visitors.py`.
 
 Live keys (`sk_live_...`) are refused unless `STOREFRONT_ALLOW_LIVE=1`; going live is the
 owner's call. Other settings (all optional, defaults in `app/settings.py`):
-`STOREFRONT_FREE_SHIPPING_OVER_CENTS` (15000), `STOREFRONT_SHIP_<CLASS>_CENTS` (placeholders:
-small sealed 500, large sealed 900, accessory 500, single 500), `STOREFRONT_TAX_MODE`
-(`none`, or `stripe` for Stripe Tax; decision D2), `STOREFRONT_DISCORD_WEBHOOK_URL` (order
-alerts; off when empty), `STOREFRONT_SMTP_HOST` / `_USER` / `_PASSWORD` (Microsoft 365, port
-587). Without SMTP, order emails are written to `data/storefront/outbox/*.eml`.
+`STOREFRONT_FREE_SHIPPING_OVER_CENTS` (15000), `STOREFRONT_SHIP_<CLASS>_CENTS` (small sealed
+1000, large sealed 2000, accessory 1000, single 1000), `STOREFRONT_TAX_MODE`
+(decision D2: `stripe` = Stripe Tax adds Utah sales tax on top at checkout, once Utah is
+registered under Tax -> Registrations in the Stripe dashboard; `none` = no tax, the default;
+anything else keeps checkout off), `STOREFRONT_DISCORD_WEBHOOK_URL` (order
+alerts; off when empty), and the order-email settings below.
+
+**Order emails** go out through Microsoft Graph (since 2026-11-12; Microsoft turns off
+password SMTP by default at the end of 2026). Settings: `STOREFRONT_GRAPH_TENANT_ID`,
+`STOREFRONT_GRAPH_CLIENT_ID`, `STOREFRONT_GRAPH_CLIENT_SECRET`, from the Entra app registration
+`poke6s-store-mail`. That app has no Mail.Send permission in Entra; instead Exchange Online
+(RBAC for Applications: a management scope on orders@poke6s.com plus the "Application
+Mail.Send" role) lets it send only as orders@poke6s.com (a free shared mailbox that shows up in
+the owner's Outlook; replies land there), so a leaked secret can't send as any
+other mailbox. The client secret expires after 24 months (renew it in Entra and update `.env`).
+`STOREFRONT_SMTP_HOST` / `_USER` / `_PASSWORD` still work as a fallback. With neither, emails
+are written to `data/storefront/outbox/*.eml`, and live checkout refuses to open.
+A failed send is queued in `outbox/retry/`, Discord is told, and the 15-minute job retries it for
+24 hours before moving it to `outbox/failed/` with a "gave up" alert. Check the setup with
+`orders_cli test-email --to <you>`; resend an order's email with `orders_cli resend <number>`.
+DKIM for poke6s.com is on (2026-11-12): two `selector*._domainkey` CNAMEs in Cloudflare (DNS only),
+and the first test email to Gmail showed SPF, DKIM (poke6s.com) and DMARC all passing. The app is
+refused when it tries to send as any other mailbox (checked: 403 for admin@).
+
+Order emails (confirmation and shipped) have a plain-text part and a designed HTML part,
+`app/templates/email/order.html`: tables and inline styles only, because email apps ignore most
+CSS. The logo is attached to the email itself (`cid:`), so it shows before the site is public.
+The shipped email links USPS, UPS, FedEx and DHL numbers to the carrier's tracking page
+(`notify.TRACKING_URLS`; other carriers show the number without a button).
 
 **A test order.** Add something to the cart, Checkout, and pay on Stripe's page with card
 `4242 4242 4242 4242`, any future date, any CVC, any US address. Orders are numbered
 `P6T-2026-0001` in test mode (`P6-...` live).
 
-**Webhooks are optional locally.** Payment is confirmed three ways, whichever comes first: the
-webhook (`POST /stripe/webhook`), the thanks page asking Stripe directly, and the reconcile job
-(start-up and every 15 minutes) that checks every pending order. To test webhooks, run the
-Stripe CLI (`stripe listen --forward-to localhost:8010/stripe/webhook`) and put the `whsec_...`
-it prints in `.env`.
+**The webhook is required** (since 2026-11-12, security review item 11): without
+`STRIPE_WEBHOOK_SECRET` checkout stays off and the log says why. Set it up in the Stripe
+dashboard under Developers > Webhooks > Add endpoint: URL `https://poke6s.com/stripe/webhook`,
+events `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
+`checkout.session.expired`, `checkout.session.async_payment_failed`, `charge.refunded` and
+`charge.dispute.created`; then copy its signing secret (`whsec_...`) into `.env`. Test mode and
+live mode each have their own endpoint and secret. For local testing, the Stripe CLI works too
+(`stripe listen --forward-to localhost:8010/stripe/webhook` prints a `whsec_...`).
+
+Payment is confirmed three ways, whichever comes first: the webhook, the thanks page asking
+Stripe directly, and the reconcile job (start-up and every 15 minutes), which checks every
+pending order and then applies the last 3 days of Stripe events the webhook may have missed
+(server or tunnel down). That last step is the only other way a refund or dispute on a paid
+order is recorded; each event is applied once, whichever route brings it.
 
 **Orders from the command line** (until the Phase 3 admin):
 
@@ -140,10 +224,11 @@ stock by hand until the Phase 3 admin.
 
 | File | What it does |
 |---|---|
+| `app/notify_list.py` | The "email me when the store opens" list (POST /notify) |
 | `app/main.py` | FastAPI app: routes, 404 + redirect handling, security headers, reconcile loop |
 | `app/orders.py` | Cart pricing, checkout, reservations, payment, expiry, refunds, disputes, shipping |
 | `app/stripe_api.py` | The Stripe calls (Checkout Sessions) over HTTPS; webhook signature check |
-| `app/notify.py` | Discord order alerts; order and shipping emails (SMTP or the outbox folder) |
+| `app/notify.py` | Discord order alerts; order and shipping emails (Microsoft Graph, SMTP or the outbox folder; retry queue; HTML in `templates/email/order.html`) |
 | `app/orders_cli.py` | `list`, `show`, `ship`, `reconcile` from the command line |
 | `app/catalog.py` | Read-only queries: filters, search, facets, product, sets, sitemap |
 | `app/importer.py` | Squarespace export + intake CSVs → database |
@@ -157,6 +242,7 @@ stock by hand until the Phase 3 admin.
 | `app/templates/`, `app/static/` | Jinja2 pages, CSS (market site's colours, D4), small JS |
 | `app/articles.py`, `app/article_import.py` | Articles (Markdown, loaded at start-up); import of the old blog posts |
 | `content/articles/*.md` | The articles |
+| `tools/reprice.py` | Prices at or near market, never below break-even; hides products that can't be (see "Prices") |
 | `tools/archive_squarespace_site.py` | One-off copy of the old site's pages, blog posts and images |
 | `content/pages/*.md` | About, FAQ, Shipping, Returns, Terms, Privacy, Contact |
 | `tests/` | pytest suite with synthetic fixtures |
@@ -201,6 +287,6 @@ reviews them before launch, then removes the line.
 
 ## Not yet (later phases)
 
-Sales tax by our own Utah table (if chosen for D2), live keys (owner); LAN-only admin, exports,
-signature confirmation on large orders and backups (Phase 3); Google Merchant feed, per-article social cards, newsletter (Phase 4). See
+Utah registration in live-mode Stripe Tax and live keys (owner); LAN-only admin, exports,
+signature confirmation on large orders (Phase 3; nightly backups already run, see `tools/backup_store.py`); Google Merchant feed, per-article social cards, newsletter (Phase 4). See
 the plan.
