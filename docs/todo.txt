@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-11 (milestone: self-hosted; poke6s.com on our own server)
+Last updated: 2026-11-14 (milestone: lorcana-plan)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -44,6 +44,10 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-14 Lorcana market plan merged (`docs/lorcana_market_plan.md`, written 2026-11-05):
+  research-only Lorcana site, internal first; data on hand, source rules checked (TCGCSV,
+  Lorcast, Scrydex, PriceCharting, Ravensburger), rarity tiers, indexes, sealed pack counts,
+  phases. Card images: download from Lorcast and host ourselves (owner). No code yet.
 - 2026-11-11 Store order alerts go to Discord channel 1569946385548050533: webhook saved in
   `.env` by the owner, store restarted, test alert accepted by Discord.
 - 2026-11-11 Shipping set (owner, plan decision D3): $10 flat for singles, accessories and small
@@ -518,9 +522,10 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   under the 10,000/day limit in the new usage guidelines.
 - [planned] Check the size of `data/tcgcsv_archive/` after a month and decide how many
   games to keep collecting.
-- [idea] Sites for other games (magic6s, yugi6s, lorcana6s...) once 6-12 months of history
+- [idea] Sites for other games (Magic, Yu-Gi-Oh, One Piece) once 6-12 months of history
   exist. They would need their own rarity rules, set eras, sealed product types and
   screener tuning; PriceCharting graded prices would need a separate download and permission.
+  Lorcana is first, with its own plan (`docs/lorcana_market_plan.md`, "Lorcana Market" below).
 
 - [planned] Graded tab follow-up: where TCGplayer and PriceCharting's ungraded prices are far
   apart (Pikachu, EX Power Keepers: TCGplayer 429.99 vs PriceCharting 100.81), check whether
@@ -783,6 +788,27 @@ Active Queue
   remaining idea.
 - [planned] Re-check first-load speed after real usage of the desktop app.
 - [idea] Keyboard shortcuts beyond up/down row stepping, if they clearly help.
+
+Lorcana Market (research site, internal first)
+----------------------------------------------
+
+Plan: `docs/lorcana_market_plan.md`. Research only (no store or listings), English, LAN-only
+until the owner decides on a public address. No new costs: TCGCSV/TCGplayer data and images
+only; Scrydex (paid) and PriceCharting graded are out of scope.
+
+- [next] Phase 0 (on a fresh branch): add category 71 (`lorcana`) to `category_config.py`; load history from
+  `data/raw` archives (Lorcana is in them back to 2024-02-08); add 71 to the nightly per-set
+  fetch and snapshots, then drop it from the collect-only job; download Lorcast card images
+  once and host them ourselves (owner agreed 2026-11-05; Scrydex terms forbid mirroring);
+  Lorcana rarity tiers and printings; Discord summary line. Add `data/lorcana_images/` to
+  `.gitignore` before the first download.
+- [planned] Phase 1: game chosen by host name (Pokemon stays the default and unchanged);
+  Discover, Research by set / franchise (`Property`) / ink, card page, Track; desktop first;
+  footer credit and "not endorsed by Disney or Ravensburger" disclaimer.
+- [planned] Phase 2: Lorcana 100, Chase and Sealed indexes; Sealed Deals after the pack
+  counts in the plan are checked against product pages.
+- [waiting] Phase 3: owner picks brand and domain (subdomain of poke6s.com or a game-neutral
+  domain); avoid a name that starts with the Lorcana trademark.
 
 Parked: Mobile and Admin
 ------------------------
