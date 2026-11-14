@@ -1863,92 +1863,44 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(result["rows"][0][0], 1)
         self.assertEqual(result["rows"][1][0], 2)
 
-    def test_store_link_prefers_visible_direct_sku_listing(self):
-        with patch.object(
-            api,
-            "load_squarespace_listing_by_sku",
-            return_value={"637647": {"sku": "637647", "title": "Prism Energy", "url": "https://www.poke6s.com/shop/p/prism-energy"}},
-        ), patch.object(api, "load_tcgplayer_sku_mapping", return_value={}), patch.object(
-            api, "_store_link_direct_match_allowed", return_value=True
-        ):
-            result = api.store_link(product_id=637647)
+    def _store_db(self, rows):
+        """A throwaway store database with just the columns /store_link reads."""
+        import sqlite3, tempfile
+        folder = tempfile.mkdtemp()
+        path = api.Path(folder) / "store.db"
+        conn = sqlite3.connect(path)
+        conn.execute("CREATE TABLE products (sku TEXT, title TEXT, slug TEXT, tcgplayer_product_ids TEXT,"
+                     " visible INTEGER, track_stock INTEGER, stock INTEGER, price_cents INTEGER)")
+        conn.executemany("INSERT INTO products VALUES (?, ?, ?, ?, ?, ?, ?, ?)", rows)
+        conn.commit()
+        conn.close()
+        return path
 
-        self.assertEqual(
-            result,
-            {
-                "listed": True,
-                "sku": "637647",
-                "title": "Prism Energy",
-                # Squarespace closes 2026-11-14: the button opens the TCGplayer Pro store instead.
-                "url": api.OUR_STORE_URL,
-            },
-        )
+    def test_store_link_points_at_the_store_product_page(self):
+        path = self._store_db([("ENG-DR-ART", "DR art set", "dr-art", "635053|649711", 1, 1, 2, 3499)])
+        with patch.object(api, "STORE_DB", path):
+            result = api.store_link(product_id=649711)
+        self.assertEqual(result, {"listed": True, "sku": "ENG-DR-ART", "title": "DR art set",
+                                  "url": f"{api.OUR_STORE_URL}/p/dr-art"})
 
-    def test_load_squarespace_listing_by_sku_skips_out_of_stock_rows(self):
-        export_path = api.SQUARESPACE_EXPORT_CSV
-        original_text = export_path.read_text() if export_path.exists() else None
-        try:
-            export_path.write_text(
-                "SKU,Visible,Stock,Product Page,Product URL,Title\n"
-                "IN-STOCK,Yes,2,shop,in-stock-item,In Stock Item\n"
-                "UNLIMITED,Yes,Unlimited,shop,unlimited-item,Unlimited Item\n"
-                "OUT-OF-STOCK,Yes,0,shop,out-of-stock-item,Out Of Stock Item\n"
-                "HIDDEN,No,5,shop,hidden-item,Hidden Item\n"
-            )
-            listing = api.load_squarespace_listing_by_sku()
-        finally:
-            if original_text is None:
-                export_path.unlink(missing_ok=True)
-            else:
-                export_path.write_text(original_text)
+    def test_store_link_hides_hidden_sold_out_and_partial_id_matches(self):
+        path = self._store_db([
+            ("HIDDEN", "Hidden", "hidden", "111", 0, 1, 5, 100),
+            ("SOLD-OUT", "Sold out", "sold-out", "222", 1, 1, 0, 100),
+            ("LONGER-ID", "Longer id", "longer", "13333", 1, 1, 5, 100),
+        ])
+        with patch.object(api, "STORE_DB", path):
+            for product_id in (111, 222, 3333):
+                self.assertEqual(api.store_link(product_id=product_id), {"listed": False})
 
-        self.assertIn("IN-STOCK", listing)
-        self.assertIn("UNLIMITED", listing)
-        self.assertNotIn("OUT-OF-STOCK", listing)
-        self.assertNotIn("HIDDEN", listing)
-        self.assertEqual(listing["IN-STOCK"]["url"], "https://www.poke6s.com/shop/p/in-stock-item")
+    def test_store_link_counts_untracked_stock_as_in_stock(self):
+        path = self._store_db([("PREORDER", "Pre-order", "pre", "444", 1, 0, 0, 100)])
+        with patch.object(api, "STORE_DB", path):
+            self.assertTrue(api.store_link(product_id=444)["listed"])
 
-    def test_store_link_can_resolve_mapped_product_listing(self):
-        with patch.object(
-            api,
-            "load_squarespace_listing_by_sku",
-            return_value={"JP-MD-BOX": {"sku": "JP-MD-BOX", "title": "Mega Dream", "url": "https://www.poke6s.com/shop/p/mega-dream"}},
-        ), patch.object(api, "load_tcgplayer_sku_mapping", return_value={"123456": "JP-MD-BOX"}):
-            result = api.store_link(product_id=123456)
-
-        self.assertTrue(result["listed"])
-        self.assertEqual(result["sku"], "JP-MD-BOX")
-        self.assertEqual(result["url"], "https://poke6s.tcgplayerpro.com/")
-
-    def test_load_tcgplayer_sku_mapping_supports_multiple_product_ids_per_sku(self):
-        mapping_path = api.SCRIPT_DIR.parents[1] / "data" / "squarespace_tcgplayer_mapping.csv"
-        original_text = mapping_path.read_text() if mapping_path.exists() else None
-        try:
-            mapping_path.write_text(
-                "sku,tcgplayer_product_id,pricing_mode,min_price,note\n"
-                "ENG-DR-ART,635053|649711,market_minus_5_pct_99,,Art bundle aliases\n"
-            )
-            mapping = api.load_tcgplayer_sku_mapping()
-        finally:
-            if original_text is None:
-                mapping_path.unlink(missing_ok=True)
-            else:
-                mapping_path.write_text(original_text)
-
-        self.assertEqual(mapping["635053"], "ENG-DR-ART")
-        self.assertEqual(mapping["649711"], "ENG-DR-ART")
-
-    def test_store_link_hides_direct_numeric_listing_for_non_card_products(self):
-        with patch.object(
-            api,
-            "load_squarespace_listing_by_sku",
-            return_value={"637647": {"sku": "637647", "title": "Prism Energy", "url": "https://www.poke6s.com/shop/p/prism-energy"}},
-        ), patch.object(api, "load_tcgplayer_sku_mapping", return_value={}), patch.object(
-            api, "_store_link_direct_match_allowed", return_value=False
-        ):
-            result = api.store_link(product_id=637647)
-
-        self.assertEqual(result, {"listed": False})
+    def test_store_link_without_a_store_database_shows_no_button(self):
+        with patch.object(api, "STORE_DB", api.Path("/nonexistent/store.db")):
+            self.assertEqual(api.store_link(product_id=1), {"listed": False})
 
     def test_set_baskets_sql_stays_card_only(self):
         with patch.object(api, "q", return_value=(["groupId"], [])) as q_mock, patch.object(

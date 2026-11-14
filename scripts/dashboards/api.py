@@ -42,6 +42,7 @@ import hashlib
 import json
 import os
 import re
+import sqlite3
 import shutil
 import bisect
 import uuid
@@ -3148,89 +3149,6 @@ def load_current_store_mapping() -> dict[str, dict]:
     return mapping
 
 
-def load_squarespace_listing_by_sku() -> dict[str, dict]:
-    """Load visible in-stock Squarespace listing URLs from the latest export file.
-
-    This powers the dashboard `Poke6s` button, so the function is intentionally strict:
-    only rows that are both visible and currently sellable should produce storefront links.
-    """
-    listing_by_sku: dict[str, dict] = {}
-    if not SQUARESPACE_EXPORT_CSV.exists():
-        return listing_by_sku
-    with SQUARESPACE_EXPORT_CSV.open(newline="") as handle:
-        for row in csv.DictReader(handle):
-            sku = str(row.get("SKU") or "").strip()
-            if not sku:
-                continue
-            visible = str(row.get("Visible") or "").strip().lower() == "yes"
-            stock_raw = str(row.get("Stock") or "").strip()
-            stock_lower = stock_raw.lower()
-            in_stock = False
-            if stock_lower == "unlimited":
-                in_stock = True
-            else:
-                try:
-                    in_stock = float(stock_raw) > 0
-                except (TypeError, ValueError):
-                    in_stock = False
-            slug = str(row.get("Product URL") or "").strip().strip("/")
-            page = str(row.get("Product Page") or "").strip().strip("/")
-            if not visible or not in_stock or not slug:
-                continue
-            if page:
-                url = f"https://www.poke6s.com/{page}/p/{slug}"
-            else:
-                url = f"https://www.poke6s.com/p/{slug}"
-            listing_by_sku[sku] = {
-                "sku": sku,
-                "title": str(row.get("Title") or "").strip(),
-                "url": url,
-            }
-    return listing_by_sku
-
-
-def load_tcgplayer_sku_mapping() -> dict[str, str]:
-    """Load TCGplayer product id -> store SKU mappings for products listed on the site.
-
-    `tcgplayer_product_id` may contain multiple aliases for the same store SKU when
-    TCGplayer has near-duplicate sealed products that should point to one storefront item.
-    """
-    mapping: dict[str, str] = {}
-    squarespace_mapping_path = SCRIPT_DIR.parents[1] / "data" / "squarespace_tcgplayer_mapping.csv"
-    if not squarespace_mapping_path.exists():
-        return mapping
-    with squarespace_mapping_path.open(newline="") as handle:
-        for row in csv.DictReader(handle):
-            product_id_raw = str(row.get("tcgplayer_product_id") or "").strip()
-            sku = str(row.get("sku") or "").strip()
-            if not product_id_raw or not sku:
-                continue
-            product_ids = [token.strip() for token in re.split(r"[|,]", product_id_raw) if token.strip()]
-            for product_id in product_ids:
-                mapping[product_id] = sku
-    return mapping
-
-
-def _store_link_direct_match_allowed(product_id: int, category_id: int) -> bool:
-    """Allow direct SKU==product_id links only for card listings; sealed uses explicit SKU mappings."""
-    category = category_config(category_id)
-    source = product_signal_from(category.category_id)
-    cols, rows = q(
-        f"""
-        SELECT productKind
-        FROM {source}
-        WHERE categoryId = {category.category_id}
-          AND productId = {int(product_id)}
-          AND latest_date = (SELECT MAX(latest_date) FROM {source})
-        LIMIT 1
-        """
-    )
-    if not rows:
-        return False
-    row = dict(zip(cols, rows[0]))
-    return str(row.get("productKind") or "").strip().lower() == "card"
-
-
 def load_latest_market_targets() -> dict[str, dict]:
     """Load the most recent generated pricing targets for SKU-level comparison.
 
@@ -5169,33 +5087,49 @@ def groups(limit: int = 1000, offset: int = 0, category_id: int = 3):
     return {"columns": cols, "rows": rows}
 
 
-# Where the "Our store" button sends buyers. The Squarespace store closes 2026-11-14, so the
-# owner chose (2026-10-31) to sell through the TCGplayer Pro store until the new storefront
-# launches; then this becomes the new store's product page. The Pro site blocks automated
-# requests, so product-level addresses there can't be checked: the button opens the store.
-OUR_STORE_URL = os.getenv("POKE6S_STORE_URL", "https://poke6s.tcgplayerpro.com/")
+# Where the "Our store" button sends buyers: the product's page on our own store, poke6s.com
+# (checkout live since 2026-11-13; before that the button opened the TCGplayer Pro store).
+# Whether we stock a product comes straight from the store's database, which this container
+# sees through the shared data folder. It is opened read-only, and only the products table is
+# read: visible products in stock (or not stock-tracked) whose `tcgplayer_product_ids` list
+# ('|'-separated) holds this TCGplayer product id. No store, no button.
+OUR_STORE_URL = os.getenv("POKE6S_STORE_URL", "https://poke6s.com").rstrip("/")
+STORE_DB = Path(os.getenv("POKE6S_STORE_DB", str(SCRIPT_DIR.parents[1] / "data" / "storefront" / "store.db")))
+
+
+def find_store_listing(product_id: int) -> dict | None:
+    """The store's in-stock listing for a TCGplayer product id: {sku, title, url}, or None."""
+    if not STORE_DB.exists():
+        return None
+    needle = str(int(product_id))
+    try:
+        conn = sqlite3.connect(f"file:{STORE_DB}?mode=ro", uri=True, timeout=2)
+        try:
+            rows = conn.execute(
+                """SELECT sku, title, slug, tcgplayer_product_ids FROM products
+                   WHERE visible = 1 AND (track_stock = 0 OR stock > 0)
+                     AND ('|' || tcgplayer_product_ids || '|') LIKE ?
+                   ORDER BY price_cents""",
+                (f"%|{needle}|%",)).fetchall()
+        finally:
+            conn.close()
+    except sqlite3.Error:
+        return None   # store database busy or being replaced: just no button this time
+    for sku, title, slug, ids in rows:
+        if needle in [part.strip() for part in (ids or "").split("|")]:
+            return {"sku": sku, "title": title, "url": f"{OUR_STORE_URL}/p/{slug}"}
+    return None
 
 
 @app.get("/store_link")
 def store_link(product_id: int, category_id: int = 3):
     """Return the "Our store" link for a product we stock (listed and in stock).
 
-    Whether we stock it still comes from the latest Squarespace export: singles resolve
-    directly when the store SKU equals the TCGplayer product id, sealed products through the
-    Squarespace/TCGplayer mapping file. The link itself is OUR_STORE_URL.
+    category_id is accepted for older pages but not needed: TCGplayer product ids are unique
+    across games, and the store lists them per product.
     """
-    product_id_text = str(int(product_id))
-    listing_by_sku = load_squarespace_listing_by_sku()
-    direct_listing = listing_by_sku.get(product_id_text)
-    if direct_listing is not None and _store_link_direct_match_allowed(product_id, category_id):
-        return {"listed": True, **direct_listing, "url": OUR_STORE_URL}
-
-    mapped_sku = load_tcgplayer_sku_mapping().get(product_id_text, "")
-    mapped_listing = listing_by_sku.get(mapped_sku) if mapped_sku else None
-    if mapped_listing is not None:
-        return {"listed": True, **mapped_listing, "url": OUR_STORE_URL}
-
-    return {"listed": False}
+    listing = find_store_listing(product_id)
+    return {"listed": True, **listing} if listing else {"listed": False}
 
 
 @app.get("/search")

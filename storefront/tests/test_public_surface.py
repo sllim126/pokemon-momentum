@@ -16,6 +16,7 @@ PUBLIC_WRITES = {
     "/cart/quote",       # prices the shopper's cart (reads only)
     "/checkout",         # starts a Stripe checkout
     "/stripe/webhook",   # Stripe's own calls, signature-checked
+    "/unsubscribe/{token}",  # email list opt-out: must work from the email, no sign-in (CAN-SPAM)
 }
 
 

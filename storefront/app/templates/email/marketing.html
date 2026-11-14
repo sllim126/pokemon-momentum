@@ -1,0 +1,73 @@
+{#- Marketing emails to the email list (new stock, sales), HTML part. Built by mailing.py, which
+    also makes the plain-text part and refuses to send without the legal pieces (see its
+    docstring). Same look and the same email-safe rules as order.html: tables, inline styles,
+    a light body, the logo attached as cid:.
+
+    The footer is the legal part; don't remove any of it: why the reader gets this email, the
+    unsubscribe link, the business name and postal address, and how to reach us.
+
+    Variables: message (subject, preheader, heading, paragraphs, button_text, button_url), why,
+    unsubscribe_url, postal_address, contact_email, site_url, logo_cid. -#}
+{%- set navy = "#000a1b" -%}
+{%- set accent = "#1f7ae0" -%}
+{%- set text = "#1b2533" -%}
+{%- set muted = "#5b6b82" -%}
+{%- set line = "#e3e8f0" -%}
+{%- set font = "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" -%}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>{{ message.subject }}</title>
+</head>
+<body style="margin:0; padding:0; background:#eef2f7;">
+{%- if message.preheader %}
+<div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">{{ message.preheader }}</div>
+{%- endif %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef2f7;">
+<tr><td align="center" style="padding:24px 12px;">
+
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
+       style="width:100%; max-width:600px; background:#ffffff; border-radius:12px; overflow:hidden; font-family:{{ font }}; color:{{ text }};">
+
+  <tr><td align="center" style="background:{{ navy }}; padding:22px 24px;">
+    <a href="{{ site_url }}" style="text-decoration:none;"><img src="cid:{{ logo_cid }}" width="180" height="63" alt="Poke6s"
+       style="display:block; border:0; width:180px; height:auto; color:#4da3ff; font-size:28px; font-weight:700;"></a>
+  </td></tr>
+
+  <tr><td style="padding:32px 32px 8px;">
+    {%- if message.heading %}
+    <h1 style="margin:0 0 16px; font-size:24px; line-height:1.3; font-weight:700; color:{{ text }};">{{ message.heading }}</h1>
+    {%- endif %}
+    {%- for paragraph in message.paragraphs %}
+    <p style="margin:0 0 14px; font-size:16px; line-height:1.6; color:{{ text }};">{{ paragraph }}</p>
+    {%- endfor %}
+  </td></tr>
+
+  {%- if message.button_url %}
+  <tr><td align="center" style="padding:12px 32px 28px;">
+    <a href="{{ message.button_url }}" style="display:inline-block; background:{{ accent }}; color:#ffffff; text-decoration:none; font-weight:600; font-size:15px; padding:12px 26px; border-radius:8px;">{{ message.button_text }}</a>
+  </td></tr>
+  {%- endif %}
+
+  <tr><td style="padding:0 32px 28px; font-size:15px; color:{{ muted }};">Poke6s</td></tr>
+
+  {#- The legal footer (CAN-SPAM): reason, unsubscribe, postal address, contact. #}
+  <tr><td style="background:#f6f8fb; border-top:1px solid {{ line }}; padding:20px 32px; font-size:12px; line-height:1.7; color:{{ muted }}; text-align:center;">
+    {{ why }}<br>
+    <a href="{{ unsubscribe_url }}" style="color:{{ accent }}; font-weight:600;">Unsubscribe</a> (one click, no sign-in)<br>
+    Poke6s LLC · {{ postal_address }}<br>
+    Questions? Reply to this email or write to <a href="mailto:{{ contact_email }}" style="color:{{ muted }};">{{ contact_email }}</a><br>
+    <a href="{{ site_url }}/privacy" style="color:{{ muted }};">Privacy</a> ·
+    <a href="{{ site_url }}" style="color:{{ muted }};">poke6s.com</a>
+  </td></tr>
+
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>

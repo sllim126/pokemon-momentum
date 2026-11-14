@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-14 (milestone: lorcana-plan)
+Last updated: 2026-11-14 (milestone: lorcana-phase0)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -31,9 +31,9 @@ Current Focus (2026-11-11)
 - Mobile: the new phone app is live at `/`, `/mobile` and `/m-next` (owner switched it early,
   2026-10-31; plan and remaining stages in `docs/mobile_app_plan.md`). The old phone and research
   dashboards were deleted; tag `backup/before-mobile-cleanup-2026-10-31` holds their last copy.
-- Storefront: our own store is live on https://poke6s.com/ (catalog only, self-hosted through a
-  Cloudflare Tunnel since 2026-11-11; Squarespace plan ends 2026-11-14). Next: switch checkout on
-  (Stripe live), then Phase 3 admin. Plan and log: `docs/storefront_plan.md`; hosting and
+- Storefront: our own store is live on https://poke6s.com/ (self-hosted through a Cloudflare
+  Tunnel since 2026-11-11; checkout live with Stripe since 2026-11-13). Next: point the market
+  site's buy button at it, email the waiting list, then Phase 3 admin. Plan and log: `docs/storefront_plan.md`; hosting and
   recovery: runbook "poke6s.com hosting".
 - Bug reports go to the Discord `#bug-reports` channel. New pages get no on-site bug form.
 - Dates: Pokémon Black Friday on TCGplayer ~Nov 25 - Dec 1; Squarespace plan ends Nov 14;
@@ -44,16 +44,115 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
-- 2026-11-14 Lorcana Phase 0 built (`feature/lorcana-phase0`, not merged yet): category 71, history
+- 2026-11-14 Lorcana Phase 0 built (merged 2026-11-14, milestone lorcana-phase0): category 71, history
   unpacker (7z archives and collect-only tarballs; real `data/extracted/` filled for all 1,008
   stored days), nightly Lorcana pass after Pokemon (no index step), collect-only job without
   Lorcana, Discord line, rarity tiers, Lorcast image downloader (3,369 images, 208 MB, all
   matched by TCGplayer id). Tested on a copy of the database: 1,007 days and 3.8 million rows
   in 4.5 minutes, Pokemon unchanged. Fixed the "tin" rule that called 15 Lorcana cards sealed.
+- 2026-11-14 Marketing emails (owner): one template for future news to the email list
+  (storefront/app/mailing.py, templates/email/marketing.html), sent with `orders_cli mailing`
+  (preview, --test-to, --send). Every email has the reason the reader gets it, a one-click
+  unsubscribe (/unsubscribe/<token> plus List-Unsubscribe headers; migration 004), the postal
+  address (STOREFRONT_POSTAL_ADDRESS; sending refuses without it) and an honest From/Reply-To.
+  Privacy page: the list is for store news, not only the opening. 159 store tests pass.
+- 2026-11-14 market.poke6s.com's "Our store" button opens the product's own poke6s.com page,
+  shown only when it's in stock there (reads data/storefront/store.db read-only; the
+  Squarespace-export loaders are gone).
+- 2026-11-14 Owner: single packs keep the $10 small-sealed shipping rate. No "we're open" email
+  (owner thought nobody had joined; see the [owner] item on the one sign-up).
 - 2026-11-14 Lorcana market plan merged (`docs/lorcana_market_plan.md`, written 2026-11-05):
   research-only Lorcana site, internal first; data on hand, source rules checked (TCGCSV,
   Lorcast, Scrydex, PriceCharting, Ravensburger), rarity tiers, indexes, sealed pack counts,
   phases. Card images: download from Lorcast and host ourselves (owner). No code yet.
+- 2026-11-13 Checkout live on poke6s.com (owner + Claude). Stripe live account activated; live
+  webhook poke6s-store-live; restricted live key (rk_live_: Checkout Sessions write; Charges,
+  PaymentIntents, Events, Tax Registrations read); STOREFRONT_ALLOW_LIVE=1, STOREFRONT_CHECKOUT=1.
+  Utah registration in Stripe Tax active from 2026-11-13 (the dashboard had scheduled it for
+  2027-01-01; recreated through the API with active_from=now). Real order P6-2026-0001 (one
+  DR pack, $9.99 + $10 shipping + $0.74 Utah tax) paid, webhook received, then refunded via
+  webhook; stock put back by hand (refunds don't restock, D8). The order stays as a record.
+- 2026-11-12 Test-mode rehearsal on the live site (owner + Claude): checkout, Stripe Tax (Utah),
+  thanks page, real webhook through the tunnel, stock reserved and sold, confirmation and
+  shipping emails via Graph (fixed a CRLF bug found by it), Discord alert, refund via webhook.
+  All worked. Then checkout switched off, Stripe key commented out again, rehearsal order
+  removed with its stock put back. Order page got a Track package button (9b829fb).
+- 2026-11-12 Store review item 12: order emails go through Microsoft Graph as the app
+  poke6s-store-mail, which Exchange lets send only as the new free shared mailbox
+  orders@poke6s.com (the alias moved off admin@; owner has full access and send-as). Failed
+  sends queue, retry for 24 h and alert Discord; orders_cli resend / test-email. DKIM CNAMEs
+  added in Cloudflare. Test to Gmail: inbox, SPF/DKIM/DMARC pass; sending as admin@ refused.
+- 2026-11-12 Store review item 15: the plan now pins the admin to its own app and LAN-only
+  port, never routed through the tunnel, refusing Cloudflare traffic, signed in; a new test
+  fails if the public app gains /admin pages or write routes beyond the four known (eec16c7).
+- 2026-11-12 Store review item 13: the 4 test orders, their 7 lines and 10 stock records
+  deleted; their test "sales" folded into the Nov 2 inventory adjustments, so stock on hand
+  is unchanged (checked product by product, and stock equals its history). Test emails in
+  the outbox and store.before-phase2-2026-11-05.db deleted. Copy taken first:
+  data/storefront/store.before-testcleanup-2026-11-12.db (delete with the other before-*
+  copies around 2026-11-19). The one email-list sign-up (06:13 UTC) is a visitor: kept.
+- 2026-11-12 Store review items 14 and 16: requirements pinned (requirements.txt,
+  requirements-dev.txt, constraints.txt), base image python:3.12.16-slim-trixie, served
+  image has no test tools (make test-storefront builds the "test" stage); HSTS and
+  Permissions-Policy headers, 32 KB cap on cart/checkout bodies, store data files mode 600
+  (f3c6934). 136 store tests pass.
+- 2026-11-12 Store review item 11: checkout stays off without STRIPE_WEBHOOK_SECRET; the
+  15-minute reconcile also applies the last 3 days of Stripe events (payments, expiries,
+  refunds, disputes), each once, so missed deliveries still land. Checked against Stripe
+  test mode (d3bb39b). 133 store tests pass.
+- 2026-11-12 Store review item 10: one visitor can hold at most 3 unpaid checkouts and 12
+  units at once (on top of 10 attempts an hour); the visitor address follows visitors.py's
+  rule; port 8010 listens on localhost only (LAN can't reach it or fake the header); the
+  per-visitor tables are tidied. 129 store tests pass; deployed (4a3060a), monitoring OK.
+- 2026-11-12 Store review item 9: nightly store backup (storefront/tools/backup_store.py,
+  cron 03:15, job `storefront-backup`) into data/backups/storefront/, 30 days, checked with
+  integrity_check; restore command with a practice mode. Drill done: restored copy matched
+  the live counts and a throwaway store ran on it. Runbook: "Store backups".
+- 2026-11-12 The store backup is also mirrored nightly to the Synology's Backup share
+  (Poke6s folder; encrypted SMB mount at /mnt/synology-backup, owner's account in a
+  root-only credentials file). A restore from that copy was tested.
+- 2026-11-12 market.poke6s.com now follows the home IP by itself: scripts/utilities/
+  update_market_dns.py runs every 5 minutes (cron job `market-dns`, logs/market_dns.log) and
+  moves the Cloudflare `market` A record when the IP changes, with a Discord note. Token:
+  CLOUDFLARE_DNS_API_TOKEN in .env (DNS edit, poke6s.com only, no expiry, no IP filter).
+  Owner chose this over moving market onto the tunnel.
+- 2026-11-12 Store review item 8: the owner set up email two-factor and a passkey on the
+  Cloudflare login.
+- 2026-11-12 Store review item 7: `.env` and `secrets/` are now mode 600/700 (only the owner
+  and root). The market container no longer sees `.env` or `secrets/` (masked in
+  docker-compose.yml) and gets only the three settings its jobs use. The Stripe test key is
+  commented out in `.env` while the store is catalog-only, so the store container holds none.
+  Checked: market 200, store 200, bug import and PriceCharting token lookup still work (aaaf6c5).
+- 2026-11-11 Store review item 6: odd page numbers, non-ASCII order-link tokens and webhook
+  signatures, and non-numeric image widths now get a page or a 404, not a 500 or 422
+  (f182035, deployed, checked live; pushed to GitHub 2026-11-12 once SSH was back).
+- 2026-11-11 Store review item 5 (owner's choice): while checkout is off, "Buy on TCGplayer"
+  opens the product's own TCGplayer page through the owner's affiliate link (disclosed on the
+  page), a "we're rebuilding" note sits under the header, and product pages and /notify take an
+  email for a one-time "we're open" message (notify_signups table, migration 003; Privacy page
+  says what is kept). 52aac12, deployed, checked live.
+- 2026-11-11 Store review item 4: store stock set from the owner's Nov 2 inventory (11 products,
+  undoing the test orders), then packs split as the owner approved: Destined Rivals 2 art sets +
+  10 loose, Perfect Order 3 art sets + 4 loose (new product ENG-PO-PACK, $5.99), Silver Tempest 11
+  loose; one art set of each kept off the store. Recorded as stock_movements 'adjustment'
+  (inventory-2026-11-02, packs-2026-11-11); backups store.before-stock-/before-packs-2026-11-11.db.
+- 2026-11-11 Store review item 3 (owner's choice): catalog mode, so with checkout off product
+  pages show no stock counts and don't tell Google "InStock" (b69231f). New
+  `storefront/tools/reprice.py` (101f5c9) prices at the store's rules (5% under market, .99) and
+  never below break-even from a private costs file; products whose break-even is above market
+  were hidden, then shown again at break-even (owner). Applied: 21 prices changed, all 30 shown (backup:
+  data/storefront/store.before-reprice-2026-11-11.db). Abyss Eye linked to TCGplayer 695112 in
+  the store and in data/squarespace_tcgplayer_mapping.csv (data file, not committed).
+- 2026-11-11 Store review item 2: the Privacy page named Cloudflare Web Analytics, which the site
+  doesn't use. It now describes the store's own visit counting and says traffic passes through
+  Cloudflare (owner approved the wording; 4192166, deployed, checked live).
+- 2026-11-11 Store review item 1: the trailing-slash redirect could send a poke6s.com link to
+  another site. Fixed with a test (fc2fc78), merged to main and deployed; checked live.
+- 2026-11-11 SMART disk health on OMV (owner ran the installer): 12 disks report (11 Seagate
+  Exos X18, 1 SanDisk SSD), all PASSED, no pending, uncorrectable, reallocated or cable errors,
+  35-40 °C. Shown in Home lab: Servers, SMART table.
+- 2026-11-11 Temporary sudo file /etc/sudoers.d/90-claude-buildout removed (owner's request):
+  sudo asks for a password again, so agents can't run sudo steps themselves; the owner runs them.
 - 2026-11-11 Store order alerts go to Discord channel 1569946385548050533: webhook saved in
   `.env` by the owner, store restarted, test alert accepted by Discord.
 - 2026-11-11 Shipping set (owner, plan decision D3): $10 flat for singles, accessories and small
@@ -75,40 +174,6 @@ Recently Completed
   indexed (scripts/monitoring/search_console.py, called by collect_status.py; runbook "Google
   search row"). The owner added poke6s.com to Search Console, submitted the sitemap and created
   the read-only service account.
-- 2026-11-09 Store rules reviewed with the owner, one at a time: the new store ships within 1
-  business day, signature on orders over $150, insurance over $100, lost in transit = replacement
-  or full refund (marked delivered = help with the carrier claim). All seven storefront text
-  pages approved and no longer drafts. The full rules (with margins and store history) moved
-  to the git-ignored `docs/private/store_operations.md`; decisions in `docs/storefront_plan.md`.
-- 2026-11-09 October leftovers reviewed with the owner one item at a time (from the old
-  `chat-history-review` / `codex/kpdh-binder-order` branches). Restored: the desktop owner-only
-  Note tab (now sharing the admin check with the TCGplayer links) and the chat-history scripts
-  (`scripts/utilities/export_codex_history.py`, `import_chatgpt_history.py`, which now takes
-  its source folder as an argument). Store rules and three business ideas moved to the new
-  git-ignored `docs/private/`. Kept ideas are listed under High Priority. Dropped: binder colour
-  notes, ChatGPT re-import, popular-character dip list, gift bundles, supplier price feed,
-  quick-save pills, logo link to the store, Squarespace-only items.
-- 2026-11-09 Branch clean-up: deleted 12 local branches (eight already in main, three October
-  branches contained in `codex/kpdh-binder-order`, and `plan/lorcana-market`, whose plan is
-  newer on `plan/lorcana-plan` and whose monitoring commits are in main) and two clean /tmp
-  worktrees. Then, once its leftovers were reviewed and merged, `codex/kpdh-binder-order` too.
-  Left: `main`, the live `feature/homelab-machines` and `plan/lorcana-plan`.
-- 2026-11-09 Brought back six fixes from the unmerged 2026-10-27 branch (`chat-history-review`),
-  each re-confirmed by the owner one at a time: desktop opens on Consistent Movers (`DEFAULT_LIST`,
-  `/discover` too); 7D chart window (desktop and phone); TCGplayer links preselect Near Mint
-  except reverse holos; a signed-in admin's TCGplayer links skip the affiliate wrapper; the
-  supplier calculator splits the per-order disbursement fee across Boxes in Order; rows without
-  a picture use an 11 KB logo copy (`images/Logo-thumb.png`). The phone's Discover tab starts on Consistent
-  Movers too (owner, same day). Declined: square-padded
-  Squarespace images, price-sync path change (both retire with Squarespace on 2026-11-14), and
-  the calculator's $0 outbound-shipping default and typed-0 handling.
-- 2026-11-09 Grafana: Store dashboard (orders to ship, sales per day, stock, nearly sold out;
-  live orders by default), internet uptime row on Home lab: Network (TCP probes to the router,
-  1.1.1.1 and 8.8.8.8 every 30 s), and a SMART disk-health table on Home lab: Servers.
-- 2026-11-09 ZFS scrubs and disk errors live in Grafana: zfs-status.timer installed on OMV;
-  pool "zfs" (raidz2, 10 disks) all online, no errors; a scrub was running at install.
-- 2026-11-09 PBS backups live in Grafana (token root@pam!Grafana, Audit). The stalest-backup and
-  no-backup tiles now count only current guests, and the table shows each guest's Proxmox name.
 
 High Priority
 -------------
@@ -169,11 +234,19 @@ runbook section "Monitoring".
   2026-11-09 in the private ISI-Knowledge repo (scripts/monitoring/today/); the owner runs its
   install.sh (sudo: Infinity plugin, a 127.0.0.1-only feed service, a cron line). Chat review
   steps: AGENTS.md, "Reviewing past chats".
-- [owner] PBS disk /dev/sdc (WD Blue 6 TB, serial WD-WX21DA5FN43K) is failing: 2,100 pending
-  and 152 uncorrectable sectors (2026-11-09), though SMART still says PASSED. Check which
-  datastore it holds (likely sixTB) and replace it; copy anything worth keeping off first.
-- [waiting] SMART for OMV: the owner runs `deploy/monitoring/smart/install_on_host.sh
-  root@192.168.1.155` (runbook "SMART disk health").
+- [parked] PBS disk /dev/sdc (WD Blue 6 TB, serial WD-WX21DA5FN43K) is failing: 2,100 pending
+  and 152 uncorrectable sectors (2026-11-09; unchanged 2026-11-10). Owner, 2026-11-11: known and
+  ignored on purpose. Its pool isn't used and holds nothing needed; backups and other machines
+  are not at risk. It just hasn't been pulled yet. Its red row in Grafana's SMART table is expected.
+- [owner] Updates, checked 2026-11-14: PBS (.72) 205 waiting (about 58 from Debian security,
+  52 from Proxmox); Slowheim (.187) 47; OMV 0; this host 0 (2 held back: VS Code, Tailscale) but
+  it needs a reboot: it runs kernel 5.15.0-143 while 6.8.0-149 and a new libc6 are installed.
+  Rebooting this host stops the sites, the store and Grafana for a few minutes. The Proxmox
+  nodes are unknown: the read-only token can't list updates (Proxmox wants Sys.Modify for that;
+  don't grant it). Check them in the Proxmox UI (node > Updates).
+- [idea] An "Updates" table on Home lab: Servers, one row per machine (updates waiting, security
+  updates, reboot needed). The data is already collected for PBS, OMV and this host, and
+  Slowheim's own Prometheus has it. The Proxmox nodes need node-exporter first (see below).
 - [idea] SMART for the three Proxmox nodes: they don't run node-exporter yet. Install it
   (apt), add them to nodes.yml, then run the SMART installer on each.
 - [idea] Internet speed test once a day (one small container), if wanted.
@@ -188,8 +261,6 @@ runbook section "Monitoring".
   2026-11-05) makes the Home lab dashboards vanish until switched back. Consider having
   install.sh copy the JSON to /var/lib/grafana/dashboards/ instead, as the private ISI
   dashboards already do.
-- [next] Owner: remove the temporary sudo file now that the build-out is merged:
-  `sudo rm /etc/sudoers.d/90-claude-buildout` (the Overview's "Temporary sudo" tile turns green).
 - [waiting] Owner: two UniFi access points are offline (2026-11-05): Garage/patio U6-Lite
   (192.168.1.10) and Living room U6-Lite (192.168.1.14). This is UniFi's Wi-Fi "warning". The
   VPN area shows "error" (no VPN server running?). Expected, or worth a look?
@@ -224,16 +295,87 @@ runbook section "Monitoring".
   `squarespace-price-sync` from JOBS in scripts/monitoring/collect_status.py and the probe of
   https://poke6s.com/ changes meaning (it becomes the new store once launched).
 
+Store review 2026-11-11 (for the owner to go through tonight). Whole storefront, public and
+backend; market site not included. How to reproduce each one: docs/private/security_review_2026-11-11.md
+(git-ignored, because this repo is public). Same numbers in both.
+
+Live now:
+- [done 2026-11-11] 1. Unsafe redirect fixed (see Recently Completed).
+- [done 2026-11-11] 2. Privacy page corrected (see Recently Completed).
+- [done 2026-11-11] 3. Catalog mode and repricing (see Recently Completed). Follow-ups:
+  - [planned] Run `storefront/tools/reprice.py --apply` nightly (no --hide-above-market) after the
+    03:00 market reference job, so prices follow the market (needs a crontab line; the costs
+    file path is the owner's). Until then, run it by hand now and then.
+  - [owner] Check three cost matches marked "check" in the private costs file (Destined Rivals
+    pack and 4-pack art set, Poke Ball Tin H24), and add costs for anything newly listed;
+    products without a cost are never repriced.
+  - Owner (2026-11-11): listing above market is fine as long as no sale loses money, so the five
+    products first hidden (three booster boxes, Greninja ex Premium Collection, Abyss Eye) are
+    shown again at break-even. Don't use --hide-above-market by default.
+- [done 2026-11-11] 4. Stock set from the owner's Nov 2 inventory (see Recently Completed).
+  Still open:
+  - [owner] 18 in-stock products are hidden (hidden on Squarespace: ETBs, Pokemon Center ETBs,
+    Costco 2-packs, premium collections, tins...). Say which to show; each needs a cost row in
+    the private costs file before reprice.py will price it.
+  - [idea] Not on the store at all: Prismatic Evolutions bundle (1), Treasure chest tin (1).
+  - Packs kept off the store on purpose (owner keeps one complete art set of each): Phantasmal
+    Flames, Mega Evolution, Journey Together, Pitch Black, Chaos Rising (4 each), plus one
+    Destined Rivals and one Perfect Order set. Silver Tempest packs aren't an art set; all loose.
+  - ENG-PO-PACK was added by hand (source 'manual:2026-11-11'), with a price rule added to
+    data/store_price_rules.csv (data file, not committed). Re-running the Squarespace importer
+    would not know it.
+- [done 2026-11-11] 5. "Buy on TCGplayer" now opens the product's TCGplayer page through the
+  affiliate link, plus a "we're rebuilding" note and an "email me when we open" list (see
+  Recently Completed). Follow-ups:
+  - [done 2026-11-14] Checkout opened; the note and form went away on their own. The "we're
+    open" email wasn't sent (see the [owner] item on the one sign-up).
+  - [done 2026-11-14] Unsubscribe links and the postal address are in every marketing email
+    (storefront/app/mailing.py).
+- [done 2026-11-11] 6. Odd addresses no longer cause 500 errors (see Recently Completed).
+- [done 2026-11-12] 7. Credentials tightened (see Recently Completed). Still open for the
+  owner: delete the spare tunnel token copy in poke6s-books.
+- [done 2026-11-12] 8. Cloudflare account: email two-factor and a passkey set up by the owner.
+
+Required before checkout goes live:
+- [done 2026-11-12] 9. Store backup and tested restore, mirrored nightly to the Synology
+  (see Recently Completed).
+- [next] Owner: change the PlexVault (192.168.1.155) password, which sits in plain text in
+  /etc/fstab (seen 2026-11-12); then move it into a root-only credentials file like
+  /etc/samba/synology-backup.cred.
+- [done 2026-11-12] 10. Checkout hold cap per visitor (see Recently Completed).
+- [done 2026-11-12] 11. Stripe webhook required, missed events caught up (see Recently
+  Completed). When checkout opens: owner adds the webhook endpoint in Stripe and puts its
+  signing secret in .env (steps: storefront/README.md, "Checkout").
+- [done 2026-11-12] 12. Order emails through Microsoft Graph from orders@poke6s.com, with
+  retry, alerts, resend and DKIM (see Recently Completed). Entra client secret expires
+  2028-11: renew it before then (Entra > App registrations > poke6s-store-mail).
+- [idea] Tighten DMARC from p=none to p=quarantine once a few weeks of mail all pass.
+- [planned] Order emails in dark mode (owner, 2026-11-12: "the logo appears off"). The logo PNG
+  has its own navy background (#000a1b) matching the email header; dark-mode mail apps recolour
+  the header but not the image, so it shows as a box. Options: a transparent logo with a light
+  outline, or a deliberate rounded "badge"; plus color-scheme meta tags for Apple Mail. Ask the
+  owner which app showed it (screenshot) before changing storefront/app/templates/email/order.html.
+- [idea] Live parcel tracking on the order page (owner, 2026-11-12): show the carrier's latest
+  status ("In transit, Salt Lake City") instead of only linking out. USPS, UPS and FedEx each
+  have a free developer API (USPS: developers.usps.com, OAuth client; UPS and FedEx: developer
+  accounts with keys), so it's three integrations, keys in .env, and a cache so pages don't call
+  the carriers on every view. Worth it once there's order volume. Today the email and order
+  page link to the carrier's own tracking page.
+- [idea] Contact address stays admin@poke6s.com (owner, 2026-11-12: help@ or admin@ both fine).
+  To switch to help@: add it as an alias in Microsoft 365, set STOREFRONT_CONTACT_EMAIL.
+- [done 2026-11-12] 13. Test data removed (see Recently Completed). After the test-mode
+  rehearsal, remove its orders the same way; a rehearsal "sale" should put the stock back
+  (it never left the shelf), unlike the Nov 2 test orders, which the count already covered.
+- [done 2026-11-12] 14. Store packages and base image pinned; test tools only in the test image (see Recently Completed).
+- [done 2026-11-12] 15. Admin placement rule written into the plan ("How it fits together")
+  and guarded by storefront/tests/test_public_surface.py. Applies when Phase 3 starts.
+- [done 2026-11-12] 16. HSTS and Permissions-Policy headers, 32 KB cap on cart/checkout bodies, store.db mode 600 (see Recently Completed).
+
 Own storefront on poke6s.com, replacing Squarespace (owner, 2026-10-31). Plan, costs, phases
 and open decisions: `docs/storefront_plan.md` (progress log at its end). What the Squarespace
 site has today: `docs/storefront_current_site.md`. Our own site, hosted on the owner's server
 behind Cloudflare Tunnel; Stripe hosted Checkout (approved by the owner 2026-10-31). The
 Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
-- [planned] At storefront launch: point the market site's "Our TCGplayer store" button
-  (`OUR_STORE_URL` in scripts/dashboards/api.py, used by /store_link on desktop and phone) at
-  the new store's `/p/<slug>` pages. Since 2026-10-31 it opens the TCGplayer Pro store (owner:
-  sell there until the new store launches, after Black Friday); which products show it still
-  comes from the last Squarespace export, so refresh that rule from the new store's stock then.
 - [next] Check the Budget Builder on 2026-11-06 shows different picks from 2026-11-05 (first day of
   rotation; today's default views were recorded for price date 2026-11-04).
 - [next] Market insights: owner approved and merged to `main` on 2026-11-07; live since
@@ -281,7 +423,7 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     review. Old text for comparison is in the saved site copy. Remove `draft: true` when done.
   - [idea] JP products without a TCGplayer mapping (e.g. JP-AE-BB) show no market price;
     add them to `data/squarespace_tcgplayer_mapping.csv`.
-- [in progress] Phase 2: cart + Stripe Checkout, test mode (Claude, 2026-11-05; guide
+- [done 2026-11-13, live] Phase 2: cart + Stripe Checkout (Claude, 2026-11-05; live since 2026-11-13; guide
   `storefront/README.md` "Checkout"). Built, merged and running on :8010 from the store's own
   clone (`~/poke6s-store`, updated by `deploy/update_storefront.sh`). Tested with a fake Stripe
   and the owner's Stripe sandbox (one paid test order). Sales tax (D2): Stripe Tax, Utah
@@ -291,16 +433,7 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     email was received (sent by hand from admin@poke6s.com, SMTP not set up yet).
   - [planned] `orders_cli ship` says "email sent" even when it only went to the outbox; say
     which. Its order-status link uses STOREFRONT_BASE_URL (localhost until launch).
-  - [planned] STRIPE_WEBHOOK_SECRET: the Tunnel is up since 2026-11-11, so add a Stripe
-    webhook to https://poke6s.com/stripe/webhook when checkout is switched on. Until then the thanks page and the 15-minute
-    reconcile job confirm payments.
-  - [waiting] Owner: Stripe activation (business profile, bank, statement descriptor POKE6S)
-    before live payments, and Tax -> Registrations -> Utah in live mode. Use the new Stripe
-    account, not the Squarespace-managed one.
-  - [next] Order emails through Microsoft Graph, not SMTP (Microsoft turns password SMTP off by
-    default from December 2026, MC786329). Owner: shared mailbox orders@poke6s.com, an Entra
-    app with Mail.Send limited to that mailbox, three values in `.env`. Claude: Graph sender in
-    `storefront/app/notify.py`. Until then emails are files in `data/storefront/outbox/`.
+  - [done 2026-11-12] Order emails through Microsoft Graph from orders@poke6s.com.
   - [planned] Once real orders exist, stop re-running the Squarespace importer (it resets
     stock); the Phase 3 admin takes over stock changes.
 - [next] Phase 3: LAN-only admin (orders, ship with tracking, refunds, stock), exports (Pirate
@@ -308,14 +441,24 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   signature confirmation on every order), backups.
 - [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
   too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
-- [planned] Switch checkout on: Stripe live activation, live keys in .env, STOREFRONT_CHECKOUT=1,
-  STOREFRONT_ALLOW_LIVE=1, webhook, a refunded live test order. Then the market site's buy button.
+- [next] Owner's notes on individual store listings (owner has them, 2026-11-14): go through
+  them one listing at a time.
+- [owner] The email list has one sign-up (a visitor, 2026-11-12 from /notify), not none: send
+  them a short "we're open" email with `orders_cli mailing`, or not. Owner's call.
+- [owner] Before the first marketing email: STOREFRONT_POSTAL_ADDRESS in .env (it's printed in
+  every email; a USPS PO box or private mailbox keeps the home address private), then
+  deploy/update_storefront.sh. `orders_cli mailing` refuses to send without it.
+- [planned] A way to join the email list now: the sign-up form shows only while checkout is
+  off. A small "News and restocks" box in the footer or on /notify? Owner's call.
+- [planned] A restock command for returns (D8: refunds don't put stock back; done by hand in
+  SQL for P6-2026-0001). Belongs in the Phase 3 admin.
 - [planned] Yearly, by 2027-10: bump the cloudflared image tag in docker-compose.yml (2026.10.7
   pinned 2026-11-11; Cloudflare supports a connector version for one year).
 - [planned] Move market.poke6s.com onto the Cloudflare Tunnel too (route to
   http://pokemon-momentum:8001; check the Caddy/visitor-IP path), then close the router port.
-- [planned] After launch: retire `scripts/squarespace_price_sync.py` from cron
-  (`deploy/crontab.txt`) and switch the market site's "Poke6s" buy button to the new store.
+- [planned] Retire the Squarespace-only scripts when the tools in api.py go. The daily price sync
+  stopped 2026-11-11 (owner; removed from cron). Keep the market site's "Our store" button on
+  TCGplayer until checkout is on (owner, 2026-11-11), then point it at the store's product pages.
 
 New mobile app (owner, 2026-10-21). Plan: `docs/mobile_app_plan.md`. The phone site now uses
 `scripts/dashboards/mobile_app.html` at `/`, `/mobile` and `/m-next`, in the desktop app's look,
@@ -413,13 +556,6 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
 - [planned] Move the desktop app's browser checks into the repository. Playwright scripts
   were written during development but only lived in a temporary folder; add them under
   `tests/` with instructions for running them.
-- [waiting] Stop market.poke6s.com going dark when the home IP changes (2026-10-16 it did).
-  Built 2026-11-12: scripts/utilities/update_market_dns.py moves the Cloudflare `market` A
-  record to the current IP every 5 minutes (owner chose this over moving market onto the
-  tunnel; the router port stays open for the other sites on that Caddy anyway). Waiting on
-  the owner: create a Cloudflare API token ("Edit zone DNS" template, poke6s.com only) and add
-  CLOUDFLARE_DNS_API_TOKEN to .env. Then: run it once by hand, and add the deploy/crontab.txt
-  line to the live crontab.
 - [idea] User testing of the desktop app, including touch screens (owner, 2026-10-21). Touch
   laptops get the desktop app (phones and tablets get the mobile page), and several things there
   rely on a mouse: double-click a picture for the full card page (the "Full data" button is the
@@ -518,6 +654,18 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   Next: [planned] automate it before 2026-12-02 (build here, push to qBittorrent with the
   LAN seed step, post the magnet link to Discord); needs libtorrent in a host venv and a
   crontab line the owner adds. Until then, build and add by hand on the 2nd.
+- [planned] TCGCSV product-data torrent (owner, 2026-11-11): binaryalias asked in the TCGCSV
+  Discord for the full product list as a torrent, for people's first download; CptSpaceToaster
+  doesn't keep product data in the archives and said to go ahead. We already hold it: the
+  catalogue crawl (`data/tcgcsv_catalogue/`) is complete, 94 games, 93 set lists, 4,733 product
+  files, 655 MB, fetched 2026-11-02 to 11-04 and refreshed every 30 days. As one `.tar.zst`
+  (zstd -19) it is 33 MB. About an hour: add `--catalogue` to
+  `scripts/torrents/build_archive_torrent.py` (one dated `tcgcsv-products-<date>.tar.zst`,
+  README with fetch dates and layout, SHA256SUMS), seed it the same way as the price torrents,
+  reply in the #useful-shares thread. Then a new snapshot each month next to the monthly price
+  torrent (the crawl's next refresh is ~2026-12-02 to 12-04). README must say it is a starting
+  point (sets added since the snapshot are missing; top up from TCGCSV) and has no prices (those
+  are in the archive torrents). Same promise: take it down if CptSpaceToaster asks.
 - [idea] Help TCGCSV by seeding a torrent of the price archive (owner offered in the TCGCSV
   Discord #development, 2026-10-19; CptSpaceToaster can't torrent and said "hopefully some
   enterprising folks" would). Archive is about 1 GB, all categories, prices only. Before
@@ -802,9 +950,9 @@ Plan: `docs/lorcana_market_plan.md`. Research only (no store or listings), Engli
 until the owner decides on a public address. No new costs: TCGCSV/TCGplayer data and images
 only; Scrydex (paid) and PriceCharting graded are out of scope.
 
-- [waiting] Phase 0 go-live: built and tested on branch `feature/lorcana-phase0` (see Recently
-  Completed). Lorcana starts the first night after the branch is merged and
-  `/opt/pokemon-momentum` is on `main` (it was on `feature/homelab-machines` on 2026-11-14).
+- [waiting] Phase 0 go-live: merged to `main` 2026-11-14 (see Recently Completed). Lorcana
+  starts the first night `/opt/pokemon-momentum` runs code that includes it (on 2026-11-14 that
+  folder was on `feature/homelab-machines`, another session's branch, which doesn't yet).
   Watch that night's Discord summary for the Lorcana line; the run is about 4 minutes longer.
   If the code was off for a while first, run `extract_category_from_archives.py --category-id 71`
   to fill the gap from the collect-only tarballs (runbook "Lorcana market").
@@ -893,6 +1041,19 @@ Future Ideas
   planned card scanning; how it tracks a collection (we have saved lists only); master-set
   tracking (see the master set guide idea below); where its prices come from and how it
   explains trends. Note what's worth borrowing, and send the maker honest feedback.
+
+- [idea] One Poke6s account for the whole site (owner, 2026-11-11): the store on poke6s.com and
+  the market site on market.poke6s.com share one sign-in, so a customer keeps their cart, saved
+  lists, targets and order history across devices and both sites. The market site already has
+  Google sign-in (`/account-settings`: synced lists, saved views, account deletion); the store
+  has none (guest checkout, cart in the browser; docs/storefront_plan.md lists accounts as "Not
+  planned", so this reverses that if agreed). To decide: one shared account service vs the
+  store trusting the market site's sign-in (a cookie on .poke6s.com, or a sign-in hand-off);
+  sign-in methods (Google only, or an email link too); keep guest checkout either way. When
+  built, update the store's Privacy page in the same change: a necessary sign-in cookie (so
+  "no tracking cookies" needs a line), what an account keeps (email, saved cart, addresses,
+  orders, lists), how to delete it and what stays for tax records, and Google as a sign-in
+  provider. The market site's own privacy wording needs the same review.
 
 Learn and collector tools (owner, 2026-10-23; "nothing tonight"):
 
