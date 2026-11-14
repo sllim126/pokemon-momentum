@@ -44,6 +44,11 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-14 Lorcana mode in the desktop app (branch `feature/lorcana-phase1`; owner chose an
+  admin-only switch): third market button for admins, Pokemon-only views left out, our Lorcast
+  images (`/lorcana/images.json` lists which exist), Disney/Ravensburger footer. Checked on a
+  throwaway copy at 1920x1080 and 1366x768: no console errors, no page scroll; English unchanged.
+  Also fixed: `.btn[hidden]` (the "Our TCGplayer store" button showed on every card, live bug).
 - 2026-11-14 Lorcana Phase 1 data (branch `feature/lorcana-phase1`): `lorcana_card_attributes`
   (film, ink(s), card type, classifications, promo type, cost, lore, strength, willpower, rarity
   tier; 3,657 cards from local files, no extra TCGCSV requests), built nightly after the product
@@ -963,6 +968,10 @@ only; Scrydex (paid) and PriceCharting graded are out of scope.
   Watch that night's Discord summary for the Lorcana line; the run is about 4 minutes longer.
   If the code was off for a while first, run `extract_category_from_archives.py --category-id 71`
   to fill the gap from the collect-only tarballs (runbook "Lorcana market").
+- [planned] Phase 1: film and ink filters in Lorcana mode (Research by film / ink, list filters),
+  reading `lorcana_card_attributes`; Lorcana rarity filters in a set's card list (the set
+  filter menu offers Pokemon rarities today, so it's hidden for nothing yet: check it).
+- [planned] Phase 1: Lorcana mode in the phone app (`mobile_app.html`), after the desktop.
 - [planned] Phase 1: a weekly `fetch_lorcast_images.py` run for new sets (only missing images are
   fetched; card lists cached 7 days). Until then, run it by hand after a set releases.
 - [planned] Phase 1: game chosen by host name (Pokemon stays the default and unchanged);

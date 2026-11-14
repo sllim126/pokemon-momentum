@@ -134,6 +134,14 @@ on the app is reachable at market.poke6s.com. A gate in `api.py` (`INTERNAL_CATE
 also answers 404 to any `?category_id=71` request from someone who isn't a signed-in admin, so
 the public market-data routes don't show Lorcana either. Publishing (Phase 3) means taking 71
 out of that set.
+
+Pages built 2026-11-14 (owner chose an admin-only switch over a separate page): the desktop
+app has a third market button, "Lorcana", for a signed-in admin. It reuses Discover (all the
+mover and dip lists), Research → Sets, the card page (chart, 6-Month Hold, Targets, Stats) and
+the saved lists, with our Lorcast images. Left out for Lorcana: Sealed Deals, budget builders,
+the Pokemon search, Market Stats and the Graded tab. Details: `docs/desktop_app.md`, "Rules
+worth knowing". Not yet: film and ink filters (the data is in `lorcana_card_attributes`), the
+phone app, and Lorcana text in Learn.
 - The game is chosen by host name, or by a `game` setting for LAN testing, rather than
   separate copies of each page. Pokemon stays the default, and `market.poke6s.com` must
   stay exactly as it is.

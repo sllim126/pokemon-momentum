@@ -123,4 +123,5 @@ The public routes below are public for Pokemon (3 and 85) only until a game is p
 | `POST /single-listings/intake-upload`, `/single-listings/source-upload`, `/single-listings/draft-upload` | admin | Singles workflow uploads |
 | `POST /supplier-pricing/enrich`, `POST /supplier-pricing/save` | admin | Match OCR-read supplier rows to SKUs and market prices; save reviewed quotes |
 | `POST /supplier-profitability/data`, `GET /supplier-profitability/fx` | admin | Profit rows per SKU; latest JPY-per-USD rate |
+| `/lorcana/images.json` | admin | `{ids: [...]}`: the productIds that have a Lorcana image, so the desktop app only asks for images that exist |
 | `/lorcana/images/{product_id}.avif` | admin | Lorcana card image downloaded from Lorcast (`data/lorcana_images/large/`); 404 when there is none, so pages use TCGplayer's image. Admin-only while Lorcana is internal (`docs/lorcana_market_plan.md`) |

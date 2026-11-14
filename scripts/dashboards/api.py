@@ -1264,6 +1264,18 @@ LORCANA_IMAGE_DIR = SCRIPT_DIR.parents[1] / "data" / "lorcana_images" / "large"
 LORCANA_IMAGE_CACHE_SECONDS = 7 * 24 * 3600
 
 
+@app.get("/lorcana/images.json")
+def lorcana_card_image_ids(
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    """The productIds that have a Lorcana image, so pages only ask for images that exist
+    (a 404 per missing card would show as a console error). Admin-only like the images."""
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    ids = sorted(int(p.stem) for p in LORCANA_IMAGE_DIR.glob("*.avif") if p.stem.isdigit()) if LORCANA_IMAGE_DIR.is_dir() else []
+    return JSONResponse({"ids": ids}, headers={"Cache-Control": "private, max-age=3600"})
+
+
 @app.get("/lorcana/images/{product_id}.avif")
 def lorcana_card_image(
     product_id: int,

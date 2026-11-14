@@ -254,6 +254,17 @@ class LorcanaImageRouteTests(unittest.TestCase):
         self.assertEqual(missing.status_code, 404)
         self.assertIn(not_a_number.status_code, (404, 422))
 
+    def test_image_list_is_admin_only_and_lists_ids(self):
+        from unittest.mock import patch
+        self.assertEqual(self.client.get("/lorcana/images.json").status_code, 401)
+        with tempfile.TemporaryDirectory() as tmp:
+            for name in ("20.avif", "3.avif", "x.avif", "5.avif.part"):
+                (Path(tmp) / name).write_bytes(b"")
+            with patch.object(self.api, "require_admin_user", new=lambda **_: None), \
+                    patch.object(self.api, "LORCANA_IMAGE_DIR", Path(tmp)):
+                response = self.client.get("/lorcana/images.json")
+        self.assertEqual(response.json(), {"ids": [3, 20]})
+
 
 class InternalCategoryGateTests(unittest.TestCase):
     """Lorcana market data stays hidden from the public until the owner publishes it."""
