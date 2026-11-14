@@ -398,8 +398,11 @@ def servers():
               description="Above 1 means more work than cores.")),
         ("Memory used", MEM_USED, dict(unit="percent", decimals=0, thresholds=steps("green", (85, "orange"), (95, "red")))),
         ("Disk used (/)", ROOT_DISK_USED, dict(unit="percent", decimals=0, thresholds=steps("green", (80, "orange"), (90, "red")))),
-        ("Updates waiting", "sum(apt_upgrades_pending) or vector(0)", dict(thresholds=steps("green", (1, "orange")))),
-        ("Reboot needed", "max(node_reboot_required) or vector(0)",
+        # localhost only: the other machines' apt metrics (PBS, OMV) arrive through the same
+        # Prometheus, and an unfiltered sum showed their updates as this host's.
+        ("Updates waiting", 'sum(apt_upgrades_pending{instance="localhost:9100"}) or vector(0)',
+         dict(thresholds=steps("green", (1, "orange")))),
+        ("Reboot needed", 'max(node_reboot_required{instance="localhost:9100"}) or vector(0)',
          dict(mappings=value_map({1: ("YES", "orange"), 0: ("No", "green")}), thresholds=steps("green", (1, "orange")))),
         # Only disks that really report SMART: this host is a Proxmox VM, and its virtual
         # disk (QEMU HARDDISK) has none, yet the SMART script still writes healthy=0 for it.

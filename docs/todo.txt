@@ -244,6 +244,15 @@ runbook section "Monitoring".
   and 152 uncorrectable sectors (2026-11-09; unchanged 2026-11-10). Owner, 2026-11-11: known and
   ignored on purpose. Its pool isn't used and holds nothing needed; backups and other machines
   are not at risk. It just hasn't been pulled yet. Its red row in Grafana's SMART table is expected.
+- [owner] Updates, checked 2026-11-14: PBS (.72) 205 waiting (about 58 from Debian security,
+  52 from Proxmox); Slowheim (.187) 47; OMV 0; this host 0 (2 held back: VS Code, Tailscale) but
+  it needs a reboot: it runs kernel 5.15.0-143 while 6.8.0-149 and a new libc6 are installed.
+  Rebooting this host stops the sites, the store and Grafana for a few minutes. The Proxmox
+  nodes are unknown: the read-only token can't list updates (Proxmox wants Sys.Modify for that;
+  don't grant it). Check them in the Proxmox UI (node > Updates).
+- [idea] An "Updates" table on Home lab: Servers, one row per machine (updates waiting, security
+  updates, reboot needed). The data is already collected for PBS, OMV and this host, and
+  Slowheim's own Prometheus has it. The Proxmox nodes need node-exporter first (see below).
 - [idea] SMART for the three Proxmox nodes: they don't run node-exporter yet. Install it
   (apt), add them to nodes.yml, then run the SMART installer on each.
 - [idea] Internet speed test once a day (one small container), if wanted.
