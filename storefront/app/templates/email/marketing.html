@@ -6,8 +6,13 @@
     The footer is the legal part; don't remove any of it: why the reader gets this email, the
     unsubscribe link, the business name and postal address, and how to reach us.
 
+    Product cards: two per row (a table, so it holds in Outlook); each card links to the product
+    and shows its photo (attached JPEG, cid:), title and price. Phones that honour <style> get one
+    card per row; the rest keep two narrow ones, which still read fine.
+
     Variables: message (subject, preheader, heading, paragraphs, button_text, button_url), why,
-    unsubscribe_url, postal_address, contact_email, site_url, logo_cid. -#}
+    unsubscribe_url, postal_address, contact_email, site_url, logo_cid, cards (sku, title,
+    price_cents, url, cid). -#}
 {%- set navy = "#000a1b" -%}
 {%- set accent = "#1f7ae0" -%}
 {%- set text = "#1b2533" -%}
@@ -21,6 +26,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <meta name="supported-color-schemes" content="light">
+<style>
+  @media (max-width: 480px) {
+    .card-cell { display: block !important; width: 100% !important; padding: 0 0 16px !important; }
+  }
+</style>
 <title>{{ message.subject }}</title>
 </head>
 <body style="margin:0; padding:0; background:#eef2f7;">
@@ -46,6 +56,37 @@
     <p style="margin:0 0 14px; font-size:16px; line-height:1.6; color:{{ text }};">{{ paragraph }}</p>
     {%- endfor %}
   </td></tr>
+
+  {%- if cards %}
+  <tr><td style="padding:8px 24px 8px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      {%- for row in cards | batch(2) %}
+      <tr>
+        {%- for card in row %}
+        <td class="card-cell" width="50%" valign="top" style="padding:0 8px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid {{ line }}; border-radius:10px;">
+            <tr><td align="center" style="padding:14px 14px 6px;">
+              {%- if card.cid %}
+              <a href="{{ card.url }}"><img src="cid:{{ card.cid }}" width="200" alt="{{ card.title }}"
+                 style="display:block; border:0; width:100%; max-width:200px; height:auto;"></a>
+              {%- endif %}
+            </td></tr>
+            <tr><td style="padding:6px 14px 0; font-size:14px; line-height:1.4; font-weight:600;">
+              <a href="{{ card.url }}" style="color:{{ text }}; text-decoration:none;">{{ card.title }}</a>
+            </td></tr>
+            <tr><td style="padding:6px 14px 14px; font-size:15px;">
+              <strong>{{ card.price_cents | money }}</strong>
+              &nbsp;<a href="{{ card.url }}" style="color:{{ accent }}; text-decoration:none; font-weight:600; font-size:14px;">View&nbsp;›</a>
+            </td></tr>
+          </table>
+        </td>
+        {%- endfor %}
+        {%- if row | length < 2 %}<td class="card-cell" width="50%" style="padding:0 8px;"></td>{% endif %}
+      </tr>
+      {%- endfor %}
+    </table>
+  </td></tr>
+  {%- endif %}
 
   {%- if message.button_url %}
   <tr><td align="center" style="padding:12px 32px 28px;">

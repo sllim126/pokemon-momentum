@@ -197,11 +197,13 @@ def retry_queued(settings: Settings) -> dict[str, int]:
 
 
 def send_email(settings: Settings, to: str, subject: str, body: str, html: str = "",
-               logo_cid: str = "", ref: str = "", headers: dict[str, str] | None = None) -> bool:
+               logo_cid: str = "", ref: str = "", headers: dict[str, str] | None = None,
+               related: list[tuple[str, bytes, str]] | None = None) -> bool:
     """Send (or, without email set up, save to the outbox) one email. With html, the message
     is multipart: plain text first, then HTML; logo_cid attaches the logo for <img src="cid:...">.
     `ref` (the order number) names it in alerts. `headers` adds more (marketing emails add
-    Reply-To and List-Unsubscribe). Returns True if it was handed over or saved; False means it
+    Reply-To and List-Unsubscribe); `related` attaches pictures for the HTML part as
+    (content ID, bytes, image subtype), for <img src="cid:...">. Returns True if it was handed over or saved; False means it
     failed and was queued for retry."""
     if not to:
         return True
@@ -218,6 +220,9 @@ def send_email(settings: Settings, to: str, subject: str, body: str, html: str =
         if logo_cid and LOGO.exists():
             message.get_payload()[1].add_related(LOGO.read_bytes(), "image", "png", cid=f"<{logo_cid}>",
                                                  filename="poke6s.png")
+        for number, (cid, data, subtype) in enumerate(related or [], start=1):
+            message.get_payload()[1].add_related(data, "image", subtype, cid=f"<{cid}>",
+                                                 filename=f"picture-{number}.{'jpg' if subtype == 'jpeg' else subtype}")
     if settings.email_transport == "outbox":
         settings.outbox_dir.mkdir(parents=True, exist_ok=True)
         stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S%f")

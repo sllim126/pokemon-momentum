@@ -330,7 +330,8 @@ stock by hand until the Phase 3 admin.
 
 ## Marketing emails
 
-For news to the email list (new stock, restocks, sales); owner's request 2026-11-14. Rules and
+For the few notifications to the email list (we're open, new stock, back in stock; owner,
+2026-11-14: "basic notifications", not promo mail). Rules and
 message format: `app/mailing.py` (module docstring). In short, every message gets an honest
 From and Reply-To, the reason the reader gets it, a one-click unsubscribe link (also as the
 List-Unsubscribe headers Gmail and Yahoo ask for), and the business's postal address.
@@ -344,14 +345,20 @@ List-Unsubscribe headers Gmail and Yahoo ask for), and the business's postal add
    Subject: Fresh stock this week
    Preheader: Six ETBs in, shipped from Utah.
    Button: Shop now | https://poke6s.com/shop
+   Products: EN-AH-ETB, ENG-PO-BOX
 
    # Fresh stock is in
 
    Ascended Heroes ETBs are back. Blank lines separate paragraphs.
    ```
 
+   `Products` (optional, up to 6 SKUs) adds a card per product after the text: photo, title,
+   price and a link, read from the store when the email is built. A SKU that is unknown,
+   hidden or sold out stops the send, so an email never offers something you can't buy.
+
 3. Check it: `docker-compose exec storefront python -m storefront.app.orders_cli mailing /app/data/storefront/mailings/news.txt`
-   (writes `news.preview.html` and `.txt` beside it and says how many people would get it).
+   (writes `news.preview.html`, its pictures and a `.txt` beside it, and says how many people
+   would get it; open the `.html` in a browser).
 4. `--test-to you@example.com` sends you one copy; `--send` sends it to everyone still
    subscribed (about 24 a minute, under Microsoft's limit; Discord gets a summary).
 

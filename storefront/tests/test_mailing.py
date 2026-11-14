@@ -4,6 +4,7 @@ refuses without them, and unsubscribing works from the email with no sign-in."""
 from __future__ import annotations
 
 import dataclasses
+import sqlite3
 from email import message_from_bytes, policy
 
 import pytest
@@ -143,3 +144,61 @@ def test_cli_send_refuses_without_email_sending(ready, tmp_path, monkeypatch, ca
 def test_privacy_page_matches(client):
     html = client.get("/privacy").text
     assert "unsubscribe" in html.lower()
+
+
+# --- product cards -------------------------------------------------------------------------
+
+def add_photo(settings, sku: str) -> None:
+    """Give a product a (transparent, to test the white fill) photo, as the importer would."""
+    from PIL import Image
+
+    folder = settings.images_dir / "480"
+    folder.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (480, 600), (200, 30, 30, 0)).save(folder / "photo-test.webp", "WEBP")
+    with sqlite3.connect(settings.db_path) as conn:
+        conn.execute("INSERT INTO product_images (product_id, file_name, original_ext) "
+                     "SELECT id, 'photo-test', 'png' FROM products WHERE sku = ?", (sku,))
+
+
+def test_products_line_and_store_checks(ready):
+    message = mailing.parse_message(MESSAGE.replace("Button:", "Products: ENG-BB-BB, JP-BB-BOX, NOPE, ENG-G25-TIN\nButton:"))
+    assert message.skus == ["ENG-BB-BB", "JP-BB-BOX", "NOPE", "ENG-G25-TIN"]
+    with sqlite3.connect(ready.db_path) as conn:
+        conn.execute("UPDATE products SET stock = 0 WHERE sku = 'ENG-G25-TIN'")
+    conn = connect(ready.db_path)
+    cards, found = mailing.load_products(ready, conn, message.skus)
+    assert [c["sku"] for c in cards] == ["ENG-BB-BB"]
+    assert cards[0]["url"].startswith("https://poke6s.com/p/") and cards[0]["image"] is None
+    assert any("JP-BB-BOX is hidden" in p for p in found)
+    assert any("no product with SKU NOPE" in p for p in found)
+    assert any("ENG-G25-TIN is sold out" in p for p in found)
+    assert len(mailing.problems(ready, message, sending=False, conn=conn)) == 3
+
+
+def test_cards_show_in_both_parts_with_attached_photos(ready):
+    add_photo(ready, "ENG-BB-BB")
+    message = mailing.parse_message(MESSAGE.replace("Button:", "Products: ENG-BB-BB, JP-AE-BB\nButton:"))
+    conn = join(ready, "a@example.com")
+    cards, found = mailing.load_products(ready, conn, message.skus)
+    assert not found and cards[0]["image"][:3] == b"\xff\xd8\xff"   # a JPEG
+    mailing.send_one(ready, message, "a@example.com", notify_list.token_for(conn, "a@example.com"), "", cards)
+    email = sent(ready)[0]
+    html = email.get_body(preferencelist=("html",)).get_content()
+    text = email.get_body(preferencelist=("plain",)).get_content()
+    for card in cards:
+        assert card["url"] in html and card["url"] in text
+    pictures = [part for part in email.walk() if part.get_content_maintype() == "image"]
+    assert sorted(p.get_content_subtype() for p in pictures) == ["jpeg", "png"]   # one photo + the logo
+    photo = next(p for p in pictures if p.get_content_subtype() == "jpeg")
+    assert f"cid:{photo['Content-ID'].strip('<>')}" in html
+
+
+def test_preview_shows_the_photos_from_files(ready, tmp_path, monkeypatch):
+    monkeypatch.setattr(orders_cli, "load_settings", lambda: ready)
+    add_photo(ready, "ENG-BB-BB")
+    path = tmp_path / "news.txt"
+    path.write_text(MESSAGE.replace("Button:", "Products: ENG-BB-BB\nButton:"), encoding="utf-8")
+    assert orders_cli.main(["mailing", str(path)]) == 0
+    html = (tmp_path / "news.preview.html").read_text(encoding="utf-8")
+    assert "cid:" not in html and "news.preview-files/picture-2.jpg" in html
+    assert (tmp_path / "news.preview-files" / "picture-2.jpg").exists()
