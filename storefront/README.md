@@ -220,16 +220,48 @@ restock (returns are inspected first). **Careful:** re-running the Squarespace i
 stock to the export's numbers, which would undo sales made here. Once real orders exist, change
 stock by hand until the Phase 3 admin.
 
+## Marketing emails
+
+For news to the email list (new stock, restocks, sales); owner's request 2026-11-14. Rules and
+message format: `app/mailing.py` (module docstring). In short, every message gets an honest
+From and Reply-To, the reason the reader gets it, a one-click unsubscribe link (also as the
+List-Unsubscribe headers Gmail and Yahoo ask for), and the business's postal address.
+
+1. Once: put the postal address in `.env` as `STOREFRONT_POSTAL_ADDRESS="..."` (a street address,
+   USPS PO box or private mailbox; it is printed in every email, so a PO box keeps a home address
+   private), then `deploy/update_storefront.sh`.
+2. Write the message in a text file under `data/storefront/mailings/` (not committed):
+
+   ```
+   Subject: Fresh stock this week
+   Preheader: Six ETBs in, shipped from Utah.
+   Button: Shop now | https://poke6s.com/shop
+
+   # Fresh stock is in
+
+   Ascended Heroes ETBs are back. Blank lines separate paragraphs.
+   ```
+
+3. Check it: `docker-compose exec storefront python -m storefront.app.orders_cli mailing /app/data/storefront/mailings/news.txt`
+   (writes `news.preview.html` and `.txt` beside it and says how many people would get it).
+4. `--test-to you@example.com` sends you one copy; `--send` sends it to everyone still
+   subscribed (about 24 a minute, under Microsoft's limit; Discord gets a summary).
+
+Only people who typed their address into the site's form are on the list. Never add customers
+or anyone else by hand: the email would then have to say it's an advertisement, and it doesn't.
+The subject must describe the email truthfully.
+
 ## Code map
 
 | File | What it does |
 |---|---|
-| `app/notify_list.py` | The "email me when the store opens" list (POST /notify) |
+| `app/notify_list.py` | The email list: sign-up (POST /notify), unsubscribe tokens, who is still subscribed |
+| `app/mailing.py` | Marketing emails to the list, with the legal parts (see "Marketing emails"); HTML in `templates/email/marketing.html` |
 | `app/main.py` | FastAPI app: routes, 404 + redirect handling, security headers, reconcile loop |
 | `app/orders.py` | Cart pricing, checkout, reservations, payment, expiry, refunds, disputes, shipping |
 | `app/stripe_api.py` | The Stripe calls (Checkout Sessions) over HTTPS; webhook signature check |
 | `app/notify.py` | Discord order alerts; order and shipping emails (Microsoft Graph, SMTP or the outbox folder; retry queue; HTML in `templates/email/order.html`) |
-| `app/orders_cli.py` | `list`, `show`, `ship`, `reconcile` from the command line |
+| `app/orders_cli.py` | `list`, `show`, `ship`, `reconcile`, `resend`, `test-email`, `mailing` from the command line |
 | `app/catalog.py` | Read-only queries: filters, search, facets, product, sets, sitemap |
 | `app/importer.py` | Squarespace export + intake CSVs → database |
 | `app/classify.py` | Product type, language, category, shipping class; slugs; search text |
@@ -265,6 +297,7 @@ The writer for the market prices lives with the market app:
 | `/order/thanks?session_id=` | After payment (confirms with Stripe if the webhook hasn't arrived) |
 | `/order/<number>?k=<token>` | Order status; the link is in the order emails |
 | `POST /stripe/webhook` | Stripe events (signature checked; each event applied once) |
+| `/unsubscribe/<token>` | Email list opt-out: GET shows a confirm button, POST unsubscribes (also mail apps' one-click unsubscribe) |
 | `/<page>` | Markdown pages from `content/pages/` |
 | `/media/<480\|1200>/<name>.webp` | Product photos, cached for a year |
 | `/sitemap.xml`, `/robots.txt`, `/healthz` | Search engines and monitoring |

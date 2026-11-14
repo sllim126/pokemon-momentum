@@ -1,0 +1,25 @@
+{#- The email list's unsubscribe page (app/mailing.py). One page, one button, no sign-in, as the
+    law asks. The link itself only shows this page: link checkers in mail apps open links
+    before people do, so the button (a POST) does the unsubscribing. Mail apps' own one-click
+    "Unsubscribe" posts straight to the same address. -#}
+{% extends "base.html" %}
+{% block content %}
+<section class="notify-page">
+  <h1>Unsubscribe</h1>
+  {% if state == "done" %}
+  <p class="notice good" role="status"><strong>You're unsubscribed.</strong> {{ email }} won't get
+    any more emails from our list. Order and shipping emails for things you buy still come.</p>
+  <p>Changed your mind? Sign up again any time on the site.</p>
+  <p><a class="btn" href="/shop">Keep browsing</a></p>
+  {% elif state == "confirm" %}
+  <p>Stop emails from the Poke6s list to <strong>{{ email }}</strong>?</p>
+  <form method="post" action="/unsubscribe/{{ token }}">
+    <button class="btn" type="submit">Unsubscribe</button>
+  </form>
+  {% else %}
+  <p class="notice bad" role="alert">This unsubscribe link isn't one we recognise. If you still get
+    emails from us, write to <a href="mailto:{{ settings.contact_email }}">{{ settings.contact_email }}</a>
+    and we'll take you off the list.</p>
+  {% endif %}
+</section>
+{% endblock %}

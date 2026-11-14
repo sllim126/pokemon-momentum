@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-11 (Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
+Last reviewed: 2026-11-14 (Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -586,6 +586,14 @@ the Cloudflare Tunnel. Details: `storefront/README.md`.
   A failed email is retried for 24 hours (Discord says so); after "GAVE UP", fix sending and
   `orders_cli resend <number>`. Live keys are refused unless `STOREFRONT_ALLOW_LIVE=1` (owner).
   Don't re-run the Squarespace importer once real orders exist: it resets stock.
+- Marketing emails to the email list (new stock, sales): write a message file (format in
+  `storefront/app/mailing.py`) under `data/storefront/mailings/`, then
+  `docker-compose exec storefront python -m storefront.app.orders_cli mailing /app/data/storefront/mailings/<file>.txt`
+  (checks it and writes a preview), add `--test-to <you>` for one copy, then `--send`. It refuses
+  to send without `STOREFRONT_POSTAL_ADDRESS` in `.env` (the law requires a postal address).
+  Unsubscribes happen on the site (`/unsubscribe/<token>`) and are instant; someone who asks by
+  email instead: `UPDATE notify_signups SET unsubscribed_at = strftime('%Y-%m-%dT%H:%M:%SZ','now')
+  WHERE email = '...';` within 10 business days (sooner is better).
 - Data (never committed): `data/storefront/` holds `store.db` (products and orders),
   `images/`, `outbox/` and `market_reference.json`. Backed up nightly (below).
 

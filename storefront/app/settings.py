@@ -87,6 +87,11 @@ class Settings:
     smtp_user: str = ""
     smtp_password: str = ""
     mail_from: str = "Poke6s <orders@poke6s.com>"
+    # The business's postal address, printed in every marketing email (CAN-SPAM requires a valid
+    # physical postal address: a street address, a USPS PO box or a private mailbox). Kept in
+    # .env (STOREFRONT_POSTAL_ADDRESS), not in the code: this repository is public. Marketing
+    # emails refuse to send without it (app/mailing.py). Order emails don't need it.
+    postal_address: str = ""
 
     @property
     def stripe_mode(self) -> str:
@@ -152,6 +157,7 @@ def load_settings() -> Settings:
         market_base_url=os.getenv("STOREFRONT_MARKET_URL", "https://market.poke6s.com").rstrip("/"),
         tcgplayer_store_url=os.getenv("STOREFRONT_TCGPLAYER_URL", "https://poke6s.tcgplayerpro.com/"),
         contact_email=os.getenv("STOREFRONT_CONTACT_EMAIL", "admin@poke6s.com"),
+        postal_address=" ".join(os.getenv("STOREFRONT_POSTAL_ADDRESS", "").split()),
         tcgplayer_affiliate_base=os.getenv("STOREFRONT_TCGPLAYER_AFFILIATE",
                                            "https://partner.tcgplayer.com/jR1OJb").strip(),
         stripe_secret_key=os.getenv("STRIPE_SECRET_KEY", "").strip(),

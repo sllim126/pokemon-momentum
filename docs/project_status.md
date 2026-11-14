@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-11-11
+Last reviewed: 2026-11-14
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -11,8 +11,8 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
 
 - Production entry point: `https://market.poke6s.com/`
 - Store: `https://poke6s.com/` is our own storefront, self-hosted on this server since
-  2026-11-11 (Cloudflare DNS and Tunnel, free plan; catalog only, checkout off until Stripe
-  goes live). Squarespace's website plan ends 2026-11-14. Hosting and recovery steps:
+  2026-11-11 (Cloudflare DNS and Tunnel, free plan). Checkout live with Stripe since
+  2026-11-13 (Utah sales tax through Stripe Tax). Squarespace's website plan ends 2026-11-14. Hosting and recovery steps:
   runbook "poke6s.com hosting"
 - Primary branch: `main`
 - Market data: daily English and Japanese TCGCSV-backed updates, fetched per set. TCGCSV's
@@ -42,18 +42,20 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   backfill and the catalogue crawl post summaries to Discord
 - Other games: Magic, Yu-Gi-Oh, One Piece and Lorcana prices are archived nightly
   (collect only, since 2026-10-12; no site yet) in `data/tcgcsv_archive/`
+- Lorcana research site: planned, internal first, research only (`docs/lorcana_market_plan.md`)
 - Storage: DuckDB working database, partitioned Parquet history, and generated snapshots
 - Frontend: static HTML/CSS/JavaScript pages served by FastAPI; a new single-page desktop
   app (`/` on desktop, `docs/desktop_app.md`) covers Buy, Discover, Research, Track and Learn
 - Accounts: Google-backed lightweight tracking accounts with saved tags and views
 - Commerce: listing intake and supplier-profitability workflows. The Squarespace storefront
   linking and price sync retire with the Squarespace plan on 2026-11-14 (todo "2026-11-14")
-- Own storefront (poke6s.com, live catalog-only since 2026-11-11): separate `storefront`
+- Own storefront (poke6s.com, live since 2026-11-11, checkout live since 2026-11-13): separate `storefront`
   container on port 8010, published through the Cloudflare Tunnel (container `cloudflared`),
   code from its own clone `~/poke6s-store`. Phase 1 (catalog, browse, SEO, redirects) since 2026-10-31.
   Phase 2 (cart and Stripe Checkout, test mode; orders in `store.db`) merged 2026-11-05; checkout
   stays off without `STRIPE_SECRET_KEY` and refuses live keys unless `STOREFRONT_ALLOW_LIVE=1`.
-  Articles (the old Squarespace blog) at `/articles`. Guide: `storefront/README.md`
+  Articles (the old Squarespace blog) at `/articles`. Marketing emails to the email list
+  (`orders_cli mailing`, with unsubscribe links) since 2026-11-14. Guide: `storefront/README.md`
 - Collector resources: generated placeholder libraries, checklists, print pages, review queues, and downloads
 - Standalone binder planners: ATLA and KPDH are served by separate read-only nginx
   containers at `/atla/` and `/kpdh/`; collection state stays in each visitor's browser.

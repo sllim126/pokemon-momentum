@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-13 (checkout live)
+Last updated: 2026-11-14 (milestone: store-live-email)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -44,6 +44,21 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-14 Marketing emails (owner): one template for future news to the email list
+  (storefront/app/mailing.py, templates/email/marketing.html), sent with `orders_cli mailing`
+  (preview, --test-to, --send). Every email has the reason the reader gets it, a one-click
+  unsubscribe (/unsubscribe/<token> plus List-Unsubscribe headers; migration 004), the postal
+  address (STOREFRONT_POSTAL_ADDRESS; sending refuses without it) and an honest From/Reply-To.
+  Privacy page: the list is for store news, not only the opening. 159 store tests pass.
+- 2026-11-14 market.poke6s.com's "Our store" button opens the product's own poke6s.com page,
+  shown only when it's in stock there (reads data/storefront/store.db read-only; the
+  Squarespace-export loaders are gone).
+- 2026-11-14 Owner: single packs keep the $10 small-sealed shipping rate. No "we're open" email
+  (owner thought nobody had joined; see the [owner] item on the one sign-up).
+- 2026-11-14 Lorcana market plan merged (`docs/lorcana_market_plan.md`, written 2026-11-05):
+  research-only Lorcana site, internal first; data on hand, source rules checked (TCGCSV,
+  Lorcast, Scrydex, PriceCharting, Ravensburger), rarity tiers, indexes, sealed pack counts,
+  phases. Card images: download from Lorcast and host ourselves (owner). No code yet.
 - 2026-11-13 Checkout live on poke6s.com (owner + Claude). Stripe live account activated; live
   webhook poke6s-store-live; restricted live key (rk_live_: Checkout Sessions write; Charges,
   PaymentIntents, Events, Tax Registrations read); STOREFRONT_ALLOW_LIVE=1, STOREFRONT_CHECKOUT=1.
@@ -51,7 +66,6 @@ Recently Completed
   2027-01-01; recreated through the API with active_from=now). Real order P6-2026-0001 (one
   DR pack, $9.99 + $10 shipping + $0.74 Utah tax) paid, webhook received, then refunded via
   webhook; stock put back by hand (refunds don't restock, D8). The order stays as a record.
-
 - 2026-11-12 Test-mode rehearsal on the live site (owner + Claude): checkout, Stripe Tax (Utah),
   thanks page, real webhook through the tunnel, stock reserved and sold, confirmation and
   shipping emails via Graph (fixed a CRLF bug found by it), Discord alert, refund via webhook.
@@ -154,40 +168,6 @@ Recently Completed
   indexed (scripts/monitoring/search_console.py, called by collect_status.py; runbook "Google
   search row"). The owner added poke6s.com to Search Console, submitted the sitemap and created
   the read-only service account.
-- 2026-11-09 Store rules reviewed with the owner, one at a time: the new store ships within 1
-  business day, signature on orders over $150, insurance over $100, lost in transit = replacement
-  or full refund (marked delivered = help with the carrier claim). All seven storefront text
-  pages approved and no longer drafts. The full rules (with margins and store history) moved
-  to the git-ignored `docs/private/store_operations.md`; decisions in `docs/storefront_plan.md`.
-- 2026-11-09 October leftovers reviewed with the owner one item at a time (from the old
-  `chat-history-review` / `codex/kpdh-binder-order` branches). Restored: the desktop owner-only
-  Note tab (now sharing the admin check with the TCGplayer links) and the chat-history scripts
-  (`scripts/utilities/export_codex_history.py`, `import_chatgpt_history.py`, which now takes
-  its source folder as an argument). Store rules and three business ideas moved to the new
-  git-ignored `docs/private/`. Kept ideas are listed under High Priority. Dropped: binder colour
-  notes, ChatGPT re-import, popular-character dip list, gift bundles, supplier price feed,
-  quick-save pills, logo link to the store, Squarespace-only items.
-- 2026-11-09 Branch clean-up: deleted 12 local branches (eight already in main, three October
-  branches contained in `codex/kpdh-binder-order`, and `plan/lorcana-market`, whose plan is
-  newer on `plan/lorcana-plan` and whose monitoring commits are in main) and two clean /tmp
-  worktrees. Then, once its leftovers were reviewed and merged, `codex/kpdh-binder-order` too.
-  Left: `main`, the live `feature/homelab-machines` and `plan/lorcana-plan`.
-- 2026-11-09 Brought back six fixes from the unmerged 2026-10-27 branch (`chat-history-review`),
-  each re-confirmed by the owner one at a time: desktop opens on Consistent Movers (`DEFAULT_LIST`,
-  `/discover` too); 7D chart window (desktop and phone); TCGplayer links preselect Near Mint
-  except reverse holos; a signed-in admin's TCGplayer links skip the affiliate wrapper; the
-  supplier calculator splits the per-order disbursement fee across Boxes in Order; rows without
-  a picture use an 11 KB logo copy (`images/Logo-thumb.png`). The phone's Discover tab starts on Consistent
-  Movers too (owner, same day). Declined: square-padded
-  Squarespace images, price-sync path change (both retire with Squarespace on 2026-11-14), and
-  the calculator's $0 outbound-shipping default and typed-0 handling.
-- 2026-11-09 Grafana: Store dashboard (orders to ship, sales per day, stock, nearly sold out;
-  live orders by default), internet uptime row on Home lab: Network (TCP probes to the router,
-  1.1.1.1 and 8.8.8.8 every 30 s), and a SMART disk-health table on Home lab: Servers.
-- 2026-11-09 ZFS scrubs and disk errors live in Grafana: zfs-status.timer installed on OMV;
-  pool "zfs" (raidz2, 10 disks) all online, no errors; a scrub was running at install.
-- 2026-11-09 PBS backups live in Grafana (token root@pam!Grafana, Audit). The stalest-backup and
-  no-backup tiles now count only current guests, and the table shows each guest's Proxmox name.
 
 High Priority
 -------------
@@ -341,10 +321,10 @@ Live now:
 - [done 2026-11-11] 5. "Buy on TCGplayer" now opens the product's TCGplayer page through the
   affiliate link, plus a "we're rebuilding" note and an "email me when we open" list (see
   Recently Completed). Follow-ups:
-  - [planned] When checkout opens: email the notify_signups list once (set notified_at), then
-    the note and form go away on their own (they show only while checkout is off).
-  - [planned] The list has no unsubscribe link yet; the one "we're open" email must include a
-    way to opt out (CAN-SPAM) and the sender's postal address.
+  - [done 2026-11-14] Checkout opened; the note and form went away on their own. The "we're
+    open" email wasn't sent (see the [owner] item on the one sign-up).
+  - [done 2026-11-14] Unsubscribe links and the postal address are in every marketing email
+    (storefront/app/mailing.py).
 - [done 2026-11-11] 6. Odd addresses no longer cause 500 errors (see Recently Completed).
 - [done 2026-11-12] 7. Credentials tightened (see Recently Completed). Still open for the
   owner: delete the spare tunnel token copy in poke6s-books.
@@ -390,11 +370,6 @@ and open decisions: `docs/storefront_plan.md` (progress log at its end). What th
 site has today: `docs/storefront_current_site.md`. Our own site, hosted on the owner's server
 behind Cloudflare Tunnel; Stripe hosted Checkout (approved by the owner 2026-10-31). The
 Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
-- [planned] At storefront launch: point the market site's "Our TCGplayer store" button
-  (`OUR_STORE_URL` in scripts/dashboards/api.py, used by /store_link on desktop and phone) at
-  the new store's `/p/<slug>` pages. Since 2026-10-31 it opens the TCGplayer Pro store (owner:
-  sell there until the new store launches, after Black Friday); which products show it still
-  comes from the last Squarespace export, so refresh that rule from the new store's stock then.
 - [next] Check the Budget Builder on 2026-11-06 shows different picks from 2026-11-05 (first day of
   rotation; today's default views were recorded for price date 2026-11-04).
 - [next] Market insights: owner approved and merged to `main` on 2026-11-07; live since
@@ -442,7 +417,7 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     review. Old text for comparison is in the saved site copy. Remove `draft: true` when done.
   - [idea] JP products without a TCGplayer mapping (e.g. JP-AE-BB) show no market price;
     add them to `data/squarespace_tcgplayer_mapping.csv`.
-- [in progress] Phase 2: cart + Stripe Checkout, test mode (Claude, 2026-11-05; guide
+- [done 2026-11-13, live] Phase 2: cart + Stripe Checkout (Claude, 2026-11-05; live since 2026-11-13; guide
   `storefront/README.md` "Checkout"). Built, merged and running on :8010 from the store's own
   clone (`~/poke6s-store`, updated by `deploy/update_storefront.sh`). Tested with a fake Stripe
   and the owner's Stripe sandbox (one paid test order). Sales tax (D2): Stripe Tax, Utah
@@ -452,13 +427,7 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     email was received (sent by hand from admin@poke6s.com, SMTP not set up yet).
   - [planned] `orders_cli ship` says "email sent" even when it only went to the outbox; say
     which. Its order-status link uses STOREFRONT_BASE_URL (localhost until launch).
-  - [planned] STRIPE_WEBHOOK_SECRET: the Tunnel is up since 2026-11-11, so add a Stripe
-    webhook to https://poke6s.com/stripe/webhook when checkout is switched on. Until then the thanks page and the 15-minute
-    reconcile job confirm payments.
-  - [next] Order emails through Microsoft Graph, not SMTP (Microsoft turns password SMTP off by
-    default from December 2026, MC786329). Owner: shared mailbox orders@poke6s.com, an Entra
-    app with Mail.Send limited to that mailbox, three values in `.env`. Claude: Graph sender in
-    `storefront/app/notify.py`. Until then emails are files in `data/storefront/outbox/`.
+  - [done 2026-11-12] Order emails through Microsoft Graph from orders@poke6s.com.
   - [planned] Once real orders exist, stop re-running the Squarespace importer (it resets
     stock); the Phase 3 admin takes over stock changes.
 - [next] Phase 3: LAN-only admin (orders, ship with tracking, refunds, stock), exports (Pirate
@@ -466,10 +435,15 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   signature confirmation on every order), backups.
 - [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
   too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
-- [next] Now that checkout is live (2026-11-13): point the market site's "Our store" button at
-  poke6s.com, and send the waiting-list email (see item 5's follow-ups).
-- [planned] A cheaper shipping rate for single packs? Small sealed is $10 flat (a $9.99 pack
-  cost $20.73 with tax). Owner's call.
+- [next] Owner's notes on individual store listings (owner has them, 2026-11-14): go through
+  them one listing at a time.
+- [owner] The email list has one sign-up (a visitor, 2026-11-12 from /notify), not none: send
+  them a short "we're open" email with `orders_cli mailing`, or not. Owner's call.
+- [owner] Before the first marketing email: STOREFRONT_POSTAL_ADDRESS in .env (it's printed in
+  every email; a USPS PO box or private mailbox keeps the home address private), then
+  deploy/update_storefront.sh. `orders_cli mailing` refuses to send without it.
+- [planned] A way to join the email list now: the sign-up form shows only while checkout is
+  off. A small "News and restocks" box in the footer or on /notify? Owner's call.
 - [planned] A restock command for returns (D8: refunds don't put stock back; done by hand in
   SQL for P6-2026-0001). Belongs in the Phase 3 admin.
 - [planned] Yearly, by 2027-10: bump the cloudflared image tag in docker-compose.yml (2026.10.7
@@ -696,9 +670,10 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   under the 10,000/day limit in the new usage guidelines.
 - [planned] Check the size of `data/tcgcsv_archive/` after a month and decide how many
   games to keep collecting.
-- [idea] Sites for other games (magic6s, yugi6s, lorcana6s...) once 6-12 months of history
+- [idea] Sites for other games (Magic, Yu-Gi-Oh, One Piece) once 6-12 months of history
   exist. They would need their own rarity rules, set eras, sealed product types and
   screener tuning; PriceCharting graded prices would need a separate download and permission.
+  Lorcana is first, with its own plan (`docs/lorcana_market_plan.md`, "Lorcana Market" below).
 
 - [planned] Graded tab follow-up: where TCGplayer and PriceCharting's ungraded prices are far
   apart (Pikachu, EX Power Keepers: TCGplayer 429.99 vs PriceCharting 100.81), check whether
@@ -961,6 +936,27 @@ Active Queue
   remaining idea.
 - [planned] Re-check first-load speed after real usage of the desktop app.
 - [idea] Keyboard shortcuts beyond up/down row stepping, if they clearly help.
+
+Lorcana Market (research site, internal first)
+----------------------------------------------
+
+Plan: `docs/lorcana_market_plan.md`. Research only (no store or listings), English, LAN-only
+until the owner decides on a public address. No new costs: TCGCSV/TCGplayer data and images
+only; Scrydex (paid) and PriceCharting graded are out of scope.
+
+- [next] Phase 0 (on a fresh branch): add category 71 (`lorcana`) to `category_config.py`; load history from
+  `data/raw` archives (Lorcana is in them back to 2024-02-08); add 71 to the nightly per-set
+  fetch and snapshots, then drop it from the collect-only job; download Lorcast card images
+  once and host them ourselves (owner agreed 2026-11-05; Scrydex terms forbid mirroring);
+  Lorcana rarity tiers and printings; Discord summary line. Add `data/lorcana_images/` to
+  `.gitignore` before the first download.
+- [planned] Phase 1: game chosen by host name (Pokemon stays the default and unchanged);
+  Discover, Research by set / franchise (`Property`) / ink, card page, Track; desktop first;
+  footer credit and "not endorsed by Disney or Ravensburger" disclaimer.
+- [planned] Phase 2: Lorcana 100, Chase and Sealed indexes; Sealed Deals after the pack
+  counts in the plan are checked against product pages.
+- [waiting] Phase 3: owner picks brand and domain (subdomain of poke6s.com or a game-neutral
+  domain); avoid a name that starts with the Lorcana trademark.
 
 Parked: Mobile and Admin
 ------------------------

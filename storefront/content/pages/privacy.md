@@ -24,9 +24,11 @@ deleted.
 
 ## Email list
 
-If you join our list to hear when the store opens, we keep your email address, the page you
-signed up from and the date. We use it only to tell you when checkout opens, and we never share
-it. Email [admin@poke6s.com](mailto:admin@poke6s.com) and we'll remove it.
+If you join our email list, we keep your email address, the page you signed up from and the
+date. We use it only to send Poke6s news: new stock, restocks and sales. We never sell or share
+it. Every email has an unsubscribe link that works in one click, with no sign-in; after that we
+keep only a note that your address is unsubscribed, so it isn't emailed again. You can also
+email [admin@poke6s.com](mailto:admin@poke6s.com) and we'll remove it.
 
 ## Cookies and visit counts
 

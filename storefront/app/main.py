@@ -486,6 +486,36 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
             notify_list.add(conn, email, str(form.get("source") or ""))
         return RedirectResponse("/notify?joined=1", status_code=303)
 
+    # --- unsubscribe from the email list (app/mailing.py) ---------------------------------
+    # The emailed link shows a confirm page (GET changes nothing, so link scanners can't
+    # unsubscribe anyone); the button, or a mail app's one-click unsubscribe (RFC 8058, a POST
+    # with "List-Unsubscribe=One-Click"), does it. The token is the address's own random code.
+
+    def unsubscribe_page(request: Request, token: str, state: str, email: str = "") -> HTMLResponse:
+        response = page(request, "unsubscribe.html", title="Unsubscribe", state=state, email=email,
+                        token=token, status_code=404 if state == "missing" else 200)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Robots-Tag"] = "noindex, nofollow"
+        return response
+
+    @app.get("/unsubscribe/{token}", response_class=HTMLResponse)
+    def unsubscribe_confirm(request: Request, token: str):
+        with db() as conn:
+            row = notify_list.find_by_token(conn, token)
+        if row is None:
+            return unsubscribe_page(request, token, "missing")
+        return unsubscribe_page(request, token, "done" if row["unsubscribed_at"] else "confirm", row["email"])
+
+    @app.post("/unsubscribe/{token}")
+    async def unsubscribe(request: Request, token: str):
+        with writer() as conn:
+            found = notify_list.unsubscribe(conn, token)
+            row = notify_list.find_by_token(conn, token) if found else None
+        form = await request.form()
+        if form.get("List-Unsubscribe") == "One-Click":
+            return PlainTextResponse("Unsubscribed." if found else "Unknown link.", status_code=200 if found else 404)
+        return unsubscribe_page(request, token, "done" if found else "missing", row["email"] if row else "")
+
     @app.post("/cart/quote")
     async def cart_quote(request: Request):
         try:
