@@ -197,11 +197,12 @@ def retry_queued(settings: Settings) -> dict[str, int]:
 
 
 def send_email(settings: Settings, to: str, subject: str, body: str, html: str = "",
-               logo_cid: str = "", ref: str = "") -> bool:
+               logo_cid: str = "", ref: str = "", headers: dict[str, str] | None = None) -> bool:
     """Send (or, without email set up, save to the outbox) one email. With html, the message
     is multipart: plain text first, then HTML; logo_cid attaches the logo for <img src="cid:...">.
-    `ref` (the order number) names it in alerts. Returns True if it was handed over or saved;
-    False means it failed and was queued for retry."""
+    `ref` (the order number) names it in alerts. `headers` adds more (marketing emails add
+    Reply-To and List-Unsubscribe). Returns True if it was handed over or saved; False means it
+    failed and was queued for retry."""
     if not to:
         return True
     message = EmailMessage()
@@ -209,6 +210,8 @@ def send_email(settings: Settings, to: str, subject: str, body: str, html: str =
     message["To"] = to
     message["Subject"] = subject
     message["Message-ID"] = make_msgid(domain="poke6s.com")
+    for name, value in (headers or {}).items():
+        message[name] = value
     message.set_content(body)
     if html:
         message.add_alternative(html, subtype="html")

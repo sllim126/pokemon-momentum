@@ -1,7 +1,7 @@
 Pokemon Momentum Data Flow
 ==========================
 
-Last reviewed: 2026-11-06 (pipeline steps and table names checked against run_daily_update.py)
+Last reviewed: 2026-11-14 (/store_link reads the store database; pipeline steps checked 2026-11-06)
 
 Recent Data/Serving Changes (March 2026)
 ----------------------------------------
@@ -779,7 +779,7 @@ What it does:
   - `/hold_check` (6-month profit check after fees and shipping)
   - `/graded_prices` (PriceCharting graded prices and history)
   - `/sparkline_batch` (many trend lines in one request)
-  - `/store_link` (whether a product is listed in the Squarespace store)
+  - `/store_link` (whether a product is listed and in stock on poke6s.com: reads data/storefront/store.db read-only)
   - `/tracking/...`
 
 Set history endpoint:
