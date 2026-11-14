@@ -1,7 +1,7 @@
 Pokemon Momentum Data Flow
 ==========================
 
-Last reviewed: 2026-11-14 (/store_link reads the store database; pipeline steps checked 2026-11-06)
+Last reviewed: 2026-11-14 (/store_link reads the store database; Lorcana pass in the nightly update; collect-only job without Lorcana; pipeline steps checked 2026-11-06)
 
 Recent Data/Serving Changes (March 2026)
 ----------------------------------------
@@ -706,13 +706,27 @@ Collect-only archive for other games (03:30 UTC, systemd timer pokemon-momentum-
 - waits until the Pokemon nightly update has released its lock, so the two never fetch
   from TCGCSV at the same time
 - [collect_tcgcsv_categories.py](/opt/pokemon-momentum/scripts/download/collect_tcgcsv_categories.py)
-  saves Magic (1), Yu-Gi-Oh (2), One Piece (68) and Lorcana (71): each game's set list and
+  saves Magic (1), Yu-Gi-Oh (2) and One Piece (68) (Lorcana (71) until 2026-11-14, when it
+  moved into the nightly update, below): each game's set list and
   every set's prices (plus product lists on Sundays and on a game's first run), byte for
   byte, into `data/tcgcsv_archive/<date>/tcgcsv-<date>-<categoryId>.tar.gz`
 - a day already archived is skipped (TCGCSV asks for each file at most once a day)
 - nothing is loaded into DuckDB, no snapshots, no website pages; the archive exists so
   those games have real history if a site for them is built later
 - Discord summary: "Other games price archive"
+
+Lorcana (category 71, since 2026-11-14; docs/lorcana_market_plan.md):
+
+- the nightly update runs the same steps for 71 after the Pokemon passes and the store audit
+  (`EXTRA_CATEGORY_IDS` in run_daily_update_host.sh): per-set TCGCSV download, load into
+  `pokemon_prices` (categoryId 71), `lorcana_groups` / `lorcana_products`, the `lorcana_*`
+  snapshots, and `data/parquet/date=*/category-71.parquet`. No index step
+  (`INDEX_CATEGORY_IDS` in run_daily_update.py) until Lorcana has indexes
+- history from 2024-02-08 came from the stored archives through
+  [extract_category_from_archives.py](/opt/pokemon-momentum/scripts/extract/extract_category_from_archives.py)
+- card images: [fetch_lorcast_images.py](/opt/pokemon-momentum/scripts/download/fetch_lorcast_images.py)
+  saves Lorcast images to `data/lorcana_images/` (by hand, not scheduled yet); rarity tiers
+  are in [lorcana_rarity.py](/opt/pokemon-momentum/scripts/common/lorcana_rarity.py)
 
 TCGCSV catalogue crawl (12:00 UTC, adam's crontab,
 [run_tcgcsv_catalogue_host.sh](/opt/pokemon-momentum/scripts/pipeline/run_tcgcsv_catalogue_host.sh)):

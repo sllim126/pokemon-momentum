@@ -111,4 +111,8 @@ def get_category_config(category_id: int) -> CategoryConfig:
         return CategoryConfig(category_id=3, slug="pokemon", label="Pokemon")
     if category_id == 85:
         return CategoryConfig(category_id=85, slug="pokemon_jp", label="Pokemon Japanese")
+    if category_id == 71:
+        # Disney Lorcana (docs/lorcana_market_plan.md). Its prices share the pokemon_prices
+        # table (keyed by categoryId, like Japanese); its own tables use the lorcana_ prefix.
+        return CategoryConfig(category_id=71, slug="lorcana", label="Lorcana")
     return CategoryConfig(category_id=category_id, slug=f"category_{category_id}", label=f"Category {category_id}")

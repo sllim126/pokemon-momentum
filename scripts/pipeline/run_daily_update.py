@@ -1,4 +1,4 @@
-"""Run the nightly update for one market (category 3 = English, 85 = Japanese).
+"""Run the nightly update for one market (category 3 = English, 85 = Japanese, 71 = Lorcana).
 
 The host script scripts/pipeline/run_daily_update_host.sh calls this inside the
 container, once per category. Steps run in order and the run stops at the first
@@ -7,7 +7,8 @@ failure, except the soft steps in METADATA_FALLBACK_STEPS, which only warn:
     download today's TCGCSV prices -> load them into DuckDB -> refresh set and
     product names -> rebuild health, signal, screener, sparkline, series and market mood snapshots ->
     PriceCharting graded prices (English pass only) -> export parquet history ->
-    build index snapshots (they read the parquet history, so they go last)
+    build index snapshots (they read the parquet history, so they go last; only for the
+    categories in INDEX_CATEGORY_IDS)
 
 `--dry-run` prints the commands without running them.
 """
@@ -37,6 +38,10 @@ METADATA_FALLBACK_STEPS = {
 # Same, for steps whose names carry the market's label ("Build Pokemon market mood snapshot").
 # The mood gauge is supplementary, and the website can compute it itself if the table is stale.
 SOFT_STEP_SUFFIXES = ("market mood snapshot",)
+# Categories that have market indexes (index_keys_for_category in scripts/dashboards/api.py).
+# The index step exits 1 for a category with none, so it is left out for the others, such
+# as Lorcana (71) until its indexes are built (docs/lorcana_market_plan.md, Phase 2).
+INDEX_CATEGORY_IDS = {3, 85}
 
 
 def parse_args() -> argparse.Namespace:
@@ -236,7 +241,7 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         # Expected result: parquet history includes the latest processed dates for downstream reads.
         steps.append(("Export parquet partitions", ["python", "scripts/utilities/export_parquet.py"]))
 
-    if not args.skip_analytics:
+    if not args.skip_analytics and args.category_id in INDEX_CATEGORY_IDS:
         # Expected result: index overview pages can read prebuilt JSON payloads instead of recomputing on first load.
         # Indexes read the parquet history, so this runs after the export or it would miss the newest day.
         steps.append(

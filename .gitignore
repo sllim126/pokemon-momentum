@@ -250,6 +250,8 @@ Thumbs.db
 
 # Collect-only TCGCSV archive for other games (large; grows by one file per game per day)
 data/tcgcsv_archive/
+# Lorcana card images downloaded from Lorcast (scripts/download/fetch_lorcast_images.py); the art is Disney/Ravensburger's
+data/lorcana_images/
 # TCGCSV catalogue crawl (scripts/download/crawl_tcgcsv_catalogue.py): thousands of JSON files
 data/tcgcsv_catalogue/
 # TCGCSV archive torrents (scripts/torrents/build_archive_torrent.py): hard links to data/raw
