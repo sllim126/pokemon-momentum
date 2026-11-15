@@ -1,6 +1,6 @@
 # Lorcana Market Plan (working name "Lorcana6s")
 
-Last reviewed: 2026-11-14 (Phase 0 built)
+Last reviewed: 2026-11-15 (Phase 1 desktop mode and gate merged)
 
 A Disney Lorcana version of the Pokemon market research site: prices, movers, set and card
 history, indexes and saved lists. **Research only.** No store, listings, buying or
@@ -126,7 +126,22 @@ results are unchanged.
 the first night after this work is merged and that folder is on `main`. That night runs
 about 4 minutes longer while the history loads.
 
-**Phase 1: internal research site (LAN only).**
+**Phase 1: internal research site (LAN only).** Data side built 2026-11-14:
+`lorcana_card_attributes` (film, ink, card type, promo type, stats, rarity tier; nightly, from
+the product lists the metadata step already fetches) and the admin-only image route
+`/lorcana/images/<productId>.avif`. "Internal" is done with the admin sign-in, since every route
+on the app is reachable at market.poke6s.com. A gate in `api.py` (`INTERNAL_CATEGORY_IDS`)
+also answers 404 to any `?category_id=71` request from someone who isn't a signed-in admin, so
+the public market-data routes don't show Lorcana either. Publishing (Phase 3) means taking 71
+out of that set.
+
+Pages built 2026-11-14 (owner chose an admin-only switch over a separate page): the desktop
+app has a third market button, "Lorcana", for a signed-in admin. It reuses Discover (all the
+mover and dip lists), Research → Sets, the card page (chart, 6-Month Hold, Targets, Stats) and
+the saved lists, with our Lorcast images. Left out for Lorcana: Sealed Deals, budget builders,
+the Pokemon search, Market Stats and the Graded tab. Details: `docs/desktop_app.md`, "Rules
+worth knowing". Not yet: film and ink filters (the data is in `lorcana_card_attributes`), the
+phone app, and Lorcana text in Learn.
 - The game is chosen by host name, or by a `game` setting for LAN testing, rather than
   separate copies of each page. Pokemon stays the default, and `market.poke6s.com` must
   stay exactly as it is.

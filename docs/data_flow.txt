@@ -722,10 +722,15 @@ Lorcana (category 71, since 2026-11-14; docs/lorcana_market_plan.md):
   `pokemon_prices` (categoryId 71), `lorcana_groups` / `lorcana_products`, the `lorcana_*`
   snapshots, and `data/parquet/date=*/category-71.parquet`. No index step
   (`INDEX_CATEGORY_IDS` in run_daily_update.py) until Lorcana has indexes
+- after the product refresh (which keeps Lorcana's fetched product lists whole in
+  `data/extracted/lorcana_products_raw/`),
+  [build_lorcana_card_attributes.py](/opt/pokemon-momentum/scripts/indicators/build_lorcana_card_attributes.py)
+  rebuilds `lorcana_card_attributes`: film, ink, card type, promo type, stats, rarity tier
 - history from 2024-02-08 came from the stored archives through
   [extract_category_from_archives.py](/opt/pokemon-momentum/scripts/extract/extract_category_from_archives.py)
 - card images: [fetch_lorcast_images.py](/opt/pokemon-momentum/scripts/download/fetch_lorcast_images.py)
-  saves Lorcast images to `data/lorcana_images/` (by hand, not scheduled yet); rarity tiers
+  saves Lorcast images to `data/lorcana_images/` (by hand, not scheduled yet), served admin-only
+  at `/lorcana/images/<productId>.avif`; rarity tiers
   are in [lorcana_rarity.py](/opt/pokemon-momentum/scripts/common/lorcana_rarity.py)
 
 TCGCSV catalogue crawl (12:00 UTC, adam's crontab,

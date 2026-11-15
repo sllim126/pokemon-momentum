@@ -1,6 +1,6 @@
 # Desktop App: Maintainer Guide
 
-Last reviewed: 2026-11-09
+Last reviewed: 2026-11-15
 
 The desktop app is one page that holds the site's five areas (Buy, Discover, Research,
 Track, Learn) in a single three-column layout built for 1080p screens. Since 2026-10-12 it
@@ -95,6 +95,19 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
 
 ## Rules worth knowing
 
+- **Lorcana mode is admin-only** (since 2026-11-14; `docs/lorcana_market_plan.md`). A third
+  market button, "Lorcana" (`market=LOR`, category 71), appears once `checkOwner()` confirms an
+  admin; anyone else who opens `?market=LOR` lands on English (`leaveLorcana()`), and the server
+  answers 404 to their `category_id=71` requests anyway (`INTERNAL_CATEGORY_IDS` in `api.py`).
+  In Lorcana mode the Pokemon-only views are left out of the menu (`POKEMON_ONLY_LISTS`: Sealed
+  Deals, both budget builders, the Pokemon search, Market Stats), the Graded tab and the store
+  button are hidden, and the footer names Disney and Ravensburger (`LEGAL`, `renderLegal()`).
+  Card images are our Lorcast copies (`cardImage()`): only for productIds listed by
+  `/lorcana/images.json`, so a card without one uses TCGplayer's image and no request fails.
+- **Hidden buttons need `.btn[hidden]`.** `.btn` sets `display: flex`, which beats the `hidden`
+  attribute; the rule `.btn[hidden] { display: none; }` makes `hidden` work. Before it was added
+  (2026-11-14), "Our TCGplayer store" showed on every card, linking nowhere for unlisted ones.
+
 - **Graded prices must link back.** PriceCharting allows display only if every price links to
   its PriceCharting product page. The Graded tab hides the link only when no price is shown. Its "Ungraded" box is our
   TCGplayer market price (the card's main price); PriceCharting's ungraded price is in the note
@@ -180,7 +193,7 @@ Other endpoints: `/search` (top search box), `/universe` (opening a card from a 
 ## State, links and storage
 
 `state` holds everything on screen; `syncUrl()` writes it into the address bar, so every
-view can be bookmarked. URL parameters: `market=JP`, `kind=sealed`, `list`, `product`
+view can be bookmarked. URL parameters: `market=JP` (or `LOR`, Lorcana, admin-only), `kind=sealed`, `list`, `product`
 (`productId||subType`), `set`, `filter`, `from=stats`, `q`, `era`, `index`, `tab`, `type`,
 `budget`, `max`, `rarity`, `cards`, `per_set`, `skip`.
 

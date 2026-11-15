@@ -58,7 +58,7 @@ import pandas as pd
 import requests
 from fastapi import Cookie, FastAPI, File, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from scripts.build_squarespace_single_listing_drafts import (
     DEFAULT_CREATED_CSV as SINGLE_LISTINGS_CREATED_CSV,
     DEFAULT_EXPORT_CSV as SINGLE_LISTINGS_EXPORT_CSV,
@@ -838,6 +838,34 @@ def desktop_app_redirect(request: Request) -> str | None:
     return None
 
 
+# Games whose data is loaded but not published yet (Lorcana: docs/lorcana_market_plan.md).
+# Every market-data route takes ?category_id=, so without this gate anyone could read them at
+# market.poke6s.com. Signed-in admins get the data; everyone else gets the same 404 as an
+# unknown route. Remove a game from this set when the owner publishes it.
+INTERNAL_CATEGORY_IDS = frozenset({"71"})
+
+
+def _is_admin_request(request: Request) -> bool:
+    """Whether the request carries a signed-in admin's token (header or cookie)."""
+    try:
+        require_admin_user(
+            authorization=request.headers.get("authorization"),
+            tracking_token=request.cookies.get("pm_tracking_token"),
+        )
+    except HTTPException:
+        return False
+    return True
+
+
+@app.middleware("http")
+async def hide_internal_categories(request: Request, call_next):
+    """404 for ?category_id=<an unpublished game> unless an admin is signed in."""
+    requested = (request.query_params.get("category_id") or "").strip()
+    if requested in INTERNAL_CATEGORY_IDS and not _is_admin_request(request):
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
+    return await call_next(request)
+
+
 @app.middleware("http")
 async def forward_desktop_to_app(request: Request, call_next):
     """Send desktop visitors on an older page to the desktop app (see desktop_app_redirect)."""
@@ -1227,6 +1255,43 @@ def admin_hub(authorization: str | None = Header(default=None), tracking_token: 
     """Links to the admin-only tools; 401/403 for anyone who isn't a signed-in admin."""
     require_admin_user(authorization=authorization, tracking_token=tracking_token)
     return FileResponse(ADMIN_HUB_HTML)
+
+
+# Lorcana card images downloaded once from Lorcast (scripts/download/fetch_lorcast_images.py),
+# named by TCGplayer productId. Lorcana is internal until the owner publishes it
+# (docs/lorcana_market_plan.md), so this route is admin-only like the rest of Lorcana.
+LORCANA_IMAGE_DIR = SCRIPT_DIR.parents[1] / "data" / "lorcana_images" / "large"
+LORCANA_IMAGE_CACHE_SECONDS = 7 * 24 * 3600
+
+
+@app.get("/lorcana/images.json")
+def lorcana_card_image_ids(
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    """The productIds that have a Lorcana image, so pages only ask for images that exist
+    (a 404 per missing card would show as a console error). Admin-only like the images."""
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    ids = sorted(int(p.stem) for p in LORCANA_IMAGE_DIR.glob("*.avif") if p.stem.isdigit()) if LORCANA_IMAGE_DIR.is_dir() else []
+    return JSONResponse({"ids": ids}, headers={"Cache-Control": "private, max-age=3600"})
+
+
+@app.get("/lorcana/images/{product_id}.avif")
+def lorcana_card_image(
+    product_id: int,
+    authorization: str | None = Header(default=None),
+    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
+):
+    """One Lorcana card image (674x940 AVIF). 404 when Lorcast has none: pages then use
+    TCGplayer's imageUrl. product_id is an int, so the path can't leave the folder."""
+    require_admin_user(authorization=authorization, tracking_token=tracking_token)
+    path = LORCANA_IMAGE_DIR / f"{product_id}.avif"
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="No Lorcana image for this product")
+    response = FileResponse(path, media_type="image/avif")
+    # private: the route needs a sign-in, so shared caches must not keep a copy.
+    response.headers["Cache-Control"] = f"private, max-age={LORCANA_IMAGE_CACHE_SECONDS}"
+    return response
 
 
 def resolve_image_path(filename: str) -> Path | None:

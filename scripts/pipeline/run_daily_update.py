@@ -5,7 +5,7 @@ container, once per category. Steps run in order and the run stops at the first
 failure, except the soft steps in METADATA_FALLBACK_STEPS, which only warn:
 
     download today's TCGCSV prices -> load them into DuckDB -> refresh set and
-    product names -> rebuild health, signal, screener, sparkline, series and market mood snapshots ->
+    product names (Lorcana: plus its card attributes) -> rebuild health, signal, screener, sparkline, series and market mood snapshots ->
     PriceCharting graded prices (English pass only) -> export parquet history ->
     build index snapshots (they read the parquet history, so they go last; only for the
     categories in INDEX_CATEGORY_IDS)
@@ -34,6 +34,8 @@ METADATA_FALLBACK_STEPS = {
     "Refresh product metadata",
     # Graded prices are supplementary; a PriceCharting outage must not stop the price update.
     "Download PriceCharting graded prices",
+    # Lorcana's film/ink/type table only feeds filters; stale is better than no prices.
+    "Build Lorcana card attributes",
 }
 # Same, for steps whose names carry the market's label ("Build Pokemon market mood snapshot").
 # The mood gauge is supplementary, and the website can compute it itself if the table is stale.
@@ -183,12 +185,18 @@ def build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
                 # Expected result: category-specific product metadata exists in DuckDB and CSV form.
                 ("Refresh product metadata", product_refresh_cmd),
                 # Expected result: a joined price/name export is available for inspection and downstream use.
+                # (Lorcana's card attributes step is inserted after this list, below.)
                 (
                     "Rebuild joined price/name export",
                     ["python", "scripts/utilities/join_prices_to_names.py", "--category-id", str(args.category_id)],
                 ),
             ]
         )
+
+    if not args.skip_metadata and args.category_id == 71:
+        # Expected result: lorcana_card_attributes (film, ink, card type, promo type) is rebuilt
+        # from the product lists the metadata step just saved; no TCGCSV requests.
+        steps.append(("Build Lorcana card attributes", ["python", "scripts/indicators/build_lorcana_card_attributes.py"]))
 
     if not args.skip_analytics:
         steps.extend(

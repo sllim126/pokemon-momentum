@@ -375,6 +375,9 @@
       display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; white-space: nowrap;
       border: 1px solid var(--line-strong); background: var(--panel-2); cursor: pointer; text-decoration: none; font-weight: 600;
     }
+    /* Without this, display: flex above beats the hidden attribute: "Our TCGplayer store" showed
+       on every card, linking nowhere for cards not in the store (fixed 2026-11-14). */
+    .btn[hidden] { display: none; }
     .btn:hover { border-color: var(--accent); }
     .btn.primary { background: var(--accent); border-color: var(--accent); color: #04121f; }
     .save-menu {
@@ -483,6 +486,8 @@
     <div class="segment" id="marketSwitch" role="group" aria-label="Market">
       <button type="button" data-market="EN">English</button>
       <button type="button" data-market="JP">Japanese</button>
+      <!-- Lorcana: admin-only while it's internal (docs/lorcana_market_plan.md); checkOwner() shows it. -->
+      <button type="button" data-market="LOR" id="lorcanaMarket" hidden>Lorcana</button>
     </div>
     <div class="segment" id="kindSwitch" role="group" aria-label="Product type">
       <button type="button" data-kind="singles">Singles</button>
@@ -676,7 +681,7 @@
       </div>
     </form>
   </section>
-  <footer class="legal" title="Poke6s Market Watch is a research tool, not financial or pricing advice, and no guarantee of current or future prices. Market prices follow whichever condition sells most, not Near Mint; check recent sales and the card itself before you buy or sell. Pokémon names, characters, logos and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company / The Pokémon Company International. Poke6s Market Watch is independent and not affiliated with or endorsed by them. Market prices from TCGplayer; graded prices from PriceCharting. TCGplayer links are affiliate links.">
+  <footer class="legal" id="legalFooter" title="Poke6s Market Watch is a research tool, not financial or pricing advice, and no guarantee of current or future prices. Market prices follow whichever condition sells most, not Near Mint; check recent sales and the card itself before you buy or sell. Pokémon names, characters, logos and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company / The Pokémon Company International. Poke6s Market Watch is independent and not affiliated with or endorsed by them. Market prices from TCGplayer; graded prices from PriceCharting. TCGplayer links are affiliate links.">
     Research tool, not financial advice. Pokémon names and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company; Poke6s Market Watch is independent and not affiliated with or endorsed by them. Prices from TCGplayer and PriceCharting are a guide, not a guarantee: do your own homework before you buy or sell. TCGplayer links are affiliate links.
   </footer>
 
@@ -835,7 +840,8 @@
     // same view (see syncUrl for the reverse).
     const params = new URLSearchParams(location.search);
     const state = {
-      market: params.get("market") === "JP" ? "JP" : "EN",
+      // LOR (Lorcana) is admin-only: checkOwner() falls back to EN for anyone else.
+      market: ["JP", "LOR"].includes(params.get("market")) ? params.get("market") : "EN",
       kind: params.get("kind") === "sealed" ? "sealed" : "singles",
       list: LISTS.some((l) => l.key === params.get("list")) ? params.get("list") : DEFAULT_LIST,
       groupId: Number(params.get("set")) || null,
@@ -885,7 +891,42 @@
     let detailRequestSeq = 0;
 
     const $ = (id) => document.getElementById(id);
-    const categoryId = () => (state.market === "JP" ? 85 : 3);
+    const categoryId = () => ({ JP: 85, LOR: 71 }[state.market] || 3);
+    const isLorcana = () => state.market === "LOR";
+    // Views that only make sense for Pokemon, hidden in Lorcana mode: pack-count deals and the
+    // budget builders (Pokemon rarity rules and PriceCharting), the Pokemon-name search and
+    // Market Stats (indexes, mood, track record, releases are built for Pokemon only).
+    const POKEMON_ONLY_LISTS = new Set(["sealed_deals", "budget", "graded_budget", "species",
+      "indexes", "index", "set_values", "mood", "track_record", "releases"]);
+    const listAvailable = (key) => !(isLorcana() && POKEMON_ONLY_LISTS.has(key));
+    // Lorcana card images are our own copies from Lorcast (/lorcana/images/<productId>.avif,
+    // admin-only); a card Lorcast has no image for falls back to TCGplayer's (see the error
+    // listener below).
+    const lorcanaFallbackImages = new Map();
+    // productIds we have an image for (/lorcana/images.json), loaded before the first Lorcana
+    // view; other cards use TCGplayer's image, so no request is made for a missing file.
+    let lorcanaImageIds = null;
+    async function loadLorcanaImageIds() {
+      if (lorcanaImageIds) return;
+      try { lorcanaImageIds = new Set((await getJson("/lorcana/images.json")).ids || []); }
+      catch (_err) { lorcanaImageIds = new Set(); }  // not an admin, or offline: TCGplayer images
+    }
+    function cardImage(productId, imageUrl) {
+      if (!isLorcana() || !productId || !lorcanaImageIds?.has(Number(productId))) return imageUrl || "";
+      const src = `/lorcana/images/${productId}.avif`;
+      lorcanaFallbackImages.set(src, imageUrl || "");
+      return src;
+    }
+    document.addEventListener("error", (event) => {
+      const img = event.target;
+      if (!(img instanceof HTMLImageElement)) return;
+      const path = new URL(img.src, location.href).pathname;
+      const fallback = lorcanaFallbackImages.get(path);
+      if (fallback !== undefined) {
+        lorcanaFallbackImages.delete(path);  // try the fallback once
+        if (fallback) img.src = fallback; else img.style.visibility = "hidden";
+      }
+    }, true);
     const productKind = () => (state.kind === "sealed" ? "sealed" : "card");
     const keyOf = (productId, subTypeName) => `${productId}||${subTypeName || ""}`;
     const money = (value) => (Number.isFinite(value) && value > 0
@@ -960,7 +1001,7 @@
         set: raw.groupName || "",
         number: raw.number || "",
         rarity: raw.rarity || "",
-        imageUrl: raw.imageUrl || "",
+        imageUrl: cardImage(raw.productId, raw.imageUrl),
         productKind: raw.productKind || (state.kind === "sealed" ? "sealed" : "card"),
         price: Number.isFinite(price) ? price : null,
         change: raw[list.change] === null || raw[list.change] === undefined || raw[list.change] === "" ? NaN : Number(raw[list.change]),
@@ -969,7 +1010,21 @@
     }
 
     // ---------- toolbar ----------
+    // Footer notice for the game on screen. Pokemon's is in the HTML; Lorcana's names Disney
+    // and Ravensburger (the plan's disclaimer) and credits TCGCSV and Lorcast.
+    const LEGAL = { pokemon: null, lorcana: {
+      text: "Research tool, not financial advice. Disney Lorcana names, characters and card art belong to Disney and Ravensburger; Poke6s Market Watch is independent and not published, endorsed or approved by them. Prices from TCGplayer via TCGCSV, card images from Lorcast; prices are a guide, not a guarantee. TCGplayer links are affiliate links.",
+      title: "Poke6s Market Watch is a research tool, not financial or pricing advice. Disney Lorcana and its names, characters, logos and card art belong to Disney and Ravensburger. Poke6s Market Watch is independent and is not published, endorsed or specifically approved by Disney or Ravensburger. Market prices from TCGplayer through TCGCSV (tcgcsv.com); card images from Lorcast (lorcast.com). TCGplayer links are affiliate links.",
+    } };
+    function renderLegal() {
+      const footer = $("legalFooter");
+      if (!LEGAL.pokemon) LEGAL.pokemon = { text: footer.textContent.trim(), title: footer.title };
+      const legal = isLorcana() ? LEGAL.lorcana : LEGAL.pokemon;
+      footer.textContent = legal.text;
+      footer.title = legal.title;
+    }
     function renderSwitches() {
+      renderLegal();
       document.querySelectorAll("#marketSwitch button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.market === state.market)));
       document.querySelectorAll("#kindSwitch button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.kind === state.kind)));
     }
@@ -977,10 +1032,11 @@
       const button = event.target.closest("button[data-market]");
       if (!button || button.dataset.market === state.market) return;
       state.market = button.dataset.market;
+      if (!listAvailable(state.list)) { state.list = DEFAULT_LIST; listPinned = false; }
       if (state.list === "set") state.list = "sets";
       if (state.list === "index") state.list = "indexes";
       if (state.list === "set" && state.setFrom === "set_values") state.list = "set_values";
-      afterScopeChange();
+      if (isLorcana()) loadLorcanaImageIds().then(afterScopeChange); else afterScopeChange();
     });
     $("kindSwitch").addEventListener("click", (event) => {
       const button = event.target.closest("button[data-kind]");
@@ -1082,7 +1138,8 @@
         const nicknameNote = data.nickname && searchItems.length ? [el("div", { class: "search-note", text: `“${data.nickname}” is a nickname: showing ${data.query}` })] : [];
         searchResults.replaceChildren(...nicknameNote, ...(searchItems.length ? searchItems.map((item, index) => {
           const isSet = item.kind === "set";
-          const image = item.imageUrl ? el("img", { src: item.imageUrl, alt: "", loading: "lazy" }) : el("div", { class: "ph" });
+          const imageSrc = isSet ? item.imageUrl : cardImage(item.productId, item.imageUrl);
+          const image = imageSrc ? el("img", { src: imageSrc, alt: "", loading: "lazy" }) : el("div", { class: "ph" });
           const meta = isSet ? `Set · ${item.meta || ""}` : [item.groupName, item.number, item.subTypeName].filter(Boolean).join(" · ");
           const button = el("button", { type: "button", class: "search-item", "data-index": String(index) },
             image,
@@ -1116,7 +1173,7 @@
         set: item.groupName || "",
         number: item.number || "",
         rarity: item.rarity || "",
-        imageUrl: item.imageUrl || "",
+        imageUrl: cardImage(item.productId, item.imageUrl),
         productKind: item.productKind || "card",
         price: Number(item.latest_price),
         change: NaN,
@@ -1133,7 +1190,7 @@
       const groupLinks = (name) => (GROUP_LINKS[name] || []).map(([label, href]) =>
         el("a", { class: "tool", href: `${href}${href.includes("?") ? "&" : "?"}category_id=${categoryId()}` }, el("span", { text: label }), el("span", { class: "ext", text: "↗" })));
       for (const list of LISTS) {
-        if (list.hidden) continue;
+        if (list.hidden || !listAvailable(list.key)) continue;
         if (list.group !== group) {
           nodes.push(...groupLinks(group));
           group = list.group;
@@ -1219,7 +1276,7 @@
     const lastCounts = {};
     async function loadCounts() {
       const scope = `${state.market}:${state.kind}`;
-      await Promise.all(LISTS.filter((l) => !l.learn && !["set", "species", ...BUDGET_LISTS, ...INSIGHT_VIEWS].includes(l.key)).map(async (list) => {
+      await Promise.all(LISTS.filter((l) => !l.learn && listAvailable(l.key) && !["set", "species", ...BUDGET_LISTS, ...INSIGHT_VIEWS].includes(l.key)).map(async (list) => {
         try {
           const rows = await fetchList(list);
           if (`${state.market}:${state.kind}` === scope) lastCounts[list.key] = rows.length;
@@ -2593,28 +2650,41 @@
       // Real link (so it can open in a new tab); a plain click switches mode in place.
       $("fullDataLink").href = (() => { const u = new URL(location.href); u.searchParams.set("product", card.key); u.searchParams.set("card", "1"); return u.toString(); })();
       renderSaveMenu();
-      loadStoreLink(card);
+      // Lorcana: no graded prices (PriceCharting's permission covers Pokemon) and nothing in our store.
+      const gradedTab = document.querySelector('.tabs button[data-tab="graded"]');
+      gradedTab.hidden = isLorcana();
+      if (isLorcana() && state.tab === "graded") state.tab = "hold";
+      if (isLorcana()) $("storeLink").hidden = true; else loadStoreLink(card);
       const seq = ++detailRequestSeq;
       loadChart(card, seq);
       loadHold(card, seq);
-      loadGraded(card, seq);
+      if (!isLorcana()) loadGraded(card, seq);
       renderTargets(card);
       showTab(state.tab);
       if (state.fullCard) loadFullExtra(card, seq);
     }
     let ownerSignedIn = false;  // true once /tracking/session confirms an admin; see tcgplayerUrl() and showReviewTab()
+    // Not an admin but the address asked for Lorcana (?market=LOR): show English instead.
+    function leaveLorcana() {
+      if (!isLorcana()) return;
+      state.market = "EN";
+      if (!listAvailable(state.list)) state.list = DEFAULT_LIST;
+      afterScopeChange();
+    }
     async function checkOwner() {
       const token = trackingToken();
-      if (!token) return;  // signed out: nothing to ask (and no 401 in the console)
+      if (!token) { leaveLorcana(); return; }  // signed out: nothing to ask (and no 401 in the console)
       try {
         const response = await fetch("/tracking/session", { headers: { Authorization: `Bearer ${token}` } });
-        if (!response.ok) return;
+        if (!response.ok) { leaveLorcana(); return; }
         const payload = await response.json();
-        if (!payload.user?.is_admin) return;
+        if (!payload.user?.is_admin) { leaveLorcana(); return; }
         ownerSignedIn = true;
+        $("lorcanaMarket").hidden = false;
+        loadLorcanaImageIds();  // ready before the Lorcana button is pressed
         if (state.selected) $("tcgLink").href = tcgplayerUrl(state.selected);  // relink the open card
         showReviewTab();
-      } catch (_err) { /* signed out or offline: links keep the affiliate wrapper */ }
+      } catch (_err) { leaveLorcana(); /* signed out or offline: links keep the affiliate wrapper */ }
     }
     // TCGplayer product link (language, printing and Near Mint preselected), wrapped in the
     // affiliate link. Near Mint is the owner's default (2026-03-22, confirmed 2026-11-09); it is
@@ -3185,8 +3255,8 @@
     loadFreshness();
     const tagsReady = loadSyncedTags();
     checkOwner();
-    loadCounts();
-    loadList();
+    // Opened on Lorcana (?market=LOR): know which images exist before drawing any card.
+    (isLorcana() ? loadLorcanaImageIds() : Promise.resolve()).then(() => { loadCounts(); loadList(); });
   })();
   </script>
 </body>

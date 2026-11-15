@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-14 (milestone: lorcana-phase0)
+Last updated: 2026-11-15 (milestone: lorcana-phase1)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -44,6 +44,18 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-14 Lorcana mode in the desktop app (merged 2026-11-15, milestone lorcana-phase1; owner chose an
+  admin-only switch): third market button for admins, Pokemon-only views left out, our Lorcast
+  images (`/lorcana/images.json` lists which exist), Disney/Ravensburger footer. Checked on a
+  throwaway copy at 1920x1080 and 1366x768: no console errors, no page scroll; English unchanged.
+  Also fixed: `.btn[hidden]` (the "Our TCGplayer store" button showed on every card, live bug).
+- 2026-11-14 Lorcana Phase 1 data (merged 2026-11-15, milestone lorcana-phase1): `lorcana_card_attributes`
+  (film, ink(s), card type, classifications, promo type, cost, lore, strength, willpower, rarity
+  tier; 3,657 cards from local files, no extra TCGCSV requests), built nightly after the product
+  refresh, which now keeps Lorcana's fetched product lists whole. Admin-only image route
+  `/lorcana/images/<productId>.avif` (404 -> pages use TCGplayer's image). Gate: every
+  `?category_id=71` request is 404 unless an admin is signed in (`INTERNAL_CATEGORY_IDS`).
+  Merged with the gate, so Lorcana data stays admin-only from its first nightly run.
 - 2026-11-14 Lorcana Phase 0 built (merged 2026-11-14, milestone lorcana-phase0): category 71, history
   unpacker (7z archives and collect-only tarballs; real `data/extracted/` filled for all 1,008
   stored days), nightly Lorcana pass after Pokemon (no index step), collect-only job without
@@ -65,115 +77,7 @@ Recently Completed
   research-only Lorcana site, internal first; data on hand, source rules checked (TCGCSV,
   Lorcast, Scrydex, PriceCharting, Ravensburger), rarity tiers, indexes, sealed pack counts,
   phases. Card images: download from Lorcast and host ourselves (owner). No code yet.
-- 2026-11-13 Checkout live on poke6s.com (owner + Claude). Stripe live account activated; live
-  webhook poke6s-store-live; restricted live key (rk_live_: Checkout Sessions write; Charges,
-  PaymentIntents, Events, Tax Registrations read); STOREFRONT_ALLOW_LIVE=1, STOREFRONT_CHECKOUT=1.
-  Utah registration in Stripe Tax active from 2026-11-13 (the dashboard had scheduled it for
-  2027-01-01; recreated through the API with active_from=now). Real order P6-2026-0001 (one
-  DR pack, $9.99 + $10 shipping + $0.74 Utah tax) paid, webhook received, then refunded via
-  webhook; stock put back by hand (refunds don't restock, D8). The order stays as a record.
-- 2026-11-12 Test-mode rehearsal on the live site (owner + Claude): checkout, Stripe Tax (Utah),
-  thanks page, real webhook through the tunnel, stock reserved and sold, confirmation and
-  shipping emails via Graph (fixed a CRLF bug found by it), Discord alert, refund via webhook.
-  All worked. Then checkout switched off, Stripe key commented out again, rehearsal order
-  removed with its stock put back. Order page got a Track package button (9b829fb).
-- 2026-11-12 Store review item 12: order emails go through Microsoft Graph as the app
-  poke6s-store-mail, which Exchange lets send only as the new free shared mailbox
-  orders@poke6s.com (the alias moved off admin@; owner has full access and send-as). Failed
-  sends queue, retry for 24 h and alert Discord; orders_cli resend / test-email. DKIM CNAMEs
-  added in Cloudflare. Test to Gmail: inbox, SPF/DKIM/DMARC pass; sending as admin@ refused.
-- 2026-11-12 Store review item 15: the plan now pins the admin to its own app and LAN-only
-  port, never routed through the tunnel, refusing Cloudflare traffic, signed in; a new test
-  fails if the public app gains /admin pages or write routes beyond the four known (eec16c7).
-- 2026-11-12 Store review item 13: the 4 test orders, their 7 lines and 10 stock records
-  deleted; their test "sales" folded into the Nov 2 inventory adjustments, so stock on hand
-  is unchanged (checked product by product, and stock equals its history). Test emails in
-  the outbox and store.before-phase2-2026-11-05.db deleted. Copy taken first:
-  data/storefront/store.before-testcleanup-2026-11-12.db (delete with the other before-*
-  copies around 2026-11-19). The one email-list sign-up (06:13 UTC) is a visitor: kept.
-- 2026-11-12 Store review items 14 and 16: requirements pinned (requirements.txt,
-  requirements-dev.txt, constraints.txt), base image python:3.12.16-slim-trixie, served
-  image has no test tools (make test-storefront builds the "test" stage); HSTS and
-  Permissions-Policy headers, 32 KB cap on cart/checkout bodies, store data files mode 600
-  (f3c6934). 136 store tests pass.
-- 2026-11-12 Store review item 11: checkout stays off without STRIPE_WEBHOOK_SECRET; the
-  15-minute reconcile also applies the last 3 days of Stripe events (payments, expiries,
-  refunds, disputes), each once, so missed deliveries still land. Checked against Stripe
-  test mode (d3bb39b). 133 store tests pass.
-- 2026-11-12 Store review item 10: one visitor can hold at most 3 unpaid checkouts and 12
-  units at once (on top of 10 attempts an hour); the visitor address follows visitors.py's
-  rule; port 8010 listens on localhost only (LAN can't reach it or fake the header); the
-  per-visitor tables are tidied. 129 store tests pass; deployed (4a3060a), monitoring OK.
-- 2026-11-12 Store review item 9: nightly store backup (storefront/tools/backup_store.py,
-  cron 03:15, job `storefront-backup`) into data/backups/storefront/, 30 days, checked with
-  integrity_check; restore command with a practice mode. Drill done: restored copy matched
-  the live counts and a throwaway store ran on it. Runbook: "Store backups".
-- 2026-11-12 The store backup is also mirrored nightly to the Synology's Backup share
-  (Poke6s folder; encrypted SMB mount at /mnt/synology-backup, owner's account in a
-  root-only credentials file). A restore from that copy was tested.
-- 2026-11-12 market.poke6s.com now follows the home IP by itself: scripts/utilities/
-  update_market_dns.py runs every 5 minutes (cron job `market-dns`, logs/market_dns.log) and
-  moves the Cloudflare `market` A record when the IP changes, with a Discord note. Token:
-  CLOUDFLARE_DNS_API_TOKEN in .env (DNS edit, poke6s.com only, no expiry, no IP filter).
-  Owner chose this over moving market onto the tunnel.
-- 2026-11-12 Store review item 8: the owner set up email two-factor and a passkey on the
-  Cloudflare login.
-- 2026-11-12 Store review item 7: `.env` and `secrets/` are now mode 600/700 (only the owner
-  and root). The market container no longer sees `.env` or `secrets/` (masked in
-  docker-compose.yml) and gets only the three settings its jobs use. The Stripe test key is
-  commented out in `.env` while the store is catalog-only, so the store container holds none.
-  Checked: market 200, store 200, bug import and PriceCharting token lookup still work (aaaf6c5).
-- 2026-11-11 Store review item 6: odd page numbers, non-ASCII order-link tokens and webhook
-  signatures, and non-numeric image widths now get a page or a 404, not a 500 or 422
-  (f182035, deployed, checked live; pushed to GitHub 2026-11-12 once SSH was back).
-- 2026-11-11 Store review item 5 (owner's choice): while checkout is off, "Buy on TCGplayer"
-  opens the product's own TCGplayer page through the owner's affiliate link (disclosed on the
-  page), a "we're rebuilding" note sits under the header, and product pages and /notify take an
-  email for a one-time "we're open" message (notify_signups table, migration 003; Privacy page
-  says what is kept). 52aac12, deployed, checked live.
-- 2026-11-11 Store review item 4: store stock set from the owner's Nov 2 inventory (11 products,
-  undoing the test orders), then packs split as the owner approved: Destined Rivals 2 art sets +
-  10 loose, Perfect Order 3 art sets + 4 loose (new product ENG-PO-PACK, $5.99), Silver Tempest 11
-  loose; one art set of each kept off the store. Recorded as stock_movements 'adjustment'
-  (inventory-2026-11-02, packs-2026-11-11); backups store.before-stock-/before-packs-2026-11-11.db.
-- 2026-11-11 Store review item 3 (owner's choice): catalog mode, so with checkout off product
-  pages show no stock counts and don't tell Google "InStock" (b69231f). New
-  `storefront/tools/reprice.py` (101f5c9) prices at the store's rules (5% under market, .99) and
-  never below break-even from a private costs file; products whose break-even is above market
-  were hidden, then shown again at break-even (owner). Applied: 21 prices changed, all 30 shown (backup:
-  data/storefront/store.before-reprice-2026-11-11.db). Abyss Eye linked to TCGplayer 695112 in
-  the store and in data/squarespace_tcgplayer_mapping.csv (data file, not committed).
-- 2026-11-11 Store review item 2: the Privacy page named Cloudflare Web Analytics, which the site
-  doesn't use. It now describes the store's own visit counting and says traffic passes through
-  Cloudflare (owner approved the wording; 4192166, deployed, checked live).
-- 2026-11-11 Store review item 1: the trailing-slash redirect could send a poke6s.com link to
-  another site. Fixed with a test (fc2fc78), merged to main and deployed; checked live.
-- 2026-11-11 SMART disk health on OMV (owner ran the installer): 12 disks report (11 Seagate
-  Exos X18, 1 SanDisk SSD), all PASSED, no pending, uncorrectable, reallocated or cable errors,
-  35-40 °C. Shown in Home lab: Servers, SMART table.
-- 2026-11-11 Temporary sudo file /etc/sudoers.d/90-claude-buildout removed (owner's request):
-  sudo asks for a password again, so agents can't run sudo steps themselves; the owner runs them.
-- 2026-11-11 Store order alerts go to Discord channel 1569946385548050533: webhook saved in
-  `.env` by the owner, store restarted, test alert accepted by Discord.
-- 2026-11-11 Shipping set (owner, plan decision D3): $10 flat for singles, accessories and small
-  sealed, $20 for large sealed, still free over $150. Every order now ships with tracking and
-  signature confirmation (was over $150); the Shipping page says so. Sales tax (D2) was decided
-  earlier: Stripe Tax, Utah only. Cloudflare "Always Use HTTPS" is on (owner; http now 301s).
-- 2026-11-11 poke6s.com launched catalog-only on the new store (owner): DNS on Cloudflare,
-  Cloudflare Tunnel to the storefront container, www redirects to https://poke6s.com,
-  checkout switched off (STOREFRONT_CHECKOUT), Google indexing on. Squarespace site replaced;
-  the D5 forwarding stopgap is no longer needed. Log: docs/storefront_plan.md.
-- 2026-11-11 Owner pointed the bare poke6s.com at the tunnel: the new store answers at
-  https://poke6s.com/ (sitemap 68 pages; old Squarespace paths 301 to the new ones). Note:
-  plain DNS (port 53) queries from this server still got Squarespace's old A records, even
-  when sent to 1.1.1.1 or Cloudflare's nameservers, while DNS over HTTPS and the system resolver
-  gave Cloudflare's. Something on the home network answers port-53 queries from a cache, so
-  check DNS with DNS over HTTPS (dns.google/resolve), not dig.
-- 2026-11-11 Google search row on Grafana's Store dashboard: clicks, times shown, click rate,
-  average position, top searches and pages, sitemap status and which sitemap pages Google has
-  indexed (scripts/monitoring/search_console.py, called by collect_status.py; runbook "Google
-  search row"). The owner added poke6s.com to Search Console, submitted the sitemap and created
-  the read-only service account.
+
 
 High Priority
 -------------
@@ -950,22 +854,25 @@ Plan: `docs/lorcana_market_plan.md`. Research only (no store or listings), Engli
 until the owner decides on a public address. No new costs: TCGCSV/TCGplayer data and images
 only; Scrydex (paid) and PriceCharting graded are out of scope.
 
-- [waiting] Phase 0 go-live: merged to `main` 2026-11-14 (see Recently Completed). Lorcana
-  starts the first night `/opt/pokemon-momentum` runs code that includes it (on 2026-11-14 that
-  folder was on `feature/homelab-machines`, another session's branch, which doesn't yet).
+- [waiting] Go-live: Phase 0 (2026-11-14) and Phase 1 with the admin-only gate (2026-11-15)
+  are on `main`. Lorcana starts the first night `/opt/pokemon-momentum` runs code that includes
+  them (on 2026-11-15 that folder was still on `feature/homelab-machines`, another session's
+  branch, which doesn't yet).
   Watch that night's Discord summary for the Lorcana line; the run is about 4 minutes longer.
   If the code was off for a while first, run `extract_category_from_archives.py --category-id 71`
   to fill the gap from the collect-only tarballs (runbook "Lorcana market").
-- [planned] Phase 1 data: product metadata keeps only rarity and number. Lorcana pages need
-  `Property` (film), `InkType`, `CardType` and `PromoType` from TCGCSV's extendedData: add them
-  for category 71 in `export_products_for_my_groups.py` (a `lorcana_products` column or a side table).
-- [planned] Phase 1: serve `data/lorcana_images/` (read-only route or static mount, cache headers)
-  with TCGplayer's `imageUrl` as the fallback; a weekly `fetch_lorcast_images.py` run for new sets.
+- [planned] Phase 1: film and ink filters in Lorcana mode (Research by film / ink, list filters),
+  reading `lorcana_card_attributes`; Lorcana rarity filters in a set's card list (the set
+  filter menu offers Pokemon rarities today, so it's hidden for nothing yet: check it).
+- [planned] Phase 1: Lorcana mode in the phone app (`mobile_app.html`), after the desktop.
+- [planned] Phase 1: a weekly `fetch_lorcast_images.py` run for new sets (only missing images are
+  fetched; card lists cached 7 days). Until then, run it by hand after a set releases.
 - [planned] Phase 1: game chosen by host name (Pokemon stays the default and unchanged);
   Discover, Research by set / franchise (`Property`) / ink, card page, Track; desktop first;
   footer credit and "not endorsed by Disney or Ravensburger" disclaimer.
 - [planned] Phase 2: Lorcana 100, Chase and Sealed indexes; Sealed Deals after the pack
   counts in the plan are checked against product pages.
+- [waiting] Phase 3: publishing includes removing 71 from `INTERNAL_CATEGORY_IDS` in `api.py`.
 - [waiting] Phase 3: owner picks brand and domain (subdomain of poke6s.com or a game-neutral
   domain); avoid a name that starts with the Lorcana trademark.
 
