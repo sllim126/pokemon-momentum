@@ -1,6 +1,6 @@
 # Lorcana Market Plan (working name "Lorcana6s")
 
-Last reviewed: 2026-11-14 (Phase 0 built)
+Last reviewed: 2026-11-15 (Phase 1 desktop mode and gate merged)
 
 A Disney Lorcana version of the Pokemon market research site: prices, movers, set and card
 history, indexes and saved lists. **Research only.** No store, listings, buying or

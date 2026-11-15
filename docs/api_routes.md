@@ -1,6 +1,6 @@
 # Site routes
 
-Last reviewed: 2026-11-14
+Last reviewed: 2026-11-15
 
 Every route served by `scripts/dashboards/api.py` (FastAPI, port 8001 in the container,
 public at market.poke6s.com). `tests/test_api_routes.py::test_every_route_is_in_the_route_reference`

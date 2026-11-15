@@ -1,6 +1,6 @@
 # Desktop App: Maintainer Guide
 
-Last reviewed: 2026-11-14
+Last reviewed: 2026-11-15
 
 The desktop app is one page that holds the site's five areas (Buy, Discover, Research,
 Track, Learn) in a single three-column layout built for 1080p screens. Since 2026-10-12 it
