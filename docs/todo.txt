@@ -313,6 +313,12 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   signature confirmation on every order), backups.
 - [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
   too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
+- [ready] Notification emails get product cards (branch `storefront/mail-product-cards`,
+  78eec63; 162 store tests pass): `Products: SKU, SKU` in a message file shows photo, price and
+  link per product. Not merged: merge when the owner says. Draft "we're open" email in
+  data/storefront/mailings/2026-11-we-are-open.txt; sends only after the PO box (see below).
+- [planned] Some store photos are tiny (Greninja ex PC 200 px, Perfect Order box 270 px):
+  replace them with larger ones (fits with the owner's listing notes).
 - [next] Owner's notes on individual store listings (owner has them, 2026-11-14): go through
   them one listing at a time.
 - [owner] The email list has one sign-up (a visitor, 2026-11-12 from /notify), not none: send
