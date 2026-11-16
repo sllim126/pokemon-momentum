@@ -1789,11 +1789,11 @@ undo, stop the site and copy the backup back over `prices_db.duckdb`.
 Upgrading DuckDB
 ----------------
 `requirements.txt` pins DuckDB (1.5.4 since 2026-11-15). Unpinned, a clean build on 2026-11-06
-installed DuckDB 2.0.0, which crashes on import with "Illegal instruction" (exit 132). This VM's
-CPU shows as a plain "QEMU Virtual CPU" with SSE4.2 but no AVX, which is the likely reason.
-Check the flags with `grep -o -w 'avx2\?' /proc/cpuinfo | sort -u`; no output means no AVX.
-Giving the VM a CPU type with AVX in Proxmox (VM > Hardware > Processors > Type, then a full
-stop and start of the VM) should let newer versions run.
+installed DuckDB 2.0.0, which crashed on import with "Illegal instruction" (exit 132): the VM's
+CPU type was a plain "QEMU Virtual CPU" without AVX. On 2026-11-15 the VM was switched to the
+`host` CPU type in Proxmox (Xeon E5-2640 v3: AVX, AVX2, FMA) and 2.0.0 now imports and runs.
+If the VM ever moves to a node or CPU type without AVX2, newer DuckDB versions will crash
+again; check with `grep -o -w avx2 /proc/cpuinfo | sort -u` (no output means no AVX2).
 
 To try a newer version (the site keeps running on the old image throughout):
 

@@ -47,6 +47,8 @@ Recently Completed
 - 2026-11-15 DuckDB pinned to 1.5.4 in `requirements.txt` (unpinned builds picked 2.0.0, which
   crashes here: confirmed with a throwaway container, exit 132). Clean `--no-cache` build with the
   pin passes all 327 tests. Removed duplicate fastapi/uvicorn lines. Runbook: "Upgrading DuckDB".
+- 2026-11-15 Owner switched the server VM to the `host` CPU type in Proxmox (Xeon E5-2640 v3,
+  AVX2). Confirmed the cause: DuckDB 2.0.0 now imports and runs; before, "Illegal instruction".
 - 2026-11-14 Lorcana mode in the desktop app (merged 2026-11-15, milestone lorcana-phase1; owner chose an
   admin-only switch): third market button for admins, Pokemon-only views left out, our Lorcast
   images (`/lorcana/images.json` lists which exist), Disney/Ravensburger footer. Checked on a
@@ -123,9 +125,8 @@ High Priority
   population reports and sealed. Paid, so it needs the owner's OK (AGENTS.md: no new costs).
   Read their Terms of Service first: attribution is required on Free and Hobby, and public
   display rights aren't stated on the docs or pricing pages.
-- [waiting] Owner: give the server VM a CPU type with AVX in Proxmox (full stop and start), if
-  newer DuckDB versions are wanted; DuckDB 2.0.0 crashes here with "Illegal instruction" and
-  the VM's QEMU CPU has no AVX. Then try an upgrade the runbook way ("Upgrading DuckDB").
+- [planned] Upgrade DuckDB 1.5.4 -> 2.x the runbook way ("Upgrading DuckDB": test image, tests,
+  database backup first, then switch). Possible since the VM got the `host` CPU type on 2026-11-15.
 
 Monitoring with Grafana (owner, 2026-11-05): "show me everything, then we scale it down".
 Dashboards on http://192.168.1.240:3000 in folders "Pokemon Momentum" and "Home lab";
