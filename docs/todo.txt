@@ -469,6 +469,11 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   after Cyber Monday (Dec 1) set it back to +0%. Six overpriced cards need a manual price (the
   skip-big-drops guard blocks the rules): Pikachu TG05 LP, Mawile EX MP, Klefki, Arven MP,
   Comfey GG14, Spewpa; three Japanese cards have no market price.
+  TCGplayer confirmed (affiliate email, 2026-11-16): "Cyber Weekend" runs 9 AM New York Nov 28 to
+  11 PM New York Dec 1 (Sat-Tue), buyers get 10% store credit on everything (13%+ for
+  subscribers). Cyber Weekend banners are in Impact (Manage > Brand Creatives > Images, "Cyber
+  Weekend 2026"). Open: does the owner want a dated Cyber Weekend note on market.poke6s.com
+  pointing at TCGplayer through the affiliate link?
 - [watching] Binder Art Maker (/binder-art, live 2026-10-21). Fix bug reports as they come in.
   Ideas if visitors ask: upload their own logo or text; a card-back design. Japanese set logos
   aren't in images/logos yet.
