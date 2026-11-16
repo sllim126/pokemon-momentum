@@ -1,6 +1,11 @@
+# DuckDB is pinned: an unpinned clean build on 2026-11-06 picked DuckDB 2.0.0, which dies
+# with "Illegal instruction" on import: the VM's CPU type then had no AVX. Since 2026-11-15 the
+# VM uses the "host" CPU type (AVX2) and 2.0.0 imports fine, but 1.5.4 is what the running
+# image uses and what wrote data/processed/prices_db.duckdb. Before raising it, build a test image and run the tests
+# (operator runbook, "Upgrading DuckDB").
 pandas
 numpy
-duckdb
+duckdb==1.5.4
 pyarrow
 fastparquet
 fastapi
@@ -14,5 +19,3 @@ plotly
 python-dotenv
 python-multipart
 prometheus-client
-fastapi
-uvicorn

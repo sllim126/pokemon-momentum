@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-14 (Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
+Last reviewed: 2026-11-15 (Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -1784,6 +1784,34 @@ docker exec pokemon-momentum chown 1000:1000 /app/data/processed/prices_db.duckd
 
 Expected: the script ends with "Row counts match", and the site's pages answer as before. To
 undo, stop the site and copy the backup back over `prices_db.duckdb`.
+
+
+Upgrading DuckDB
+----------------
+`requirements.txt` pins DuckDB (1.5.4 since 2026-11-15). Unpinned, a clean build on 2026-11-06
+installed DuckDB 2.0.0, which crashed on import with "Illegal instruction" (exit 132): the VM's
+CPU type was a plain "QEMU Virtual CPU" without AVX. On 2026-11-15 the VM was switched to the
+`host` CPU type in Proxmox (Xeon E5-2640 v3: AVX, AVX2, FMA) and 2.0.0 now imports and runs.
+If the VM ever moves to a node or CPU type without AVX2, newer DuckDB versions will crash
+again; check with `grep -o -w avx2 /proc/cpuinfo | sort -u` (no output means no AVX2).
+
+To try a newer version (the site keeps running on the old image throughout):
+
+```bash
+cd /opt/pokemon-momentum
+# 1. Change the pin in requirements.txt, then build a separate test image.
+docker build --no-cache --pull -t pm-duckdb-test .
+docker run --rm --network none pm-duckdb-test python -c "import duckdb; print(duckdb.__version__)"
+# 2. Run the tests in it against a read-only view of the data (see AGENTS.md for the command;
+#    mount data/ read-only and a writable copy of data/squarespace_tcgplayer_mapping.csv).
+# 3. Back up the database before the real image switches: a new major version may rewrite
+#    its file format, and older versions can't open it afterwards.
+cp data/processed/prices_db.duckdb data/backups/prices_db_before_duckdb_upgrade_$(date +%F).duckdb
+# 4. Rebuild and restart the real container.
+docker-compose build pokemon-momentum && docker-compose up -d pokemon-momentum
+```
+
+To undo: put the old pin back, rebuild, and copy the backup over `prices_db.duckdb`.
 
 
 If Japanese category loads no history
