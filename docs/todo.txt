@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-15 (milestone: lorcana-phase1)
+Last updated: 2026-11-16 (milestone: pin-duckdb)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -49,39 +49,7 @@ Recently Completed
   pin passes all 327 tests. Removed duplicate fastapi/uvicorn lines. Runbook: "Upgrading DuckDB".
 - 2026-11-15 Owner switched the server VM to the `host` CPU type in Proxmox (Xeon E5-2640 v3,
   AVX2). Confirmed the cause: DuckDB 2.0.0 now imports and runs; before, "Illegal instruction".
-- 2026-11-14 Lorcana mode in the desktop app (merged 2026-11-15, milestone lorcana-phase1; owner chose an
-  admin-only switch): third market button for admins, Pokemon-only views left out, our Lorcast
-  images (`/lorcana/images.json` lists which exist), Disney/Ravensburger footer. Checked on a
-  throwaway copy at 1920x1080 and 1366x768: no console errors, no page scroll; English unchanged.
-  Also fixed: `.btn[hidden]` (the "Our TCGplayer store" button showed on every card, live bug).
-- 2026-11-14 Lorcana Phase 1 data (merged 2026-11-15, milestone lorcana-phase1): `lorcana_card_attributes`
-  (film, ink(s), card type, classifications, promo type, cost, lore, strength, willpower, rarity
-  tier; 3,657 cards from local files, no extra TCGCSV requests), built nightly after the product
-  refresh, which now keeps Lorcana's fetched product lists whole. Admin-only image route
-  `/lorcana/images/<productId>.avif` (404 -> pages use TCGplayer's image). Gate: every
-  `?category_id=71` request is 404 unless an admin is signed in (`INTERNAL_CATEGORY_IDS`).
-  Merged with the gate, so Lorcana data stays admin-only from its first nightly run.
-- 2026-11-14 Lorcana Phase 0 built (merged 2026-11-14, milestone lorcana-phase0): category 71, history
-  unpacker (7z archives and collect-only tarballs; real `data/extracted/` filled for all 1,008
-  stored days), nightly Lorcana pass after Pokemon (no index step), collect-only job without
-  Lorcana, Discord line, rarity tiers, Lorcast image downloader (3,369 images, 208 MB, all
-  matched by TCGplayer id). Tested on a copy of the database: 1,007 days and 3.8 million rows
-  in 4.5 minutes, Pokemon unchanged. Fixed the "tin" rule that called 15 Lorcana cards sealed.
-- 2026-11-14 Marketing emails (owner): one template for future news to the email list
-  (storefront/app/mailing.py, templates/email/marketing.html), sent with `orders_cli mailing`
-  (preview, --test-to, --send). Every email has the reason the reader gets it, a one-click
-  unsubscribe (/unsubscribe/<token> plus List-Unsubscribe headers; migration 004), the postal
-  address (STOREFRONT_POSTAL_ADDRESS; sending refuses without it) and an honest From/Reply-To.
-  Privacy page: the list is for store news, not only the opening. 159 store tests pass.
-- 2026-11-14 market.poke6s.com's "Our store" button opens the product's own poke6s.com page,
-  shown only when it's in stock there (reads data/storefront/store.db read-only; the
-  Squarespace-export loaders are gone).
-- 2026-11-14 Owner: single packs keep the $10 small-sealed shipping rate. No "we're open" email
-  (owner thought nobody had joined; see the [owner] item on the one sign-up).
-- 2026-11-14 Lorcana market plan merged (`docs/lorcana_market_plan.md`, written 2026-11-05):
-  research-only Lorcana site, internal first; data on hand, source rules checked (TCGCSV,
-  Lorcast, Scrydex, PriceCharting, Ravensburger), rarity tiers, indexes, sealed pack counts,
-  phases. Card images: download from Lorcast and host ourselves (owner). No code yet.
+  No upgrade planned (owner, 2026-11-16): 1.5.4 does the job; runbook "Upgrading DuckDB" if needed.
 
 
 High Priority
@@ -125,8 +93,6 @@ High Priority
   population reports and sealed. Paid, so it needs the owner's OK (AGENTS.md: no new costs).
   Read their Terms of Service first: attribution is required on Free and Hobby, and public
   display rights aren't stated on the docs or pricing pages.
-- [planned] Upgrade DuckDB 1.5.4 -> 2.x the runbook way ("Upgrading DuckDB": test image, tests,
-  database backup first, then switch). Possible since the VM got the `host` CPU type on 2026-11-15.
 
 Monitoring with Grafana (owner, 2026-11-05): "show me everything, then we scale it down".
 Dashboards on http://192.168.1.240:3000 in folders "Pokemon Momentum" and "Home lab";
