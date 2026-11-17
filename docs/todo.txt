@@ -544,6 +544,29 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   torrent (the crawl's next refresh is ~2026-12-02 to 12-04). README must say it is a starting
   point (sets added since the snapshot are missing; top up from TCGCSV) and has no prices (those
   are in the archive torrents). Same promise: take it down if CptSpaceToaster asks.
+- [waiting] TCGCSV Discord #development, read up to 2026-11-16 (owner's screenshots,
+  2026-11-17). What matters to us:
+  - CptSpaceToaster's hosting costs are real: 120M+ requests and 10 TB+ a month, and the
+    archive's return added ~80 GB on day one (~$200/month if sustained). He bans people who
+    pull the whole archive more than once; "download each archive file once" is the rule. We
+    do exactly that, and the torrents take load off him.
+  - Owner decision: switch our daily prices to the one archive file a day (step 5 of the
+    archive plan above)? It would replace ~1,900 per-group requests a night with 1. Catch: the
+    archive file appears later than the per-group files (the Nov 14 and 15 files arrived by
+    Nov 16 21:30 UTC), so the site's prices would run about a day behind. Not started.
+  - Owner decision: support TCGCSV on Patreon (patreon.com/TCGCSV, from $1/month; a new cost,
+    so the owner's call). Free alternative: his affiliate link,
+    `https://partner.tcgplayer.com/tcgcsv?u=<URL-encoded TCGplayer product URL>` or the short
+    `https://cpt.tcgcsv.com/{code}`. Our TCGplayer links carry our own affiliate code, so only
+    use his where we don't already earn (e.g. a "data from TCGCSV" credit link).
+  - He may add a `tcgcsv_affiliate_url` field to product JSON (alongside `url`, never replacing
+    it). If it shows up, our product parsing should ignore unknown fields (it does today).
+  - "Market price" covers every condition (new cards ~NM/LP, old cards ~MP/HP/Damaged). The
+    site already says so (desktop "About these prices" and the legal footer); nothing to do.
+  - Pikaqian (https://pikaqian.com/docs/) was recommended on 2026-11-05 as a faster, more
+    accurate Pokemon set-list source. [idea] Look at it (terms, cost) before building more
+    set-metadata cleanup of our own.
+  Next read: from 2026-11-16 (JerryTap, 12:42 PM).
 - [idea] Help TCGCSV by seeding a torrent of the price archive (owner offered in the TCGCSV
   Discord #development, 2026-10-19; CptSpaceToaster can't torrent and said "hopefully some
   enterprising folks" would). Archive is about 1 GB, all categories, prices only. Before
