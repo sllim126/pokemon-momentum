@@ -950,21 +950,30 @@ Future Ideas
 ------------
 
 - [idea] Ideas from pokepastor.com (reviewed 2026-11-17; the owner's early inspiration). A
-  one-person Pokemon shop (singles and sealed, English and Japanese) on SortSwift, a hosted
-  TCG storefront, with a YouTube channel (weekly pack openings) and a Discord. No price data or
-  charts: it's a shop, so it compares with poke6s.com, not the market site. Worth borrowing for
-  the storefront, cheapest first:
-  - Trust lines near the buy button: "shipping since <year>", "sleeved and top-loaded", and
-    a handwritten thank-you card in some orders (a cheap touch customers remember).
-  - Shop filters: type (singles/sealed), set, condition, language, price range; sort by
-    newest, price or name. Condition on every single's card (NM, LP...).
-  - Favorites/wishlist (needs accounts; we have none), and gift cards (needs Stripe work).
-  - "Sell to us" pages (collection: a form with photos; bulk: a count form, shipping
-    instructions after review). Only if buying restarts: new buying is parked in the business
-    to-do.
-  - A video/community block on the home page (YouTube, Discord), if the owner ever makes them.
-  Not worth copying: SortSwift itself (a paid platform; ours costs nothing) and its flat
-  listing pages with no stock labels.
+  one-person Pokemon shop on SortSwift (a paid hosted storefront), mostly singles; ours is
+  sealed only (owner), so its singles tools (condition per card, set/rarity filters) don't
+  apply. Poke6s already links Discord, YouTube, Instagram and the rest in the store footer.
+  Taken forward: trust lines and reviews (next item). Parked unless buying restarts: "sell to
+  us" pages (collection form with photos; bulk count form).
+- [waiting] Trust lines and Google reviews on poke6s.com (owner liked it, 2026-11-17).
+  (1) Short trust lines near the buy button and in the footer, e.g. "selling since <year>",
+  how sealed product is packed, ships in 1 business day from Utah; needs the owner's facts.
+  (2) Ask every customer for a Google review: a link in the order email a few days after it
+  ships (or a separate follow-up email). Needs a Google Business Profile (free; a home
+  business can hide its address and show a service area) and its "ask for reviews" link.
+  Ask everyone, never only happy customers, and never offer anything for a review (Google's
+  rules and the FTC's 2024 fake-review rule). (3) Later, show the rating on the site (a
+  reviews page or a line in the footer), from the Business Profile, not a paid widget.
+- [waiting] One Poke6s account for the store and the market site (owner, 2026-11-17).
+  Reverses "Customer accounts: not planned" in docs/storefront_plan.md. The market site already
+  has Google sign-in accounts (tracking tags, saved views). Proposed: the store signs in with
+  the same Google client, and both sites recognise the same person by their Google account ID,
+  so there are no passwords to keep. Guest checkout stays. What a store account would add: order
+  history (orders matched by email), back-in-stock alerts and a wishlist; later, linking a
+  market watchlist to "buy from Poke6s". Open questions: one shared sign-in at poke6s.com
+  (a cookie for .poke6s.com) or two sign-ins with the same Google button; where the shared
+  user table lives (store SQLite vs. the market's database); privacy page and account
+  deletion covering both sites. Plan with the owner before building.
 
 - [idea] Trade checker (owner, 2026-11-17): is a trade fair? Two sides: "you give" (cards,
   sealed, slabs) and "you get". Each item priced from our data (TCGplayer market, PriceCharting
