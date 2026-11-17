@@ -55,6 +55,13 @@
     a { color: var(--accent); }
 
     /* ---------- header ---------- */
+    /* TCGplayer Cyber Weekend note (see #eventBar); remove after 2026-12-01. */
+    .event-bar { display: block; padding: 7px 16px; text-align: center; font-size: 13px; line-height: 1.4;
+      text-decoration: none; color: var(--text); background: var(--accent-soft); border-bottom: 1px solid var(--line); }
+    .event-bar[hidden] { display: none; }
+    .event-bar:hover strong { text-decoration: underline; }
+    .event-bar .event-note { margin-left: 6px; font-size: 11px; color: var(--muted); }
+
     .top {
       display: flex;
       align-items: center;
@@ -542,6 +549,29 @@
       <span id="accountLabel">Sign in</span>
     </a>
   </header>
+  <!-- TCGplayer Cyber Weekend 2026 note (owner, 2026-11-17; dates from TCGplayer's affiliate email
+       of 2026-11-16: 9 AM New York Nov 28 to 11 PM New York Dec 1). It shows itself only inside
+       that window (add ?event_preview=1 to see it any time) and links through the affiliate
+       link, except for the signed-in owner, as tcgplayerUrl() does. Remove after the event. -->
+  <a class="event-bar" id="eventBar" href="https://www.tcgplayer.com/" target="_blank" rel="sponsored noopener" hidden>
+    <strong>TCGplayer Cyber Weekend:</strong> 10% back in store credit on everything, through Dec 1 ›
+    <span class="event-note">affiliate link</span>
+  </a>
+  <script>
+    (() => {
+      const START = Date.parse("2026-11-28T14:00:00Z"), END = Date.parse("2026-12-02T04:00:00Z");
+      const now = Date.now();
+      if (!/[?&]event_preview=1/.test(location.search) && (now < START || now >= END)) return;
+      const bar = document.getElementById("eventBar");
+      bar.hidden = false;
+      bar.addEventListener("click", () => {
+        // ownerSignedIn lives in the page's main script; the owner's own clicks skip the affiliate link.
+        const owner = typeof ownerSignedIn !== "undefined" && ownerSignedIn;
+        bar.href = owner ? "https://www.tcgplayer.com/"
+                         : `https://partner.tcgplayer.com/jR1OJb?u=${encodeURIComponent("https://www.tcgplayer.com/")}`;
+      });
+    })();
+  </script>
 
   <div class="scope">
     <div class="switch" id="marketSwitch" role="group" aria-label="Market">
