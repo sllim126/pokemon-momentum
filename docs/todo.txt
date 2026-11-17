@@ -949,6 +949,23 @@ Needs Decisions
 Future Ideas
 ------------
 
+- [idea] Ideas from pokepastor.com (reviewed 2026-11-17; the owner's early inspiration). A
+  one-person Pokemon shop (singles and sealed, English and Japanese) on SortSwift, a hosted
+  TCG storefront, with a YouTube channel (weekly pack openings) and a Discord. No price data or
+  charts: it's a shop, so it compares with poke6s.com, not the market site. Worth borrowing for
+  the storefront, cheapest first:
+  - Trust lines near the buy button: "shipping since <year>", "sleeved and top-loaded", and
+    a handwritten thank-you card in some orders (a cheap touch customers remember).
+  - Shop filters: type (singles/sealed), set, condition, language, price range; sort by
+    newest, price or name. Condition on every single's card (NM, LP...).
+  - Favorites/wishlist (needs accounts; we have none), and gift cards (needs Stripe work).
+  - "Sell to us" pages (collection: a form with photos; bulk: a count form, shipping
+    instructions after review). Only if buying restarts: new buying is parked in the business
+    to-do.
+  - A video/community block on the home page (YouTube, Discord), if the owner ever makes them.
+  Not worth copying: SortSwift itself (a paid platform; ours costs nothing) and its flat
+  listing pages with no stock labels.
+
 - [idea] Trade checker (owner, 2026-11-17): is a trade fair? Two sides: "you give" (cards,
   sealed, slabs) and "you get". Each item priced from our data (TCGplayer market, PriceCharting
   for graded), totals per side, and how far off the trade is in dollars and percent ("you give
