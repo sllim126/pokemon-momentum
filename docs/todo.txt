@@ -531,24 +531,28 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   2nd. Jan-Oct 2026 get no monthly torrents. Owner, 2026-11-17: also a 2026-so-far torrent now,
   so people can take everything from torrents and fetch only the days since the newest one;
   keep our own downloads as they are. Built 2026-11-17: `tcgcsv-archive-2026-01-to-10`
-  (304 days, 1.18 GB; `--months` option added to the builder). Not seeding yet: qBittorrent's
+  (304 days plus the product list, 1.21 GB, info hash 9cd6f1b5...; `--months` option added).
+  Not seeding yet: qBittorrent's
   web API answered "added" but the torrent never appeared in its list (owner to check the
   Windows PC for a waiting dialog); then LAN-seed it and post the magnet in #useful-shares.
   Next: [planned] automate it before 2026-12-02 (build here, push to qBittorrent with the
   LAN seed step, post the magnet link to Discord); needs libtorrent in a host venv and a
   crontab line the owner adds. Until then, build and add by hand on the 2nd.
-- [planned] TCGCSV product-data torrent (owner, 2026-11-11): binaryalias asked in the TCGCSV
-  Discord for the full product list as a torrent, for people's first download; CptSpaceToaster
-  doesn't keep product data in the archives and said to go ahead. We already hold it: the
-  catalogue crawl (`data/tcgcsv_catalogue/`) is complete, 94 games, 93 set lists, 4,733 product
-  files, 655 MB, fetched 2026-11-02 to 11-04 and refreshed every 30 days. As one `.tar.zst`
-  (zstd -19) it is 33 MB. About an hour: add `--catalogue` to
-  `scripts/torrents/build_archive_torrent.py` (one dated `tcgcsv-products-<date>.tar.zst`,
-  README with fetch dates and layout, SHA256SUMS), seed it the same way as the price torrents,
-  reply in the #useful-shares thread. Then a new snapshot each month next to the monthly price
-  torrent (the crawl's next refresh is ~2026-12-02 to 12-04). README must say it is a starting
-  point (sets added since the snapshot are missing; top up from TCGCSV) and has no prices (those
-  are in the archive torrents). Same promise: take it down if CptSpaceToaster asks.
+- [planned] TCGCSV product list inside the torrents (owner, 2026-11-11 and 11-17): binaryalias
+  asked for it; CptSpaceToaster said go ahead; the owner promised it "in the next monthly
+  archive". Done in the builder 2026-11-17: every new torrent carries
+  `tcgcsv-products-<date>.tar.xz` (~32 MB) from the catalogue crawl, plus a README section. The
+  2026 Jan-Oct torrent has it. Keep the crawl's monthly refresh going so each month's copy is fresh.
+- [planned] Automate the monthly torrent (owner, 2026-11-17). On the 2nd of each month, a host
+  cron job: (1) build last month's torrent in a python:3.12-slim container (libtorrent), with
+  the product list; (2) check it: no missing days, every SHA256 matches, libtorrent re-checks
+  the pieces against the files; (3) add it to qBittorrent (192.168.1.207, category TCGCSV,
+  Z:\TCGCSV) and seed it over the LAN until qBittorrent shows 100%; (4) email the owner the
+  .torrent as an attachment with the magnet link and a ready-to-paste #useful-shares post
+  (through the store's Microsoft 365 sender; no new cost); (5) a line in our own Discord
+  alerts if any step fails. The owner posts in the TCGCSV Discord by hand (it's someone
+  else's server). Blocked on: qBittorrent's web API answers "added" but the torrent never
+  appears (seen 2026-11-17); find out why first. Needs a crontab line the owner adds.
 - [waiting] TCGCSV Discord #development, read up to 2026-11-16 (owner's screenshots,
   2026-11-17). What matters to us:
   - CptSpaceToaster's hosting costs are real: 120M+ requests and 10 TB+ a month, and the

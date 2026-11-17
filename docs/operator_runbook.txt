@@ -1128,12 +1128,15 @@ though qBittorrent still uploads on connections it opens itself.
   to it over the LAN only (libtorrent with DHT and trackers off, port 6891) and point
   qBittorrent at `192.168.1.240:6891` (`/api/v2/torrents/addPeers`). That's how 2024 and 2025
   were loaded on 2026-11-02.
-- Planned (2026-11-11): a monthly product-data torrent, built from the catalogue crawl's
-  `data/tcgcsv_catalogue/` as one `.tar.zst` (~33 MB). See docs/todo.txt, "TCGCSV
-  product-data torrent". Not built yet.
+- The product list rides inside every torrent from 2026-11-17 on (owner; promised in
+  #useful-shares on 2026-11-11): the catalogue crawl's `data/tcgcsv_catalogue/` packed as
+  `tcgcsv-products-<newest fetch date>.tar.xz` (~32 MB; xz because 7-Zip on Windows opens it),
+  described in the README and listed in SHA256SUMS. `--no-catalogue` leaves it out. 2024 and
+  2025 predate it.
 - Info hashes: 2024 `b4e6415457ba8f5a841cceb149242d48542f58de`,
   2025 `90554b38726121571b352ae75fd1143aff4a5064`,
-  2026-01-to-10 `2a65c5f956f1451d5b76a216c5c1ae5d47dd5328` (304 days, 1.18 GB).
+  2026-01-to-10 `9cd6f1b5725199a554ddd393f7073e432ca7aba8` (304 days plus the product list,
+  1.21 GB).
 
 Manual category runs inside Docker
 ----------------------------------
