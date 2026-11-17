@@ -1127,7 +1127,13 @@ though qBittorrent still uploads on connections it opens itself.
   reach it once: add the `.torrent` there through the web API, then have this server seed
   to it over the LAN only (libtorrent with DHT and trackers off, port 6891) and point
   qBittorrent at `192.168.1.240:6891` (`/api/v2/torrents/addPeers`). That's how 2024 and 2025
-  were loaded on 2026-11-02.
+  were loaded on 2026-11-02. Simpler, from 2026-11-17: `Z:\TCGCSV` is the PlexVault share
+  (192.168.1.155), mounted here at `/mnt/media/TCGCSV`. Copy the torrent's folder there
+  (`cp -r`, then `sha256sum -c SHA256SUMS.txt` on the copy), then add the `.torrent` with save
+  path `Z:\TCGCSV`: qBittorrent checks the files and seeds at once.
+- If qBittorrent's API answers "added" but the torrent never shows up (and its log has no
+  "Added new torrent" line), qBittorrent is stuck: restart it on the PC, then add again
+  (2026-11-17).
 - The product list rides inside every torrent from 2026-11-17 on (owner; promised in
   #useful-shares on 2026-11-11): the catalogue crawl's `data/tcgcsv_catalogue/` packed as
   `tcgcsv-products-<newest fetch date>.tar.xz` (~32 MB; xz because 7-Zip on Windows opens it),
