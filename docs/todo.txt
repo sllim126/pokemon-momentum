@@ -528,7 +528,12 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   Post new torrents as replies in that thread.
   Schedule (owner, 2026-11-02): monthly torrents start with November 2026 (built 2026-12-02),
   then December 2026 and the full 2026 year together on 2027-01-02, then each month on the
-  2nd. Jan-Oct 2026 get no monthly torrents; they're in the 2026 year one.
+  2nd. Jan-Oct 2026 get no monthly torrents. Owner, 2026-11-17: also a 2026-so-far torrent now,
+  so people can take everything from torrents and fetch only the days since the newest one;
+  keep our own downloads as they are. Built 2026-11-17: `tcgcsv-archive-2026-01-to-10`
+  (304 days, 1.18 GB; `--months` option added to the builder). Not seeding yet: qBittorrent's
+  web API answered "added" but the torrent never appeared in its list (owner to check the
+  Windows PC for a waiting dialog); then LAN-seed it and post the magnet in #useful-shares.
   Next: [planned] automate it before 2026-12-02 (build here, push to qBittorrent with the
   LAN seed step, post the magnet link to Discord); needs libtorrent in a host venv and a
   crontab line the owner adds. Until then, build and add by hand on the 2nd.
@@ -550,7 +555,8 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
     archive's return added ~80 GB on day one (~$200/month if sustained). He bans people who
     pull the whole archive more than once; "download each archive file once" is the rule. We
     do exactly that, and the torrents take load off him.
-  - Owner decision: switch our daily prices to the one archive file a day (step 5 of the
+  - Decided 2026-11-17: keep our downloads as they are (no switch); help through torrents instead.
+    Was: switch our daily prices to the one archive file a day (step 5 of the
     archive plan above)? It would replace ~1,900 per-group requests a night with 1. Catch: the
     archive file appears later than the per-group files (the Nov 14 and 15 files arrived by
     Nov 16 21:30 UTC), so the site's prices would run about a day behind. Not started.

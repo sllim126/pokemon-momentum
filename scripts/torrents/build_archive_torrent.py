@@ -1,8 +1,10 @@
-"""Build a torrent of TCGCSV's daily price archive for one year or one month.
+"""Build a torrent of TCGCSV's daily price archive for one year, one month or a run of months.
 
 Owner's plan (2026-11-02): help TCGCSV with its bandwidth bill by seeding the archive as
 torrents: one per finished year (2024, 2025, then 2026 on 2027-01-02) and one per month from
-November 2026 on, each built on the 2nd of the following month. CptSpaceToaster OK'd sharing
+November 2026 on, each built on the 2nd of the following month. Owner, 2026-11-17: also a
+2026-so-far torrent (January to October, --months 2026-01:2026-10), so anyone can take the whole
+history from torrents and fetch only the few days since the newest monthly one from tcgcsv.com. CptSpaceToaster OK'd sharing
 them in the TCGCSV Discord's #useful-shares on 2026-11-02 and can withdraw that at any time
 (TCGCSV passes on TCGplayer data with TCGplayer's permission). See docs/operator_runbook.txt "TCGCSV archive torrents".
 
@@ -22,6 +24,7 @@ Needs libtorrent (`pip install libtorrent`; not in the site's container). Run on
 
     python scripts/torrents/build_archive_torrent.py --year 2024
     python scripts/torrents/build_archive_torrent.py --month 2026-11
+    python scripts/torrents/build_archive_torrent.py --months 2026-01:2026-10
 """
 
 import argparse
@@ -72,7 +75,9 @@ Prices are TCGplayer data, shared by TCGCSV with TCGplayer's permission. Credit 
 TCGplayer if you use them, and please follow TCGCSV's usage guidelines
 (https://tcgcsv.com/docs#usage-guidelines) for anything you fetch from TCGCSV directly.
 This torrent exists to take download load off TCGCSV: prefer it to fetching the whole
-archive from tcgcsv.com.
+archive from tcgcsv.com. Torrents cover 2024 and 2025 (a year each), 2026 so far, and each
+month after that, posted in the TCGCSV Discord's #useful-shares. Take those, then fetch only
+the days after the newest torrent from tcgcsv.com, once each.
 
 Packaged by Poke6s Market Watch.
 """
@@ -83,19 +88,33 @@ def parse_args() -> argparse.Namespace:
     period = parser.add_mutually_exclusive_group(required=True)
     period.add_argument("--year", type=int, help="e.g. 2024")
     period.add_argument("--month", help="YYYY-MM, e.g. 2026-11")
+    period.add_argument("--months", help="FIRST:LAST months, YYYY-MM:YYYY-MM, e.g. 2026-01:2026-10")
     parser.add_argument("--allow-gaps", action="store_true", help="Build even if some days are missing.")
     return parser.parse_args()
+
+
+def month_end(year: int, month: int) -> date:
+    """The last day of a month."""
+    return date(year + month // 12, month % 12 + 1, 1) - timedelta(days=1)
 
 
 def period_days(args: argparse.Namespace) -> tuple[str, list[date]]:
     """The torrent's name and every day it should cover (never before the archive's first day)."""
     if args.year:
         start, end, name = date(args.year, 1, 1), date(args.year, 12, 31), f"tcgcsv-archive-{args.year}"
-    else:
+    elif args.month:
         year, month = (int(part) for part in args.month.split("-"))
-        start = date(year, month, 1)
-        end = (date(year + month // 12, month % 12 + 1, 1)) - timedelta(days=1)
+        start, end = date(year, month, 1), month_end(year, month)
         name = f"tcgcsv-archive-{year}-{month:02d}"
+    else:
+        first, _, last = args.months.partition(":")
+        (y1, m1), (y2, m2) = ((int(p) for p in part.split("-")) for part in (first, last))
+        start, end = date(y1, m1, 1), month_end(y2, m2)
+        if end < start:
+            raise SystemExit(f"--months {args.months}: the last month is before the first.")
+        # e.g. tcgcsv-archive-2026-01-to-10, or tcgcsv-archive-2025-11-to-2026-02 across a year
+        name = (f"tcgcsv-archive-{y1}-{m1:02d}-to-{m2:02d}" if y1 == y2
+                else f"tcgcsv-archive-{y1}-{m1:02d}-to-{y2}-{m2:02d}")
     start = max(start, FIRST_ARCHIVE_DAY)
     return name, [start + timedelta(days=i) for i in range((end - start).days + 1)]
 

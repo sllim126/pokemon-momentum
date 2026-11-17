@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-15 (Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
+Last reviewed: 2026-11-17 (TCGCSV archive torrents: 2026 so far; Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -1097,7 +1097,9 @@ TCGCSV archive torrents
 Owner's plan (2026-11-02): seed TCGCSV's daily archive as torrents to take load off TCGCSV,
 one per finished year (2024, 2025; 2026 on 2027-01-02) and one per month from November
 2026 on (built on the 2nd of the next month: November on 2026-12-02, December with the 2026
-year on 2027-01-02).
+year on 2027-01-02). Owner, 2026-11-17: plus one 2026-so-far torrent (January to October,
+built 2026-11-17), so people can take the whole history from torrents and fetch only the
+days since the newest monthly torrent from tcgcsv.com. Our own daily downloads stay as they are.
 Sharing approved by CptSpaceToaster in the TCGCSV Discord (2026-11-02): post the magnet
 links and updates in #useful-shares. He may later monetize the archive lightly to cover
 TCGCSV's hosting and doesn't expect the torrents to get in the way, but if he ever asks, take
@@ -1107,11 +1109,19 @@ attached); add each new torrent as a reply there. The seeder needs the router's 
 (TCP and UDP 2191 to the qBittorrent machine): without it, outside peers can't connect even
 though qBittorrent still uploads on connections it opens itself.
 
-- Build: `scripts/torrents/build_archive_torrent.py --year 2024` (or `--month 2026-11`).
+- Build: `scripts/torrents/build_archive_torrent.py --year 2024` (or `--month 2026-11`, or a
+  run of months: `--months 2026-01:2026-10`).
   It needs libtorrent, which isn't in the site's container: run it on the host from a venv
   with `pip install libtorrent`. Output in `data/torrents/` (gitignored): the torrent's folder
   (hard links to `data/raw`, plus README.txt and SHA256SUMS.txt), the `.torrent`, and the
   magnet link in `<name>.magnet.txt`. Torrents are v1-only, for older clients.
+  The host venv is gone since the Python 3.14 upgrade; a throwaway container works:
+  `docker run --rm -v /opt/pokemon-momentum:/app python:3.12-slim sh -c "pip install -q
+  libtorrent && python /app/scripts/torrents/build_archive_torrent.py --month 2026-11"`.
+  Run it as root (the default): the site's container wrote some `data/raw` files as root, and
+  Linux won't let another user hard-link them. Then `chown 1000:1000` the new folder, its
+  README and SHA256SUMS, the `.torrent` and the `.magnet.txt` (not the archive files: they
+  are the same files as `data/raw`).
 - Seeding: the owner's qBittorrent on 192.168.1.207 (web UI port 8080, category "TCGCSV",
   saved to `Z:\TCGCSV`). It is a separate Windows machine, so a new torrent's files have to
   reach it once: add the `.torrent` there through the web API, then have this server seed
@@ -1122,7 +1132,8 @@ though qBittorrent still uploads on connections it opens itself.
   `data/tcgcsv_catalogue/` as one `.tar.zst` (~33 MB). See docs/todo.txt, "TCGCSV
   product-data torrent". Not built yet.
 - Info hashes: 2024 `b4e6415457ba8f5a841cceb149242d48542f58de`,
-  2025 `90554b38726121571b352ae75fd1143aff4a5064`.
+  2025 `90554b38726121571b352ae75fd1143aff4a5064`,
+  2026-01-to-10 `2a65c5f956f1451d5b76a216c5c1ae5d47dd5328` (304 days, 1.18 GB).
 
 Manual category runs inside Docker
 ----------------------------------
