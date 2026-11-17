@@ -942,6 +942,15 @@ Needs Decisions
 Future Ideas
 ------------
 
+- [idea] Trade checker (owner, 2026-11-17): is a trade fair? Two sides: "you give" (cards,
+  sealed, slabs) and "you get". Each item priced from our data (TCGplayer market, PriceCharting
+  for graded), totals per side, and how far off the trade is in dollars and percent ("you give
+  $142, you get $118: 17% in their favour"). Open questions before building: condition (the
+  market price isn't a Near Mint price; let people pick a condition or a % of market?), cash
+  added to one side, trade-in vs. sell value (stores trade at 70-80% of market), and whether
+  it lives on desktop, the phone app or both. Could reuse the Deal Checker's item search and
+  pricing. A shareable link of the trade would let both people see the same numbers.
+
 - [planned] Review CollectiKit (collectikit.ai; iOS, Android and web), a free collector app
   its maker shared on r/PokemonTCG (2026-10-28). The owner promised its maker a thorough review.
   Features it claims: "K2" chat assistant (text or voice) that explains past and current TCG
