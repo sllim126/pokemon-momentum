@@ -65,10 +65,12 @@ def test_sorting(client):
     assert asc[0] == "/p/pokemon-booster-pack-japanese" and desc[0] == "/p/black-bolt-booster-bundle-english"
 
 
-def test_product_page_shows_market_price_and_trend(client):
+def test_product_page_shows_market_price(client):
     page = client.get("/p/black-bolt-booster-bundle-english").text
     assert "Market price $100.00" in page
-    assert "30 days +4.2%" in page
+    # Trimmed 2026-11-18: no 30-day trend, no date line, no SKU on the page.
+    assert "30 days" not in page and "TCGplayer market price" not in page
+    assert "<dt>SKU</dt>" not in page
     assert "20% below market" in page
     assert "https://market.poke6s.com/?kind=sealed&amp;product=630431%7C%7CNormal" in page
     assert "Buy on TCGplayer" in page

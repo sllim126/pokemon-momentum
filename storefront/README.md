@@ -335,7 +335,7 @@ The writer for the market prices lives with the market app:
 | `/shop` | All products. Query: `q`, `lang` (`en`/`ja`), `type`, `set`, `sort` (`newest`, `price-asc`, `price-desc`), `page` |
 | `/c/<category>` | Category (same filters) |
 | `/sets`, `/sets/<set-slug>` | Sets in stock |
-| `/p/<slug>` | Product page, with the market price and 30-day trend |
+| `/p/<slug>` | Product page, with the market price (linked to its history) and how far below it we are |
 | `/cart` | Cart (kept in the browser; priced by `POST /cart/quote`). `?cancelled=<number>&k=<token>` releases a checkout the shopper backed out of |
 | `POST /cart/quote` | `{"items": [{"sku", "qty"}]}` → lines, problems, subtotal, shipping, total (JSON) |
 | `POST /checkout` | Same body → `{"url": <Stripe checkout page>}`; 409 with a new quote if the cart changed, 503 when checkout is off |
