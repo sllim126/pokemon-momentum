@@ -594,6 +594,14 @@ the Cloudflare Tunnel. Details: `storefront/README.md`.
   Unsubscribes happen on the site (`/unsubscribe/<token>`) and are instant; someone who asks by
   email instead: `UPDATE notify_signups SET unsubscribed_at = strftime('%Y-%m-%dT%H:%M:%SZ','now')
   WHERE email = '...';` within 10 business days (sooner is better).
+- Store admin (Phase 3, since 2026-11-14): http://192.168.1.240:8011/ from the home network
+  only (container `poke6s-storefront-admin`, started and updated with the store by
+  `deploy/update_storefront.sh`). Set or change its password on the server:
+  `python3 -m storefront.admin.passwd`, then the deploy script. Locked out after wrong
+  passwords: wait 15 minutes (or restart the admin container). If the server's LAN address
+  changes, set `STOREFRONT_ADMIN_BIND=<new address>` in `.env` and run the deploy script; the
+  container won't start on an address the machine doesn't have. Details: `storefront/README.md`,
+  "Admin".
 - Data (never committed): `data/storefront/` holds `store.db` (products and orders),
   `images/`, `outbox/` and `market_reference.json`. Backed up nightly (below).
 

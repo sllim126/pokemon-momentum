@@ -45,7 +45,8 @@ services:
     user: "${STOREFRONT_UID:-1000}:${STOREFRONT_GID:-1000}"
     working_dir: /app
     command: python -m uvicorn storefront.app.main:app --host 0.0.0.0 --port 8010
-    environment:
+    # &store-env: the admin (below) reuses these settings, so the two always agree.
+    environment: &store-env
       STOREFRONT_DATA_DIR: /app/data/storefront
       # Local address until launch; robots stay blocked until STOREFRONT_ALLOW_INDEXING=1.
       STOREFRONT_BASE_URL: ${STOREFRONT_BASE_URL:-http://localhost:8010}
@@ -89,6 +90,39 @@ services:
       - ./data/storefront:/app/data/storefront
     restart: unless-stopped
 
+  # Store admin (Phase 3; storefront/README.md, "Admin"): orders, stock and reports. Its own app
+  # and port, for the home network only (storefront/admin/main.py lists all the walls):
+  # - published on the server's LAN address only, never 0.0.0.0, and never given a tunnel route;
+  # - on its own Docker network, so cloudflared can't reach it even by mistake;
+  # - the app refuses Cloudflare traffic and non-private addresses, and needs a sign-in
+  #   (python3 -m storefront.admin.passwd sets the password).
+  # Updated together with the store by deploy/update_storefront.sh.
+  storefront-admin:
+    build:
+      context: ${STOREFRONT_CODE_DIR:-./storefront}
+      target: runtime
+    container_name: poke6s-storefront-admin
+    user: "${STOREFRONT_UID:-1000}:${STOREFRONT_GID:-1000}"
+    working_dir: /app
+    command: python -m uvicorn storefront.admin.main:app --host 0.0.0.0 --port 8011
+    environment:
+      <<: *store-env
+      STOREFRONT_ADMIN_PASSWORD_HASH: ${STOREFRONT_ADMIN_PASSWORD_HASH:-}
+      STOREFRONT_ADMIN_SESSION_SECRET: ${STOREFRONT_ADMIN_SESSION_SECRET:-}
+      # Nightly backups, read (never written) for the Overview page.
+      STOREFRONT_ADMIN_BACKUP_DIR: /app/data/backups/storefront
+    ports:
+      # The server's home-network address (STOREFRONT_ADMIN_BIND in .env if it ever changes).
+      # If the address isn't on this machine, the container refuses to start: a safe failure.
+      - "${STOREFRONT_ADMIN_BIND:-192.168.1.240}:8011:8011"
+    networks:
+      - admin
+    volumes:
+      - ${STOREFRONT_CODE_DIR:-./storefront}:/app/storefront
+      - ./data:/app/data:ro
+      - ./data/storefront:/app/data/storefront
+    restart: unless-stopped
+
   # Cloudflare Tunnel connector (storefront plan, "Hosting"). It dials out to Cloudflare, so
   # the router needs no open ports; the public hostnames (poke6s.com -> http://storefront:8010)
   # are set in the Cloudflare dashboard under Networking > Tunnels > poke6s-home > Routes.
@@ -104,3 +138,7 @@ services:
     depends_on:
       - storefront
     restart: unless-stopped
+
+networks:
+  # The store admin's own network (see storefront-admin): no other container is on it.
+  admin: {}

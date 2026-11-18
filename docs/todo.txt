@@ -55,7 +55,11 @@ Recently Completed
 - 2026-11-15 Owner switched the server VM to the `host` CPU type in Proxmox (Xeon E5-2640 v3,
   AVX2). Confirmed the cause: DuckDB 2.0.0 now imports and runs; before, "Illegal instruction".
   No upgrade planned (owner, 2026-11-16): 1.5.4 does the job; runbook "Upgrading DuckDB" if needed.
-
+- 2026-11-14 Store admin, Phase 3 step 1: separate app and container on :8011 (LAN address
+  only, own Docker network, refuses Cloudflare and non-private addresses), password sign-in
+  with lockout, Overview page (to ship, month net sales, email queue, backups, disputes,
+  sold-out products, set-up). Owner decisions D10 (no singles on poke6s.com) and D11 (market
+  admin tools: two retired, supplier tools stay). Checked at 1920x1080, 1366x768 and phone.
 
 High Priority
 -------------
@@ -168,9 +172,9 @@ runbook section "Monitoring".
   the owner adds it later.
 - [waiting] `grafana.tail6217f2.ts.net` (Tailscale serve) forwards to port 8086, where nothing
   listens; Grafana is on 3000. Point it at 3000?
-- [planned] 2026-11-14: when the Squarespace price sync is retired, drop
-  `squarespace-price-sync` from JOBS in scripts/monitoring/collect_status.py and the probe of
-  https://poke6s.com/ changes meaning (it becomes the new store once launched).
+- [next] Due now (the Squarespace price sync left cron 2026-11-11 and the plan ended
+  2026-11-14): drop `squarespace-price-sync` from JOBS in scripts/monitoring/collect_status.py,
+  so Grafana stops expecting it. The https://poke6s.com/ probe already checks the new store.
 
 Store review 2026-11-11 (for the owner to go through tonight). Whole storefront, public and
 backend; market site not included. How to reproduce each one: docs/private/security_review_2026-11-11.md
@@ -313,9 +317,30 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - [done 2026-11-12] Order emails through Microsoft Graph from orders@poke6s.com.
   - [planned] Once real orders exist, stop re-running the Squarespace importer (it resets
     stock); the Phase 3 admin takes over stock changes.
-- [next] Phase 3: LAN-only admin (orders, ship with tracking, refunds, stock), exports (Pirate
-  Ship, sales tax, bookkeeping, TCGplayer reconciliation; the Pirate Ship export should ask for
-  signature confirmation on every order), backups.
+- [in progress] Phase 3: store admin, built in 8 steps (plan "Phase 3"; Claude). Step 1
+  (foundation: app on http://192.168.1.240:8011/, network walls, sign-in, Overview) built
+  2026-11-14, merged to main and deployed 2026-11-18. Next:
+  - [owner] Set the admin password on the server: `python3 -m storefront.admin.passwd`, then
+    `bash deploy/update_storefront.sh`, then open http://192.168.1.240:8011/.
+  - [next] Step 2, Orders: list and detail, mark shipped with tracking, resend, notes.
+  - [owner] Before step 3: one Pirate Ship export of shipments with tracking numbers, and the
+    column layout Pirate Ship's "import orders" upload accepts (a sample file; names and
+    addresses can be made up), so the export and upload match exactly.
+  - [owner] Before step 7: the columns your books use for a month of sales (QuickBooks import
+    or the ledger in poke6s-books), so the bookkeeping export fits without retyping.
+  - [planned] Step 3, Shipping: Pirate Ship CSV export (signature confirmation on every
+    order), tracking upload, packing slips.
+  - [planned] Step 4, Refunds through Stripe with optional restock (also covers the "restock
+    command for returns" item below). Needs a second restricted Stripe key for the admin with
+    Refunds write (owner creates it); the public store's key stays unable to refund.
+  - [planned] Steps 5-7: products and stock, pricing (reprice.py as a page), reports (sales
+    tax, TCGplayer reconciliation, bookkeeping columns agreed with the owner first).
+  - [planned] Step 8 (D11): retire the market site's Squarespace Export Upload and Singles
+    Listing Intake (D10: no singles on poke6s.com), point Supplier Profitability's store price
+    at the store database, update the market Admin page.
+  - [idea] The admin is home-network only. Tailscale is already on the server, so reaching it
+    away from home later would need only binding it to the Tailscale address too and allowing
+    that range in refuse_reason(). Not without the owner asking.
 - [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
   too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
 - [ready] Notification emails get product cards (branch `storefront/mail-product-cards`,
@@ -339,9 +364,9 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   pinned 2026-11-11; Cloudflare supports a connector version for one year).
 - [planned] Move market.poke6s.com onto the Cloudflare Tunnel too (route to
   http://pokemon-momentum:8001; check the Caddy/visitor-IP path), then close the router port.
-- [planned] Retire the Squarespace-only scripts when the tools in api.py go. The daily price sync
-  stopped 2026-11-11 (owner; removed from cron). Keep the market site's "Our store" button on
-  TCGplayer until checkout is on (owner, 2026-11-11), then point it at the store's product pages.
+- [planned] Retire the Squarespace-only scripts together with the market tools that use them
+  (store admin step 8, D11). The daily price sync stopped 2026-11-11 (owner; removed from
+  cron). The market site's store button already points at poke6s.com (2026-11-14).
 
 New mobile app (owner, 2026-10-21). Plan: `docs/mobile_app_plan.md`. The phone site now uses
 `scripts/dashboards/mobile_app.html` at `/`, `/mobile` and `/m-next`, in the desktop app's look,

@@ -251,6 +251,46 @@ Only people who typed their address into the site's form are on the list. Never 
 or anyone else by hand: the email would then have to say it's an advertisement, and it doesn't.
 The subject must describe the email truthfully.
 
+## Admin (Phase 3, home network only)
+
+The owner's admin is a separate app, `storefront/admin/`, in its own container
+(`poke6s-storefront-admin`) on port **8011**: open **http://192.168.1.240:8011/** from any
+device on the home network. It is never reachable from the internet. The walls, each enough
+on its own:
+
+1. docker-compose publishes 8011 on the LAN address only (`STOREFRONT_ADMIN_BIND`, default
+   192.168.1.240), and the admin is on its own Docker network, so the tunnel connector can't
+   reach it. The tunnel has no route to it.
+2. The app refuses requests carrying Cloudflare headers, and any address outside the private
+   ranges (`refuse_reason()` in `admin/main.py`).
+3. A password sign-in on every page, and a per-session token on every form; form posts from
+   another site are refused.
+
+The public app can't grow admin features by accident: `tests/test_public_surface.py` fails if
+it gains `/admin` pages or a new write route.
+
+**Sign-in.** One owner password, stored only as a PBKDF2 hash in `.env`. To set or change it,
+on the server from the repo folder (asks twice, prints nothing secret):
+
+    python3 -m storefront.admin.passwd
+    bash deploy/update_storefront.sh
+
+The first run also adds `STOREFRONT_ADMIN_SESSION_SECRET`. A device stays signed in for 30
+days; changing the password signs every device out. Five wrong passwords in 15 minutes lock
+that address out for 15 minutes and post a Discord alert.
+
+**Pages so far** (built in steps; plan "Phase 3"):
+
+| Address | Page |
+|---|---|
+| `/` | Overview: orders to ship (late ones flagged after 24 hours), this month's net sales (live orders only), order emails retrying or failed, last nightly backup, disputes, sold-out products still on show, store set-up |
+| `/login`, `POST /login`, `POST /logout` | Sign-in |
+| `/healthz` | `{"ok", "schema", "sign_in_ready"}` (still home network only) |
+
+The admin reads the same settings as the store (the compose file shares them), so it shows
+the real checkout, Stripe, tax and email state. Until the Orders page lands, ship orders with
+`orders_cli` (see "Checkout").
+
 ## Code map
 
 | File | What it does |
@@ -277,6 +317,11 @@ The subject must describe the email truthfully.
 | `tools/reprice.py` | Prices at or near market, never below break-even; hides products that can't be (see "Prices") |
 | `tools/archive_squarespace_site.py` | One-off copy of the old site's pages, blog posts and images |
 | `content/pages/*.md` | About, FAQ, Shipping, Returns, Terms, Privacy, Contact |
+| `admin/main.py` | The admin app: the network walls, sign-in routes, Overview |
+| `admin/auth.py` | Password hashing, signed session cookies, form tokens, lockout (standard library only) |
+| `admin/overview.py` | What the Overview shows (read-only queries) |
+| `admin/passwd.py` | Sets the admin password in `.env` |
+| `admin/templates/`, `admin/static/admin.css` | Admin pages (no JavaScript) |
 | `tests/` | pytest suite with synthetic fixtures |
 
 The writer for the market prices lives with the market app:
@@ -320,6 +365,6 @@ reviews them before launch, then removes the line.
 
 ## Not yet (later phases)
 
-Utah registration in live-mode Stripe Tax and live keys (owner); LAN-only admin, exports,
-signature confirmation on large orders (Phase 3; nightly backups already run, see `tools/backup_store.py`); Google Merchant feed, per-article social cards, newsletter (Phase 4). See
+The rest of the admin: orders, Pirate Ship export and tracking upload, refunds, products and
+stock, pricing, reports (Phase 3; the Overview and sign-in are done, see "Admin"); Google Merchant feed, per-article social cards, newsletter (Phase 4). See
 the plan.

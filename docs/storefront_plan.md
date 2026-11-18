@@ -434,7 +434,29 @@ owner has reviewed this plan. **Phase 0 needs the owner** (accounts and DNS), so
 - *Done when:* a Stripe test order goes from cart to paid to shipped email, and stock and the
   order record match.
 
-**Phase 3: admin and operations (Codex)**
+**Phase 3: admin and operations (Claude, started 2026-11-14)**
+
+Built in steps, each merged and used before the next (owner, 2026-11-14: "go slow and do
+this properly"):
+
+1. Foundation: the separate app on :8011, the network walls, sign-in, Overview. **Done
+   2026-11-14.**
+2. Orders: list and detail; mark shipped with tracking (sends the email), resend, notes.
+   Replaces `orders_cli` for daily use.
+3. Shipping: Pirate Ship CSV export of unshipped orders (signature confirmation on every
+   order), upload of Pirate Ship's tracking export (marks shipped, sends the emails), packing
+   slips.
+4. Refunds: full or partial through Stripe, restock optional. Needs the admin's own
+   restricted Stripe key with Refunds write; the public store's key stays unable to refund.
+5. Products and stock: price, stock and visibility; every change logged with a reason; add
+   products and photos.
+6. Pricing: `tools/reprice.py` as a page, preview before apply.
+7. Reports: Utah sales tax, TCGplayer reconciliation, bookkeeping export (columns agreed with
+   the owner first).
+8. Market site clean-up (D11): retire the two Squarespace-era tools, repoint Supplier
+   Profitability, update the market Admin page.
+
+Original scope:
 - LAN-only admin: products and photos, stock adjustments, orders, ship with tracking, refunds. Rules: "How it fits
   together" (own app, own LAN-only port, refuses tunnel traffic).
 - Exports: Pirate Ship CSV, packing slips, TCGplayer reconciliation, sales-tax report,
@@ -470,6 +492,8 @@ Reviewed with the owner on 2026-10-31. D2 decided 2026-11-05.
 | D7 | Admin access | **Decided:** home network only |
 | D8 | Returns | **Decided:** sealed product accepted back **unopened in original wrap within 14 days**. The refund is issued **after the owner inspects the returned item**. Buyer pays return shipping unless we made an error or it arrived damaged. The policy page must state the inspection step |
 | D9 | Newsletter | **Decided:** not in the first release; Phase 4 at the earliest |
+| D10 | Singles on poke6s.com | **Decided (owner, 2026-11-14):** no singles for the foreseeable future (tried; too much time for the return). The market site's Singles Listing Intake is retired, and the admin handles sealed product and accessories only |
+| D11 | Market admin tools | **Decided (owner, 2026-11-14):** the Squarespace Export Upload and Singles Listing Intake are retired; Supplier Pricing and Supplier Profitability stay on market.poke6s.com, with Profitability's store price read from the store database instead of the Squarespace mapping; Bug Reports, End of Day, Embed and Dashboard Lab stay as they are |
 
 ## Rules for whoever builds this
 
@@ -509,3 +533,4 @@ Reviewed with the owner on 2026-10-31. D2 decided 2026-11-05.
 | 2026-11-11 | Claude | Shipping rates set (owner, D3): $10 singles, accessories and small sealed; $20 large sealed; free over $150. Tracking and signature confirmation on every order (Shipping page updated). Cloudflare "Always Use HTTPS" on. Order alerts to Discord channel 1569946385548050533 once its webhook URL is in `.env` | Owner: Discord webhook URL, Stripe activation, Microsoft 365 sending. Claude: backups, Stripe webhook, Phase 3 admin |
 | 2026-11-13 | Claude | **Checkout live (owner).** Stripe live account activated; live webhook `poke6s-store-live` (same 6 events); a restricted live key (`rk_live_`: Checkout Sessions write; Charges, PaymentIntents, Events, Tax Registrations read); `STOREFRONT_ALLOW_LIVE=1`, `STOREFRONT_CHECKOUT=1`. Stripe Tax Utah registration active from 2026-11-13 (the dashboard had scheduled it for 2027-01-01, so it was recreated through the API). A real order (one pack, $0.74 Utah tax) paid and refunded through the webhook; stock put back by hand (refunds don't restock, D8) | Owner: the Utah account number on the Stripe registration when the Tax Commission letter arrives. Claude: Phase 3 admin (restock on returns) |
 | 2026-11-14 | Claude | Marketing emails (owner): `app/mailing.py` + `templates/email/marketing.html`, sent with `orders_cli mailing` (preview, test copy, send). Every email: reason for receiving it, one-click unsubscribe (`/unsubscribe/<token>` and List-Unsubscribe headers), business postal address (`STOREFRONT_POSTAL_ADDRESS`, refused without it). Privacy page updated: the list is for store news, not only the opening. Nobody had joined the opening list, so no opening email was sent. market.poke6s.com's "Our store" button now opens the product's poke6s.com page, shown only when it's in stock there. Single packs keep the $10 small-sealed rate (owner) | Owner: postal address in `.env` before the first mailing; notes on individual listings |
+| 2026-11-14 | Claude | **Phase 3 step 1: store admin foundation.** `storefront/admin/`: its own app and container (`poke6s-storefront-admin`) on http://192.168.1.240:8011/, LAN address only, own Docker network (cloudflared can't reach it), refuses Cloudflare headers and non-private addresses; password sign-in (PBKDF2 hash in `.env`, set with `python3 -m storefront.admin.passwd`), 30-day signed cookies, form tokens, same-origin check, lockout with Discord alert. Overview: to ship (late after 24 h), month net sales (live only), email retry/failed queue, last backup, disputes, sold-out products on show, store set-up. Deploy script starts and checks both containers. Owner decisions D10 (no singles) and D11 (market tools) | Owner: set the admin password. Claude: step 2, Orders |
