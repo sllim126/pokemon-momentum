@@ -46,6 +46,10 @@ Recently Completed
 
 - 2026-11-19 Store trust lines (owner's facts: selling since July 2025; bubble wrap in a
   cardboard box; tracking and signature on every order; ships within 1 business day): a ticked
+  list under Add to cart on product pages, plus the About and Shipping pages. Google reviews:
+  the Business Profile already exists ("Poke6s, llc"; Google's monthly reports go to the store
+  mailbox); waiting on the owner for its "Ask for reviews" link (g.page/r/...) before adding
+  the review request (todo item on the tcgcsv/discord-notes-and-2026-torrent branch).
   list under Add to cart on product pages, plus the About and Shipping pages. Google reviews
   are still waiting on a Google Business Profile (todo item from the
   tcgcsv/discord-notes-and-2026-torrent branch).
