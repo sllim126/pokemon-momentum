@@ -1,7 +1,7 @@
 Pokemon Momentum Data Flow
 ==========================
 
-Last reviewed: 2026-11-14 (/store_link reads the store database; Lorcana pass in the nightly update; collect-only job without Lorcana; pipeline steps checked 2026-11-06)
+Last reviewed: 2026-11-19 (nightly update writes a copy and swaps it in; /store_link reads the store database; Lorcana pass in the nightly update; collect-only job without Lorcana; pipeline steps checked 2026-11-06)
 
 Recent Data/Serving Changes (March 2026)
 ----------------------------------------
@@ -46,15 +46,18 @@ Recent Data/Serving Changes (March 2026)
   market baseline). Rules in `scripts/common/market_mood.py`. A soft step: if it fails, the
   update carries on and `/market_mood` computes the same numbers itself once (~30 s, in the
   background).
-- Track record picks are not part of the nightly update: when the website starts (the
-  nightly restarts it) a background thread stores the top 25 of each Discover list for the
+- Track record picks are not part of the nightly update: when the website starts, or notices
+  the nightly update's new database file (it no longer restarts the site), a background thread stores the top 25 of each Discover list for the
   new price date in the tracking database (`data/processed/tracking.sqlite3`, table
   `list_pick_history`, kept for good). `/track_record` scores them against the series
   snapshot. See `scripts/dashboards/pick_tracker.py`.
 - Since 2026-10-12 the web app remembers which DuckDB tables exist and whether the parquet
   history covers a market, and runs queries on cursors of one shared read-only DuckDB
   connection (`query_support.py`), instead of reopening the 13 GB file several times per
-  request. So anything that writes to DuckDB must run with the website stopped.
+  request. So nothing may write the live file while the website runs: the nightly update
+  writes to a copy in data/processed_next/ and renames it over the live file at the end
+  (operator_runbook.txt, "Nightly update: copy and swap"); manual writes still need the
+  website stopped.
 - `/sparkline_batch` now reads prebuilt sparkline payloads instead of rebuilding tiny chart history live.
 - `/universe` now reads from the product signal snapshot instead of scanning raw price history.
 - the dashboard still applies client-side y-axis rules on top of `/series` so repriced windows
