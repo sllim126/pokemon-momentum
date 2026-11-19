@@ -44,6 +44,11 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-18 poke6s.com product pages trimmed (owner): the market box shows only the market
+  price (linked to its market.poke6s.com history) and the "% below market" badge; the 30-day
+  trend, the source/date line and the SKU row are gone. First real store order the same night
+  (P6-2026-0006). Packing slips are still Phase 3 admin work; until then a one-off PDF script
+  lives outside the repo.
 - 2026-11-17 market.poke6s.com shows a one-line "TCGplayer Cyber Weekend: 10% back in store
   credit" note above the toolbar (desktop) and under the header (phone), only from 9 AM New York
   Nov 28 to 11 PM New York Dec 1, through the affiliate link (not for the signed-in owner),
