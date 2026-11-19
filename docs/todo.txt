@@ -44,6 +44,12 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-19 Budget Builder rotation checked: the default picks change from day to day
+  (budget_pick_history, Nov 4-17: raw keeps 2-6 cards from the day before, graded 2-3). Days
+  with no row are days nobody opened the builder.
+- 2026-11-19 Grafana no longer lists the retired Squarespace price sync: it had left `JOBS` on
+  2026-11-11, but its last metrics file (`momentum_job_squarespace-price-sync.prom`, Nov 10)
+  was still in node-exporter's folder. Deleted it; runbook "Retire a job" now says to.
 - 2026-11-19 The nightly market update no longer takes market.poke6s.com down (it was down
   17-22 minutes from 02:00 UTC, 7 PM in Utah). It updates a copy of prices_db.duckdb and
   swaps it in with one rename; the site notices the new file and reopens it. Tested with a
@@ -176,9 +182,6 @@ runbook section "Monitoring".
   the owner adds it later.
 - [waiting] `grafana.tail6217f2.ts.net` (Tailscale serve) forwards to port 8086, where nothing
   listens; Grafana is on 3000. Point it at 3000?
-- [next] Due now (the Squarespace price sync left cron 2026-11-11 and the plan ended
-  2026-11-14): drop `squarespace-price-sync` from JOBS in scripts/monitoring/collect_status.py,
-  so Grafana stops expecting it. The https://poke6s.com/ probe already checks the new store.
 
 Store review 2026-11-11 (for the owner to go through tonight). Whole storefront, public and
 backend; market site not included. How to reproduce each one: docs/private/security_review_2026-11-11.md
@@ -224,9 +227,9 @@ Live now:
 Required before checkout goes live:
 - [done 2026-11-12] 9. Store backup and tested restore, mirrored nightly to the Synology
   (see Recently Completed).
-- [next] Owner: change the PlexVault (192.168.1.155) password, which sits in plain text in
-  /etc/fstab (seen 2026-11-12); then move it into a root-only credentials file like
-  /etc/samba/synology-backup.cred.
+- [idea] PlexVault (192.168.1.155): password changed by the owner (2026-11-19). It is still
+  written inline in /etc/fstab, which every user on this server can read; moving it to a
+  root-only credentials file like /etc/samba/synology-backup.cred would hide it (needs sudo).
 - [done 2026-11-12] 10. Checkout hold cap per visitor (see Recently Completed).
 - [done 2026-11-12] 11. Stripe webhook required, missed events caught up (see Recently
   Completed). When checkout opens: owner adds the webhook endpoint in Stripe and puts its
@@ -261,8 +264,6 @@ and open decisions: `docs/storefront_plan.md` (progress log at its end). What th
 site has today: `docs/storefront_current_site.md`. Our own site, hosted on the owner's server
 behind Cloudflare Tunnel; Stripe hosted Checkout (approved by the owner 2026-10-31). The
 Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
-- [next] Check the Budget Builder on 2026-11-06 shows different picks from 2026-11-05 (first day of
-  rotation; today's default views were recorded for price date 2026-11-04).
 - [next] Market insights: owner approved and merged to `main` on 2026-11-07; live since
   2026-11-09 (main merged into `feature/homelab-machines`, which the site runs from). Picks are
   recorded for price dates 11-05, 11-06 and 11-08 (English) and 11-05 and 11-08 (Japanese);
