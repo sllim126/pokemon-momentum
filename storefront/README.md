@@ -297,6 +297,10 @@ that address out for 15 minutes and post a Discord alert.
 | `POST /products/<id>/price` | New price and optional “was” price, with a reason (required). A change of more than 50% must be confirmed (catches 1299 typed for 12.99) |
 | `POST /products/<id>/settings` | Shown or hidden, featured on the home page, per-order limit |
 | `POST /products/<id>/stock` | Received (+N), Sold on TCGplayer (−N) or Counted (on the shelf = N; the difference is logged, leaving units in open checkouts alone) |
+| `/products/new`, `POST /products/new` | Add a product: type TCGplayer ID(s), “Check and fill in” fills title, kind, language, set and a starting price from the market data and warns if the store already has a product with that ID (often hidden: show it instead); “Add product” saves it **hidden** with its starting stock |
+| `POST /products/<id>/details` | Title, kind, language, set, TCGplayer IDs, barcode, description (the web address and SKU never change) |
+| `POST /products/<id>/photos` | Upload photos (JPEG, PNG or WebP, 15 MB each, 12 per product; checked to be real images) |
+| `POST /products/<id>/photos/<photo>/main`, `.../remove` | Make a photo the main one; remove one (its resized copies go, the original stays in `images/original` and the backup) |
 | `/login`, `POST /login`, `POST /logout` | Sign-in |
 | `/healthz` | `{"ok", "schema", "sign_in_ready"}` (still home network only) |
 
@@ -309,6 +313,10 @@ Product changes live in `app/product_changes.py`: stock moves only by a logged
 `stock_movements` row (its sum must equal `products.stock`), and price and visibility changes go
 in `product_changes` (migration 005) with the old and new value and the reason; `tools/reprice.py`
 logs its changes there too, marked “repricing”.
+Adding products, detail edits and photos live in `app/product_details.py` (same rules as the
+importer: kind, category and shipping class follow the type; the set comes from TCGplayer).
+**Once products are added or edited here, don't re-run the Squarespace importer**: it would
+reset their stock and details from the old export.
 
 **Shipping an order:** Overview or Orders → open the order → "Packing slip (PDF)" (print at
 Actual size) → buy the label → paste the tracking number → "Mark shipped and email tracking".
@@ -322,6 +330,7 @@ Actual size) → buy the label → paste the tracking number → "Mark shipped a
 | `app/main.py` | FastAPI app: routes, 404 + redirect handling, security headers, reconcile loop |
 | `app/orders.py` | Cart pricing, checkout, reservations, payment, expiry, refunds, disputes, shipping |
 | `app/product_changes.py` | Admin price, visibility and stock changes, each logged (see "Pages so far") |
+| `app/product_details.py` | Admin: add products, edit details, photos (each change logged) |
 | `app/stripe_api.py` | The Stripe calls (Checkout Sessions) over HTTPS; webhook signature check |
 | `app/notify.py` | Discord order alerts; order and shipping emails (Microsoft Graph, SMTP or the outbox folder; retry queue; HTML in `templates/email/order.html`) |
 | `app/orders_cli.py` | `list`, `show`, `ship`, `reconcile`, `resend`, `test-email`, `mailing` from the command line |

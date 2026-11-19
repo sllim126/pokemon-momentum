@@ -1,0 +1,63 @@
+{#- Add a product (Phase 3, step 5b). "Check" looks the TCGplayer IDs up in the market data and
+    fills in what's still empty (nothing is saved); "Add product" saves it hidden. Rules:
+    storefront/app/product_details.py. `found` lists what each typed ID is. -#}
+{% extends "base.html" %}
+{% block title %}Add a product{% endblock %}
+{% block main %}
+{% set f = form %}
+<p class="small"><a href="/products">← Products</a></p>
+<div class="page-head"><h1>Add a product</h1></div>
+{% if error %}<p class="flash bad" role="alert">{{ error }}</p>{% endif %}
+{% if checked %}<p class="flash good" role="status">{{ checked }}</p>{% endif %}
+
+<form method="post" action="/products/new">
+<input type="hidden" name="form_token" value="{{ form_token }}">
+<div class="columns">
+  <div>
+    <section class="panel">
+      <h2>1. TCGplayer product</h2>
+      <div class="edit-form">
+        <label class="wide">TCGplayer product ID(s)
+          <input name="tcgplayer_ids" maxlength="300" autocomplete="off" value="{{ f.tcgplayer_ids }}" placeholder="e.g. 630431">
+        </label>
+        <button class="secondary" type="submit" name="action" value="check" formnovalidate>Check and fill in</button>
+      </div>
+      {% include "_tcgplayer_found.html" %}
+      {% if listed %}
+      <div class="flash bad" role="alert">
+        <strong>Already in the store:</strong>
+        <ul class="plain">
+          {% for x in listed %}<li><a href="/products/{{ x.id }}">{{ x.title }}</a> <span class="muted small">{{ x.sku }} ·
+            {% if x.visible %}shown{% else %}hidden{% endif %}{% if x.track_stock %} · {{ x.stock }} in stock{% endif %}</span></li>{% endfor %}
+        </ul>
+        <p class="small">To sell it again, open it and show it (or add stock) instead of adding a second copy.</p>
+      </div>
+      {% endif %}
+      <p class="muted small">The number at the end of the product's TCGplayer address (tcgplayer.com/product/<strong>630431</strong>/...). It gives the market price and the set. More than one (a tin with several designs): separate them with commas, and the market price is their average. No TCGplayer product? Leave it empty.</p>
+    </section>
+
+    <section class="panel">
+      <h2>2. Details</h2>
+      <div class="edit-form">
+        {% include "_product_detail_fields.html" %}
+      </div>
+    </section>
+  </div>
+
+  <aside>
+    <section class="panel">
+      <h2>3. Price and stock</h2>
+      <div class="edit-form">
+        <label class="wide">SKU (your code for it)
+          <input name="sku" required maxlength="40" autocomplete="off" value="{{ f.sku }}" placeholder="e.g. ENG-PO-ETB"></label>
+        <label>Price ($) <input name="price" required inputmode="decimal" maxlength="12" autocomplete="off" value="{{ f.price }}"></label>
+        <label>In stock now <input name="stock" required inputmode="numeric" maxlength="5" autocomplete="off" value="{{ f.stock }}"></label>
+        <button type="submit" name="action" value="save">Add product</button>
+      </div>
+      <p class="muted small">It's added <strong>hidden</strong>. Then add photos on its page and show it.
+        The SKU can't be changed later.</p>
+    </section>
+  </aside>
+</div>
+</form>
+{% endblock %}

@@ -48,6 +48,50 @@
       <p class="muted small">Running the repricing tool (storefront/tools/reprice.py) can change a price that follows a market rule; it shows up here as “repricing”.</p>
     </section>
 
+    <section class="panel" id="photos">
+      <h2>Photos</h2>
+      {% if photo_error %}<p class="flash bad" role="alert">{{ photo_error }}</p>{% endif %}
+      {% if photos %}
+      <ul class="photo-grid">
+        {% for ph in photos %}
+        <li>
+          <img src="/images/480/{{ ph.file_name }}.webp" alt="" loading="lazy" width="140" height="140">
+          {% if loop.first %}<span class="badge">main</span>{% else %}
+          <form method="post" action="/products/{{ p.id }}/photos/{{ ph.id }}/main"><input type="hidden" name="form_token" value="{{ form_token }}"><button class="link" type="submit">Make main</button></form>{% endif %}
+          <form method="post" action="/products/{{ p.id }}/photos/{{ ph.id }}/remove"><input type="hidden" name="form_token" value="{{ form_token }}"><button class="link danger" type="submit">Remove</button></form>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">No photos yet.{% if p.visible %} The store shows a blank square.{% endif %}</p>
+      {% endif %}
+      {% if photos | length < max_photos %}
+      <form class="photo-form" method="post" action="/products/{{ p.id }}/photos" enctype="multipart/form-data">
+        <input type="hidden" name="form_token" value="{{ form_token }}">
+        <label class="sr-only" for="photo-files">Photos</label>
+        <input id="photo-files" type="file" name="photos" accept="image/jpeg,image/png,image/webp" multiple required>
+        <button type="submit">Upload</button>
+      </form>
+      <p class="muted small">JPEG, PNG or WebP, up to 15 MB each, {{ max_photos }} per product. The first is the one lists show. A square photo on a white background looks best.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel" id="details">
+      <h2>Details</h2>
+      {% if details_error %}<p class="flash bad" role="alert">{{ details_error }}</p>{% endif %}
+      {% set d = details %}
+      <form class="edit-form" method="post" action="/products/{{ p.id }}/details">
+        <input type="hidden" name="form_token" value="{{ form_token }}">
+        <label class="wide">TCGplayer product ID(s)
+          <input name="tcgplayer_ids" maxlength="300" autocomplete="off" value="{{ d.tcgplayer_ids }}"></label>
+        <div class="wide">{% include "_tcgplayer_found.html" %}</div>
+        {% include "_product_detail_fields.html" %}
+        <label class="wide">Why, optional <input name="reason" maxlength="300" placeholder="e.g. Fixed the set name"></label>
+        <button type="submit">Save details</button>
+      </form>
+      <p class="muted small">The web address ({{ p.slug }}) and SKU stay the same when the title changes, so old links keep working.</p>
+    </section>
+
     <section class="panel" id="history">
       <h2>History</h2>
       {% if history %}
@@ -58,7 +102,7 @@
           <tr>
             <td class="small nowrap">{{ e.at | when }}</td>
             <td>{{ e.what[0] }}{% if e.source == 'reprice' %} <span class="badge">repricing</span>{% endif %}</td>
-            <td class="nowrap">{{ e.what[1] }}</td>
+            <td class="change">{{ e.what[1] }}</td>
             <td class="small">{% if e.kind == 'stock' and e.field in ('sale', 'reservation', 'release') %}<a href="/orders/{{ e.reason }}">{{ e.reason }}</a>{% else %}{{ e.reason }}{% endif %}</td>
           </tr>
         {% endfor %}

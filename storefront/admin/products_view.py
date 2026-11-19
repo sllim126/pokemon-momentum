@@ -22,7 +22,10 @@ DEFAULT_VIEW = "on-sale"
 PAGE_SIZE = 200
 # Field names in product_changes -> what the history says.
 FIELD_LABELS = {"price": "Price", "compare_at": "“Was” price", "visible": "Visible",
-                "featured": "Featured", "max_per_order": "Per-order limit"}
+                "featured": "Featured", "max_per_order": "Per-order limit", "created": "Added",
+                "title": "Title", "description": "Description", "product_type": "Kind",
+                "language": "Language", "set_name": "Set", "tcgplayer_ids": "TCGplayer IDs",
+                "gtin": "Barcode", "photo": "Photo"}
 STOCK_LABELS = {"sale": "Sold here", "reservation": "In a checkout", "release": "Checkout ended",
                 "restock": "Received", "adjustment": "Counted", "tcgplayer_sale": "Sold on TCGplayer",
                 "import": "Imported"}
@@ -89,12 +92,18 @@ def describe(entry: dict) -> tuple[str, str]:
         return STOCK_LABELS.get(entry["field"], entry["field"]), f"{change:+d}"
     label = FIELD_LABELS.get(entry["field"], entry["field"])
     old, new = entry["old_value"], entry["new_value"]
+    if entry["field"] == "created":
+        return label, new or ""
+    if entry["field"] == "photo":   # the reason column says what happened (Uploaded, Removed...)
+        return label, ""
     if entry["field"] in ("price", "compare_at"):
         show = lambda v: "none" if v is None else f"${int(v) / 100:,.2f}"  # noqa: E731
     elif entry["field"] in ("visible", "featured"):
         show = lambda v: "yes" if v == "1" else "no"  # noqa: E731
-    else:
+    elif entry["field"] == "max_per_order":
         show = lambda v: "no limit" if v is None else v  # noqa: E731
+    else:   # text: title, set, kind, IDs (descriptions are logged as their length)
+        show = lambda v: "none" if v in (None, "") else v  # noqa: E731
     return label, f"{show(old)} → {show(new)}"
 
 

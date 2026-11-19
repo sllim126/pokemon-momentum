@@ -44,6 +44,9 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-19 Store admin step 5b: add products from the admin (TCGplayer ID lookup fills the
+  details and warns about duplicates; new products start hidden), edit details, upload photos,
+  choose the main photo, remove photos. All logged in the product's history (migration 006).
 - 2026-11-19 Store admin Phase 3 step 5, first half (http://192.168.1.240:8011/products):
   product list with price vs market and stock; product page to change the price (reason
   required, big changes confirmed), show/hide, featured and per-order limit, and stock
@@ -213,9 +216,11 @@ Live now:
     shown again at break-even. Don't use --hide-above-market by default.
 - [done 2026-11-11] 4. Stock set from the owner's Nov 2 inventory (see Recently Completed).
   Still open:
-  - [owner] 18 in-stock products are hidden (hidden on Squarespace: ETBs, Pokemon Center ETBs,
-    Costco 2-packs, premium collections, tins...). Say which to show; each needs a cost row in
-    the private costs file before reprice.py will price it.
+  - [owner] 17 in-stock products are hidden (hidden on Squarespace: ETBs, Pokemon Center ETBs,
+    Costco 2-packs, premium collections, tins...), e.g. ENG-PO-ETB (Perfect Order ETB, 3 in
+    stock). Since 2026-11-19 the admin's Products → "Hidden, in stock" tab lists them, and each
+    product's page can show it. reprice.py prices one only once it has a cost row in the private
+    costs file.
   - [idea] Not on the store at all: Prismatic Evolutions bundle (1), Treasure chest tin (1).
   - Packs kept off the store on purpose (owner keeps one complete art set of each): Phantasmal
     Flames, Mega Evolution, Journey Together, Pitch Black, Chaos Rising (4 each), plus one
@@ -342,10 +347,10 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - [planned] Step 4, Refunds through Stripe with optional restock (also covers the "restock
     command for returns" item below). Needs a second restricted Stripe key for the admin with
     Refunds write (owner creates it); the public store's key stays unable to refund.
-  - [next] Step 5b: add new products and their photos from the admin (step 5's first half,
-    price, stock and visibility, done 2026-11-19 on branch storefront/admin-products).
-  - [planned] Steps 6-7: pricing (reprice.py as a page), reports (sales tax, TCGplayer
-    reconciliation, bookkeeping columns agreed with the owner first).
+  - [next] Step 6, Pricing: reprice.py as an admin page, preview before apply (needs the
+    private costs file's path on the server).
+  - [planned] Step 7: reports (sales tax, TCGplayer reconciliation, bookkeeping columns agreed
+    with the owner first).
   - [planned] Step 8 (D11): retire the market site's Squarespace Export Upload and Singles
     Listing Intake (D10: no singles on poke6s.com), point Supplier Profitability's store price
     at the store database, update the market Admin page.

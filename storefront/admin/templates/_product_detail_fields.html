@@ -1,0 +1,18 @@
+{#- The detail fields, shared by the add page (values in `f`) and the product page's Details
+    panel (values in `d`). Expects `types`, `type_labels` and `languages`. -#}
+{% set v = f if f is defined else d %}
+<label class="wide">Title
+  <input name="title" required maxlength="150" value="{{ v.title }}" placeholder="e.g. Perfect Order Elite Trainer Box - English"></label>
+<label>Kind
+  <select name="product_type">
+    {% if not v.product_type %}<option value="" selected>Choose…</option>{% endif %}
+    {% for t in types %}<option value="{{ t }}"{% if v.product_type == t %} selected{% endif %}>{{ type_labels[t] }}</option>{% endfor %}
+  </select></label>
+<label>Language
+  <select name="language">
+    {% for code, label in languages.items() %}<option value="{{ code }}"{% if (v.language or '') == code %} selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select></label>
+<label>Set <input name="set_name" maxlength="80" value="{{ v.set_name }}" placeholder="From TCGplayer if empty"></label>
+<label>Barcode (UPC), optional <input name="gtin" inputmode="numeric" maxlength="20" autocomplete="off" value="{{ v.gtin }}"></label>
+<label class="wide">Description (Markdown: **bold**, - lists, blank line between paragraphs)
+  <textarea name="description_md" rows="6" maxlength="10000">{{ v.description_md }}</textarea></label>

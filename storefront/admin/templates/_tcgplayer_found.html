@@ -1,0 +1,11 @@
+{#- What each typed TCGplayer ID is, from the market data (`found` from product_details.lookups),
+    so a wrong ID shows up before it's saved. Shared by the add page and the product page. -#}
+{% if found %}
+<ul class="plain found small">
+  {% for x in found %}
+  <li>{% if x.name %}<strong>{{ x.id }}</strong>: {% if x.url %}<a href="{{ x.url }}" target="_blank" rel="noopener">{{ x.name }} ↗</a>{% else %}{{ x.name }}{% endif %}
+    <span class="muted">· {{ x.group or 'no set' }}{% if x.price %} · market ${{ '%.2f' % x.price }}{% endif %}</span>
+  {% else %}<strong>{{ x.id }}</strong>: <span class="warn-text">not in the market data</span> <span class="muted">(a typo, or a product the market site doesn't track)</span>{% endif %}</li>
+  {% endfor %}
+</ul>
+{% endif %}
