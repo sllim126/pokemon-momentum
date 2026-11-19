@@ -44,6 +44,11 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-19 Market insights launch checks done: picks are recorded every night since Nov 8
+  (English ~165 a day, Japanese ~93; Nov 7 was missed before launch and can't be rebuilt), the
+  nightly run builds the Pokemon, Japanese and Lorcana mood snapshots (Nov 18: English 55.9,
+  Japanese 45.6), and Track record shows 7-day results (461 English picks scored). 30-day
+  results start around Dec 5.
 - 2026-11-19 Budget Builder rotation checked: the default picks change from day to day
   (budget_pick_history, Nov 4-17: raw keeps 2-6 cards from the day before, graded 2-3). Days
   with no row are days nobody opened the builder.
@@ -264,13 +269,6 @@ and open decisions: `docs/storefront_plan.md` (progress log at its end). What th
 site has today: `docs/storefront_current_site.md`. Our own site, hosted on the owner's server
 behind Cloudflare Tunnel; Stripe hosted Checkout (approved by the owner 2026-10-31). The
 Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
-- [next] Market insights: owner approved and merged to `main` on 2026-11-07; live since
-  2026-11-09 (main merged into `feature/homelab-machines`, which the site runs from). Picks are
-  recorded for price dates 11-05, 11-06 and 11-08 (English) and 11-05 and 11-08 (Japanese);
-  11-07 was missed while it wasn't live and can't be rebuilt. Check that the next nightly builds
-  `pokemon_market_mood_snapshot` (log line "Build Pokemon market mood snapshot") and that the
-  site log shows "Track record: recorded N picks" for the new date. The first 7-day results show
-  on 2026-11-11 (picks recorded since 2026-11-05; budget picks since 2026-11-04).
 - [idea] Track record: also record the Japanese lists' Budget Builder and the Graded Budget
   Builder (scored on PriceCharting history). Only raw English budget picks are scored today.
 - [idea] Desktop card column at 1366 px: when a card has "Our TCGplayer store", the action bar
