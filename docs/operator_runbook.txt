@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-19 (Nightly update keeps the site up: copy and swap; Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
+Last reviewed: 2026-11-19 (Retire a monitored job; Nightly update keeps the site up: copy and swap; Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -102,6 +102,10 @@ Edits made in the Grafana UI are lost at the next rebuild.
 Add a job: add it to `JOBS` in `scripts/monitoring/collect_status.py` (with its interval).
 A cron job also needs `/usr/bin/python3 scripts/monitoring/run_job.py <name> -- ` in front of
 its command in the crontab and `deploy/crontab.txt`. A systemd job needs nothing else.
+
+Retire a job: remove it from `JOBS`, the crontab and `deploy/crontab.txt`, then delete its
+`momentum_job_<name>.prom` from `/var/lib/prometheus/node-exporter/`. The file is never
+removed on its own, so Grafana keeps showing the job's last run until it's gone.
 
 Install or repair (needs sudo; safe to rerun): `bash deploy/monitoring/install.sh`. It sets
 the text-file folder to group `adam`, keeps the blackbox exporter on localhost, copies the

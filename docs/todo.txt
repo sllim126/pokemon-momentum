@@ -44,6 +44,9 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-19 Grafana no longer lists the retired Squarespace price sync: it had left `JOBS` on
+  2026-11-11, but its last metrics file (`momentum_job_squarespace-price-sync.prom`, Nov 10)
+  was still in node-exporter's folder. Deleted it; runbook "Retire a job" now says to.
 - 2026-11-19 The nightly market update no longer takes market.poke6s.com down (it was down
   17-22 minutes from 02:00 UTC, 7 PM in Utah). It updates a copy of prices_db.duckdb and
   swaps it in with one rename; the site notices the new file and reopens it. Tested with a
@@ -176,9 +179,6 @@ runbook section "Monitoring".
   the owner adds it later.
 - [waiting] `grafana.tail6217f2.ts.net` (Tailscale serve) forwards to port 8086, where nothing
   listens; Grafana is on 3000. Point it at 3000?
-- [next] Due now (the Squarespace price sync left cron 2026-11-11 and the plan ended
-  2026-11-14): drop `squarespace-price-sync` from JOBS in scripts/monitoring/collect_status.py,
-  so Grafana stops expecting it. The https://poke6s.com/ probe already checks the new store.
 
 Store review 2026-11-11 (for the owner to go through tonight). Whole storefront, public and
 backend; market site not included. How to reproduce each one: docs/private/security_review_2026-11-11.md
