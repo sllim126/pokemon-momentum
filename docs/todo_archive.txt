@@ -7,6 +7,19 @@ Archived Completed Work
 November 2026
 -------------
 
+- Completed and archived at the 2026-11-19 milestone (zero-downtime-nightly):
+  - 2026-11-15 DuckDB pinned to 1.5.4 in `requirements.txt` (unpinned builds picked 2.0.0, which
+    crashes here: confirmed with a throwaway container, exit 132). Clean `--no-cache` build with the
+    pin passes all 327 tests. Removed duplicate fastapi/uvicorn lines. Runbook: "Upgrading DuckDB".
+  - 2026-11-15 Owner switched the server VM to the `host` CPU type in Proxmox (Xeon E5-2640 v3,
+    AVX2). Confirmed the cause: DuckDB 2.0.0 now imports and runs; before, "Illegal instruction".
+    No upgrade planned (owner, 2026-11-16): 1.5.4 does the job; runbook "Upgrading DuckDB" if needed.
+  - 2026-11-14 Store admin, Phase 3 step 1: separate app and container on :8011 (LAN address
+    only, own Docker network, refuses Cloudflare and non-private addresses), password sign-in
+    with lockout, Overview page (to ship, month net sales, email queue, backups, disputes,
+    sold-out products, set-up). Owner decisions D10 (no singles on poke6s.com) and D11 (market
+    admin tools: two retired, supplier tools stay). Checked at 1920x1080, 1366x768 and phone.
+
 - Completed and archived at the 2026-11-16 milestone (pin-duckdb):
   - 2026-11-14 Lorcana mode in the desktop app (merged 2026-11-15, milestone lorcana-phase1; owner chose an
     admin-only switch): third market button for admins, Pokemon-only views left out, our Lorcast
