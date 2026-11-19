@@ -44,11 +44,16 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-19 Store admin Phase 3 step 2, Orders (http://192.168.1.240:8011/orders): order list
+  with tabs and search; order page with items, address, customer, Stripe link and timeline;
+  mark shipped with tracking (emails the customer and says whether it went); resend emails;
+  dated notes; address correction for unshipped orders (old address kept in the notes);
+  packing slip PDF and a gift slip without prices. `orders_cli ship` now says whether the
+  email was sent, saved to the outbox or queued. reportlab added to the store image (pinned).
 - 2026-11-18 poke6s.com product pages trimmed (owner): the market box shows only the market
   price (linked to its market.poke6s.com history) and the "% below market" badge; the 30-day
   trend, the source/date line and the SKU row are gone. First real store order the same night
-  (P6-2026-0006). Packing slips are still Phase 3 admin work; until then a one-off PDF script
-  lives outside the repo.
+  (P6-2026-0006).
 - 2026-11-17 market.poke6s.com shows a one-line "TCGplayer Cyber Weekend: 10% back in store
   credit" note above the toolbar (desktop) and under the header (phone), only from 9 AM New York
   Nov 28 to 11 PM New York Dec 1, through the affiliate link (not for the signed-in owner),
@@ -317,24 +322,24 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - Owner tests on :8010 passed 2026-11-06 (computers, iPad, phone): Arizona order paid with no
     tax; Utah order paid with $18.68 tax on $250.80 (7.45%); both marked shipped and the shipped
     email was received (sent by hand from admin@poke6s.com, SMTP not set up yet).
-  - [planned] `orders_cli ship` says "email sent" even when it only went to the outbox; say
-    which. Its order-status link uses STOREFRONT_BASE_URL (localhost until launch).
   - [done 2026-11-12] Order emails through Microsoft Graph from orders@poke6s.com.
   - [planned] Once real orders exist, stop re-running the Squarespace importer (it resets
     stock); the Phase 3 admin takes over stock changes.
 - [in progress] Phase 3: store admin, built in 8 steps (plan "Phase 3"; Claude). Step 1
   (foundation: app on http://192.168.1.240:8011/, network walls, sign-in, Overview) built
-  2026-11-14, merged to main and deployed 2026-11-18. Next:
+  2026-11-14, merged to main and deployed 2026-11-18. Step 2 (Orders, with packing slips)
+  built 2026-11-19 on branch storefront/admin-orders. Next:
   - [owner] Set the admin password on the server: `python3 -m storefront.admin.passwd`, then
     `bash deploy/update_storefront.sh`, then open http://192.168.1.240:8011/.
-  - [next] Step 2, Orders: list and detail, mark shipped with tracking, resend, notes.
   - [owner] Before step 3: one Pirate Ship export of shipments with tracking numbers, and the
     column layout Pirate Ship's "import orders" upload accepts (a sample file; names and
     addresses can be made up), so the export and upload match exactly.
   - [owner] Before step 7: the columns your books use for a month of sales (QuickBooks import
     or the ledger in poke6s-books), so the bookkeeping export fits without retyping.
-  - [planned] Step 3, Shipping: Pirate Ship CSV export (signature confirmation on every
-    order), tracking upload, packing slips.
+  - [next] Step 3, Shipping: Pirate Ship CSV export (signature confirmation on every
+    order) and tracking upload. (Packing slips were done in step 2.) Also save each sealed
+    product's packed box size and weight (e.g. one ETB ships in an 11 x 7.5 x 5.5 box) so the
+    export fills them in.
   - [planned] Step 4, Refunds through Stripe with optional restock (also covers the "restock
     command for returns" item below). Needs a second restricted Stripe key for the admin with
     Refunds write (owner creates it); the public store's key stays unable to refund.

@@ -1,0 +1,140 @@
+{#- One order (Phase 3, step 2): what was bought, where it goes, and the actions: mark shipped,
+    packing slip, resend an email, notes, correct the address. Every change is a POST with the
+    session's form token; the page reloads with ?done=... (messages in main.py DONE). -#}
+{% extends "base.html" %}
+{% block title %}{{ order.number }}{% endblock %}
+{% block main %}
+{% set o = order %}
+{% set sale = o.status not in ('pending', 'expired', 'cancelled') %}
+<p class="small"><a href="/orders">← Orders</a></p>
+<div class="page-head">
+  <h1>{{ o.number }}{% if o.mode == 'test' %} <span class="badge">test</span>{% endif %}</h1>
+  <span class="status big s-{{ o.status }}">{{ o.status | replace('_', ' ') }}</span>
+  {% if waiting is not none %}<span class="badge{% if waiting > 24 %} bad{% endif %}">paid {{ waiting | hours }} ago</span>{% endif %}
+</div>
+{% if done %}<p class="flash good" role="status">{{ done }}</p>{% endif %}
+{% if error %}<p class="flash bad" role="alert">{{ error }}</p>{% endif %}
+
+<div class="columns">
+  <div>
+    <section class="panel">
+      <h2>Items</h2>
+      <table class="items">
+        <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Price</th><th class="num">Amount</th></tr></thead>
+        <tbody>
+        {% for i in o['items'] %}
+          <tr><td>{{ i.title }}<br><span class="small muted">{{ i.sku }}</span></td><td class="num">{{ i.quantity }}</td>
+            <td class="num">{{ i.unit_price_cents | money }}</td><td class="num">{{ (i.unit_price_cents * i.quantity) | money }}</td></tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr><td colspan="3" class="num label">Subtotal</td><td class="num">{{ o.subtotal_cents | money }}</td></tr>
+          <tr><td colspan="3" class="num label">Shipping ({{ o.ship_class | replace('-', ' ') }})</td><td class="num">{{ o.shipping_cents | money }}</td></tr>
+          {% if o.discount_cents %}<tr><td colspan="3" class="num label">Discount</td><td class="num">−{{ o.discount_cents | money }}</td></tr>{% endif %}
+          <tr><td colspan="3" class="num label">Sales tax</td><td class="num">{{ o.tax_cents | money }}</td></tr>
+          <tr class="total"><td colspan="3" class="num label">Total paid</td><td class="num">{{ o.total_cents | money }}</td></tr>
+          {% if o.refunded_cents %}<tr><td colspan="3" class="num label">Refunded</td><td class="num">−{{ o.refunded_cents | money }}</td></tr>{% endif %}
+        </tfoot>
+      </table>
+    </section>
+
+    <section class="panel" id="ship">
+      <h2>Shipping</h2>
+      {% if o.status == 'paid' %}
+      <form class="ship-form" method="post" action="/orders/{{ o.number }}/ship">
+        <input type="hidden" name="form_token" value="{{ form_token }}">
+        <label>Carrier
+          <select name="carrier">{% for c in carriers %}<option{% if c == 'USPS' %} selected{% endif %}>{{ c }}</option>{% endfor %}</select>
+        </label>
+        <label>If Other <input name="carrier_other" maxlength="40" placeholder="Carrier name"></label>
+        <label class="wide">Tracking number <input name="tracking" required maxlength="60" value="{{ tracking or '' }}" autocomplete="off" placeholder="9400 1000 0000 0000 0000 00"></label>
+        <button type="submit">Mark shipped and email tracking</button>
+      </form>
+      <p class="muted small">The customer gets the shipped email with the tracking link straight away. Spaces in the number are fine.</p>
+      {% elif o.status == 'shipped' or o.tracking_number %}
+      <dl class="facts">
+        <dt>Shipped</dt><dd>{{ o.shipped_at | when }}</dd>
+        <dt>Carrier</dt><dd>{{ o.carrier or '—' }}</dd>
+        <dt>Tracking</dt><dd>{% if track_url %}<a href="{{ track_url }}" target="_blank" rel="noopener">{{ o.tracking_number }} ↗</a>{% else %}{{ o.tracking_number or '—' }}{% endif %}</dd>
+      </dl>
+      {% else %}
+      <p class="muted">{% if sale %}Not shipped.{% else %}This checkout never became a sale, so there's nothing to ship.{% endif %}</p>
+      {% endif %}
+    </section>
+
+    <section class="panel" id="notes">
+      <h2>Notes</h2>
+      {% if o.notes %}<div class="notes">{{ o.notes }}</div>{% else %}<p class="muted">No notes yet.</p>{% endif %}
+      <form class="note-form" method="post" action="/orders/{{ o.number }}/note">
+        <input type="hidden" name="form_token" value="{{ form_token }}">
+        <label class="sr-only" for="note">Add a note</label>
+        <textarea id="note" name="note" rows="2" maxlength="2000" required placeholder="e.g. Emailed the customer to confirm the address"></textarea>
+        <button type="submit">Add note</button>
+      </form>
+      <p class="muted small">Only you see notes. Each one is saved with the date and time.</p>
+    </section>
+  </div>
+
+  <aside>
+    {% if sale %}
+    <section class="panel">
+      <h2>Packing slip</h2>
+      <p class="actions">
+        <a class="button" href="/orders/{{ o.number }}/packing-slip.pdf" target="_blank" rel="noopener">Packing slip (PDF)</a>
+        <a class="button secondary" href="/orders/{{ o.number }}/packing-slip.pdf?gift=1" target="_blank" rel="noopener">Gift slip, no prices</a>
+      </p>
+      <p class="muted small">Print at “Actual size” on US Letter.</p>
+    </section>
+    {% endif %}
+
+    <section class="panel">
+      <h2>Customer</h2>
+      <p>{{ o.name or '—' }}<br>{% if o.email %}<a href="mailto:{{ o.email }}?subject={{ ('Your Poke6s order ' ~ o.number) | urlencode }}">{{ o.email }}</a>{% endif %}</p>
+      <h2>Ship to</h2>
+      {% if address %}<address class="ship-to">{% for line in address %}{{ line }}<br>{% endfor %}{{ (o.shipping or {}).get('address', {}).get('country') or '' }}</address>{% else %}<p class="muted">No address.</p>{% endif %}
+      {% if o.status == 'paid' %}
+      {% set a = address_form %}
+      <details{% if address_open %} open{% endif %}>
+        <summary>Change the address</summary>
+        <p class="muted small">For a correction the customer confirmed (e.g. USPS's suggested version). The old address is kept in the notes; Stripe still shows the original.</p>
+        <form class="address-form" method="post" action="/orders/{{ o.number }}/address">
+          <input type="hidden" name="form_token" value="{{ form_token }}">
+          <label>Name <input name="name" required maxlength="120" value="{{ a.name or '' }}"></label>
+          <label>Street <input name="line1" required maxlength="120" value="{{ a.line1 or '' }}"></label>
+          <label>Apt, unit <input name="line2" maxlength="120" value="{{ a.line2 or '' }}"></label>
+          <label>City <input name="city" required maxlength="120" value="{{ a.city or '' }}"></label>
+          <div class="pair">
+            <label>State <input name="state" required maxlength="2" value="{{ a.state or '' }}"></label>
+            <label>ZIP <input name="postal_code" required maxlength="10" value="{{ a.postal_code or '' }}"></label>
+          </div>
+          <label>Why <input name="reason" maxlength="300" placeholder="e.g. Customer confirmed by email"></label>
+          <button type="submit">Save the new address</button>
+        </form>
+      </details>
+      {% endif %}
+    </section>
+
+    {% if sale and o.email %}
+    <section class="panel">
+      <h2>Emails</h2>
+      <form method="post" action="/orders/{{ o.number }}/resend" class="inline">
+        <input type="hidden" name="form_token" value="{{ form_token }}">
+        <button class="secondary" type="submit" name="kind" value="confirmed">Resend order confirmation</button>
+        {% if o.tracking_number %}<button class="secondary" type="submit" name="kind" value="shipped">Resend tracking email</button>{% endif %}
+      </form>
+    </section>
+    {% endif %}
+
+    <section class="panel">
+      <h2>Payment</h2>
+      <dl class="facts">
+        {% for label, when in timeline %}<dt>{{ label }}</dt><dd>{{ when }}</dd>{% endfor %}
+      </dl>
+      <p class="small">
+        {% if stripe_url %}<a href="{{ stripe_url }}" target="_blank" rel="noopener">Open in Stripe ↗</a><br>{% endif %}
+        {% if sale %}<a href="{{ status_url }}" target="_blank" rel="noopener">Customer's order page ↗</a>{% endif %}
+      </p>
+    </section>
+  </aside>
+</div>
+{% endblock %}

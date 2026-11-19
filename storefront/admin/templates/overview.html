@@ -8,7 +8,7 @@
     <tbody>
     {% for o in rows %}
       <tr{% if o.late %} class="late"{% endif %}>
-        <td><strong>{{ o.number }}</strong>{% if o.mode == 'test' %} <span class="badge">test</span>{% endif %}</td>
+        <td><a href="/orders/{{ o.number }}"><strong>{{ o.number }}</strong></a>{% if o.mode == 'test' %} <span class="badge">test</span>{% endif %}</td>
         <td>{{ o.name or '—' }}</td>
         <td class="num">{{ o['items'] }}</td>
         <td class="num">{{ o.total_cents | money }}</td>
@@ -56,8 +56,7 @@
   <section class="panel">
     <h2>To ship</h2>
     {{ order_table(d.to_ship, "Nothing to ship. Paid orders appear here until they're marked shipped.", show_wait=True) }}
-    <p class="muted small">Until the Orders page arrives (next step), mark an order shipped on the server:
-      <code>docker exec poke6s-storefront python -m storefront.app.orders_cli ship NUMBER --carrier USPS --tracking …</code></p>
+    {% if d.to_ship %}<p class="muted small">Open an order to print its packing slip and mark it shipped. <a href="/orders">All orders</a></p>{% endif %}
   </section>
 
   <aside>
@@ -65,7 +64,7 @@
       <h2>Needs attention</h2>
       <ul class="checks">
         {% for o in d.disputed %}<li class="bad">Dispute on {{ o.number }} ({{ o.total_cents | money }}): answer it in the Stripe dashboard.</li>{% endfor %}
-        {% if d.emails.failed %}<li class="bad">{{ d.emails.failed }} order email{{ '' if d.emails.failed == 1 else 's' }} gave up after a day of retries. Resend with <code>orders_cli resend NUMBER</code>.</li>{% endif %}
+        {% if d.emails.failed %}<li class="bad">{{ d.emails.failed }} order email{{ '' if d.emails.failed == 1 else 's' }} gave up after a day of retries. Resend from the order's page (Orders).</li>{% endif %}
         {% if d.emails.retrying %}<li class="warn">{{ d.emails.retrying }} order email{{ '' if d.emails.retrying == 1 else 's' }} waiting to retry (every 15 minutes).</li>{% endif %}
         {% if d.backup.stale %}<li class="bad">{% if d.backup.found %}The last backup is {{ d.backup.hours | hours }} old: the nightly job may have failed.{% else %}No backup found.{% endif %} See the runbook, "Store backups".</li>{% endif %}
         {% if not d.status.checkout_on %}<li class="warn">Checkout is {{ d.status.checkout | trim('.') }}.</li>{% endif %}

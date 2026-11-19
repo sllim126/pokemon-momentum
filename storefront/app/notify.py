@@ -253,6 +253,10 @@ def _address_lines(order: dict) -> list[str]:
     return [p for p in parts if p]
 
 
+# Public name for the admin and orders.py (the ship-to block as lines: name, street, city line).
+address_lines = _address_lines
+
+
 def _address(order: dict) -> str:
     return "\n".join(f"  {p}" for p in _address_lines(order))
 

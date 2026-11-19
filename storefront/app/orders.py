@@ -7,7 +7,8 @@ and orders".
     Stripe webhook / reconcile() ------> mark_paid()         reservation becomes a sale
                                       -> release()           checkout expired: stock back
                                       -> record_refund(), record_dispute()
-    tools/ship_order.py ---------------> mark_shipped()      shipped email with tracking
+    admin / orders_cli ship -----------> mark_shipped()      shipped email with tracking
+    admin -----------------------------> add_note(), correct_address()
 
 Rules kept here:
 - The browser sends only SKUs and quantities; prices, stock and shipping come from the
@@ -450,8 +451,60 @@ def mark_shipped(conn: sqlite3.Connection, settings: Settings, number: str, carr
                  (now_iso(now), carrier.strip(), tracking.strip(), order["id"]))
     conn.commit()
     order = get_order(conn, number)
-    notify.shipped_email(settings, order, status_url(base_url, order))
+    # True when the email was sent (or saved to the outbox when email isn't set up); False means
+    # it failed and is queued for retry. Callers say which, rather than always "sent".
+    order["email_sent"] = notify.shipped_email(settings, order, status_url(base_url, order))
     return order
+
+
+# Longest owner note accepted at once (the admin's note box).
+MAX_NOTE = 2000
+ADDRESS_FIELDS = ("name", "line1", "line2", "city", "state", "postal_code")
+
+
+def add_note(conn: sqlite3.Connection, number: str, text: str, now: datetime | None = None) -> dict:
+    """Append a dated note to an order (owner notes from the admin). Notes are one text column:
+    the shop's own notes (oversold, expired, dispute) are joined with spaces, owner notes go on
+    their own line, prefixed with the shop's local date and time."""
+    text = " ".join(text.split())[:MAX_NOTE]
+    if not text:
+        raise ValueError("The note is empty")
+    order = get_order(conn, number)
+    if order is None:
+        raise ValueError(f"No order {number}")
+    stamp = notify.local_time(now_iso(now))
+    # (trim() only strips spaces, so the first note is set rather than appended after a newline.)
+    conn.execute("UPDATE orders SET notes = CASE WHEN trim(notes) = '' THEN ? ELSE notes || char(10) || ? END "
+                 "WHERE id = ?", (f"{stamp}: {text}", f"{stamp}: {text}", order["id"]))
+    conn.commit()
+    return get_order(conn, number)
+
+
+def correct_address(conn: sqlite3.Connection, number: str, fields: dict, reason: str = "",
+                    now: datetime | None = None) -> dict:
+    """Change where an unshipped order goes, e.g. after the customer confirms USPS's corrected
+    address. The old address is kept in the order's notes, because Stripe's payment record
+    still shows the address entered at checkout (useful if the payment is ever disputed)."""
+    order = get_order(conn, number)
+    if order is None:
+        raise ValueError(f"No order {number}")
+    if order["status"] != "paid":
+        raise ValueError(f"Order {number} is {order['status']}: only paid, unshipped orders can change address")
+    clean = {key: " ".join(str(fields.get(key) or "").split())[:120] for key in ADDRESS_FIELDS}
+    clean["state"] = clean["state"].upper()
+    missing = [key for key in ("name", "line1", "city", "state", "postal_code") if not clean[key]]
+    if missing:
+        raise ValueError("Missing: " + ", ".join(missing))
+    old = order.get("shipping") or {}
+    old_text = ", ".join(notify.address_lines(order)) or "none"
+    country = (old.get("address") or {}).get("country") or "US"
+    shipping = {"name": clean["name"], "address": {"line1": clean["line1"], "line2": clean["line2"] or None,
+                                                   "city": clean["city"], "state": clean["state"],
+                                                   "postal_code": clean["postal_code"], "country": country}}
+    conn.execute("UPDATE orders SET shipping_json = ? WHERE id = ?", (json.dumps(shipping), order["id"]))
+    conn.commit()
+    why = f" Reason: {' '.join(reason.split())[:300]}." if reason.strip() else ""
+    return add_note(conn, number, f"Address changed. Was: {old_text}.{why}", now)
 
 
 def status_url(base_url: str, order: dict) -> str:

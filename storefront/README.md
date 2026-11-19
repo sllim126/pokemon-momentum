@@ -205,7 +205,8 @@ pending order and then applies the last 3 days of Stripe events the webhook may 
 (server or tunnel down). That last step is the only other way a refund or dispute on a paid
 order is recorded; each event is applied once, whichever route brings it.
 
-**Orders from the command line** (until the Phase 3 admin):
+**Orders from the command line.** Day to day, use the admin's Orders page (see "Admin"); the
+command line does the same things and stays for scripts and emergencies:
 
 ```
 docker-compose exec storefront python -m storefront.app.orders_cli list
@@ -284,12 +285,24 @@ that address out for 15 minutes and post a Discord alert.
 | Address | Page |
 |---|---|
 | `/` | Overview: orders to ship (late ones flagged after 24 hours), this month's net sales (live orders only), order emails retrying or failed, last nightly backup, disputes, sold-out products still on show, store set-up |
+| `/orders?view=&q=` | Orders: tabs To ship (oldest first), Shipped, Refunds & disputes, All sales, Unfinished checkouts; search by number, name or email |
+| `/orders/<number>` | One order: items, totals, ship-to address, customer, Stripe link, timeline, notes |
+| `POST /orders/<number>/ship` | Mark shipped with carrier and tracking (spaces allowed); sends the tracking email and says whether it went, went to the outbox, or is queued for retry |
+| `POST /orders/<number>/note` | Add a dated note (only the owner sees notes) |
+| `POST /orders/<number>/address` | Change the address of a paid, unshipped order (e.g. USPS's corrected version, once the customer confirms); the old address goes into the notes |
+| `POST /orders/<number>/resend` | Send the order confirmation or tracking email again |
+| `/orders/<number>/packing-slip.pdf` | Packing slip, US Letter PDF; `?gift=1` leaves the prices off |
 | `/login`, `POST /login`, `POST /logout` | Sign-in |
 | `/healthz` | `{"ok", "schema", "sign_in_ready"}` (still home network only) |
 
 The admin reads the same settings as the store (the compose file shares them), so it shows
-the real checkout, Stripe, tax and email state. Until the Orders page lands, ship orders with
-`orders_cli` (see "Checkout").
+the real checkout, Stripe, tax and email state. Every change is a form post carrying the
+session's form token, then a redirect back to the page with a message (`DONE` in
+`admin/main.py`). Order changes themselves live in `app/orders.py` (`mark_shipped`, `add_note`,
+`correct_address`), shared with `orders_cli`, so the two can't drift apart.
+
+**Shipping an order:** Overview or Orders → open the order → "Packing slip (PDF)" (print at
+Actual size) → buy the label → paste the tracking number → "Mark shipped and email tracking".
 
 ## Code map
 
@@ -320,6 +333,8 @@ the real checkout, Stripe, tax and email state. Until the Orders page lands, shi
 | `admin/main.py` | The admin app: the network walls, sign-in routes, Overview |
 | `admin/auth.py` | Password hashing, signed session cookies, form tokens, lockout (standard library only) |
 | `admin/overview.py` | What the Overview shows (read-only queries) |
+| `admin/orders_view.py` | The Orders list: tabs, search, counts, Stripe link, timeline (read-only queries) |
+| `admin/packing_slip.py` | Packing slip PDFs (reportlab); prints the logo without its navy background |
 | `admin/passwd.py` | Sets the admin password in `.env` |
 | `admin/templates/`, `admin/static/admin.css` | Admin pages (no JavaScript) |
 | `tests/` | pytest suite with synthetic fixtures |
@@ -365,6 +380,6 @@ reviews them before launch, then removes the line.
 
 ## Not yet (later phases)
 
-The rest of the admin: orders, Pirate Ship export and tracking upload, refunds, products and
-stock, pricing, reports (Phase 3; the Overview and sign-in are done, see "Admin"); Google Merchant feed, per-article social cards, newsletter (Phase 4). See
+The rest of the admin: Pirate Ship export and tracking upload, refunds, products and stock,
+pricing, reports (Phase 3; sign-in, Overview and Orders are done, see "Admin"); Google Merchant feed, per-article social cards, newsletter (Phase 4). See
 the plan.

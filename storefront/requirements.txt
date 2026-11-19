@@ -13,3 +13,5 @@ pillow==13.0.0
 requests==2.34.2
 python-multipart==0.0.33
 prometheus-client==0.26.0
+# Packing slips as PDF (admin, Phase 3 step 2).
+reportlab==4.2.5
