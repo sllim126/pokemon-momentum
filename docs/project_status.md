@@ -28,7 +28,10 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   next request. Last night's file stays in `data/processed_prev/` (runbook "Nightly update:
   copy and swap")
 - Store admin (LAN only, http://192.168.1.240:8011): Overview and Orders (mark shipped with
-  tracking, resend emails, notes, address correction, packing and gift slip PDFs)
+  tracking, resend emails, notes, address correction, packing and gift slip PDFs); Shipping
+  (Pirate Ship file out, tracking file back); Products (price, stock, visibility, details,
+  photos, packed size, adding products, every change logged); Pricing (repricing with a preview).
+  Still to build: refunds, reports, market site clean-up (`docs/storefront_plan.md` Phase 3)
 - Nightly pipeline memory: snapshot scripts cap DuckDB at 10 GB and 4 threads
   (`scripts/common/duckdb_settings.py`) after an out-of-memory kill on 2026-11-02
 - Graded data: nightly PriceCharting snapshot, kept as our own history

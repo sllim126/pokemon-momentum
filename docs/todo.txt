@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-19 (milestone: zero-downtime-nightly)
+Last updated: 2026-11-19 (store admin step 3, Shipping)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -44,6 +44,11 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-19 Store admin step 3, Shipping page (/shipping): paid orders out as a CSV for Pirate
+  Ship's spreadsheet import (weight and box from each product's new "Packed for shipping"
+  size; orders marked "in a file" so a label isn't bought twice), Pirate Ship's shipments CSV
+  back in with a preview, then the ticked orders marked shipped with tracking emails. Migration
+  007. The admin menu now wraps on phones instead of scrolling sideways.
 - 2026-11-19 Store admin step 6, Pricing page (/pricing): the repricing rules with a preview;
   tick what to apply, each logged as "repricing"; lines changed meanwhile are skipped; costs
   read through a read-only mount (.env STOREFRONT_COSTS_DIR), never shown. reprice.py now shares
@@ -340,16 +345,14 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   built 2026-11-19 on branch storefront/admin-orders. Next:
   - [owner] Set the admin password on the server: `python3 -m storefront.admin.passwd`, then
     `bash deploy/update_storefront.sh`, then open http://192.168.1.240:8011/.
-  - [owner] Before step 3: one Pirate Ship export of shipments with tracking numbers, and the
-    column layout Pirate Ship's "import orders" upload accepts (a sample file; names and
-    addresses can be made up), so the export and upload match exactly.
   - [owner] Before step 7: the columns your books use for a month of sales (QuickBooks import
     or the ledger in poke6s-books), so the bookkeeping export fits without retyping.
-  - [next] Step 3, Shipping: Pirate Ship CSV export (signature confirmation on every
-    order) and tracking upload. (Packing slips were done in step 2.) Also save each sealed
-    product's packed box size and weight (e.g. one ETB ships in an 11 x 7.5 x 5.5 box) so the
-    export fills them in.
-  - [planned] Step 4, Refunds through Stripe with optional restock (also covers the "restock
+  - [owner] Step 3 (Shipping page, done 2026-11-19 on branch storefront/admin-shipping): save the
+    packed weight and box on the product page ("Packed for shipping") for what you ship most;
+    only 16 of 95 products have a weight (Squarespace's) and none of the ETBs. Then, with the
+    next orders, upload Pirate Ship's first real shipments CSV and say if anything didn't match
+    (its export columns aren't documented, so the reader guesses by header and order number).
+  - [next] Step 4, Refunds through Stripe with optional restock (also covers the "restock
     command for returns" item below). Needs a second restricted Stripe key for the admin with
     Refunds write (owner creates it); the public store's key stays unable to refund.
   - [owner] Pricing page (http://192.168.1.240:8011/pricing, live after the next deploy): 9

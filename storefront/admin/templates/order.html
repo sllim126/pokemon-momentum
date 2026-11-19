@@ -50,7 +50,9 @@
         <label class="wide">Tracking number <input name="tracking" required maxlength="60" value="{{ tracking or '' }}" autocomplete="off" placeholder="9400 1000 0000 0000 0000 00"></label>
         <button type="submit">Mark shipped and email tracking</button>
       </form>
-      <p class="muted small">The customer gets the shipped email with the tracking link straight away. Spaces in the number are fine.</p>
+      <p class="muted small">The customer gets the shipped email with the tracking link straight away. Spaces in the number are fine.
+        Several orders at once: the <a href="/shipping">Shipping</a> page (Pirate Ship file out, tracking file back).
+        {% if o.labels_exported_at %}This order went out in a Pirate Ship file {{ o.labels_exported_at | when }}.{% endif %}</p>
       {% elif o.status == 'shipped' or o.tracking_number %}
       <dl class="facts">
         <dt>Shipped</dt><dd>{{ o.shipped_at | when }}</dd>
