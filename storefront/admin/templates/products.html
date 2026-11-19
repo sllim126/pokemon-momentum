@@ -1,0 +1,47 @@
+{#- Products list (Phase 3, step 5). Tabs by what the store shows, search by title, set or SKU.
+    `rows` from products_view.list_products (each with its market summary and % vs market). -#}
+{% extends "base.html" %}
+{% block title %}Products{% endblock %}
+{% block main %}
+<div class="page-head">
+  <h1>Products</h1>
+  <form class="search" method="get" action="/products" role="search">
+    <input type="hidden" name="view" value="{{ view }}">
+    <label class="sr-only" for="q">Search products</label>
+    <input id="q" name="q" type="search" value="{{ q }}" placeholder="Title, set or SKU">
+    <button type="submit">Search</button>
+    {% if q %}<a class="small" href="/products?view={{ view }}">Clear</a>{% endif %}
+  </form>
+</div>
+
+<nav class="tabs" aria-label="Product views">
+  {% for name, (label, _c) in views.items() %}
+  <a href="/products?view={{ name }}{% if q %}&amp;q={{ q | urlencode }}{% endif %}" {% if name == view %}aria-current="page"{% endif %}>{{ label }} <span class="badge">{{ counts[name] }}</span></a>
+  {% endfor %}
+</nav>
+
+<section class="panel">
+  {% if rows %}
+  <table class="products">
+    <thead><tr><th class="thumb-col"><span class="sr-only">Photo</span></th><th>Product</th>
+      <th class="num">Price</th><th class="num">Market</th><th class="num">Available</th><th>On the store</th></tr></thead>
+    <tbody>
+    {% for p in rows %}
+      <tr>
+        <td class="thumb-col">{% if p.thumb %}<img class="thumb" src="{{ p.thumb }}" alt="" loading="lazy" width="48" height="48">{% endif %}</td>
+        <td><a href="/products/{{ p.id }}"><strong class="wrap">{{ p.title }}</strong></a><br><span class="muted small">{{ p.sku }}</span></td>
+        <td class="num">{{ p.price_cents | money }}{% if p.compare_at_cents %}<br><s class="muted small">{{ p.compare_at_cents | money }}</s>{% endif %}</td>
+        <td class="num">{% if p.market %}{{ (p.market.price * 100) | round | int | money }}<br><span class="small {% if p.vs_market > 0 %}warn-text{% else %}muted{% endif %}">{{ '%+d' % p.vs_market }}%</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td class="num">{% if not p.track_stock %}<span class="muted small">not counted</span>{% elif p.stock == 0 %}<span class="bad-text">0</span>{% else %}{{ p.stock }}{% endif %}</td>
+        <td>{% if p.visible %}<span class="good-text">Shown</span>{% if p.featured %} <span class="badge">featured</span>{% endif %}{% else %}<span class="muted">Hidden</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if rows | length >= page_size %}<p class="muted small">Showing the first {{ page_size }}. Search to narrow it down.</p>{% endif %}
+  <p class="muted small">Market: TCGplayer market price from market.poke6s.com{% if market_date %}, {{ market_date }}{% endif %}. A plus means we're above market.</p>
+  {% else %}
+  <p class="muted">{% if q %}No products in “{{ views[view][0] }}” match “{{ q }}”.{% else %}No products here.{% endif %}</p>
+  {% endif %}
+</section>
+{% endblock %}

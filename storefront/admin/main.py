@@ -37,9 +37,11 @@ from fastapi.templating import Jinja2Templates
 
 from ..app import notify
 from ..app import orders as store_orders
+from ..app import product_changes
 from ..app.db import connect, latest_migration, migrate
+from ..app.market import MarketReference
 from ..app.settings import Settings, load_settings
-from . import orders_view, overview, packing_slip
+from . import orders_view, overview, packing_slip, products_view
 from .auth import COOKIE_NAME, SESSION_DAYS, Lockout, Sessions, check_password
 
 log = logging.getLogger("storefront.admin")
@@ -79,6 +81,13 @@ DONE = {
     "resend_failed": "The email failed again and is queued for retry (see Discord).",
     "note": "Note added.",
     "address": "Address changed. The old one is kept in the notes.",
+}
+PRODUCT_DONE = {
+    "price": "Price saved. The store shows it now.",
+    "settings": "Saved. The store shows the change now.",
+    "same": "Nothing changed.",
+    "stock": "Stock saved.",
+    "count_same": "The count matched; nothing changed.",
 }
 
 
@@ -149,6 +158,10 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
     templates.env.filters["when"] = notify.local_time
     templates.env.filters["hours"] = overview.hours_label
     templates.env.globals.update(settings=settings)
+    market = MarketReference(settings.market_reference_path)
+    # Product photos for the Products pages (the 480 px copies; images.py has the layout).
+    # check_dir=False: a fresh install has no images folder yet.
+    app.mount("/images", StaticFiles(directory=settings.images_dir, check_dir=False), name="images")
 
     @app.middleware("http")
     async def guard(request: Request, call_next):
@@ -394,6 +407,106 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
             return order_page(request, cookie, number, 400, error=str(exc), address_form=fields)
         log.info("Order %s: shipping address changed from the admin", number)
         return RedirectResponse(order_url(number, done="address"), status_code=303)
+
+    # --- products and stock (Phase 3, step 5) ---------------------------------------------------
+
+    def product_url(product_id: int, **params) -> str:
+        query = f"?{urlencode(params)}" if params else ""
+        return f"/products/{product_id}{query}"
+
+    def product_page(request: Request, cookie: str, product_id: int, status_code: int = 200, **context) -> Response:
+        with db() as conn:
+            product = products_view.get_product(conn, product_id, market)
+            entries = product_changes.history(conn, product_id) if product else []
+        if product is None:
+            return PlainTextResponse("Not found.", status_code=404)
+        history = [{**e, "what": products_view.describe(e)} for e in entries]
+        return page(request, "product.html", cookie, status_code=status_code, product=product, history=history,
+                    active="products", stock_kinds=products_view.STOCK_FORM_KINDS,
+                    store_url=f"{settings.base_url.rstrip('/')}/p/{product['slug']}",
+                    done=PRODUCT_DONE.get(request.query_params.get("done", "")), **context)
+
+    @app.get("/products", response_class=HTMLResponse)
+    def product_list(request: Request, view: str = products_view.DEFAULT_VIEW, q: str = ""):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        view = view if view in products_view.VIEWS else products_view.DEFAULT_VIEW
+        q = q.strip()[:100]
+        with db() as conn:
+            rows = products_view.list_products(conn, view, q, market)
+            counts = products_view.counts(conn)
+        return page(request, "products.html", cookie, rows=rows, counts=counts, view=view, q=q,
+                    views=products_view.VIEWS, active="products", page_size=products_view.PAGE_SIZE,
+                    market_date=market.data().get("latest_date"))
+
+    @app.get("/products/{product_id:int}", response_class=HTMLResponse)
+    def product_detail(request: Request, product_id: int):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        return product_page(request, cookie, product_id)
+
+    @app.post("/products/{product_id:int}/price")
+    def product_price(request: Request, product_id: int, form_token: str = Form(""), price: str = Form(""),
+                      compare_at: str = Form(""), reason: str = Form(""), confirm: str = Form("")):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        if not form_ok(cookie, form_token):
+            return expired_form()
+        typed = {"price": price, "compare_at": compare_at, "reason": reason}
+        try:
+            wanted = {"price_cents": product_changes.parse_money(price),
+                      "compare_at_cents": product_changes.parse_money(compare_at)}
+            with writer() as conn:
+                changed = product_changes.update_product(conn, product_id, wanted, reason, confirmed=bool(confirm))
+        except ValueError as exc:
+            return product_page(request, cookie, product_id, 400, price_error=str(exc), typed=typed)
+        log.info("Product %s: %s changed from the admin", product_id, ", ".join(changed) or "nothing")
+        return RedirectResponse(product_url(product_id, done="price" if changed else "same"), status_code=303)
+
+    @app.post("/products/{product_id:int}/settings")
+    def product_settings(request: Request, product_id: int, form_token: str = Form(""), visible: str = Form(""),
+                         featured: str = Form(""), max_per_order: str = Form(""), reason: str = Form("")):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        if not form_ok(cookie, form_token):
+            return expired_form()
+        limit = max_per_order.strip()
+        if visible not in ("0", "1") or featured not in ("0", "1") or (limit and not limit.isdigit()):
+            return product_page(request, cookie, product_id, 400,
+                                settings_error="The per-order limit must be a whole number, or empty.")
+        wanted = {"visible": int(visible), "featured": int(featured),
+                  "max_per_order": int(limit) if limit else None}
+        try:
+            with writer() as conn:
+                changed = product_changes.update_product(conn, product_id, wanted, reason)
+        except ValueError as exc:
+            return product_page(request, cookie, product_id, 400, settings_error=str(exc))
+        log.info("Product %s: %s changed from the admin", product_id, ", ".join(changed) or "nothing")
+        return RedirectResponse(product_url(product_id, done="settings" if changed else "same"), status_code=303)
+
+    @app.post("/products/{product_id:int}/stock")
+    def product_stock(request: Request, product_id: int, form_token: str = Form(""), kind: str = Form(""),
+                      quantity: str = Form(""), note: str = Form("")):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        if not form_ok(cookie, form_token):
+            return expired_form()
+        amount = quantity.strip()
+        try:
+            if not amount.isdigit():
+                raise ValueError("Type how many (a whole number).")
+            with writer() as conn:
+                change = product_changes.adjust_stock(conn, product_id, kind, int(amount), note)
+        except ValueError as exc:
+            return product_page(request, cookie, product_id, 400, stock_error=str(exc),
+                                typed_stock={"kind": kind, "quantity": quantity, "note": note})
+        log.info("Product %s: stock %+d (%s) from the admin", product_id, change, kind)
+        return RedirectResponse(product_url(product_id, done="stock" if change else "count_same"), status_code=303)
 
     @app.exception_handler(404)
     async def not_found(request: Request, _exc):
