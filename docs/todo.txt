@@ -226,11 +226,15 @@ Live now:
     shown again at break-even. Don't use --hide-above-market by default.
 - [done 2026-11-11] 4. Stock set from the owner's Nov 2 inventory (see Recently Completed).
   Still open:
-  - [owner] 17 in-stock products are hidden (hidden on Squarespace: ETBs, Pokemon Center ETBs,
-    Costco 2-packs, premium collections, tins...), e.g. ENG-PO-ETB (Perfect Order ETB, 3 in
-    stock). Since 2026-11-19 the admin's Products → "Hidden, in stock" tab lists them, and each
-    product's page can show it. reprice.py prices one only once it has a cost row in the private
-    costs file.
+  - [done 2026-11-19] 15 of the 17 hidden in-stock products shown (owner: list everything at
+    break-even or better): costs added to the private costs file from the owner's floors file
+    (the higher cost where one item was bought at two prices), priced 5% under market or at
+    break-even if higher. Still hidden, [owner]:
+    - Perfect Order Pokemon Center ETB (ENG-PO-PC-ETB): break-even works out to $175.99 against a
+      ~$103 market (dearest unit is the preorder, and over $150 the price must also cover the
+      label). Owner: list there, or use the cheaper unit's cost.
+    - Mega Charizard (ENG-MCHARIZARDex-PC, "Premium Collection"): the only cost in the books is
+      for the "Mega Charizard X ex Ultra Premium Collection". Owner: same product or not?
   - [idea] Not on the store at all: Prismatic Evolutions bundle (1), Treasure chest tin (1).
   - Packs kept off the store on purpose (owner keeps one complete art set of each): Phantasmal
     Flames, Mega Evolution, Journey Together, Pitch Black, Chaos Rising (4 each), plus one
