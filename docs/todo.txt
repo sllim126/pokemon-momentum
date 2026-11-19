@@ -233,8 +233,8 @@ Live now:
     - Perfect Order Pokemon Center ETB (ENG-PO-PC-ETB): break-even works out to $175.99 against a
       ~$103 market (dearest unit is the preorder, and over $150 the price must also cover the
       label). Owner: list there, or use the cheaper unit's cost.
-    - Mega Charizard (ENG-MCHARIZARDex-PC, "Premium Collection"): the only cost in the books is
-      for the "Mega Charizard X ex Ultra Premium Collection". Owner: same product or not?
+    - Mega Charizard (ENG-MCHARIZARDex-PC) shown 2026-11-19 at $195.99 once the owner confirmed
+      it is the Mega Charizard X ex Premium Collection in the books.
   - [idea] Not on the store at all: Prismatic Evolutions bundle (1), Treasure chest tin (1).
   - Packs kept off the store on purpose (owner keeps one complete art set of each): Phantasmal
     Flames, Mega Evolution, Journey Together, Pitch Black, Chaos Rising (4 each), plus one
@@ -356,7 +356,8 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     only 16 of 95 products have a weight (Squarespace's) and none of the ETBs. Then, with the
     next orders, upload Pirate Ship's first real shipments CSV and say if anything didn't match
     (its export columns aren't documented, so the reader guesses by header and order number).
-  - [next] Step 4, Refunds through Stripe with optional restock (also covers the "restock
+  - [next] Step 4, Refunds through Stripe (key ready 2026-11-19: STOREFRONT_ADMIN_STRIPE_KEY in .env,
+    live restricted key, checked: refunds, charges and payment intents readable, everything else refused) with optional restock (also covers the "restock
     command for returns" item below). Needs a second restricted Stripe key for the admin with
     Refunds write (owner creates it); the public store's key stays unable to refund.
   - [owner] Pricing page (http://192.168.1.240:8011/pricing, live after the next deploy): 9
