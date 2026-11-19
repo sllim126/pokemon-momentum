@@ -1,0 +1,128 @@
+{#- One product (Phase 3, step 5): price, what the store shows, stock, and the history of every
+    change. Each form is a POST with the session's form token; the page reloads with ?done=...
+    (messages in main.py PRODUCT_DONE). Rules and logging: storefront/app/product_changes.py. -#}
+{% extends "base.html" %}
+{% block title %}{{ product.title }}{% endblock %}
+{% block main %}
+{% set p = product %}
+<p class="small"><a href="/products">← Products</a></p>
+<div class="page-head">
+  {% if p.thumb %}<img class="thumb big" src="{{ p.thumb }}" alt="" width="72" height="72">{% endif %}
+  <div>
+    <h1>{{ p.title }}</h1>
+    <p class="muted small">{{ p.sku }} · {{ p.product_type | replace('-', ' ') }}{% if p.set_name %} · {{ p.set_name }}{% endif %}{% if p.categories %} · {{ p.categories | join(', ') }}{% endif %}</p>
+  </div>
+  <span class="status big {% if p.visible %}s-shipped{% else %}s-refunded{% endif %}">{% if p.visible %}On the store{% else %}Hidden{% endif %}</span>
+  {% if p.visible %}<a class="small" href="{{ store_url }}" target="_blank" rel="noopener">View on poke6s.com ↗</a>{% endif %}
+</div>
+{% if done %}<p class="flash good" role="status">{{ done }}</p>{% endif %}
+
+<div class="columns">
+  <div>
+    <section class="panel" id="price">
+      <h2>Price</h2>
+      {% if price_error %}<p class="flash bad" role="alert">{{ price_error }}</p>{% endif %}
+      {% set t = typed or {} %}
+      <form class="edit-form" method="post" action="/products/{{ p.id }}/price">
+        <input type="hidden" name="form_token" value="{{ form_token }}">
+        <label>Price ($)
+          <input name="price" required inputmode="decimal" maxlength="12" autocomplete="off"
+                 value="{{ t.price if t.price is defined else '%.2f' % (p.price_cents / 100) }}"></label>
+        <label>“Was” price ($), optional
+          <input name="compare_at" inputmode="decimal" maxlength="12" autocomplete="off"
+                 value="{{ t.compare_at if t.compare_at is defined else ('%.2f' % (p.compare_at_cents / 100) if p.compare_at_cents else '') }}"></label>
+        <label class="wide">Why (kept in the history)
+          <input name="reason" maxlength="300" value="{{ t.reason or '' }}" placeholder="e.g. 5% under market"></label>
+        {% if price_error and 'big change' in price_error %}
+        <label class="wide check"><input type="checkbox" name="confirm" value="1"> Yes, this price is right</label>
+        {% endif %}
+        <button type="submit">Save price</button>
+      </form>
+      <dl class="facts small">
+        <dt>Market</dt>
+        <dd>{% if p.market %}<a href="{{ p.market.url }}" target="_blank" rel="noopener">${{ '%.2f' % p.market.price }}</a>
+          ({{ p.market.latest_date }}{% if p.market.averaged_over > 1 %}, averaged over {{ p.market.averaged_over }} designs{% endif %});
+          we're <strong>{{ '%+d' % p.vs_market }}%</strong> {% if p.vs_market >= 0 %}above{% else %}below{% endif %} it
+          {% else %}<span class="muted">no market price for this product</span>{% endif %}</dd>
+      </dl>
+      <p class="muted small">Running the repricing tool (storefront/tools/reprice.py) can change a price that follows a market rule; it shows up here as “repricing”.</p>
+    </section>
+
+    <section class="panel" id="history">
+      <h2>History</h2>
+      {% if history %}
+      <table class="history">
+        <thead><tr><th>When</th><th>What</th><th>Change</th><th>Why / reference</th></tr></thead>
+        <tbody>
+        {% for e in history %}
+          <tr>
+            <td class="small nowrap">{{ e.at | when }}</td>
+            <td>{{ e.what[0] }}{% if e.source == 'reprice' %} <span class="badge">repricing</span>{% endif %}</td>
+            <td class="nowrap">{{ e.what[1] }}</td>
+            <td class="small">{% if e.kind == 'stock' and e.field in ('sale', 'reservation', 'release') %}<a href="/orders/{{ e.reason }}">{{ e.reason }}</a>{% else %}{{ e.reason }}{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% if history | length >= 100 %}<p class="muted small">The latest 100 changes.</p>{% endif %}
+      {% else %}
+      <p class="muted">No changes yet.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <aside>
+    <section class="panel" id="stock">
+      <h2>Stock</h2>
+      {% if p.track_stock %}
+      <dl class="facts">
+        <dt>Available</dt><dd><strong class="{% if p.stock == 0 %}bad-text{% endif %}">{{ p.stock }}</strong></dd>
+        {% if p.held %}<dt>In a checkout</dt><dd>{{ p.held }} <span class="muted small">(back in 30 min if unpaid)</span></dd>{% endif %}
+        <dt>On the shelf</dt><dd>{{ p.stock + p.held }}</dd>
+        <dt>Sold here</dt><dd>{{ p.sold_here }}</dd>
+      </dl>
+      {% if stock_error %}<p class="flash bad" role="alert">{{ stock_error }}</p>{% endif %}
+      {% set s = typed_stock or {} %}
+      <form class="edit-form stock-form" method="post" action="/products/{{ p.id }}/stock">
+        <input type="hidden" name="form_token" value="{{ form_token }}">
+        <label>What happened
+          <select name="kind">
+            {% for key, label in stock_kinds %}<option value="{{ key }}"{% if s.kind == key %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select></label>
+        <label>How many <input name="quantity" required inputmode="numeric" maxlength="5" autocomplete="off" value="{{ s.quantity or '' }}"></label>
+        <label class="wide">Note <input name="note" maxlength="300" value="{{ s.note or '' }}" placeholder="e.g. Costco run, or a return"></label>
+        <button type="submit">Save stock</button>
+      </form>
+      <p class="muted small"><strong>Received</strong> adds to stock. <strong>Sold on TCGplayer</strong> takes it off.
+        <strong>Counted</strong>: type how many are on the shelf, and the difference is logged (for anything else that left: damaged, kept, sold in person; say so in the note).</p>
+      {% else %}
+      <p class="muted">Not stock-counted: this product sells without a count (supplier-backed or made to order).</p>
+      {% endif %}
+    </section>
+
+    <section class="panel" id="settings">
+      <h2>On the store</h2>
+      {% if settings_error %}<p class="flash bad" role="alert">{{ settings_error }}</p>{% endif %}
+      <form class="edit-form" method="post" action="/products/{{ p.id }}/settings">
+        <input type="hidden" name="form_token" value="{{ form_token }}">
+        <label class="wide">Show
+          <select name="visible">
+            <option value="1"{% if p.visible %} selected{% endif %}>Shown on the store</option>
+            <option value="0"{% if not p.visible %} selected{% endif %}>Hidden</option>
+          </select></label>
+        <label>Featured
+          <select name="featured">
+            <option value="0"{% if not p.featured %} selected{% endif %}>No</option>
+            <option value="1"{% if p.featured %} selected{% endif %}>Yes, on the home page</option>
+          </select></label>
+        <label>Limit per order <input name="max_per_order" inputmode="numeric" maxlength="2" autocomplete="off"
+               value="{{ p.max_per_order or '' }}" placeholder="No limit"></label>
+        <label class="wide">Why, optional <input name="reason" maxlength="300" placeholder="e.g. Keeping this one"></label>
+        <button type="submit">Save</button>
+      </form>
+      <p class="muted small">Featured: once any product is featured, the home page's “Featured” row shows only featured products, newest first (until then it shows the priciest boxes).</p>
+      {% if p.visible and p.track_stock and p.stock == 0 %}<p class="muted small">Shown as sold out until stock comes in.</p>{% endif %}
+    </section>
+  </aside>
+</div>
+{% endblock %}

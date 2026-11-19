@@ -25,7 +25,8 @@ listed above market (owner, 2026-11-11). It still gets its break-even price. Hid
 that could sell at or under market again are listed; show them with --show SKU --apply.
 
 Dry run by default: prints the table and changes nothing. --apply writes everything in one
-transaction. Standard library only, so it runs on the host:
+transaction and logs each change in product_changes (the admin's product history, marked
+"repricing"). Standard library only, so it runs on the host:
 
     python3 storefront/tools/reprice.py --costs /path/to/store_sku_costs.csv --hide-above-market
     python3 storefront/tools/reprice.py --costs /path/to/store_sku_costs.csv --hide-above-market --apply
@@ -149,7 +150,7 @@ def main() -> int:
     con = sqlite3.connect(args.db)
     con.row_factory = sqlite3.Row
     rows = con.execute(
-        "SELECT id, sku, title, price_cents, tcgplayer_product_ids, visible, stock, track_stock "
+        "SELECT id, sku, title, price_cents, compare_at_cents, tcgplayer_product_ids, visible, stock, track_stock "
         "FROM products ORDER BY title").fetchall()
 
     print(f"Market prices from {reference.get('latest_date')}. "
@@ -184,7 +185,7 @@ def main() -> int:
               f"{money(price):>9} {vs:>7}  {note}")
         # A hidden product still gets its break-even price, so showing it again can't lose money.
         if round(price * 100) != row["price_cents"]:
-            changes.append((row["id"], sku, round(price * 100)))
+            changes.append((row["id"], sku, round(price * 100), row["price_cents"]))
 
     print(f"\n{len(changes)} price(s) change; {len(hide)} product(s) to hide.")
     if skipped:
@@ -202,16 +203,34 @@ def main() -> int:
         print(f"\nUnknown SKU(s) for --show: {', '.join(unknown)}")
         return 1
     if args.apply:
+        # Logged in product_changes (migration 005) so the admin's product history shows them as
+        # "repricing". An older database without the table just isn't logged.
+        logged = con.execute("SELECT 1 FROM sqlite_master WHERE name = 'product_changes'").fetchone()
+        rule_note = f"market rule, market prices from {reference.get('latest_date')}"
+
+        def log_change(product_id, field, old, new, reason=rule_note):
+            if logged and old != new:
+                con.execute("INSERT INTO product_changes (product_id, field, old_value, new_value, reason, source, at) "
+                            "VALUES (?, ?, ?, ?, ?, 'reprice', strftime('%Y-%m-%dT%H:%M:%SZ','now'))",
+                            (product_id, field, None if old is None else str(old), None if new is None else str(new),
+                             reason))
+
+        by_id = {row["id"]: row for row in rows}
+        by_sku = {row["sku"]: row for row in rows}
         with con:
-            for product_id, _, cents in changes:
+            for product_id, _, cents, old_cents in changes:
+                log_change(product_id, "price", old_cents, cents)
+                log_change(product_id, "compare_at", by_id[product_id]["compare_at_cents"], None)
                 con.execute("UPDATE products SET price_cents = ?, compare_at_cents = NULL, "
                             "updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = ?",
                             (cents, product_id))
             for product_id, _ in hide:
+                log_change(product_id, "visible", by_id[product_id]["visible"], 0, "break-even is above market")
                 con.execute("UPDATE products SET visible = 0, "
                             "updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = ?",
                             (product_id,))
             for sku in args.show:
+                log_change(by_sku[sku]["id"], "visible", by_sku[sku]["visible"], 1, "shown with --show")
                 con.execute("UPDATE products SET visible = 1, "
                             "updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?",
                             (sku,))

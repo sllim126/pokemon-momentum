@@ -292,6 +292,11 @@ that address out for 15 minutes and post a Discord alert.
 | `POST /orders/<number>/address` | Change the address of a paid, unshipped order (e.g. USPS's corrected version, once the customer confirms); the old address goes into the notes |
 | `POST /orders/<number>/resend` | Send the order confirmation or tracking email again |
 | `/orders/<number>/packing-slip.pdf` | Packing slip, US Letter PDF; `?gift=1` leaves the prices off |
+| `/products?view=&q=` | Products: tabs On the store, Sold out on the store, Hidden, Hidden in stock, All; search by title, set or SKU; price next to the market price (% above or below) and stock |
+| `/products/<id>` | One product: price, stock (available, in a checkout, on the shelf, sold here), what the store shows, and the history of every change |
+| `POST /products/<id>/price` | New price and optional “was” price, with a reason (required). A change of more than 50% must be confirmed (catches 1299 typed for 12.99) |
+| `POST /products/<id>/settings` | Shown or hidden, featured on the home page, per-order limit |
+| `POST /products/<id>/stock` | Received (+N), Sold on TCGplayer (−N) or Counted (on the shelf = N; the difference is logged, leaving units in open checkouts alone) |
 | `/login`, `POST /login`, `POST /logout` | Sign-in |
 | `/healthz` | `{"ok", "schema", "sign_in_ready"}` (still home network only) |
 
@@ -300,6 +305,10 @@ the real checkout, Stripe, tax and email state. Every change is a form post carr
 session's form token, then a redirect back to the page with a message (`DONE` in
 `admin/main.py`). Order changes themselves live in `app/orders.py` (`mark_shipped`, `add_note`,
 `correct_address`), shared with `orders_cli`, so the two can't drift apart.
+Product changes live in `app/product_changes.py`: stock moves only by a logged
+`stock_movements` row (its sum must equal `products.stock`), and price and visibility changes go
+in `product_changes` (migration 005) with the old and new value and the reason; `tools/reprice.py`
+logs its changes there too, marked “repricing”.
 
 **Shipping an order:** Overview or Orders → open the order → "Packing slip (PDF)" (print at
 Actual size) → buy the label → paste the tracking number → "Mark shipped and email tracking".
@@ -312,6 +321,7 @@ Actual size) → buy the label → paste the tracking number → "Mark shipped a
 | `app/mailing.py` | Marketing emails to the list, with the legal parts (see "Marketing emails"); HTML in `templates/email/marketing.html` |
 | `app/main.py` | FastAPI app: routes, 404 + redirect handling, security headers, reconcile loop |
 | `app/orders.py` | Cart pricing, checkout, reservations, payment, expiry, refunds, disputes, shipping |
+| `app/product_changes.py` | Admin price, visibility and stock changes, each logged (see "Pages so far") |
 | `app/stripe_api.py` | The Stripe calls (Checkout Sessions) over HTTPS; webhook signature check |
 | `app/notify.py` | Discord order alerts; order and shipping emails (Microsoft Graph, SMTP or the outbox folder; retry queue; HTML in `templates/email/order.html`) |
 | `app/orders_cli.py` | `list`, `show`, `ship`, `reconcile`, `resend`, `test-email`, `mailing` from the command line |
