@@ -44,6 +44,10 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-19 Store admin step 6, Pricing page (/pricing): the repricing rules with a preview;
+  tick what to apply, each logged as "repricing"; lines changed meanwhile are skipped; costs
+  read through a read-only mount (.env STOREFRONT_COSTS_DIR), never shown. reprice.py now shares
+  plan()/apply() with the page; its output is unchanged.
 - 2026-11-19 Store admin step 5b: add products from the admin (TCGplayer ID lookup fills the
   details and warns about duplicates; new products start hidden), edit details, upload photos,
   choose the main photo, remove photos. All logged in the product's history (migration 006).
@@ -207,7 +211,8 @@ Live now:
 - [done 2026-11-11] 3. Catalog mode and repricing (see Recently Completed). Follow-ups:
   - [planned] Run `storefront/tools/reprice.py --apply` nightly (no --hide-above-market) after the
     03:00 market reference job, so prices follow the market (needs a crontab line; the costs
-    file path is the owner's). Until then, run it by hand now and then.
+    file path is the owner's). Until then, the admin's Pricing page (2026-11-19) does it with a
+    preview; owner to say whether nightly is still wanted.
   - [owner] Check three cost matches marked "check" in the private costs file (Destined Rivals
     pack and 4-pack art set, Poke Ball Tin H24), and add costs for anything newly listed;
     products without a cost are never repriced.
@@ -347,8 +352,9 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - [planned] Step 4, Refunds through Stripe with optional restock (also covers the "restock
     command for returns" item below). Needs a second restricted Stripe key for the admin with
     Refunds write (owner creates it); the public store's key stays unable to refund.
-  - [next] Step 6, Pricing: reprice.py as an admin page, preview before apply (needs the
-    private costs file's path on the server).
+  - [owner] Pricing page (http://192.168.1.240:8011/pricing, live after the next deploy): 9
+    prices would change on 2026-11-18's market (e.g. Ascended Heroes ETB $120.99 -> $119.99).
+    Untick any to keep, then apply.
   - [planned] Step 7: reports (sales tax, TCGplayer reconciliation, bookkeeping columns agreed
     with the owner first).
   - [planned] Step 8 (D11): retire the market site's Squarespace Export Upload and Singles

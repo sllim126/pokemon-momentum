@@ -1,0 +1,95 @@
+{#- Pricing (Phase 3, step 6): reprice.py's plan with a preview. Ticked lines are applied; each
+    posts "id:now:new" so a line that changed after the page loaded is skipped (pricing_view.py).
+    Prices only, never costs (same as reprice.py's output). -#}
+{% extends "base.html" %}
+{% block title %}Pricing{% endblock %}
+{% block main %}
+<div class="page-head"><h1>Pricing</h1>
+  {% if result.market_date %}<span class="muted small">Market prices from {{ result.market_date }}</span>{% endif %}
+</div>
+{% if done %}<p class="flash good" role="status">{{ done }}</p>{% endif %}
+
+{% if result.error %}
+<section class="panel">
+  <p class="flash bad" role="alert">{{ result.error }}</p>
+  <p class="small">The page reads three files: the private costs file (mounted read-only into the admin from the folder named
+    by <code>STOREFRONT_COSTS_DIR</code> in <code>.env</code>), <code>data/store_price_rules.csv</code> and the market prices
+    (<code>data/storefront/market_reference.json</code>, refreshed at 03:00). Set-up steps: storefront/README.md, “Pricing page”.</p>
+</section>
+{% else %}
+
+<section class="panel">
+  <h2>Would change ({{ result.changes | length }})</h2>
+  {% if result.changes %}
+  <form method="post" action="/pricing/apply">
+    <input type="hidden" name="form_token" value="{{ form_token }}">
+    <table class="pricing">
+      <thead><tr><th><span class="sr-only">Apply</span></th><th>Product</th><th class="num">Now</th><th class="num">Market</th>
+        <th class="num">New</th><th class="num">vs market</th><th>Note</th></tr></thead>
+      <tbody>
+      {% for x in result.changes %}
+        <tr>
+          <td><input type="checkbox" name="pick" value="{{ pick_key(x) }}" checked aria-label="Apply {{ x.sku }}"></td>
+          <td><a href="/products/{{ x.id }}"><strong class="wrap">{{ x.title }}</strong></a><br><span class="muted small">{{ x.sku }}</span></td>
+          <td class="num">{{ x.now | money }}</td>
+          <td class="num">{{ x.market | money }}</td>
+          <td class="num"><strong>{{ x.new | money }}</strong><br><span class="small {% if x.new > x.now %}warn-text{% else %}good-text{% endif %}">{{ '%+.2f' % ((x.new - x.now) / 100) }}</span></td>
+          <td class="num">{{ '%+d' % x.vs_market }}%</td>
+          <td class="small">{% if x.raised %}raised to break-even{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p class="actions"><button type="submit">Apply the ticked prices</button></p>
+  </form>
+  <p class="muted small">Untick anything you want to keep as it is. Each change goes in its product's history as “repricing”.
+    The rule: each product's line in data/store_price_rules.csv (5% under market, ending in .99, for most), never below
+    the price that breaks even on a poke6s.com sale.</p>
+  {% else %}
+  <p class="muted">Every rule-priced product already has its price.</p>
+  {% endif %}
+</section>
+
+<div class="columns">
+  <div>
+    <section class="panel">
+      <h2>Already at their price ({{ result.steady | length }})</h2>
+      {% if result.steady %}
+      <details><summary>Show them</summary>
+        <table class="pricing">
+          <thead><tr><th>Product</th><th class="num">Price</th><th class="num">Market</th><th class="num">vs market</th><th>Note</th></tr></thead>
+          <tbody>
+          {% for x in result.steady %}
+            <tr><td><a href="/products/{{ x.id }}">{{ x.title }}</a></td><td class="num">{{ x.now | money }}</td>
+              <td class="num">{{ x.market | money }}</td><td class="num">{{ '%+d' % x.vs_market }}%</td>
+              <td class="small">{% if x.raised %}at break-even{% endif %}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </details>
+      {% endif %}
+    </section>
+  </div>
+  <aside>
+    <section class="panel">
+      <h2>Left alone ({{ result.skipped | length }})</h2>
+      {% if result.skipped %}
+      <ul class="plain small">
+        {% for x in result.skipped %}<li><a href="/products/{{ x.id }}">{{ x.title }}</a><br><span class="muted">{{ x.now | money }} · {{ x.reason }}</span></li>{% endfor %}
+      </ul>
+      <p class="muted small">Change these on their product page. “No cost on file”: add the SKU to the costs file first.</p>
+      {% else %}<p class="muted">None.</p>{% endif %}
+    </section>
+    {% if result.could_show %}
+    <section class="panel">
+      <h2>Hidden, could sell now ({{ result.could_show | length }})</h2>
+      <ul class="plain small">
+        {% for x in result.could_show %}<li><a href="/products/{{ x.id }}">{{ x.title }}</a><br><span class="muted">would be {{ x.new | money }} (market {{ x.market | money }})</span></li>{% endfor %}
+      </ul>
+      <p class="muted small">In stock and able to sell at or under market without a loss. Show one on its product page.</p>
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endif %}
+{% endblock %}

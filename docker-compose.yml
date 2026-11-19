@@ -121,6 +121,10 @@ services:
       - ${STOREFRONT_CODE_DIR:-./storefront}:/app/storefront
       - ./data:/app/data:ro
       - ./data/storefront:/app/data/storefront
+      # The owner's private costs file for the Pricing page (storefront/admin/pricing_view.py),
+      # read-only. STOREFRONT_COSTS_DIR in .env names the folder holding store_sku_costs.csv; it
+      # lives outside this public repo. Unset, the page says the costs file is missing.
+      - ${STOREFRONT_COSTS_DIR:-./data/storefront/no-costs}:/app/costs:ro
     restart: unless-stopped
 
   # Cloudflare Tunnel connector (storefront plan, "Hosting"). It dials out to Cloudflare, so

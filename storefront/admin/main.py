@@ -42,7 +42,7 @@ from ..app.classify import PRODUCT_TYPE_LABELS
 from ..app.db import connect, latest_migration, migrate
 from ..app.market import MarketReference
 from ..app.settings import Settings, load_settings
-from . import orders_view, overview, packing_slip, products_view
+from . import orders_view, overview, packing_slip, pricing_view, products_view
 from .auth import COOKIE_NAME, SESSION_DAYS, Lockout, Sessions, check_password
 
 log = logging.getLogger("storefront.admin")
@@ -104,6 +104,8 @@ class AdminConfig:
     session_secret: str = ""
     # Nightly backups (storefront/tools/backup_store.py), read for the Overview page.
     backup_dir: Path | None = None
+    # The owner's private costs file, for the Pricing page (pricing_view.py). Read-only mount.
+    costs_file: Path | None = None
 
     @property
     def ready(self) -> bool:
@@ -117,6 +119,7 @@ def load_config(settings: Settings) -> AdminConfig:
         password_hash=os.getenv("STOREFRONT_ADMIN_PASSWORD_HASH", "").strip(),
         session_secret=os.getenv("STOREFRONT_ADMIN_SESSION_SECRET", "").strip(),
         backup_dir=Path(os.getenv("STOREFRONT_ADMIN_BACKUP_DIR", str(default_backups))),
+        costs_file=Path(os.getenv("STOREFRONT_ADMIN_COSTS_FILE", "/app/costs/store_sku_costs.csv")),
     )
 
 
@@ -651,6 +654,54 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
         except ValueError as exc:
             return product_page(request, cookie, product_id, 400, photo_error=str(exc))
         return RedirectResponse(product_url(product_id, done=f"photo_{what}") + "#photos", status_code=303)
+
+    # --- pricing (Phase 3, step 6) ---------------------------------------------------------------
+
+    rules_file = settings.data_dir.parent / "store_price_rules.csv"
+
+    def pricing_plan(conn: sqlite3.Connection) -> dict:
+        return pricing_view.load(conn, config.costs_file or Path("/nonexistent"), rules_file,
+                                 settings.market_reference_path)
+
+    @app.get("/pricing", response_class=HTMLResponse)
+    def pricing(request: Request):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        with db() as conn:
+            result = pricing_plan(conn)
+        query = request.query_params
+        done = None
+        if query.get("done") == "applied":
+            done = f"Applied {query.get('n', '0')} price change(s). Each is in its product's history as “repricing”."
+            if query.get("stale", "0") != "0":
+                done += (f" {query.get('stale')} ticked line(s) had changed since the page loaded and were left "
+                         "alone: check them below.")
+        return page(request, "pricing.html", cookie, result=result, active="pricing", done=done,
+                    pick_key=pricing_view.pick_key)
+
+    @app.post("/pricing/apply")
+    async def pricing_apply(request: Request):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        form = await request.form(max_files=0, max_fields=500)
+        if not form_ok(cookie, str(form.get("form_token") or "")):
+            return expired_form()
+        picks = [str(value) for value in form.getlist("pick")]
+        with db() as conn:
+            result = pricing_plan(conn)
+        if result.get("error"):
+            return RedirectResponse("/pricing", status_code=303)
+        keep, stale = pricing_view.chosen(result, picks)
+        changed = 0
+        if keep:
+            with writer() as conn:
+                changed = pricing_view.reprice.apply(conn, keep, market_date=result["market_date"])
+        stale += len(keep) - changed
+        log.info("Pricing: %d price(s) applied from the admin, %d skipped as changed", changed, stale)
+        return RedirectResponse(f"/pricing?{urlencode({'done': 'applied', 'n': changed, 'stale': stale})}",
+                                status_code=303)
 
     @app.exception_handler(404)
     async def not_found(request: Request, _exc):

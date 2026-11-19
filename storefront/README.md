@@ -100,6 +100,24 @@ python3 storefront/tools/reprice.py --costs <store_sku_costs.csv> --show ENG-PO-
 Products without a rule, a market price or a cost are left alone and listed. Re-running the
 Squarespace importer resets prices and visibility, so run this again after any import.
 
+### Pricing page
+
+The admin's **Pricing** page (http://192.168.1.240:8011/pricing, Phase 3 step 6) runs the same
+rules with a preview: it lists the prices that would change (now, market, new, vs market,
+"raised to break-even"), and **Apply the ticked prices** writes only the ticked lines, each
+logged in its product's history as "repricing". A line whose price changed after the page
+loaded is skipped and reported. It never hides products (`--hide-above-market` stays a
+command-line choice) and never shows costs. Also listed: products already at their price,
+products left alone (no rule, manual, no market price, no cost) and hidden in-stock products
+that could sell at or under market without a loss.
+
+Set-up: the admin reads the costs file through a read-only mount. Put the folder holding
+`store_sku_costs.csv` in `.env` as `STOREFRONT_COSTS_DIR=/path/to/folder` (the folder stays
+outside this public repo), then `bash deploy/update_storefront.sh`. Without it the page says the
+costs file is missing. Rules come from `data/store_price_rules.csv` and market prices from
+`data/storefront/market_reference.json` (refreshed at 03:00). The page and the script share
+`reprice.plan()` and `reprice.apply()`, so they always agree.
+
 ## Save a copy of the old Squarespace site
 
 The Squarespace export has no page text, blog posts or images, so
@@ -301,6 +319,7 @@ that address out for 15 minutes and post a Discord alert.
 | `POST /products/<id>/details` | Title, kind, language, set, TCGplayer IDs, barcode, description (the web address and SKU never change) |
 | `POST /products/<id>/photos` | Upload photos (JPEG, PNG or WebP, 15 MB each, 12 per product; checked to be real images) |
 | `POST /products/<id>/photos/<photo>/main`, `.../remove` | Make a photo the main one; remove one (its resized copies go, the original stays in `images/original` and the backup) |
+| `/pricing`, `POST /pricing/apply` | Pricing: the repricing rules with a preview; applies only the ticked lines (see "Pricing page") |
 | `/login`, `POST /login`, `POST /logout` | Sign-in |
 | `/healthz` | `{"ok", "schema", "sign_in_ready"}` (still home network only) |
 
@@ -346,7 +365,8 @@ Actual size) → buy the label → paste the tracking number → "Mark shipped a
 | `app/templates/`, `app/static/` | Jinja2 pages, CSS (market site's colours, D4), small JS |
 | `app/articles.py`, `app/article_import.py` | Articles (Markdown, loaded at start-up); import of the old blog posts |
 | `content/articles/*.md` | The articles |
-| `tools/reprice.py` | Prices at or near market, never below break-even; hides products that can't be (see "Prices") |
+| `tools/reprice.py` | Prices at or near market, never below break-even; hides products that can't be (see "Prices"); `plan()`/`apply()` shared with the admin |
+| `admin/pricing_view.py` | The Pricing page: reads the inputs, checks ticked lines against a fresh plan |
 | `tools/archive_squarespace_site.py` | One-off copy of the old site's pages, blog posts and images |
 | `content/pages/*.md` | About, FAQ, Shipping, Returns, Terms, Privacy, Contact |
 | `admin/main.py` | The admin app: the network walls, sign-in routes, Overview |
