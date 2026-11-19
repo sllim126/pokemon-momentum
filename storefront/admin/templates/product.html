@@ -144,6 +144,22 @@
       {% endif %}
     </section>
 
+    <section class="panel" id="packed">
+      <h2>Packed for shipping</h2>
+      {% if packed_error %}<p class="flash bad" role="alert">{{ packed_error }}</p>{% endif %}
+      <form class="edit-form packed-form" method="post" action="/products/{{ p.id }}/packed">
+        <input type="hidden" name="form_token" value="{{ form_token }}">
+        <label>Weight (oz) <input name="weight" inputmode="decimal" maxlength="10" autocomplete="off" value="{{ packed.weight }}"></label>
+        <label>Box L (in) <input name="length" inputmode="decimal" maxlength="6" autocomplete="off" value="{{ packed.length }}"></label>
+        <label>W <input name="width" inputmode="decimal" maxlength="6" autocomplete="off" value="{{ packed.width }}"></label>
+        <label>H <input name="height" inputmode="decimal" maxlength="6" autocomplete="off" value="{{ packed.height }}"></label>
+        <label class="wide">Why, optional <input name="reason" maxlength="300" placeholder="e.g. Weighed in its box"></label>
+        <button type="submit">Save size</button>
+      </form>
+      <p class="muted small">One unit ready to ship, in its box. The Pirate Ship file fills these in (the box only for a one-item order).
+        Weight in ounces; “1.5 lb” works too.</p>
+    </section>
+
     <section class="panel" id="settings">
       <h2>On the store</h2>
       {% if settings_error %}<p class="flash bad" role="alert">{{ settings_error }}</p>{% endif %}

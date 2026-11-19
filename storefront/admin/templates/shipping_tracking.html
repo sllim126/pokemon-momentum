@@ -1,0 +1,48 @@
+{#- Preview of Pirate Ship's tracking file (Phase 3, step 3). Nothing has changed yet: ticked lines
+    post "number|carrier|tracking" to /shipping/tracking/apply, which checks each again and marks
+    the order shipped (emailing the customer). `entries` from shipping.check. -#}
+{% extends "base.html" %}
+{% block title %}Tracking numbers{% endblock %}
+{% block main %}
+<p class="small"><a href="/shipping">← Shipping</a></p>
+<div class="page-head"><h1>Tracking numbers</h1><span class="muted small">{{ file_name }}</span></div>
+{% set ready = entries | selectattr('ready') | list %}
+{% set not_ready = entries | rejectattr('ready') | list %}
+
+<section class="panel">
+  <h2>Ready to mark shipped ({{ ready | length }})</h2>
+  {% if ready %}
+  <form method="post" action="/shipping/tracking/apply">
+    <input type="hidden" name="form_token" value="{{ form_token }}">
+    <table class="shipping">
+      <thead><tr><th><span class="sr-only">Mark shipped</span></th><th>Order</th><th>Carrier</th><th>Tracking</th></tr></thead>
+      <tbody>
+      {% for e in ready %}
+        <tr>
+          <td><input type="checkbox" name="pick" value="{{ pick_key(e) }}" checked aria-label="Mark {{ e.number }} shipped"></td>
+          <td><a href="/orders/{{ e.number }}"><strong>{{ e.number }}</strong></a>{% if e.mode == 'test' %} <span class="badge">test</span>{% endif %}<br><span class="muted small">{{ e.name }}</span></td>
+          <td>{{ e.carrier }}</td>
+          <td class="small">{{ e.tracking }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p class="actions"><button type="submit">Mark shipped and email tracking</button></p>
+  </form>
+  <p class="muted small">Each ticked customer gets the shipped email with their tracking link straight away.</p>
+  {% else %}
+  <p class="muted">None of the orders in this file are waiting to ship.</p>
+  {% endif %}
+</section>
+
+{% if not_ready or problems or other %}
+<section class="panel">
+  <h2>Left alone</h2>
+  <ul class="plain small">
+    {% for e in not_ready %}<li><a href="/orders/{{ e.number }}">{{ e.number }}</a>: {{ e.why }}</li>{% endfor %}
+    {% for line, text in problems %}<li>Row {{ line }}: {{ text }}</li>{% endfor %}
+    {% if other %}<li>{{ other }} label(s) for other sales (no poke6s.com order number).</li>{% endif %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

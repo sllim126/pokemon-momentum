@@ -1,0 +1,64 @@
+{#- Shipping (Phase 3, step 3): paid orders out to Pirate Ship as a CSV, tracking numbers back in.
+    `orders` from shipping.unshipped (oldest first). Rules and file layout: admin/shipping.py. -#}
+{% extends "base.html" %}
+{% block title %}Shipping{% endblock %}
+{% block main %}
+<div class="page-head"><h1>Shipping</h1></div>
+{% if done %}<p class="flash good" role="status">{{ done }}</p>{% endif %}
+
+<section class="panel">
+  <h2>1. Buy labels in Pirate Ship ({{ orders | length }} to ship)</h2>
+  {% if error %}<p class="flash bad" role="alert">{{ error }}</p>{% endif %}
+  {% if orders %}
+  <form method="post" action="/shipping/export">
+    <input type="hidden" name="form_token" value="{{ form_token }}">
+    <table class="shipping">
+      <thead><tr><th><span class="sr-only">Include</span></th><th>Order</th><th>Ship to</th><th>Items</th><th>Package</th></tr></thead>
+      <tbody>
+      {% for o in orders %}
+        <tr>
+          <td><input type="checkbox" name="order" value="{{ o.number }}" aria-label="Include {{ o.number }}"
+                     {% if o.mode == 'live' and not o.labels_exported_at %}checked{% endif %}></td>
+          <td><a href="/orders/{{ o.number }}"><strong>{{ o.number }}</strong></a>{% if o.mode == 'test' %} <span class="badge">test</span>{% endif %}
+            <br><span class="muted small">paid {{ o.paid_at | when }}</span>
+            {% if o.labels_exported_at %}<br><span class="badge bad">in a file {{ o.labels_exported_at | when }}</span>{% endif %}</td>
+          <td class="small">{{ o.address | join('<br>' | safe) }}</td>
+          <td class="small">{% for i in o['items'] %}{{ i.quantity }} × {{ i.title }}<br>{% endfor %}</td>
+          <td class="small">{% if o.weight_oz %}{{ '%g' % o.weight_oz }} oz{% else %}<span class="warn-text">weight unknown</span>{% endif %}
+            {% if o.box %}<br>{{ '%g x %g x %g in' % o.box }}{% elif o['items'] | sum(attribute='quantity') > 1 %}<br><span class="muted">box: choose in Pirate Ship</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p class="actions"><button type="submit">Download the Pirate Ship file</button></p>
+  </form>
+  <ol class="steps small">
+    <li>On pirateship.com, import the file as a spreadsheet. The first time, Pirate Ship asks which column is which: the headers say.</li>
+    <li><strong>Tick Signature Confirmation</strong> for the batch (every order ships with one; the file can't set it).</li>
+    <li>Check each package's weight and box, then buy the labels. Each label's corner shows what goes in the box.</li>
+  </ol>
+  <p class="muted small">Unticked: test orders, and orders already in a downloaded file (so a second label isn't bought by mistake;
+    tick one to download it again). No email addresses go to Pirate Ship: the store sends its own tracking email at step 2.</p>
+  {% if missing %}
+  <p class="small"><strong>No packed size yet</strong> (type it in Pirate Ship this time, or save it once on the product's page):
+    {% for i in missing %}<a href="/products/{{ i.product_id }}#packed">{{ i.title }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+  {% endif %}
+  {% else %}
+  <p class="muted">Nothing to ship.</p>
+  {% endif %}
+</section>
+
+<section class="panel" id="tracking">
+  <h2>2. Send the tracking numbers</h2>
+  {% if upload_error %}<p class="flash bad" role="alert">{{ upload_error }}</p>{% endif %}
+  <form class="photo-form" method="post" action="/shipping/tracking" enctype="multipart/form-data">
+    <input type="hidden" name="form_token" value="{{ form_token }}">
+    <label class="sr-only" for="tracking-file">Pirate Ship's shipments file</label>
+    <input id="tracking-file" type="file" name="file" accept=".csv,text/csv" required>
+    <button type="submit">Check the file</button>
+  </form>
+  <p class="muted small">After buying, export the shipments from Pirate Ship as a CSV and upload it here, unopened (a spreadsheet
+    can turn tracking numbers into 9.4E+21). You'll see which orders it matches before anything changes; then each one is
+    marked shipped and its customer gets the tracking email. Labels for other sales (TCGplayer, eBay) in the same file are ignored.</p>
+</section>
+{% endblock %}

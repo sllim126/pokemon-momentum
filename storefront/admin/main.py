@@ -42,7 +42,7 @@ from ..app.classify import PRODUCT_TYPE_LABELS
 from ..app.db import connect, latest_migration, migrate
 from ..app.market import MarketReference
 from ..app.settings import Settings, load_settings
-from . import orders_view, overview, packing_slip, pricing_view, products_view
+from . import orders_view, overview, packing_slip, pricing_view, products_view, shipping
 from .auth import COOKIE_NAME, SESSION_DAYS, Lockout, Sessions, check_password
 
 log = logging.getLogger("storefront.admin")
@@ -66,12 +66,8 @@ SECURITY_HEADERS = {
 }
 
 
-# Order numbers as the store makes them (P6-2026-0001, test mode P6T-2026-0001). Anything else in
-# an /orders/... address is a 404 before the database is asked.
-ORDER_NUMBER = re.compile(r"^P6T?-\d{4}-\d{4,6}$")
-# Tracking numbers: letters and digits only once spaces are taken out (USPS 20-22 digits, UPS
-# 1Z..., FedEx 12-15, DHL 10). Loose on purpose; this only catches paste mistakes.
-TRACKING = re.compile(r"^[A-Za-z0-9]{8,40}$")
+# Order-number and tracking-number patterns live in shipping.py (shared with the Shipping page).
+ORDER_NUMBER, TRACKING = shipping.ORDER_NUMBER, shipping.TRACKING
 # Messages after a change (Post/Redirect/Get: the page is reloaded with ?done=<key>).
 DONE = {
     "shipped": "Marked shipped. The tracking email went to the customer.",
@@ -95,6 +91,7 @@ PRODUCT_DONE = {
     "photo_same": "Those photos are already on this product.",
     "photo_main": "Main photo changed.",
     "photo_remove": "Photo removed.",
+    "packed": "Packed size saved. The Pirate Ship file uses it from now on.",
 }
 
 
@@ -436,7 +433,12 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
         details = context.pop("typed_details", None) or {
             **{key: product[key] or "" for key in ("title", "product_type", "set_name", "gtin", "description_md")},
             "language": product["language"] or "", "tcgplayer_ids": ", ".join(ids)}
+        packed = context.pop("typed_packed", None) or {
+            key: f"{product[column]:g}" if product[column] else ""
+            for key, column in (("weight", "weight_oz"), ("length", "length_in"), ("width", "width_in"),
+                                ("height", "height_in"))}
         return page(request, "product.html", cookie, status_code=status_code, product=product, history=history,
+                    packed=packed,
                     photos=pictures, details=details, found=product_details.lookups(ids, market),
                     types=product_details.TYPES, type_labels=PRODUCT_TYPE_LABELS,
                     languages=product_details.LANGUAGES, max_photos=product_details.MAX_PHOTOS,
@@ -654,6 +656,114 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
         except ValueError as exc:
             return product_page(request, cookie, product_id, 400, photo_error=str(exc))
         return RedirectResponse(product_url(product_id, done=f"photo_{what}") + "#photos", status_code=303)
+
+    @app.post("/products/{product_id:int}/packed")
+    def product_packed(request: Request, product_id: int, form_token: str = Form(""), weight: str = Form(""),
+                       length: str = Form(""), width: str = Form(""), height: str = Form(""),
+                       reason: str = Form("")):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        if not form_ok(cookie, form_token):
+            return expired_form()
+        typed = {"weight": weight, "length": length, "width": width, "height": height}
+        try:
+            with writer() as conn:
+                changed = shipping.set_packed_size(conn, product_id, weight, length, width, height, reason)
+        except ValueError as exc:
+            return product_page(request, cookie, product_id, 400, packed_error=str(exc), typed_packed=typed)
+        return RedirectResponse(product_url(product_id, done="packed" if changed else "same") + "#packed",
+                                status_code=303)
+
+    # --- shipping through Pirate Ship (Phase 3, step 3) ---------------------------------------------
+
+    def shipping_page(request: Request, cookie: str, status_code: int = 200, **context) -> Response:
+        with db() as conn:
+            orders = shipping.unshipped(conn)
+        query = request.query_params
+        done = None
+        if query.get("done") == "shipped":
+            n, failed = query.get("n", "0"), query.get("failed", "0")
+            done = f"Marked {n} order(s) shipped. "
+            done += ("The tracking emails were saved to the outbox (email isn't set up)."
+                     if settings.email_transport == "outbox" else "The customers have their tracking emails.")
+            if failed != "0":
+                done += f" {failed} email(s) failed and will retry every 15 minutes (see Discord)."
+            if query.get("skipped", "0") != "0":
+                done += f" {query.get('skipped')} ticked line(s) were left alone: the order had changed meanwhile."
+        return page(request, "shipping.html", cookie, status_code=status_code, orders=orders, active="shipping",
+                    missing=shipping.missing_sizes(orders), done=done, describe_size=shipping.describe_size, **context)
+
+    @app.get("/shipping", response_class=HTMLResponse)
+    def shipping_home(request: Request):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        return shipping_page(request, cookie)
+
+    @app.post("/shipping/export")
+    async def shipping_export(request: Request):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        form = await request.form(max_files=0, max_fields=500)
+        if not form_ok(cookie, str(form.get("form_token") or "")):
+            return expired_form()
+        picked = {str(v) for v in form.getlist("order") if ORDER_NUMBER.match(str(v))}
+        with db() as conn:
+            orders = [o for o in shipping.unshipped(conn) if o["number"] in picked]
+        if not orders:
+            return shipping_page(request, cookie, 400, error="Tick at least one order first.")
+        with writer() as conn:
+            shipping.mark_exported(conn, [o["number"] for o in orders])
+        log.info("Shipping: %d order(s) exported for Pirate Ship", len(orders))
+        stamp = datetime.now(UTC).strftime("%Y-%m-%d-%H%M")
+        return Response(shipping.export_csv(orders), media_type="text/csv; charset=utf-8",
+                        headers={"Content-Disposition": f'attachment; filename="pirate-ship-{stamp}.csv"'})
+
+    @app.post("/shipping/tracking")
+    async def shipping_tracking(request: Request):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        form = await request.form(max_files=1, max_fields=5)
+        if not form_ok(cookie, str(form.get("form_token") or "")):
+            return expired_form()
+        upload = form.get("file")
+        try:
+            if not hasattr(upload, "read") or not upload.filename:
+                raise ValueError("Choose Pirate Ship's CSV file first.")
+            found = shipping.read_tracking(await upload.read(shipping.MAX_UPLOAD_BYTES + 1))
+        except ValueError as exc:
+            return shipping_page(request, cookie, 400, upload_error=str(exc))
+        with db() as conn:
+            entries = shipping.check(conn, found["rows"])
+        return page(request, "shipping_tracking.html", cookie, entries=entries, other=found["other"],
+                    problems=found["problems"], file_name=upload.filename[:80], active="shipping",
+                    pick_key=shipping.pick_key)
+
+    @app.post("/shipping/tracking/apply")
+    async def shipping_tracking_apply(request: Request):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        form = await request.form(max_files=0, max_fields=500)
+        if not form_ok(cookie, str(form.get("form_token") or "")):
+            return expired_form()
+        picks = [p for p in (shipping.parse_pick(str(v)) for v in form.getlist("pick")) if p]
+        shipped = failed = skipped = 0
+        for number, carrier, tracking in picks:
+            try:
+                with writer() as conn:
+                    order = store_orders.mark_shipped(conn, settings, number, carrier, tracking, settings.base_url)
+            except ValueError:
+                skipped += 1      # shipped, refunded or gone since the preview
+                continue
+            shipped += 1
+            failed += 0 if order["email_sent"] else 1
+        log.info("Shipping: %d order(s) marked shipped from a Pirate Ship file (%d skipped)", shipped, skipped)
+        return RedirectResponse("/shipping?" + urlencode({"done": "shipped", "n": shipped, "failed": failed,
+                                                          "skipped": skipped}), status_code=303)
 
     # --- pricing (Phase 3, step 6) ---------------------------------------------------------------
 

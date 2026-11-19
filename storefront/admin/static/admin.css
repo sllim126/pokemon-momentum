@@ -22,7 +22,7 @@ pre { background: var(--panel-2); padding: 10px 12px; border-radius: 8px; overfl
   background: var(--panel); position: sticky; top: 0; z-index: 2; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-weight: 700; }
 .brand img { height: 30px; width: auto; }
-.top nav { display: flex; gap: 4px; }
+.top nav { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
 .top nav a { color: var(--muted); text-decoration: none; padding: 6px 12px; border-radius: 8px; }
 .top nav a[aria-current="page"], .top nav a:hover { color: var(--text); background: var(--panel-2); }
 .top-right { margin-left: auto; display: flex; align-items: center; gap: 16px; }
@@ -78,6 +78,7 @@ dl.facts dd { margin: 0; }
 }
 @media (max-width: 560px) {
   main { padding: 12px; }
+  .top nav a { padding: 6px 8px; }
   .tiles { grid-template-columns: 1fr 1fr; gap: 8px; }
   th:nth-child(3), td:nth-child(3) { display: none; }
 }
@@ -187,4 +188,16 @@ table.pricing input[type=checkbox] { width: 18px; height: 18px; }
 @media (max-width: 560px) {
   /* Keep Now visible (the Overview's rule hides every table's third column). */
   table.pricing th:nth-child(3), table.pricing td:nth-child(3) { display: table-cell; }
+}
+
+/* Shipping (Phase 3, step 3) */
+table.shipping input[type=checkbox] { width: 18px; height: 18px; }
+table.shipping td { vertical-align: top; }
+ol.steps { margin: 0 0 10px; padding-left: 20px; }
+ol.steps li { margin-bottom: 4px; }
+.packed-form { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 560px) {
+  .packed-form { grid-template-columns: 1fr 1fr; }
+  /* Keep the address visible (the Overview's rule hides every table's third column). */
+  table.shipping th:nth-child(3), table.shipping td:nth-child(3) { display: table-cell; }
 }

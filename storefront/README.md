@@ -319,6 +319,10 @@ that address out for 15 minutes and post a Discord alert.
 | `POST /products/<id>/details` | Title, kind, language, set, TCGplayer IDs, barcode, description (the web address and SKU never change) |
 | `POST /products/<id>/photos` | Upload photos (JPEG, PNG or WebP, 15 MB each, 12 per product; checked to be real images) |
 | `POST /products/<id>/photos/<photo>/main`, `.../remove` | Make a photo the main one; remove one (its resized copies go, the original stays in `images/original` and the backup) |
+| `/shipping` | Shipping: paid orders waiting for a label, with what the Pirate Ship file fills in (see "Shipping through Pirate Ship") |
+| `POST /shipping/export` | Download the ticked orders as a CSV for Pirate Ship's spreadsheet import; marks them "in a file" |
+| `POST /shipping/tracking`, `POST /shipping/tracking/apply` | Upload Pirate Ship's shipments CSV, see which orders it matches, then mark the ticked ones shipped (each customer gets the tracking email) |
+| `POST /products/<id>/packed` | One unit's packed weight (oz, or "1.5 lb") and box size, for the Pirate Ship file |
 | `/pricing`, `POST /pricing/apply` | Pricing: the repricing rules with a preview; applies only the ticked lines (see "Pricing page") |
 | `/login`, `POST /login`, `POST /logout` | Sign-in |
 | `/healthz` | `{"ok", "schema", "sign_in_ready"}` (still home network only) |
@@ -337,8 +341,42 @@ importer: kind, category and shipping class follow the type; the set comes from 
 **Once products are added or edited here, don't re-run the Squarespace importer**: it would
 reset their stock and details from the old export.
 
-**Shipping an order:** Overview or Orders → open the order → "Packing slip (PDF)" (print at
+**Shipping one order:** Overview or Orders → open the order → "Packing slip (PDF)" (print at
 Actual size) → buy the label → paste the tracking number → "Mark shipped and email tracking".
+
+### Shipping through Pirate Ship
+
+For several orders at once (code: `admin/shipping.py`):
+
+1. **Shipping** page → tick the orders (live orders not yet in a file are ticked) → "Download the
+   Pirate Ship file". On pirateship.com, import it as a spreadsheet; the first time, Pirate Ship
+   asks which column is which. Columns: Order ID, Name, Company (empty), Address, Address Line 2,
+   City, State, Zipcode, Country, Weight (oz), Length/Width/Height (in), Rubber Stamp 1 (what goes
+   in the box, e.g. `1x EN-AH-ETB`, printed on the label).
+2. **Tick Signature Confirmation** for the batch in Pirate Ship (every order ships with one, plan
+   D3); a spreadsheet import can't set it. Then buy the labels.
+3. Export the shipments from Pirate Ship as CSV and upload it on the Shipping page, **unopened**
+   (a spreadsheet turns USPS numbers into 9.4E+21; the upload refuses those). The preview shows
+   which orders match; "Mark shipped and email tracking" marks the ticked ones, through the same
+   `mark_shipped` as the order page.
+
+Rules worth knowing:
+- Weight is the sum of each item's packed weight; the box size is filled in only for a one-item
+  order (two items may share a bigger box). Unknown values are left blank to type in Pirate Ship,
+  and the page lists the products with no packed size yet. Packed sizes live in the products
+  columns `weight_oz`, `length_in`, `width_in`, `height_in` (first filled by the Squarespace
+  importer, which stored Squarespace's shipping weight) and are logged as "Packed size".
+- No email column: the store sends its own tracking email, so Pirate Ship shouldn't send another.
+- Text cells lose a leading `=`, `+` or `@`, so a customer-typed address can't act as a formula if
+  the file is opened in a spreadsheet.
+- Reading the tracking file is forgiving because Pirate Ship's export columns aren't documented:
+  the order number is found by its pattern in any cell, the tracking number in the column whose
+  header says "tracking", the carrier from a "carrier" column or the number's shape (`1Z` = UPS).
+  Rows without one of our order numbers (TCGplayer or eBay labels) are only counted; rows whose
+  status says voided, refunded or cancelled are skipped; an order with two different tracking
+  numbers in the file isn't guessed (mark it on its page).
+- `orders.labels_exported_at` (migration 007) records when an order last went out in a file, so
+  the page warns before a second label is bought.
 
 ## Code map
 
@@ -373,6 +411,7 @@ Actual size) → buy the label → paste the tracking number → "Mark shipped a
 | `admin/auth.py` | Password hashing, signed session cookies, form tokens, lockout (standard library only) |
 | `admin/overview.py` | What the Overview shows (read-only queries) |
 | `admin/orders_view.py` | The Orders list: tabs, search, counts, Stripe link, timeline (read-only queries) |
+| `admin/shipping.py` | The Shipping page: Pirate Ship file out, tracking file back, packed sizes |
 | `admin/packing_slip.py` | Packing slip PDFs (reportlab); prints the logo without its navy background |
 | `admin/passwd.py` | Sets the admin password in `.env` |
 | `admin/templates/`, `admin/static/admin.css` | Admin pages (no JavaScript) |
