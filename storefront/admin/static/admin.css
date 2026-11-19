@@ -167,3 +167,24 @@ table.history td { font-size: 0.9rem; }
   .panel { overflow-x: auto; }
   .top { flex-wrap: wrap; }
 }
+
+/* Adding products, details and photos (Phase 3, step 5b) */
+.page-head > a.button { margin-left: 8px; }
+ul.found { margin: 8px 0; gap: 4px; }
+.photo-grid { list-style: none; margin: 0 0 12px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.photo-grid li { display: grid; gap: 4px; justify-items: start; font-size: 0.85rem; }
+.photo-grid img { width: 140px; height: 140px; object-fit: contain; background: #fff; border-radius: 8px; }
+.photo-grid form { margin: 0; }
+button.link.danger { color: var(--bad); }
+.photo-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.photo-form input[type=file] { max-width: 100%; }
+td.change { font-size: 0.9rem; overflow-wrap: anywhere; }
+.edit-form textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.edit-form .wide > ul.found { margin: 0; }
+
+/* Pricing (Phase 3, step 6) */
+table.pricing input[type=checkbox] { width: 18px; height: 18px; }
+@media (max-width: 560px) {
+  /* Keep Now visible (the Overview's rule hides every table's third column). */
+  table.pricing th:nth-child(3), table.pricing td:nth-child(3) { display: table-cell; }
+}

@@ -100,6 +100,24 @@ python3 storefront/tools/reprice.py --costs <store_sku_costs.csv> --show ENG-PO-
 Products without a rule, a market price or a cost are left alone and listed. Re-running the
 Squarespace importer resets prices and visibility, so run this again after any import.
 
+### Pricing page
+
+The admin's **Pricing** page (http://192.168.1.240:8011/pricing, Phase 3 step 6) runs the same
+rules with a preview: it lists the prices that would change (now, market, new, vs market,
+"raised to break-even"), and **Apply the ticked prices** writes only the ticked lines, each
+logged in its product's history as "repricing". A line whose price changed after the page
+loaded is skipped and reported. It never hides products (`--hide-above-market` stays a
+command-line choice) and never shows costs. Also listed: products already at their price,
+products left alone (no rule, manual, no market price, no cost) and hidden in-stock products
+that could sell at or under market without a loss.
+
+Set-up: the admin reads the costs file through a read-only mount. Put the folder holding
+`store_sku_costs.csv` in `.env` as `STOREFRONT_COSTS_DIR=/path/to/folder` (the folder stays
+outside this public repo), then `bash deploy/update_storefront.sh`. Without it the page says the
+costs file is missing. Rules come from `data/store_price_rules.csv` and market prices from
+`data/storefront/market_reference.json` (refreshed at 03:00). The page and the script share
+`reprice.plan()` and `reprice.apply()`, so they always agree.
+
 ## Save a copy of the old Squarespace site
 
 The Squarespace export has no page text, blog posts or images, so
@@ -297,6 +315,11 @@ that address out for 15 minutes and post a Discord alert.
 | `POST /products/<id>/price` | New price and optional “was” price, with a reason (required). A change of more than 50% must be confirmed (catches 1299 typed for 12.99) |
 | `POST /products/<id>/settings` | Shown or hidden, featured on the home page, per-order limit |
 | `POST /products/<id>/stock` | Received (+N), Sold on TCGplayer (−N) or Counted (on the shelf = N; the difference is logged, leaving units in open checkouts alone) |
+| `/products/new`, `POST /products/new` | Add a product: type TCGplayer ID(s), “Check and fill in” fills title, kind, language, set and a starting price from the market data and warns if the store already has a product with that ID (often hidden: show it instead); “Add product” saves it **hidden** with its starting stock |
+| `POST /products/<id>/details` | Title, kind, language, set, TCGplayer IDs, barcode, description (the web address and SKU never change) |
+| `POST /products/<id>/photos` | Upload photos (JPEG, PNG or WebP, 15 MB each, 12 per product; checked to be real images) |
+| `POST /products/<id>/photos/<photo>/main`, `.../remove` | Make a photo the main one; remove one (its resized copies go, the original stays in `images/original` and the backup) |
+| `/pricing`, `POST /pricing/apply` | Pricing: the repricing rules with a preview; applies only the ticked lines (see "Pricing page") |
 | `/login`, `POST /login`, `POST /logout` | Sign-in |
 | `/healthz` | `{"ok", "schema", "sign_in_ready"}` (still home network only) |
 
@@ -309,6 +332,10 @@ Product changes live in `app/product_changes.py`: stock moves only by a logged
 `stock_movements` row (its sum must equal `products.stock`), and price and visibility changes go
 in `product_changes` (migration 005) with the old and new value and the reason; `tools/reprice.py`
 logs its changes there too, marked “repricing”.
+Adding products, detail edits and photos live in `app/product_details.py` (same rules as the
+importer: kind, category and shipping class follow the type; the set comes from TCGplayer).
+**Once products are added or edited here, don't re-run the Squarespace importer**: it would
+reset their stock and details from the old export.
 
 **Shipping an order:** Overview or Orders → open the order → "Packing slip (PDF)" (print at
 Actual size) → buy the label → paste the tracking number → "Mark shipped and email tracking".
@@ -322,6 +349,7 @@ Actual size) → buy the label → paste the tracking number → "Mark shipped a
 | `app/main.py` | FastAPI app: routes, 404 + redirect handling, security headers, reconcile loop |
 | `app/orders.py` | Cart pricing, checkout, reservations, payment, expiry, refunds, disputes, shipping |
 | `app/product_changes.py` | Admin price, visibility and stock changes, each logged (see "Pages so far") |
+| `app/product_details.py` | Admin: add products, edit details, photos (each change logged) |
 | `app/stripe_api.py` | The Stripe calls (Checkout Sessions) over HTTPS; webhook signature check |
 | `app/notify.py` | Discord order alerts; order and shipping emails (Microsoft Graph, SMTP or the outbox folder; retry queue; HTML in `templates/email/order.html`) |
 | `app/orders_cli.py` | `list`, `show`, `ship`, `reconcile`, `resend`, `test-email`, `mailing` from the command line |
@@ -337,7 +365,8 @@ Actual size) → buy the label → paste the tracking number → "Mark shipped a
 | `app/templates/`, `app/static/` | Jinja2 pages, CSS (market site's colours, D4), small JS |
 | `app/articles.py`, `app/article_import.py` | Articles (Markdown, loaded at start-up); import of the old blog posts |
 | `content/articles/*.md` | The articles |
-| `tools/reprice.py` | Prices at or near market, never below break-even; hides products that can't be (see "Prices") |
+| `tools/reprice.py` | Prices at or near market, never below break-even; hides products that can't be (see "Prices"); `plan()`/`apply()` shared with the admin |
+| `admin/pricing_view.py` | The Pricing page: reads the inputs, checks ticked lines against a fresh plan |
 | `tools/archive_squarespace_site.py` | One-off copy of the old site's pages, blog posts and images |
 | `content/pages/*.md` | About, FAQ, Shipping, Returns, Terms, Privacy, Contact |
 | `admin/main.py` | The admin app: the network walls, sign-in routes, Overview |

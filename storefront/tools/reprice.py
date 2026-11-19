@@ -127,6 +127,104 @@ def market_price(reference: dict, tcgplayer_ids: str) -> float | None:
     return round(sum(prices) / len(prices), 2) if prices else None
 
 
+def load_rules(path: Path) -> dict[str, str]:
+    """sku -> pricing mode from data/store_price_rules.csv."""
+    with path.open(encoding="utf-8", newline="") as handle:
+        return {r["sku"].strip(): r["pricing_mode"].strip() for r in csv.DictReader(handle)}
+
+
+def load_products(con: sqlite3.Connection) -> list[dict]:
+    return [dict(r) for r in con.execute(
+        "SELECT id, sku, title, price_cents, compare_at_cents, tcgplayer_product_ids, visible, stock, track_stock "
+        "FROM products ORDER BY title")]
+
+
+def plan(products: list[dict], costs: dict, reference: dict, rules: dict, *,
+         free_shipping_over: float = 150.0, hide_above_market: bool = False) -> dict:
+    """Work out every product's new price without changing anything.
+
+    Returns lists of dicts (prices in cents):
+      priced      visible products the rules price: id, sku, title, now, market, target, new,
+                  raised (lifted to break-even), hide (with hide_above_market), change (new != now)
+      skipped     visible products left alone, with the reason (no rule, manual, no market price,
+                  no cost on file)
+      could_show  hidden, in-stock products that could sell at or under market without a loss
+    Shared by this script and the admin's Pricing page (storefront/admin), so both agree.
+    """
+    priced, skipped, could_show = [], [], []
+    for row in products:
+        sku, visible = row["sku"], bool(row["visible"])
+        mode = rules.get(sku, "")
+        market = market_price(reference, row["tcgplayer_product_ids"])
+        target = rule_target(market, mode) if market is not None else None
+        reason = ("no price rule" if not mode else "manual price" if target is None and market
+                  else "no market price" if market is None else "no cost on file"
+                  if sku not in costs else "")
+        base = {"id": row["id"], "sku": sku, "title": row["title"], "now": row["price_cents"], "mode": mode}
+        if reason:
+            if visible:
+                skipped.append({**base, "reason": reason})
+            continue
+        price, raised = new_price(target, costs[sku], free_shipping_over)
+        new = round(price * 100)
+        if not visible:
+            # Hidden products are only reported: worth showing again once they can sell at or
+            # under market without a loss (and are in stock).
+            if not raised and (row["stock"] > 0 or not row["track_stock"]):
+                could_show.append({**base, "new": new, "market": round(market * 100)})
+            continue
+        # A product whose break-even is above market still gets its break-even price, so
+        # showing it again later can't lose money.
+        priced.append({**base, "market": round(market * 100), "target": round(target * 100), "new": new,
+                       "raised": raised, "hide": raised and hide_above_market, "change": new != row["price_cents"],
+                       "vs_market": round((price / market - 1) * 100)})
+    return {"priced": priced, "skipped": skipped, "could_show": could_show,
+            "market_date": reference.get("latest_date")}
+
+
+def apply(con: sqlite3.Connection, changes: list[dict], *, hide: list[dict] = (), show: list[dict] = (),
+          market_date: str | None = None) -> int:
+    """Write planned prices (and hides/shows) in one transaction, each logged in product_changes
+    as "repricing". `changes` are plan()["priced"] entries. A product whose price moved since the
+    plan was made (someone changed it in the admin) is skipped. Returns how many prices changed."""
+    # Logged in product_changes (migration 005) so the admin's product history shows them as
+    # "repricing". An older database without the table just isn't logged.
+    logged = con.execute("SELECT 1 FROM sqlite_master WHERE name = 'product_changes'").fetchone()
+    rule_note = f"market rule, market prices from {market_date}"
+    stamp = "strftime('%Y-%m-%dT%H:%M:%SZ','now')"
+
+    def log_change(product_id, field, old, new, reason=rule_note):
+        if logged and old != new:
+            con.execute("INSERT INTO product_changes (product_id, field, old_value, new_value, reason, source, at) "
+                        f"VALUES (?, ?, ?, ?, ?, 'reprice', {stamp})",
+                        (product_id, field, None if old is None else str(old), None if new is None else str(new),
+                         reason))
+
+    changed = 0
+    con.execute("BEGIN IMMEDIATE")
+    try:
+        for item in changes:
+            row = con.execute("SELECT price_cents, compare_at_cents FROM products WHERE id = ?", (item["id"],)).fetchone()
+            if row is None or row[0] != item["now"]:
+                continue
+            log_change(item["id"], "price", item["now"], item["new"])
+            log_change(item["id"], "compare_at", row[1], None)
+            con.execute(f"UPDATE products SET price_cents = ?, compare_at_cents = NULL, updated_at = {stamp} "
+                        "WHERE id = ?", (item["new"], item["id"]))
+            changed += 1
+        for item in hide:
+            log_change(item["id"], "visible", 1, 0, "break-even is above market")
+            con.execute(f"UPDATE products SET visible = 0, updated_at = {stamp} WHERE id = ?", (item["id"],))
+        for item in show:
+            log_change(item["id"], "visible", 0, 1, "shown with --show")
+            con.execute(f"UPDATE products SET visible = 1, updated_at = {stamp} WHERE id = ?", (item["id"],))
+        con.commit()
+    except BaseException:
+        con.rollback()
+        raise
+    return changed
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--costs", type=Path, required=True, help="private sku,unit_cost,... CSV")
@@ -142,99 +240,43 @@ def main() -> int:
     parser.add_argument("--apply", action="store_true", help="write the changes")
     args = parser.parse_args()
 
-    costs = load_costs(args.costs)
     reference = json.loads(args.market.read_text(encoding="utf-8"))
-    with args.rules.open(encoding="utf-8", newline="") as handle:
-        rules = {r["sku"].strip(): r["pricing_mode"].strip() for r in csv.DictReader(handle)}
-
     con = sqlite3.connect(args.db)
     con.row_factory = sqlite3.Row
-    rows = con.execute(
-        "SELECT id, sku, title, price_cents, compare_at_cents, tcgplayer_product_ids, visible, stock, track_stock "
-        "FROM products ORDER BY title").fetchall()
+    products = load_products(con)
+    result = plan(products, load_costs(args.costs), reference, load_rules(args.rules),
+                  free_shipping_over=args.free_shipping_over, hide_above_market=args.hide_above_market)
 
-    print(f"Market prices from {reference.get('latest_date')}. "
+    print(f"Market prices from {result['market_date']}. "
           f"{'APPLYING' if args.apply else 'Dry run: nothing changes'}.\n")
     print(f"{'SKU':20} {'now':>9} {'market':>9} {'rule':>9} {'new':>9} {'vs mkt':>7}  note")
-    changes, hide, skipped, could_show = [], [], [], []
-    for row in rows:
-        sku, now, visible = row["sku"], row["price_cents"] / 100, bool(row["visible"])
-        mode = rules.get(sku, "")
-        market = market_price(reference, row["tcgplayer_product_ids"])
-        target = rule_target(market, mode) if market is not None else None
-        reason = ("no price rule" if not mode else "manual price" if target is None and market
-                  else "no market price" if market is None else "no cost on file"
-                  if sku not in costs else "")
-        if reason:
-            if visible:
-                skipped.append((sku, row["title"], now, reason))
-            continue
-        price, raised = new_price(target, costs[sku], args.free_shipping_over)
-        if not visible:
-            # Hidden products are only reported: worth showing again once they can sell at or
-            # under market without a loss (and are in stock).
-            if not raised and (row["stock"] > 0 or not row["track_stock"]):
-                could_show.append((sku, row["title"], price, market))
-            continue
-        note = "raised to break-even" if raised else ""
-        if raised and args.hide_above_market:
-            hide.append((row["id"], sku))
-            note = "HIDE: break-even is above market"
-        vs = f"{(price / market - 1) * 100:+.0f}%"
-        print(f"{sku[:20]:20} {money(now):>9} {money(market):>9} {money(target):>9} "
-              f"{money(price):>9} {vs:>7}  {note}")
-        # A hidden product still gets its break-even price, so showing it again can't lose money.
-        if round(price * 100) != row["price_cents"]:
-            changes.append((row["id"], sku, round(price * 100), row["price_cents"]))
-
+    for item in result["priced"]:
+        note = "HIDE: break-even is above market" if item["hide"] else "raised to break-even" if item["raised"] else ""
+        print(f"{item['sku'][:20]:20} {money(item['now'] / 100):>9} {money(item['market'] / 100):>9} "
+              f"{money(item['target'] / 100):>9} {money(item['new'] / 100):>9} {item['vs_market']:>+6d}%  {note}")
+    changes = [item for item in result["priced"] if item["change"]]
+    hide = [item for item in result["priced"] if item["hide"]]
     print(f"\n{len(changes)} price(s) change; {len(hide)} product(s) to hide.")
-    if skipped:
+    if result["skipped"]:
         print("\nLeft alone:")
-        for sku, title, now, reason in skipped:
-            print(f"  {sku[:20]:20} {money(now):>9}  {reason}: {title[:50]}")
-    if could_show:
+        for item in result["skipped"]:
+            print(f"  {item['sku'][:20]:20} {money(item['now'] / 100):>9}  {item['reason']}: {item['title'][:50]}")
+    if result["could_show"]:
         print("\nHidden, but could sell at or under market now (show with --show SKU --apply):")
-        for sku, title, price, market in could_show:
-            print(f"  {sku[:20]:20} {money(price):>9} (market {money(market)})  {title[:45]}")
+        for item in result["could_show"]:
+            print(f"  {item['sku'][:20]:20} {money(item['new'] / 100):>9} (market {money(item['market'] / 100)})  "
+                  f"{item['title'][:45]}")
 
-    known = {row["sku"] for row in rows}
-    unknown = [sku for sku in args.show if sku not in known]
+    by_sku = {row["sku"]: row for row in products}
+    unknown = [sku for sku in args.show if sku not in by_sku]
     if unknown:
         print(f"\nUnknown SKU(s) for --show: {', '.join(unknown)}")
         return 1
     if args.apply:
-        # Logged in product_changes (migration 005) so the admin's product history shows them as
-        # "repricing". An older database without the table just isn't logged.
-        logged = con.execute("SELECT 1 FROM sqlite_master WHERE name = 'product_changes'").fetchone()
-        rule_note = f"market rule, market prices from {reference.get('latest_date')}"
-
-        def log_change(product_id, field, old, new, reason=rule_note):
-            if logged and old != new:
-                con.execute("INSERT INTO product_changes (product_id, field, old_value, new_value, reason, source, at) "
-                            "VALUES (?, ?, ?, ?, ?, 'reprice', strftime('%Y-%m-%dT%H:%M:%SZ','now'))",
-                            (product_id, field, None if old is None else str(old), None if new is None else str(new),
-                             reason))
-
-        by_id = {row["id"]: row for row in rows}
-        by_sku = {row["sku"]: row for row in rows}
-        with con:
-            for product_id, _, cents, old_cents in changes:
-                log_change(product_id, "price", old_cents, cents)
-                log_change(product_id, "compare_at", by_id[product_id]["compare_at_cents"], None)
-                con.execute("UPDATE products SET price_cents = ?, compare_at_cents = NULL, "
-                            "updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = ?",
-                            (cents, product_id))
-            for product_id, _ in hide:
-                log_change(product_id, "visible", by_id[product_id]["visible"], 0, "break-even is above market")
-                con.execute("UPDATE products SET visible = 0, "
-                            "updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE id = ?",
-                            (product_id,))
-            for sku in args.show:
-                log_change(by_sku[sku]["id"], "visible", by_sku[sku]["visible"], 1, "shown with --show")
-                con.execute("UPDATE products SET visible = 1, "
-                            "updated_at = strftime('%Y-%m-%dT%H:%M:%SZ','now') WHERE sku = ?",
-                            (sku,))
-        print(f"Applied: {len(changes)} price(s), {len(hide)} hidden, {len(args.show)} shown.")
+        con.isolation_level = None   # apply() runs its own BEGIN ... COMMIT
+        changed = apply(con, changes, hide=hide, show=[by_sku[sku] for sku in args.show if not by_sku[sku]["visible"]],
+                        market_date=result["market_date"])
+        print(f"Applied: {changed} price(s), {len(hide)} hidden, {len(args.show)} shown.")
     con.close()
     return 0
 

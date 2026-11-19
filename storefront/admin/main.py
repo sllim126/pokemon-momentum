@@ -37,11 +37,12 @@ from fastapi.templating import Jinja2Templates
 
 from ..app import notify
 from ..app import orders as store_orders
-from ..app import product_changes
+from ..app import product_changes, product_details
+from ..app.classify import PRODUCT_TYPE_LABELS
 from ..app.db import connect, latest_migration, migrate
 from ..app.market import MarketReference
 from ..app.settings import Settings, load_settings
-from . import orders_view, overview, packing_slip, products_view
+from . import orders_view, overview, packing_slip, pricing_view, products_view
 from .auth import COOKIE_NAME, SESSION_DAYS, Lockout, Sessions, check_password
 
 log = logging.getLogger("storefront.admin")
@@ -88,6 +89,12 @@ PRODUCT_DONE = {
     "same": "Nothing changed.",
     "stock": "Stock saved.",
     "count_same": "The count matched; nothing changed.",
+    "created": "Product added. It's hidden until you show it: add photos and check the details first.",
+    "details": "Details saved. The store shows them now.",
+    "photos": "Photos added.",
+    "photo_same": "Those photos are already on this product.",
+    "photo_main": "Main photo changed.",
+    "photo_remove": "Photo removed.",
 }
 
 
@@ -97,6 +104,8 @@ class AdminConfig:
     session_secret: str = ""
     # Nightly backups (storefront/tools/backup_store.py), read for the Overview page.
     backup_dir: Path | None = None
+    # The owner's private costs file, for the Pricing page (pricing_view.py). Read-only mount.
+    costs_file: Path | None = None
 
     @property
     def ready(self) -> bool:
@@ -110,6 +119,7 @@ def load_config(settings: Settings) -> AdminConfig:
         password_hash=os.getenv("STOREFRONT_ADMIN_PASSWORD_HASH", "").strip(),
         session_secret=os.getenv("STOREFRONT_ADMIN_SESSION_SECRET", "").strip(),
         backup_dir=Path(os.getenv("STOREFRONT_ADMIN_BACKUP_DIR", str(default_backups))),
+        costs_file=Path(os.getenv("STOREFRONT_ADMIN_COSTS_FILE", "/app/costs/store_sku_costs.csv")),
     )
 
 
@@ -418,10 +428,18 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
         with db() as conn:
             product = products_view.get_product(conn, product_id, market)
             entries = product_changes.history(conn, product_id) if product else []
+            pictures = product_details.photos(conn, product_id) if product else []
         if product is None:
             return PlainTextResponse("Not found.", status_code=404)
         history = [{**e, "what": products_view.describe(e)} for e in entries]
+        ids = [i for i in product["tcgplayer_product_ids"].split("|") if i]
+        details = context.pop("typed_details", None) or {
+            **{key: product[key] or "" for key in ("title", "product_type", "set_name", "gtin", "description_md")},
+            "language": product["language"] or "", "tcgplayer_ids": ", ".join(ids)}
         return page(request, "product.html", cookie, status_code=status_code, product=product, history=history,
+                    photos=pictures, details=details, found=product_details.lookups(ids, market),
+                    types=product_details.TYPES, type_labels=PRODUCT_TYPE_LABELS,
+                    languages=product_details.LANGUAGES, max_photos=product_details.MAX_PHOTOS,
                     active="products", stock_kinds=products_view.STOCK_FORM_KINDS,
                     store_url=f"{settings.base_url.rstrip('/')}/p/{product['slug']}",
                     done=PRODUCT_DONE.get(request.query_params.get("done", "")), **context)
@@ -507,6 +525,183 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
                                 typed_stock={"kind": kind, "quantity": quantity, "note": note})
         log.info("Product %s: stock %+d (%s) from the admin", product_id, change, kind)
         return RedirectResponse(product_url(product_id, done="stock" if change else "count_same"), status_code=303)
+
+    # --- adding products, details and photos (Phase 3, step 5b) ---------------------------------
+
+    def detail_fields(**typed) -> dict:
+        return {key: (typed.get(key) or "") for key in
+                ("sku", "title", "product_type", "language", "set_name", "tcgplayer_ids", "gtin", "description_md")}
+
+    def new_product_page(request: Request, cookie: str, form: dict, status_code: int = 200, **context) -> Response:
+        try:
+            ids = product_details.parse_ids(form["tcgplayer_ids"])
+        except ValueError:
+            ids = []
+        with db() as conn:
+            listed = product_details.already_listed(conn, ids)
+        return page(request, "product_new.html", cookie, status_code=status_code, form=form,
+                    found=product_details.lookups(ids, market), listed=listed,
+                    active="products", types=product_details.TYPES, type_labels=PRODUCT_TYPE_LABELS,
+                    languages=product_details.LANGUAGES, **context)
+
+    @app.get("/products/new", response_class=HTMLResponse)
+    def product_new(request: Request):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        return new_product_page(request, cookie, {**detail_fields(), "language": "en", "price": "", "stock": "0"})
+
+    @app.post("/products/new")
+    def product_create(request: Request, form_token: str = Form(""), action: str = Form("save"),
+                       sku: str = Form(""), title: str = Form(""), product_type: str = Form(""),
+                       language: str = Form(""), set_name: str = Form(""), tcgplayer_ids: str = Form(""),
+                       gtin: str = Form(""), description_md: str = Form(""), price: str = Form(""),
+                       stock: str = Form("0")):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        if not form_ok(cookie, form_token):
+            return expired_form()
+        form = {**detail_fields(sku=sku, title=title, product_type=product_type, language=language,
+                                set_name=set_name, tcgplayer_ids=tcgplayer_ids, gtin=gtin,
+                                description_md=description_md), "price": price, "stock": stock}
+        if action == "check":
+            # Look the TCGplayer IDs up and fill in whatever is still empty; nothing is saved.
+            try:
+                ids = product_details.parse_ids(tcgplayer_ids)
+            except ValueError as exc:
+                return new_product_page(request, cookie, form, 400, error=str(exc))
+            hint = product_details.suggest(ids, market)
+            for key, value in hint.items():
+                if not form.get(key) and value:
+                    form[key] = value
+            entry = market.summary("|".join(ids))
+            if entry and not price:   # a starting point: the market price
+                form["price"] = f"{entry.price:.2f}"
+            message = ("Found it: check the details below, then add the product." if hint
+                       else "None of those IDs are in the market data, so fill the details in by hand.")
+            return new_product_page(request, cookie, form, checked=message)
+        try:
+            amount = stock.strip() or "0"
+            if not amount.isdigit():
+                raise ValueError("Stock must be a whole number, 0 or more.")
+            fields = {**form, "tcgplayer_ids": tcgplayer_ids}
+            with writer() as conn:
+                product_id = product_details.create_product(
+                    conn, fields, market, price_cents=product_changes.parse_money(price), stock=int(amount))
+        except ValueError as exc:
+            return new_product_page(request, cookie, form, 400, error=str(exc))
+        log.info("Product %s (%s) added from the admin", product_id, sku)
+        return RedirectResponse(product_url(product_id, done="created"), status_code=303)
+
+    @app.post("/products/{product_id:int}/details")
+    def product_edit_details(request: Request, product_id: int, form_token: str = Form(""), title: str = Form(""),
+                             product_type: str = Form(""), language: str = Form(""), set_name: str = Form(""),
+                             tcgplayer_ids: str = Form(""), gtin: str = Form(""), description_md: str = Form(""),
+                             reason: str = Form("")):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        if not form_ok(cookie, form_token):
+            return expired_form()
+        fields = detail_fields(title=title, product_type=product_type, language=language, set_name=set_name,
+                               tcgplayer_ids=tcgplayer_ids, gtin=gtin, description_md=description_md)
+        try:
+            with writer() as conn:
+                changed = product_details.update_details(conn, product_id, fields, market, reason)
+        except ValueError as exc:
+            return product_page(request, cookie, product_id, 400, details_error=str(exc), typed_details=fields)
+        log.info("Product %s: %s changed from the admin", product_id, ", ".join(changed) or "nothing")
+        return RedirectResponse(product_url(product_id, done="details" if changed else "same"), status_code=303)
+
+    @app.post("/products/{product_id:int}/photos")
+    async def product_add_photos(request: Request, product_id: int):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        # Read by hand (not Form()) to cap the number of files; each file's size is capped when it's read.
+        form = await request.form(max_files=product_details.MAX_PHOTOS, max_fields=10)
+        if not form_ok(cookie, str(form.get("form_token") or "")):
+            return expired_form()
+        uploads = [item for item in form.getlist("photos") if hasattr(item, "read") and item.filename]
+        try:
+            if not uploads:
+                raise ValueError("Choose one or more photos first.")
+            data = [await item.read(product_details.MAX_PHOTO_BYTES + 1) for item in uploads]
+            with writer() as conn:
+                added = product_details.add_photos(conn, settings.images_dir, product_id, data)
+        except ValueError as exc:
+            return product_page(request, cookie, product_id, 400, photo_error=str(exc))
+        log.info("Product %s: %d photo(s) added from the admin", product_id, added)
+        return RedirectResponse(product_url(product_id, done="photos" if added else "photo_same") + "#photos",
+                                status_code=303)
+
+    @app.post("/products/{product_id:int}/photos/{image_id:int}/{what}")
+    def product_photo_action(request: Request, product_id: int, image_id: int, what: str, form_token: str = Form("")):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        if not form_ok(cookie, form_token):
+            return expired_form()
+        if what not in ("main", "remove"):
+            return PlainTextResponse("Not found.", status_code=404)
+        try:
+            with writer() as conn:
+                if what == "main":
+                    product_details.make_main_photo(conn, product_id, image_id)
+                else:
+                    product_details.remove_photo(conn, settings.images_dir, product_id, image_id)
+        except ValueError as exc:
+            return product_page(request, cookie, product_id, 400, photo_error=str(exc))
+        return RedirectResponse(product_url(product_id, done=f"photo_{what}") + "#photos", status_code=303)
+
+    # --- pricing (Phase 3, step 6) ---------------------------------------------------------------
+
+    rules_file = settings.data_dir.parent / "store_price_rules.csv"
+
+    def pricing_plan(conn: sqlite3.Connection) -> dict:
+        return pricing_view.load(conn, config.costs_file or Path("/nonexistent"), rules_file,
+                                 settings.market_reference_path)
+
+    @app.get("/pricing", response_class=HTMLResponse)
+    def pricing(request: Request):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        with db() as conn:
+            result = pricing_plan(conn)
+        query = request.query_params
+        done = None
+        if query.get("done") == "applied":
+            done = f"Applied {query.get('n', '0')} price change(s). Each is in its product's history as “repricing”."
+            if query.get("stale", "0") != "0":
+                done += (f" {query.get('stale')} ticked line(s) had changed since the page loaded and were left "
+                         "alone: check them below.")
+        return page(request, "pricing.html", cookie, result=result, active="pricing", done=done,
+                    pick_key=pricing_view.pick_key)
+
+    @app.post("/pricing/apply")
+    async def pricing_apply(request: Request):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        form = await request.form(max_files=0, max_fields=500)
+        if not form_ok(cookie, str(form.get("form_token") or "")):
+            return expired_form()
+        picks = [str(value) for value in form.getlist("pick")]
+        with db() as conn:
+            result = pricing_plan(conn)
+        if result.get("error"):
+            return RedirectResponse("/pricing", status_code=303)
+        keep, stale = pricing_view.chosen(result, picks)
+        changed = 0
+        if keep:
+            with writer() as conn:
+                changed = pricing_view.reprice.apply(conn, keep, market_date=result["market_date"])
+        stale += len(keep) - changed
+        log.info("Pricing: %d price(s) applied from the admin, %d skipped as changed", changed, stale)
+        return RedirectResponse(f"/pricing?{urlencode({'done': 'applied', 'n': changed, 'stale': stale})}",
+                                status_code=303)
 
     @app.exception_handler(404)
     async def not_found(request: Request, _exc):
