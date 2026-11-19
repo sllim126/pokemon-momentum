@@ -228,6 +228,9 @@ main section { margin-top: 32px; }
   background: var(--accent); color: #04121f; font-size: 0.75rem; text-align: center; }
 .buy-box p.note, .buy-box p[data-added] { display: block; }
 .buy-box p[data-added]:empty { display: none; }
+/* Trust lines under Add to cart: a short ticked list, wrapped into two columns when wide. */
+.trust { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 14px; color: var(--muted); }
+.trust li::before { content: "\2713"; color: var(--good); font-weight: 700; margin-right: 6px; }
 .add-to-cart { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 0 0 8px; }
 .add-to-cart select, .cart-line select { background: var(--panel); color: var(--text); border: 1px solid var(--line-strong);
   border-radius: 8px; padding: 8px 10px; font: inherit; }

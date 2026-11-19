@@ -62,6 +62,14 @@
       </form>
       <p class="small muted" data-added role="status"></p>
       <p class="small muted note">Free US shipping on orders over ${{ '{:,}'.format(settings.free_shipping_over_cents // 100) }}. Also on <a href="{{ buy_url }}">TCGplayer</a>.</p>
+      {#- Trust lines (owner, 2026-11-19): facts the owner gave; keep them in step with
+          content/pages/shipping.md and about.md if anything changes. #}
+      <ul class="trust small">
+        <li>Ships within 1 business day</li>
+        <li>Bubble wrap, in a cardboard box</li>
+        <li>Tracking and signature on every order</li>
+        <li>Selling Pokémon since July 2025</li>
+      </ul>
       {% elif checkout_enabled %}
       <p><strong>Sold out.</strong> Check our TCGplayer store, or email us to ask about a restock.</p>
       <p><a class="btn" href="{{ buy_url }}">TCGplayer store</a>

@@ -44,6 +44,11 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-19 Store trust lines (owner's facts: selling since July 2025; bubble wrap in a
+  cardboard box; tracking and signature on every order; ships within 1 business day): a ticked
+  list under Add to cart on product pages, plus the About and Shipping pages. Google reviews
+  are still waiting on a Google Business Profile (todo item from the
+  tcgcsv/discord-notes-and-2026-torrent branch).
 - 2026-11-19 Store admin step 4, Refunds and returns: "Refund or return" on the order page
   refunds any amount through Stripe with the admin's own restricted key, emails the customer,
   notes it, and puts returned units back on the shelf. A partial refund on an unshipped order
