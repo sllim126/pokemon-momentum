@@ -15,6 +15,7 @@ Paths are container paths (/app/...): run this inside the pokemon-momentum conta
 
 import csv
 import math
+import os
 import threading
 import time
 from datetime import date, timedelta
@@ -83,23 +84,115 @@ def category_config(category_id: int):
 # Every request used to open the 13 GB DuckDB file several times just to ask which tables
 # exist (~100 ms each), query the parquet history to see whether a market is in it
 # (~270 ms), and open the file again for each query (~80 ms). Those answers only change
-# when the nightly update rebuilds the data, and the nightly update stops the website
-# first, so they are worked out once and remembered. SOURCE_CHECK_TTL_SECONDS is a
-# backstop in case the data is rebuilt while the site is running. Failed checks (for
-# example a locked database) are never remembered.
+# when the nightly update rebuilds the data, so they are worked out once and remembered.
+# SOURCE_CHECK_TTL_SECONDS is a backstop. Failed checks (for example a locked database) are
+# never remembered.
+#
+# Since 2026-11-19 the nightly update no longer stops the website: it writes a copy of the
+# database and then renames the copy over prices_db.duckdb in one step
+# (scripts/pipeline/run_daily_update_host.sh). get_con() notices the new file (its inode
+# changes), opens it, forgets every remembered answer and runs the data-swap hooks (api.py
+# registers its own cache clearing and start-up jobs). The old connection keeps working for
+# queries already running on it and is closed RETIRE_AFTER_SECONDS later.
+#
+# Why the file is opened through a hard link (processed/.open/prices_db.<device>-<inode>.duckdb)
+# and not by its own name: DuckDB keeps one database per path inside a process, so connecting
+# to the same path again while the old connection is open hands back the OLD file. A link
+# named after the inode is a new path for each new file. Links cost no space; old ones are
+# removed as soon as the new file is open (an open file stays readable after its last name
+# is gone, so the retired connection is unaffected).
 SOURCE_CHECK_TTL_SECONDS = 600
+RETIRE_AFTER_SECONDS = 120
 _table_names_cache: tuple[float, frozenset] | None = None
 _parquet_category_cache: dict[int, tuple[float, bool]] = {}
 _shared_con = None
+_shared_con_id: tuple[int, int] | None = None   # (device, inode) of the file it opened
+_retired_cons: list[tuple[float, object]] = []   # (retired at, connection), closed later
 _shared_con_lock = threading.Lock()
+_data_swap_hooks: list = []
+
+
+def on_data_swap(hook) -> None:
+    """Run hook() (in a background thread) whenever a new database file is noticed."""
+    _data_swap_hooks.append(hook)
+
+
+def _file_id(path: Path) -> tuple[int, int] | None:
+    try:
+        st = os.stat(path)
+    except OSError:
+        return None
+    return (st.st_dev, st.st_ino)
+
+
+def _alias_dir() -> Path:
+    return DB_PATH.parent / ".open"
+
+
+def _open_path(file_id: tuple[int, int]) -> str:
+    """The path to open the current database file by: its per-inode hard link (see above).
+    Falls back to the file's own name if the link can't be made (then a swap is only picked
+    up after a restart)."""
+    alias = _alias_dir() / f"{DB_PATH.stem}.{file_id[0]}-{file_id[1]}{DB_PATH.suffix}"
+    try:
+        if not alias.exists():
+            alias.parent.mkdir(exist_ok=True)
+            os.link(DB_PATH, alias)
+        if _file_id(alias) == file_id:
+            return str(alias)
+    except OSError as exc:
+        print(f"Could not link {DB_PATH.name} under {alias.parent}: {exc}", flush=True)
+    return str(DB_PATH)
+
+
+def _remove_other_aliases(keep: str) -> None:
+    """Delete the links to older database files, so their disk space is freed once closed."""
+    folder = _alias_dir()
+    if not folder.is_dir():
+        return
+    for link in folder.glob(f"{DB_PATH.stem}.*{DB_PATH.suffix}"):
+        if str(link) != keep:
+            try:
+                link.unlink()
+            except OSError:
+                pass
+
+
+def _forget_answers() -> None:
+    """Drop every remembered answer that came from the database (not the connection)."""
+    global _table_names_cache
+    _table_names_cache = None
+    _parquet_category_cache.clear()
+    _release_dates_cache.clear()
+    _feed_dates_cache.clear()
+
+
+def _run_swap_hooks() -> None:
+    for hook in list(_data_swap_hooks):
+        try:
+            hook()
+        except Exception as exc:  # noqa: BLE001 - one failing hook must not stop the others
+            print(f"Data swap hook {getattr(hook, '__name__', hook)} failed: {exc}", flush=True)
+
+
+def _close_retired(now: float, force: bool = False) -> None:
+    """Close connections retired long enough ago that no query can still be using them."""
+    keep = []
+    for retired_at, con in _retired_cons:
+        if force or now - retired_at >= RETIRE_AFTER_SECONDS:
+            try:
+                con.close()
+            except Exception:  # noqa: BLE001
+                pass
+        else:
+            keep.append((retired_at, con))
+    _retired_cons[:] = keep
 
 
 def clear_source_caches() -> None:
     """Forget the cached table list and parquet checks and close the shared connection."""
-    global _table_names_cache, _shared_con
-    _table_names_cache = None
-    _parquet_category_cache.clear()
-    _release_dates_cache.clear()
+    global _shared_con, _shared_con_id
+    _forget_answers()
     with _shared_con_lock:
         if _shared_con is not None:
             try:
@@ -107,6 +200,8 @@ def clear_source_caches() -> None:
             except Exception:  # noqa: BLE001 - closing a dead connection is fine
                 pass
         _shared_con = None
+        _shared_con_id = None
+        _close_retired(0, force=True)
 
 
 def _fresh(cached_at: float) -> bool:
@@ -153,10 +248,12 @@ def db_has_table(name: str) -> bool:
     global _table_names_cache
     if _table_names_cache and _fresh(_table_names_cache[0]):
         return name in _table_names_cache[1]
-    if not DB_PATH.exists():
+    file_id = _file_id(DB_PATH)
+    if file_id is None:
         return False
     try:
-        con = duckdb.connect(str(DB_PATH), read_only=True)
+        # Same path as the shared connection, so DuckDB reuses that open database.
+        con = duckdb.connect(_open_path(file_id), read_only=True)
     except duckdb.IOException:
         # When another process holds the DuckDB write/read lock, metadata checks
         # should gracefully fall back to CSV/parquet sources instead of taking
@@ -292,20 +389,40 @@ def get_con():
     Returns a cursor on one shared read-only connection to the DuckDB file, opened on first
     use (cursors are DuckDB's way to use one connection from several threads, and closing
     a cursor leaves the shared connection open). While the site runs it holds a read lock,
-    so anything that writes to the DuckDB file must run with the website stopped, as the
-    nightly update does. If the file is missing or locked by a writer, falls back to an
-    in-memory connection so queries on CSV/parquet sources still work.
+    so nothing may write to this file in place: the nightly update writes a copy and swaps
+    it in (see the notes above _table_names_cache), and each call here checks whether the
+    file was swapped (one stat call). If the file is missing or locked by a writer, falls
+    back to an in-memory connection so queries on CSV/parquet sources still work.
     """
-    global _shared_con
-    if not DB_PATH.exists():
+    global _shared_con, _shared_con_id
+    file_id = _file_id(DB_PATH)
+    if file_id is None:
         return duckdb.connect()
+    swapped = False
     with _shared_con_lock:
+        if _shared_con is not None and file_id != _shared_con_id:
+            # A new database file: retire the old connection (queries running on it finish)
+            # and forget what was remembered from it.
+            now = time.monotonic()
+            _retired_cons.append((now, _shared_con))
+            _shared_con = None
+            _forget_answers()
+            swapped = True
+        if _retired_cons:
+            _close_retired(time.monotonic())
         if _shared_con is None:
+            path = _open_path(file_id)
             try:
-                _shared_con = duckdb.connect(str(DB_PATH), read_only=True)
+                _shared_con = duckdb.connect(path, read_only=True)
+                _shared_con_id = file_id
             except duckdb.IOException:
                 return duckdb.connect()
-        return _shared_con.cursor()
+            _remove_other_aliases(keep=path)
+        cursor = _shared_con.cursor()
+    if swapped:
+        print("New price database noticed; reopened it and cleared cached answers.", flush=True)
+        threading.Thread(target=_run_swap_hooks, name="data-swap-hooks", daemon=True).start()
+    return cursor
 
 
 def q(sql: str, params=None):

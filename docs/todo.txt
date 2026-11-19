@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-16 (milestone: pin-duckdb)
+Last updated: 2026-11-19 (milestone: zero-downtime-nightly)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -44,6 +44,11 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-19 The nightly market update no longer takes market.poke6s.com down (it was down
+  17-22 minutes from 02:00 UTC, 7 PM in Utah). It updates a copy of prices_db.duckdb and
+  swaps it in with one rename; the site notices the new file and reopens it. Tested with a
+  full run and a request every second: 748 checks, none failed. Last night's file is kept in
+  data/processed_prev/ for rollback. Runbook: "Nightly update: copy and swap".
 - 2026-11-19 Store admin Phase 3 step 2, Orders (http://192.168.1.240:8011/orders): order list
   with tabs and search; order page with items, address, customer, Stripe link and timeline;
   mark shipped with tracking (emails the customer and says whether it went); resend emails;
@@ -59,17 +64,6 @@ Recently Completed
   Nov 28 to 11 PM New York Dec 1, through the affiliate link (not for the signed-in owner),
   marked "affiliate link". ?event_preview=1 shows it early. Checked at 1920x1080 and 1366x768
   (no page scroll, no console errors) and on a phone.
-- 2026-11-15 DuckDB pinned to 1.5.4 in `requirements.txt` (unpinned builds picked 2.0.0, which
-  crashes here: confirmed with a throwaway container, exit 132). Clean `--no-cache` build with the
-  pin passes all 327 tests. Removed duplicate fastapi/uvicorn lines. Runbook: "Upgrading DuckDB".
-- 2026-11-15 Owner switched the server VM to the `host` CPU type in Proxmox (Xeon E5-2640 v3,
-  AVX2). Confirmed the cause: DuckDB 2.0.0 now imports and runs; before, "Illegal instruction".
-  No upgrade planned (owner, 2026-11-16): 1.5.4 does the job; runbook "Upgrading DuckDB" if needed.
-- 2026-11-14 Store admin, Phase 3 step 1: separate app and container on :8011 (LAN address
-  only, own Docker network, refuses Cloudflare and non-private addresses), password sign-in
-  with lockout, Overview page (to ship, month net sales, email queue, backups, disputes,
-  sold-out products, set-up). Owner decisions D10 (no singles on poke6s.com) and D11 (market
-  admin tools: two retired, supplier tools stay). Checked at 1920x1080, 1366x768 and phone.
 
 High Priority
 -------------
@@ -351,6 +345,11 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - [idea] The admin is home-network only. Tailscale is already on the server, so reaching it
     away from home later would need only binding it to the Tailscale address too and allowing
     that range in refuse_reason(). Not without the owner asking.
+- [idea] Market site: the Monday 11:00 UTC placeholder refresh
+  (run_metadata_placeholder_refresh_host.sh) still stops the site while it writes; it could use
+  the same copy and swap as the nightly update. A friendly "updating, back in a minute" page
+  for the rare stops (deploys, restarts) would need a Caddy change on 192.168.1.30, which is
+  the separate project's machine: owner's call.
 - [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
   too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
 - [ready] Notification emails get product cards (branch `storefront/mail-product-cards`,

@@ -105,6 +105,7 @@ from scripts.dashboards.query_support import (
     q,
     screener_snapshot_from,
     long_series_snapshot_from,
+    on_data_swap,
     series_snapshot_from,
     sparkline_snapshot_from,
     to_jsonable,
@@ -9202,3 +9203,16 @@ def _start_background_jobs() -> None:
     if os.environ.get("PM_SKIP_STARTUP_JOBS") or "pytest" in sys.modules:
         return
     threading.Thread(target=_startup_jobs, name="startup-jobs", daemon=True).start()
+
+
+def _after_data_swap() -> None:
+    """The nightly update swapped in a new database without restarting the site (2026-11-19):
+    do what a restart used to do. Caches keyed by the latest price date refresh by themselves;
+    the index overview cache is time-based, so it is emptied here."""
+    _INDEX_OVERVIEW_CACHE.clear()
+    if os.environ.get("PM_SKIP_STARTUP_JOBS") or "pytest" in sys.modules:
+        return
+    _startup_jobs()
+
+
+on_data_swap(_after_data_swap)

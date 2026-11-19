@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-11-15
+Last reviewed: 2026-11-19
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -23,6 +23,12 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   Comics) are skipped after 25 not-founds, and 404s aren't re-asked until due
 - Archive torrents: 2024 and 2025 seeding from the owner's qBittorrent; not shared until
   CptSpaceToaster agrees (runbook "TCGCSV archive torrents")
+- Nightly update (02:00 UTC) keeps market.poke6s.com up since 2026-11-19: it updates a copy
+  of the price database and swaps it in with one rename; the site reopens the new file on its
+  next request. Last night's file stays in `data/processed_prev/` (runbook "Nightly update:
+  copy and swap")
+- Store admin (LAN only, http://192.168.1.240:8011): Overview and Orders (mark shipped with
+  tracking, resend emails, notes, address correction, packing and gift slip PDFs)
 - Nightly pipeline memory: snapshot scripts cap DuckDB at 10 GB and 4 threads
   (`scripts/common/duckdb_settings.py`) after an out-of-memory kill on 2026-11-02
 - Graded data: nightly PriceCharting snapshot, kept as our own history

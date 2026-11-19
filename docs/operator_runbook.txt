@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-15 (Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
+Last reviewed: 2026-11-19 (Nightly update keeps the site up: copy and swap; Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -12,7 +12,7 @@ crontab changes). Each job is explained further down in this file.
 
 | When | Job | How it runs | Log |
 | --- | --- | --- | --- |
-| Daily 02:00 | Nightly market update: TCGCSV prices, metadata, snapshots, parquet, PriceCharting, indexes for Pokemon English and Japanese, then Lorcana (no indexes yet); restarts the app; Discord summary | `pokemon-momentum-daily-update.timer` | `logs/daily_update.log` |
+| Daily 02:00 | Nightly market update: TCGCSV prices, metadata, snapshots, parquet, PriceCharting, indexes for Pokemon English and Japanese, then Lorcana (no indexes yet), all written to a copy of the database that is swapped in at the end, so the site stays up (see "Nightly update: copy and swap"); Discord summary | `pokemon-momentum-daily-update.timer` | `logs/daily_update.log` |
 | Daily 03:00 | Storefront market prices (`data/storefront/market_reference.json`, read by the new shop's product pages) | cron: `scripts/build_storefront_market_reference.py` | `logs/storefront_market_reference.log` |
 | Daily 03:15 | Store backup: `store.db`, visit counts, outbox and photos into `data/backups/storefront/` (30 days; see "Store backups") | cron: `storefront/tools/backup_store.py backup` | `logs/storefront_backup.log` |
 | Daily 03:30 | Other games price archive (collect only: Magic, Yu-Gi-Oh, One Piece) | `pokemon-momentum-tcgcsv-collect.timer` | see "Other games archive" |
@@ -27,7 +27,7 @@ crontab changes). Each job is explained further down in this file.
 
 Check timers with `systemctl list-timers | grep pokemon`.
 
-After every website start (so after each nightly update) the site records the day's Track
+After every website start, and after each nightly swap, the site records the day's Track
 record picks in the background. Check it in the container log: `docker-compose logs
 pokemon-momentum | grep "Track record"` should show "recorded N picks for <date>" for
 category 3 and 85 once per price date ("recorded 0" on a second start the same day is fine).
@@ -842,7 +842,8 @@ Normal expectation:
 - processes both category `3` (Pokemon) and category `85` (Pokemon Japanese) in sequence
 - adds PriceCharting graded prices (English pass) and rebuilds the market-index snapshots
   after the parquet export
-- restarts the app container afterward and posts a summary to Discord (see Alerts below)
+- writes to a copy of the database and swaps it in at the end, so the site stays up ("Nightly
+  update: copy and swap"), then posts a summary to Discord (see Alerts below)
 - the weekly full metadata refresh runs Sunday at `11:00 UTC`
 - the weekly placeholder cleanup runs Monday at `11:00 UTC`, 24 hours later
 - the placeholder cleanup only reruns product metadata + product signal snapshot so stale
@@ -1138,8 +1139,8 @@ Use these when testing a category-specific pipeline path directly.
 
 DuckDB allows one writer, and the running website keeps the database open for reading
 (one shared connection, since 2026-10-12), so any pipeline step that writes to it fails on a
-lock while the site is up. The nightly script stops the site
-first; do the same here (`sudo docker-compose stop pokemon-momentum`, run the commands,
+lock while the site is up. The nightly script writes to a copy instead (see "Nightly update:
+copy and swap"); for these manual runs, stop the site first (`sudo docker-compose stop pokemon-momentum`, run the commands,
 then `sudo docker-compose up -d pokemon-momentum`), or start the systemd service above,
 which does it for you. `--skip-download` reuses the prices already downloaded today.
 
@@ -1738,6 +1739,61 @@ Recommended action:
 - only intervene if logs are fully stationary and the process clearly failed or was OOM-killed
 
 
+Nightly update: copy and swap
+-----------------------------
+Since 2026-11-19 the nightly update (`scripts/pipeline/run_daily_update_host.sh`) no longer
+stops the website. Before, the site was down for the whole run, 17 to 22 minutes from 02:00
+UTC (7 PM in Utah). Now:
+
+1. It copies `data/processed/prices_db.duckdb` to `data/processed_next/` (about 10 GB, a few
+   minutes). It needs the file's size plus 5 GB free on the disk.
+2. Every pipeline container runs with `data/processed_next/` mounted as its
+   `/app/data/processed`, so all writes go to the copy while the site serves the old file.
+3. At the end it checks the copy (no leftover `.wal`, the price table opens and has rows, and
+   the live file wasn't changed by another job meanwhile), hard-links the live file into
+   `data/processed_prev/prices_db.duckdb` (last night's data, for a rollback; replacing the
+   older link frees that file), and renames the copy over the live file in one step.
+4. The site notices the new file on its next query (one `stat` per query,
+   `query_support.get_con`), opens it, forgets its cached answers, and redoes its start-up
+   work (Track record picks, market mood). It opens the database through a hard link named
+   after the file's inode in `data/processed/.open/`, because DuckDB reuses an open database
+   for a path it has seen; links to older files are removed as soon as the new one is open.
+   The old connection is closed two minutes later, once queries running on it are done.
+
+Tested 2026-11-19: a full English and Japanese run with a request every second, 748 checks,
+none failed.
+
+If the copy can't be made (not enough space, or the live file has a `.wal`), the script falls
+back to the old way for that night: stop the site, write the live file, start the site. The
+log says which. `SWAP=0` forces the old way.
+
+If the copy fails its check, the live file is left alone (the site keeps last night's prices),
+the log has an ERROR line and the Discord summary is red. Like before, a run that failed
+partway still swaps in what it finished, as long as the copy checks out.
+
+Rollback to last night's data (for example, a bad price file got loaded):
+
+```bash
+cd /opt/pokemon-momentum
+cp --sparse=always data/processed_prev/prices_db.duckdb data/processed/prices_db.rollback.duckdb
+mv -fT data/processed/prices_db.rollback.duckdb data/processed/prices_db.duckdb
+curl -s http://127.0.0.1:8001/health   # the site reopens the file on its next query
+```
+
+Copy rather than link the rollback file, so the next night's update can't change
+`processed_prev`. Testing the copy and swap by hand without re-running Pokemon (as a normal
+user; logs and locks go to a scratch folder, no Discord summary):
+
+```bash
+LOG_DIR=/tmp/t LOCK_DIR=/tmp/t NOTIFY=0 DAILY_CATEGORY_IDS="" EXTRA_CATEGORY_IDS="" \
+  scripts/pipeline/run_daily_update_host.sh
+```
+
+Run as a normal user, the clean-up of `data/processed_next/` fails on a folder the container
+creates as root; remove it with
+`docker run --rm -v /opt/pokemon-momentum/data:/d pokemon-momentum-pokemon-momentum rm -rf /d/processed_next`.
+
+
 If DuckDB reports a file lock error
 -----------------------------------
 Symptoms:
@@ -1751,7 +1807,8 @@ Cause:
 
 Normal design:
 
-- the host wrapper stops the app before pipeline writes
+- the nightly script never writes the live file: it updates a copy and swaps it in (see
+  "Nightly update: copy and swap"). Manual pipeline runs still need the site stopped:
 
 Manual recovery:
 

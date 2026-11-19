@@ -168,9 +168,11 @@ PSA cert lookup:
 ## Daily Pipeline
 
 The nightly run is `scripts/pipeline/run_daily_update_host.sh`, started at 02:00 UTC by
-the `pokemon-momentum-daily-update` systemd timer. It stops the app (DuckDB has one
-writer), runs the pipeline for English then Japanese, restarts the app, and posts a summary
-to Discord.
+the `pokemon-momentum-daily-update` systemd timer. DuckDB has one writer and the site keeps
+the database open, so it copies the database, runs the pipeline for English, Japanese and
+Lorcana against the copy, then swaps the copy in with one rename; the site notices and
+reopens it without going down. It posts a summary to Discord. Details and rollback:
+`docs/operator_runbook.txt`, "Nightly update: copy and swap".
 
 Run the pipeline for one market manually (inside the container):
 

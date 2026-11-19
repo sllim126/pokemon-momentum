@@ -193,9 +193,13 @@ class QuerySupportTests(unittest.TestCase):
 
     def test_db_has_table_checks_show_tables(self):
         fake_con = FakeConnection(tables=["pokemon_prices", "pokemon_groups"])
+        query_support.clear_source_caches()
+        self.addCleanup(query_support.clear_source_caches)
         with patch.object(query_support, "DB_PATH", Path("/tmp/fake.duckdb")), patch.object(
-            Path, "exists", return_value=True
-        ), patch.object(query_support.duckdb, "connect", return_value=fake_con):
+            query_support, "_file_id", return_value=(1, 2)
+        ), patch.object(query_support, "_open_path", return_value="/tmp/fake.duckdb"), patch.object(
+            query_support.duckdb, "connect", return_value=fake_con
+        ):
             self.assertTrue(query_support.db_has_table("pokemon_groups"))
             self.assertFalse(query_support.db_has_table("missing_table"))
         self.assertTrue(fake_con.closed)
@@ -203,13 +207,18 @@ class QuerySupportTests(unittest.TestCase):
     def test_get_con_uses_disk_db_when_present_or_memory_otherwise(self):
         fake_disk = FakeConnection()
         fake_memory = FakeConnection()
+        query_support.clear_source_caches()
+        self.addCleanup(query_support.clear_source_caches)
         with patch.object(query_support, "DB_PATH", Path("/tmp/fake.duckdb")), patch.object(
-            Path, "exists", return_value=True
-        ), patch.object(query_support.duckdb, "connect", return_value=fake_disk):
+            query_support, "_file_id", return_value=(1, 2)
+        ), patch.object(query_support, "_open_path", return_value="/tmp/fake.duckdb"), patch.object(
+            query_support.duckdb, "connect", return_value=fake_disk
+        ):
             self.assertIs(query_support.get_con(), fake_disk.cursor_result)
 
+        query_support.clear_source_caches()
         with patch.object(query_support, "DB_PATH", Path("/tmp/fake.duckdb")), patch.object(
-            Path, "exists", return_value=False
+            query_support, "_file_id", return_value=None
         ), patch.object(query_support.duckdb, "connect", return_value=fake_memory):
             self.assertIs(query_support.get_con(), fake_memory)
 
@@ -327,3 +336,61 @@ class GapScaledThresholdTests(unittest.TestCase):
     def test_unreadable_feed_keeps_threshold(self):
         with patch.object(query_support, "recent_feed_dates", return_value=[]):
             self.assertEqual(query_support.gap_scaled_threshold(10, 30, 3), 10)
+
+
+class DatabaseSwapTests(unittest.TestCase):
+    """The nightly update renames a new database over the old one while the site runs
+    (2026-11-19); get_con() must notice, reopen, forget cached answers and run the hooks."""
+
+    def setUp(self):
+        query_support.clear_source_caches()
+        self.addCleanup(query_support.clear_source_caches)
+
+    @staticmethod
+    def make_db(path, value):
+        import duckdb
+        con = duckdb.connect(str(path))
+        con.execute("CREATE TABLE t AS SELECT ? AS x", [value])
+        con.close()
+
+    def test_new_file_is_noticed_and_old_connection_retired(self):
+        import os
+        import threading
+        with TemporaryDirectory() as tmp:
+            live, new = Path(tmp) / "prices_db.duckdb", Path(tmp) / "next.duckdb"
+            self.make_db(live, 1)
+            self.make_db(new, 2)
+            ran = threading.Event()
+            with patch.object(query_support, "DB_PATH", live), patch.object(query_support, "_data_swap_hooks", []):
+                query_support.on_data_swap(ran.set)
+                first = query_support.q("SELECT x FROM t")[1][0][0]
+                query_support._table_names_cache = (0.0, frozenset({"stale"}))
+                query_support._feed_dates_cache[3] = (0.0, ["stale"])
+                old_con = query_support._shared_con
+                os.replace(new, live)                      # what the nightly job does
+                second = query_support.q("SELECT x FROM t")[1][0][0]
+                self.assertEqual((first, second), (1, 2))
+                self.assertTrue(ran.wait(5), "the swap hook should run")
+                self.assertIsNone(query_support._table_names_cache)
+                self.assertNotIn(3, query_support._feed_dates_cache)
+                self.assertIs(query_support._retired_cons[0][1], old_con)
+                # A query on the retired connection still works until it is closed.
+                self.assertEqual(old_con.cursor().execute("SELECT x FROM t").fetchone()[0], 1)
+                with patch.object(query_support.time, "monotonic",
+                                  return_value=query_support._retired_cons[0][0] + query_support.RETIRE_AFTER_SECONDS):
+                    query_support.get_con().close()
+                self.assertEqual(query_support._retired_cons, [])
+                # Only the link to the current file is left.
+                links = sorted(p.name for p in (Path(tmp) / ".open").iterdir())
+                self.assertEqual(len(links), 1)
+
+    def test_same_file_does_not_reopen(self):
+        with TemporaryDirectory() as tmp:
+            live = Path(tmp) / "prices_db.duckdb"
+            self.make_db(live, 1)
+            with patch.object(query_support, "DB_PATH", live):
+                query_support.q("SELECT x FROM t")
+                con = query_support._shared_con
+                query_support.q("SELECT x FROM t")
+                self.assertIs(query_support._shared_con, con)
+                self.assertEqual(query_support._retired_cons, [])
