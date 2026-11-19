@@ -29,14 +29,15 @@
     </p>
     <p class="price">{{ product.price_cents | money }}{% if product.compare_at_cents %} <s>{{ product.compare_at_cents | money }}</s>{% endif %}</p>
 
+    {#- Kept short on purpose (owner, 2026-11-18): the market price and how far below it we
+        are. The 30-day trend and the source/date line were dropped; the price itself links to
+        the product's history on market.poke6s.com. #}
     {% if market %}
     <div class="market">
-      <p><strong>Market price {{ market.price | dollars }}</strong>
-        {% if market.roc_30d_pct is not none %}<span class="pill {{ 'up' if market.roc_30d_pct >= 0 else 'down' }}">30 days {{ '%+.1f' % market.roc_30d_pct }}%</span>{% endif %}
+      <p><strong>{% if market.url %}<a href="{{ market.url }}">Market price {{ market.price | dollars }}</a>{% else %}Market price {{ market.price | dollars }}{% endif %}</strong>
+        {% if market.averaged_over > 1 %}<span class="small muted">averaged over {{ market.averaged_over }} designs</span>{% endif %}
         {% if below_market %}<span class="pill good">{{ below_market }}% below market</span>{% endif %}
       </p>
-      <p class="small muted">TCGplayer market price{% if market.averaged_over > 1 %}, averaged over {{ market.averaged_over }} designs{% endif %}{% if market.latest_date %}, {{ market.latest_date }}{% endif %}.
-        {% if market.url %}<a href="{{ market.url }}">Price history on market.poke6s.com</a>{% endif %}</p>
     </div>
     {% endif %}
 
@@ -77,7 +78,6 @@
     </div>
 
     <dl class="specs">
-      <dt>SKU</dt><dd>{{ product.sku }}</dd>
       <dt>Shipping</dt><dd>{{ ship_class_labels.get(product.ship_class, product.ship_class) }}. US only. <a href="/shipping">Shipping policy</a></dd>
       <dt>Returns</dt><dd>Unopened in original wrap within 14 days. <a href="/returns">Returns policy</a></dd>
     </dl>
