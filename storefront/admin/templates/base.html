@@ -14,6 +14,7 @@
     {% if signed_in %}
     <nav aria-label="Admin">
       <a href="/" {% if active == 'overview' %}aria-current="page"{% endif %}>Overview</a>
+      <a href="/orders" {% if active == 'orders' %}aria-current="page"{% endif %}>Orders</a>
     </nav>
     <div class="top-right">
       <a class="muted small" href="{{ settings.base_url }}" target="_blank" rel="noopener">Open the store ↗</a>

@@ -83,7 +83,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Status page: {orders.status_url(settings.base_url, order)}")
         elif args.command == "ship":
             order = orders.mark_shipped(conn, settings, args.number, args.carrier, args.tracking, settings.base_url)
-            print(f"{order['number']} marked shipped; tracking email sent to {order['email']}.")
+            if order["email_sent"]:
+                how = "saved to the outbox" if settings.email_transport == "outbox" else "sent"
+                print(f"{order['number']} marked shipped; tracking email {how} ({order['email']}).")
+            else:
+                print(f"{order['number']} marked shipped; the tracking email failed and is queued for retry "
+                      f"(see Discord).")
         elif args.command == "resend":
             order = orders.get_order(conn, args.number)
             if order is None or not order["email"]:

@@ -21,13 +21,14 @@ from __future__ import annotations
 import ipaddress
 import logging
 import os
+import re
 import sqlite3
 from collections.abc import Iterator
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlencode, urlsplit
 
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
@@ -35,9 +36,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from ..app import notify
+from ..app import orders as store_orders
 from ..app.db import connect, latest_migration, migrate
 from ..app.settings import Settings, load_settings
-from . import overview
+from . import orders_view, overview, packing_slip
 from .auth import COOKIE_NAME, SESSION_DAYS, Lockout, Sessions, check_password
 
 log = logging.getLogger("storefront.admin")
@@ -58,6 +60,25 @@ SECURITY_HEADERS = {
     "Content-Security-Policy": "default-src 'self'; img-src 'self' data:; style-src 'self'; "
                                "script-src 'self'; form-action 'self'; frame-ancestors 'none'",
     "X-Robots-Tag": "noindex, nofollow",
+}
+
+
+# Order numbers as the store makes them (P6-2026-0001, test mode P6T-2026-0001). Anything else in
+# an /orders/... address is a 404 before the database is asked.
+ORDER_NUMBER = re.compile(r"^P6T?-\d{4}-\d{4,6}$")
+# Tracking numbers: letters and digits only once spaces are taken out (USPS 20-22 digits, UPS
+# 1Z..., FedEx 12-15, DHL 10). Loose on purpose; this only catches paste mistakes.
+TRACKING = re.compile(r"^[A-Za-z0-9]{8,40}$")
+# Messages after a change (Post/Redirect/Get: the page is reloaded with ?done=<key>).
+DONE = {
+    "shipped": "Marked shipped. The tracking email went to the customer.",
+    "shipped_outbox": "Marked shipped. Email isn't set up, so the tracking email was saved to the outbox.",
+    "shipped_email_failed": "Marked shipped, but the tracking email failed. It will retry every 15 minutes "
+                            "(see Discord); you can also resend it below.",
+    "resent": "Email sent again.",
+    "resend_failed": "The email failed again and is queued for retry (see Discord).",
+    "note": "Note added.",
+    "address": "Address changed. The old one is kept in the notes.",
 }
 
 
@@ -145,7 +166,7 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
 
     @contextmanager
     def db() -> Iterator[sqlite3.Connection]:
-        # Read-only for now: step 1 only shows things. Later steps open a writer per change.
+        # Read-only, for pages. Changes open writer() below, one connection per change.
         conn = connect(settings.db_path, readonly=True)
         try:
             yield conn
@@ -217,6 +238,162 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
             data = overview.build(conn, settings, config.backup_dir or Path("/nonexistent"))
         return page(request, "overview.html", cookie, data=data, active="overview",
                     now=datetime.now(UTC).isoformat())
+
+    # --- orders (Phase 3, step 2) -------------------------------------------------------------
+
+    @contextmanager
+    def writer() -> Iterator[sqlite3.Connection]:
+        """A connection that may change things, for one change (the store's rules: orders.py)."""
+        conn = connect(settings.db_path, writer=True)
+        try:
+            yield conn
+        finally:
+            conn.close()
+
+    def form_ok(cookie: str, token: str) -> bool:
+        return bool(sessions and sessions.form_token_ok(cookie, token))
+
+    def expired_form() -> PlainTextResponse:
+        return PlainTextResponse("This form has expired. Reload the page and try again.", status_code=403)
+
+    def order_url(number: str, **params) -> str:
+        query = f"?{urlencode(params)}" if params else ""
+        return f"/orders/{quote(number)}{query}"
+
+    def order_page(request: Request, cookie: str, number: str, status_code: int = 200, **context) -> Response:
+        if not ORDER_NUMBER.match(number):
+            return PlainTextResponse("Not found.", status_code=404)
+        with db() as conn:
+            order = store_orders.get_order(conn, number)
+        if order is None:
+            return PlainTextResponse("Not found.", status_code=404)
+        # The "change the address" form: what was typed (after an error, opened) or the current one.
+        typed = context.pop("address_form", None)
+        shipping = order["shipping"] or {}
+        current = {"name": shipping.get("name") or order["name"] or "", **(shipping.get("address") or {})}
+        return page(request, "order.html", cookie, status_code=status_code, order=order, active="orders",
+                    address_form=typed or current, address_open=bool(typed),
+                    address=notify.address_lines(order), timeline=orders_view.timeline(order),
+                    stripe_url=orders_view.stripe_url(order), waiting=orders_view.waiting_hours(order),
+                    track_url=notify.tracking_url(order["carrier"], order["tracking_number"]),
+                    status_url=store_orders.status_url(settings.base_url, order),
+                    carriers=orders_view.CARRIERS, done=DONE.get(request.query_params.get("done", "")),
+                    **context)
+
+    @app.get("/orders", response_class=HTMLResponse)
+    def order_list(request: Request, view: str = orders_view.DEFAULT_VIEW, q: str = ""):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        view = view if view in orders_view.VIEWS else orders_view.DEFAULT_VIEW
+        q = q.strip()[:100]
+        with db() as conn:
+            rows = orders_view.list_orders(conn, view, q)
+            counts = orders_view.counts(conn)
+        return page(request, "orders.html", cookie, rows=rows, counts=counts, view=view, q=q,
+                    views=orders_view.VIEWS, active="orders", page_size=orders_view.PAGE_SIZE)
+
+    @app.get("/orders/{number}", response_class=HTMLResponse)
+    def order_detail(request: Request, number: str):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        return order_page(request, cookie, number)
+
+    @app.get("/orders/{number}/packing-slip.pdf")
+    def order_packing_slip(request: Request, number: str, gift: int = 0):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        if not ORDER_NUMBER.match(number):
+            return PlainTextResponse("Not found.", status_code=404)
+        with db() as conn:
+            order = store_orders.get_order(conn, number)
+        if order is None or order["status"] in ("pending", "expired", "cancelled"):
+            return PlainTextResponse("Not found.", status_code=404)
+        pdf = packing_slip.build(order, settings, prices=not gift)
+        name = f"packing-slip-{number}{'-gift' if gift else ''}.pdf"
+        # inline: opens in the browser's PDF viewer, ready to print.
+        return Response(pdf, media_type="application/pdf",
+                        headers={"Content-Disposition": f'inline; filename="{name}"'})
+
+    @app.post("/orders/{number}/ship")
+    def order_ship(request: Request, number: str, form_token: str = Form(""), carrier: str = Form("USPS"),
+                   carrier_other: str = Form(""), tracking: str = Form("")):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        if not form_ok(cookie, form_token):
+            return expired_form()
+        tracking = "".join(tracking.split())
+        name = carrier_other.strip()[:40] if carrier == "Other" else carrier
+        if carrier not in orders_view.CARRIERS or not name:
+            return order_page(request, cookie, number, 400, error="Pick a carrier (or type one for Other).")
+        if not TRACKING.match(tracking):
+            return order_page(request, cookie, number, 400, error="That tracking number doesn't look right: "
+                              "letters and digits only, 8 to 40 of them.", tracking=tracking)
+        try:
+            with writer() as conn:
+                order = store_orders.mark_shipped(conn, settings, number, name, tracking, settings.base_url)
+        except ValueError as exc:
+            return order_page(request, cookie, number, 400, error=str(exc))
+        if not order["email_sent"]:
+            done = "shipped_email_failed"
+        else:
+            done = "shipped_outbox" if settings.email_transport == "outbox" else "shipped"
+        log.info("Order %s marked shipped from the admin (%s)", number, name)
+        return RedirectResponse(order_url(number, done=done), status_code=303)
+
+    @app.post("/orders/{number}/resend")
+    def order_resend(request: Request, number: str, form_token: str = Form(""), kind: str = Form("")):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        if not form_ok(cookie, form_token):
+            return expired_form()
+        with db() as conn:
+            order = store_orders.get_order(conn, number) if ORDER_NUMBER.match(number) else None
+        if order is None:
+            return PlainTextResponse("Not found.", status_code=404)
+        if kind not in ("confirmed", "shipped") or (kind == "shipped" and not order["tracking_number"]) \
+                or order["status"] in ("pending", "expired", "cancelled") or not order["email"]:
+            return order_page(request, cookie, number, 400, error="That email can't be sent for this order.")
+        url = store_orders.status_url(settings.base_url, order)
+        ok = (notify.shipped_email if kind == "shipped" else notify.order_confirmation)(settings, order, url)
+        return RedirectResponse(order_url(number, done="resent" if ok else "resend_failed"), status_code=303)
+
+    @app.post("/orders/{number}/note")
+    def order_note(request: Request, number: str, form_token: str = Form(""), note: str = Form("")):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        if not form_ok(cookie, form_token):
+            return expired_form()
+        try:
+            with writer() as conn:
+                store_orders.add_note(conn, number, note)
+        except ValueError as exc:
+            return order_page(request, cookie, number, 400, error=str(exc))
+        return RedirectResponse(order_url(number, done="note"), status_code=303)
+
+    @app.post("/orders/{number}/address")
+    def order_address(request: Request, number: str, form_token: str = Form(""), name: str = Form(""),
+                      line1: str = Form(""), line2: str = Form(""), city: str = Form(""), state: str = Form(""),
+                      postal_code: str = Form(""), reason: str = Form("")):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        if not form_ok(cookie, form_token):
+            return expired_form()
+        fields = {"name": name, "line1": line1, "line2": line2, "city": city, "state": state,
+                  "postal_code": postal_code}
+        try:
+            with writer() as conn:
+                store_orders.correct_address(conn, number, fields, reason)
+        except ValueError as exc:
+            return order_page(request, cookie, number, 400, error=str(exc), address_form=fields)
+        log.info("Order %s: shipping address changed from the admin", number)
+        return RedirectResponse(order_url(number, done="address"), status_code=303)
 
     @app.exception_handler(404)
     async def not_found(request: Request, _exc):

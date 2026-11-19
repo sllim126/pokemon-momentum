@@ -1,0 +1,49 @@
+{#- Orders list (Phase 3, step 2). Tabs by status, search by number, name or email.
+    `rows` from orders_view.list_orders; `counts` per tab from orders_view.counts. -#}
+{% extends "base.html" %}
+{% block title %}Orders{% endblock %}
+{% block main %}
+<div class="page-head">
+  <h1>Orders</h1>
+  <form class="search" method="get" action="/orders" role="search">
+    <input type="hidden" name="view" value="{{ view }}">
+    <label class="sr-only" for="q">Search orders</label>
+    <input id="q" name="q" type="search" value="{{ q }}" placeholder="Order number, name or email">
+    <button type="submit">Search</button>
+    {% if q %}<a class="small" href="/orders?view={{ view }}">Clear</a>{% endif %}
+  </form>
+</div>
+
+<nav class="tabs" aria-label="Order status">
+  {% for name, (label, _s) in views.items() %}
+  <a href="/orders?view={{ name }}{% if q %}&amp;q={{ q | urlencode }}{% endif %}" {% if name == view %}aria-current="page"{% endif %}>{{ label }} <span class="badge">{{ counts[name] }}</span></a>
+  {% endfor %}
+</nav>
+
+<section class="panel">
+  {% if rows %}
+  <table class="orders">
+    <thead><tr><th>Order</th><th>Customer</th><th>Ship to</th><th class="num">Items</th><th class="num">Total</th>
+      <th>Status</th><th>{% if view == 'to-ship' %}Paid{% else %}Placed{% endif %}</th></tr></thead>
+    <tbody>
+    {% for o in rows %}
+      <tr{% if o.late %} class="late"{% endif %}>
+        <td><a href="/orders/{{ o.number }}"><strong>{{ o.number }}</strong></a>{% if o.mode == 'test' %} <span class="badge">test</span>{% endif %}</td>
+        <td>{{ o.name or '—' }}<br><span class="muted small">{{ o.email or '' }}</span></td>
+        <td>{{ o.destination or '—' }}</td>
+        <td class="num">{{ o['items'] }}</td>
+        <td class="num">{{ o.total_cents | money }}</td>
+        <td><span class="status s-{{ o.status }}">{{ o.status | replace('_', ' ') }}</span>
+          {% if o.late %}<span class="badge bad">{{ o.waiting_hours | hours }} waiting</span>{% endif %}
+          {% if o.status == 'shipped' and o.tracking_number %}<br><span class="muted small">{{ o.carrier }} {{ o.tracking_number }}</span>{% endif %}</td>
+        <td class="small">{{ (o.paid_at if view == 'to-ship' else o.created_at) | when }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if rows | length >= page_size %}<p class="muted small">Showing the first {{ page_size }}. Search to narrow it down.</p>{% endif %}
+  {% else %}
+  <p class="muted">{% if q %}No orders in “{{ views[view][0] }}” match “{{ q }}”.{% elif view == 'to-ship' %}Nothing to ship.{% else %}No orders here.{% endif %}</p>
+  {% endif %}
+</section>
+{% endblock %}

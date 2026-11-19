@@ -1,6 +1,6 @@
 # New storefront for poke6s.com: plan
 
-Last reviewed: 2026-11-14
+Last reviewed: 2026-11-19
 **Status: live catalog-only on https://poke6s.com/ since 2026-11-11**, self-hosted on the owner's
 server through a Cloudflare Tunnel (runbook "poke6s.com hosting"). Phases 1 and 2 built;
 checkout stays off (Stripe test mode only) until the owner activates live payments. Google
@@ -442,7 +442,9 @@ this properly"):
 1. Foundation: the separate app on :8011, the network walls, sign-in, Overview. **Done
    2026-11-14.**
 2. Orders: list and detail; mark shipped with tracking (sends the email), resend, notes.
-   Replaces `orders_cli` for daily use.
+   Replaces `orders_cli` for daily use. **Done 2026-11-19**, with packing slips moved here
+   from step 3 (the first real order needed one) and address corrections (the customer's
+   address failed USPS validation).
 3. Shipping: Pirate Ship CSV export of unshipped orders (signature confirmation on every
    order), upload of Pirate Ship's tracking export (marks shipped, sends the emails), packing
    slips.
@@ -534,3 +536,4 @@ Reviewed with the owner on 2026-10-31. D2 decided 2026-11-05.
 | 2026-11-13 | Claude | **Checkout live (owner).** Stripe live account activated; live webhook `poke6s-store-live` (same 6 events); a restricted live key (`rk_live_`: Checkout Sessions write; Charges, PaymentIntents, Events, Tax Registrations read); `STOREFRONT_ALLOW_LIVE=1`, `STOREFRONT_CHECKOUT=1`. Stripe Tax Utah registration active from 2026-11-13 (the dashboard had scheduled it for 2027-01-01, so it was recreated through the API). A real order (one pack, $0.74 Utah tax) paid and refunded through the webhook; stock put back by hand (refunds don't restock, D8) | Owner: the Utah account number on the Stripe registration when the Tax Commission letter arrives. Claude: Phase 3 admin (restock on returns) |
 | 2026-11-14 | Claude | Marketing emails (owner): `app/mailing.py` + `templates/email/marketing.html`, sent with `orders_cli mailing` (preview, test copy, send). Every email: reason for receiving it, one-click unsubscribe (`/unsubscribe/<token>` and List-Unsubscribe headers), business postal address (`STOREFRONT_POSTAL_ADDRESS`, refused without it). Privacy page updated: the list is for store news, not only the opening. Nobody had joined the opening list, so no opening email was sent. market.poke6s.com's "Our store" button now opens the product's poke6s.com page, shown only when it's in stock there. Single packs keep the $10 small-sealed rate (owner) | Owner: postal address in `.env` before the first mailing; notes on individual listings |
 | 2026-11-14 | Claude | **Phase 3 step 1: store admin foundation.** `storefront/admin/`: its own app and container (`poke6s-storefront-admin`) on http://192.168.1.240:8011/, LAN address only, own Docker network (cloudflared can't reach it), refuses Cloudflare headers and non-private addresses; password sign-in (PBKDF2 hash in `.env`, set with `python3 -m storefront.admin.passwd`), 30-day signed cookies, form tokens, same-origin check, lockout with Discord alert. Overview: to ship (late after 24 h), month net sales (live only), email retry/failed queue, last backup, disputes, sold-out products on show, store set-up. Deploy script starts and checks both containers. Owner decisions D10 (no singles) and D11 (market tools) | Owner: set the admin password. Claude: step 2, Orders |
+| 2026-11-19 | Claude | **Phase 3 step 2: Orders.** First real order (P6-2026-0006, 2026-11-18) showed what was missing, so: Orders list (tabs, search), order page (items, address, customer, Stripe link, timeline), mark shipped with tracking (says whether the email went, went to the outbox or is queued; `orders_cli ship` now says so too), resend emails, dated owner notes, address correction for paid orders (old address kept in notes; Stripe keeps the original), packing slip PDF with a gift version (reportlab added, pinned). Overview links to orders | Owner: a sample Pirate Ship export for step 3. Claude: step 3, Pirate Ship export and tracking upload |

@@ -1,9 +1,10 @@
-# Every installed package at its tested version (pip freeze of the test image, 2026-11-12).
+# Every installed package at its tested version (pip freeze of the test image, 2026-11-19).
 # Used with pip's -c: it pins whatever requirements*.txt pull in, and installs nothing itself.
 annotated-doc==0.0.5
 annotated-types==0.8.0
 anyio==4.16.0
 certifi==2026.10.23
+chardet==7.7.0
 charset-normalizer==3.5.2
 click==8.5.0
 fastapi==0.162.0
@@ -26,6 +27,7 @@ pydantic_core==2.50.2
 Pygments==2.21.0
 pytest==9.2.0
 python-multipart==0.0.33
+reportlab==4.2.5
 requests==2.34.2
 starlette==1.10.0
 typing-inspection==0.4.5
