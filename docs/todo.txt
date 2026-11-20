@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-20 (step 9a, one look; market inventory)
+Last updated: 2026-11-20 (missing product pictures; /dashboard-lab removed)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -44,6 +44,11 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-20 Missing product pictures: 53 of the 60 products TCGplayer has no picture for now show
+  a stand-in (one item for a case or multi-pack, the Poke Ball pattern card for a Master Ball
+  card); our own files in images/products/<productId>.jpg win over stand-ins. Applied after the
+  nightly product refresh (scripts/utilities/apply_product_image_overrides.py). /dashboard-lab
+  deleted (owner); its address forwards to /, tag backup/before-dashboard-lab-removal-2026-11-20.
 - 2026-11-20 Step 9a, one look: the Poke6s bar (Shop / Market / Admin) across the top of
   poke6s.com, market.poke6s.com (every page through site_shell.js, plus the phone app) and the
   store admin; the store header's "Market prices" link and the admin's "Open the store" moved
@@ -774,6 +779,12 @@ already be covered.
 Active Queue
 ------------
 
+- [owner] Find real pictures for the products TCGplayer has none for, and save them as
+  images/products/<productId>.jpg (instructions: images/products/README.md). No picture at all
+  yet: 98202 Jigglypuff #25 (XY Trainer Kit), 636312 Costco Crown Zenith ETB + Paldea Legends
+  Tins, 610741 Costco Evolving Skies ETB and Tin, 549339 Gyarados 043/193 Cosmos Holo, 664138
+  Hydrapple Cosmos Holo, 567093 JP Charizard ex 139/108, 615352 JP Rainbow Energy (Pokemon VS).
+  The other 53 show a stand-in until then (scripts/dashboards/product_image_standins.csv).
 - [planned] Performance review (2026-11-05): the design is sound (nightly snapshot tables, one
   shared read-only DuckDB connection; phone pages answer in 5-95 ms). Fix 1 (dead tables) is
   done, see Recently Completed. Still to do:
@@ -1028,8 +1039,8 @@ Needs Decisions
 - Keep the lightweight tracking account long term, or join a broader site membership?
 - A future assistant: explainer, ranked recommender, or collection copilot? What guardrails
   and disclaimers does it need?
-- Development pages `/dashboard-lab`, `/dashboard-dev`: decided 2026-10-12 to leave them public
-  for now (`/mobile-rebuild` was deleted 2026-10-31).
+- Development page `/dashboard-dev`: decided 2026-10-12 to leave it public for now
+  (`/mobile-rebuild` was deleted 2026-10-31; `/dashboard-lab` on 2026-11-20).
 
 Future Ideas
 ------------

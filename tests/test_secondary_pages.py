@@ -3,7 +3,6 @@ import unittest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DESKTOP_LAB_HTML = REPO_ROOT / "scripts" / "dashboards" / "dashboard_lab.html"
 SEALED_DEALS_HTML = REPO_ROOT / "scripts" / "dashboards" / "sealed_deals.html"
 SET_EXPLORER_HTML = REPO_ROOT / "scripts" / "dashboards" / "set_explorer.html"
 BUDGET_BUILDER_HTML = REPO_ROOT / "scripts" / "dashboards" / "budget_builder.html"
@@ -16,7 +15,6 @@ INDEX_OVERVIEW_DETAIL_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overv
 class SecondaryPageContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.desktop_lab_html = DESKTOP_LAB_HTML.read_text(encoding="utf-8")
         cls.sealed_deals_html = SEALED_DEALS_HTML.read_text(encoding="utf-8")
         cls.set_explorer_html = SET_EXPLORER_HTML.read_text(encoding="utf-8")
         cls.budget_builder_html = BUDGET_BUILDER_HTML.read_text(encoding="utf-8")
@@ -24,19 +22,6 @@ class SecondaryPageContractTests(unittest.TestCase):
         cls.placeholder_library_html = PLACEHOLDER_LIBRARY_HTML.read_text(encoding="utf-8")
         cls.index_overview_hub_html = INDEX_OVERVIEW_HUB_HTML.read_text(encoding="utf-8")
         cls.index_overview_detail_html = INDEX_OVERVIEW_DETAIL_HTML.read_text(encoding="utf-8")
-
-    def test_desktop_lab_page_exposes_live_route_reference_links(self):
-        self.assertIn("Desktop Lab", self.desktop_lab_html)
-        self.assertIn("Market Command Center", self.desktop_lab_html)
-        self.assertIn("/dashboard", self.desktop_lab_html)
-        self.assertIn("/set-explorer", self.desktop_lab_html)
-        self.assertIn("/sealed-deals", self.desktop_lab_html)
-        self.assertIn("/dashboard?tab=group_products", self.desktop_lab_html)
-        self.assertIn("/dashboard?tab=browse_species", self.desktop_lab_html)
-        self.assertIn("/dashboard?tab=under_the_radar", self.desktop_lab_html)
-        for workspace in ("buy", "discover", "research", "track", "learn"):
-            self.assertIn(f'data-workspace="{workspace}"', self.desktop_lab_html)
-        self.assertIn("const WORKSPACES", self.desktop_lab_html)
 
     def test_sealed_deals_page_has_core_filters_and_table(self):
         self.assertIn("Poke6s Sealed Deals", self.sealed_deals_html)

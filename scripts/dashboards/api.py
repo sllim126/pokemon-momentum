@@ -139,7 +139,6 @@ import threading
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent.parent
-ALT_DASHBOARD_HTML = SCRIPT_DIR / "dashboard_lab.html"
 COLLECTOR_HUB_HTML = SCRIPT_DIR / "collector_hub.html"
 PLACEHOLDER_LIBRARY_HTML = SCRIPT_DIR / "placeholder_library.html"
 BINDER_ART_HTML = SCRIPT_DIR / "binder_art.html"
@@ -937,8 +936,11 @@ def retired_mobile_pages():
 
 
 @app.get("/dashboard-lab")
-def dashboard_lab():
-    return FileResponse(ALT_DASHBOARD_HTML)
+def retired_dashboard_lab():
+    """The desktop layout prototype was deleted on 2026-11-20 once the desktop app replaced it
+    (restore from the git tag backup/before-dashboard-lab-removal-2026-11-20 if ever needed).
+    The address forwards to the home page so saved links keep working."""
+    return RedirectResponse("/", status_code=301)
 
 
 @app.get("/collector-hub")

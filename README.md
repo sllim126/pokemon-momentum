@@ -34,8 +34,6 @@ The goal is simple: make it easier to spot what is moving, what may be starting 
   - the mobile app on any device (`/mobile-classic` and `/mobile-rebuild` forward here)
 - `/buy`, `/discover`, `/research`, `/track`, `/learn`
   - area landing pages built from the shared header's menu (`site_shell.js`)
-- `/dashboard-lab`
-  - desktop command-center design/workflow reference (development page)
 - `/collector-hub`
   - entry point for collector checklists, print tools, review queues, and downloads
 - `/placeholders`
