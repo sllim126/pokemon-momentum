@@ -63,6 +63,15 @@ class StorefrontMarketReferenceTests(unittest.TestCase):
             path.write_text("sku,tcgplayer_product_id\nA,11|12\nB,\n", encoding="utf-8")
             self.assertEqual(ref.store_product_ids((path,)), {"11", "12"})
 
+    def test_article_market_tags_add_their_cards(self):
+        with TemporaryDirectory() as tmpdir:
+            folder = Path(tmpdir)
+            (folder / "post.md").write_text(
+                "---\ntitle: X\n---\nText.\n\n[[market 662184 655886]]\n\n"
+                "Inline [[market 999]] is not a box line.\n", encoding="utf-8")
+            self.assertEqual(ref.article_product_ids(folder), {"662184", "655886"})
+            self.assertEqual(ref.article_product_ids(folder / "missing"), set())
+
     def test_write_is_atomic_json(self):
         with TemporaryDirectory() as tmpdir:
             out = Path(tmpdir) / "sub" / "market_reference.json"

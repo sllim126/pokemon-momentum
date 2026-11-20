@@ -270,6 +270,14 @@ def test_market_boxes_use_todays_prices():
     assert "https://tcgplayer-cdn.tcgplayer.com/product/712094_200w.jpg" in out
     assert "Delta &lt;Reign&gt; ETB" in out                                     # names escaped
     assert "as of November 19" in out and "Intro." in out and "Outro." in out
+    # Cards show their set, and Japanese products say so (English and Japanese share names).
+    market.products["655886"] = {"name": "Mega Charizard X ex - 110/080", "price": 654.46, "kind": "card",
+                                 "group_name": "M2: Inferno X", "market": "JP", "roc_30d_pct": -8.0}
+    card = market_boxes(parse("x", "[[market 655886]]\n").html, market)
+    assert '<span class="market-box-set">Inferno X · Japanese</span>' in card
+    assert "market-box-set" not in out                                         # English sealed: none
+    assert 'class="market-boxes market-boxes-cards"' in card and "655886_in_1000x1000.jpg" in card
+    assert "market-boxes-cards" not in out
     # A tag whose products are all unknown disappears; text that merely mentions one stays.
     assert market_boxes(parse("x", "[[market 1]]\n").html, market).strip() == ""
     inline = parse("x", "Write [[market 712094]] on its own line.\n").html
