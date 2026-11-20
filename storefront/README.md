@@ -231,11 +231,13 @@ DKIM for poke6s.com is on (2026-11-12): two `selector*._domainkey` CNAMEs in Clo
 and the first test email to Gmail showed SPF, DKIM (poke6s.com) and DMARC all passing. The app is
 refused when it tries to send as any other mailbox (checked: 403 for admin@).
 
-Order emails (confirmation and shipped) have a plain-text part and a designed HTML part,
+Order emails (confirmation, shipped, refund and the review request) have a plain-text part and a designed HTML part,
 `app/templates/email/order.html`: tables and inline styles only, because email apps ignore most
 CSS. The logo is attached to the email itself (`cid:`), so it shows before the site is public.
 The shipped email links USPS, UPS, FedEx and DHL numbers to the carrier's tracking page
-(`notify.TRACKING_URLS`; other carriers show the number without a button).
+(`notify.TRACKING_URLS`; other carriers show the number without a button). The review request
+(5 days after shipping, once per order) is short: the items, a "Leave a Google review" button
+and an invitation to reply if anything's wrong; `orders.send_review_requests` has the rules.
 
 **A test order.** Add something to the cart, Checkout, and pay on Stripe's page with card
 `4242 4242 4242 4242`, any future date, any CVC, any US address. Orders are numbered

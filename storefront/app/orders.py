@@ -8,6 +8,7 @@ and orders".
                                       -> release()           checkout expired: stock back
                                       -> record_refund(), record_dispute()
     admin / orders_cli ship -----------> mark_shipped()      shipped email with tracking
+    reconcile job, days later ---------> send_review_requests()  one Google review request
     admin -----------------------------> add_note(), correct_address()
 
 Rules kept here:
@@ -512,6 +513,50 @@ def correct_address(conn: sqlite3.Connection, number: str, fields: dict, reason:
     conn.commit()
     why = f" Reason: {' '.join(reason.split())[:300]}." if reason.strip() else ""
     return add_note(conn, number, f"Address changed. Was: {old_text}.{why}", now)
+
+
+# --- Google review requests (owner, 2026-11-20) -------------------------------------------
+# Ask every customer, happy or not, and never offer anything for a review: Google's review
+# rules and the FTC's 2024 rule on fake reviews both forbid choosing who is asked or paying
+# for reviews (discounts, entries, freebies). So the email goes to every eligible order.
+REVIEW_LATEST_EXTRA_DAYS = 14      # orders shipped longer ago than days + this are never asked
+REVIEW_SEND_HOURS = range(9, 20)   # shop time (Utah): no review emails overnight
+
+
+def send_review_requests(conn: sqlite3.Connection, settings: Settings, base_url: str,
+                         now: datetime | None = None) -> int:
+    """Email the Google review request to live orders shipped settings.review_request_days ago.
+
+    Called by the reconcile job (every 15 minutes). An order qualifies once: still 'shipped'
+    (not refunded, returned or disputed), shipped between review_request_days and
+    review_request_days + REVIEW_LATEST_EXTRA_DAYS ago (so switching this on doesn't email old
+    orders), not asked before, and the address hasn't unsubscribed from the email list.
+    review_asked_at is set before sending, so a crash can't send it twice; a failed send is
+    queued for retry by notify.send_email like any order email. Returns how many were sent.
+    """
+    if not settings.google_review_url or settings.review_request_days <= 0:
+        return 0
+    now = now or datetime.now(UTC)
+    if now.astimezone(notify.MOUNTAIN).hour not in REVIEW_SEND_HOURS:
+        return 0
+    newest = now - timedelta(days=settings.review_request_days)
+    oldest = newest - timedelta(days=REVIEW_LATEST_EXTRA_DAYS)
+    rows = conn.execute(
+        "SELECT number FROM orders WHERE mode = 'live' AND status = 'shipped' AND review_asked_at IS NULL "
+        "AND shipped_at <= ? AND shipped_at >= ? AND email != '' "
+        "AND lower(email) NOT IN (SELECT lower(email) FROM notify_signups WHERE unsubscribed_at IS NOT NULL) "
+        "ORDER BY id", (now_iso(newest), now_iso(oldest))).fetchall()
+    sent = 0
+    for row in rows:
+        cur = conn.execute("UPDATE orders SET review_asked_at = ? WHERE number = ? AND review_asked_at IS NULL",
+                           (now_iso(now), row["number"]))
+        if cur.rowcount != 1:
+            continue   # another pass got there first
+        conn.commit()
+        order = get_order(conn, row["number"])
+        notify.review_request_email(settings, order, status_url(base_url, order))
+        sent += 1
+    return sent
 
 
 def status_url(base_url: str, order: dict) -> str:

@@ -326,6 +326,32 @@ Poke6s
     return send_email(settings, order["email"], subject, body, html, cid, ref=order["number"])
 
 
+def review_request_email(settings: Settings, order: dict, status_url: str) -> bool:
+    """Ask for a Google review, once per order, a few days after it shipped
+    (orders.send_review_requests decides when and to whom). Every customer gets the same ask:
+    no incentive, and problems are invited by reply, not filtered out of who is asked."""
+    review_url = settings.google_review_url
+    body = f"""Hi{(' ' + (order.get('name') or '').split()[0]) if (order.get('name') or '').strip() else ''},
+
+Your Poke6s order {order['number']} should have arrived by now. How did we do?
+
+If you have a minute, a short review on Google helps a small shop like ours a lot:
+{review_url}
+
+{_lines(order)}
+
+If anything arrived damaged or isn't right, reply to this email and we'll sort it out.
+
+This is the only review email we'll send for this order.
+
+Poke6s
+"""
+    subject = f"How did we do? Poke6s order {order['number']}"
+    html, cid = _html(settings, "review", order, status_url, subject,
+                      "A short Google review helps a small shop like ours a lot.", review_url=review_url)
+    return send_email(settings, order["email"], subject, body, html, cid, ref=order["number"])
+
+
 def refund_email(settings: Settings, order: dict, status_url: str, refund_cents: int) -> bool:
     """Tell the customer about a refund made from the admin (Phase 3, step 4). `order` already
     carries the new refunded total."""

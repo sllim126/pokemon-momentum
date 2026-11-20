@@ -125,6 +125,8 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     def reconcile_once() -> None:
         with writer() as conn:
             counts = orders.reconcile(conn, settings, stripe, settings.base_url)
+            # A few days after shipping: the one Google review request per order.
+            counts["review_emails"] = orders.send_review_requests(conn, settings, settings.base_url)
         # Order emails that failed earlier get another try (notify.py, review item 12).
         counts.update({f"email_{k}": v for k, v in notify.retry_queued(settings).items()})
         if any(counts.values()):

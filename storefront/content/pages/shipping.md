@@ -19,7 +19,8 @@ an email with the tracking number when your order ships.
 
 ## Packing
 
-Sealed product is packed in a box with padding so corners and shrink wrap arrive intact.
+Sealed product is wrapped in bubble wrap and shipped in a cardboard box, never a padded
+mailer, so corners and shrink wrap arrive intact.
 Every order ships with **tracking** and **signature confirmation**, so someone needs to be
 there to sign for it.
 

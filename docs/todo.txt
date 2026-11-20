@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-20 (market option B: Binder Art Maker and Collector Hub moved to poke6s.com; missing product pictures; /dashboard-lab removed; blog drafts and scheduled articles)
+Last updated: 2026-11-20 (market option B: Binder Art Maker and Collector Hub moved to poke6s.com; missing product pictures; /dashboard-lab removed; blog drafts and scheduled articles; store trust lines and Google review request)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -44,6 +44,13 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-20 Store trust lines and the Google review request. Trust lines (owner's facts:
+  selling since July 2025; bubble wrap in a cardboard box; tracking and signature on every
+  order; ships within 1 business day): a ticked list under Add to cart, plus the About and
+  Shipping pages. Review request: 5 days after an order ships, one "How did we do?" email with
+  the Google Business Profile's review link (g.page/r/CYIrs6Vj97MOEBM/review), sent by the
+  15-minute job between 9 am and 8 pm Utah time (migration 008). Also: STOREFRONT_POSTAL_ADDRESS
+  was never passed into the store container; docker-compose now passes it.
 - 2026-11-20 Binder Art Maker: "Pockets to fill" (owner's request). Pick which pockets get the
   picture (e.g. 1 & 4, or 8 & 9); the picture fits the kept pockets and the PDF/ZIP hold only
   those cards. Works with 2x2 to 5x5 pages and 2-page spreads.
@@ -346,6 +353,11 @@ and open decisions: `docs/storefront_plan.md` (progress log at its end). What th
 site has today: `docs/storefront_current_site.md`. Our own site, hosted on the owner's server
 behind Cloudflare Tunnel; Stripe hosted Checkout (approved by the owner 2026-10-31). The
 Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
+- [owner] Google Business Profile ("Poke6s, llc"): confirm the business details (Google's
+  "Action Required" email, 2026-10-22: hours, phone, website https://poke6s.com) and add a few
+  photos (sealed stock, packing). The review request emails are built (Recently Completed).
+- [idea] Show the Google star rating on poke6s.com once there are a few reviews (from the
+  profile, not a paid widget).
 - [idea] Track record: also record the Japanese lists' Budget Builder and the Graded Budget
   Builder (scored on PriceCharting history). Only raw English budget picks are scored today.
 - [idea] Desktop card column at 1366 px: when a card has "Our TCGplayer store", the action bar
@@ -470,16 +482,18 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
 - [ready] Notification emails get product cards (branch `storefront/mail-product-cards`,
   78eec63; 162 store tests pass): `Products: SKU, SKU` in a message file shows photo, price and
   link per product. Not merged: merge when the owner says. Draft "we're open" email in
-  data/storefront/mailings/2026-11-we-are-open.txt; sends only after the PO box (see below).
+  data/storefront/mailings/2026-11-we-are-open.txt; the postal address it needs is set (below).
 - [planned] Some store photos are tiny (Greninja ex PC 200 px, Perfect Order box 270 px):
   replace them with larger ones (fits with the owner's listing notes).
 - [next] Owner's notes on individual store listings (owner has them, 2026-11-14): go through
   them one listing at a time.
 - [owner] The email list has one sign-up (a visitor, 2026-11-12 from /notify), not none: send
   them a short "we're open" email with `orders_cli mailing`, or not. Owner's call.
-- [owner] Before the first marketing email: STOREFRONT_POSTAL_ADDRESS in .env (it's printed in
-  every email; a USPS PO box or private mailbox keeps the home address private), then
-  deploy/update_storefront.sh. `orders_cli mailing` refuses to send without it.
+- [ready] Postal address for marketing emails: STOREFRONT_POSTAL_ADDRESS is set in .env
+  (2026-11-20). No PO box: the owner chose the business's street address (already on its Google
+  Business Profile and state registration); it lives only in .env, never in the repo. It reaches
+  the store container once the storefront/trust-lines branch (docker-compose passes it) is
+  merged and deploy/update_storefront.sh has run; `orders_cli mailing` refuses until then.
 - [planned] A way to join the email list now: the sign-up form shows only while checkout is
   off. A small "News and restocks" box in the footer or on /notify? Owner's call.
 - [planned] A restock command for returns (D8: refunds don't put stock back; done by hand in

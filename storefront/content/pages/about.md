@@ -4,6 +4,10 @@ description: Poke6s is a small shop for sealed Pokémon TCG product, and the tea
 ---
 Poke6s is a small shop for sealed Pokémon Trading Card Game product: booster
 boxes, bundles, Elite Trainer Boxes and collection boxes, in English and Japanese.
+We've been selling Pokémon cards since July 2025.
+
+Every order is wrapped in bubble wrap, shipped in a cardboard box with tracking and signature
+confirmation, and sent within 1 business day. Details are on the [shipping page](/shipping).
 
 We also run [market.poke6s.com](https://market.poke6s.com), a free site that tracks Pokémon
 card and sealed prices every day. That's why every product page here shows the current market
