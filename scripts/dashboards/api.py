@@ -139,10 +139,11 @@ import threading
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent.parent
-COLLECTOR_HUB_HTML = SCRIPT_DIR / "collector_hub.html"
 PLACEHOLDER_LIBRARY_HTML = SCRIPT_DIR / "placeholder_library.html"
-# Binder Art Maker moved to the store on 2026-11-20 (docs/market_inventory.md, option B).
+# Binder Art Maker and Collector Hub moved to the store on 2026-11-20
+# (docs/market_inventory.md, option B).
 SHOP_BINDER_ART_URL = "https://poke6s.com/binder-art"
+SHOP_COLLECTOR_HUB_URL = "https://poke6s.com/collector-hub"
 SET_EXPLORER_HTML = SCRIPT_DIR / "set_explorer.html"
 BUDGET_BUILDER_HTML = SCRIPT_DIR / "budget_builder.html"
 SEALED_DEALS_HTML = SCRIPT_DIR / "sealed_deals.html"
@@ -946,7 +947,10 @@ def retired_dashboard_lab():
 
 @app.get("/collector-hub")
 def collector_hub():
-    return FileResponse(COLLECTOR_HUB_HTML)
+    """Collector Hub lives on the shop now (poke6s.com/collector-hub, moved 2026-11-20;
+    storefront/app/collector_hub.py). Its tiles still link to this site's /collector-assets
+    and /placeholder-downloads, and /collector-manifest stays for the Placeholder Library."""
+    return RedirectResponse(SHOP_COLLECTOR_HUB_URL, status_code=301)
 
 
 @app.get("/placeholders")

@@ -1,6 +1,7 @@
-"""Binder Art Maker on the store (/binder-art, app/binder_art.py), moved from market.poke6s.com
-on 2026-11-20: the page and its CSP, and the set logo list built from a logo folder and the
-TCGCSV groups CSV (both temporary copies here)."""
+"""The free tools moved from market.poke6s.com to the store on 2026-11-20: Binder Art Maker
+(/binder-art, app/binder_art.py: the page, its CSP, and the set logo list built from a logo
+folder and the TCGCSV groups CSV, both temporary copies here) and Collector Hub
+(/collector-hub, app/collector_hub.py)."""
 
 from __future__ import annotations
 
@@ -87,3 +88,14 @@ def test_page_logos_and_csp(art_client):
 def test_listed_in_the_sitemap_and_footer(art_client):
     assert "https://shop.test/binder-art</loc>" in art_client.get("/sitemap.xml").text
     assert 'href="/binder-art"' in art_client.get("/").text
+
+
+def test_collector_hub(art_client):
+    # Moved from the market 2026-11-20 (app/collector_hub.py); its resources still open there.
+    page = art_client.get("/collector-hub")
+    assert page.status_code == 200 and "<h1>Collector Hub</h1>" in page.text
+    assert "https://market.poke6s.com/collector-assets/checklists-sv/index.html" in page.text
+    assert "https://market.poke6s.com/placeholder-downloads/combined-printable-csv" in page.text
+    assert 'href="/binder-art"' in page.text and "<script>" not in page.text.split("<body>", 1)[1]
+    assert "https://shop.test/collector-hub</loc>" in art_client.get("/sitemap.xml").text
+    assert 'href="/collector-hub"' in art_client.get("/").text

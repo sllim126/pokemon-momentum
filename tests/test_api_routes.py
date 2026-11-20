@@ -329,12 +329,24 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("Budget Builder", response.text)
 
-    def test_collector_hub_page_serves_html(self):
-        response = self.client.get("/collector-hub")
+    def test_collector_hub_moved_to_the_shop(self):
+        # Moved to poke6s.com on 2026-11-20 (storefront/tests/test_free_tools.py tests it there).
+        response = self.client.get("/collector-hub", follow_redirects=False)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("text/html", response.headers["content-type"])
-        self.assertIn("<h1>Collector Hub</h1>", response.text)
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response.headers["location"], "https://poke6s.com/collector-hub")
+
+    def test_shop_collector_hub_links_resolve_here(self):
+        # The shop's Collector Hub (storefront/app/collector_hub.py) links to files this site
+        # serves; a renamed bucket or download id here would break those links.
+        from storefront.app import collector_hub
+
+        manifest_hrefs = {item["href"] for item in self.client.get("/collector-manifest").json()["items"]}
+        for section in collector_hub.SECTIONS:
+            for resource in section.resources:
+                self.assertIn(f"/collector-assets/{resource.asset}", manifest_hrefs)
+                if resource.download:
+                    self.assertIn(resource.download[0], api.PLACEHOLDER_DOWNLOAD_FILES)
 
     def test_placeholder_library_page_serves_html(self):
         response = self.client.get("/placeholders")
@@ -359,7 +371,7 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(missing, [], "add these routes to docs/api_routes.md")
 
     def test_binder_art_moved_to_the_shop(self):
-        # Moved to poke6s.com on 2026-11-20 (storefront/tests/test_binder_art.py tests it there).
+        # Moved to poke6s.com on 2026-11-20 (storefront/tests/test_free_tools.py tests it there).
         response = self.client.get("/binder-art", follow_redirects=False)
 
         self.assertEqual(response.status_code, 301)
