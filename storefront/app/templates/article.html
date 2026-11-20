@@ -10,7 +10,7 @@
     <p class="muted"><time datetime="{{ article.date }}">{{ article.date | longdate }}</time>{% if article.author %} · {{ article.author }}{% endif %} · {{ article.minutes }} min read</p>
   </header>
   {% if article.cover and not article.cover_in_body %}<img class="article-cover" src="/media/1200/{{ article.cover }}.webp" alt="" width="1200" height="675">{% endif %}
-  <div class="article-body">{{ article.html | safe }}</div>
+  <div class="article-body">{{ body_html | safe }}</div>
   {% if article.tags %}
   <ul class="chips article-tags" aria-label="Tags">{% for t in article.tags %}<li><a class="chip" href="/articles?tag={{ t | urlencode }}">{{ t }}</a></li>{% endfor %}</ul>
   {% endif %}

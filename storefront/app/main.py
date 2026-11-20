@@ -36,7 +36,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import catalog, classify, collector_hub, images, notify, notify_list, orders, redirects, seo, stripe_api
-from .articles import Articles
+from .articles import Articles, market_boxes
 from .binder_art import SetLogos
 from .db import connect, latest_migration, migrate
 from .market import MarketReference
@@ -83,6 +83,9 @@ SECURITY_HEADERS = {
 # The Binder Art Maker's page (/binder-art) also needs blob: images: the visitor's own picture is
 # read with URL.createObjectURL and never leaves the browser. Everything else stays the same.
 BINDER_ART_CSP = SECURITY_HEADERS["Content-Security-Policy"].replace("img-src 'self' data:", "img-src 'self' data: blob:")
+# Article pages may show TCGplayer's product pictures in market boxes (articles.market_boxes).
+ARTICLE_CSP = SECURITY_HEADERS["Content-Security-Policy"].replace(
+    "img-src 'self' data:", "img-src 'self' data: https://tcgplayer-cdn.tcgplayer.com")
 # Largest cart or checkout request accepted (item 16). A full cart (50 lines) is about 3 KB.
 MAX_CART_BODY_BYTES = 32 * 1024
 
@@ -436,11 +439,14 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         if found is None:
             raise HTTPException(404)
         crumbs = [("Home", "/"), ("Articles", "/articles"), (found.title, f"/articles/{slug}")]
-        return page(request, "article.html", title=found.title, article=found,
-                    scheduled=articles.is_scheduled(found),
-                    more=articles.more_like(found), crumbs=crumbs, og_type="article",
-                    og_image=seo.image_url(settings, found.cover), description=found.description,
-                    jsonld=[seo.article_jsonld(settings, found), seo.breadcrumbs_jsonld(settings, crumbs)])
+        response = page(request, "article.html", title=found.title, article=found,
+                        scheduled=articles.is_scheduled(found),
+                        body_html=market_boxes(found.html, market),   # today's prices, per view
+                        more=articles.more_like(found), crumbs=crumbs, og_type="article",
+                        og_image=seo.image_url(settings, found.cover), description=found.description,
+                        jsonld=[seo.article_jsonld(settings, found), seo.breadcrumbs_jsonld(settings, crumbs)])
+        response.headers["Content-Security-Policy"] = ARTICLE_CSP
+        return response
 
     # --- free tools ---------------------------------------------------------------------
     # Collector Hub and Binder Art Maker, moved from market.poke6s.com on 2026-11-20
