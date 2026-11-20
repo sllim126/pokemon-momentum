@@ -19,8 +19,8 @@ Where the data comes from
 
 Rough map of this file (line numbers drift; search for the route string)
 - page routes (HTML files, redirects, phone/desktop switch): `@app.get("/")` onwards
-- admin research (EOD index views) and supplier tools: /eod/*, /supplier-* (the Squarespace
-  export upload and singles intake were retired 2026-11-20, D11)
+- supplier tools: /supplier-* (the Squarespace export upload and singles intake were retired
+  2026-11-20, D11; so were the End of Day and Embed research views, owner 2026-11-20)
 - sign-in and saved state (tracking_store.py): /tracking/*
 - market data for the apps: /universe, /groups, /search, /group_products, /series,
   /card_details, /sparkline_batch, /index-overview-data
@@ -148,8 +148,6 @@ SET_EXPLORER_HTML = SCRIPT_DIR / "set_explorer.html"
 BUDGET_BUILDER_HTML = SCRIPT_DIR / "budget_builder.html"
 SEALED_DEALS_HTML = SCRIPT_DIR / "sealed_deals.html"
 ACCOUNT_SETTINGS_HTML = SCRIPT_DIR / "account_settings.html"
-EOD_DASHBOARD_HTML = SCRIPT_DIR / "eod_dashboard.html"
-EMBED_DASHBOARD_HTML = SCRIPT_DIR / "embed_dashboard.html"
 BUG_REPORTS_HTML = SCRIPT_DIR / "bug_reports.html"
 REVIEW_NOTE_ATTACHMENTS_DIR = REPO_ROOT / "data" / "review_note_attachments"
 REVIEW_NOTE_PAGES = {"/m-next", "/"}  # pages with the owner's Note tab (phone app, desktop app)
@@ -201,21 +199,6 @@ IMAGE_DIR_CANDIDATES = [
     Path("/opt/pokemon-momentum/images"),
     Path.cwd() / "images",
 ]
-MS_SCRIPTS_ROOT_CANDIDATES = [
-    Path("/app/MS_Scripts"),
-    SCRIPT_DIR.parents[2] / "MS_Scripts",
-    Path("/opt/pokemon-momentum/MS_Scripts"),
-]
-for ms_scripts_root in MS_SCRIPTS_ROOT_CANDIDATES:
-    if ms_scripts_root.exists():
-        ms_scripts_root_str = str(ms_scripts_root)
-        if ms_scripts_root_str not in sys.path:
-            sys.path.insert(0, ms_scripts_root_str)
-        break
-
-from processor.utilities.pokemon_eodhistoricaldata_api import EodApi as PokemonEodApi
-
-EOD_API = PokemonEodApi("POKEMON")
 # Admins are matched by exact, Google-verified email. Usernames that merely start
 # with an admin's name (e.g. "sllim126@anything") are not admins.
 ADMIN_USERNAMES = {
@@ -1016,18 +999,6 @@ def dashboard_dev(request: Request):
     return dashboard_response_for_request(request)
 
 
-@app.get("/eod-dashboard")
-def eod_dashboard(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
-    require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    return FileResponse(EOD_DASHBOARD_HTML)
-
-
-@app.get("/embed")
-def embed_dashboard(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
-    require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    return FileResponse(EMBED_DASHBOARD_HTML)
-
-
 @app.get("/bug-reports")
 def bug_reports_page(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
     require_admin_user(authorization=authorization, tracking_token=tracking_token)
@@ -1037,9 +1008,17 @@ def bug_reports_page(authorization: str | None = Header(default=None), tracking_
 # Retired 2026-11-20 (storefront plan D11): the Squarespace Export Upload and Singles Listing
 # Intake. poke6s.com runs on its own store now (products and prices in its admin, home network
 # only) and singles stay on TCGplayer (D10). Old bookmarks land on the Admin page instead.
+#
+# Also retired 2026-11-20 (owner): End of Day (/eod-dashboard, a stock-market-style index view
+# over the same prices the Index Overview and Set Explorer show) and Embed (/embed, a small
+# trend box for iframes on the old Squarespace site). Both were admin-only, so no visitor
+# loses anything; their JSON routes (/eod/*) are gone too.
 @app.get("/pricing-upload")
 @app.get("/single-listings-upload")
-def retired_squarespace_tools():
+@app.get("/eod-dashboard")
+@app.get("/embed")
+@app.head("/embed")
+def retired_admin_pages():
     return RedirectResponse("/admin", status_code=301)
 
 
@@ -1264,11 +1243,6 @@ def image_asset_head(filename: str):
     return FileResponse(path)
 
 
-@app.head("/embed")
-def embed_dashboard_head():
-    return FileResponse(EMBED_DASHBOARD_HTML)
-
-
 @app.get("/health")
 def health(category_id: int = 3):
     """Report the active history source and latest available date for a category."""
@@ -1318,38 +1292,6 @@ def psa_cert_lookup(
         last_checked_at=psa_utcnow().replace(microsecond=0).isoformat(),
     )
     return psa_lookup_response(stored_row, source="psa")
-
-
-@app.get("/eod/market_details")
-def eod_market_details(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
-    require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    details = EOD_API.get_market_details()
-    return details.to_dict()
-
-
-@app.get("/eod/index_list")
-def eod_index_list(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
-    """Admin only: the English sets that have prices, as {value, label} options for the EOD research page's index picker."""
-    require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    cols, rows = q(
-        f"""
-        WITH active_groups AS (
-          SELECT DISTINCT groupId
-          FROM {prices_from()}
-          WHERE categoryId = 3
-        )
-        SELECT
-          CAST(g.groupId AS VARCHAR) AS value,
-          COALESCE(g.name, CAST(g.groupId AS VARCHAR)) AS label,
-          g.abbreviation
-        FROM active_groups a
-        JOIN {groups_from(3)} g
-          ON g.groupId = a.groupId
-        ORDER BY lower(COALESCE(g.name, CAST(g.groupId AS VARCHAR)))
-        """
-    )
-    items = [dict(zip(cols, row)) for row in rows]
-    return {"indexes": items}
 
 
 @app.get("/categories")
@@ -4482,99 +4424,6 @@ def bug_reports(
 ):
     require_admin_user(authorization=authorization, tracking_token=tracking_token)
     return {"items": list_bug_reports(limit=limit)}
-
-
-@app.get("/eod/index_components")
-def eod_index_components(index: str, authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
-    """Admin only: the cards in one set ("index") for the EOD research page, via the EOD-style API wrapper (EOD_API)."""
-    require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    try:
-        general, components = EOD_API.get_index_components(index)
-    except FileNotFoundError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
-    except duckdb.Error as exc:
-        raise HTTPException(status_code=500, detail=f"EOD index_components failed for {index}: {exc}") from exc
-    except urllib.error.HTTPError as exc:
-        raise HTTPException(status_code=exc.code or 404, detail=f"Set not found: {index}") from exc
-    except Exception as exc:
-        if isinstance(exc, HTTPException):
-            raise
-        raise HTTPException(status_code=500, detail=f"EOD index_components failed for {index}: {exc}") from exc
-
-    general_rows = general.to_dict(orient="records")
-    components_reset = components.reset_index()
-    component_rows = components_reset.to_dict(orient="records")
-    return {
-        "general": general_rows[0] if general_rows else {},
-        "components": component_rows,
-    }
-
-
-@app.get("/eod/series")
-def eod_series(code: str, days: int = 365, authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
-    """Admin only: one product's daily price series for the EOD research page, looked up by its code.
-
-    `days` is clamped to 7-5000. Errors from the wrapper become HTTP errors with the code in
-    the message.
-    """
-    require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    days = max(7, min(days, 5000))
-    try:
-        product = EOD_API.resolve_product(code)
-        if product is None:
-            raise HTTPException(status_code=404, detail=f"No product found for {code}")
-        latest_date = product.get("latest_date")
-        if pd.notna(latest_date) and hasattr(latest_date, "date"):
-            latest_date = latest_date.date()
-        padded_from = None
-        if latest_date is not None:
-            padded_from = latest_date - timedelta(days=days + 35)
-        live = EOD_API.code_live(code, product=product)
-        series = EOD_API.code_eod(code, from_date=padded_from, product=product)
-        fundamentals = EOD_API.code_fundamentals(code, product=product)
-    except FileNotFoundError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
-    except Exception as exc:
-        if isinstance(exc, HTTPException):
-            raise
-        raise HTTPException(status_code=500, detail=f"EOD series failed for {code}: {exc}") from exc
-
-    if series is None or series.empty:
-        raise HTTPException(status_code=404, detail=f"No series found for {code}")
-
-    if days:
-        series = series.tail(days)
-
-    rows = []
-    prices = pd.to_numeric(series["close"], errors="coerce")
-    sma7 = prices.rolling(7).mean()
-    sma30 = prices.rolling(30).mean()
-    normalized = series.reset_index(drop=True).copy()
-    normalized["close"] = prices.reset_index(drop=True)
-
-    for idx, row in normalized.iterrows():
-        raw_date = row.get("date")
-        if pd.isna(raw_date):
-            date_str = ""
-        elif hasattr(raw_date, "date"):
-            date_str = str(raw_date.date())
-        else:
-            date_str = str(raw_date)
-        rows.append(
-            [
-                date_str,
-                None if pd.isna(row["close"]) else float(row["close"]),
-                None if pd.isna(sma7.iloc[idx]) else float(sma7.iloc[idx]),
-                None if pd.isna(sma30.iloc[idx]) else float(sma30.iloc[idx]),
-            ]
-        )
-
-    return {
-        "columns": ["date", "close", "sma7", "sma30"],
-        "rows": rows,
-        "live": to_jsonable(live.to_dict()) if live is not None else {},
-        "fundamentals": to_jsonable(fundamentals.to_dict()) if fundamentals is not None else {},
-    }
 
 
 @app.get("/universe")

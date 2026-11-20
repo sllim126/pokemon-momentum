@@ -38,7 +38,7 @@ The public routes below are public for Pokemon (3 and 85) only until a game is p
 | `/pricing-upload`, `/single-listings-upload` | none | anyone | Retired 2026-11-20 (D11): 301 to `/admin` |
 | `/supplier-pricing` | `supplier_pricing.html` | admin | Read supplier price sheets with OCR (tesseract.js) and compare to market |
 | `/supplier-profitability` | `supplier_profitability.html` | admin | Per-SKU profit for supplier buys; store prices read from `data/storefront/store.db` |
-| `/eod-dashboard`, `/embed` (GET and HEAD) | `eod_dashboard.html`, `embed_dashboard.html` | admin | Index/EOD research views |
+| `/eod-dashboard`, `/embed` (GET; `/embed` HEAD too) | none | public | Retired 2026-11-20 (owner): 301 to `/admin` |
 
 ## Shared files
 
@@ -115,7 +115,6 @@ The public routes below are public for Pokemon (3 and 85) only until a game is p
 
 | Route | Access | What it does |
 | --- | --- | --- |
-| `/eod/market_details`, `/eod/index_list`, `/eod/index_components`, `/eod/series` | admin | EOD Historical Data index research |
 | `POST /supplier-pricing/enrich`, `POST /supplier-pricing/save` | admin | Match OCR-read supplier rows to SKUs and market prices; save reviewed quotes |
 | `POST /supplier-profitability/data`, `GET /supplier-profitability/fx` | admin | Profit rows per SKU; latest JPY-per-USD rate |
 | `/lorcana/images.json` | admin | `{ids: [...]}`: the productIds that have a Lorcana image, so the desktop app only asks for images that exist |

@@ -84,7 +84,7 @@ Homes: **Market** = stays a research site (at market.poke6s.com or poke6s.com/ma
 | Supplier Pricing (`/supplier-pricing`) | Read a supplier's price sheet (OCR), save quotes | **Admin.** Owner-only and about buying stock for the store; the costs file is already in the admin |
 | Supplier Profitability (`/supplier-profitability`) | Supplier cost vs market vs store price, per channel | **Admin**, next to the Pricing page (both answer "what should this sell for") |
 | Bug Reports (`/bug-reports`) | Reports from Discord and review notes | **Admin** (one owner home, step 9c) or stays; Discord stays the inbox either way |
-| End of Day, Embed | Older research views | Kept as they are by D11 (2026-11-14). **Decide** whether they still earn their keep. (Dashboard Lab, the old prototype, was deleted 2026-11-20) |
+| End of Day, Embed | Older research views | **Retired 2026-11-20** (owner): End of Day showed nothing the Index Overview, Set Explorer and price charts don't; Embed served the old Squarespace site. Old addresses go to `/admin`. (Dashboard Lab was deleted the same day) |
 | Admin index (`/admin`) | Links to the above | Becomes the "one owner home" (9c) |
 
 ### 5. Accounts

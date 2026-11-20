@@ -835,7 +835,6 @@ Healthy result:
 
 - `/` on desktop (desktop app: each area opens, a card's chart and 6-Month Hold load)
 - `/dashboard`
-- `/embed` (admins only)
 
 Healthy result for `/dashboard`:
 
@@ -1423,7 +1422,7 @@ Current scope:
 - `/mobile`, the desktop app (`/`) and `/account-settings` use the
   tracking account; lists saved before signing in are merged into the account on sign-in
 - price targets (buy-below / sell-above) stay in each browser and do not sync
-- `/embed` and `/set-explorer` are not wired to tracking
+- `/set-explorer` is not wired to tracking
 
 Sign-in sessions (`scripts/dashboards/tracking_store.py`, since 2026-10-13):
 

@@ -460,8 +460,9 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     printable checklists (served from "TCG Placeholders/", so the store needs that folder or
     a copy of the published pages). Then the owner tools into the admin (Supplier Pricing,
     Supplier Profitability).
-  - [waiting] Owner: the last "Decide" row in docs/market_inventory.md (End of Day, Embed).
-    Sealed Deals and Budget Builder: keep (owner, 2026-11-20: "those are fun to look at").
+  - [done 2026-11-20] Market inventory "Decide" rows (owner): Sealed Deals and Budget Builder
+    kept ("those are fun to look at"); End of Day and Embed retired (pages, /eod/* routes and
+    the MS_Scripts EOD adapter removed; old addresses 301 to /admin).
   - [planned] Count the market app's views by ?list= for 2-4 weeks (visitors.py records page
     paths without the query string, so app views are invisible), to inform the inventory.
   - [idea] Bigger, a project of its own (owner, 2026-11-20): fold market.poke6s.com into

@@ -63,8 +63,6 @@ These routes require a Google sign-in whose email is listed in
 `POKEMON_MOMENTUM_ADMIN_USERS` (exact match):
 
 - `/admin` (index of the tools below)
-- `/eod-dashboard`
-- `/embed`
 - `/bug-reports`
 - `/supplier-pricing`
 - `/supplier-profitability`
