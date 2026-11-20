@@ -465,9 +465,9 @@ this properly"):
    **Done 2026-11-20**: both pages and their eight routes removed (old addresses redirect to
    `/admin`); Supplier Pricing and Profitability read store prices from `store.db`; the market
    Admin page links the store admin and poke6s.com.
-9. (Proposed by the owner, 2026-11-20, not decided) Make the three sites feel like one:
-   shared header and look, one Poke6s account, one owner home. See docs/todo.txt
-   "Phase 3 step 9" for the options.
+9. (Owner, 2026-11-20: approved) Make the three sites feel like one: shared header and look,
+   one Poke6s account, one owner home; the store admin stays on the home network. Possibly
+   bigger: fold market.poke6s.com into poke6s.com (todo "[idea] Bigger, a project of its own").
 
 Original scope:
 - LAN-only admin: products and photos, stock adjustments, orders, ship with tracking, refunds. Rules: "How it fits
