@@ -689,6 +689,20 @@ already be covered.
 Active Queue
 ------------
 
+- [planned] Link check of market.poke6s.com, 2026-11-20 (owner asked: no dead links). Headless
+  crawl of 240 pages (desktop and phone, tabs clicked, cards opened): 2,357 links. Result: no
+  dead links. All 2,310 internal links return 200 (/admin is 401, but its link is hidden for
+  visitors); TCGplayer product links (21 sampled), PriceCharting card pages (21), Discord,
+  poke6s.com and TCGCSV all work. Small things found:
+  1. /dashboard-lab: switching English -> Japanese while an English card is selected asks
+     /series for that card with category_id=85 (404). Clear the selection or skip the chart
+     request when the market changes. Development page only.
+  2. 60 products have no TCGplayer image at any size (CDN answers 403); the pages already hide
+     the empty image. A fallback picture (set logo or a placeholder) would look better.
+  3. This server's own DNS (127.0.0.53) can't resolve tcgplayer-cdn.tcgplayer.com (public DNS
+     can: a CloudFront name). Visitors aren't affected; anything on this server that fetches
+     TCGplayer images would be. Check the resolver (Tailscale DNS?).
+  Crawler and checker scripts were one-off (scratchpad); rerun the same way if needed.
 - [planned] Performance review (2026-11-05): the design is sound (nightly snapshot tables, one
   shared read-only DuckDB connection; phone pages answer in 5-95 ms). Fix 1 (dead tables) is
   done, see Recently Completed. Still to do:
