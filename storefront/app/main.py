@@ -35,9 +35,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import catalog, classify, collector_hub, images, notify, notify_list, orders, redirects, seo, stripe_api
+from . import catalog, classify, collector_hub, images, placeholder_library, notify, notify_list, orders, redirects, seo, stripe_api
 from .articles import Articles
 from .binder_art import SetLogos
+from .placeholder_library import PlaceholderFiles
 from .db import connect, latest_migration, migrate
 from .market import MarketReference
 from .metrics import install_metrics
@@ -107,6 +108,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     settings = settings or load_settings()
     market = MarketReference(settings.market_reference_path)
     set_logos = SetLogos(settings.set_logo_dir, settings.groups_csv)
+    placeholder_files = PlaceholderFiles(settings.placeholder_dir)
     pages = load_pages()
     articles = Articles(articles_dir or ARTICLES_DIR)
     if not settings.checkout_switch:
@@ -441,9 +443,10 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
                     jsonld=[seo.article_jsonld(settings, found), seo.breadcrumbs_jsonld(settings, crumbs)])
 
     # --- free tools ---------------------------------------------------------------------
-    # Collector Hub and Binder Art Maker, moved from market.poke6s.com on 2026-11-20
-    # (docs/market_inventory.md, option B). Collector Hub: server-rendered from
-    # app/collector_hub.py. Binder Art Maker: the work happens in the browser
+    # Collector Hub, Placeholder Library and Binder Art Maker, moved from market.poke6s.com on
+    # 2026-11-20 (docs/market_inventory.md, option B). Collector Hub: server-rendered from
+    # app/collector_hub.py. Placeholder Library: app/placeholder_library.py, which also serves
+    # the generated pages and files both pages link to. Binder Art Maker: the work happens in the browser
     # (static/binder-art.js, with jsPDF and JSZip served from static/vendor/ because the CSP
     # allows no other script hosts).
 
@@ -461,10 +464,43 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     def collector_hub_page(request: Request):
         crumbs = [("Home", "/"), ("Collector Hub", "/collector-hub")]
         return page(request, "collector_hub.html", title="Collector Hub", crumbs=crumbs,
-                    sections=collector_hub.SECTIONS, resource_url=collector_hub.resource_url,
-                    download_url=collector_hub.download_url, jsonld=[seo.breadcrumbs_jsonld(settings, crumbs)],
+                    sections=collector_hub.SECTIONS, resource_url=placeholder_library.resource_url,
+                    download_url=placeholder_library.download_url, jsonld=[seo.breadcrumbs_jsonld(settings, crumbs)],
                     description="Free master-set tools: checklists for every Scarlet & Violet and Mega Evolution "
                                 "set, and printable binder placeholder cards.")
+
+    @app.get("/placeholders", response_class=HTMLResponse)
+    def placeholder_library_page(request: Request):
+        crumbs = [("Home", "/"), ("Collector Hub", "/collector-hub"), ("Placeholder Library", "/placeholders")]
+        return page(request, "placeholder_library.html", title="Placeholder Library", crumbs=crumbs,
+                    sections=placeholder_library.SECTIONS, files=placeholder_files,
+                    resource_url=placeholder_library.resource_url, download_url=placeholder_library.download_url,
+                    jsonld=[seo.breadcrumbs_jsonld(settings, crumbs)],
+                    description="Free printable placeholder cards for Pokémon TCG binders, with checklists and "
+                                "spreadsheets for every Scarlet & Violet and Mega Evolution set. Updated nightly.")
+
+    @app.get("/placeholders/files/{bucket}/{rel:path}")
+    def placeholder_file(bucket: str, rel: str):
+        path = placeholder_files.asset(bucket, rel)
+        if path is None:
+            raise HTTPException(404)
+        # Rebuilt nightly; ten minutes of caching keeps the tunnel quiet without going stale.
+        headers = {"Cache-Control": "public, max-age=600"}
+        media = placeholder_library.media_type(path)
+        if path.suffix.lower() == ".html":
+            body = path.read_bytes()
+            headers["Content-Security-Policy"] = placeholder_library.page_csp(
+                SECURITY_HEADERS["Content-Security-Policy"], body)
+            return Response(body, media_type=media, headers=headers)
+        return FileResponse(path, media_type=media, headers=headers)
+
+    @app.get("/placeholders/download/{download_id}")
+    def placeholder_download(download_id: str):
+        path = placeholder_files.download(download_id)
+        if path is None:
+            raise HTTPException(404)
+        return FileResponse(path, media_type=placeholder_library.media_type(path), filename=path.name,
+                            headers={"Cache-Control": "public, max-age=600"})
 
     @app.get("/binder-art/logos.json")
     def binder_art_logos():

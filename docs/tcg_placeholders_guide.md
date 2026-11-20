@@ -156,27 +156,29 @@ Typical contents:
 
 ## 4. How The Website Exposes It
 
-The main app does not rebuild placeholder data on request. Instead, it serves
-the already-generated files.
+The website does not rebuild placeholder data on request. Instead, it serves
+the already-generated files. Since 2026-11-20 that's the store (poke6s.com), not the
+market: the store container mounts this folder read-only, so the nightly rebuild shows on
+the site with no deploy.
 
 Relevant app files:
 
-- `scripts/dashboards/api.py`
-- `storefront/app/collector_hub.py` (Collector Hub, on poke6s.com since 2026-11-20)
-- `scripts/dashboards/placeholder_library.html`
+- `storefront/app/placeholder_library.py` (the library page and the file serving; the
+  whitelists `BUCKETS` and `DOWNLOADS`)
+- `storefront/app/collector_hub.py` (the Collector Hub's tiles)
 
-### Backend exposure
+### Routes
 
-`api.py` exposes this workflow in two ways:
+- `/collector-hub`: the guided page
+- `/placeholders`: every page and file, by who it's for, with the last rebuild date
+- `/placeholders/files/{bucket}/{path}`: the generated pages and their CSVs
+- `/placeholders/download/{id}`: the downloads, as attachments
 
-- collector-style asset browsing:
-  - `/collector-hub` (301 to poke6s.com/collector-hub since 2026-11-20)
-  - `/collector-manifest`
-  - `/collector-assets/{bucket}/{asset_path}`
-- dedicated placeholder download page:
-  - `/placeholders`
-  - `/placeholder-downloads-manifest`
-  - `/placeholder-downloads/{asset_id}`
+The market's old `/collector-hub`, `/placeholders`, `/collector-assets/{bucket}/{path}` and
+`/placeholder-downloads/{id}` addresses 301 to these, with the same bucket names and ids.
+The generated pages carry inline scripts (checklist ticks); the store serves each one with a
+CSP that allows exactly those scripts by hash. Keep new pages free of inline `on...=`
+handlers and outside scripts, which that CSP would block.
 
 Expected behavior:
 
@@ -200,9 +202,12 @@ with the hand-edited Mega-era files and:
 - writes every catalog promo missing from `mega_placeholders.csv` to
   `TCG Placeholders/auto_mega_promos.csv` (generated; don't edit it). The release set and
   variant come from the catalog name ("(30th Celebration)", "(Pitch Black Stamped)",
-  "[Staff]", "(Pokemon Center Exclusive)"), or from the neighbouring promo numbers when the
-  name doesn't say. Product and Product Type read "Not confirmed yet" / "Needs review",
-  because the catalog doesn't say which product a promo came in;
+  "[Staff]", "(Pokemon Center Exclusive)"). When the name doesn't say, a sealed product of
+  the era's sets that names the card in brackets gives the set and the product (since
+  2026-11-20: "Delta Reign 3 Pack Blister [Seel]" for MEP116 Seel). Only when neither says
+  is the set guessed from the neighbouring promo numbers, and the row's note says so.
+  Product reads "Not confirmed yet" without a product match; Product Type always reads
+  "Needs review" until someone checks;
 - rebuilds the Mega checklists and the Mega and combined print hubs with those rows included;
 - posts to the owner's Discord channel when it found something new.
 
@@ -265,6 +270,6 @@ If someone needs to “decode” this subsystem quickly:
 - source CSVs explain the input
 - build scripts explain the transformation rules
 - generated folders show the expected output shape
-- `api.py` explains how the public website publishes it
+- `storefront/app/placeholder_library.py` explains how the public website publishes it
 
 That is the intended mental model for maintaining this part of the project.

@@ -6,10 +6,9 @@ Moved from market.poke6s.com on 2026-11-20 (docs/market_inventory.md, option B);
 /collector-manifest; here it is plain server-rendered HTML from the list below.
 
 The resources themselves (checklist sites, placeholder print pages, CSVs) are generated files
-under "TCG Placeholders/" that the market still serves (`/collector-assets/<bucket>/...` and
-`/placeholder-downloads/<id>`), so every link points at the market site for now. When the
-Placeholder Library moves too (the next option B piece), only `resource_url` and
-`download_url` need to change.
+under "TCG Placeholders/", served by the store since the Placeholder Library moved too
+(app/placeholder_library.py: `resource_url` and `download_url` live there). Only the
+"Sets by release date" link still goes to the market.
 """
 
 from __future__ import annotations
@@ -23,8 +22,8 @@ class Resource:
     text: str
     tags: tuple[str, ...]
     open_label: str
-    asset: str                       # market path under /collector-assets/
-    download: tuple[str, str] | None = None   # (placeholder-download id, label)
+    asset: str                       # "<bucket>/<path>" (placeholder_library.BUCKETS)
+    download: tuple[str, str] | None = None   # (placeholder_library.DOWNLOADS id, label)
     extra: tuple[str, str] | None = None      # (market path, label)
 
 
@@ -72,10 +71,3 @@ SECTIONS = (
     )),
 )
 
-
-def resource_url(market_base_url: str, asset: str) -> str:
-    return f"{market_base_url}/collector-assets/{asset}"
-
-
-def download_url(market_base_url: str, download_id: str) -> str:
-    return f"{market_base_url}/placeholder-downloads/{download_id}"

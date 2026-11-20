@@ -96,6 +96,9 @@ class Settings:
     # read-only into the container, and the market's TCGCSV set list for names and dates.
     set_logo_dir: Path = REPO_ROOT / "images" / "logos"
     groups_csv: Path = REPO_ROOT / "data" / "extracted" / "pokemon_groups.csv"
+    # Placeholder Library files (app/placeholder_library.py): the main checkout's generated
+    # "TCG Placeholders" folder, mounted read-only and rebuilt nightly by the market's sync job.
+    placeholder_dir: Path = REPO_ROOT / "TCG Placeholders"
 
     @property
     def stripe_mode(self) -> str:
@@ -185,4 +188,5 @@ def load_settings() -> Settings:
         set_logo_dir=Path(os.getenv("STOREFRONT_SET_LOGO_DIR", str(REPO_ROOT / "images" / "logos"))),
         groups_csv=Path(os.getenv("STOREFRONT_GROUPS_CSV",
                                   str(REPO_ROOT / "data" / "extracted" / "pokemon_groups.csv"))),
+        placeholder_dir=Path(os.getenv("STOREFRONT_PLACEHOLDER_DIR", str(REPO_ROOT / "TCG Placeholders"))),
     )

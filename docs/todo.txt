@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-20 (market option B: Binder Art Maker and Collector Hub moved to poke6s.com; missing product pictures; /dashboard-lab removed; blog drafts and scheduled articles)
+Last updated: 2026-11-20 (market option B: Binder Art Maker, Collector Hub and Placeholder Library moved to poke6s.com; placeholder sync matches promos to products; missing product pictures; /dashboard-lab removed; blog drafts and scheduled articles)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -47,6 +47,13 @@ Recently Completed
 - 2026-11-20 Binder Art Maker: "Pockets to fill" (owner's request). Pick which pockets get the
   picture (e.g. 1 & 4, or 8 & 9); the picture fits the kept pockets and the PDF/ZIP hold only
   those cards. Works with 2x2 to 5x5 pages and 2-page spreads.
+- 2026-11-20 Option B, third piece: Placeholder Library moved to poke6s.com/placeholders with all
+  its print pages, checklists and CSVs, served by the store from the nightly-rebuilt "TCG
+  Placeholders" folder (read-only mount; per-page hashed CSP for their inline scripts). Market
+  /placeholders, /collector-assets/... and /placeholder-downloads/... 301 there. Placeholder sync
+  checked (runs nightly, last run clean, Flowing Fists added today) and fixed: promos whose
+  catalog name gives no set now match a sealed product naming them (MEP115 Spritzee, MEP116 Seel
+  were filed under 30th Celebration; they're Delta Reign blister promos).
 - 2026-11-20 Option B, second piece: Collector Hub moved to poke6s.com/collector-hub (server-
   rendered; tiles still open the market's checklist and print files). market /collector-hub 301s.
 - 2026-11-20 Blog: "Master Sets, Part 2: Japanese vs English" (3 charts, cover) and "Master
@@ -437,10 +444,19 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     and customer addresses on the internet.
   - [next] Market option B (owner chose it 2026-11-20, docs/market_inventory.md): move the
     collector tools to poke6s.com, one at a time, with 301s from the old addresses. Done:
-    Binder Art Maker and Collector Hub (2026-11-20). Next: the Placeholder Library and its
-    printable checklists (served from "TCG Placeholders/", so the store needs that folder or
-    a copy of the published pages). Then the owner tools into the admin (Supplier Pricing,
-    Supplier Profitability).
+    Binder Art Maker, Collector Hub and Placeholder Library (2026-11-20). Next: the owner
+    tools into the admin (Supplier Pricing, Supplier Profitability).
+  - [waiting] Owner: confirm the 13 promos in "TCG Placeholders/auto_mega_promos.csv" (move each
+    row into mega_placeholders.csv with its real Product and Product Type). MEP028 Celebratory
+    Fanfare has waited since October. MEP111-114 (Masquerain, Magmortar, Enamorus, Kommo-o, each
+    with a [Staff] copy) are guessed as 30th Celebration from their neighbours, but every 30th
+    Celebration promo says so in its catalog name and these don't: they look like Delta Reign
+    prerelease promos. MEP117 Kyogre (+ Pokemon Center copy) is guessed Delta Reign.
+  - [planned] Placeholder Library gaps found 2026-11-20: Prize Pack Series 9 (released
+    2026-07) has no source list yet (the build only reads Series 7 and 8; lists come as PDFs);
+    Delta Reign has no hand-checked rows (its set stamps, box and ETB promos), so it has no
+    checklist page; "30th Celebration Classic Collection" was added to set_release_dates.csv
+    as its own set with the same code (30C) as 30th Celebration, worth checking.
   - [waiting] Owner: the "Decide" rows in docs/market_inventory.md (Sealed Deals and Budget
     Builder; End of Day, Embed, Dashboard Lab).
   - [planned] Count the market app's views by ?list= for 2-4 weeks (visitors.py records page
