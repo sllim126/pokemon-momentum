@@ -7,7 +7,6 @@ DESKTOP_LAB_HTML = REPO_ROOT / "scripts" / "dashboards" / "dashboard_lab.html"
 SEALED_DEALS_HTML = REPO_ROOT / "scripts" / "dashboards" / "sealed_deals.html"
 SET_EXPLORER_HTML = REPO_ROOT / "scripts" / "dashboards" / "set_explorer.html"
 BUDGET_BUILDER_HTML = REPO_ROOT / "scripts" / "dashboards" / "budget_builder.html"
-COLLECTOR_HUB_HTML = REPO_ROOT / "scripts" / "dashboards" / "collector_hub.html"
 PLACEHOLDER_LIBRARY_HTML = REPO_ROOT / "scripts" / "dashboards" / "placeholder_library.html"
 INDEX_OVERVIEW_HUB_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overview_hub.html"
 INDEX_OVERVIEW_DETAIL_HTML = REPO_ROOT / "scripts" / "dashboards" / "index_overview_detail.html"
@@ -20,7 +19,6 @@ class SecondaryPageContractTests(unittest.TestCase):
         cls.sealed_deals_html = SEALED_DEALS_HTML.read_text(encoding="utf-8")
         cls.set_explorer_html = SET_EXPLORER_HTML.read_text(encoding="utf-8")
         cls.budget_builder_html = BUDGET_BUILDER_HTML.read_text(encoding="utf-8")
-        cls.collector_hub_html = COLLECTOR_HUB_HTML.read_text(encoding="utf-8")
         cls.placeholder_library_html = PLACEHOLDER_LIBRARY_HTML.read_text(encoding="utf-8")
         cls.index_overview_hub_html = INDEX_OVERVIEW_HUB_HTML.read_text(encoding="utf-8")
         cls.index_overview_detail_html = INDEX_OVERVIEW_DETAIL_HTML.read_text(encoding="utf-8")
@@ -68,21 +66,6 @@ class SecondaryPageContractTests(unittest.TestCase):
         self.assertIn("Refresh Results", self.budget_builder_html)
         self.assertIn("allowDuplicatesToggle", self.budget_builder_html)
         self.assertIn("Duplicates are acceptable", self.budget_builder_html)
-
-    def test_collector_hub_page_has_manifest_and_core_routes(self):
-        self.assertIn("Poke6s Collector Hub", self.collector_hub_html)
-        self.assertIn("/collector-manifest", self.collector_hub_html)
-        self.assertIn("/placeholders", self.collector_hub_html)
-        # Each resource opens in its own tab (links come from the manifest); nothing is embedded.
-        self.assertIn('target: "_blank"', self.collector_hub_html)
-        self.assertNotIn("<iframe", self.collector_hub_html)
-        # Plain-language explanations exist for the manifest's resources.
-        for item_id in ("sv-checklists", "mega-checklists", "combined-placeholders", "release-dates"):
-            self.assertIn(f'"{item_id}"', self.collector_hub_html)
-        # Site-wide navigation comes from the shared shell, not a per-page route strip,
-        # and development pages are not linked publicly.
-        self.assertIn("/site-shell.js", self.collector_hub_html)
-        self.assertNotIn("/dashboard-lab", self.collector_hub_html)
 
     def test_placeholder_library_page_has_manifest_and_download_routes(self):
         self.assertIn("Poke6s Placeholder Library", self.placeholder_library_html)

@@ -1,6 +1,6 @@
 # market.poke6s.com inventory: what to keep, move or retire
 
-Last reviewed: 2026-11-20 (owner chose option B; Binder Art Maker moved)
+Last reviewed: 2026-11-20 (owner chose option B; Binder Art Maker and Collector Hub moved)
 
 ## Why this exists
 
@@ -12,7 +12,8 @@ poke6s.com/market). This page lists everything the market site does, with a sugg
 each piece, so that decision can be made piece by piece.
 
 **Decided 2026-11-20: option B** (below). Done so far: Binder Art Maker (now
-poke6s.com/binder-art). Next: Collector Hub and the Placeholder Library. The "Decide" rows
+poke6s.com/binder-art) and Collector Hub (poke6s.com/collector-hub). Next: the Placeholder
+Library. The "Decide" rows
 are still open.
 
 Already done towards "one site": the same Shop / Market / Admin bar across the top of all three
@@ -71,7 +72,7 @@ Homes: **Market** = stays a research site (at market.poke6s.com or poke6s.com/ma
 
 | Part | What it does | Suggested home |
 | --- | --- | --- |
-| Collector Hub (`/collector-hub`) | Master-set checklists and printables, explained | **Store.** It's the most-visited standalone page and fits a shop's "guides" (next to Articles); brings collectors to poke6s.com |
+| Collector Hub (`/collector-hub`) | Master-set checklists and printables, explained | **Store. Moved 2026-11-20** to poke6s.com/collector-hub; its tiles still open the market's files until the Placeholder Library moves |
 | Placeholder Library (`/placeholders`) and the printable checklists | Printable binder placeholders | **Store**, with Collector Hub |
 | Binder Art Maker (`/binder-art`) | Free tool: one picture cut into card-size pieces for a binder page | **Store. Moved 2026-11-20** to poke6s.com/binder-art; the market address 301s there |
 | How it works (guide) | Explains the market app | Market |

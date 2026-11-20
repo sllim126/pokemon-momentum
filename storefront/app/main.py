@@ -35,7 +35,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import catalog, classify, images, notify, notify_list, orders, redirects, seo, stripe_api
+from . import catalog, classify, collector_hub, images, notify, notify_list, orders, redirects, seo, stripe_api
 from .articles import Articles
 from .binder_art import SetLogos
 from .db import connect, latest_migration, migrate
@@ -440,9 +440,11 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
                     jsonld=[seo.article_jsonld(settings, found), seo.breadcrumbs_jsonld(settings, crumbs)])
 
     # --- free tools ---------------------------------------------------------------------
-    # Binder Art Maker, moved from market.poke6s.com on 2026-11-20 (docs/market_inventory.md,
-    # option B). The work happens in the browser (static/binder-art.js, with jsPDF and JSZip
-    # served from static/vendor/ because the CSP allows no other script hosts).
+    # Collector Hub and Binder Art Maker, moved from market.poke6s.com on 2026-11-20
+    # (docs/market_inventory.md, option B). Collector Hub: server-rendered from
+    # app/collector_hub.py. Binder Art Maker: the work happens in the browser
+    # (static/binder-art.js, with jsPDF and JSZip served from static/vendor/ because the CSP
+    # allows no other script hosts).
 
     @app.get("/binder-art", response_class=HTMLResponse)
     def binder_art(request: Request):
@@ -453,6 +455,15 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
                                     "binder page, with an optional set logo. Print-ready PDF with cut marks, or card PNGs.")
         response.headers["Content-Security-Policy"] = BINDER_ART_CSP
         return response
+
+    @app.get("/collector-hub", response_class=HTMLResponse)
+    def collector_hub_page(request: Request):
+        crumbs = [("Home", "/"), ("Collector Hub", "/collector-hub")]
+        return page(request, "collector_hub.html", title="Collector Hub", crumbs=crumbs,
+                    sections=collector_hub.SECTIONS, resource_url=collector_hub.resource_url,
+                    download_url=collector_hub.download_url, jsonld=[seo.breadcrumbs_jsonld(settings, crumbs)],
+                    description="Free master-set tools: checklists for every Scarlet & Violet and Mega Evolution "
+                                "set, and printable binder placeholder cards.")
 
     @app.get("/binder-art/logos.json")
     def binder_art_logos():

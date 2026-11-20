@@ -66,8 +66,8 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   code from its own clone `~/poke6s-store`. Phase 1 (catalog, browse, SEO, redirects) since 2026-10-31.
   Phase 2 (cart and Stripe Checkout, test mode; orders in `store.db`) merged 2026-11-05; checkout
   stays off without `STRIPE_SECRET_KEY` and refuses live keys unless `STOREFRONT_ALLOW_LIVE=1`.
-  Articles (the old Squarespace blog) at `/articles`. Free Binder Art Maker at `/binder-art`
-  (moved from the market site 2026-11-20). Marketing emails to the email list
+  Articles (the old Squarespace blog) at `/articles`. Free Binder Art Maker at `/binder-art` and
+  Collector Hub at `/collector-hub` (both moved from the market site 2026-11-20). Marketing emails to the email list
   (`orders_cli mailing`, with unsubscribe links) since 2026-11-14. Guide: `storefront/README.md`
 - Collector resources: generated placeholder libraries, checklists, print pages, review queues, and downloads
 - Standalone binder planners: ATLA and KPDH are served by separate read-only nginx
@@ -97,7 +97,7 @@ PriceCharting download and Squarespace price sync were running.
 | `/budget-builder` | Budget-based recommendation builder | Live; covered by desktop app Budget Builder |
 | `/sealed-deals` | Sealed price-per-pack/value screening | Live; covered by desktop app Sealed Deals |
 | `/account-settings` | Google sign-in, synced lists, saved views, account deletion | Live; restyled 2026-10 |
-| `/collector-hub` | Collector resources with live preview | Live; restyled 2026-10 |
+| `/collector-hub` | Redirects to poke6s.com/collector-hub (moved to the store); its tiles still open the files served here | Live; moved 2026-11-20 |
 | `/placeholders` | Placeholder/checklist downloads | Live; restyled 2026-10 |
 | `/binder-art` | Redirects to poke6s.com/binder-art: the Binder Art Maker (free tool, one image cut into card-size pieces for a binder page) moved to the store | Live 2026-10-21; moved 2026-11-20 |
 | `/index-overview` | Market-index hub | Live; covered by desktop app Market Stats → Indexes |

@@ -133,6 +133,14 @@ It writes pages and the Resources blog posts as Markdown (posts with front matte
 date, old address, tags, categories, cover image), the pages as served, the original images
 and `index.csv`/`images.csv`. Re-runs skip images already saved.
 
+## Collector Hub
+
+`/collector-hub` explains the free master-set resources (checklists, placeholder print pages,
+CSVs) in three steps and a tile per resource (moved from market.poke6s.com on 2026-11-20).
+The list and its wording are in `app/collector_hub.py`. The files themselves are still
+generated under "TCG Placeholders/" and served by the market site, so the tiles link there;
+the market test `test_shop_collector_hub_links_resolve_here` checks each link still exists.
+
 ## Binder Art Maker
 
 `/binder-art` is the free tool that cuts one picture into card-size pieces for a binder page
@@ -441,6 +449,7 @@ Rules worth knowing:
 | `app/redirects.py`, `redirects.csv` | 301s from old Squarespace addresses |
 | `app/markdown.py` | Markdown rendering (raw HTML escaped); Squarespace HTML → Markdown |
 | `app/templates/`, `app/static/` | Jinja2 pages, CSS (market site's colours, D4), small JS |
+| `app/collector_hub.py` | Collector Hub's resources and their wording (links to the market's files) |
 | `app/binder_art.py` | Binder Art Maker's set-logo list (the tool itself is `static/binder-art.js`) |
 | `app/articles.py`, `app/article_import.py` | Articles (Markdown, loaded at start-up); import of the old blog posts |
 | `content/articles/*.md` | The articles |

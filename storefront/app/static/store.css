@@ -293,3 +293,28 @@ ul.notice { list-style: none; }
 
 /* Order page: the tracking number and its "Track package" button (carrier's site). */
 .tracking { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+
+/* Collector Hub (/collector-hub, templates/collector_hub.html; moved from the market 2026-11-20). */
+.hub-head { max-width: 860px; }
+.hub-head p { margin: 0 0 12px; }
+.hub-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
+.hub-steps { list-style: none; padding: 0; margin: 20px 0 0; display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+.hub-steps li { display: flex; gap: 12px; align-items: flex-start; padding: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.hub-steps b { flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.hub-steps strong { display: block; }
+.hub-steps span { color: var(--muted); font-size: 0.9rem; }
+.hub-section h2 { margin-bottom: 4px; }
+.hub-section > p { margin: 0 0 14px; }
+.hub-grid { list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+.hub-tile { display: flex; flex-direction: column; gap: 8px; padding: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.hub-tile h3 { margin: 0; font-size: 1.05rem; }
+.hub-tile p { margin: 0; }
+.hub-tile .hub-actions { margin-top: auto; padding-top: 6px; }
+.hub-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.hub-tags span { padding: 2px 9px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); font-size: 0.75rem; font-weight: 600; }
+.hub-legal { margin-top: 32px; }
+@media (min-width: 760px) {
+  .hub-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .hub-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1100px) { .hub-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }

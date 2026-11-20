@@ -162,7 +162,7 @@ the already-generated files.
 Relevant app files:
 
 - `scripts/dashboards/api.py`
-- `scripts/dashboards/collector_hub.html`
+- `storefront/app/collector_hub.py` (Collector Hub, on poke6s.com since 2026-11-20)
 - `scripts/dashboards/placeholder_library.html`
 
 ### Backend exposure
@@ -170,7 +170,7 @@ Relevant app files:
 `api.py` exposes this workflow in two ways:
 
 - collector-style asset browsing:
-  - `/collector-hub`
+  - `/collector-hub` (301 to poke6s.com/collector-hub since 2026-11-20)
   - `/collector-manifest`
   - `/collector-assets/{bucket}/{asset_path}`
 - dedicated placeholder download page:
