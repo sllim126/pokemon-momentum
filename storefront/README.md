@@ -308,6 +308,7 @@ that address out for 15 minutes and post a Discord alert.
 | `POST /orders/<number>/ship` | Mark shipped with carrier and tracking (spaces allowed); sends the tracking email and says whether it went, went to the outbox, or is queued for retry |
 | `POST /orders/<number>/note` | Add a dated note (only the owner sees notes) |
 | `POST /orders/<number>/address` | Change the address of a paid, unshipped order (e.g. USPS's corrected version, once the customer confirms); the old address goes into the notes |
+| `POST /orders/<number>/refund` | Refund any amount up to what's left through Stripe, and/or put returned units back on the shelf; emails the customer and notes it on the order (see "Refunds and returns") |
 | `POST /orders/<number>/resend` | Send the order confirmation or tracking email again |
 | `/orders/<number>/packing-slip.pdf` | Packing slip, US Letter PDF; `?gift=1` leaves the prices off |
 | `/products?view=&q=` | Products: tabs On the store, Sold out on the store, Hidden, Hidden in stock, All; search by title, set or SKU; price next to the market price (% above or below) and stock |
@@ -343,6 +344,34 @@ reset their stock and details from the old export.
 
 **Shipping one order:** Overview or Orders → open the order → "Packing slip (PDF)" (print at
 Actual size) → buy the label → paste the tracking number → "Mark shipped and email tracking".
+
+### Refunds and returns
+
+On the order page, **Refund or return** (code: `admin/refunds.py`):
+- **Refund** any amount up to what's left (the whole order, or e.g. only the shipping), with a
+  reason Stripe passes to the bank. It goes through Stripe with the admin's **own restricted live
+  key**, `STOREFRONT_ADMIN_STRIPE_KEY` in `.env` (Stripe: Charges and Refunds write, Charges and
+  PaymentIntents read, nothing else). docker-compose passes it to the admin container only; the
+  public store's key can't refund. Without it the form says refunds aren't set up.
+- The order is updated at once through `orders.record_refund` (the same code as the
+  `charge.refunded` webhook, which then finds nothing new and stays quiet), the customer gets a
+  refund email (`notify.refund_email`), and a dated note says what was done.
+- A **partial refund on an unshipped order leaves it paid**, so it stays in To ship.
+- **Put back** returned units: one `restock` stock movement per product, referenced
+  `Return <order number>`; the form never offers more than the order sold minus what's already
+  back. A $0 refund with units put back is a return with no money back (yet).
+- Safety: never more than paid minus refunded; a confirmation tick; an idempotency key from the
+  order, its refunded total and the amount, so a double click can't refund twice. Disputed
+  payments can't be refunded (answer the dispute in Stripe); test orders are refunded in Stripe's
+  test dashboard. Stripe keeps its processing fee on refunded payments.
+- Returns (D8): inspect the box first, then refund, and put back only units you can sell again.
+
+Setting up the key (once): Stripe dashboard, live mode → Developers → API keys → Create
+restricted key, "poke6s admin refunds", Charges and Refunds: Write, PaymentIntents: Read,
+everything else None. Add it without showing it:
+
+    read -rsp "Paste the rk_live key: " K; echo; printf 'STOREFRONT_ADMIN_STRIPE_KEY=%s\n' "$K" >> .env; unset K
+    bash deploy/update_storefront.sh
 
 ### Shipping through Pirate Ship
 
@@ -411,6 +440,7 @@ Rules worth knowing:
 | `admin/auth.py` | Password hashing, signed session cookies, form tokens, lockout (standard library only) |
 | `admin/overview.py` | What the Overview shows (read-only queries) |
 | `admin/orders_view.py` | The Orders list: tabs, search, counts, Stripe link, timeline (read-only queries) |
+| `admin/refunds.py` | Refunds through Stripe (the admin's own key) and returned units put back |
 | `admin/shipping.py` | The Shipping page: Pirate Ship file out, tracking file back, packed sizes |
 | `admin/packing_slip.py` | Packing slip PDFs (reportlab); prints the logo without its navy background |
 | `admin/passwd.py` | Sets the admin password in `.env` |

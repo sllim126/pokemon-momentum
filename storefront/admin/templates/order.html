@@ -75,6 +75,42 @@
       </form>
       <p class="muted small">Only you see notes. Each one is saved with the date and time.</p>
     </section>
+
+    {#- Refund or return (Phase 3, step 4): admin/refunds.py. Shown for sales with money left to
+        refund or units to put back. -#}
+    {% set can_put_back = returnable | selectattr('can') | list %}
+    {% if sale and (refund_left > 0 and o.status != 'refunded' or can_put_back or refund_blocked) %}
+    <section class="panel" id="refund">
+      <h2>Refund or return</h2>
+      {% if refund_error %}<p class="flash bad" role="alert">{{ refund_error }}</p>{% endif %}
+      {% if refund_blocked %}<p class="muted">{{ refund_blocked }}</p>{% endif %}
+      {% set r = refund_typed or {} %}
+      {% set money_ok = not refund_blocked and refund_left > 0 and o.status != 'refunded' %}
+      {% if money_ok or can_put_back %}
+      <form class="edit-form" method="post" action="/orders/{{ o.number }}/refund">
+        <input type="hidden" name="form_token" value="{{ form_token }}">
+        {% if money_ok %}
+        <label>Refund ($), up to {{ refund_left | money }}
+          <input name="amount" inputmode="decimal" maxlength="12" autocomplete="off"
+                 value="{{ r.amount if r.amount is defined else '%.2f' % (refund_left / 100) }}"></label>
+        <label>Reason
+          <select name="reason">{% for key, label in refund_reasons.items() %}<option value="{{ key }}"{% if (r.reason or 'requested_by_customer') == key %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+        {% else %}<input type="hidden" name="reason" value="">{% endif %}
+        {% for line in can_put_back %}
+        <label class="wide">Put back on the shelf: {{ line.title }}
+          <select name="back_{{ line.product_id }}">{% for n in range(line.can + 1) %}<option value="{{ n }}">{{ n }}{% if n == 0 %} (not returned, or not resellable){% endif %}</option>{% endfor %}</select></label>
+        {% endfor %}
+        <label class="wide">Note, optional <input name="note" maxlength="300" value="{{ r.note or '' }}" placeholder="e.g. Returned unopened, inspected"></label>
+        <label class="wide check"><input type="checkbox" name="confirm" value="1"> Yes, do this{% if money_ok %} (a refund goes straight back to the customer's card and can't be undone){% endif %}</label>
+        <button type="submit">{% if money_ok %}Refund{% else %}Put back{% endif %}</button>
+      </form>
+      <p class="muted small">{% if money_ok %}{% if not refund_ready %}<strong>Refunds aren't set up yet</strong> (STOREFRONT_ADMIN_STRIPE_KEY).
+        {% endif %}Clear the amount (or type 0) to only put stock back. Part of the total is fine, e.g. just the shipping. The customer gets
+        a refund email. Stripe keeps its fee on refunded payments. {% endif %}Returns: refund after inspecting the box (D8), and put
+        back only units you can sell again.</p>
+      {% endif %}
+    </section>
+    {% endif %}
   </div>
 
   <aside>

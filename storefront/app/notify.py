@@ -261,7 +261,8 @@ def _address(order: dict) -> str:
     return "\n".join(f"  {p}" for p in _address_lines(order))
 
 
-def _html(settings: Settings, kind: str, order: dict, status_url: str, subject: str, preheader: str) -> tuple[str, str]:
+def _html(settings: Settings, kind: str, order: dict, status_url: str, subject: str, preheader: str,
+          **extra) -> tuple[str, str]:
     """The HTML part of an order email and the logo's content ID."""
     parts = urlsplit(status_url)
     site_url = f"{parts.scheme}://{parts.netloc}" if parts.netloc else settings.base_url
@@ -271,7 +272,7 @@ def _html(settings: Settings, kind: str, order: dict, status_url: str, subject: 
         preheader=preheader, contact_email=settings.contact_email, logo_cid=logo_cid,
         placed=local_time(order["paid_at"] or order["created_at"]), test=order["mode"] == "test",
         tracking_url=tracking_url(order.get("carrier"), order.get("tracking_number")),
-        address_lines=_address_lines(order))
+        address_lines=_address_lines(order), **extra)
     return html, logo_cid
 
 
@@ -322,4 +323,26 @@ Poke6s
     subject = f"{test}Poke6s order {order['number']} has shipped"
     html, cid = _html(settings, "shipped", order, status_url, subject,
                       f"Your order is on its way. {order['carrier'] or 'Tracking'} {order['tracking_number'] or ''}".strip())
+    return send_email(settings, order["email"], subject, body, html, cid, ref=order["number"])
+
+
+def refund_email(settings: Settings, order: dict, status_url: str, refund_cents: int) -> bool:
+    """Tell the customer about a refund made from the admin (Phase 3, step 4). `order` already
+    carries the new refunded total."""
+    test = "[TEST] " if order["mode"] == "test" else ""
+    body = f"""We've refunded {money(refund_cents)} for your Poke6s order {order['number']} to the card you paid with.
+Banks usually take 5 to 10 business days to show it.
+
+{_lines(order)}
+  Refunded  -{money(order['refunded_cents'])}
+
+Order status: {status_url}
+
+Questions? Reply to this email or write to {settings.contact_email}.
+
+Poke6s
+"""
+    subject = f"{test}Poke6s order {order['number']}: refund of {money(refund_cents)}"
+    html, cid = _html(settings, "refunded", order, status_url, subject,
+                      f"{money(refund_cents)} is on its way back to your card.", refund_cents=refund_cents)
     return send_email(settings, order["email"], subject, body, html, cid, ref=order["number"])
