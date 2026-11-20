@@ -949,6 +949,31 @@ Needs Decisions
 Future Ideas
 ------------
 
+- [idea] Ideas from tcgquant.com (reviewed 2026-11-20). A paid sealed-investing site (Pokemon
+  and One Piece, about 150 sealed products; free tier plus Premium at $12.99/month or
+  $124.99/year). Data: TCGplayer prices plus eBay listings and sold prices, and grading
+  population counts (PSA, BGS, CGC, TAG). What it has that we don't, roughly most useful first:
+  1. Portfolio with cost basis: what you paid, profit/loss, return, a value chart; CSV import.
+     Our Track lists (Buy List, Watchlist, Favorites) save items but not what was paid.
+  2. Sell targets: an exit price per holding, how far the market is from it, "target hit".
+  3. Daily alert email, sent only when something changed (holdings, watchlist, targets).
+     Discord alerts too.
+  4. Pack EV: expected value per pack and per box from card prices and pull rates. Needs pull
+     rates per set (no free source in our data yet).
+  5. Supply and demand score per sealed product (listings down, sales up, days of stock
+     left). Needs listing counts and sales speed, which TCGCSV doesn't give; their eBay data
+     would need eBay's API (free, but has terms to check). Our sales_volume counts could cover
+     the demand side.
+  6. Offer sheet: price a whole collection at a percentage of market for a buyer, without
+     showing your cost; TCGplayer and eBay sold links for checking.
+  7. Smaller: a CAGR (yearly return) calculator and two-product compare; a "destruction
+     tracker" estimating sealed product opened, from graded population counts.
+  What we have that it doesn't: everything free; Japanese prices; market indexes by era;
+  graded prices from PriceCharting with linkbacks; budget builders (raw and graded); every
+  card, not only 150 sealed products; collector tools (placeholders, binder art); our own store
+  linked from the product. Their track-record page (462 backtested signals, hit rate, average
+  gain) matches our Market Stats -> Track record. If we ever charge, their price points are a
+  reference. Owner to pick which to plan.
 - [idea] Ideas from pokepastor.com (reviewed 2026-11-17; the owner's early inspiration). A
   one-person Pokemon shop on SortSwift (a paid hosted storefront), mostly singles; ours is
   sealed only (owner), so its singles tools (condition per card, set/rarity filters) don't
