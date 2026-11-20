@@ -9,6 +9,11 @@
   <link rel="stylesheet" href="/static/admin.css">
 </head>
 <body>
+  <nav class="ps-family" aria-label="Poke6s sites">
+    <a href="{{ settings.base_url }}" target="_blank" rel="noopener">Shop</a>
+    <a href="{{ settings.market_base_url }}" target="_blank" rel="noopener">Market</a>
+    <a href="/" aria-current="page">Admin</a>
+  </nav>
   <header class="top">
     <a class="brand" href="/"><img src="/store-static/img/logo.png" alt="Poke6s" width="110" height="39"><span>Admin</span></a>
     {% if signed_in %}
@@ -20,7 +25,6 @@
       <a href="/pricing" {% if active == 'pricing' %}aria-current="page"{% endif %}>Pricing</a>
     </nav>
     <div class="top-right">
-      <a class="muted small" href="{{ settings.base_url }}" target="_blank" rel="noopener">Open the store ↗</a>
       <form method="post" action="/logout">
         <input type="hidden" name="form_token" value="{{ form_token }}">
         <button class="link" type="submit">Sign out</button>

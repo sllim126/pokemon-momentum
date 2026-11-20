@@ -52,6 +52,17 @@ main section { margin-top: 32px; }
 .btn.primary:hover { background: #7cbcff; }
 
 /* header */
+/* Poke6s family bar (Phase 3 step 9a, 2026-11-20): one slim strip across the top of all three
+   Poke6s sites (Shop = poke6s.com, Market = market.poke6s.com, Admin = the store admin on the
+   home network) so moving between them feels like one site. Keep the copies in step:
+   storefront/app/static/store.css, storefront/admin/static/admin.css,
+   scripts/dashboards/site_shell.js (market pages) and scripts/dashboards/mobile_app.html. */
+.ps-family { display: flex; align-items: center; gap: 2px; padding: 3px 16px; flex: none;
+  background: #050b14; border-bottom: 1px solid rgba(136, 162, 205, 0.16);
+  font: 600 12.5px/1.4 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+.ps-family a { color: #93a6c8; text-decoration: none; padding: 3px 10px; border-radius: 999px; }
+.ps-family a:hover { color: #eaf1ff; }
+.ps-family a[aria-current="page"] { color: #eaf1ff; background: rgba(77, 163, 255, 0.16); }
 .site-head { background: var(--panel-3); border-bottom: 1px solid var(--line); }
 .head-row { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: center; padding-top: 10px; padding-bottom: 10px; }
 .brand img { width: 120px; height: auto; }

@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-20 (store admin step 8, market clean-up)
+Last updated: 2026-11-20 (step 9a, one look; market inventory)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -44,6 +44,10 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-20 Step 9a, one look: the Poke6s bar (Shop / Market / Admin) across the top of
+  poke6s.com, market.poke6s.com (every page through site_shell.js, plus the phone app) and the
+  store admin; the store header's "Market prices" link and the admin's "Open the store" moved
+  into it. Market inventory drafted (docs/market_inventory.md).
 - 2026-11-20 Store admin step 8 (D11): market.poke6s.com's Squarespace Export Upload and Singles
   Listing Intake retired (old addresses redirect to /admin); Supplier Pricing and Profitability
   read live store prices from the store database; market Admin page links the store admin.
@@ -384,8 +388,8 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - [planned] Step 9 (owner, 2026-11-20, all three layers approved; the store admin stays on
     the home network): make poke6s.com, market.poke6s.com and the store admin feel like one
     site. Layers, smallest first:
-    a. One look and navigation: the same header on all three (logo, Shop / Market links, the
-       owner's Admin link when signed in) and matching footers. Small; no security change.
+    a. [done 2026-11-20] One look and navigation: the Poke6s bar (Shop / Market, and Admin in
+       the admin) across the top of all three sites. Matching footers still to do.
     b. One Poke6s account: the market site's accounts become the store's too, through a
        sign-in cookie shared across poke6s.com and market.poke6s.com. Checkout stays guest
        (Stripe); an account would add order history, saved "notify me" items and the
@@ -395,6 +399,12 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
        network. The admin stays off the internet (Tailscale idea below for away from home).
     Not recommended: putting the store admin behind the public sign-in; it would put refunds
     and customer addresses on the internet.
+  - [owner] Market inventory drafted (docs/market_inventory.md, 2026-11-20): every market part
+    with a suggested home (keep / store / admin / retire) and three ways to go (A two sites,
+    B collector tools into the store (suggested), C everything under poke6s.com/market).
+    Owner: pick A, B or C, and the "Decide" rows.
+  - [planned] Count the market app's views by ?list= for 2-4 weeks (visitors.py records page
+    paths without the query string, so app views are invisible), to inform the inventory.
   - [idea] Bigger, a project of its own (owner, 2026-11-20): fold market.poke6s.com into
     poke6s.com (e.g. poke6s.com/market). The market site existed because Squarespace couldn't
     host those tools; now the store is ours, it may not need its own site. Many of its tools were

@@ -55,6 +55,14 @@
     a { color: var(--accent); }
 
     /* ---------- header ---------- */
+    /* Poke6s family bar (step 9a): the same Shop / Market strip as poke6s.com, the store admin and
+       the market's other pages (site_shell.js holds the master copy of these rules). */
+    .ps-family { display: flex; align-items: center; gap: 2px; padding: 3px calc(12px + var(--safe-r)) 3px calc(12px + var(--safe-l));
+      flex: 0 0 auto; background: #050b14; border-bottom: 1px solid rgba(136, 162, 205, 0.16);
+      font: 600 12.5px/1.4 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .ps-family a { color: #93a6c8; text-decoration: none; padding: 3px 10px; border-radius: 999px; }
+    .ps-family a[aria-current="page"] { color: #eaf1ff; background: rgba(77, 163, 255, 0.16); }
+
     /* TCGplayer Cyber Weekend note (see #eventBar); remove after 2026-12-01. */
     .event-bar { display: block; padding: 7px 16px; text-align: center; font-size: 13px; line-height: 1.4;
       text-decoration: none; color: var(--text); background: var(--accent-soft); border-bottom: 1px solid var(--line); }
@@ -535,6 +543,7 @@
   </style>
 </head>
 <body>
+  <nav class="ps-family" aria-label="Poke6s sites"><a href="https://poke6s.com/">Shop</a><a href="/" aria-current="page">Market</a></nav>
   <header class="top">
     <button type="button" class="icon-btn" id="menuBtn" aria-label="Open menu" aria-controls="menu" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
