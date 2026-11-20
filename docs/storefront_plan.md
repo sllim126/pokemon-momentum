@@ -507,7 +507,7 @@ Reviewed with the owner on 2026-10-31. D2 decided 2026-11-05.
 | D8 | Returns | **Decided:** sealed product accepted back **unopened in original wrap within 14 days**. The refund is issued **after the owner inspects the returned item**. Buyer pays return shipping unless we made an error or it arrived damaged. The policy page must state the inspection step |
 | D9 | Newsletter | **Decided:** not in the first release; Phase 4 at the earliest |
 | D10 | Singles on poke6s.com | **Decided (owner, 2026-11-14):** no singles for the foreseeable future (tried; too much time for the return). The market site's Singles Listing Intake is retired, and the admin handles sealed product and accessories only |
-| D11 | Market admin tools | **Decided (owner, 2026-11-14):** the Squarespace Export Upload and Singles Listing Intake are retired; Supplier Pricing and Supplier Profitability stay on market.poke6s.com, with Profitability's store price read from the store database instead of the Squarespace mapping; Bug Reports, End of Day, Embed and Dashboard Lab stay as they are |
+| D11 | Market admin tools | **Decided (owner, 2026-11-14):** the Squarespace Export Upload and Singles Listing Intake are retired; Supplier Pricing and Supplier Profitability stay on market.poke6s.com, with Profitability's store price read from the store database instead of the Squarespace mapping; Bug Reports, End of Day and Embed stay as they are (Dashboard Lab was deleted 2026-11-20, owner) |
 
 ## Rules for whoever builds this
 

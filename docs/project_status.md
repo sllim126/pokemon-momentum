@@ -92,7 +92,7 @@ PriceCharting download and Squarespace price sync were running.
 | `/mobile` | The mobile app (`mobile_app.html`), also what phones get at `/` | Live since 2026-10-31 (steps 1.1-1.5 done) |
 | `/mobile-classic`, `/mobile-rebuild` | Forward to `/mobile` | The old phone page and the mobile concept page were deleted on 2026-10-31 |
 | `/m-next` | The mobile app's build-time address (plan in `docs/mobile_app_plan.md`) | Same page as `/mobile`; kept for links and review notes |
-| `/dashboard-lab` | Desktop command-center reference | Development page; left public on purpose (decided 2026-10-12) |
+| `/dashboard-lab` | Former desktop prototype | Deleted 2026-11-20 (the desktop app replaced it); tag `backup/before-dashboard-lab-removal-2026-11-20` keeps a copy |
 | `/set-explorer` | Set cost, concentration, and depth | Live; covered by desktop app Market Stats → Set values |
 | `/budget-builder` | Budget-based recommendation builder | Live; covered by desktop app Budget Builder |
 | `/sealed-deals` | Sealed price-per-pack/value screening | Live; covered by desktop app Sealed Deals |
@@ -145,6 +145,10 @@ The following pages require a Google sign-in listed in `POKEMON_MOMENTUM_ADMIN_U
 - Google sign-in, synced tracking tags and saved views. Public bug reports go to Discord; the
   signed-in owner has a private floating review-note tool on the `/m-next` preview.
 - English/Japanese market index family
+- Missing product pictures (2026-11-20): about 60 products have no TCGplayer picture; 53 show a
+  stand-in (`scripts/dashboards/product_image_standins.csv`) and our own files in
+  `images/products/` win over those (`scripts/utilities/apply_product_image_overrides.py`,
+  run after the nightly product refresh)
 - Squarespace price sync and inventory audit
 - Singles listing workflow with cached, square-padded Scrydex artwork
 - Clean-up and code review (2026-11-05): the price database was compacted from 13.9 GB to

@@ -25,8 +25,8 @@ The public routes below are public for Pokemon (3 and 85) only until a game is p
 | `/home-preview` | | public | Former preview address of the desktop app; forwards to `/` |
 | `/mobile` | `mobile_app.html` | public | The mobile app (switched on early by the owner, 2026-10-31; `docs/mobile_app_plan.md`) |
 | `/mobile-classic`, `/mobile-rebuild` | 301 to `/mobile` | public | The old phone page and the old mobile concept page, deleted 2026-10-31 |
+| `/dashboard-lab` | 301 to `/` | public | The old desktop layout prototype, deleted 2026-11-20 |
 | `/m-next` | `mobile_app.html` | public | The mobile app's address while it was built; kept for links and review notes |
-| `/dashboard-lab` | `dashboard_lab.html` | public | Experimental dashboard, linked from Admin only |
 | `/collector-hub` | `collector_hub.html` | public | Collector resources (Learn) |
 | `/placeholders` | `placeholder_library.html` | public | Placeholder Library: print pages and downloads (Learn) |
 | `/binder-art` | (redirect) | public | 301 to https://poke6s.com/binder-art: the Binder Art Maker moved to the store on 2026-11-20 |

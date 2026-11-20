@@ -20,6 +20,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts.common.category_config import get_category_config
+from scripts.utilities.apply_product_image_overrides import apply_category, own_images, standins
 from scripts.utilities.tcgcsv_client import (
     TcgcsvBlockedError,
     build_tcgcsv_session,
@@ -361,6 +362,9 @@ def main() -> int:
     rows = sorted(rows_by_key.values(), key=lambda row: (row[0], row[1]))
     write_outputs(rows, out_csv, table_name)
     save_fetched_hashes(hashes_path, fetched_hashes)
+    # Products TCGplayer has no picture for get our own picture or a stand-in
+    # (see apply_product_image_overrides.py); the snapshots built next pick them up.
+    apply_category(category.category_id, own_images(), standins())
 
     print("Category:", category.label, f"({category.category_id})")
     print("Wrote:", out_csv)
