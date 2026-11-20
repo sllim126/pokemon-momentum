@@ -45,6 +45,7 @@ DOWNLOADS = {
     "mega-auto-promos-csv": "auto_mega_promos.csv",
     "prize-pack-series7-csv": "prize_pack_series7.csv",
     "prize-pack-series8-csv": "prize_pack_series8.csv",
+    "prize-pack-series9-csv": "prize_pack_series9.csv",
     "combined-normalized-csv": "output_combined/placeholders.normalized.csv",
     "combined-printable-csv": "output_combined/placeholders.printable_unique.csv",
     "combined-json": "output_combined/placeholders.json",
@@ -191,6 +192,8 @@ SECTIONS = (
              "checking.", "Maintainers", download="mega-auto-promos-csv"),
         Item("Scarlet & Violet source list", "The hand-checked list every Scarlet & Violet placeholder is built "
              "from.", "Maintainers", download="sv-source-csv"),
+        Item("Prize Pack Series 9", "Prize Pack Series 9 cards that also get placeholders, with standard or "
+             "foil as on the official list.", "Maintainers", download="prize-pack-series9-csv"),
         Item("Prize Pack Series 8", "Prize Pack Series 8 cards that also get placeholders.", "Maintainers",
              download="prize-pack-series8-csv"),
         Item("Prize Pack Series 7", "Prize Pack Series 7 cards that also get placeholders.", "Maintainers",

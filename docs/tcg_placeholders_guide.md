@@ -40,8 +40,8 @@ Primary editable files:
   - Mega-era source used for carryover and Mega checklist builds
 - `TCG Placeholders/prize_pack_series7.csv`
   - Prize Pack Series 7 source rows
-- `TCG Placeholders/prize_pack_series8.csv`
-  - Prize Pack Series 8 source rows
+- `TCG Placeholders/prize_pack_series8.csv` and `prize_pack_series9.csv`
+  - Prize Pack Series 8 and 9 source rows (Series 9 from the official PDF, 2026-11-20; foil or standard in Notes)
 
 Historical reference:
 

@@ -66,15 +66,19 @@ ERAS = [
 ]
 
 # Library rebuild, as in TCG Placeholders/docs/publishing.md plus the generated promo file.
+# The first is the Scarlet & Violet checklist with its defaults (build_checklists.py): that era
+# is finished, but Prize Pack series keep reprinting its cards (added 2026-11-20 for Series 9).
 BUILDS = [
+    ["tools/build_checklists.py"],
     ["tools/build_checklists.py", "--era", "Mega Evolution", "--input", "mega_placeholders.csv",
-     "--input", "auto_mega_promos.csv", "--input", "prize_pack_series8.csv", "--output-dir", "checklists_mega",
+     "--input", "auto_mega_promos.csv", "--input", "prize_pack_series8.csv", "--input", "prize_pack_series9.csv",
+     "--output-dir", "checklists_mega",
      "--overrides", "data/checklist_mega_overrides.csv", "--additions", "data/checklist_mega_additions.csv"],
     ["tools/build_placeholders.py", "--input", "placeholders.csv", "--extra-input", "mega_placeholders.csv",
      "--extra-input", "auto_mega_promos.csv", "--extra-input", "prize_pack_series7.csv",
-     "--extra-input", "prize_pack_series8.csv", "--output-dir", "output_combined"],
+     "--extra-input", "prize_pack_series8.csv", "--extra-input", "prize_pack_series9.csv", "--output-dir", "output_combined"],
     ["tools/build_placeholders.py", "--input", "mega_placeholders.csv", "--extra-input", "auto_mega_promos.csv",
-     "--extra-input", "prize_pack_series8.csv", "--output-dir", "output_mega"],
+     "--extra-input", "prize_pack_series8.csv", "--extra-input", "prize_pack_series9.csv", "--output-dir", "output_mega"],
 ]
 
 

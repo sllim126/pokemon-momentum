@@ -1729,6 +1729,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         Path("mega_placeholders.csv"),
         Path("prize_pack_series7.csv"),
         Path("prize_pack_series8.csv"),
+        Path("prize_pack_series9.csv"),
         Path(args.additions),
     ]
     data = source_rows(inputs, args.header_row)

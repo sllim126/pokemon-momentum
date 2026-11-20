@@ -1,0 +1,80 @@
+Charmander PFL 011 ■ ■
+Charmeleon PFL 012 ■ ■
+Crustle DRI 012 ■
+Decidueye ex POR 012 ■
+Dewgong POR 019 ■
+Dragonair ASC 151 ■
+Dratini ASC 150 ■
+Ethan’s Quilava DRI 033 ■
+Ethan’s Typhlosion DRI 034 ■ ■
+Gastly POR 048 ■
+Gengar POR 050 ■
+Haunter POR 049 ■
+Iono’s Kilowattrel JTG 055 ■
+Jellicent ex WHT 045 ■
+Kirlia MEG 059 ■
+Marnie’s Grimmsnarl ex DRI 136 ■
+Mega Charizard X ex PFL 013 ■
+Mega Charizard Y ex ASC 022 ■
+Mega Dragonite ex ASC 152 ■
+Mega Eelektross ex ASC 061 ■
+Mega Gengar ex PFL 056 ■
+Mega Lucario ex MEG 077 ■
+Mega Sharpedo ex PFL 061 ■
+Mega Skarmory ex POR 055 ■
+Mega Starmie ex POR 021 ■
+Mega Zygarde ex POR 047 ■
+Meganium MEG 010 ■ ■
+Meowth ex POR 062 ■
+Mismagius ASC 086 ■
+Mismagius ex PFL 036 ■
+Moltres PFL 014 ■ ■
+N’s Zekrom ASC 155 ■ ■
+N’s Zoroark ex JTG 098 ■
+N’s Zorua JTG 097 ■
+Oricorio ex PFL 018 ■
+Psyduck ASC 039 ■ ■
+Ralts MEG 058 ■
+Reshiram PFL 017 ■
+Reshiram ex WHT 020 ■
+Riolu MEG 076 ■
+Toxtricity PFL 068 ■ ■
+Tynamo BLK 030 ■
+Yveltal ex POR 053 ■
+Zekrom ex BLK 034 ■
+Zeraora DRI 078 ■ ■
+Acerola’s Mischief MEG 113 ■
+Battle Cage PLF 085 ■
+Blowtorch PFL 086 ■
+Boss’s Orders ASC 183 ■ ■
+Brave Bangle WHT 080 ■
+Brock’s Scouting JTG 146 ■
+Canari ASC 185 ■
+Core Memory POR 070 ■
+Dawn PLF 087 ■ ■
+Ethan’s Adventure DRI 165 ■
+Firebreather PFL 089 ■ ■
+Grimsley’s Move PFL 090 ■ ■
+Hilda WHT 084 ■ ■
+Lillie’s Determination MEG 119 ■ ■
+Levincia JTG 150 ■
+Mystery Garden MEG 122 ■
+Poké Pad POR 081 ■
+Premium Power Pro MEG 124 ■
+Punk Helmet PFL 092 ■
+Rosa’s Encouragement POR 084 ■
+Tool Scrapper WHT 085 ■
+Ultra Ball MEG 131 ■ ■
+Wondrous Patch PFL 094 ■ ■
+Growing Grass Energy POR 086 ■ ■
+Ignition Energy WHT 086 ■
+Rocky Fighting Energy POR 087 ■ ■
+Telepathic Psychic Energy POR 088 ■ ■
+Basic Grass Energy MEE 001 ■ ■
+Basic Fire Energy MEE 002 ■ ■
+Basic Water Energy MEE 003 ■ ■
+Basic Lightning Energy MEE 004 ■ ■
+Basic Psychic Energy MEE 005 ■ ■
+Basic Fighting Energy MEE 006 ■ ■
+Basic Darkness Energy MEE 007 ■ ■
+Basic Metal Energy MEE 008 ■ ■

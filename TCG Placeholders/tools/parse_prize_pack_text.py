@@ -25,6 +25,8 @@ FIELDNAMES = [
 SET_CODE_FIXES = {
     # Extracted from the official PDF as SHF because of the embedded font.
     "SHF": "SFA",
+    # Misprinted on the official Series 9 list (Battle Cage 085, Dawn 087 are Phantasmal Flames).
+    "PLF": "PFL",
 }
 
 
