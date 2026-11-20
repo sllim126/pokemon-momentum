@@ -62,11 +62,12 @@
       </form>
       <p class="small muted" data-added role="status"></p>
       <p class="small muted note">Free US shipping on orders over ${{ '{:,}'.format(settings.free_shipping_over_cents // 100) }}. Also on <a href="{{ buy_url }}">TCGplayer</a>.</p>
-      {#- Trust lines (owner, 2026-11-19): facts the owner gave; keep them in step with
+      {#- Trust lines (owner, 2026-11-19; packing reworded 2026-11-20: a box or a padded mailer,
+          whichever suits the order, always tracked and signed for): facts the owner gave; keep them in step with
           content/pages/shipping.md and about.md if anything changes. #}
       <ul class="trust small">
         <li>Ships within 1 business day</li>
-        <li>Bubble wrap, in a cardboard box</li>
+        <li>Bubble wrapped, in a box or padded mailer</li>
         <li>Tracking and signature on every order</li>
         <li>Selling Pokémon since July 2025</li>
       </ul>
