@@ -153,6 +153,15 @@ text, and restart the container. `draft: true` keeps it off the list, the home p
 sitemap while it can still be previewed at its address. Pictures go in like product photos
 (`images.store_original`) and are referenced as `/media/1200/<name>.webp`.
 
+**Scheduling.** A finished article (`draft: false`) with a future `date` is scheduled: it stays
+off the list, the home page and the sitemap until that date (Mountain time), then appears on
+its own, with no restart, because the date is checked on every request. Its page shows a
+"Scheduled" note until then, so it can still be proofread at its address. The file still has to
+be in place when the container starts, so restart after adding one. Workflow for the regular
+posts: Claude (or whoever) drafts each one a few days ahead with fresh data as `draft: true`;
+the owner proofreads it and adds their own voice, then sets `draft: false` and the date it
+should go live. The topic list is in `docs/todo.txt` ("Blog posts").
+
 The 10 posts from Squarespace were converted from the saved copy by `app/article_import.py`
 (slugs from the titles; old `/resources/...` addresses 301 to the new ones, including the old
 category and tag pages). The copy is outside the repo, so mount it:

@@ -214,3 +214,31 @@ def test_cover_that_is_also_in_the_text_is_not_repeated():
     text = OLDER.replace("Checklist text.", "Checklist text.\n\n![Banner](/media/1200/journey-abcdef0123.webp)")
     assert parse("x", text).cover_in_body
     assert not parse("x", OLDER).cover_in_body
+
+
+SCHEDULED = """---
+title: Coming Soon
+date: 2099-01-01
+categories: Market Talk
+draft: false
+---
+Proofread and waiting for its date.
+"""
+
+
+def test_scheduled_article_waits_for_its_date(imported, articles_dir):
+    """A finished article with a future date stays hidden until that date, then goes live."""
+    (articles_dir / "coming-soon.md").write_text(SCHEDULED, encoding="utf-8")
+    articles = Articles(articles_dir)
+    scheduled = articles.get("coming-soon")
+    assert "coming-soon" not in [a.slug for a in articles.published()]
+    assert articles.is_scheduled(scheduled) and not articles.is_scheduled(articles.get("not-ready-yet"))
+    # On its date it appears, newest first, with no reload.
+    assert articles.published(today="2099-01-01")[0].slug == "coming-soon"
+    assert not articles.is_scheduled(scheduled, today="2099-01-01")
+
+    with TestClient(create_app(imported, articles_dir=articles_dir), follow_redirects=False) as client:
+        page = client.get("/articles/coming-soon")
+        assert page.status_code == 200 and "Scheduled: goes live on 2099-01-01" in page.text
+        assert "Coming Soon" not in client.get("/articles").text
+        assert "coming-soon" not in client.get("/sitemap.xml").text

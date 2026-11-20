@@ -540,7 +540,8 @@ the Cloudflare Tunnel. Details: `storefront/README.md`.
   container; output goes outside the repo):
   `python3 storefront/tools/archive_squarespace_site.py --out <folder> --products-csv <export>`.
 - Articles: Markdown files in `storefront/content/articles/`; restart the container after
-  adding or editing one. How to write one: `storefront/README.md` "Articles".
+  adding or editing one. How to write one: `storefront/README.md` "Articles". To schedule a
+  post, set `draft: false` and a future `date`; it goes live that day (Mountain time) by itself.
 - Checkout (Phase 2, Stripe test mode): on when `STOREFRONT_CHECKOUT=1`,
   `STRIPE_SECRET_KEY=sk_test_...` (commented out while catalog-only, so the store holds no
   Stripe key) and `STRIPE_WEBHOOK_SECRET=whsec_...` (required; endpoint setup in

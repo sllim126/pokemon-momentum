@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-20 (Binder Art Maker moved to poke6s.com; missing product pictures; /dashboard-lab removed)
+Last updated: 2026-11-20 (Binder Art Maker moved to poke6s.com; missing product pictures; /dashboard-lab removed; blog drafts and scheduled articles)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -44,6 +44,10 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-20 Blog: "Master Sets, Part 2: Japanese vs English" (3 charts, cover) and "Master
+  Sets Have Become an Art Form" drafted as `draft: true` from the 2026-11-18 prices. Articles
+  with `draft: false` and a future date are now scheduled: hidden until their date, then live
+  with no restart (storefront/README.md "Articles").
 - 2026-11-20 Market option B chosen (owner); first piece done: Binder Art Maker moved to
   poke6s.com/binder-art (store page, logos from images/logos mounted read-only, jsPDF/JSZip
   self-hosted for the store's CSP). market.poke6s.com/binder-art 301s there.
@@ -120,6 +124,25 @@ Recently Completed
 High Priority
 -------------
 
+- [next] Blog posts, 2–3 a week to the end of 2026 (owner, 2026-11-20). Draft each one a few
+  days ahead from fresh data as `draft: true`, no images unless asked; the owner proofreads
+  and adds their own voice before it goes live (set `draft: false` + the date to schedule it).
+  Graded prices from PriceCharting must link back to PriceCharting. Swap a topic if the data
+  turns out boring.
+  - Owner first: proofread "Master Sets, Part 2" (fill the `[ADAM: ...]` line, check the
+    English/Japanese set pairs) and "Master Sets Have Become an Art Form" (wants binder photos).
+    When the art-form post is live, add a link to it at the end of Part 2.
+  - Owner also asked: fix the original "Let's talk about Master Sets…" post (dead Journey
+    Together link to /shop, data only in pictures, no headings, 400-character description,
+    typos) and link it to Part 2.
+  - Topics: Nov 24 Delta Reign's first three weeks vs Pitch Black and Chaos Rising · Nov 26
+    Is sealed cheaper on Black Friday? (Nov–Dec 2024/2025) · Nov 28 Gift guide by budget
+    ($25/$50/$100, price per pack) · Dec 1 Why a PSA 1 can outsell a PSA 5 · Dec 4 Art-form post
+    (drafted) · Dec 8 Best booster box deal, English and Japanese · Dec 10 30th Celebration,
+    three months in · Dec 12 Cards that sell for more in Japanese · Dec 15 What happens when a
+    set goes out of print · Dec 17 The Pokémon tax (same rarity, different Pokémon) · Dec 19
+    Stocking stuffers under $10 · Dec 22 Biggest single-card movers of 2026 · Dec 26 Do prices
+    dip after Christmas? · Dec 29 Sealed in 2026 · Dec 31 2026 in Pokémon cards.
 - [planned] Phone app conveniences the old phone page had (owner, 2026-10-27; confirmed
   2026-11-09). Copy the behaviour from `mobile_dashboard.html` in git tag
   `backup/before-mobile-cleanup-2026-10-31`:
