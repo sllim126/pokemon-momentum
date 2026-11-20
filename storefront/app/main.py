@@ -435,6 +435,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
             raise HTTPException(404)
         crumbs = [("Home", "/"), ("Articles", "/articles"), (found.title, f"/articles/{slug}")]
         return page(request, "article.html", title=found.title, article=found,
+                    scheduled=articles.is_scheduled(found),
                     more=articles.more_like(found), crumbs=crumbs, og_type="article",
                     og_image=seo.image_url(settings, found.cover), description=found.description,
                     jsonld=[seo.article_jsonld(settings, found), seo.breadcrumbs_jsonld(settings, crumbs)])

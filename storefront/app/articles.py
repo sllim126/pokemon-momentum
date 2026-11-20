@@ -19,6 +19,8 @@ one. Each file starts with flat front matter (see markdown.split_front_matter):
 without one, the first picture in the body is used. `old_path` is the article's Squarespace
 address, answered with a 301 (main.py). Drafts are left out of the list, the sitemap and the
 home page but still open at their address, with a draft note, so the owner can preview them.
+A finished article (draft: false) with a future date is scheduled: hidden the same way, with a
+"scheduled" note, until its date arrives (Articles.published).
 
 The posts carried over from Squarespace were converted by article_import.py.
 """
@@ -27,8 +29,10 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote, unquote
+from zoneinfo import ZoneInfo
 
 from markdown_it import MarkdownIt
 
@@ -36,6 +40,14 @@ from .classify import fold
 from .markdown import split_front_matter
 
 WORDS_PER_MINUTE = 230
+SHOP_TZ = ZoneInfo("America/Denver")   # same zone as notify.MOUNTAIN
+
+
+def _today() -> str:
+    """Today's date in the shop's time zone, as YYYY-MM-DD (how article dates are written)."""
+    return datetime.now(SHOP_TZ).date().isoformat()
+
+
 MEDIA_IMAGE = re.compile(r"/media/\d+/([a-z0-9-]+)\.webp")
 
 # Raw HTML stays escaped, as on the other pages. Images in an article are lazy-loaded.
@@ -118,8 +130,20 @@ class Articles:
         self.by_slug = {a.slug: a for a in self.all}
         self.by_old_path = {a.old_path.lower().rstrip("/"): a for a in self.all if a.old_path}
 
-    def published(self) -> list[Article]:
-        return [a for a in self.all if not a.draft]
+    def published(self, today: str | None = None) -> list[Article]:
+        """Articles that are live: not drafts, and dated today or earlier.
+
+        A finished article with a future date is scheduled: it stays out of the list, the
+        sitemap and the home page until its date, then appears with no restart, because the
+        date is checked on every call. `today` is for tests; it defaults to today's date in
+        Mountain time.
+        """
+        today = today or _today()
+        return [a for a in self.all if not a.draft and a.date <= today]
+
+    def is_scheduled(self, article: Article, today: str | None = None) -> bool:
+        """True for a finished article whose date hasn't come yet."""
+        return not article.draft and article.date > (today or _today())
 
     def get(self, slug: str) -> Article | None:
         return self.by_slug.get(slug)

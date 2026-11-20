@@ -3,6 +3,7 @@
 {% block content %}
 <article class="text-page article">
   {% if article.draft %}<p class="draft-note">Draft: not listed on the site yet.</p>{% endif %}
+  {% if scheduled %}<p class="draft-note">Scheduled: goes live on {{ article.date }}.</p>{% endif %}
   <header class="article-head">
     {% if article.categories %}<p class="article-cats">{% for c in article.categories %}<a href="/articles?category={{ c | urlencode }}">{{ c }}</a>{% endfor %}</p>{% endif %}
     <h1>{{ article.title }}</h1>
