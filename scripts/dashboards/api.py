@@ -142,7 +142,8 @@ REPO_ROOT = SCRIPT_DIR.parent.parent
 ALT_DASHBOARD_HTML = SCRIPT_DIR / "dashboard_lab.html"
 COLLECTOR_HUB_HTML = SCRIPT_DIR / "collector_hub.html"
 PLACEHOLDER_LIBRARY_HTML = SCRIPT_DIR / "placeholder_library.html"
-BINDER_ART_HTML = SCRIPT_DIR / "binder_art.html"
+# Binder Art Maker moved to the store on 2026-11-20 (docs/market_inventory.md, option B).
+SHOP_BINDER_ART_URL = "https://poke6s.com/binder-art"
 SET_EXPLORER_HTML = SCRIPT_DIR / "set_explorer.html"
 BUDGET_BUILDER_HTML = SCRIPT_DIR / "budget_builder.html"
 SEALED_DEALS_HTML = SCRIPT_DIR / "sealed_deals.html"
@@ -953,68 +954,10 @@ def placeholder_library():
 
 @app.get("/binder-art")
 def binder_art():
-    """Free Binder Art Maker: cuts an image into card-size pieces in the visitor's browser."""
-    return FileResponse(BINDER_ART_HTML)
-
-
-# Logos shared by a family of small sets get one dropdown entry under the family name
-# (keyed by any member groupId); these entries go after the dated sets.
-BINDER_ART_LOGO_FAMILIES = {1422: "POP Series", 1418: "Black Star Promos", 1401: "McDonald's Promos"}
-_BINDER_ART_LOGO_CACHE: dict[str, object] = {"mtime": None, "logos": []}
-
-
-@app.get("/binder-art/logos.json")
-def binder_art_logos():
-    """Set logos for the Binder Art Maker's dropdown, newest set first.
-
-    Reads the files in images/logos/<groupId>.png. scripts/utilities/sync_set_logos.py
-    copies one logo to several groupIds (a set and its subset), so identical files are
-    merged into one entry named after the earliest set that uses it.
-    """
-    logo_dir = next((d / "logos" for d in IMAGE_DIR_CANDIDATES if (d / "logos").is_dir()), None)
-    if logo_dir is None:
-        return {"logos": []}
-    mtime = logo_dir.stat().st_mtime
-    if _BINDER_ART_LOGO_CACHE["mtime"] == mtime:
-        return {"logos": _BINDER_ART_LOGO_CACHE["logos"]}
-
-    by_hash: dict[str, list[int]] = {}
-    for path in logo_dir.glob("*.png"):
-        if path.stem.isdigit():
-            digest = hashlib.md5(path.read_bytes()).hexdigest()
-            by_hash.setdefault(digest, []).append(int(path.stem))
-    all_ids = sorted(gid for ids in by_hash.values() for gid in ids)
-    info: dict[int, tuple[str, str]] = {}
-    if all_ids:
-        try:
-            _cols, rows = q(
-                f"SELECT groupId, name, CAST(publishedOn AS VARCHAR) FROM {groups_from(3)} "
-                f"WHERE groupId IN ({','.join(str(i) for i in all_ids)})"
-            )
-            info = {int(r[0]): (str(r[1] or ""), str(r[2] or "")) for r in rows}
-        except Exception:
-            info = {}
-
-    dated, families = [], []
-    for ids in by_hash.values():
-        known = sorted((gid for gid in ids if gid in info), key=lambda gid: (info[gid][1], gid))
-        if not known:
-            continue
-        family = next((BINDER_ART_LOGO_FAMILIES[gid] for gid in ids if gid in BINDER_ART_LOGO_FAMILIES), None)
-        first = known[0]
-        published = info[first][1]
-        entry = {
-            "name": family or info[first][0],
-            "year": "" if family else published[:4],
-            "url": f"/images/logos/{first}.png",
-            "_sort": published,
-        }
-        (families if family else dated).append(entry)
-    dated.sort(key=lambda e: e["_sort"], reverse=True)
-    families.sort(key=lambda e: e["name"])
-    logos = [{k: v for k, v in e.items() if k != "_sort"} for e in dated + families]
-    _BINDER_ART_LOGO_CACHE.update(mtime=mtime, logos=logos)
-    return {"logos": logos}
+    """The free Binder Art Maker lives on the shop now (poke6s.com/binder-art, moved
+    2026-11-20; code in storefront/app/binder_art.py and its template). Old links and search
+    results follow this permanent redirect. Its logo list moved with it."""
+    return RedirectResponse(SHOP_BINDER_ART_URL, status_code=301)
 
 
 @app.get("/collector-manifest")

@@ -1,0 +1,67 @@
+/* Binder Art Maker (templates/binder_art.html, static/binder-art.js). Moved from
+   market.poke6s.com on 2026-11-20; the colours are the store's tokens from store.css, which
+   are the same names the market used. Desktop: settings on the left (scrolling on their own),
+   the preview on the right at a fixed height. Phones: one column, preview first. */
+.ba-head { max-width: 860px; }
+.ba-head p { margin: 0 0 16px; }
+.ba-free { color: var(--good); font-weight: 600; }
+.ba-small { font-size: 13px; }
+.ba-grow { flex: 1; }
+.ba-legal { margin-top: 16px; }
+
+.ba-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.ba-panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); min-width: 0; }
+.ba-stage { order: -1; display: flex; flex-direction: column; overflow: hidden; }
+#stage { display: block; width: 100%; height: 62vh; min-height: 320px; background: var(--panel-3); touch-action: none; cursor: grab; }
+@media (min-width: 960px) {
+  .ba-layout { grid-template-columns: 350px minmax(0, 1fr); height: min(78vh, 860px); min-height: 560px; }
+  .ba-rail { overflow-y: auto; }
+  .ba-stage { order: 0; }
+  #stage { flex: 1; min-height: 0; height: auto; }
+}
+#stage.drag { cursor: grabbing; }
+#stage.over { outline: 3px dashed var(--accent); outline-offset: -8px; }
+
+/* main section's 32px top margin (store.css) is for page sections, not these groups. */
+main .ba-group { margin: 0; display: flex; flex-direction: column; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.ba-group:last-child { border-bottom: 0; }
+.ba-group h2 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.ba-group > .btn { width: 100%; }
+.ba-hint { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.ba-stack { display: flex; flex-direction: column; gap: 10px; }
+.ba-stack[hidden], .ba-field[hidden], #sampleNote[hidden] { display: none; }
+
+.ba-presets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.ba-preset { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 7px 6px 7px 8px; border-radius: 10px;
+  border: 1px solid var(--line-strong); background: var(--panel-2); cursor: pointer; }
+.ba-preset b { font-variant-numeric: tabular-nums; }
+.ba-preset small { color: var(--muted); font-size: 11px; white-space: nowrap; }
+.ba-preset[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+
+.ba-field { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; font-size: 14px; }
+.ba-field input[type=number], .ba-rail select { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--panel-3); }
+.ba-field input[type=number] { width: 76px; text-align: right; font-variant-numeric: tabular-nums; }
+.ba-rail select { width: 100%; }
+.ba-field select { width: auto; max-width: 190px; }
+.ba-rail input[type=range] { width: 100%; accent-color: var(--accent); }
+
+.ba-seg { display: flex; flex-wrap: wrap; padding: 3px; border-radius: 10px; background: var(--panel-3); border: 1px solid var(--line); }
+/* The store's base text is 16px; the tool's controls keep the market's tighter 14px. */
+.ba-panel { font-size: 14px; }
+.ba-seg button { flex: 1 1 auto; white-space: nowrap; font-size: 13.5px; border: 0; background: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; color: var(--muted); font-weight: 600; }
+.ba-seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--text); box-shadow: inset 0 0 0 1px rgba(77, 163, 255, 0.45); }
+.ba-toolbar .ba-seg { flex: 0 1 auto; max-width: 100%; }
+
+.ba-file { position: relative; overflow: hidden; }
+.ba-file input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.ba-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ba-check { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.ba-toolbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.ba-facts { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--muted); }
+.ba-facts b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ba-pill { padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid currentColor; }
+.ba-pill.good { color: var(--good); } .ba-pill.warn { color: var(--warn); } .ba-pill.bad { color: var(--bad); }
+#status { margin: 0; min-height: 1.4em; font-size: 13px; color: var(--muted); }
+#status.good { color: var(--good); } #status.bad { color: var(--bad); }
+.ba-tips summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.ba-tips ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; display: grid; gap: 6px; }

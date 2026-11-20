@@ -37,6 +37,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import catalog, classify, images, notify, notify_list, orders, redirects, seo, stripe_api
 from .articles import Articles
+from .binder_art import SetLogos
 from .db import connect, latest_migration, migrate
 from .market import MarketReference
 from .metrics import install_metrics
@@ -79,6 +80,9 @@ SECURITY_HEADERS = {
     # No page needs the camera, microphone, location or USB; Stripe's checkout is its own page.
     "Permissions-Policy": "camera=(), microphone=(), geolocation=(), usb=()",
 }
+# The Binder Art Maker's page (/binder-art) also needs blob: images: the visitor's own picture is
+# read with URL.createObjectURL and never leaves the browser. Everything else stays the same.
+BINDER_ART_CSP = SECURITY_HEADERS["Content-Security-Policy"].replace("img-src 'self' data:", "img-src 'self' data: blob:")
 # Largest cart or checkout request accepted (item 16). A full cart (50 lines) is about 3 KB.
 MAX_CART_BODY_BYTES = 32 * 1024
 
@@ -102,6 +106,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     """Build the app. `stripe` replaces the real Stripe client (tests pass a fake)."""
     settings = settings or load_settings()
     market = MarketReference(settings.market_reference_path)
+    set_logos = SetLogos(settings.set_logo_dir, settings.groups_csv)
     pages = load_pages()
     articles = Articles(articles_dir or ARTICLES_DIR)
     if not settings.checkout_switch:
@@ -433,6 +438,33 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
                     more=articles.more_like(found), crumbs=crumbs, og_type="article",
                     og_image=seo.image_url(settings, found.cover), description=found.description,
                     jsonld=[seo.article_jsonld(settings, found), seo.breadcrumbs_jsonld(settings, crumbs)])
+
+    # --- free tools ---------------------------------------------------------------------
+    # Binder Art Maker, moved from market.poke6s.com on 2026-11-20 (docs/market_inventory.md,
+    # option B). The work happens in the browser (static/binder-art.js, with jsPDF and JSZip
+    # served from static/vendor/ because the CSP allows no other script hosts).
+
+    @app.get("/binder-art", response_class=HTMLResponse)
+    def binder_art(request: Request):
+        crumbs = [("Home", "/"), ("Binder Art Maker", "/binder-art")]
+        response = page(request, "binder_art.html", title="Binder Art Maker", crumbs=crumbs,
+                        jsonld=[seo.breadcrumbs_jsonld(settings, crumbs)],
+                        description="Free tool: cut one picture into Pokémon-card-size pieces for a 2×2 to 4×4 "
+                                    "binder page, with an optional set logo. Print-ready PDF with cut marks, or card PNGs.")
+        response.headers["Content-Security-Policy"] = BINDER_ART_CSP
+        return response
+
+    @app.get("/binder-art/logos.json")
+    def binder_art_logos():
+        # Changes when a logo is added or the nightly set list updates: an hour's cache is plenty.
+        return JSONResponse({"logos": set_logos.logos()}, headers={"Cache-Control": "public, max-age=3600"})
+
+    @app.get("/binder-art/logos/{name}")
+    def binder_art_logo(name: str):
+        path = set_logos.path(name.removesuffix(".png")) if name.endswith(".png") else None
+        if path is None:
+            raise HTTPException(404)
+        return FileResponse(path, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
 
     # --- cart, checkout and orders (Phase 2; rules in orders.py) --------------------------
 

@@ -92,6 +92,10 @@ class Settings:
     # .env (STOREFRONT_POSTAL_ADDRESS), not in the code: this repository is public. Marketing
     # emails refuse to send without it (app/mailing.py). Order emails don't need it.
     postal_address: str = ""
+    # Binder Art Maker set logos (app/binder_art.py): the repo's images/logos folder, mounted
+    # read-only into the container, and the market's TCGCSV set list for names and dates.
+    set_logo_dir: Path = REPO_ROOT / "images" / "logos"
+    groups_csv: Path = REPO_ROOT / "data" / "extracted" / "pokemon_groups.csv"
 
     @property
     def stripe_mode(self) -> str:
@@ -178,4 +182,7 @@ def load_settings() -> Settings:
         smtp_user=os.getenv("STOREFRONT_SMTP_USER", "").strip(),
         smtp_password=os.getenv("STOREFRONT_SMTP_PASSWORD", ""),
         mail_from=os.getenv("STOREFRONT_MAIL_FROM", "Poke6s <orders@poke6s.com>"),
+        set_logo_dir=Path(os.getenv("STOREFRONT_SET_LOGO_DIR", str(REPO_ROOT / "images" / "logos"))),
+        groups_csv=Path(os.getenv("STOREFRONT_GROUPS_CSV",
+                                  str(REPO_ROOT / "data" / "extracted" / "pokemon_groups.csv"))),
     )

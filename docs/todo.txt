@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-20 (step 9a, one look; market inventory)
+Last updated: 2026-11-20 (market option B: Binder Art Maker moved to poke6s.com)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -44,6 +44,9 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-20 Market option B chosen (owner); first piece done: Binder Art Maker moved to
+  poke6s.com/binder-art (store page, logos from images/logos mounted read-only, jsPDF/JSZip
+  self-hosted for the store's CSP). market.poke6s.com/binder-art 301s there.
 - 2026-11-20 Step 9a, one look: the Poke6s bar (Shop / Market / Admin) across the top of
   poke6s.com, market.poke6s.com (every page through site_shell.js, plus the phone app) and the
   store admin; the store header's "Market prices" link and the admin's "Open the store" moved
@@ -399,10 +402,14 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
        network. The admin stays off the internet (Tailscale idea below for away from home).
     Not recommended: putting the store admin behind the public sign-in; it would put refunds
     and customer addresses on the internet.
-  - [owner] Market inventory drafted (docs/market_inventory.md, 2026-11-20): every market part
-    with a suggested home (keep / store / admin / retire) and three ways to go (A two sites,
-    B collector tools into the store (suggested), C everything under poke6s.com/market).
-    Owner: pick A, B or C, and the "Decide" rows.
+  - [next] Market option B (owner chose it 2026-11-20, docs/market_inventory.md): move the
+    collector tools to poke6s.com, one at a time, with 301s from the old addresses. Done:
+    Binder Art Maker (2026-11-20). Next: Collector Hub, then the Placeholder Library and its
+    printable checklists (served from "TCG Placeholders/", so the store needs that folder or
+    a copy of the published pages). Then the owner tools into the admin (Supplier Pricing,
+    Supplier Profitability).
+  - [waiting] Owner: the "Decide" rows in docs/market_inventory.md (Sealed Deals and Budget
+    Builder; End of Day, Embed, Dashboard Lab).
   - [planned] Count the market app's views by ?list= for 2-4 weeks (visitors.py records page
     paths without the query string, so app views are invisible), to inform the inventory.
   - [idea] Bigger, a project of its own (owner, 2026-11-20): fold market.poke6s.com into
@@ -590,7 +597,8 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
 - [planned] After 2026-12-01: remove the Cyber Weekend note (#eventBar block and .event-bar CSS)
   from desktop_home.html and mobile_app.html. It hides itself outside 2026-11-28 14:00 UTC to
   2026-12-02 04:00 UTC, so leaving it a few days longer does no harm.
-- [watching] Binder Art Maker (/binder-art, live 2026-10-21). Fix bug reports as they come in.
+- [watching] Binder Art Maker (poke6s.com/binder-art since 2026-11-20; on the market site from
+  2026-10-21). Fix bug reports as they come in.
   Ideas if visitors ask: upload their own logo or text; a card-back design. Japanese set logos
   aren't in images/logos yet.
 - [idea] Bulk pricing on TCGplayer (owner, 2026-10-19): the owner's bulk isn't selling. Other
