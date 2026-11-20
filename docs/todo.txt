@@ -135,7 +135,8 @@ High Priority
   - Owner also asked: fix the original "Let's talk about Master Sets…" post (dead Journey
     Together link to /shop, data only in pictures, no headings, 400-character description,
     typos) and link it to Part 2.
-  - Topics: Nov 24 Delta Reign's first three weeks vs Pitch Black and Chaos Rising · Nov 26
+  - Topics: Nov 24 Delta Reign, two weeks in (drafted 2026-11-20 from prices to Nov 19:
+    `delta-reign-the-first-two-weeks.md`) · Nov 26
     Is sealed cheaper on Black Friday? (Nov–Dec 2024/2025) · Nov 28 Gift guide by budget
     ($25/$50/$100, price per pack) · Dec 1 Why a PSA 1 can outsell a PSA 5 · Dec 4 Art-form post
     (drafted) · Dec 8 Best booster box deal, English and Japanese · Dec 10 30th Celebration,
