@@ -401,16 +401,18 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
 - [ready] Notification emails get product cards (branch `storefront/mail-product-cards`,
   78eec63; 162 store tests pass): `Products: SKU, SKU` in a message file shows photo, price and
   link per product. Not merged: merge when the owner says. Draft "we're open" email in
-  data/storefront/mailings/2026-11-we-are-open.txt; sends only after the PO box (see below).
+  data/storefront/mailings/2026-11-we-are-open.txt; the postal address it needs is set (below).
 - [planned] Some store photos are tiny (Greninja ex PC 200 px, Perfect Order box 270 px):
   replace them with larger ones (fits with the owner's listing notes).
 - [next] Owner's notes on individual store listings (owner has them, 2026-11-14): go through
   them one listing at a time.
 - [owner] The email list has one sign-up (a visitor, 2026-11-12 from /notify), not none: send
   them a short "we're open" email with `orders_cli mailing`, or not. Owner's call.
-- [owner] Before the first marketing email: STOREFRONT_POSTAL_ADDRESS in .env (it's printed in
-  every email; a USPS PO box or private mailbox keeps the home address private), then
-  deploy/update_storefront.sh. `orders_cli mailing` refuses to send without it.
+- [ready] Postal address for marketing emails: STOREFRONT_POSTAL_ADDRESS is set in .env
+  (2026-11-20). No PO box: the owner chose the business's street address (already on its Google
+  Business Profile and state registration); it lives only in .env, never in the repo. It reaches
+  the store container once the storefront/trust-lines branch (docker-compose passes it) is
+  merged and deploy/update_storefront.sh has run; `orders_cli mailing` refuses until then.
 - [planned] A way to join the email list now: the sign-up form shows only while checkout is
   off. A small "News and restocks" box in the footer or on /notify? Owner's call.
 - [planned] A restock command for returns (D8: refunds don't put stock back; done by hand in
