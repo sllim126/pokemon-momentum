@@ -418,6 +418,82 @@ def test_shipping_an_order_emails_tracking(app_client, shop, fake):
     assert "9400111899223817461234" in message.get_body(("plain",)).get_content()
 
 
+def _shipped_live_order(app_client, shop, fake, shipped_at: datetime, email: str = "") -> str:
+    """A paid, shipped order turned into a live one (review requests skip test orders)."""
+    session_id = start(app_client, ("JP-PACK-A", 1))
+    number = number_of(fake, session_id)
+    conn = connect(shop.db_path, writer=True)
+    try:
+        orders.mark_paid(conn, shop, fake.pay(session_id), "https://shop.test")
+        orders.mark_shipped(conn, shop, number, "USPS", "9400", "https://shop.test")
+        conn.execute("UPDATE orders SET mode = 'live', shipped_at = ? WHERE number = ?",
+                     (orders.now_iso(shipped_at), number))
+        if email:
+            conn.execute("UPDATE orders SET email = ? WHERE number = ?", (email, number))
+        conn.commit()
+    finally:
+        conn.close()
+    return number
+
+
+def _ask(shop, now: datetime) -> int:
+    conn = connect(shop.db_path, writer=True)
+    try:
+        return orders.send_review_requests(conn, shop, "https://shop.test", now=now)
+    finally:
+        conn.close()
+
+
+def _review_emails(shop) -> list[str]:
+    return [p.read_text() for p in shop.outbox_dir.glob("*.eml") if "How did we do?" in p.read_text()]
+
+
+# 18:00 UTC is 11 am in Utah (inside the sending hours); 08:00 UTC is 1 am there.
+DAYTIME = datetime(2026, 12, 10, 18, 0, tzinfo=UTC)
+
+
+def test_review_request_goes_once_five_days_after_shipping(app_client, shop, fake):
+    number = _shipped_live_order(app_client, shop, fake, DAYTIME - timedelta(days=4))
+    assert _ask(shop, DAYTIME) == 0                                   # too soon
+    assert _ask(shop, DAYTIME + timedelta(days=1, hours=-10)) == 0    # due, but 1 am in Utah
+    assert _ask(shop, DAYTIME + timedelta(days=1)) == 1
+    assert _ask(shop, DAYTIME + timedelta(days=1, hours=1)) == 0      # never twice
+    assert order_row(shop, number)["review_asked_at"]
+    emails = _review_emails(shop)
+    assert len(emails) == 1
+    from email import policy
+    from email.parser import BytesParser
+    path = next(p for p in shop.outbox_dir.glob("*.eml") if "How did we do?" in p.read_text())
+    message = BytesParser(policy=policy.default).parsebytes(path.read_bytes())
+    plain, html = message.get_body(("plain",)).get_content(), message.get_body(("html",)).get_content()
+    assert shop.google_review_url in plain and number in plain and "only review email" in plain
+    assert "Leave a Google review" in html and shop.google_review_url in html
+    assert "View your order" not in html and "Subtotal" not in html   # short: no totals
+
+
+def test_review_request_skips_test_refunded_old_and_unsubscribed(app_client, shop, fake):
+    due = DAYTIME - timedelta(days=6)
+    refunded = _shipped_live_order(app_client, shop, fake, due)
+    old = _shipped_live_order(app_client, shop, fake, DAYTIME - timedelta(days=30))
+    gone = _shipped_live_order(app_client, shop, fake, due, email="gone@example.com")
+    test_mode = _shipped_live_order(app_client, shop, fake, due)
+    with connect(shop.db_path, writer=True) as conn:
+        conn.execute("UPDATE orders SET status = 'refunded' WHERE number = ?", (refunded,))
+        conn.execute("UPDATE orders SET mode = 'test' WHERE number = ?", (test_mode,))
+        conn.execute("INSERT INTO notify_signups (email, created_at, unsubscribed_at) "
+                     "VALUES ('Gone@Example.com', '2026-11-01T00:00:00Z', '2026-11-02T00:00:00Z')")
+        conn.commit()
+    assert _ask(shop, DAYTIME) == 0
+    assert _review_emails(shop) == []
+    assert all(not order_row(shop, n)["review_asked_at"] for n in (refunded, old, gone, test_mode))
+
+
+def test_review_requests_off_without_a_link(app_client, shop, fake):
+    _shipped_live_order(app_client, shop, fake, DAYTIME - timedelta(days=6))
+    assert _ask(dataclasses.replace(shop, google_review_url=""), DAYTIME) == 0
+    assert _ask(shop, DAYTIME) == 1
+
+
 # --- switches -----------------------------------------------------------------------------
 
 def test_without_a_stripe_key_checkout_is_off(client):

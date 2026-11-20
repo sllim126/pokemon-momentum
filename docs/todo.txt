@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-19 (store admin step 4, Refunds)
+Last updated: 2026-11-20 (store trust lines and Google review request)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -44,15 +44,13 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
-- 2026-11-19 Store trust lines (owner's facts: selling since July 2025; bubble wrap in a
-  cardboard box; tracking and signature on every order; ships within 1 business day): a ticked
-  list under Add to cart on product pages, plus the About and Shipping pages. Google reviews:
-  the Business Profile already exists ("Poke6s, llc"; Google's monthly reports go to the store
-  mailbox); waiting on the owner for its "Ask for reviews" link (g.page/r/...) before adding
-  the review request (todo item on the tcgcsv/discord-notes-and-2026-torrent branch).
-  list under Add to cart on product pages, plus the About and Shipping pages. Google reviews
-  are still waiting on a Google Business Profile (todo item from the
-  tcgcsv/discord-notes-and-2026-torrent branch).
+- 2026-11-20 Store trust lines and the Google review request. Trust lines (owner's facts:
+  selling since July 2025; bubble wrap in a cardboard box; tracking and signature on every
+  order; ships within 1 business day): a ticked list under Add to cart, plus the About and
+  Shipping pages. Review request: 5 days after an order ships, one "How did we do?" email with
+  the Google Business Profile's review link (g.page/r/CYIrs6Vj97MOEBM/review), sent by the
+  15-minute job between 9 am and 8 pm Utah time (migration 008). Also: STOREFRONT_POSTAL_ADDRESS
+  was never passed into the store container; docker-compose now passes it.
 - 2026-11-19 Store admin step 4, Refunds and returns: "Refund or return" on the order page
   refunds any amount through Stripe with the admin's own restricted key, emails the customer,
   notes it, and puts returned units back on the shelf. A partial refund on an unshipped order
@@ -312,16 +310,11 @@ and open decisions: `docs/storefront_plan.md` (progress log at its end). What th
 site has today: `docs/storefront_current_site.md`. Our own site, hosted on the owner's server
 behind Cloudflare Tunnel; Stripe hosted Checkout (approved by the owner 2026-10-31). The
 Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
-- [waiting] Google review request (owner, 2026-11-19). The Business Profile "Poke6s, llc"
-  already exists (Google's emails go to the store mailbox). Owner's steps in the profile:
-  1. "Ask for reviews": copy the review link (g.page/r/...) and send it over.
-  2. Confirm business details (Google's "Action Required" email, 2026-10-22): hours, phone,
-     and the website set to https://poke6s.com.
-  3. Add a few photos (sealed stock, packing setup), as Google suggested on 2026-11-18.
-  Then build: a "How did we do?" email with that link a few days after an order is marked
-  shipped (one per order, skipped if the customer unsubscribed). Ask every customer and
-  offer nothing in return (Google's rules; FTC 2024 fake-review rule). Later, maybe show the
-  rating on the site, from the profile, not a paid widget.
+- [owner] Google Business Profile ("Poke6s, llc"): confirm the business details (Google's
+  "Action Required" email, 2026-10-22: hours, phone, website https://poke6s.com) and add a few
+  photos (sealed stock, packing). The review request emails are built (Recently Completed).
+- [idea] Show the Google star rating on poke6s.com once there are a few reviews (from the
+  profile, not a paid widget).
 - [idea] Track record: also record the Japanese lists' Budget Builder and the Graded Budget
   Builder (scored on PriceCharting history). Only raw English budget picks are scored today.
 - [idea] Desktop card column at 1366 px: when a card has "Our TCGplayer store", the action bar

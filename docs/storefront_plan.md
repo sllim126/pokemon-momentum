@@ -1,6 +1,6 @@
 # New storefront for poke6s.com: plan
 
-Last reviewed: 2026-11-19
+Last reviewed: 2026-11-20
 **Status: live catalog-only on https://poke6s.com/ since 2026-11-11**, self-hosted on the owner's
 server through a Cloudflare Tunnel (runbook "poke6s.com hosting"). Phases 1 and 2 built;
 checkout stays off (Stripe test mode only) until the owner activates live payments. Google
@@ -290,6 +290,12 @@ Prices are stored in cents. All times are UTC in the database, shown in Mountain
      admin;
    - the shopper gets a shipping email from admin@poke6s.com via Microsoft 365 SMTP;
    - SMTP AUTH may need switching on for that mailbox.
+   - **Review request (owner, 2026-11-20):** 5 days after shipping, the reconcile job sends one
+     "How did we do?" email with the link to the shop's Google Business Profile reviews
+     (`orders.send_review_requests`; between 9 am and 8 pm Utah time; live orders still marked
+     shipped, so not refunded or disputed; skipped for addresses that unsubscribed from the
+     list; orders shipped more than 19 days ago are never asked). Every customer is asked
+     and nothing is offered for a review (Google's rules, FTC 2024 fake-review rule).
 8. **Development uses Stripe test mode** and the Stripe CLI for webhooks. **Switching to live
    keys is the owner's call** (it reaches real customers and money).
 
@@ -547,3 +553,4 @@ Reviewed with the owner on 2026-10-31. D2 decided 2026-11-05.
 | 2026-11-19 | Claude | **Phase 3 step 6: Pricing page.** `/pricing` runs reprice.py's rules (now shared as `plan()`/`apply()`; command-line output unchanged, checked against the live data) with a preview: tick what to apply, each change logged as "repricing"; lines that changed meanwhile are skipped. Costs come through a read-only mount named in `.env` (`STOREFRONT_COSTS_DIR`) and are never shown. Today's preview: 9 prices would change, owner to review | Owner: review and apply the 9. Claude: step 7 needs the bookkeeping columns |
 | 2026-11-19 | Claude | **Phase 3 step 3: Shipping through Pirate Ship.** `/shipping`: paid orders out as a CSV for Pirate Ship's spreadsheet import (its field names; weight from each product's packed weight, box size for one-item orders; no email column, the store sends its own tracking email; orders marked "in a file" so a second label isn't bought by mistake), and Pirate Ship's shipments CSV back in with a preview (order number found in any cell, tracking from the "tracking" column, other sales' labels ignored, voided labels and Excel-mangled numbers refused) before marking the ticked orders shipped. Product page gains "Packed for shipping" (weight and box, logged). Migration 007. Pirate Ship's export columns aren't documented, so the reader is forgiving; the first real export confirms it | Owner: save packed sizes for the products you ship most (only 16 of 95 have a weight, from Squarespace); upload the first real shipments export and say if anything didn't match. Claude: step 4 once the refund key exists |
 | 2026-11-19 | Claude | **Phase 3 step 4: Refunds and returns.** Order page "Refund or return": any amount up to what's left through Stripe with the admin's own restricted live key (`STOREFRONT_ADMIN_STRIPE_KEY`, passed to the admin container only; checked: refunds, charges and payment intents allowed, customers, balance and checkout refused), recorded at once through `record_refund` (the webhook then stays quiet), a refund email, a dated note; returned units put back as `restock` movements referenced `Return <order>`, never more than sold. Idempotency key per order/refunded total/amount; disputed and test orders refused. A partial refund on an unshipped order now leaves it paid (it used to drop out of To ship) | Owner: the first real refund confirms the key's write access. Claude: step 7 once the bookkeeping columns are agreed; step 8 needs nothing |
+| 2026-11-20 | Claude | **Trust lines and the Google review request.** Product pages list the owner's facts under Add to cart (ships within 1 business day; bubble wrap in a cardboard box; tracking and signature on every order; selling since July 2025), also on About and Shipping. Five days after an order ships, one "How did we do?" email links to the Google Business Profile's reviews (migration 008, `orders.send_review_requests`, run by the 15-minute job). `STOREFRONT_POSTAL_ADDRESS` is now passed into the container (docker-compose), which marketing emails needed | Owner: confirm the Business Profile's details and website |

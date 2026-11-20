@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-19 (Retire a monitored job; Nightly update keeps the site up: copy and swap; Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
+Last reviewed: 2026-11-20 (Store review request emails; Retire a monitored job; Nightly update keeps the site up: copy and swap; Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -589,6 +589,9 @@ the Cloudflare Tunnel. Details: `storefront/README.md`.
   "Order emails"); without it they go to `data/storefront/outbox/` and live checkout stays off.
   A failed email is retried for 24 hours (Discord says so); after "GAVE UP", fix sending and
   `orders_cli resend <number>`. Live keys are refused unless `STOREFRONT_ALLOW_LIVE=1` (owner).
+  Five days after an order ships, the same 15-minute job sends one Google review request
+  ("How did we do?", 9 am to 8 pm Utah time; `orders.review_asked_at` records it). Off:
+  `STOREFRONT_GOOGLE_REVIEW_URL=` (empty) in `.env`; the delay is `STOREFRONT_REVIEW_REQUEST_DAYS`.
   Don't re-run the Squarespace importer once real orders exist: it resets stock.
 - Marketing emails to the email list (new stock, sales): write a message file (format in
   `storefront/app/mailing.py`) under `data/storefront/mailings/`, then

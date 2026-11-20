@@ -78,6 +78,13 @@ services:
       STOREFRONT_SMTP_HOST: ${STOREFRONT_SMTP_HOST:-}
       STOREFRONT_SMTP_USER: ${STOREFRONT_SMTP_USER:-}
       STOREFRONT_SMTP_PASSWORD: ${STOREFRONT_SMTP_PASSWORD:-}
+      # Printed in every marketing email (CAN-SPAM); orders_cli mailing refuses to send without it.
+      STOREFRONT_POSTAL_ADDRESS: ${STOREFRONT_POSTAL_ADDRESS:-}
+      # Google review request, one per order, this many days after it ships (orders.py,
+      # send_review_requests). The link's default is in app/settings.py; setting
+      # STOREFRONT_GOOGLE_REVIEW_URL= (empty) in .env switches the emails off.
+      STOREFRONT_GOOGLE_REVIEW_URL: ${STOREFRONT_GOOGLE_REVIEW_URL-https://g.page/r/CYIrs6Vj97MOEBM/review}
+      STOREFRONT_REVIEW_REQUEST_DAYS: ${STOREFRONT_REVIEW_REQUEST_DAYS:-5}
     ports:
       # This machine only (security review 2026-11-11, item 10): the public site comes in
       # through the tunnel (cloudflared, on the Docker network), and monitoring, the deploy

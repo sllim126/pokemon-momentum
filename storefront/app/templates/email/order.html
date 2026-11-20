@@ -6,7 +6,7 @@
     every app and in dark mode; the navy header matches the logo's own background (#000a1b).
     The logo is attached to the email itself (cid:), so it shows before the site is public.
 
-    Variables: kind ('confirmed' | 'shipped'), order, status_url, site_url, contact_email,
+    Variables: kind ('confirmed' | 'shipped' | 'refunded' | 'review'), order, review_url (review), status_url, site_url, contact_email,
     logo_cid, placed, tracking_url, test. -#}
 {%- set navy = "#000a1b" -%}
 {%- set accent = "#1f7ae0" -%}
@@ -45,11 +45,14 @@
 
   <tr><td style="padding:32px 32px 8px;">
     <h1 style="margin:0 0 8px; font-size:24px; line-height:1.3; font-weight:700; color:{{ text }};">
-      {%- if kind == "shipped" %}Your order is on its way{% elif kind == "refunded" %}Your refund is on its way{% else %}Thanks for your order!{% endif -%}
+      {%- if kind == "shipped" %}Your order is on its way{% elif kind == "refunded" %}Your refund is on its way{% elif kind == "review" %}How did we do?{% else %}Thanks for your order!{% endif -%}
     </h1>
     <p style="margin:0; font-size:15px; line-height:1.5; color:{{ muted }};">
       {%- if kind == "shipped" -%}
         Good news: order <strong style="color:{{ text }};">{{ order.number }}</strong> has shipped.
+      {%- elif kind == "review" -%}
+        Order <strong style="color:{{ text }};">{{ order.number }}</strong> should have arrived by now.
+        If you have a minute, a short review on Google helps a small shop like ours a lot.
       {%- elif kind == "refunded" -%}
         We've refunded <strong style="color:{{ text }};">{{ refund_cents | money }}</strong> for order
         <strong style="color:{{ text }};">{{ order.number }}</strong> to the card you paid with.
@@ -60,6 +63,14 @@
       {%- endif -%}
     </p>
   </td></tr>
+
+  {%- if kind == "review" %}
+  <tr><td align="center" style="padding:24px 32px 4px;">
+    <a href="{{ review_url }}" style="display:inline-block; background:{{ accent }}; color:#ffffff; text-decoration:none; font-weight:600; font-size:16px; padding:13px 28px; border-radius:8px;">Leave a Google review</a>
+    <p style="margin:14px 0 0; font-size:14px; line-height:1.5; color:{{ muted }};">
+      Something arrived damaged or isn't right? Reply to this email and we'll sort it out.</p>
+  </td></tr>
+  {%- endif %}
 
   {%- if kind == "shipped" and order.tracking_number %}
   <tr><td style="padding:20px 32px 4px;">
@@ -93,6 +104,7 @@
     </table>
   </td></tr>
 
+  {%- if kind != "review" %}
   <tr><td style="padding:12px 32px 0;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:15px;">
       <tr><td style="padding:4px 0; color:{{ muted }};">Subtotal</td><td align="right" style="padding:4px 0;">{{ order.subtotal_cents | money }}</td></tr>
@@ -114,6 +126,7 @@
   <tr><td align="center" style="padding:28px 32px 4px;">
     <a href="{{ status_url }}" style="display:inline-block; background:{{ navy }}; color:#ffffff; text-decoration:none; font-weight:600; font-size:15px; padding:12px 26px; border-radius:8px;">View your order</a>
   </td></tr>
+  {%- endif %}
 
   <tr><td style="padding:24px 32px 28px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px; line-height:1.5;">

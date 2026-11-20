@@ -92,6 +92,12 @@ class Settings:
     # .env (STOREFRONT_POSTAL_ADDRESS), not in the code: this repository is public. Marketing
     # emails refuse to send without it (app/mailing.py). Order emails don't need it.
     postal_address: str = ""
+    # Google review request (owner, 2026-11-20): the "Ask for reviews" link from the shop's
+    # Google Business Profile ("Poke6s, llc"). It's a public link, not a secret. Each live order
+    # gets one email with it review_request_days after it ships (orders.send_review_requests).
+    # Empty (STOREFRONT_GOOGLE_REVIEW_URL=) switches the emails off.
+    google_review_url: str = "https://g.page/r/CYIrs6Vj97MOEBM/review"
+    review_request_days: int = 5
 
     @property
     def stripe_mode(self) -> str:
@@ -178,4 +184,7 @@ def load_settings() -> Settings:
         smtp_user=os.getenv("STOREFRONT_SMTP_USER", "").strip(),
         smtp_password=os.getenv("STOREFRONT_SMTP_PASSWORD", ""),
         mail_from=os.getenv("STOREFRONT_MAIL_FROM", "Poke6s <orders@poke6s.com>"),
+        google_review_url=os.getenv("STOREFRONT_GOOGLE_REVIEW_URL",
+                                    "https://g.page/r/CYIrs6Vj97MOEBM/review").strip(),
+        review_request_days=_int("STOREFRONT_REVIEW_REQUEST_DAYS", 5),
     )
