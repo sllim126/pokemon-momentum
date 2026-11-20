@@ -65,3 +65,13 @@ main .ba-group { margin: 0; display: flex; flex-direction: column; gap: 10px; pa
 #status.good { color: var(--good); } #status.bad { color: var(--bad); }
 .ba-tips summary { cursor: pointer; font-weight: 600; font-size: 14px; }
 .ba-tips ul { margin: 8px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; display: grid; gap: 6px; }
+
+/* Pockets to fill: one toggle per pocket in the page's own shape (columns set by binder-art.js).
+   Pressed = gets a piece of the picture; not pressed = left empty for one of your own cards. */
+.ba-pockets { display: grid; gap: 4px; max-width: 170px; }
+.ba-pockets.spread { max-width: 300px; }
+.ba-pocket { aspect-ratio: 63 / 88; min-height: 0; padding: 0; border-radius: 6px; cursor: pointer; font-weight: 600;
+  font-size: 13px; font-variant-numeric: tabular-nums; color: var(--muted); background: var(--panel-3);
+  border: 1px dashed var(--line-strong); }
+.ba-pocket[aria-pressed="true"] { color: var(--text); background: var(--accent-soft); border: 1px solid var(--accent); }
+.ba-pocket:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

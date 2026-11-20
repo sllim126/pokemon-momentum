@@ -152,6 +152,11 @@ reads `images/logos/<groupId>.png`, mounted read-only into the container, and na
 from `data/extracted/pokemon_groups.csv`; a logo added with `scripts/utilities/sync_set_logos.py`
 shows up within an hour (the list's cache time).
 
+"Pockets to fill" (2026-11-20) lets a visitor use only some pockets, say 1 and 4, or 8 and 9,
+leaving the rest for real cards. The picture is fitted to the box around the kept pockets, and
+the PDF and ZIP hold only those cards (file names gain e.g. `-p1-4`). Pockets are numbered row
+by row on each page; at least one is always kept.
+
 ## Articles
 
 The blog lives at `/articles` (list, with category and tag filters) and `/articles/<slug>`.

@@ -66,8 +66,8 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   code from its own clone `~/poke6s-store`. Phase 1 (catalog, browse, SEO, redirects) since 2026-10-31.
   Phase 2 (cart and Stripe Checkout, test mode; orders in `store.db`) merged 2026-11-05; checkout
   stays off without `STRIPE_SECRET_KEY` and refuses live keys unless `STOREFRONT_ALLOW_LIVE=1`.
-  Articles (the old Squarespace blog) at `/articles`. Free Binder Art Maker at `/binder-art` and
-  Collector Hub at `/collector-hub` (both moved from the market site 2026-11-20). Marketing emails to the email list
+  Articles (the old Squarespace blog) at `/articles`. Free Binder Art Maker at `/binder-art` (can
+  fill just the pockets you pick) and Collector Hub at `/collector-hub` (both moved from the market site 2026-11-20). Marketing emails to the email list
   (`orders_cli mailing`, with unsubscribe links) since 2026-11-14. Guide: `storefront/README.md`
 - Collector resources: generated placeholder libraries, checklists, print pages, review queues, and downloads
 - Standalone binder planners: ATLA and KPDH are served by separate read-only nginx
