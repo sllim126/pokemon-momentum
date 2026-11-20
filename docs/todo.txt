@@ -135,8 +135,9 @@ High Priority
   - Owner also asked: fix the original "Let's talk about Master Sets…" post (dead Journey
     Together link to /shop, data only in pictures, no headings, 400-character description,
     typos) and link it to Part 2.
+  - Posts can show live product boxes with `[[market <ids>]]` (storefront/README.md "Articles").
   - Topics: Nov 24 Delta Reign, two weeks in (drafted 2026-11-20 from prices to Nov 19:
-    `delta-reign-the-first-two-weeks.md`) · Nov 26
+    `delta-reign-the-first-two-weeks.md`, with market boxes) · Nov 26
     Is sealed cheaper on Black Friday? (Nov–Dec 2024/2025) · Nov 28 Gift guide by budget
     ($25/$50/$100, price per pack) · Dec 1 Why a PSA 1 can outsell a PSA 5 · Dec 4 Art-form post
     (drafted) · Dec 8 Best booster box deal, English and Japanese · Dec 10 30th Celebration,
@@ -396,8 +397,11 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   2026-11-14, merged to main and deployed 2026-11-18. Step 2 (Orders, with packing slips)
   built 2026-11-19 on branch storefront/admin-orders. Next:
   - [done 2026-11-18] Owner set the admin password and signed in.
-  - [owner] Before step 7: the columns your books use for a month of sales (QuickBooks import
-    or the ledger in poke6s-books), so the bookkeeping export fits without retyping.
+  - [done 2026-11-20] Bookkeeping columns for step 7: the books already define them (the Utah sales
+    worksheet and the Tax ledger in poke6s-books). Owner's choice: poke6s.com sales do NOT go into
+    QuickBooks as sales receipts. QuickBooks sees only the Stripe payouts in the bank feed, like
+    TCGplayer (simplest, least error-prone). The monthly export feeds the worksheet and the ledger,
+    splitting each payout into sales, tax collected, shipping and Stripe fees per order.
   - [owner] Step 3 (Shipping page, done 2026-11-19 on branch storefront/admin-shipping): save the
     packed weight and box on the product page ("Packed for shipping") for what you ship most;
     only 16 of 95 products have a weight (Squarespace's) and none of the ETBs. Then, with the
@@ -409,8 +413,8 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - [owner] Pricing page (http://192.168.1.240:8011/pricing, live after the next deploy): 9
     prices would change on 2026-11-18's market (e.g. Ascended Heroes ETB $120.99 -> $119.99).
     Untick any to keep, then apply.
-  - [planned] Step 7: reports (sales tax, TCGplayer reconciliation, bookkeeping columns agreed
-    with the owner first).
+  - [planned] Step 7: reports (sales tax, TCGplayer reconciliation, and the monthly bookkeeping
+    export in the books' existing columns; no QuickBooks import, owner 2026-11-20).
   - [done 2026-11-20] Step 8 (D11): market site's Squarespace Export Upload and Singles
     Listing Intake retired; Supplier pages read store prices from store.db; market Admin page
     links the store admin.

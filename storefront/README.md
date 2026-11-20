@@ -153,6 +153,14 @@ text, and restart the container. `draft: true` keeps it off the list, the home p
 sitemap while it can still be previewed at its address. Pictures go in like product photos
 (`images.store_original`) and are referenced as `/media/1200/<name>.webp`.
 
+**Market boxes.** A line holding only `[[market <id> <id> ...]]` (TCGplayer product IDs, as
+in `data/storefront/market_reference.json`) shows those products as a row of boxes: TCGplayer's
+picture, today's market price, the 30-day change and a link to the price history on
+market.poke6s.com. The prices are filled in on every page view, so they stay current as the
+daily file updates; IDs missing from the file are skipped. Every sealed product (English and
+Japanese) is in the file; single cards only if the store lists them. The article page's CSP
+allows pictures from `tcgplayer-cdn.tcgplayer.com` for this.
+
 **Scheduling.** A finished article (`draft: false`) with a future `date` is scheduled: it stays
 off the list, the home page and the sitemap until that date (Mountain time), then appears on
 its own, with no restart, because the date is checked on every request. Its page shows a

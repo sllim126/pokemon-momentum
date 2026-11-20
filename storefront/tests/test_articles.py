@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from storefront.app import article_import
-from storefront.app.articles import Articles, parse
+from storefront.app.articles import Articles, market_boxes, parse
 from storefront.app.main import create_app
 
 NEWER = """---
@@ -242,3 +242,41 @@ def test_scheduled_article_waits_for_its_date(imported, articles_dir):
         assert page.status_code == 200 and "Scheduled: goes live on 2099-01-01" in page.text
         assert "Coming Soon" not in client.get("/articles").text
         assert "coming-soon" not in client.get("/sitemap.xml").text
+
+
+class _StubMarket:
+    """Stands in for market.MarketReference."""
+
+    def __init__(self, products: dict) -> None:
+        self.products = products
+
+    def data(self) -> dict:
+        return {"latest_date": "2026-11-19", "products": self.products}
+
+    def entry(self, product_id: str):
+        return self.products.get(product_id)
+
+
+def test_market_boxes_use_todays_prices():
+    market = _StubMarket({
+        "712094": {"name": "Delta Reign Booster Box", "price": 192.54, "roc_30d_pct": -19.1,
+                   "url": "https://market.poke6s.com/?kind=sealed&product=712094%7C%7CNormal"},
+        "712102": {"name": "Delta <Reign> ETB", "price": 76.21, "roc_30d_pct": None, "url": None},
+    })
+    html = parse("x", "---\ntitle: X\n---\nIntro.\n\n[[market 712094 712102 999]]\n\nOutro.\n").html
+    out = market_boxes(html, market)
+    assert "[[market" not in out and out.count('class="market-box"') == 2      # unknown 999 skipped
+    assert "$192.54" in out and "▼ 19.1% in 30 days" in out and "Price history" in out
+    assert "https://tcgplayer-cdn.tcgplayer.com/product/712094_200w.jpg" in out
+    assert "Delta &lt;Reign&gt; ETB" in out                                     # names escaped
+    assert "as of November 19" in out and "Intro." in out and "Outro." in out
+    # A tag whose products are all unknown disappears; text that merely mentions one stays.
+    assert market_boxes(parse("x", "[[market 1]]\n").html, market).strip() == ""
+    inline = parse("x", "Write [[market 712094]] on its own line.\n").html
+    assert market_boxes(inline, market) == inline
+
+
+def test_article_page_allows_tcgplayer_pictures(blog_client):
+    csp = blog_client.get("/articles/journey-together-master-set-checklist").headers["content-security-policy"]
+    assert "img-src 'self' data: https://tcgplayer-cdn.tcgplayer.com" in csp
+    assert "tcgplayer" not in blog_client.get("/articles").headers["content-security-policy"]

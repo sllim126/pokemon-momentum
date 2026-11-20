@@ -70,9 +70,15 @@ Booster boxes, release day vs about 90 days later:
 - **Phantasmal Flames:** $287 → $275 (−4%)
 - **Perfect Order:** $207 → $218 (+5%)
 
-That's a much smaller drop than the singles. And the older ones have come back: a Phantasmal Flames box is **$374** today (30% above release), and Mega Evolution is right back at its release price of around $300.
+That's a much smaller drop than the singles. And the older ones have come back: when I wrote this, a Phantasmal Flames box was **$374** (30% above release), and Mega Evolution was right back at its release price of around $300. Here's where they are today:
+
+[[market 654137 644298 684444 692939 672394]]
 
 Delta Reign's booster box has gone from $215 to **$193** (−10%), which is right in line with the others. The one to watch is the **Pokémon Center Elite Trainer Box**, which has already halved, from $270 to $135.
+
+Delta Reign's sealed products right now:
+
+[[market 712094 712102 712104 712097]]
 
 ## So, buy now or wait?
 

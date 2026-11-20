@@ -224,6 +224,16 @@ main section { margin-top: 32px; }
 .article-body img { max-width: 100%; height: auto; border-radius: 10px; margin: 8px 0; }
 .article-body blockquote { margin: 16px 0; padding: 4px 16px; border-left: 3px solid var(--accent); color: var(--muted); }
 .article-body a { overflow-wrap: anywhere; }
+/* Market boxes in articles (articles.market_boxes): TCGplayer picture, today's price, 30-day change. */
+.market-boxes { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; margin: 16px 0 20px; }
+.market-box { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.article-body .market-box img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; background: #fff; margin: 0; border-radius: 0; }
+.market-box-text { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px 12px; }
+.market-box-name { font-size: 0.85rem; line-height: 1.3; }
+.market-box-price { font-size: 1.15rem; font-weight: 700; }
+.market-box-trend { color: var(--muted); font-size: 0.85rem; }
+.market-box-link { font-size: 0.85rem; margin-top: 4px; }
+.market-boxes figcaption { grid-column: 1 / -1; color: var(--muted); font-size: 0.8rem; }
 .article-tags { margin: 28px 0 8px; }
 .article-tags .chip { font-weight: 500; font-size: 0.85rem; padding: 6px 12px; }
 @media (min-width: 640px) { .article-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
