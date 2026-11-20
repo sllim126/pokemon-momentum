@@ -402,10 +402,10 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   the same copy and swap as the nightly update. A friendly "updating, back in a minute" page
   for the rare stops (deploys, restarts) would need a Caddy change on 192.168.1.30, which is
   the separate project's machine: owner's call.
-- [next] The host's `.venv` is broken: the system Python moved to 3.14 and the venv points at
-  3.12, which is gone, so `playwright` (screenshot checks, docs/responsive_qa.md) won't run
-  from it. Recreate it with 3.14 (needs `apt install python3.14-venv`, owner) or use the
-  `mcr.microsoft.com/playwright/python` image, as on 2026-11-18. Found 2026-11-18.
+- [done 2026-11-20] Host `.venv` rebuilt on Python 3.14 (the system Python had moved from
+  3.12): requirements.txt plus playwright 1.63.0, beautifulsoup4, pillow, pyyaml, psutil;
+  DuckDB stays 1.5.4. Screenshot checks work again. The old one is in `.venv-py312-broken`
+  (git-ignored); delete it once nothing is missed.
 - [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
   too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
 - [ready] Notification emails get product cards (branch `storefront/mail-product-cards`,
