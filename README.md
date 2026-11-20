@@ -68,8 +68,6 @@ These routes require a Google sign-in whose email is listed in
 - `/eod-dashboard`
 - `/embed`
 - `/bug-reports`
-- `/pricing-upload`
-- `/single-listings-upload`
 - `/supplier-pricing`
 - `/supplier-profitability`
 

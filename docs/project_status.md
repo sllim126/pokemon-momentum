@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-11-19
+Last reviewed: 2026-11-20
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -32,7 +32,7 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   returns); Shipping
   (Pirate Ship file out, tracking file back); Products (price, stock, visibility, details,
   photos, packed size, adding products, every change logged); Pricing (repricing with a preview).
-  Still to build: reports, market site clean-up (`docs/storefront_plan.md` Phase 3)
+  Still to build: reports (`docs/storefront_plan.md` Phase 3)
 - Nightly pipeline memory: snapshot scripts cap DuckDB at 10 GB and 4 threads
   (`scripts/common/duckdb_settings.py`) after an out-of-memory kill on 2026-11-02
 - Graded data: nightly PriceCharting snapshot, kept as our own history
@@ -132,10 +132,8 @@ The following pages require a Google sign-in listed in `POKEMON_MOMENTUM_ADMIN_U
 | `/eod-dashboard` | End-of-day market data view |
 | `/embed` | Lightweight internal/embed dashboard |
 | `/bug-reports` | Internal feedback and bug queue |
-| `/pricing-upload` | Upload and compare Squarespace product exports |
-| `/single-listings-upload` | Convert/upload single-card listing intake |
 | `/supplier-pricing` | Review and save supplier quotes |
-| `/supplier-profitability` | Compare supplier, market, and store economics |
+| `/supplier-profitability` | Compare supplier, market, and store economics (store prices from the store database) |
 
 ## Major completed work
 

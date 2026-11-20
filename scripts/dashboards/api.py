@@ -19,8 +19,8 @@ Where the data comes from
 
 Rough map of this file (line numbers drift; search for the route string)
 - page routes (HTML files, redirects, phone/desktop switch): `@app.get("/")` onwards
-- admin research (EOD index views) and store tools (Squarespace pricing, single listings,
-  supplier pricing): /eod/*, /pricing-upload, /single-listings/*, /supplier-*
+- admin research (EOD index views) and supplier tools: /eod/*, /supplier-* (the Squarespace
+  export upload and singles intake were retired 2026-11-20, D11)
 - sign-in and saved state (tracking_store.py): /tracking/*
 - market data for the apps: /universe, /groups, /search, /group_products, /series,
   /card_details, /sparkline_batch, /index-overview-data
@@ -40,6 +40,7 @@ import csv
 import difflib
 import hashlib
 import json
+import logging
 import os
 import re
 import sqlite3
@@ -56,29 +57,9 @@ import urllib.error
 import duckdb
 import pandas as pd
 import requests
-from fastapi import Cookie, FastAPI, File, Header, HTTPException, Request, UploadFile
+from fastapi import Cookie, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
-from scripts.build_squarespace_single_listing_drafts import (
-    DEFAULT_CREATED_CSV as SINGLE_LISTINGS_CREATED_CSV,
-    DEFAULT_EXPORT_CSV as SINGLE_LISTINGS_EXPORT_CSV,
-    DEFAULT_INTAKE_CSV as SINGLE_LISTINGS_INTAKE_CSV,
-    DEFAULT_MARKET_CSV as SINGLE_LISTINGS_MARKET_CSV,
-    DEFAULT_OUTPUT_CSV as SINGLE_LISTINGS_DRAFT_CSV,
-    DRAFT_FIELDS as SINGLE_LISTINGS_DRAFT_FIELDS,
-    INTAKE_FIELDS as SINGLE_LISTINGS_INTAKE_FIELDS,
-    build_drafts as build_single_listing_drafts,
-    write_csv as write_single_listing_csv,
-)
-from scripts.build_store_price_targets import build_target_rows
-from scripts.convert_collection_csv_to_single_listing_intake import (
-    SOURCE_REQUIRED_FIELDS as SINGLE_LISTINGS_SOURCE_FIELDS,
-    convert_collection_rows as convert_single_listing_source_rows,
-)
-from scripts.create_squarespace_single_listings import (
-    DEFAULT_FOLLOWUP_CSV as SINGLE_LISTINGS_FOLLOWUP_CSV,
-)
-
 from scripts.dashboards.query_support import (
     DB_PATH,
     EXTRACTED_DIR,
@@ -171,8 +152,6 @@ EMBED_DASHBOARD_HTML = SCRIPT_DIR / "embed_dashboard.html"
 BUG_REPORTS_HTML = SCRIPT_DIR / "bug_reports.html"
 REVIEW_NOTE_ATTACHMENTS_DIR = REPO_ROOT / "data" / "review_note_attachments"
 REVIEW_NOTE_PAGES = {"/m-next", "/"}  # pages with the owner's Note tab (phone app, desktop app)
-PRICING_UPLOAD_HTML = SCRIPT_DIR / "pricing_upload.html"
-SINGLE_LISTINGS_UPLOAD_HTML = SCRIPT_DIR / "single_listings_upload.html"
 SUPPLIER_PRICING_HTML = SCRIPT_DIR / "supplier_pricing.html"
 SUPPLIER_PROFITABILITY_HTML = SCRIPT_DIR / "supplier_profitability.html"
 # The mobile app (plan: docs/mobile_app_plan.md). Phones get it at /, /mobile and /dashboard
@@ -1106,19 +1085,13 @@ def bug_reports_page(authorization: str | None = Header(default=None), tracking_
     return FileResponse(BUG_REPORTS_HTML)
 
 
+# Retired 2026-11-20 (storefront plan D11): the Squarespace Export Upload and Singles Listing
+# Intake. poke6s.com runs on its own store now (products and prices in its admin, home network
+# only) and singles stay on TCGplayer (D10). Old bookmarks land on the Admin page instead.
 @app.get("/pricing-upload")
-def pricing_upload_page(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
-    require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    return FileResponse(PRICING_UPLOAD_HTML)
-
-
 @app.get("/single-listings-upload")
-def single_listings_upload_page(
-    authorization: str | None = Header(default=None),
-    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
-):
-    require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    return FileResponse(SINGLE_LISTINGS_UPLOAD_HTML)
+def retired_squarespace_tools():
+    return RedirectResponse("/admin", status_code=301)
 
 
 @app.get("/supplier-pricing")
@@ -3152,12 +3125,11 @@ def require_admin_user(
     return session_user
 
 
-STORE_PRICE_RULES_CSV = SCRIPT_DIR.parents[1] / "data" / "store_price_rules.csv"
-SQUARESPACE_EXPORT_CSV = SCRIPT_DIR.parents[1] / "products_Apr-09_04-31-18PM.csv"
-SQUARESPACE_EXPORT_ARCHIVE_DIR = SCRIPT_DIR.parents[1] / "data" / "archive" / "squarespace_exports"
 SUPPLIER_NAME_MAPPING_CSV = SCRIPT_DIR.parents[1] / "data" / "supplier_name_mapping.csv"
 SUPPLIER_QUOTES_CSV = SCRIPT_DIR.parents[1] / "data" / "supplier_quotes.csv"
-SQUARESPACE_MAPPING_CSV = SCRIPT_DIR.parents[1] / "output" / "squarespace_product_mapping.csv"
+# The store's own database (poke6s.com, storefront/). Read-only here: prices are changed in the
+# store admin, never from this site.
+STORE_DB = SCRIPT_DIR.parents[1] / "data" / "storefront" / "store.db"
 
 
 def _normalize_supplier_name(value: str) -> str:
@@ -3197,22 +3169,28 @@ def load_supplier_name_mapping() -> dict[str, str]:
     return mapping
 
 
-def load_current_store_mapping() -> dict[str, dict]:
-    """Load the current SKU -> Squarespace product mapping generated by the sync script.
+def load_store_prices() -> dict[str, dict]:
+    """Each poke6s.com product's current price, from the store's database (read-only).
 
     Expected output:
-    - dict keyed by SKU
-    - each value includes product id, variant id, title, and current prices
+    - dict keyed by SKU: {"title", "current_price" (dollars, as text), "visible" (bool)}
+    - empty when the store database isn't there or can't be read; the supplier pages then show
+      no store price rather than failing
+    Replaced the Squarespace mapping (output/squarespace_product_mapping.csv) on 2026-11-20 (D11).
     """
-    mapping: dict[str, dict] = {}
-    if not SQUARESPACE_MAPPING_CSV.exists():
-        return mapping
-    with SQUARESPACE_MAPPING_CSV.open(newline="") as handle:
-        for row in csv.DictReader(handle):
-            sku = str(row.get("sku") or "").strip()
-            if sku:
-                mapping[sku] = row
-    return mapping
+    if not STORE_DB.exists():
+        return {}
+    try:
+        con = sqlite3.connect(f"file:{STORE_DB}?mode=ro", uri=True, timeout=5)
+        try:
+            rows = con.execute("SELECT sku, title, price_cents, visible FROM products").fetchall()
+        finally:
+            con.close()
+    except sqlite3.Error:
+        logging.getLogger(__name__).exception("Couldn't read store prices from %s", STORE_DB)
+        return {}
+    return {sku: {"title": title, "current_price": f"{price_cents / 100:.2f}", "visible": bool(visible)}
+            for sku, title, price_cents, visible in rows if sku}
 
 
 def load_latest_market_targets() -> dict[str, dict]:
@@ -3234,79 +3212,6 @@ def load_latest_market_targets() -> dict[str, dict]:
     return mapping
 
 
-def summarize_store_price_rules() -> dict:
-    """Count how many store pricing rules are automatic vs manual."""
-    total_rules = 0
-    manual_rules = 0
-    with STORE_PRICE_RULES_CSV.open(newline="") as handle:
-        for row in csv.DictReader(handle):
-            sku = str(row.get("sku") or "").strip()
-            if not sku:
-                continue
-            total_rules += 1
-            if str(row.get("pricing_mode") or "").strip() == "manual":
-                manual_rules += 1
-    return {
-        "total_rules": total_rules,
-        "manual_rules": manual_rules,
-        "auto_rules": total_rules - manual_rules,
-    }
-
-
-def summarize_uploaded_export(upload_path: Path) -> dict:
-    """Build a pricing coverage summary for a newly uploaded Squarespace export.
-
-    Expected output:
-    - counts for export rows, covered target rows, unmatched rules, and a preview table
-    """
-    rows = []
-    with upload_path.open(newline="") as handle:
-        for row in csv.DictReader(handle):
-            sku = str(row.get("SKU") or "").strip()
-            if not sku:
-                continue
-            rows.append(
-                {
-                    "sku": sku,
-                    "title": str(row.get("Title") or "").strip(),
-                    "price": str(row.get("Price") or "").strip(),
-                    "sale_price": str(row.get("Sale Price") or "").strip(),
-                }
-            )
-    rows_by_sku = {row["sku"]: row for row in rows}
-    target_rows, unmatched = build_target_rows(upload_path)
-    auto_preview = []
-    covered = 0
-    missing_from_export = []
-    for row in target_rows:
-        export_row = rows_by_sku.get(row["sku"])
-        if export_row is None:
-            missing_from_export.append(row["sku"])
-            continue
-        covered += 1
-        auto_preview.append(
-            {
-                "sku": row["sku"],
-                "title": export_row["title"],
-                "current_price": export_row["price"],
-                "target_price": row["target_price"],
-                "market_price": row["market_price"],
-                "pricing_mode": row["pricing_mode"],
-                "market_source": row["market_source"],
-            }
-        )
-    auto_preview.sort(key=lambda item: item["sku"])
-    return {
-        "export_rows": len(rows),
-        "covered_rows": covered,
-        "target_rows": len(target_rows),
-        "missing_from_export": missing_from_export,
-        "unmatched_rules": unmatched,
-        "preview": auto_preview[:80],
-        **summarize_store_price_rules(),
-    }
-
-
 def enrich_supplier_rows(rows: list[dict]) -> list[dict]:
     """Attach store and market context to OCR-reviewed supplier quote rows.
 
@@ -3315,7 +3220,7 @@ def enrich_supplier_rows(rows: list[dict]) -> list[dict]:
       and `target_price` added when available
     """
     supplier_mapping = load_supplier_name_mapping()
-    store_mapping = load_current_store_mapping()
+    store_mapping = load_store_prices()
     market_targets = load_latest_market_targets()
     enriched = []
     for row in rows:
@@ -3811,7 +3716,7 @@ def supplier_profitability_data(
     require_admin_user(authorization=authorization, tracking_token=tracking_token)
     assumptions = payload if isinstance(payload, dict) else {}
     latest_quotes, unmatched_quotes = load_latest_supplier_quotes()
-    store_mapping = load_current_store_mapping()
+    store_mapping = load_store_prices()
     market_targets = load_latest_market_targets()
 
     jpy_per_usd = _optional_float(assumptions.get("jpy_per_usd")) or 159.0
@@ -4007,253 +3912,6 @@ def supplier_profitability_fx(
         return {"ok": True, **_latest_jpy_per_usd_rate()}
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Unable to refresh JPY/USD rate: {exc}") from exc
-
-
-def _validate_csv_columns(header_line: str, required_fields: list[str], detail: str) -> None:
-    present_fields = {field.strip() for field in header_line.split(",") if field.strip()}
-    missing = [field for field in required_fields if field not in present_fields]
-    if missing:
-        raise HTTPException(status_code=400, detail=f"{detail} Missing columns: {', '.join(missing)}")
-
-
-def _summarize_listing_drafts(rows: list[dict[str, str]]) -> dict[str, object]:
-    """Counts and a short preview of a Squarespace single-listing draft file, for the upload page.
-
-    Counts ready, error and approved rows (by draft_status / review_status) and returns the first
-    few rows for the page to show before anything is sent to the store.
-    """
-    ready_rows = [row for row in rows if str(row.get("draft_status") or "").strip().lower() == "ready"]
-    error_rows = [row for row in rows if str(row.get("draft_status") or "").strip().lower() == "error"]
-    approved_rows = [
-        row for row in rows if str(row.get("review_status") or "").strip().lower() == "approved"
-    ]
-    preview = [
-        {
-            "sku": row.get("sku", ""),
-            "final_title": row.get("final_title", ""),
-            "target_price": row.get("target_price", ""),
-            "set_name": row.get("set_name", ""),
-            "rarity": row.get("rarity", ""),
-            "warnings": row.get("warnings", ""),
-            "errors": row.get("errors", ""),
-        }
-        for row in rows[:12]
-    ]
-    return {
-        "draft_rows": len(rows),
-        "ready_rows": len(ready_rows),
-        "error_rows": len(error_rows),
-        "approved_rows": len(approved_rows),
-        "preview": preview,
-        "error_details": [row.get("errors", "") for row in error_rows[:12] if row.get("errors")],
-    }
-
-
-@app.get("/single-listings/intake-download")
-def single_listings_intake_download(
-    authorization: str | None = Header(default=None),
-    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
-):
-    require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    return FileResponse(SINGLE_LISTINGS_INTAKE_CSV, filename=SINGLE_LISTINGS_INTAKE_CSV.name)
-
-
-@app.get("/single-listings/draft-download")
-def single_listings_draft_download(
-    authorization: str | None = Header(default=None),
-    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
-):
-    require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    if not SINGLE_LISTINGS_DRAFT_CSV.exists():
-        raise HTTPException(status_code=404, detail="Draft CSV has not been generated yet.")
-    return FileResponse(SINGLE_LISTINGS_DRAFT_CSV, filename=SINGLE_LISTINGS_DRAFT_CSV.name)
-
-
-@app.get("/single-listings/followup-download")
-def single_listings_followup_download(
-    authorization: str | None = Header(default=None),
-    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
-):
-    require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    if not SINGLE_LISTINGS_FOLLOWUP_CSV.exists():
-        raise HTTPException(status_code=404, detail="Follow-up CSV has not been generated yet.")
-    return FileResponse(SINGLE_LISTINGS_FOLLOWUP_CSV, filename=SINGLE_LISTINGS_FOLLOWUP_CSV.name)
-
-
-@app.post("/single-listings/intake-upload")
-async def single_listings_intake_upload(
-    file: UploadFile = File(...),
-    authorization: str | None = Header(default=None),
-    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
-):
-    admin_user = require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    filename = str(file.filename or "").strip()
-    if not filename.lower().endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Please upload a singles intake CSV.")
-
-    payload = await file.read()
-    if not payload:
-        raise HTTPException(status_code=400, detail="Uploaded file was empty.")
-
-    header_line = payload.splitlines()[0].decode("utf-8", errors="ignore") if payload.splitlines() else ""
-    _validate_csv_columns(
-        header_line,
-        SINGLE_LISTINGS_INTAKE_FIELDS,
-        "CSV does not look like a singles intake file.",
-    )
-
-    SINGLE_LISTINGS_INTAKE_CSV.write_bytes(payload)
-    drafts = build_single_listing_drafts(
-        intake_csv=SINGLE_LISTINGS_INTAKE_CSV,
-        market_csv=SINGLE_LISTINGS_MARKET_CSV,
-        squarespace_export=SINGLE_LISTINGS_EXPORT_CSV,
-        created_csv=SINGLE_LISTINGS_CREATED_CSV,
-    )
-    write_single_listing_csv(SINGLE_LISTINGS_DRAFT_CSV, SINGLE_LISTINGS_DRAFT_FIELDS, drafts)
-
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    return {
-        "ok": True,
-        "saved_to": str(SINGLE_LISTINGS_INTAKE_CSV),
-        "draft_saved_to": str(SINGLE_LISTINGS_DRAFT_CSV),
-        "uploaded_by": admin_user.username,
-        "uploaded_at": timestamp,
-        **_summarize_listing_drafts(drafts),
-    }
-
-
-@app.post("/single-listings/source-upload")
-async def single_listings_source_upload(
-    file: UploadFile = File(...),
-    authorization: str | None = Header(default=None),
-    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
-):
-    admin_user = require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    filename = str(file.filename or "").strip()
-    if not filename.lower().endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Please upload a collection-builder CSV.")
-
-    payload = await file.read()
-    if not payload:
-        raise HTTPException(status_code=400, detail="Uploaded file was empty.")
-
-    header_line = payload.splitlines()[0].decode("utf-8", errors="ignore") if payload.splitlines() else ""
-    _validate_csv_columns(
-        header_line,
-        SINGLE_LISTINGS_SOURCE_FIELDS,
-        "CSV does not look like a collection-builder export.",
-    )
-
-    source_rows = list(
-        csv.DictReader(payload.decode("utf-8-sig", errors="ignore").splitlines())
-    )
-    intake_rows, conversion_errors = convert_single_listing_source_rows(source_rows)
-    if conversion_errors:
-        raise HTTPException(
-            status_code=400,
-            detail=" | ".join(conversion_errors[:8]),
-        )
-
-    write_single_listing_csv(SINGLE_LISTINGS_INTAKE_CSV, SINGLE_LISTINGS_INTAKE_FIELDS, intake_rows)
-    drafts = build_single_listing_drafts(
-        intake_csv=SINGLE_LISTINGS_INTAKE_CSV,
-        market_csv=SINGLE_LISTINGS_MARKET_CSV,
-        squarespace_export=SINGLE_LISTINGS_EXPORT_CSV,
-        created_csv=SINGLE_LISTINGS_CREATED_CSV,
-    )
-    write_single_listing_csv(SINGLE_LISTINGS_DRAFT_CSV, SINGLE_LISTINGS_DRAFT_FIELDS, drafts)
-
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    return {
-        "ok": True,
-        "saved_to": str(SINGLE_LISTINGS_INTAKE_CSV),
-        "draft_saved_to": str(SINGLE_LISTINGS_DRAFT_CSV),
-        "source_rows": len(source_rows),
-        "intake_rows": len(intake_rows),
-        "uploaded_by": admin_user.username,
-        "uploaded_at": timestamp,
-        **_summarize_listing_drafts(drafts),
-    }
-
-
-@app.post("/single-listings/draft-upload")
-async def single_listings_draft_upload(
-    file: UploadFile = File(...),
-    authorization: str | None = Header(default=None),
-    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
-):
-    admin_user = require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    filename = str(file.filename or "").strip()
-    if not filename.lower().endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Please upload a reviewed draft CSV.")
-
-    payload = await file.read()
-    if not payload:
-        raise HTTPException(status_code=400, detail="Uploaded file was empty.")
-
-    header_line = payload.splitlines()[0].decode("utf-8", errors="ignore") if payload.splitlines() else ""
-    required_fields = ["sku", "draft_status", "review_status", "final_title", "target_price"]
-    _validate_csv_columns(
-        header_line,
-        required_fields,
-        "CSV does not look like a reviewed singles draft file.",
-    )
-
-    SINGLE_LISTINGS_DRAFT_CSV.write_bytes(payload)
-    draft_rows = []
-    with SINGLE_LISTINGS_DRAFT_CSV.open(newline="", encoding="utf-8") as handle:
-        draft_rows = list(csv.DictReader(handle))
-
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    return {
-        "ok": True,
-        "saved_to": str(SINGLE_LISTINGS_DRAFT_CSV),
-        "uploaded_by": admin_user.username,
-        "uploaded_at": timestamp,
-        **_summarize_listing_drafts(draft_rows),
-    }
-
-
-@app.post("/pricing-upload/compare")
-async def pricing_upload_compare(
-    file: UploadFile = File(...),
-    authorization: str | None = Header(default=None),
-    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
-):
-    """Accept a fresh Squarespace export, archive it, and preview pricing coverage.
-
-    Side effects:
-    - overwrites the canonical local export used by the pricing pipeline
-    - writes a timestamped archive copy for later debugging
-    """
-    admin_user = require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    filename = str(file.filename or "").strip()
-    if not filename.lower().endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Please upload a Squarespace CSV export.")
-
-    payload = await file.read()
-    if not payload:
-        raise HTTPException(status_code=400, detail="Uploaded file was empty.")
-
-    header_line = payload.splitlines()[0].decode("utf-8", errors="ignore") if payload.splitlines() else ""
-    if "Product ID [Non Editable]" not in header_line or "SKU" not in header_line:
-        raise HTTPException(status_code=400, detail="CSV does not look like a Squarespace product export.")
-
-    SQUARESPACE_EXPORT_ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    archive_path = SQUARESPACE_EXPORT_ARCHIVE_DIR / f"squarespace_export_{timestamp}.csv"
-    archive_path.write_bytes(payload)
-    SQUARESPACE_EXPORT_CSV.write_bytes(payload)
-
-    summary = summarize_uploaded_export(SQUARESPACE_EXPORT_CSV)
-    return {
-        "ok": True,
-        "saved_to": str(SQUARESPACE_EXPORT_CSV),
-        "archive_path": str(archive_path),
-        "uploaded_by": admin_user.username,
-        "uploaded_at": timestamp,
-        **summary,
-    }
 
 
 @app.post("/supplier-pricing/enrich")
