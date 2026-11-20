@@ -68,8 +68,8 @@ class StorefrontMarketReferenceTests(unittest.TestCase):
             folder = Path(tmpdir)
             (folder / "post.md").write_text(
                 "---\ntitle: X\n---\nText.\n\n[[market 662184 655886]]\n\n"
-                "Inline [[market 999]] is not a box line.\n", encoding="utf-8")
-            self.assertEqual(ref.article_product_ids(folder), {"662184", "655886"})
+                "[[cards 42]]\nInline [[market 999]] is not a box line.\n", encoding="utf-8")
+            self.assertEqual(ref.article_product_ids(folder), {"662184", "655886", "42"})
             self.assertEqual(ref.article_product_ids(folder / "missing"), set())
 
     def test_write_is_atomic_json(self):

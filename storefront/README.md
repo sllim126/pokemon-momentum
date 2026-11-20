@@ -170,7 +170,8 @@ sitemap while it can still be previewed at its address. Pictures go in like prod
 in `data/storefront/market_reference.json`) shows those products as a row of boxes: TCGplayer's
 picture, today's market price, the 30-day change and a link to the price history on
 market.poke6s.com. The prices are filled in on every page view, so they stay current as the
-daily file updates; IDs missing from the file are skipped. Every sealed product (English and
+daily file updates; IDs missing from the file are skipped. `[[cards <id> ...]]` shows only the pictures, names
+and sets, with no prices, for when a post is about the art. Every sealed product (English and
 Japanese) is in the file, and so is any single card named in an article's `[[market ...]]` line
 (the nightly `scripts/build_storefront_market_reference.py` reads the articles). A row of only
 single cards is shown bigger, card-shaped, for the art; cards also show their set, and

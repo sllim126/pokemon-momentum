@@ -26,7 +26,7 @@ script, run after the market's daily update, writes one small JSON file it reads
     }
 
 Which products: every sealed product in the English and Japanese snapshots, plus any card
-named in the store's SKU mapping or intake CSVs or in an article's `[[market <ids>]]` line
+named in the store's SKU mapping or intake CSVs or in an article's `[[market <ids>]]` or `[[cards <ids>]]` line
 (storefront/content/articles, shown as boxes by storefront/app/articles.market_boxes). One entry per product ID; when a product has
 several printings the Normal one is used, then Holofoil, then the first listed.
 
@@ -58,7 +58,7 @@ STORE_ID_FILES = (
 )
 ARTICLES_DIR = REPO_ROOT / "storefront" / "content" / "articles"
 # Same tag the storefront replaces (articles.MARKET_TAG), read from the Markdown source.
-ARTICLE_MARKET_TAG = re.compile(r"^\[\[market((?:[ \t]+\d+)+)[ \t]*\]\][ \t]*$", re.MULTILINE)
+ARTICLE_MARKET_TAG = re.compile(r"^\[\[(?:market|cards)((?:[ \t]+\d+)+)[ \t]*\]\][ \t]*$", re.MULTILINE)
 DEFAULT_OUTPUT = REPO_ROOT / "data" / "storefront" / "market_reference.json"
 MARKET_SITE = "https://market.poke6s.com"
 SUBTYPE_PREFERENCE = ("Normal", "Holofoil")
