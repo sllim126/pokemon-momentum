@@ -42,7 +42,8 @@ from ..app.classify import PRODUCT_TYPE_LABELS
 from ..app.db import connect, latest_migration, migrate
 from ..app.market import MarketReference
 from ..app.settings import Settings, load_settings
-from . import orders_view, overview, packing_slip, pricing_view, products_view, shipping
+from ..app.stripe_api import StripeClient
+from . import orders_view, overview, packing_slip, pricing_view, products_view, refunds, shipping
 from .auth import COOKIE_NAME, SESSION_DAYS, Lockout, Sessions, check_password
 
 log = logging.getLogger("storefront.admin")
@@ -78,6 +79,12 @@ DONE = {
     "resend_failed": "The email failed again and is queued for retry (see Discord).",
     "note": "Note added.",
     "address": "Address changed. The old one is kept in the notes.",
+    "refunded": "Refunded. The customer has the refund email; banks take 5 to 10 business days to show it.",
+    "refunded_outbox": "Refunded. Email isn't set up, so the refund email was saved to the outbox.",
+    "refunded_email_failed": "Refunded, but the refund email failed. It will retry every 15 minutes (see Discord).",
+    "refunded_no_email": "Refunded. This order has no email address, so no email went out.",
+    "put_back": "Stock put back.",
+    "refunded_put_back": "Refunded and stock put back. The customer has the refund email.",
 }
 PRODUCT_DONE = {
     "price": "Price saved. The store shows it now.",
@@ -103,6 +110,9 @@ class AdminConfig:
     backup_dir: Path | None = None
     # The owner's private costs file, for the Pricing page (pricing_view.py). Read-only mount.
     costs_file: Path | None = None
+    # The admin's own restricted Stripe key (Charges and Refunds write), for refunds (refunds.py).
+    # The public store never gets it (docker-compose passes it to the admin only).
+    stripe_refund_key: str = ""
 
     @property
     def ready(self) -> bool:
@@ -117,6 +127,7 @@ def load_config(settings: Settings) -> AdminConfig:
         session_secret=os.getenv("STOREFRONT_ADMIN_SESSION_SECRET", "").strip(),
         backup_dir=Path(os.getenv("STOREFRONT_ADMIN_BACKUP_DIR", str(default_backups))),
         costs_file=Path(os.getenv("STOREFRONT_ADMIN_COSTS_FILE", "/app/costs/store_sku_costs.csv")),
+        stripe_refund_key=os.getenv("STOREFRONT_ADMIN_STRIPE_KEY", "").strip(),
     )
 
 
@@ -143,9 +154,14 @@ def _same_origin(request: Request) -> bool:
     return urlsplit(origin).netloc == request.headers.get("host", "")
 
 
-def create_admin_app(settings: Settings | None = None, config: AdminConfig | None = None) -> FastAPI:
+def create_admin_app(settings: Settings | None = None, config: AdminConfig | None = None,
+                     refund_client=None) -> FastAPI:
+    """`refund_client`: tests pass a fake with create_refund(); otherwise a StripeClient on the
+    admin's refund key, or None when that key isn't set (the refund form then says so)."""
     settings = settings or load_settings()
     config = config or load_config(settings)
+    if refund_client is None and config.stripe_refund_key:
+        refund_client = StripeClient(config.stripe_refund_key)
     sessions = Sessions(config.session_secret, config.password_hash) if config.ready else None
     lockout = Lockout()
     if not config.ready:
@@ -285,6 +301,7 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
             return PlainTextResponse("Not found.", status_code=404)
         with db() as conn:
             order = store_orders.get_order(conn, number)
+            returnable = refunds.returnable(conn, order) if order else []
         if order is None:
             return PlainTextResponse("Not found.", status_code=404)
         # The "change the address" form: what was typed (after an error, opened) or the current one.
@@ -298,7 +315,9 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
                     track_url=notify.tracking_url(order["carrier"], order["tracking_number"]),
                     status_url=store_orders.status_url(settings.base_url, order),
                     carriers=orders_view.CARRIERS, done=DONE.get(request.query_params.get("done", "")),
-                    **context)
+                    refund_blocked=refunds.can_refund(order), refund_left=refunds.remaining_cents(order),
+                    refund_ready=refund_client is not None, refund_reasons=refunds.REASONS,
+                    returnable=returnable, **context)
 
     @app.get("/orders", response_class=HTMLResponse)
     def order_list(request: Request, view: str = orders_view.DEFAULT_VIEW, q: str = ""):
@@ -414,6 +433,45 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
             return order_page(request, cookie, number, 400, error=str(exc), address_form=fields)
         log.info("Order %s: shipping address changed from the admin", number)
         return RedirectResponse(order_url(number, done="address"), status_code=303)
+
+    @app.post("/orders/{number}/refund")
+    async def order_refund(request: Request, number: str):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        form = await request.form(max_files=0, max_fields=60)
+        if not form_ok(cookie, str(form.get("form_token") or "")):
+            return expired_form()
+        if not ORDER_NUMBER.match(number):
+            return PlainTextResponse("Not found.", status_code=404)
+        amount = str(form.get("amount") or "")
+        put_back = {}
+        for key, value in form.items():
+            if key.startswith("back_") and key[5:].isdigit() and str(value).isdigit():
+                put_back[int(key[5:])] = int(value)
+        typed = {"amount": amount, "reason": str(form.get("reason") or ""), "note": str(form.get("note") or "")}
+        try:
+            if amount.strip() and amount.strip() not in ("0", "0.00") and refund_client is None:
+                raise ValueError("Refunds aren't set up: STOREFRONT_ADMIN_STRIPE_KEY is missing (storefront/README.md, "
+                                 "“Refunds”).")
+            with writer() as conn:
+                result = refunds.refund(conn, settings, refund_client, number, amount, typed["reason"], put_back,
+                                        typed["note"], form.get("confirm") == "1")
+        except ValueError as exc:
+            return order_page(request, cookie, number, 400, refund_error=str(exc), refund_typed=typed)
+        log.info("Order %s: refunded %s, %d unit(s) put back, from the admin", number, result["refunded"],
+                 result["put_back"])
+        # The combined message only when the email really went; otherwise the refund message says
+        # what happened to the email (the units put back are in the order's notes either way).
+        if result["refunded"] and result["put_back"] and result["email_sent"] and settings.email_transport != "outbox":
+            done = "refunded_put_back"
+        elif result["refunded"]:
+            done = ("refunded_no_email" if result["email_sent"] is None else "refunded_email_failed"
+                    if not result["email_sent"] else "refunded_outbox" if settings.email_transport == "outbox"
+                    else "refunded")
+        else:
+            done = "put_back"
+        return RedirectResponse(order_url(number, done=done), status_code=303)
 
     # --- products and stock (Phase 3, step 5) ---------------------------------------------------
 

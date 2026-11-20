@@ -109,6 +109,9 @@ services:
       <<: *store-env
       STOREFRONT_ADMIN_PASSWORD_HASH: ${STOREFRONT_ADMIN_PASSWORD_HASH:-}
       STOREFRONT_ADMIN_SESSION_SECRET: ${STOREFRONT_ADMIN_SESSION_SECRET:-}
+      # The admin's own restricted Stripe key (Charges and Refunds write) for refunds. Only the
+      # admin gets it: the public store's key can't refund.
+      STOREFRONT_ADMIN_STRIPE_KEY: ${STOREFRONT_ADMIN_STRIPE_KEY:-}
       # Nightly backups, read (never written) for the Overview page.
       STOREFRONT_ADMIN_BACKUP_DIR: /app/data/backups/storefront
     ports:

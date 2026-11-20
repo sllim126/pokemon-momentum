@@ -45,11 +45,15 @@
 
   <tr><td style="padding:32px 32px 8px;">
     <h1 style="margin:0 0 8px; font-size:24px; line-height:1.3; font-weight:700; color:{{ text }};">
-      {%- if kind == "shipped" %}Your order is on its way{% else %}Thanks for your order!{% endif -%}
+      {%- if kind == "shipped" %}Your order is on its way{% elif kind == "refunded" %}Your refund is on its way{% else %}Thanks for your order!{% endif -%}
     </h1>
     <p style="margin:0; font-size:15px; line-height:1.5; color:{{ muted }};">
       {%- if kind == "shipped" -%}
         Good news: order <strong style="color:{{ text }};">{{ order.number }}</strong> has shipped.
+      {%- elif kind == "refunded" -%}
+        We've refunded <strong style="color:{{ text }};">{{ refund_cents | money }}</strong> for order
+        <strong style="color:{{ text }};">{{ order.number }}</strong> to the card you paid with.
+        Banks usually take 5 to 10 business days to show it.
       {%- else -%}
         Order <strong style="color:{{ text }};">{{ order.number }}</strong>, placed {{ placed }}.
         We'll email you again with tracking as soon as it ships.
@@ -101,6 +105,9 @@
       {%- endif %}
       <tr><td style="padding:12px 0 0; font-size:17px; font-weight:700; border-top:1px solid {{ line }};">Total</td>
           <td align="right" style="padding:12px 0 0; font-size:17px; font-weight:700; border-top:1px solid {{ line }};">{{ order.total_cents | money }}</td></tr>
+      {%- if order.refunded_cents %}
+      <tr><td style="padding:4px 0; color:{{ muted }};">Refunded</td><td align="right" style="padding:4px 0; color:#1a8f5a;">−{{ order.refunded_cents | money }}</td></tr>
+      {%- endif %}
     </table>
   </td></tr>
 

@@ -1,6 +1,7 @@
 """The few Stripe calls the shop makes, over plain HTTPS (no Stripe library needed).
 
 - create_session / retrieve_session / expire_session: Checkout Sessions.
+- create_refund: a refund on a payment (the admin's own restricted key, Phase 3 step 4).
 - list_events: recent events, so reconcile() can apply any webhook delivery that was missed.
 - verify_webhook: checks the Stripe-Signature header on webhook deliveries.
 
@@ -71,6 +72,9 @@ class StripeClient:
 
     def expire_session(self, session_id: str) -> dict:
         return self._call("POST", f"/checkout/sessions/{session_id}/expire")
+
+    def create_refund(self, params: dict, idempotency_key: str) -> dict:
+        return self._call("POST", "/refunds", params, idempotency_key)
 
     def list_events(self, types: list[str], since: int) -> list[dict]:
         """Events of these types created at or after `since` (unix time), oldest first."""

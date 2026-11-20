@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-19 (store admin step 3, Shipping)
+Last updated: 2026-11-19 (store admin step 4, Refunds)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -44,6 +44,14 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-19 Store admin step 4, Refunds and returns: "Refund or return" on the order page
+  refunds any amount through Stripe with the admin's own restricted key, emails the customer,
+  notes it, and puts returned units back on the shelf. A partial refund on an unshipped order
+  keeps it in To ship.
+- 2026-11-19 15 hidden in-stock products listed (costs added from the owner's floors file, 5%
+  under market or break-even), plus Mega Charizard X ex Premium Collection. Perfect Order PC
+  ETB stays hidden (owner: maybe hold a year and list again). Every single ETB's packed size is
+  set: 2 lb, 11 x 7.5 x 5.5 in.
 - 2026-11-19 Store admin step 3, Shipping page (/shipping): paid orders out as a CSV for Pirate
   Ship's spreadsheet import (weight and box from each product's new "Packed for shipping"
   size; orders marked "in a file" so a label isn't bought twice), Pirate Ship's shipments CSV
@@ -226,11 +234,16 @@ Live now:
     shown again at break-even. Don't use --hide-above-market by default.
 - [done 2026-11-11] 4. Stock set from the owner's Nov 2 inventory (see Recently Completed).
   Still open:
-  - [owner] 17 in-stock products are hidden (hidden on Squarespace: ETBs, Pokemon Center ETBs,
-    Costco 2-packs, premium collections, tins...), e.g. ENG-PO-ETB (Perfect Order ETB, 3 in
-    stock). Since 2026-11-19 the admin's Products → "Hidden, in stock" tab lists them, and each
-    product's page can show it. reprice.py prices one only once it has a cost row in the private
-    costs file.
+  - [done 2026-11-19] 15 of the 17 hidden in-stock products shown (owner: list everything at
+    break-even or better): costs added to the private costs file from the owner's floors file
+    (the higher cost where one item was bought at two prices), priced 5% under market or at
+    break-even if higher. Still hidden, [owner]:
+    - [parked until ~2027-11] Perfect Order Pokemon Center ETB (ENG-PO-PC-ETB), 3 units: kept
+      hidden (owner, 2026-11-19: maybe hold a year and list again). One unit was bought privately
+      at a much higher cost than the two preorders, so pricing from it gives $175.99 against a
+      ~$103 market; averaging all three would break even at about $98.99.
+    - Mega Charizard (ENG-MCHARIZARDex-PC) shown 2026-11-19 at $195.99 once the owner confirmed
+      it is the Mega Charizard X ex Premium Collection in the books.
   - [idea] Not on the store at all: Prismatic Evolutions bundle (1), Treasure chest tin (1).
   - Packs kept off the store on purpose (owner keeps one complete art set of each): Phantasmal
     Flames, Mega Evolution, Journey Together, Pitch Black, Chaos Rising (4 each), plus one
@@ -352,9 +365,9 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     only 16 of 95 products have a weight (Squarespace's) and none of the ETBs. Then, with the
     next orders, upload Pirate Ship's first real shipments CSV and say if anything didn't match
     (its export columns aren't documented, so the reader guesses by header and order number).
-  - [next] Step 4, Refunds through Stripe with optional restock (also covers the "restock
-    command for returns" item below). Needs a second restricted Stripe key for the admin with
-    Refunds write (owner creates it); the public store's key stays unable to refund.
+  - [done 2026-11-19] Step 4, Refunds and returns from the order page (key in .env as
+    STOREFRONT_ADMIN_STRIPE_KEY). [owner] The first real refund is the first real test of the
+    key's write access: if Stripe refuses, the page shows Stripe's message.
   - [owner] Pricing page (http://192.168.1.240:8011/pricing, live after the next deploy): 9
     prices would change on 2026-11-18's market (e.g. Ascended Heroes ETB $120.99 -> $119.99).
     Untick any to keep, then apply.

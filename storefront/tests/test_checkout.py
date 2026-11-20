@@ -380,7 +380,8 @@ def test_refund_and_dispute_are_recorded(app_client, shop, fake):
     send_event(app_client, {"id": "evt_r", "type": "charge.refunded", "data": {"object": {
         "payment_intent": intent, "amount": 8099, "amount_refunded": 1000}}})
     order = order_row(shop, number)
-    assert (order["status"], order["refunded_cents"]) == ("partially_refunded", 1000)
+    # Unshipped: a partial refund (e.g. the shipping charge) leaves it paid, still to ship.
+    assert (order["status"], order["refunded_cents"]) == ("paid", 1000)
     send_event(app_client, {"id": "evt_d", "type": "charge.dispute.created", "data": {"object": {
         "payment_intent": intent, "amount": 8099, "reason": "fraudulent"}}})
     assert order_row(shop, number)["status"] == "disputed"

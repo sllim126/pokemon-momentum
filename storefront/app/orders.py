@@ -415,12 +415,19 @@ def mark_paid(conn: sqlite3.Connection, settings: Settings, session: dict, base_
 
 def record_refund(conn: sqlite3.Connection, settings: Settings, charge: dict) -> dict | None:
     """charge.refunded: store the refunded total. Stock is not put back automatically: returns
-    are inspected first (plan decision D8), then restocked by hand."""
+    are inspected first (plan decision D8), then restocked by hand or with the admin's refund
+    form. A partial refund on an unshipped order leaves it paid, so it can still be shipped."""
     order = get_order(conn, payment_intent=charge.get("payment_intent"))
     if order is None:
         return None
     refunded = int(charge.get("amount_refunded") or 0)
     status = "refunded" if refunded >= int(charge.get("amount") or order["total_cents"]) else "partially_refunded"
+    if status == "partially_refunded" and order["status"] == "paid":
+        status = "paid"     # still to ship (e.g. only the shipping charge refunded): keep it in To ship
+    if refunded == order["refunded_cents"] and status == order["status"]:
+        # Already recorded: a refund made in the admin is recorded straight away, and Stripe's
+        # charge.refunded webhook then repeats it. No second Discord message.
+        return order
     conn.execute("UPDATE orders SET refunded_cents = ?, status = ? WHERE id = ?", (refunded, status, order["id"]))
     conn.commit()
     notify.discord(settings, f"Refund recorded on {order['number']}: {notify.money(refunded)} ({status}).")
