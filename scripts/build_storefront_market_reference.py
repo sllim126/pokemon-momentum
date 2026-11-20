@@ -26,7 +26,8 @@ script, run after the market's daily update, writes one small JSON file it reads
     }
 
 Which products: every sealed product in the English and Japanese snapshots, plus any card
-named in the store's SKU mapping or intake CSVs. One entry per product ID; when a product has
+named in the store's SKU mapping or intake CSVs or in an article's `[[market <ids>]]` line
+(storefront/content/articles, shown as boxes by storefront/app/articles.market_boxes). One entry per product ID; when a product has
 several printings the Normal one is used, then Holofoil, then the first listed.
 
 Usage (inside the market container):
@@ -41,6 +42,7 @@ import argparse
 import csv
 import json
 import os
+import re
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
@@ -54,6 +56,9 @@ STORE_ID_FILES = (
     REPO_ROOT / "data" / "new_sealed_intake.csv",
     REPO_ROOT / "data" / "new_singles_intake.csv",
 )
+ARTICLES_DIR = REPO_ROOT / "storefront" / "content" / "articles"
+# Same tag the storefront replaces (articles.MARKET_TAG), read from the Markdown source.
+ARTICLE_MARKET_TAG = re.compile(r"^\[\[market((?:[ \t]+\d+)+)[ \t]*\]\][ \t]*$", re.MULTILINE)
 DEFAULT_OUTPUT = REPO_ROOT / "data" / "storefront" / "market_reference.json"
 MARKET_SITE = "https://market.poke6s.com"
 SUBTYPE_PREFERENCE = ("Normal", "Holofoil")
@@ -71,6 +76,16 @@ def store_product_ids(paths=STORE_ID_FILES) -> set[str]:
                     for pid in (row.get(column) or "").split("|"):
                         if pid.strip().isdigit():
                             ids.add(pid.strip())
+    return ids
+
+
+def article_product_ids(folder: Path = ARTICLES_DIR) -> set[str]:
+    """TCGplayer product IDs named in articles' [[market ...]] lines, so single cards a post
+    shows (not only sealed products) get a picture and price box."""
+    ids: set[str] = set()
+    for path in sorted(folder.glob("*.md")) if folder.is_dir() else []:
+        for match in ARTICLE_MARKET_TAG.finditer(path.read_text(encoding="utf-8")):
+            ids.update(match.group(1).split())
     return ids
 
 
@@ -128,7 +143,7 @@ def read_snapshot(path: Path, market: str, wanted: set[str]) -> tuple[dict[str, 
 
 
 def build(en_csv: Path = EN_SIGNAL_CSV, jp_csv: Path = JP_SIGNAL_CSV, wanted: set[str] | None = None) -> dict:
-    wanted = store_product_ids() if wanted is None else wanted
+    wanted = store_product_ids() | article_product_ids() if wanted is None else wanted
     en, en_date = read_snapshot(en_csv, "EN", wanted)
     jp, jp_date = read_snapshot(jp_csv, "JP", wanted)
     # TCGplayer product IDs are unique across categories, so the two markets never collide.

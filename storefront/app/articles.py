@@ -207,6 +207,7 @@ class Articles:
 MARKET_TAG = re.compile(r"<p>\[\[market((?:\s+\d+)+)\s*\]\]</p>")
 # TCGplayer's own product pictures (allowed in the article page's CSP, main.ARTICLE_CSP).
 TCGPLAYER_IMAGE = "https://tcgplayer-cdn.tcgplayer.com/product/{id}_{size}w.jpg"
+TCGPLAYER_CARD_LARGE = "https://tcgplayer-cdn.tcgplayer.com/product/{id}_in_1000x1000.jpg"
 
 
 def _market_box(product_id: str, entry: dict) -> str:
@@ -219,14 +220,28 @@ def _market_box(product_id: str, entry: dict) -> str:
         # Arrow and words, not colour: a falling price isn't bad news for a buyer.
         arrow = "▲" if change > 0 else "▼" if change < 0 else "•"
         trend = f'<span class="market-box-trend">{arrow} {abs(change):.1f}% in 30 days</span>'
+    # Single cards get their set under the name, since an English and a Japanese printing
+    # share the name; anything Japanese says so. ("ME02: Phantasmal Flames" -> "Phantasmal Flames")
+    details = []
+    if entry.get("kind") == "card" and entry.get("group_name"):
+        details.append(entry["group_name"].split(": ", 1)[-1])
+    if entry.get("market") == "JP":
+        details.append("Japanese")
+    detail = (f'<span class="market-box-set">{html_lib.escape(" · ".join(details))}</span>'
+              if details else "")
     link = entry.get("url")
     history = (f'<a class="market-box-link" href="{html_lib.escape(link)}">Price history</a>'
                if link else "")
-    small = TCGPLAYER_IMAGE.format(id=product_id, size=200)
-    large = TCGPLAYER_IMAGE.format(id=product_id, size=400)
+    if entry.get("kind") == "card":
+        # Cards are shown big, for their art (a row of cards gets wider boxes, store.css).
+        small, large = TCGPLAYER_IMAGE.format(id=product_id, size=400), TCGPLAYER_CARD_LARGE.format(id=product_id)
+        width, height = 400, 558
+    else:
+        small, large = TCGPLAYER_IMAGE.format(id=product_id, size=200), TCGPLAYER_IMAGE.format(id=product_id, size=400)
+        width, height = 200, 200
     return (f'<div class="market-box"><img src="{small}" srcset="{small} 1x, {large} 2x" alt="{name}" '
-            f'width="200" height="200" loading="lazy">'
-            f'<div class="market-box-text"><span class="market-box-name">{name}</span>'
+            f'width="{width}" height="{height}" loading="lazy">'
+            f'<div class="market-box-text"><span class="market-box-name">{name}</span>{detail}'
             f'<span class="market-box-price">{price}</span>{trend}{history}</div></div>')
 
 
@@ -241,16 +256,18 @@ def market_boxes(html: str, market) -> str:
     latest = (market.data() or {}).get("latest_date")
 
     def replace(match: re.Match) -> str:
-        boxes = []
+        boxes, kinds = [], set()
         for product_id in match.group(1).split():
             entry = market.entry(product_id)
             if entry and entry.get("price"):
                 boxes.append(_market_box(product_id, entry))
+                kinds.add(entry.get("kind"))
         if not boxes:
             return ""
+        css = "market-boxes market-boxes-cards" if kinds == {"card"} else "market-boxes"
         day = datetime.fromisoformat(latest) if latest else None
         as_of = f" as of {day:%B} {day.day}" if day else ""
-        return (f'<figure class="market-boxes">{"".join(boxes)}'
+        return (f'<figure class="{css}">{"".join(boxes)}'
                 f'<figcaption>TCGplayer market prices{as_of}, updated daily.</figcaption></figure>')
 
     return MARKET_TAG.sub(replace, html)

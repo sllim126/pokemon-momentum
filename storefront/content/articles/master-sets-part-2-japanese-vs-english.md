@@ -9,18 +9,18 @@ cover: master-sets-english-vs-japanese-21bcba0d0f
 old_path: 
 draft: true
 ---
-Almost a year ago I wrote [Let's talk about Master Sets…](/articles/lets-talk-about-master-sets), where I priced every Scarlet & Violet and Mega Evolution set to answer one question from Discord: what's the cheapest set to master on a budget? It's turned into the most-read post on this site, so clearly I'm not the only one doing this math.
+Almost a year ago I wrote [Let's talk about Master Sets…](/articles/lets-talk-about-master-sets), where I priced every Scarlet & Violet and Mega Evolution set to answer one question from Discord: what's the cheapest set to master on a budget? Since then, that post has turned into the most-read post on this site, so clearly I'm not the only one doing this math.
 
-Since then, the follow-up questions I keep seeing (and the ones people are searching to find that post) are basically these two:
+The follow-up questions I keep seeing (and the ones people are searching to find that post) are basically these two:
 
 1. **Is a Japanese master set cheaper than an English one?**
 2. **Do I need the whole set, or should I just chase the secret rares?**
 
-So, being the data nerd I am, I went back to the spreadsheet.
+So, being the data nerd I am, I went back to the spreadsheets.
 
 ## How I priced it this time
 
-Last time I loaded every card into a TCGplayer cart and let the Optimizer build the cheapest order. That's the most honest number, but it took two hours per batch of sets.
+Last time I loaded every card into a TCGplayer cart and let the Optimizer build the cheapest order. That gives a real checkout total, but it took two hours per batch of sets, and let's be honest, it wasn't reproducible. We're all about the scientific method up in here!
 
 This time I used the market price data behind my [market screener](/articles/why-i-built-a-pokemon-market-screener): the TCGplayer market price of every printing in each set (every card, every reverse holo, every Poké Ball and Master Ball pattern) as of November 18, 2026, all added together. That lets me compare dozens of sets at once, but keep in mind:
 
@@ -30,7 +30,7 @@ This time I used the market price data behind my [market screener](/articles/why
 
 ## Question 1: The secret rares *are* the set
 
-This one surprised me less than it should have. In every set I looked at, the cards numbered past the set total make up almost all of the master set's cost:
+To no one's surprise, the secret rares ARE the set. In every set I looked at, the cards numbered past the set total make up almost all of the master set's cost:
 
 - **Mega Evolution:** $1,200 of $1,257 (95%)
 - **Phantasmal Flames:** $857 of $896 (96%)
@@ -45,11 +45,11 @@ Look at Perfect Order: 167 printings (every common, uncommon, rare and reverse h
 
 So the answer to "full master set or just the SRs?" isn't really about money. Skipping the bulk doesn't save you much. **The bulk costs time, not money**: sorting, binder pages, and tracking down that one reverse holo uncommon nobody bothered to list. If you open packs, you'll end up with most of it anyway.
 
-If finishing the secret rares is what you enjoy, do that. If you love the satisfaction of a binder with no gaps, the bulk is the cheap part.
+If finishing the secret rares is what you enjoy, do that. If you love the satisfaction of a binder with no gaps, the bulk is an afterthought.
 
 ## Question 2: Japanese vs English
 
-Japanese main sets don't have reverse holos, so a Japanese master set is usually just one copy of each card, about 120 cards instead of 200 to 400. Fewer cards should mean cheaper, right?
+Japanese main sets don't really do reverse holos, so a Japanese master set is usually just one copy of each card, about 120 cards instead of 200 to 400. Fewer cards should mean cheaper, right?
 
 Sometimes. Here are the English sets next to their Japanese versions:
 
@@ -88,6 +88,10 @@ In most English sets, the top chase card is **15 to 30%** of the master set. In 
 
 (Phantasmal Flames is the English exception: Mega Charizard X ex is $531 of $896, 59%. Charizard gonna Charizard.)
 
+Biased opinion: that card is BETTER in Japanese, because there isn't text covering Charmander's face! If you're collecting it for the art, it's nice to actually see the art.
+
+[[market 662184 655886]]
+
 ![Bar chart: the top card's share of the master set. In Japanese Mega sets it's 33 to 58 percent, in English 19 to 30 percent, except Phantasmal Flames at 59 percent.](/media/1200/master-sets-top-card-share-0c54a389bb.webp)
 
 So a Japanese Mega-era master set is really two projects: about 115 cards that are pretty affordable, and one card that costs as much as all of them combined. That changes how you'd plan it. You can finish everything else, then save up for the one card, or decide 99% is good enough. (I know [someone who decided that](/articles/journey-together-master-set-checklist-and-promo-guide).)
@@ -103,9 +107,9 @@ Prices moved since January, using the same market-price method both times:
 
 Last year I told everyone to go master Obsidian Flames. It's now up about 26%, and the cheapest Scarlet & Violet set to master is… **Journey Together**, at $392.
 
-[ADAM: a line or two about your own Journey Together set here? It ties the two posts together nicely.]
+I'm both happy and sad that Journey Together is the least expensive set to master. It's a beautiful set and was the first set that I was able to find in the wild when my daughter started expressing interest in the card game. Have I lost money on the collection? Most definitely, but I didn't master it for an investment, I mastered it for the experience. In fact, with the Prize Pack series 9 and some of the championship decks, I am still collecting cards from that set! Even though the S&V era is wrapped up, there are still cards to collect from it.
 
-On the Mega Evolution side, Chaos Rising ($410) and Perfect Order ($431) are right there with it.
+On the Mega Evolution side of collecting, Chaos Rising ($410) and Perfect Order ($431) are right there with Journey Together as being on the lower end of complete master sets. (anyone want to guess what sets I'm working towards now?)
 
 ## So what should you collect?
 
@@ -113,9 +117,9 @@ Same answer as last time, with a little more data behind it:
 
 - **On a budget, in English?** Journey Together, Chaos Rising or Perfect Order. Skipping the bulk won't save you much, so pick based on which binder you'd want to look at.
 - **Want the special sets?** Go Japanese. Prismatic Evolutions, Black Bolt, White Flare and Ascended Heroes are all less than half price in Japanese.
-- **Want a Japanese Mega set?** Budget for the top card on its own. It's half the set. If you want to start opening, we carry [Ninja Spinner](/p/pokemon-ninja-spinner-booster-box-japanese) and [Abyss Eye](/p/pokemon-abyss-eye-m5-booster-box-japanese) booster boxes.
+- **Want a Japanese Mega set?** Budget for the top card on its own. It's half the set. If you want to start opening, we carry [Ninja Spinner](/p/pokemon-ninja-spinner-booster-box-japanese) and [Abyss Eye](/p/pokemon-abyss-eye-m5-booster-box-japanese) booster boxes, and more in the future.
 - **Just want the chase cards?** That's 80 to 95% of the cost of the full set anyway. Don't feel bad about it.
 
 Collect what makes you happy and set a budget before you start. The best master set is still the one you actually enjoy finishing.
 
-Or Journey Together. It's pretty cheap right now.
+Or Perfect Order. It's not *the* cheapest, but it's the cheapest one you can actually find on shelves right now, and scalpers aren't touching it, so you can get it at MSRP!!
