@@ -483,8 +483,12 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   the separate project's machine: owner's call.
 - [done 2026-11-20] Host `.venv` rebuilt on Python 3.14 (the system Python had moved from
   3.12): requirements.txt plus playwright 1.63.0, beautifulsoup4, pillow, pyyaml, psutil;
-  DuckDB stays 1.5.4. Screenshot checks work again. The old one is in `.venv-py312-broken`
-  (git-ignored); delete it once nothing is missed.
+  DuckDB stays 1.5.4. Screenshot checks work again. The old one was deleted the same day.
+- [next] Four market tests fail on a clean checkout of main run in a fresh container
+  (2026-11-20): three in tests/test_api_routes.py (groups SQL offset, health route snapshot
+  details, set baskets card-only) and one in tests/test_query_support.py (metadata CTE
+  classification fields). Same four before the End of Day / Embed removal. Check them in the
+  real container with `make test-all`; they may depend on files under data/.
 - [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
   too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
 - [ready] Notification emails get product cards (branch `storefront/mail-product-cards`,
