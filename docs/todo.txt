@@ -356,8 +356,7 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   (foundation: app on http://192.168.1.240:8011/, network walls, sign-in, Overview) built
   2026-11-14, merged to main and deployed 2026-11-18. Step 2 (Orders, with packing slips)
   built 2026-11-19 on branch storefront/admin-orders. Next:
-  - [owner] Set the admin password on the server: `python3 -m storefront.admin.passwd`, then
-    `bash deploy/update_storefront.sh`, then open http://192.168.1.240:8011/.
+  - [done 2026-11-18] Owner set the admin password and signed in.
   - [owner] Before step 7: the columns your books use for a month of sales (QuickBooks import
     or the ledger in poke6s-books), so the bookkeeping export fits without retyping.
   - [owner] Step 3 (Shipping page, done 2026-11-19 on branch storefront/admin-shipping): save the
@@ -384,6 +383,10 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   the same copy and swap as the nightly update. A friendly "updating, back in a minute" page
   for the rare stops (deploys, restarts) would need a Caddy change on 192.168.1.30, which is
   the separate project's machine: owner's call.
+- [next] The host's `.venv` is broken: the system Python moved to 3.14 and the venv points at
+  3.12, which is gone, so `playwright` (screenshot checks, docs/responsive_qa.md) won't run
+  from it. Recreate it with 3.14 (needs `apt install python3.14-venv`, owner) or use the
+  `mcr.microsoft.com/playwright/python` image, as on 2026-11-18. Found 2026-11-18.
 - [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
   too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
 - [ready] Notification emails get product cards (branch `storefront/mail-product-cards`,
