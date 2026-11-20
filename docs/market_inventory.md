@@ -63,7 +63,7 @@ Homes: **Market** = stays a research site (at market.poke6s.com or poke6s.com/ma
 | Discover lists (Top Movers, Pullbacks, Breakouts... 9 lists) | Daily screens of what's moving | **Market**. This is the research product; per-view counts would show which lists earn their place |
 | Research: Sets, one set, Pokémon | Every set and card with prices and signals | **Market**, with the store's `/sets` pages linking to it (they already overlap: the store's set pages show market data for sealed) |
 | Market Stats: Indexes, Set values, Market mood, Track record, Releases | Market-wide readings | **Market** |
-| Buy: Sealed Deals, Budget Builder | Price per pack; best cards for a budget | **Decide.** Sealed Deals is close to what a shop shows (value per pack); it could become a store page that links to products we sell |
+| Buy: Sealed Deals, Budget Builder | Price per pack; best cards for a budget | **Keep** (owner, 2026-11-20: "those are fun to look at"). Sealed Deals could later link to products we sell |
 | Card page (prices, chart, graded tab, full data) | Everything about one card | **Market**; the store's product pages could link to the matching card page for price history |
 | Track: Buy List, Watchlist, Favorites (signed in) | Saved cards per account | **Market**, and the heart of the "one account" step (9b): the same account could hold "notify me" items from the store |
 | Search, nicknames ("moonbreon") | Find any card | Market; a shared search across store and market is a later idea |

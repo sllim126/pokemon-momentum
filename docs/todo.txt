@@ -420,13 +420,15 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     TCGplayer (simplest, least error-prone). The monthly export feeds the worksheet and the ledger,
     splitting each payout into sales, tax collected, shipping and Stripe fees per order.
   - [owner] Step 3 (Shipping page, done 2026-11-19 on branch storefront/admin-shipping): save the
-    packed weight and box on the product page ("Packed for shipping") for what you ship most;
-    only 16 of 95 products have a weight (Squarespace's) and none of the ETBs. Then, with the
+    packed weight and box on the product page ("Packed for shipping") as each product ships
+    (owner, 2026-11-20: weights get added as items go out, not in one sitting). 24 of 95 have
+    one on 2026-11-20, all ETBs included (2 lb, 11 x 7.5 x 5.5). Then, with the
     next orders, upload Pirate Ship's first real shipments CSV and say if anything didn't match
     (its export columns aren't documented, so the reader guesses by header and order number).
   - [done 2026-11-19] Step 4, Refunds and returns from the order page (key in .env as
     STOREFRONT_ADMIN_STRIPE_KEY). [owner] The first real refund is the first real test of the
-    key's write access: if Stripe refuses, the page shows Stripe's message.
+    key's write access: if Stripe refuses, the page shows Stripe's message. Owner plans a test
+    order on 2026-11-20 and its refund from the admin on 2026-11-21.
   - [owner] Pricing page (http://192.168.1.240:8011/pricing, live after the next deploy): 9
     prices would change on 2026-11-18's market (e.g. Ascended Heroes ETB $120.99 -> $119.99).
     Untick any to keep, then apply.
@@ -458,8 +460,8 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     printable checklists (served from "TCG Placeholders/", so the store needs that folder or
     a copy of the published pages). Then the owner tools into the admin (Supplier Pricing,
     Supplier Profitability).
-  - [waiting] Owner: the "Decide" rows in docs/market_inventory.md (Sealed Deals and Budget
-    Builder; End of Day, Embed, Dashboard Lab).
+  - [waiting] Owner: the last "Decide" row in docs/market_inventory.md (End of Day, Embed).
+    Sealed Deals and Budget Builder: keep (owner, 2026-11-20: "those are fun to look at").
   - [planned] Count the market app's views by ?list= for 2-4 weeks (visitors.py records page
     paths without the query string, so app views are invisible), to inform the inventory.
   - [idea] Bigger, a project of its own (owner, 2026-11-20): fold market.poke6s.com into
