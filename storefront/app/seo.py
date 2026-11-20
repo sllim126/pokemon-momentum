@@ -131,7 +131,7 @@ def dump(data: dict) -> str:
 
 
 def sitemap_xml(settings: Settings, entries: dict, page_slugs: list[str], articles=()) -> str:
-    urls: list[tuple[str, str | None]] = [("/", None), ("/shop", None), ("/sets", None)]
+    urls: list[tuple[str, str | None]] = [("/", None), ("/shop", None), ("/sets", None), ("/binder-art", None)]
     if articles:
         urls.append(("/articles", None))
         urls += [(f"/articles/{a.slug}", a.date or None) for a in articles]

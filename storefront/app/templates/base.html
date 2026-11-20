@@ -27,6 +27,8 @@
   <script type="application/ld+json">{{ block | jsonld | safe }}</script>
   {% endfor %}
   <script src="/static/store.js" defer></script>
+  {#- A page's own stylesheet or scripts (files under /static only: the CSP allows nothing inline). -#}
+  {% block head %}{% endblock %}
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -81,6 +83,7 @@
       <nav aria-label="About">
         <h2>Poke6s</h2>
         <a href="/articles">Articles</a>
+        <a href="/binder-art">Binder Art Maker</a>
         {% for slug in ['about', 'terms', 'privacy'] if slug in footer_pages %}<a href="/{{ slug }}">{{ footer_pages[slug].title }}</a>{% endfor %}
         <a href="{{ settings.market_base_url }}">market.poke6s.com</a>
       </nav>

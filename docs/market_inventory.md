@@ -1,6 +1,6 @@
 # market.poke6s.com inventory: what to keep, move or retire
 
-Last reviewed: 2026-11-20 (first draft, for the owner's decision)
+Last reviewed: 2026-11-20 (owner chose option B; Binder Art Maker moved)
 
 ## Why this exists
 
@@ -9,7 +9,11 @@ custom tools: price research, Japanese box pricing, collector printables. poke6s
 our own code (`storefront/`), so the owner asked (2026-11-20) whether the market site still
 needs to be its own site, or whether it should move into poke6s.com (for example
 poke6s.com/market). This page lists everything the market site does, with a suggested home for
-each piece, so that decision can be made piece by piece. Nothing here is decided yet.
+each piece, so that decision can be made piece by piece.
+
+**Decided 2026-11-20: option B** (below). Done so far: Binder Art Maker (now
+poke6s.com/binder-art). Next: Collector Hub and the Placeholder Library. The "Decide" rows
+are still open.
 
 Already done towards "one site": the same Shop / Market / Admin bar across the top of all three
 sites (step 9a, 2026-11-20). Still planned: one Poke6s account (9b) and one owner home (9c),
@@ -69,7 +73,7 @@ Homes: **Market** = stays a research site (at market.poke6s.com or poke6s.com/ma
 | --- | --- | --- |
 | Collector Hub (`/collector-hub`) | Master-set checklists and printables, explained | **Store.** It's the most-visited standalone page and fits a shop's "guides" (next to Articles); brings collectors to poke6s.com |
 | Placeholder Library (`/placeholders`) and the printable checklists | Printable binder placeholders | **Store**, with Collector Hub |
-| Binder Art Maker (`/binder-art`) | Free tool: one picture cut into card-size pieces for a binder page | **Store.** A free tool that draws people in belongs on the shop's domain |
+| Binder Art Maker (`/binder-art`) | Free tool: one picture cut into card-size pieces for a binder page | **Store. Moved 2026-11-20** to poke6s.com/binder-art; the market address 301s there |
 | How it works (guide) | Explains the market app | Market |
 
 ### 4. Owner tools (admin, signed in)
@@ -113,7 +117,7 @@ the work; it would also decide where the Lorcana site goes.
 
 1. Count app views per `?list=` for a few weeks (small change, no new costs), so the research
    app's parts are judged on use.
-2. Pick A, B or C. B can start with Binder Art Maker alone, the smallest self-contained piece.
+2. ~~Pick A, B or C.~~ B, 2026-11-20; Binder Art Maker moved first.
 3. For each "Decide" row above: keep, move or retire.
 
 Related: `docs/storefront_plan.md` (Phase 3 step 9), `docs/desktop_app.md` (the app's views),

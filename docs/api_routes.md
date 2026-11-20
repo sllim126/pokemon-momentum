@@ -29,7 +29,7 @@ The public routes below are public for Pokemon (3 and 85) only until a game is p
 | `/dashboard-lab` | `dashboard_lab.html` | public | Experimental dashboard, linked from Admin only |
 | `/collector-hub` | `collector_hub.html` | public | Collector resources (Learn) |
 | `/placeholders` | `placeholder_library.html` | public | Placeholder Library: print pages and downloads (Learn) |
-| `/binder-art` | `binder_art.html` | public | Free Binder Art Maker (Learn); see `docs/desktop_app.md` |
+| `/binder-art` | (redirect) | public | 301 to https://poke6s.com/binder-art: the Binder Art Maker moved to the store on 2026-11-20 |
 | `/set-explorer`, `/budget-builder`, `/sealed-deals` | `set_explorer.html`, `budget_builder.html`, `sealed_deals.html` | public | Older standalone pages; desktop visitors are forwarded into the app |
 | `/index-overview`, `/index-overview-<index>` | `index_overview_hub.html`, `index_overview_detail.html` | public | Market index pages; desktop visitors are forwarded to Market Stats |
 | `/account-settings` | `account_settings.html` | public (works when signed in) | Sign-in, saved lists, saved views |
@@ -49,7 +49,6 @@ The public routes below are public for Pokemon (3 and 85) only until a game is p
 | `/dashboard-common.js` | public | Helpers shared by the older pages (`dashboard_common.js`) |
 | `/images/{filename}` (GET and HEAD) | public | Files under `images/` (logos, set logos in `images/logos/<groupId>.png`) |
 | `/set-logos.json` | public | Group IDs that have a set logo |
-| `/binder-art/logos.json` | public | Binder Art Maker's logo dropdown (one entry per distinct logo) |
 | `/collector-manifest`, `/collector-assets/{bucket}/{path}` | public | Collector Hub's list of resources and their files |
 | `/placeholder-downloads-manifest`, `/placeholder-downloads/{asset_id}` | public | Placeholder Library's list of files and the downloads |
 

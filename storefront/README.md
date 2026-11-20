@@ -133,6 +133,17 @@ It writes pages and the Resources blog posts as Markdown (posts with front matte
 date, old address, tags, categories, cover image), the pages as served, the original images
 and `index.csv`/`images.csv`. Re-runs skip images already saved.
 
+## Binder Art Maker
+
+`/binder-art` is the free tool that cuts one picture into card-size pieces for a binder page
+(moved from market.poke6s.com on 2026-11-20). It all runs in the visitor's browser
+(`static/binder-art.js`, with jsPDF and JSZip in `static/vendor/`: the CSP allows no outside
+script hosts, so update them by downloading the new pinned version there). Only this page's
+CSP allows `blob:` images, for the visitor's picture. The set-logo list (`app/binder_art.py`)
+reads `images/logos/<groupId>.png`, mounted read-only into the container, and names each logo
+from `data/extracted/pokemon_groups.csv`; a logo added with `scripts/utilities/sync_set_logos.py`
+shows up within an hour (the list's cache time).
+
 ## Articles
 
 The blog lives at `/articles` (list, with category and tag filters) and `/articles/<slug>`.
@@ -430,6 +441,7 @@ Rules worth knowing:
 | `app/redirects.py`, `redirects.csv` | 301s from old Squarespace addresses |
 | `app/markdown.py` | Markdown rendering (raw HTML escaped); Squarespace HTML → Markdown |
 | `app/templates/`, `app/static/` | Jinja2 pages, CSS (market site's colours, D4), small JS |
+| `app/binder_art.py` | Binder Art Maker's set-logo list (the tool itself is `static/binder-art.js`) |
 | `app/articles.py`, `app/article_import.py` | Articles (Markdown, loaded at start-up); import of the old blog posts |
 | `content/articles/*.md` | The articles |
 | `tools/reprice.py` | Prices at or near market, never below break-even; hides products that can't be (see "Prices"); `plan()`/`apply()` shared with the admin |
