@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-19 (Retire a monitored job; Nightly update keeps the site up: copy and swap; Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
+Last reviewed: 2026-11-20 (Store Pricing Ops after Squarespace; Retire a monitored job; Nightly update keeps the site up: copy and swap; Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -494,63 +494,28 @@ If poke6s.com is down:
 
 Store Pricing Ops
 -----------------
-The store pricing workflow now has three admin pages that work together:
+Since 2026-11-20 (storefront plan D11) poke6s.com runs on its own store, so this site keeps
+only the two supplier pages; the Squarespace Export Upload and Singles Listing Intake were
+retired (their old addresses redirect to `/admin`).
 
-- `/pricing-upload`
-  - upload the latest Squarespace product export after you add or edit products
 - `/supplier-pricing`
   - upload or OCR supplier screenshots and save reviewed JPY quote rows by SKU
 - `/supplier-profitability`
-  - compare latest supplier costs against market/store pricing with editable supplier-side and buyer-side assumptions
+  - compare latest supplier costs against market and store prices, with editable supplier-side
+    and buyer-side assumptions
 
-Daily price sync inputs:
+Inputs:
 
-- Squarespace export:
-  - `/opt/pokemon-momentum/products_Apr-09_04-31-18PM.csv`
-- Supplier quotes:
-  - `/opt/pokemon-momentum/data/supplier_quotes.csv`
-- Price rules:
-  - `/opt/pokemon-momentum/data/store_price_rules.csv`
-- Generated daily targets:
-  - `/opt/pokemon-momentum/data/market_prices_latest.csv`
+- Store prices: read-only from the store's database, `data/storefront/store.db`
+  (`load_store_prices()`), so they are always the live poke6s.com prices. Prices are changed in
+  the store admin (http://192.168.1.240:8011, Products or Pricing), never here.
+- Supplier quotes: `/opt/pokemon-momentum/data/supplier_quotes.csv`
+- Market prices and targets: `/opt/pokemon-momentum/data/market_prices_latest.csv`
 
-Important pricing behavior:
-
-- the target builder uses `max(market_target, profit_floor)` for SKUs with supplier quotes
-- `profit_floor` is derived from supplier cost plus landed-cost assumptions
-- Japanese booster boxes use their own floor: landed cost (JPY at 159 per USD, 10% duty,
-  shared inbound shipping, handling) plus 20%
-- a Japanese rule whose latest supplier quote is more than 7 days old is priced at market
-  + 25% instead
-- rows without supplier quotes remain market-based
-- these defaults can be changed with the environment variables at the top of
-  `scripts/build_store_price_targets.py`
-- `target_source` in `market_prices_latest.csv` says which price won: `market`,
-  `profit_floor`, `jp_landed_markup`, or `jp_market_plus_25_stale_quote`
-
-Retiring sold listings:
-
-- `scripts/squarespace_retire_listings.py` hides a listing and sets its stock to 0 (the
-  listing, photos and URL stay, so it is reversible; nothing is deleted)
-- it looks up product and variant IDs in the latest Squarespace export, so upload a fresh
-  export first if the listing is new
-- always preview first, then apply:
-
-```bash
-python3 scripts/squarespace_retire_listings.py --sku 610540-holofoil --sku 84840
-python3 scripts/squarespace_retire_listings.py --sku 610540-holofoil --sku 84840 --apply
-```
-
-- every change is logged to `output/squarespace_retired_listings.jsonl`
-- to bring one back, make it visible and set its stock again in Squarespace
-
-Recommended operator flow when adding a new SKU:
-
-1. Add the product in Squarespace with a unique SKU.
-2. Add or update its pricing rule in `data/store_price_rules.csv`.
-3. Upload the refreshed Squarespace export on `/pricing-upload`.
-4. Save the latest supplier quote on `/supplier-pricing` if you want profit-floor protection.
-5. Review `/supplier-profitability` before allowing auto-pricing to move the SKU.
+Adding a product to the store: the store admin's Products → "Add a product" (storefront/README.md,
+"Admin"). Its price rule lives in `data/store_price_rules.csv` and the repricing rules run on the
+admin's Pricing page. The Squarespace-era scripts (`scripts/squarespace_*.py`,
+`scripts/*squarespace_single_listing*.py`) are no longer used by any page or job.
 
 New storefront (poke6s.com, local only)
 ---------------------------------------
@@ -696,20 +661,6 @@ If the `Poke6s` button is missing when it should appear:
 
 What each page is expected to do
 --------------------------------
-
-`/pricing-upload`
-
-- Purpose:
-  - replace the local Squarespace export with a fresh one after store edits
-- Inputs:
-  - a valid Squarespace product CSV export
-- Outputs:
-  - archive copy in `data/archive/squarespace_exports/`
-  - canonical working export in `products_Apr-09_04-31-18PM.csv`
-  - coverage preview showing which SKUs have usable pricing rules
-- Debug questions:
-  - if a SKU is missing from automation, did it appear in the uploaded export?
-  - if the export was accepted but no preview row appears, check `unmatched_rules`
 
 `/supplier-pricing`
 

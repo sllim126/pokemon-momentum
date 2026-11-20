@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-19 (store admin step 4, Refunds)
+Last updated: 2026-11-20 (store admin step 8, market clean-up)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -44,6 +44,9 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-20 Store admin step 8 (D11): market.poke6s.com's Squarespace Export Upload and Singles
+  Listing Intake retired (old addresses redirect to /admin); Supplier Pricing and Profitability
+  read live store prices from the store database; market Admin page links the store admin.
 - 2026-11-19 Store admin step 4, Refunds and returns: "Refund or return" on the order page
   refunds any amount through Stripe with the admin's own restricted key, emails the customer,
   notes it, and puts returned units back on the shelf. A partial refund on an unshipped order
@@ -373,9 +376,25 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     Untick any to keep, then apply.
   - [planned] Step 7: reports (sales tax, TCGplayer reconciliation, bookkeeping columns agreed
     with the owner first).
-  - [planned] Step 8 (D11): retire the market site's Squarespace Export Upload and Singles
-    Listing Intake (D10: no singles on poke6s.com), point Supplier Profitability's store price
-    at the store database, update the market Admin page.
+  - [done 2026-11-20] Step 8 (D11): market site's Squarespace Export Upload and Singles
+    Listing Intake retired; Supplier pages read store prices from store.db; market Admin page
+    links the store admin.
+  - [idea] Delete the unused Squarespace-era scripts (scripts/squarespace_*.py,
+    scripts/*squarespace_single_listing*.py, build_store_price_targets' export inputs) and their
+    tests, once the owner no longer needs them for history.
+  - [owner] Step 9 (owner, 2026-11-20): make poke6s.com, market.poke6s.com and the store admin
+    feel like one site. Options, smallest first:
+    a. One look and navigation: the same header on all three (logo, Shop / Market links, the
+       owner's Admin link when signed in) and matching footers. Small; no security change.
+    b. One Poke6s account: the market site's accounts become the store's too, through a
+       sign-in cookie shared across poke6s.com and market.poke6s.com. Checkout stays guest
+       (Stripe); an account would add order history, saved "notify me" items and the
+       collection tools in one place. Medium; adds customer sign-in to the store.
+    c. One owner home: the store admin's Overview also shows the market's admin tools (bug
+       reports, supplier pages) and vice versa, and one owner sign-in for both on the home
+       network. The admin stays off the internet (Tailscale idea below for away from home).
+    Not recommended: putting the store admin behind the public sign-in; it would put refunds
+    and customer addresses on the internet.
   - [idea] The admin is home-network only. Tailscale is already on the server, so reaching it
     away from home later would need only binding it to the Tailscale address too and allowing
     that range in refuse_reason(). Not without the owner asking.

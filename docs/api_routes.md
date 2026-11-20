@@ -1,6 +1,6 @@
 # Site routes
 
-Last reviewed: 2026-11-15
+Last reviewed: 2026-11-20
 
 Every route served by `scripts/dashboards/api.py` (FastAPI, port 8001 in the container,
 public at market.poke6s.com). `tests/test_api_routes.py::test_every_route_is_in_the_route_reference`
@@ -35,10 +35,9 @@ The public routes below are public for Pokemon (3 and 85) only until a game is p
 | `/account-settings` | `account_settings.html` | public (works when signed in) | Sign-in, saved lists, saved views |
 | `/admin` | `admin_hub.html` | admin | Links to the admin tools below |
 | `/bug-reports` | `bug_reports.html` | admin | Review queue: Discord bug reports, old mobile Feedback form entries and owner review notes from the phone and desktop apps |
-| `/pricing-upload` | `pricing_upload.html` | admin | Upload a Squarespace export and preview price coverage |
-| `/single-listings-upload` | `single_listings_upload.html` | admin | Singles listing workflow (intake, drafts, follow-up) |
+| `/pricing-upload`, `/single-listings-upload` | none | anyone | Retired 2026-11-20 (D11): 301 to `/admin` |
 | `/supplier-pricing` | `supplier_pricing.html` | admin | Read supplier price sheets with OCR (tesseract.js) and compare to market |
-| `/supplier-profitability` | `supplier_profitability.html` | admin | Per-SKU profit for supplier buys |
+| `/supplier-profitability` | `supplier_profitability.html` | admin | Per-SKU profit for supplier buys; store prices read from `data/storefront/store.db` |
 | `/eod-dashboard`, `/embed` (GET and HEAD) | `eod_dashboard.html`, `embed_dashboard.html` | admin | Index/EOD research views |
 
 ## Shared files
@@ -118,9 +117,6 @@ The public routes below are public for Pokemon (3 and 85) only until a game is p
 | Route | Access | What it does |
 | --- | --- | --- |
 | `/eod/market_details`, `/eod/index_list`, `/eod/index_components`, `/eod/series` | admin | EOD Historical Data index research |
-| `POST /pricing-upload/compare` | admin | Archive a Squarespace export and preview pricing coverage |
-| `/single-listings/intake-download`, `/single-listings/draft-download`, `/single-listings/followup-download` | admin | Singles workflow downloads |
-| `POST /single-listings/intake-upload`, `/single-listings/source-upload`, `/single-listings/draft-upload` | admin | Singles workflow uploads |
 | `POST /supplier-pricing/enrich`, `POST /supplier-pricing/save` | admin | Match OCR-read supplier rows to SKUs and market prices; save reviewed quotes |
 | `POST /supplier-profitability/data`, `GET /supplier-profitability/fx` | admin | Profit rows per SKU; latest JPY-per-USD rate |
 | `/lorcana/images.json` | admin | `{ids: [...]}`: the productIds that have a Lorcana image, so the desktop app only asks for images that exist |

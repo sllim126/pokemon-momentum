@@ -425,32 +425,16 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
 
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
-    def test_pricing_upload_page_serves_html(self, _get_session_user_mock):
-        response = self.client.get("/pricing-upload", cookies={"pm_tracking_token": "token"})
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("text/html", response.headers["content-type"])
-        self.assertIn("Pricing Upload", response.text)
-
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
-    def test_single_listings_upload_page_serves_html(self, _get_session_user_mock):
-        response = self.client.get("/single-listings-upload", cookies={"pm_tracking_token": "token"})
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("text/html", response.headers["content-type"])
-        self.assertIn("Singles Listing Upload", response.text)
-        self.assertIn("Download Post-Create Follow-Up CSV", response.text)
-
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
-    def test_single_listings_followup_download_returns_file(self, _get_session_user_mock):
-        with TemporaryDirectory() as tmpdir:
-            followup_csv = Path(tmpdir) / "followup.csv"
-            followup_csv.write_text("sku,title\n123,Test Card\n", encoding="utf-8")
-            with patch.object(api, "SINGLE_LISTINGS_FOLLOWUP_CSV", followup_csv):
-                response = self.client.get("/single-listings/followup-download", cookies={"pm_tracking_token": "token"})
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("attachment;", response.headers["content-disposition"])
+    def test_retired_squarespace_tools_send_old_bookmarks_to_admin(self, _get_session_user_mock):
+        # Retired 2026-11-20 (storefront plan D11); their upload and download routes are gone.
+        for path in ("/pricing-upload", "/single-listings-upload"):
+            response = self.client.get(path, cookies={"pm_tracking_token": "token"}, follow_redirects=False)
+            self.assertEqual(response.status_code, 301)
+            self.assertEqual(response.headers["location"], "/admin")
+        for path in ("/single-listings/followup-download", "/single-listings/draft-download"):
+            self.assertEqual(self.client.get(path, cookies={"pm_tracking_token": "token"}).status_code, 404)
+        response = self.client.post("/pricing-upload/compare", cookies={"pm_tracking_token": "token"})
+        self.assertIn(response.status_code, (404, 405))
 
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_supplier_profitability_page_serves_html(self, _get_session_user_mock):
@@ -492,99 +476,6 @@ class ApiRouteTests(unittest.TestCase):
         payload = response.json()
         self.assertEqual(payload["items"][0]["category_id"], 3)
         self.assertEqual(payload["items"][1]["category_id"], 85)
-
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
-    @patch.object(api, "build_single_listing_drafts", return_value=[{"draft_status": "ready", "review_status": "", "sku": "123", "final_title": "Test Card", "target_price": "1.23", "set_name": "Test Set", "rarity": "Rare", "warnings": "", "errors": ""}])
-    @patch.object(api, "write_single_listing_csv")
-    def test_single_listings_intake_upload_saves_and_builds_drafts(
-        self,
-        write_single_listing_csv_mock,
-        build_single_listing_drafts_mock,
-        _get_session_user_mock,
-    ):
-        with TemporaryDirectory() as tmpdir:
-            intake_csv = Path(tmpdir) / "new_singles_intake.csv"
-            draft_csv = Path(tmpdir) / "drafts.csv"
-            with patch.object(api, "SINGLE_LISTINGS_INTAKE_CSV", intake_csv), patch.object(
-                api, "SINGLE_LISTINGS_DRAFT_CSV", draft_csv
-            ):
-                response = self.client.post(
-                    "/single-listings/intake-upload",
-                    cookies={"pm_tracking_token": "token"},
-                    files={
-                        "file": (
-                            "intake.csv",
-                            b"sku,product_id,subtype,language,condition,quantity,price_override,title_override,notes\n123,123,Normal,japanese,Near Mint,1,,,\n",
-                            "text/csv",
-                        )
-                    },
-                )
-
-        self.assertEqual(response.status_code, 200)
-        payload = response.json()
-        self.assertTrue(payload["ok"])
-        self.assertEqual(payload["draft_rows"], 1)
-        self.assertEqual(payload["ready_rows"], 1)
-        build_single_listing_drafts_mock.assert_called_once()
-        write_single_listing_csv_mock.assert_called_once()
-
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
-    @patch.object(api, "build_single_listing_drafts", return_value=[{"draft_status": "ready", "review_status": "", "sku": "478077-holofoil", "final_title": "Darkrai VSTAR", "target_price": "24.99", "set_name": "Crown Zenith", "rarity": "Ultra Rare", "warnings": "", "errors": ""}])
-    @patch.object(api, "convert_single_listing_source_rows", return_value=([{"sku": "478077-holofoil", "product_id": "478077", "subtype": "Holofoil", "language": "english", "condition": "Near Mint", "quantity": "2", "price_override": "", "title_override": "", "notes": ""}], []))
-    @patch.object(api, "write_single_listing_csv")
-    def test_single_listings_source_upload_converts_and_builds_drafts(
-        self,
-        write_single_listing_csv_mock,
-        convert_single_listing_source_rows_mock,
-        build_single_listing_drafts_mock,
-        _get_session_user_mock,
-    ):
-        with TemporaryDirectory() as tmpdir:
-            intake_csv = Path(tmpdir) / "new_singles_intake.csv"
-            draft_csv = Path(tmpdir) / "drafts.csv"
-            with patch.object(api, "SINGLE_LISTINGS_INTAKE_CSV", intake_csv), patch.object(
-                api, "SINGLE_LISTINGS_DRAFT_CSV", draft_csv
-            ):
-                response = self.client.post(
-                    "/single-listings/source-upload",
-                    cookies={"pm_tracking_token": "token"},
-                    files={
-                        "file": (
-                            "builder.csv",
-                            b"Position,Name,Set Name,Card Number,Variant,Language,Notes\n1,Darkrai VSTAR,Crown Zenith Galarian Gallery,GG50/GG70,Holofoil,English,\n2,Darkrai VSTAR,Crown Zenith Galarian Gallery,GG50/GG70,Holofoil,English,\n",
-                            "text/csv",
-                        )
-                    },
-                )
-
-        self.assertEqual(response.status_code, 200)
-        payload = response.json()
-        self.assertTrue(payload["ok"])
-        self.assertEqual(payload["source_rows"], 2)
-        self.assertEqual(payload["intake_rows"], 1)
-        convert_single_listing_source_rows_mock.assert_called_once()
-        build_single_listing_drafts_mock.assert_called_once()
-        self.assertEqual(write_single_listing_csv_mock.call_count, 2)
-
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
-    def test_single_listings_draft_upload_rejects_missing_columns(self, _get_session_user_mock):
-        with TemporaryDirectory() as tmpdir:
-            draft_csv = Path(tmpdir) / "drafts.csv"
-            with patch.object(api, "SINGLE_LISTINGS_DRAFT_CSV", draft_csv):
-                response = self.client.post(
-                    "/single-listings/draft-upload",
-                    cookies={"pm_tracking_token": "token"},
-                    files={
-                        "file": (
-                            "draft.csv",
-                            b"sku,final_title\n123,Test Card\n",
-                            "text/csv",
-                        )
-                    },
-                )
-
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("reviewed singles draft file", response.text)
 
     @patch.object(api, "prices_from", return_value="read_parquet('/tmp/mock.parquet')")
     @patch.object(api, "q", return_value=(["rows", "latest"], [(321, "2026-03-30")]))
@@ -1231,64 +1122,33 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.headers["x-content-type-options"], "nosniff")
 
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
-    def test_pricing_upload_compare_saves_csv_and_returns_summary(self, _get_session_user_mock):
-        source_csv = (
-            b"Product ID [Non Editable],SKU,Title,Price,Sale Price\n"
-            b"123,ABC-123,Test Product,12.00,0.00\n"
-        )
+    def test_store_prices_come_from_the_store_database(self, _get_session_user_mock):
+        # Supplier pages read poke6s.com prices from the store's own SQLite database (D11).
+        import sqlite3
+
         with TemporaryDirectory() as tmpdir:
-            tmp_root = Path(tmpdir)
-            export_path = tmp_root / "products.csv"
-            archive_dir = tmp_root / "archive"
-            summary = {
-                "export_rows": 1,
-                "covered_rows": 1,
-                "target_rows": 1,
-                "missing_from_export": [],
-                "unmatched_rules": [],
-                "preview": [{"sku": "ABC-123"}],
-                "total_rules": 1,
-                "manual_rules": 0,
-                "auto_rules": 1,
-            }
-            with patch.object(api, "SQUARESPACE_EXPORT_CSV", export_path), patch.object(api, "SQUARESPACE_EXPORT_ARCHIVE_DIR", archive_dir), patch.object(
-                api, "summarize_uploaded_export", return_value=summary
-            ):
-                response = self.client.post(
-                    "/pricing-upload/compare",
-                    files={"file": ("products.csv", source_csv, "text/csv")},
-                    cookies={"pm_tracking_token": "token"},
-                )
-
-                self.assertEqual(response.status_code, 200)
-                payload = response.json()
-                self.assertTrue(payload["ok"])
-                self.assertEqual(payload["saved_to"], str(export_path))
-                self.assertTrue(export_path.exists())
-                self.assertGreater(payload["export_rows"], 0)
-                self.assertGreater(payload["covered_rows"], 0)
-                self.assertTrue(payload["preview"])
-
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
-    def test_pricing_upload_compare_rejects_non_squarespace_csv(self, _get_session_user_mock):
-        response = self.client.post(
-            "/pricing-upload/compare",
-            files={"file": ("bad.csv", b"sku,price\nABC,1.00\n", "text/csv")},
-            cookies={"pm_tracking_token": "token"},
-        )
-
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("Squarespace", response.text)
+            db = Path(tmpdir) / "store.db"
+            con = sqlite3.connect(db)
+            con.execute("CREATE TABLE products (sku TEXT, title TEXT, price_cents INTEGER, visible INTEGER)")
+            con.execute("INSERT INTO products VALUES ('JP-TEST-BOX', 'Test Set Box', 12999, 1), ('HIDDEN', 'Hidden', 500, 0)")
+            con.commit()
+            con.close()
+            with patch.object(api, "STORE_DB", db):
+                prices = api.load_store_prices()
+            with patch.object(api, "STORE_DB", Path(tmpdir) / "missing.db"):
+                self.assertEqual(api.load_store_prices(), {})
+        self.assertEqual(prices["JP-TEST-BOX"], {"title": "Test Set Box", "current_price": "129.99", "visible": True})
+        self.assertFalse(prices["HIDDEN"]["visible"])
 
     @patch.object(api, "load_latest_market_targets", return_value={"JP-TEST-BOX": {"market_price": "120.00", "target_price": "125.00", "title": "Test Set Box"}})
-    @patch.object(api, "load_current_store_mapping", return_value={"JP-TEST-BOX": {"current_price": "129.99", "title": "Test Set Box"}})
+    @patch.object(api, "load_store_prices", return_value={"JP-TEST-BOX": {"current_price": "129.99", "title": "Test Set Box"}})
     @patch.object(api, "load_latest_supplier_quotes", return_value=([{"sku": "JP-TEST-BOX", "cost_jpy": "6500", "quote_date": "2026-04-27", "supplier_name": "Test Supplier", "item_name_raw": "Test Set Box"}], []))
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_supplier_profitability_data_returns_channel_breakdown(
         self,
         _get_session_user_mock,
         _load_latest_supplier_quotes_mock,
-        _load_current_store_mapping_mock,
+        _load_store_prices_mock,
         _load_latest_market_targets_mock,
     ):
         response = self.client.post(
@@ -1328,7 +1188,7 @@ class ApiRouteTests(unittest.TestCase):
         self.assertGreater(row["channels"]["ebay"]["required_price_for_target_margin"], row["channels"]["site"]["required_price_for_target_margin"])
 
     @patch.object(api, "load_latest_market_targets", return_value={"JP-TEST-BOX": {"market_price": "120.00", "target_price": "125.00", "title": "Test Set Box"}})
-    @patch.object(api, "load_current_store_mapping", return_value={"JP-TEST-BOX": {"current_price": "129.99", "title": "Test Set Box"}})
+    @patch.object(api, "load_store_prices", return_value={"JP-TEST-BOX": {"current_price": "129.99", "title": "Test Set Box"}})
     @patch.object(api, "load_latest_supplier_quotes", return_value=([{"sku": "JP-TEST-BOX", "cost_jpy": "6500", "quote_date": "2026-04-27", "supplier_name": "Test Supplier", "item_name_raw": "Test Set Box"}], []))
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_supplier_disbursement_fee_is_split_across_the_order(self, *_mocks):
