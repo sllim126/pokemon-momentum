@@ -56,7 +56,8 @@ Recently Completed
   were filed under 30th Celebration; they're Delta Reign blister promos). Owner confirmed
   MEP111-114 (Delta Reign prerelease, stamped, with Staff copies), 115/116 (blisters) and 117
   Kyogre (Delta Reign ETB; Pokemon Center ETB copy): now in mega_placeholders.csv. Prize Pack
-  Series 9 added from the official PDF (80 cards; standard or foil in Notes; the list's "PLF"
+  MEP list checked against Bulbapedia (owner pasted it): 28 rows added (staff copies, Game On!,
+  tins, MEP118/120/125-127/131) and 6 corrected. Prize Pack Series 9 added from the official PDF (80 cards; standard or foil in Notes; the list's "PLF"
   misprint read as PFL); the nightly sync now also rebuilds the Scarlet & Violet checklists so
   Prize Pack reprints of that era show up.
 - 2026-11-20 Option B, second piece: Collector Hub moved to poke6s.com/collector-hub (server-
@@ -451,9 +452,12 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     collector tools to poke6s.com, one at a time, with 301s from the old addresses. Done:
     Binder Art Maker, Collector Hub and Placeholder Library (2026-11-20). Next: the owner
     tools into the admin (Supplier Pricing, Supplier Profitability).
-  - [watching] Promos on the owner's list that TCGplayer doesn't list yet: MEP118 Mega Rayquaza
-    ex, MEP120 Celebratory Fanfare (also a Championship reward, 2026 artwork), MEP131 Pokemon RUN Pikachu, No. 500 Pikachu at the Museum.
-    The nightly sync adds each once TCGplayer lists it; then confirm its product.
+  - [watching] The MEP promo list was checked against Bulbapedia's (pasted by the owner
+    2026-11-20): staff copies, Game On! and tin copies, and MEP118/120/125-127/131 added to
+    mega_placeholders.csv ahead of TCGplayer. Jumbo-only cards (No. 500 Pikachu at the Museum,
+    the Jumbo copies) left out: they don't fit binder pockets. Rows marked "release date not
+    confirmed" need dates when known. The nightly sync only notices new numbers, not new
+    variants of a known number, so check Bulbapedia's list after each set's release.
   - [planned] Placeholder Library: Delta Reign has no hand-checked rows for its own set code
     (DLR set stamps, box toppers), so it has no checklist page yet; only its promos (MEP111-117)
     are in. "30th Celebration Classic Collection" was added to set_release_dates.csv as its own
