@@ -12,7 +12,7 @@
 {% block content %}
 <div class="ba-head">
   <h1>Binder Art Maker</h1>
-  <p class="muted"><span class="ba-free">Free.</span> Turn one picture into a full binder page of card-size pieces (63 × 88 mm, the size of a
+  <p class="muted"><span class="ba-free">Free.</span> Turn one picture into card-size pieces for a whole binder page, or just the pockets you pick (63 × 88 mm, the size of a
     Pokémon card). The strips that fall behind the pocket seams are left out, so the picture lines up across the pockets.
     Your image stays on your computer; nothing is uploaded.</p>
 </div>
@@ -42,6 +42,12 @@
         <button id="p1" aria-pressed="true">Single page</button>
         <button id="p2" aria-pressed="false">2-page spread</button>
       </div>
+    </section>
+
+    <section class="ba-group" aria-labelledby="h-pockets">
+      <h2 id="h-pockets">Pockets to fill</h2>
+      <div class="ba-pockets" id="pockets" role="group" aria-label="Pockets to fill"></div>
+      <div class="ba-row"><p class="ba-hint ba-grow">Click a pocket to leave it for a card of your own. The picture spreads across the pockets you keep.</p><button class="btn" id="allPockets">Fill all</button></div>
     </section>
 
     <section class="ba-group" aria-labelledby="h-fit">

@@ -44,6 +44,9 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-20 Binder Art Maker: "Pockets to fill" (owner's request). Pick which pockets get the
+  picture (e.g. 1 & 4, or 8 & 9); the picture fits the kept pockets and the PDF/ZIP hold only
+  those cards. Works with 2x2 to 5x5 pages and 2-page spreads.
 - 2026-11-20 Market option B chosen (owner); first piece done: Binder Art Maker moved to
   poke6s.com/binder-art (store page, logos from images/logos mounted read-only, jsPDF/JSZip
   self-hosted for the store's CSP). market.poke6s.com/binder-art 301s there.

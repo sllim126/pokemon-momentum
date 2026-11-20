@@ -8,6 +8,11 @@
  * picture is laid across the whole page and each card shows only its own window of it. That
  * is what keeps lines straight across the pockets.
  *
+ * Pockets to fill (2026-11-20): S.off holds the pockets left empty ("row,col", columns counted
+ * across both pages of a spread). The picture is fitted to the box around the pockets that are
+ * kept, and only those are previewed with the picture and exported; the empty ones show as
+ * bare pockets. Pockets are numbered row by row on each page, 1-9 on a 9-pocket page.
+ *
  * Set logos come from /binder-art/logos.json (app/binder_art.py: the repo's images/logos
  * files, one entry per distinct logo) and are drawn on one chosen card, kept LOGO_INSET mm
  * inside the cut line.
@@ -20,7 +25,7 @@
   "use strict";
   const CARD_W = 63, CARD_H = 88, DPI = 300;
   const PAPER = { letter: { w: 215.9, h: 279.4, name: "Letter", fmt: "letter" }, a4: { w: 210, h: 297, name: "A4", fmt: "a4" } };
-  const S = { cols: 3, rows: 3, pages: 1, gapX: 5, gapY: 5, spreadGap: 30, bleed: 0, paper: "letter", zoom: 1, panX: 0, panY: 0, view: "binder" };
+  const S = { cols: 3, rows: 3, pages: 1, gapX: 5, gapY: 5, spreadGap: 30, bleed: 0, paper: "letter", zoom: 1, panX: 0, panY: 0, view: "binder", off: new Set() };
   // Logo overlay. r/c null = the bottom-right card of whatever layout is chosen.
   const L = { list: [], idx: -1, im: null, r: null, c: null, pos: "br", w: 36, shadow: true };
   const LOGO_INSET = 4; // mm kept clear of the trim so cutting can't clip the logo
@@ -29,19 +34,32 @@
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
   // ---------- geometry ----------
+  const key = (r, c) => r + "," + c;
+  // The pockets that get a piece of the picture, row by row (the order they're printed in).
+  function usedCells() {
+    const out = [], tc = S.cols * S.pages;
+    for (let r = 0; r < S.rows; r++) for (let c = 0; c < tc; c++) if (!S.off.has(key(r, c))) out.push([r, c]);
+    return out;
+  }
+  // Pocket number as printed on the toggle: row by row within its own page.
+  const pocketNo = (r, c) => r * S.cols + (c % S.cols) + 1;
   function geom() {
     const tc = S.cols * S.pages, xs = [], ys = [];
     for (let c = 0; c < tc; c++) { const p = Math.floor(c / S.cols); xs.push(c * (CARD_W + S.gapX) + p * (S.spreadGap - S.gapX)); }
     for (let r = 0; r < S.rows; r++) ys.push(r * (CARD_H + S.gapY));
     const artW = xs[tc - 1] + CARD_W, artH = ys[S.rows - 1] + CARD_H, b = S.bleed;
-    const boxW = artW + 2 * b, boxH = artH + 2 * b;
+    // The picture covers the box around the kept pockets (the whole page when all are kept).
+    const cells = usedCells();
+    const bx0 = Math.min(...cells.map(([, c]) => xs[c])), bx1 = Math.max(...cells.map(([, c]) => xs[c])) + CARD_W;
+    const by0 = Math.min(...cells.map(([r]) => ys[r])), by1 = Math.max(...cells.map(([r]) => ys[r])) + CARD_H;
+    const bw = bx1 - bx0, bh = by1 - by0, boxW = bw + 2 * b, boxH = bh + 2 * b;
     // k = mm per source pixel. At zoom 1 the picture just covers the art box including bleed.
     const k = Math.max(boxW / img.width, boxH / img.height) * S.zoom;
     const dispW = img.width * k, dispH = img.height * k;
     const maxX = (dispW - boxW) / 2, maxY = (dispH - boxH) / 2;
     S.panX = clamp(S.panX, -maxX, maxX); S.panY = clamp(S.panY, -maxY, maxY);
-    const ix = -b + (boxW - dispW) / 2 + S.panX, iy = -b + (boxH - dispH) / 2 + S.panY;
-    return { tc, xs, ys, artW, artH, b, boxW, boxH, k, ix, iy, dispW, dispH };
+    const ix = bx0 - b + (boxW - dispW) / 2 + S.panX, iy = by0 - b + (boxH - dispH) / 2 + S.panY;
+    return { tc, xs, ys, artW, artH, b, cells, bx0, by0, bw, bh, boxW, boxH, k, ix, iy, dispW, dispH };
   }
   // Source-pixel rectangle for an art-space rectangle, nudged inside the image (float rounding).
   function src(g, x, y, w, h) {
@@ -49,8 +67,10 @@
     sx = clamp(sx, 0, Math.max(0, img.width - sw)); sy = clamp(sy, 0, Math.max(0, img.height - sh));
     return [sx, sy, sw, sh];
   }
+  // The logo's pocket: the one chosen if it's still kept, else the last kept pocket (bottom right).
   function logoCell(g) {
-    return [L.r == null ? S.rows - 1 : Math.min(L.r, S.rows - 1), L.c == null ? g.tc - 1 : Math.min(L.c, g.tc - 1)];
+    const chosen = L.r != null && g.cells.find(([r, c]) => r === L.r && c === L.c);
+    return chosen || g.cells[g.cells.length - 1];
   }
   // Logo rectangle in art space, or null when no logo is chosen or it hasn't loaded yet.
   function logoRect(g) {
@@ -77,7 +97,7 @@
     const la = { nx: Math.floor((p.h - 2 * m) / tw), ny: Math.floor((p.w - 2 * m) / th), orient: "landscape" };
     const best = la.nx * la.ny > po.nx * po.ny ? la : po;
     best.per = best.nx * best.ny; best.tw = tw; best.th = th;
-    const total = S.cols * S.pages * S.rows;
+    const total = usedCells().length;
     best.sheets = best.per ? Math.ceil(total / best.per) : 0;
     return best;
   }
@@ -112,6 +132,15 @@
       }
       for (let r = 0; r < S.rows; r++) for (let c = 0; c < g.tc; c++) {
         const dx = X(g.xs[c]), dy = Y(g.ys[r]), dw = CARD_W * vs, dh = CARD_H * vs;
+        if (S.off.has(key(r, c))) {   // a pocket left for one of the visitor's own cards
+          ctx.beginPath(); rr(ctx, dx + .5, dy + .5, dw - 1, dh - 1, 3 * vs);
+          ctx.fillStyle = "rgba(255,255,255,.04)"; ctx.fill();
+          ctx.setLineDash([5, 4]); ctx.strokeStyle = "rgba(255,255,255,.28)"; ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]);
+          ctx.fillStyle = "rgba(255,255,255,.45)"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.font = `600 ${Math.max(10, Math.round(9 * vs))}px system-ui, sans-serif`;
+          ctx.fillText(String(pocketNo(r, c)), dx + dw / 2, dy + dh / 2);
+          continue;
+        }
         ctx.save(); ctx.beginPath(); rr(ctx, dx, dy, dw, dh, 3 * vs); ctx.clip();
         ctx.drawImage(img, ...src(g, g.xs[c], g.ys[r], CARD_W, CARD_H), dx, dy, dw, dh);
         if (lr && lr.r === r && lr.c === c) drawLogo(ctx, lr, vs, -ox / vs, -oy / vs);
@@ -123,15 +152,17 @@
       }
     } else {
       ctx.globalAlpha = .3; ctx.drawImage(img, X(g.ix), Y(g.iy), g.dispW * vs, g.dispH * vs); ctx.globalAlpha = 1;
-      ctx.save(); ctx.beginPath(); ctx.rect(X(-g.b), Y(-g.b), g.boxW * vs, g.boxH * vs); ctx.clip();
+      const bx = g.bx0 - g.b, by = g.by0 - g.b;
+      ctx.save(); ctx.beginPath(); ctx.rect(X(bx), Y(by), g.boxW * vs, g.boxH * vs); ctx.clip();
       ctx.drawImage(img, X(g.ix), Y(g.iy), g.dispW * vs, g.dispH * vs);
-      // Dim everything inside the art box that isn't a card face: seams and bleed get cut away.
-      ctx.beginPath(); ctx.rect(X(-g.b), Y(-g.b), g.boxW * vs, g.boxH * vs);
-      for (let r = 0; r < S.rows; r++) for (let c = 0; c < g.tc; c++) ctx.rect(X(g.xs[c]), Y(g.ys[r]), CARD_W * vs, CARD_H * vs);
+      // Dim everything inside the art box that isn't a kept card face: seams, bleed and empty
+      // pockets get cut away.
+      ctx.beginPath(); ctx.rect(X(bx), Y(by), g.boxW * vs, g.boxH * vs);
+      for (const [r, c] of g.cells) ctx.rect(X(g.xs[c]), Y(g.ys[r]), CARD_W * vs, CARD_H * vs);
       ctx.fillStyle = "rgba(4,8,15,.65)"; ctx.fill("evenodd"); ctx.restore();
       if (lr) drawLogo(ctx, lr, vs, -ox / vs, -oy / vs);
       ctx.lineWidth = 1.25;
-      for (let r = 0; r < S.rows; r++) for (let c = 0; c < g.tc; c++) {
+      for (const [r, c] of g.cells) {
         ctx.strokeStyle = tok("--accent"); ctx.setLineDash([]);
         ctx.strokeRect(X(g.xs[c]), Y(g.ys[r]), CARD_W * vs, CARD_H * vs);
         if (g.b > 0) {
@@ -146,8 +177,9 @@
   function facts(g) {
     const dpi = Math.round(25.4 / g.k);
     const [cls, word] = dpi >= 300 ? ["good", "sharp"] : dpi >= 200 ? ["good", "good"] : dpi >= 150 ? ["warn", "okay"] : ["bad", "soft"];
-    $("#facts").innerHTML = `<span><b>${g.tc * S.rows}</b> cards</span>` +
-      `<span>picture <b>${g.artW.toFixed(0)} × ${g.artH.toFixed(0)} mm</b></span>` +
+    const all = g.tc * S.rows, n = g.cells.length;
+    $("#facts").innerHTML = `<span><b>${n}</b> card${n > 1 ? "s" : ""}${n < all ? ` of ${all} pockets` : ""}</span>` +
+      `<span>picture <b>${g.bw.toFixed(0)} × ${g.bh.toFixed(0)} mm</b></span>` +
       `<span class="ba-pill ${cls}">${dpi} DPI · ${word}</span>`;
     const f = sheetFit(), p = PAPER[S.paper];
     $("#sheetFacts").innerHTML = f.per
@@ -169,7 +201,9 @@
   }
   const tick = () => new Promise((r) => requestAnimationFrame(() => r()));
   const baseName = () => (imgName.replace(/\.[^.]+$/, "").replace(/[^a-z0-9_-]+/gi, "-").replace(/^-|-$/g, "") || "binder-art");
-  const layoutTag = () => `${S.cols * S.pages}x${S.rows}`;
+  // e.g. "3x3", or "3x3-p1-4" when only pockets 1 and 4 are filled (spreads: "p2.1" = page 2, pocket 1).
+  const layoutTag = () => `${S.cols * S.pages}x${S.rows}` + (S.off.size
+    ? "-p" + usedCells().map(([r, c]) => (S.pages > 1 ? `${Math.floor(c / S.cols) + 1}.` : "") + pocketNo(r, c)).join("-") : "");
   function setStatus(msg, cls = "") { const el = $("#status"); el.textContent = msg; el.className = cls; }
   function busy(on) { $("#pdf").disabled = on; $("#zip").disabled = on; }
   function saveFile(filename, blob) {
@@ -188,7 +222,7 @@
       const g = geom(), p = PAPER[S.paper];
       const doc = new window.jspdf.jsPDF({ orientation: f.orient, unit: "mm", format: p.fmt });
       const PW = doc.internal.pageSize.getWidth(), PH = doc.internal.pageSize.getHeight();
-      const cells = []; for (let r = 0; r < S.rows; r++) for (let c = 0; c < g.tc; c++) cells.push([r, c]);
+      const cells = g.cells;
       for (let s = 0; s < f.sheets; s++) {
         if (s) doc.addPage(p.fmt, f.orient);
         const chunk = cells.slice(s * f.per, (s + 1) * f.per);
@@ -221,14 +255,15 @@
     if (!window.JSZip) { setStatus("The ZIP maker didn't load. Reload the page and try again.", "bad"); return; }
     busy(true);
     try {
-      const g = geom(), zip = new JSZip(), n = g.tc * S.rows; let i = 0;
-      for (let r = 0; r < S.rows; r++) for (let c = 0; c < g.tc; c++) {
+      const g = geom(), zip = new JSZip(), n = g.cells.length; let i = 0;
+      for (const [r, c] of g.cells) {
         setStatus(`Making card ${++i} of ${n}…`); await tick();
         const blob = await new Promise((res) => tileCanvas(g, r, c).toBlob(res, "image/png"));
         zip.file(`${baseName()}_r${r + 1}c${c + 1}.png`, blob);
       }
       zip.file("README.txt", `${n} cards, ${DPI} DPI, ${CARD_W} x ${CARD_H} mm trim with ${g.b} mm bleed on each side.\n` +
         `rXcY = row X, column Y as they sit in the binder (${S.pages === 2 ? "columns run across both pages of the spread" : "one page"}).\n` +
+        (S.off.size ? `Only the pockets you chose are included; the others are left for your own cards.\n` : "") +
         `Made with the free Binder Art Maker at https://poke6s.com/binder-art\n`);
       setStatus("Zipping…"); await tick();
       saveFile(`${baseName()}_${layoutTag()}_cards.zip`, await zip.generateAsync({ type: "blob" }));
@@ -289,13 +324,42 @@
     $("#spreadField").hidden = S.pages !== 2;
     document.querySelectorAll("#bleed button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.b === S.bleed)));
     $("#vBinder").setAttribute("aria-pressed", String(S.view === "binder")); $("#vFull").setAttribute("aria-pressed", String(S.view !== "binder"));
-    // Card choices follow the layout; "bottom right" stays the default whatever the grid.
-    const tc = S.cols * S.pages, opts = ['<option value="">Bottom-right card</option>'];
-    for (let r = 0; r < S.rows; r++) for (let c = 0; c < tc; c++) opts.push(`<option value="${r},${c}">Row ${r + 1}, column ${c + 1}</option>`);
+    const tc = S.cols * S.pages;
+    // Forget empty pockets that the new layout no longer has; never leave every pocket empty.
+    for (const k of [...S.off]) { const [r, c] = k.split(",").map(Number); if (r >= S.rows || c >= tc) S.off.delete(k); }
+    if (!usedCells().length) S.off.clear();
+    renderPockets();
+    // Card choices follow the kept pockets; "bottom right" (the last kept one) is the default.
+    const opts = ['<option value="">Bottom-right card</option>'];
+    for (const [r, c] of usedCells()) opts.push(`<option value="${r},${c}">Row ${r + 1}, column ${c + 1}</option>`);
     $("#logoCard").innerHTML = opts.join("");
-    $("#logoCard").value = L.r == null ? "" : `${Math.min(L.r, S.rows - 1)},${Math.min(L.c, tc - 1)}`;
+    const keep = L.r != null && !S.off.has(key(L.r, L.c)) && L.r < S.rows && L.c < tc;
+    $("#logoCard").value = keep ? key(L.r, L.c) : "";
     draw();
   }
+  // The pocket toggles: one button per pocket, laid out like the binder page (a spread shows
+  // both pages with a gap between them). Pressed = the pocket gets a piece of the picture.
+  function renderPockets() {
+    const box = $("#pockets"), tc = S.cols * S.pages, parts = [];
+    box.classList.toggle("spread", S.pages > 1);
+    box.style.gridTemplateColumns = Array.from({ length: S.pages }, () => `repeat(${S.cols}, 1fr)`).join(" 10px ");
+    for (let r = 0; r < S.rows; r++) for (let c = 0; c < tc; c++) {
+      if (S.pages > 1 && c > 0 && c % S.cols === 0) parts.push('<span aria-hidden="true"></span>');
+      const on = !S.off.has(key(r, c)), page = S.pages > 1 ? `, page ${Math.floor(c / S.cols) + 1}` : "";
+      parts.push(`<button type="button" class="ba-pocket" data-k="${key(r, c)}" aria-pressed="${on}" aria-label="Pocket ${pocketNo(r, c)}${page}">${pocketNo(r, c)}</button>`);
+    }
+    box.innerHTML = parts.join("");
+    $("#allPockets").disabled = !S.off.size;
+  }
+  $("#pockets").onclick = (e) => {
+    const b = e.target.closest(".ba-pocket"); if (!b) return;
+    const k = b.dataset.k;
+    if (S.off.has(k)) S.off.delete(k);
+    else if (usedCells().length > 1) S.off.add(k);
+    else { setStatus("Keep at least one pocket for the picture.", "bad"); return; }
+    setStatus(""); syncControls();
+  };
+  $("#allPockets").onclick = () => { S.off.clear(); syncControls(); };
   const num = (el, lo, hi, fb) => { const v = parseFloat(el.value); return isFinite(v) ? clamp(v, lo, hi) : fb; };
   document.querySelectorAll("#presets .ba-preset").forEach((b) => b.onclick = () => { S.cols = +b.dataset.c; S.rows = +b.dataset.r; syncControls(); });
   $("#cols").oninput = () => { S.cols = Math.round(num($("#cols"), 1, 5, S.cols)); syncControls(); };
