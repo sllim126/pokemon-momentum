@@ -11,6 +11,7 @@ inject scripts into a page. Page files may start with a simple front-matter bloc
 
 from __future__ import annotations
 
+import re
 from html.parser import HTMLParser
 
 from markdown_it import MarkdownIt
@@ -20,6 +21,22 @@ _md = MarkdownIt("commonmark", {"html": False, "linkify": False, "typographer": 
 
 def render(text: str) -> str:
     return _md.render(text or "")
+
+
+# Squarespace's bold sometimes ends with a space inside it ("**Card Text: **Each ..."), which
+# Markdown won't render as bold. Only an opening "**" (at the start of a line or after a space
+# or "(") followed by text that starts with a non-space counts, so the gap between two good
+# bolds ("**ex**, **Trainer cards**") is never mistaken for one.
+_BOLD_INNER_SPACE = re.compile(r"(?<![^\s(])\*\*(\S(?:[^*\n]*?\S)?)\s+\*\*(?=\w)")
+# A heading at the very top that only says "Details" or "Product Details": the product page
+# already puts a "Details" heading above the description.
+_LEADING_DETAILS_HEADING = re.compile(r"\A\s*#{1,6}[ \t]*(?:\*\*)?(?:product[ \t]+)?details:?(?:\*\*)?[ \t]*(?:\n|\Z)", re.I)
+
+
+def render_description(text: str) -> str:
+    """Render a product description, tidying two leftovers from the Squarespace import."""
+    text = _BOLD_INNER_SPACE.sub(r"**\1** ", text or "")
+    return render(_LEADING_DETAILS_HEADING.sub("", text, count=1))
 
 
 def split_front_matter(text: str) -> tuple[dict[str, str], str]:

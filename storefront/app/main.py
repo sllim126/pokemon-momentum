@@ -42,7 +42,7 @@ from .db import connect, latest_migration, migrate
 from .market import MarketReference
 from .metrics import install_metrics
 from .visitors import client_ip, install_visitor_counting
-from .markdown import render, split_front_matter
+from .markdown import render, render_description, split_front_matter
 from .settings import STOREFRONT_DIR, Settings, load_settings
 
 APP_DIR = Path(__file__).resolve().parent
@@ -165,12 +165,13 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     env = templates.env
     env.globals.update(settings=settings, checkout_enabled=settings.checkout_enabled, tax_note=orders.tax_note(settings), year=datetime.now(UTC).year, sort_labels=catalog.SORT_LABELS,
                        type_labels=classify.PRODUCT_TYPE_LABELS, language_labels=classify.LANGUAGE_LABELS,
-                       ship_class_labels=classify.SHIP_CLASS_LABELS, footer_pages=pages,
+                       footer_pages=pages,
                        social_links=seo.SOCIAL_LINKS)
     env.filters["money"] = lambda cents: f"${(cents or 0) / 100:,.2f}"
     env.filters["dollars"] = lambda value: f"${value:,.2f}"
     env.filters["jsonld"] = seo.dump
     env.filters["markdown"] = render
+    env.filters["description"] = render_description
     env.filters["longdate"] = _long_date
 
     @contextmanager
