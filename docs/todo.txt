@@ -451,12 +451,8 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     collector tools to poke6s.com, one at a time, with 301s from the old addresses. Done:
     Binder Art Maker, Collector Hub and Placeholder Library (2026-11-20). Next: the owner
     tools into the admin (Supplier Pricing, Supplier Profitability).
-  - [waiting] Owner: which product or event gave out MEP028 Celebratory Fanfare (2025,
-    regulation I, Play! Pokemon logo; the catalog also lists an "Asia Championship Series 24-25"
-    copy)? Until then it stays in auto_mega_promos.csv. It is not the same card as MEP120
-    Celebratory Fanfare (2026, regulation J, different artwork; owner, 2026-11-20).
   - [watching] Promos on the owner's list that TCGplayer doesn't list yet: MEP118 Mega Rayquaza
-    ex, MEP120 Celebratory Fanfare, MEP131 Pokemon RUN Pikachu, No. 500 Pikachu at the Museum.
+    ex, MEP120 Celebratory Fanfare (also a Championship reward, 2026 artwork), MEP131 Pokemon RUN Pikachu, No. 500 Pikachu at the Museum.
     The nightly sync adds each once TCGplayer lists it; then confirm its product.
   - [planned] Placeholder Library: Delta Reign has no hand-checked rows for its own set code
     (DLR set stamps, box toppers), so it has no checklist page yet; only its promos (MEP111-117)
@@ -1131,11 +1127,9 @@ Learn and collector tools (owner, 2026-10-23; "nothing tonight"):
   screener (today's How it works), and cards linking to Collector Hub, Placeholder Library and
   Binder Art Maker.
 - [idea] Collector Hub review: the owner wants it looked at and revised.
-- [waiting] Owner: how was MEP028 Celebratory Fanfare handed out (plain and "Ace Trainer"
-  versions; maybe a Play! Pokémon league prize)? See the 2026-11-20 item under Current Focus;
-  MEP120 is a different Celebratory Fanfare (2026 artwork). The other 29 earlier promos were confirmed on 2026-10-24,
-  MEP111-117 on 2026-11-20. Release dates marked "to confirm" in mega_placeholders.csv (Figure,
-  Premium and Ultra-Premium Collections, set as 2026-11-06) need checking when those ship.
+- [planned] Release dates marked "to confirm" or "not confirmed" in mega_placeholders.csv
+  (Figure, Premium and Ultra-Premium Collections set as 2026-11-06; MEP028 Celebratory Fanfare,
+  a Championship reward per the owner 2026-11-20, set as 2025-10-24) need checking.
 - [planned] Placeholder Library follow-up: placeholders and title cards for whole sets (every
   card of a master set, from the catalog), not only promos and variants. (Prize Pack Series 9
   and Delta Reign's promos were added 2026-11-20.)
