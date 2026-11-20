@@ -13,6 +13,10 @@
  * page address (PATH_AREAS). The same AREAS config renders the area landing pages, so
  * the navigation and the hubs can never disagree.
  *
+ * Above the header sits the Poke6s family bar (Shop / Market), the same strip poke6s.com and the
+ * store admin show, so the sites read as one (step 9a, 2026-11-20). The phone app
+ * (mobile_app.html) has its own copy because it doesn't load this script.
+ *
  * The links point at the older page addresses on purpose: on desktop the server forwards
  * each one to the matching desktop-app view (desktop_app_redirect in api.py), while
  * phones keep opening the older pages.
@@ -100,7 +104,16 @@
     [/^\/(learn|collector-hub|placeholders|binder-art)\b/, "learn"],
   ];
 
+  // The shop's address. Hard-coded: the market site has no setting for it, and it never changes.
+  const SHOP_URL = "https://poke6s.com/";
+
   const CSS = `
+    .ps-family { display: flex; align-items: center; gap: 2px; padding: 3px 16px; flex: none; position: relative; z-index: 1001;
+      background: #050b14; border-bottom: 1px solid rgba(136, 162, 205, 0.16);
+      font: 600 12.5px/1.4 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .ps-family a { color: #93a6c8; text-decoration: none; padding: 3px 10px; border-radius: 999px; }
+    .ps-family a:hover { color: #eaf1ff; }
+    .ps-family a[aria-current="page"] { color: #eaf1ff; background: rgba(77, 163, 255, 0.16); }
     .ps-shell { position: relative; z-index: 1000; font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
       background: rgba(8, 17, 29, 0.94); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(136, 162, 205, 0.2); }
     .ps-shell-inner { max-width: 1440px; margin: 0 auto; padding: 8px 16px; display: flex; align-items: center; gap: 16px; }
@@ -183,6 +196,15 @@
     return header;
   }
 
+  // The Poke6s family bar: the same Shop / Market strip as poke6s.com and the store admin.
+  function buildFamilyBar() {
+    const bar = document.createElement("nav");
+    bar.className = "ps-family";
+    bar.setAttribute("aria-label", "Poke6s sites");
+    bar.innerHTML = `<a href="${SHOP_URL}">Shop</a><a href="/" aria-current="page">Market</a>`;
+    return bar;
+  }
+
   function mount() {
     if (document.querySelector(".ps-shell")) return;
     const style = document.createElement("style");
@@ -192,6 +214,8 @@
     const header = buildHeader();
     if (slot) slot.replaceWith(header);
     else document.body.insertBefore(header, document.body.firstChild);
+    // Pages with their own logo (data-shell="nav") get the bar too, at the very top.
+    if (!document.querySelector(".ps-family")) document.body.insertBefore(buildFamilyBar(), document.body.firstChild);
   }
 
   window.Poke6sShell = { AREAS, currentArea };

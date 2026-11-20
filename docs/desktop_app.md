@@ -209,6 +209,11 @@ Saved-list tag names: `owned` is shown as Buy List, `research` as Needs Review.
 
 ## Other desktop pages in the same style
 
+Every page that loads `site_shell.js` also gets the Poke6s bar (Shop / Market) above its header,
+the same strip poke6s.com and the store admin show (step 9a, 2026-11-20); the phone app has its
+own copy in `mobile_app.html`. Change all copies together (list in `site_shell.js`).
+
+
 Collector Hub (`collector_hub.html`), Placeholder Library (`placeholder_library.html`) and
 Account (`account_settings.html`) load `scripts/dashboards/desktop_theme.css`, served at
 `/desktop-theme.css`. Collector Hub and Placeholder Library are scrolling "reading pages"
