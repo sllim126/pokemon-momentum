@@ -13,8 +13,8 @@ Almost a year ago I wrote [Let's talk about Master Sets…](/articles/lets-talk-
 
 The follow-up questions I keep seeing (and the ones people are searching to find that post) are basically these two:
 
-1. **Is a Japanese master set cheaper than an English one?**
-2. **Do I need the whole set, or should I just chase the secret rares?**
+1. **Do I need the whole set, or should I just chase the secret rares?**
+2. **Is a Japanese master set cheaper than an English one?**
 
 So, being the data nerd I am, I went back to the spreadsheets.
 
@@ -28,7 +28,7 @@ This time I used the market price data behind my [market screener](/articles/why
 - **It's not the same method as last year,** so don't compare these totals directly to the numbers in the first post. Where I compare against January below, I re-ran January's prices with this same method.
 - A **"secret rare"** here means any card numbered past the set's printed total, like 125/094.
 
-## Question 1: The secret rares *are* the set
+## Question 1: Do you need the bulk, or just the secret rares?
 
 To no one's surprise, the secret rares ARE the set. In every set I looked at, the cards numbered past the set total make up almost all of the master set's cost:
 
@@ -47,7 +47,7 @@ So the answer to "full master set or just the SRs?" isn't really about money. Sk
 
 If finishing the secret rares is what you enjoy, do that. If you love the satisfaction of a binder with no gaps, the bulk is an afterthought.
 
-## Question 2: Japanese vs English
+## Question 2: Is a Japanese master set cheaper?
 
 Japanese main sets don't really do reverse holos, so a Japanese master set is usually just one copy of each card, about 120 cards instead of 200 to 400. Fewer cards should mean cheaper, right?
 
