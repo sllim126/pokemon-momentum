@@ -278,6 +278,10 @@ def test_market_boxes_use_todays_prices():
     assert "market-box-set" not in out                                         # English sealed: none
     assert 'class="market-boxes market-boxes-cards"' in card and "655886_in_1000x1000.jpg" in card
     assert "market-boxes-cards" not in out
+    # [[cards ...]]: pictures, names and sets only.
+    art = market_boxes(parse("x", "[[cards 655886]]\n").html, market)
+    assert "655886_in_1000x1000.jpg" in art and "Inferno X · Japanese" in art
+    assert "$" not in art and "Price history" not in art and "Card images from TCGplayer." in art
     # A tag whose products are all unknown disappears; text that merely mentions one stays.
     assert market_boxes(parse("x", "[[market 1]]\n").html, market).strip() == ""
     inline = parse("x", "Write [[market 712094]] on its own line.\n").html

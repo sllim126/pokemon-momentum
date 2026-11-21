@@ -22,7 +22,8 @@ home page but still open at their address, with a draft note, so the owner can p
 Market boxes: a paragraph holding only `[[market <id> <id> ...]]` (TCGplayer product IDs) becomes
 a row of boxes with each product's TCGplayer picture, today's market price and 30-day change,
 filled in on every page view from market_reference.json (market_boxes below), so the prices in
-an old post stay current. Products missing from that file are left out.
+an old post stay current. `[[cards <id> ...]]` shows just the pictures, names and sets.
+Products missing from that file are left out.
 A finished article (draft: false) with a future date is scheduled: hidden the same way, with a
 "scheduled" note, until its date arrives (Articles.published).
 
@@ -203,18 +204,19 @@ class Articles:
 
 # --- market boxes -----------------------------------------------------------------------------
 
-# `[[market 712094 712102]]` alone in a paragraph, as markdown-it renders it.
-MARKET_TAG = re.compile(r"<p>\[\[market((?:\s+\d+)+)\s*\]\]</p>")
+# `[[market 712094 712102]]` (pictures with prices) or `[[cards 662184 655886]]` (pictures only),
+# alone in a paragraph, as markdown-it renders it.
+MARKET_TAG = re.compile(r"<p>\[\[(market|cards)((?:\s+\d+)+)\s*\]\]</p>")
 # TCGplayer's own product pictures (allowed in the article page's CSP, main.ARTICLE_CSP).
 TCGPLAYER_IMAGE = "https://tcgplayer-cdn.tcgplayer.com/product/{id}_{size}w.jpg"
 TCGPLAYER_CARD_LARGE = "https://tcgplayer-cdn.tcgplayer.com/product/{id}_in_1000x1000.jpg"
 
 
-def _market_box(product_id: str, entry: dict) -> str:
+def _market_box(product_id: str, entry: dict, with_price: bool = True) -> str:
     name = html_lib.escape(entry.get("name") or "")
-    price = f"${float(entry['price']):,.2f}"
+    price = f'<span class="market-box-price">${float(entry["price"]):,.2f}</span>' if with_price else ""
     change = entry.get("roc_30d_pct")
-    if change is None:
+    if change is None or not with_price:
         trend = ""
     else:
         # Arrow and words, not colour: a falling price isn't bad news for a buyer.
@@ -231,7 +233,7 @@ def _market_box(product_id: str, entry: dict) -> str:
               if details else "")
     link = entry.get("url")
     history = (f'<a class="market-box-link" href="{html_lib.escape(link)}">Price history</a>'
-               if link else "")
+               if link and with_price else "")
     if entry.get("kind") == "card":
         # Cards are shown big, for their art (a row of cards gets wider boxes, store.css).
         small, large = TCGPLAYER_IMAGE.format(id=product_id, size=400), TCGPLAYER_CARD_LARGE.format(id=product_id)
@@ -242,32 +244,35 @@ def _market_box(product_id: str, entry: dict) -> str:
     return (f'<div class="market-box"><img src="{small}" srcset="{small} 1x, {large} 2x" alt="{name}" '
             f'width="{width}" height="{height}" loading="lazy">'
             f'<div class="market-box-text"><span class="market-box-name">{name}</span>{detail}'
-            f'<span class="market-box-price">{price}</span>{trend}{history}</div></div>')
+            f'{price}{trend}{history}</div></div>')
 
 
 def market_boxes(html: str, market) -> str:
-    """Replace each [[market ...]] paragraph with boxes priced from `market` (a MarketReference).
+    """Replace each [[market ...]] / [[cards ...]] paragraph with boxes from `market` (a
+    MarketReference). [[cards ...]] shows only the pictures, names and sets, for the art.
 
     Done per request, not at load time, because the prices change daily. Unknown IDs are
     skipped; a tag with none left disappears, so a post never shows a broken box.
     """
-    if "[[market" not in html:
+    if "[[market" not in html and "[[cards" not in html:
         return html
     latest = (market.data() or {}).get("latest_date")
 
     def replace(match: re.Match) -> str:
+        with_price = match.group(1) == "market"
         boxes, kinds = [], set()
-        for product_id in match.group(1).split():
+        for product_id in match.group(2).split():
             entry = market.entry(product_id)
             if entry and entry.get("price"):
-                boxes.append(_market_box(product_id, entry))
+                boxes.append(_market_box(product_id, entry, with_price))
                 kinds.add(entry.get("kind"))
         if not boxes:
             return ""
         css = "market-boxes market-boxes-cards" if kinds == {"card"} else "market-boxes"
         day = datetime.fromisoformat(latest) if latest else None
         as_of = f" as of {day:%B} {day.day}" if day else ""
-        return (f'<figure class="{css}">{"".join(boxes)}'
-                f'<figcaption>TCGplayer market prices{as_of}, updated daily.</figcaption></figure>')
+        caption = (f"TCGplayer market prices{as_of}, updated daily." if with_price
+                   else "Card images from TCGplayer.")
+        return f'<figure class="{css}">{"".join(boxes)}<figcaption>{caption}</figcaption></figure>'
 
     return MARKET_TAG.sub(replace, html)

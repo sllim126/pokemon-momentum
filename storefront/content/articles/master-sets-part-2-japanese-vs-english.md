@@ -90,7 +90,7 @@ In most English sets, the top chase card is **15 to 30%** of the master set. In 
 
 Biased opinion: that card is BETTER in Japanese, because there isn't text covering Charmander's face! If you're collecting it for the art, it's nice to actually see the art.
 
-[[market 662184 655886]]
+[[cards 662184 655886]]
 
 ![Bar chart: the top card's share of the master set. In Japanese Mega sets it's 33 to 58 percent, in English 19 to 30 percent, except Phantasmal Flames at 59 percent.](/media/1200/master-sets-top-card-share-0c54a389bb.webp)
 
