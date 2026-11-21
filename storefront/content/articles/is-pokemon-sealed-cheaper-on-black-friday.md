@@ -66,13 +66,13 @@ The things that did get cheaper over the holidays were new releases settling dow
 
 ## But TCGplayer's Cyber Weekend still counts
 
-The prices don't drop, but TCGplayer runs its own promotion over the holiday weekend, and it's back this year: **10% back in TCGplayer store credit on everything**, across every game, from 9 a.m. Eastern on November 28 to 11 p.m. Eastern on December 1. Subscribers get 13% or more.
+The prices don't drop, but TCGplayer runs its own promotion over the holiday weekend, and it's back this year: **10% back in TCGplayer store credit on everything**, across every game, from 9 a.m. Eastern on Black Friday, November 27, to 11 p.m. Eastern on Cyber Monday, November 30. Subscribers get 13% or more.
 
 So it's not a sale in the "prices are lower" sense. But if you were going to buy that box anyway, buying it during Cyber Weekend gets you the same price you'd have paid the week before, plus credit toward your next order. That's a discount, just a delayed one.
 
 ## So when should you buy?
 
-- **Buying gifts on TCGplayer?** Buy during Cyber Weekend (November 28 to December 1) at the latest, and don't wait past it. The price won't be any lower than the week before, but you'll get 10% back in store credit. Waiting until later in December didn't save money either year, and in 2024 waiting just two weeks past Black Friday cost about 10% on ETBs.
+- **Buying gifts on TCGplayer?** Buy during Cyber Weekend (November 27 to 30) at the latest, and don't wait past it. The price won't be any lower than the week before, but you'll get 10% back in store credit. Waiting until later in December didn't save money either year, and in 2024 waiting just two weeks past Black Friday cost about 10% on ETBs.
 - **The real Black Friday deals are at retail.** Big stores sometimes drop ETBs and tins to MSRP or below for a day. Those sales don't show up in the market price, and they sell out fast, but if you see one, that's the deal.
 - **Want a new set?** Black Friday doesn't matter. Give it a couple of months and the singles and most sealed will come down on their own.
 
