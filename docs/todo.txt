@@ -149,8 +149,11 @@ High Priority
     Kecleon line in Delta Reign. When the art-form post is live, add a link to it at the end of
     Part 2.
   - Posts can show live product boxes with `[[market <ids>]]` (storefront/README.md "Articles").
-  - Topics: Nov 24 Delta Reign, two weeks in (drafted 2026-11-20 from prices to Nov 19:
-    `delta-reign-the-first-two-weeks.md`, with market boxes) · Nov 26
+  - [next] Delta Reign post (`delta-reign-the-first-two-weeks.md`): owner-edited, prices to
+    Nov 20, still `draft: true`, dated 2026-11-24. On Nov 23: refresh its numbers to the newest
+    prices (the "as of" note too), owner does a final read, then set `draft: false` and deploy
+    so it goes live by itself on the 24th.
+  - Topics: Nov 24 Delta Reign, two weeks in (see above) · Nov 26
     Is sealed cheaper on Black Friday? (Nov–Dec 2024/2025) · Nov 28 Gift guide by budget
     ($25/$50/$100, price per pack) · Dec 1 Why a PSA 1 can outsell a PSA 5 · Dec 4 Art-form post
     (drafted) · Dec 8 Best booster box deal, English and Japanese · Dec 10 30th Celebration,
