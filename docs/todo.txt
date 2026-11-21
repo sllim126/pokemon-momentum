@@ -141,9 +141,10 @@ High Priority
   and adds their own voice before it goes live (set `draft: false` + the date to schedule it).
   Graded prices from PriceCharting must link back to PriceCharting. Swap a topic if the data
   turns out boring.
-  - Owner first: proofread "Master Sets, Part 2" (fill the `[ADAM: ...]` line, check the
-    English/Japanese set pairs) and "Master Sets Have Become an Art Form" (wants binder photos).
-    When the art-form post is live, add a link to it at the end of Part 2.
+  - "Master Sets, Part 2" published 2026-11-21 (charts re-rendered without titles). Owner
+    still to proofread "Master Sets Have Become an Art Form" (wants binder photos) and fill the
+    Kecleon line in Delta Reign. When the art-form post is live, add a link to it at the end of
+    Part 2.
   - Owner also asked: fix the original "Let's talk about Master Sets…" post (dead Journey
     Together link to /shop, data only in pictures, no headings, 400-character description,
     typos) and link it to Part 2.
