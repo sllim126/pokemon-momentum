@@ -48,6 +48,10 @@ Some examples, two weeks before Black Friday 2024 → Black Friday → mid-Janua
 - **Stellar Crown booster box:** $108 → $119 → $159
 - **Paldean Fates ETB:** $56 → $67 → $89
 
+And here's where those four are today. Nobody who waited on them got a better price. (These boxes show live TCGplayer market prices and update every day, so they won't match the dated numbers in the text.)
+
+[[market 565606 565630 557354 528040]]
+
 (The run-up to Prismatic Evolutions in January 2025 probably helped push everything up that winter.)
 
 2025 was calmer. ETBs and booster boxes stayed about flat through December, and booster bundles drifted down a few percent. But even in a quiet year, Black Friday itself wasn't the cheap day:
@@ -60,18 +64,18 @@ Some examples, two weeks before Black Friday 2024 → Black Friday → mid-Janua
 
 The things that did get cheaper over the holidays were new releases settling down, and that happens whatever the date. Phantasmal Flames came out two weeks before Black Friday 2025. Its booster box went from $287 to $278 on Black Friday and $221 by Christmas, then came back up. (Same pattern I found for [Delta Reign](/articles/delta-reign-the-first-two-weeks).)
 
-## But TCGplayer's Black Friday promo still counts
+## But TCGplayer's Cyber Weekend still counts
 
-The prices don't drop, but TCGplayer does run its own Black Friday weekend promotion. Last year it ran from Black Friday morning through Cyber Monday night (November 28 to December 1, 2025), and instead of lowering prices it gave you TCGplayer store credit back on what you bought. [ADAM: this year's details: how much back, dates, subscriber bonus?]
+The prices don't drop, but TCGplayer runs its own promotion over the holiday weekend, and it's back this year: **10% back in TCGplayer store credit on everything**, across every game, from 9 a.m. Eastern on November 28 to 11 p.m. Eastern on December 1. Subscribers get 13% or more.
 
-So it's not a sale in the "prices are lower" sense. But if you were going to buy that box anyway, buying it Black Friday weekend gets you the same price you'd have paid the week before, plus credit toward your next order. That's a discount, just a delayed one.
+So it's not a sale in the "prices are lower" sense. But if you were going to buy that box anyway, buying it during Cyber Weekend gets you the same price you'd have paid the week before, plus credit toward your next order. That's a discount, just a delayed one.
 
 ## So when should you buy?
 
-- **Buying gifts on TCGplayer?** Buy on Black Friday weekend at the latest, and don't wait past it. The price won't be any lower than the week before, but you'll get the store credit back. Waiting until later in December didn't save money either year, and in 2024 waiting just two weeks past Black Friday cost about 10% on ETBs.
+- **Buying gifts on TCGplayer?** Buy during Cyber Weekend (November 28 to December 1) at the latest, and don't wait past it. The price won't be any lower than the week before, but you'll get 10% back in store credit. Waiting until later in December didn't save money either year, and in 2024 waiting just two weeks past Black Friday cost about 10% on ETBs.
 - **The real Black Friday deals are at retail.** Big stores sometimes drop ETBs and tins to MSRP or below for a day. Those sales don't show up in the market price, and they sell out fast, but if you see one, that's the deal.
 - **Want a new set?** Black Friday doesn't matter. Give it a couple of months and the singles and most sealed will come down on their own.
 
-Here's what a few of the usual gift picks cost today. These boxes show live TCGplayer market prices and update every day, so if you're reading this later, they won't match the November numbers above:
+Here's what a few gift picks cost today, from a stocking stuffer up to a booster box:
 
-[[market 712102 712094 672394 644298 610931]]
+[[market 712097 712102 593355 672394 712094]]
