@@ -26,9 +26,9 @@ The big cards:
 - **Raikou ex** (Special Illustration Rare, 136/103): $82 → **$100** (+23%)
 - **Kecleon** (Illustration Rare, 117/103): $15 → **$24** (+63%)
 
-So it's not all falling. The two Rayquazas came down, but a couple of cards people actually like the art on went *up*. Kecleon is up more than 60%. [ADAM: Kecleon joke here?]
+So it's not all falling. The two Rayquazas came down, but a couple of cards people actually like the art on went *up*. Kecleon came in like a wrecking ball and is up 63%.
 
-[[cards 728061 728062 726574 726567]]
+[[market 728061 728062 726574 726567]]
 
 ## How it compares with the last five sets
 
