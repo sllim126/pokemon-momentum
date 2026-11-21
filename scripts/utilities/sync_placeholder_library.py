@@ -1,6 +1,6 @@
 """Keep the Placeholder Library up to date with the TCGplayer catalog.
 
-The library (`TCG Placeholders/`, served at /placeholders and in the Collector Hub) is
+The library (`TCG Placeholders/`, served by the store at poke6s.com/placeholders) is
 built from hand-edited CSVs. This job finds what the catalog knows that those CSVs don't,
 writes it to generated files next to them, and rebuilds the library:
 
@@ -10,9 +10,13 @@ writes it to generated files next to them, and rebuilds the library:
   missing from `mega_placeholders.csv` are written to `auto_mega_promos.csv`, in the same
   columns. The catalog name usually says where the card came from ("Zapdos - 098 (30th
   Celebration)", "Slowbro - 083 (Pitch Black Stamped)"), which gives the release set and
-  the variant. When it doesn't ("(Prerelease)"), the set is taken from the neighbouring
-  promo numbers. The catalog never says which product a promo came in (blister, ETB, box),
-  so those rows say "Not confirmed yet" until someone checks.
+  the variant. When it doesn't, the sealed products of the era's sets are searched for one
+  that names the card in brackets ("Delta Reign Single Pack Blister [Spritzee]" for MEP115
+  Spritzee): that gives the set and the product. Only when neither says is the set taken from
+  the neighbouring promo numbers, which can be wrong when two sets' promos are numbered
+  together (added 2026-11-20 after MEP115/116 were filed under 30th Celebration). Without a
+  product match the row says "Not confirmed yet"; either way the Product Type says "Needs
+  review" until someone checks.
 - The library pages are rebuilt with the generated rows included (the same commands as
   `TCG Placeholders/docs/publishing.md`).
 
@@ -62,15 +66,19 @@ ERAS = [
 ]
 
 # Library rebuild, as in TCG Placeholders/docs/publishing.md plus the generated promo file.
+# The first is the Scarlet & Violet checklist with its defaults (build_checklists.py): that era
+# is finished, but Prize Pack series keep reprinting its cards (added 2026-11-20 for Series 9).
 BUILDS = [
+    ["tools/build_checklists.py"],
     ["tools/build_checklists.py", "--era", "Mega Evolution", "--input", "mega_placeholders.csv",
-     "--input", "auto_mega_promos.csv", "--input", "prize_pack_series8.csv", "--output-dir", "checklists_mega",
+     "--input", "auto_mega_promos.csv", "--input", "prize_pack_series8.csv", "--input", "prize_pack_series9.csv",
+     "--output-dir", "checklists_mega",
      "--overrides", "data/checklist_mega_overrides.csv", "--additions", "data/checklist_mega_additions.csv"],
     ["tools/build_placeholders.py", "--input", "placeholders.csv", "--extra-input", "mega_placeholders.csv",
      "--extra-input", "auto_mega_promos.csv", "--extra-input", "prize_pack_series7.csv",
-     "--extra-input", "prize_pack_series8.csv", "--output-dir", "output_combined"],
+     "--extra-input", "prize_pack_series8.csv", "--extra-input", "prize_pack_series9.csv", "--output-dir", "output_combined"],
     ["tools/build_placeholders.py", "--input", "mega_placeholders.csv", "--extra-input", "auto_mega_promos.csv",
-     "--extra-input", "prize_pack_series8.csv", "--output-dir", "output_mega"],
+     "--extra-input", "prize_pack_series8.csv", "--extra-input", "prize_pack_series9.csv", "--output-dir", "output_mega"],
 ]
 
 
@@ -81,12 +89,13 @@ def read_csv(path: Path) -> list[dict]:
         return list(csv.DictReader(handle))
 
 
-def catalog(era: dict) -> tuple[dict[str, dict], list[dict]]:
-    """The era's sets {short name: {code, release}} and its promo products from the catalog."""
+def catalog(era: dict) -> tuple[dict[str, dict], list[dict], list[tuple[str, str]]]:
+    """The era's sets {short name: {code, release}}, its promo cards, and the sealed products of
+    its sets as (set short name, product name), from the catalog."""
     import duckdb  # only in the site container
 
     con = duckdb.connect(str(DB_PATH), read_only=True)
-    sets = {}
+    sets, set_groups = {}, {}
     for name, code, published in con.execute(
         "SELECT name, abbreviation, publishedOn FROM pokemon_groups ORDER BY publishedOn"
     ).fetchall():
@@ -96,6 +105,7 @@ def catalog(era: dict) -> tuple[dict[str, dict], list[dict]]:
         if short in era["skip_sets"]:
             continue
         sets[short] = {"code": code or "", "release": str(published)[:10]}
+        set_groups[name] = short
     promos = [
         {"name": name, "number": number}
         for name, number in con.execute(
@@ -107,8 +117,19 @@ def catalog(era: dict) -> tuple[dict[str, dict], list[dict]]:
             [era["promo_group"]],
         ).fetchall()
     ]
+    # Sealed products have no card number; only bracketed names can name a promo card.
+    products = [
+        (set_groups[group], name)
+        for group, name in con.execute(
+            """
+            SELECT g.name, p.name FROM pokemon_products p JOIN pokemon_groups g USING (groupId)
+            WHERE coalesce(p.number, '') = '' AND p.name LIKE '%[%]%'
+            """
+        ).fetchall()
+        if group in set_groups
+    ]
     con.close()
-    return sets, promos
+    return sets, promos, products
 
 
 def promo_number(code: str, value: str) -> int | None:
@@ -143,6 +164,21 @@ def describe_promo(name: str, sets: dict[str, dict]) -> tuple[str, str | None, s
     return card, release_set, variant
 
 
+def product_match(card: str, products: list[tuple[str, str]]) -> tuple[str, str] | None:
+    """(release set, product name) of the era's sealed product that names this card in brackets,
+    or None when no set's product does, or products of more than one set do.
+
+    "Spritzee", [("Delta Reign", "Delta Reign Single Pack Blister [Spritzee]")]
+        -> ("Delta Reign", "Delta Reign Single Pack Blister [Spritzee]")
+    The match is on whole words, so "Mew" doesn't match "[Mewtwo]". Code cards are skipped.
+    """
+    word = re.compile(rf"\[[^\]]*(?<![\w-]){re.escape(card)}(?![\w-])[^\]]*\]", re.I)
+    hits = [(s, name) for s, name in products if not name.startswith("Code Card") and word.search(name)]
+    if not hits or len({s for s, _ in hits}) > 1:
+        return None
+    return hits[0][0], " / ".join(sorted({name for _, name in hits}))
+
+
 def nearest_set(number: int, known: dict[int, str]) -> str | None:
     """Release set of the closest promo number below (else above) that has one."""
     lower = [n for n in known if n < number]
@@ -157,7 +193,7 @@ def sync_era(era: dict, dry_run: bool) -> dict:
     (new sets to the release-date catalog, new promos to the era's auto_*_promos.csv). Returns
     what it found for the summary. With dry_run nothing is written.
     """
-    sets, promos = catalog(era)
+    sets, promos, products = catalog(era)
     hand_rows = read_csv(era["hand_file"])
 
     # New sets for the release-date catalog.
@@ -182,11 +218,16 @@ def sync_era(era: dict, dry_run: bool) -> dict:
         if number in known_numbers:
             continue
         card, release_set, variant = describe_promo(promo["name"], sets)
-        described.append((number, promo["name"], card, release_set, variant))
+        match = product_match(card, products)
+        if match and release_set in (None, match[0]):
+            release_set, product = match
+        else:
+            product = None
+        described.append((number, promo["name"], card, release_set, variant, product))
         if release_set:
             set_by_number.setdefault(number, release_set)
     auto_rows, seen = [], set()
-    for number, catalog_name, card, release_set, variant in described:
+    for number, catalog_name, card, release_set, variant, product in described:
         if (number, variant) in seen:  # the catalog can list the same card twice (e.g. a bundle copy)
             continue
         seen.add((number, variant))
@@ -194,12 +235,14 @@ def sync_era(era: dict, dry_run: bool) -> dict:
         # Another printing of the same number (e.g. the [Staff] copy) shares its set.
         release_set = release_set or set_by_number.get(number) or nearest_set(number, set_by_number) or ""
         note = f"Added automatically from the TCGplayer catalog (\"{catalog_name}\")"
-        if guessed:
+        if product:
+            note += f"; set and product from the catalog's \"{product}\""
+        elif guessed:
             note += "; release set guessed from the neighbouring promo numbers"
         auto_rows.append({
             "Release Set": release_set,
             "Release Date": sets.get(release_set, {}).get("release", ""),
-            "Product": UNCONFIRMED_PRODUCT,
+            "Product": product or UNCONFIRMED_PRODUCT,
             "Product Type": UNCONFIRMED_TYPE,
             "Card Name": card,
             "Card Number": f"{era['promo_code']}{number:03d}",

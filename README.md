@@ -34,10 +34,8 @@ The goal is simple: make it easier to spot what is moving, what may be starting 
   - the mobile app on any device (`/mobile-classic` and `/mobile-rebuild` forward here)
 - `/buy`, `/discover`, `/research`, `/track`, `/learn`
   - area landing pages built from the shared header's menu (`site_shell.js`)
-- `/collector-hub`
-  - entry point for collector checklists, print tools, review queues, and downloads
-- `/placeholders`
-  - curated placeholder/checklist download library
+- `/collector-hub`, `/placeholders`
+  - moved to poke6s.com on 2026-11-20 (the store); these addresses redirect there
 - `/dashboard-dev`
   - desktop dashboard alias retained for development compatibility
 - `/set-explorer`

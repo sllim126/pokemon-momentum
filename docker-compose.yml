@@ -97,6 +97,9 @@ services:
       - ./data/storefront:/app/data/storefront
       # Set logos for the Binder Art Maker (/binder-art, storefront/app/binder_art.py).
       - ./images/logos:/app/images/logos:ro
+      # Placeholder Library files (/placeholders, storefront/app/placeholder_library.py), rebuilt
+      # nightly in this folder by the market's sync job; read-only, so rebuilds show up at once.
+      - "./TCG Placeholders:/app/TCG Placeholders:ro"
     restart: unless-stopped
 
   # Store admin (Phase 3; storefront/README.md, "Admin"): orders, stock and reports. Its own app

@@ -137,9 +137,24 @@ and `index.csv`/`images.csv`. Re-runs skip images already saved.
 
 `/collector-hub` explains the free master-set resources (checklists, placeholder print pages,
 CSVs) in three steps and a tile per resource (moved from market.poke6s.com on 2026-11-20).
-The list and its wording are in `app/collector_hub.py`. The files themselves are still
-generated under "TCG Placeholders/" and served by the market site, so the tiles link there;
-the market test `test_shop_collector_hub_links_resolve_here` checks each link still exists.
+The list and its wording are in `app/collector_hub.py`; its tiles open the Placeholder
+Library's files (below), and `tests/test_free_tools.py` checks every tile link resolves.
+
+## Placeholder Library
+
+`/placeholders` lists every printable placeholder page, checklist and spreadsheet, by who it's
+for (moved from market.poke6s.com on 2026-11-20). `app/placeholder_library.py` holds the list
+and serves the files: `/placeholders/files/<bucket>/<path>` (the generated print and checklist
+pages and their CSVs) and `/placeholders/download/<id>` (as attachments). Only the folders in
+`BUCKETS`, the files in `DOWNLOADS` and the types in `MEDIA_TYPES` are reachable.
+
+The files are not part of the store. They are generated in the main checkout's
+"TCG Placeholders" folder, rebuilt every night at 04:30 UTC by the market's
+`scripts/utilities/sync_placeholder_library.py` (docs/tcg_placeholders_guide.md), and mounted
+read-only into the store container, so a rebuild shows on the site straight away and the page
+says when it last happened. The generated pages have inline styles and scripts (saving
+checklist ticks), which the store's CSP refuses; each one is served with a CSP that allows
+exactly its own scripts by SHA-256 hash, plus inline styles (`page_csp`).
 
 ## Binder Art Maker
 

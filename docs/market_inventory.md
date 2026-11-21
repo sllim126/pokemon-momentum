@@ -1,6 +1,6 @@
 # market.poke6s.com inventory: what to keep, move or retire
 
-Last reviewed: 2026-11-20 (owner chose option B; Binder Art Maker and Collector Hub moved)
+Last reviewed: 2026-11-20 (owner chose option B; Binder Art Maker, Collector Hub and Placeholder Library moved)
 
 ## Why this exists
 
@@ -12,8 +12,9 @@ poke6s.com/market). This page lists everything the market site does, with a sugg
 each piece, so that decision can be made piece by piece.
 
 **Decided 2026-11-20: option B** (below). Done so far: Binder Art Maker (now
-poke6s.com/binder-art) and Collector Hub (poke6s.com/collector-hub). Next: the Placeholder
-Library. The "Decide" rows
+poke6s.com/binder-art), Collector Hub (poke6s.com/collector-hub) and Placeholder Library
+(poke6s.com/placeholders, with all its print pages, checklists and files). Next: the owner
+tools into the admin. The "Decide" rows
 are still open.
 
 Already done towards "one site": the same Shop / Market / Admin bar across the top of all three
@@ -72,8 +73,8 @@ Homes: **Market** = stays a research site (at market.poke6s.com or poke6s.com/ma
 
 | Part | What it does | Suggested home |
 | --- | --- | --- |
-| Collector Hub (`/collector-hub`) | Master-set checklists and printables, explained | **Store. Moved 2026-11-20** to poke6s.com/collector-hub; its tiles still open the market's files until the Placeholder Library moves |
-| Placeholder Library (`/placeholders`) and the printable checklists | Printable binder placeholders | **Store**, with Collector Hub |
+| Collector Hub (`/collector-hub`) | Master-set checklists and printables, explained | **Store. Moved 2026-11-20** to poke6s.com/collector-hub |
+| Placeholder Library (`/placeholders`) and the printable checklists | Printable binder placeholders | **Store. Moved 2026-11-20** to poke6s.com/placeholders; the store reads the nightly-rebuilt "TCG Placeholders" folder read-only |
 | Binder Art Maker (`/binder-art`) | Free tool: one picture cut into card-size pieces for a binder page | **Store. Moved 2026-11-20** to poke6s.com/binder-art; the market address 301s there |
 | How it works (guide) | Explains the market app | Market |
 

@@ -118,7 +118,7 @@ Open `output/index.html` in a browser to choose a print mode:
 The same builder works for other CSV files:
 
 ```powershell
-python tools/build_placeholders.py --input mega_placeholders.csv --extra-input prize_pack_series8.csv --output-dir output_mega
+python tools/build_placeholders.py --input mega_placeholders.csv --extra-input prize_pack_series8.csv --extra-input prize_pack_series9.csv --output-dir output_mega
 python tools/build_placeholders.py --input swsh_placeholders.csv --output-dir output_swsh
 python tools/build_placeholders.py --input prize_pack_series7.csv --output-dir output_prize_pack_series7
 ```
@@ -127,7 +127,7 @@ To build one combined print dashboard that includes SV, Mega-era carryover cards
 and Prize Pack rows grouped back into their original card set codes:
 
 ```powershell
-python tools/build_placeholders.py --input placeholders.csv --extra-input mega_placeholders.csv --extra-input prize_pack_series7.csv --extra-input prize_pack_series8.csv --output-dir output_combined
+python tools/build_placeholders.py --input placeholders.csv --extra-input mega_placeholders.csv --extra-input prize_pack_series7.csv --extra-input prize_pack_series8.csv --extra-input prize_pack_series9.csv --output-dir output_combined
 ```
 
 Expected result:
@@ -161,7 +161,7 @@ To build the Mega Evolution checklist site, including `MEP` promos and Prize
 Pack Series 8 rows:
 
 ```powershell
-python tools/build_checklists.py --era "Mega Evolution" --input mega_placeholders.csv --input prize_pack_series8.csv --output-dir checklists_mega --overrides data\checklist_mega_overrides.csv --additions data\checklist_mega_additions.csv
+python tools/build_checklists.py --era "Mega Evolution" --input mega_placeholders.csv --input prize_pack_series8.csv --input prize_pack_series9.csv --output-dir checklists_mega --overrides data\checklist_mega_overrides.csv --additions data\checklist_mega_additions.csv
 ```
 
 Expected result:

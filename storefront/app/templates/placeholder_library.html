@@ -1,0 +1,44 @@
+{#- Placeholder Library (moved from market.poke6s.com 2026-11-20). The list and its wording are in
+    app/placeholder_library.py; the files come from the "TCG Placeholders" folder, rebuilt nightly.
+    Server-rendered, no script. -#}
+{% extends "base.html" %}
+{% block content %}
+<div class="hub-head">
+  <h1>Placeholder Library</h1>
+  <p class="muted">Every page and file behind the <a href="/collector-hub">Collector Hub</a>. Placeholders are printable
+    stand-in cards that hold a binder pocket until you own the real card. Most collectors only need the print pages
+    and checklists; the other files are for spreadsheets and for fixing the card lists.</p>
+  {% set built = files.last_built() %}
+  <p class="muted small">{% if not files.available() %}The placeholder files aren't available right now. Try again later.
+    {% elif built %}Updated automatically every night as new sets and promos appear. Last rebuilt
+    <time datetime="{{ built.isoformat() }}">{{ built.strftime('%b %-d, %Y') }}</time>.{% endif %}</p>
+</div>
+
+{% for section in sections %}
+<section class="hub-section">
+  <h2>{{ section.title }}</h2>
+  <p class="muted">{{ section.text }}{% if loop.last %} <a href="/contact">Contact us</a>.{% endif %}</p>
+  <ul class="lib-list">
+    {% for item in section.items %}
+    <li class="lib-row">
+      <div class="lib-main">
+        <strong>{{ item.title }}</strong>
+        <span class="muted">{{ item.text }}</span>
+        <span class="lib-meta">{% if item.page %}Opens in a new tab{% else %}{% set f = files.download(item.download) %}{% if f %}{{ f.name }} · {{ files.size_label(item.download) }}{% else %}Not available right now{% endif %}{% endif %}</span>
+      </div>
+      <span class="lib-chip">{{ item.audience }}</span>
+      {% if item.page %}
+      <a class="btn primary" href="{{ resource_url(item.page) }}" target="_blank" rel="noopener">Open</a>
+      {% else %}
+      <a class="btn" href="{{ download_url(item.download) }}" download>Download</a>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+
+<p class="muted small hub-legal">Free to print for your own collection. Looking for binders, sleeves or the sets
+  themselves? <a href="/sets">Shop by set</a>. Pokémon names and trademarks belong to Nintendo, Creatures Inc.,
+  GAME FREAK inc. and The Pokémon Company.</p>
+{% endblock %}

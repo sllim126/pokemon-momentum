@@ -336,24 +336,26 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 301)
         self.assertEqual(response.headers["location"], "https://poke6s.com/collector-hub")
 
-    def test_shop_collector_hub_links_resolve_here(self):
-        # The shop's Collector Hub (storefront/app/collector_hub.py) links to files this site
-        # serves; a renamed bucket or download id here would break those links.
-        from storefront.app import collector_hub
+    def test_placeholder_library_and_its_files_moved_to_the_shop(self):
+        # Moved to poke6s.com on 2026-11-20 (storefront/app/placeholder_library.py). Old page,
+        # file and download addresses forward to the same names there.
+        from storefront.app import placeholder_library
 
-        manifest_hrefs = {item["href"] for item in self.client.get("/collector-manifest").json()["items"]}
-        for section in collector_hub.SECTIONS:
-            for resource in section.resources:
-                self.assertIn(f"/collector-assets/{resource.asset}", manifest_hrefs)
-                if resource.download:
-                    self.assertIn(resource.download[0], api.PLACEHOLDER_DOWNLOAD_FILES)
-
-    def test_placeholder_library_page_serves_html(self):
-        response = self.client.get("/placeholders")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("text/html", response.headers["content-type"])
-        self.assertIn("Placeholder Library", response.text)
+        cases = {
+            "/placeholders": "https://poke6s.com/placeholders",
+            "/collector-assets/checklists-mega/by_set/mep.html":
+                "https://poke6s.com/placeholders/files/checklists-mega/by_set/mep.html",
+            "/placeholder-downloads/combined-printable-csv":
+                "https://poke6s.com/placeholders/download/combined-printable-csv",
+        }
+        for old, new in cases.items():
+            response = self.client.get(old, follow_redirects=False)
+            self.assertEqual(response.status_code, 301, old)
+            self.assertEqual(response.headers["location"], new)
+        # The forwarded names exist on the shop.
+        self.assertIn("checklists-mega", placeholder_library.BUCKETS)
+        self.assertIn("combined-printable-csv", placeholder_library.DOWNLOADS)
+        self.assertEqual(self.client.get("/collector-manifest").status_code, 404)
 
     def test_every_route_is_in_the_route_reference(self):
         # docs/api_routes.md is the handover map of the server; a new route must be listed there.
@@ -376,49 +378,6 @@ class ApiRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 301)
         self.assertEqual(response.headers["location"], "https://poke6s.com/binder-art")
-
-    def test_collector_manifest_lists_resources(self):
-        response = self.client.get("/collector-manifest")
-
-        self.assertEqual(response.status_code, 200)
-        payload = response.json()
-        self.assertTrue(payload["project_root_exists"])
-        self.assertGreaterEqual(len(payload["items"]), 4)
-        self.assertTrue(any(item["id"] == "sv-checklists" for item in payload["items"]))
-        self.assertTrue(any(item["id"] == "combined-placeholders" for item in payload["items"]))
-
-    def test_placeholder_download_manifest_lists_downloads(self):
-        response = self.client.get("/placeholder-downloads-manifest")
-
-        self.assertEqual(response.status_code, 200)
-        payload = response.json()
-        self.assertTrue(payload["project_root_exists"])
-        self.assertGreaterEqual(payload["download_count"], 8)
-        self.assertTrue(any(item["id"] == "sv-source-csv" for item in payload["items"]))
-        self.assertTrue(any(item["id"] == "combined-json" for item in payload["items"]))
-
-    def test_collector_asset_route_serves_known_html_file(self):
-        response = self.client.get("/collector-assets/checklists-sv/index.html")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("text/html", response.headers["content-type"])
-
-    def test_collector_asset_route_blocks_path_escape(self):
-        response = self.client.get("/collector-assets/checklists-sv/%2E%2E/%2E%2E/README.md")
-
-        self.assertEqual(response.status_code, 404)
-
-    def test_placeholder_download_route_serves_known_csv(self):
-        response = self.client.get("/placeholder-downloads/sv-source-csv")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("text/csv", response.headers["content-type"])
-        self.assertIn("attachment;", response.headers["content-disposition"])
-
-    def test_placeholder_download_route_blocks_unknown_asset(self):
-        response = self.client.get("/placeholder-downloads/not-real")
-
-        self.assertEqual(response.status_code, 404)
 
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_retired_squarespace_tools_send_old_bookmarks_to_admin(self, _get_session_user_mock):

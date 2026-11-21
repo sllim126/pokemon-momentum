@@ -49,7 +49,7 @@ import bisect
 import uuid
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import unquote, urlencode
+from urllib.parse import quote, unquote, urlencode
 import sys
 import time
 import urllib.error
@@ -139,11 +139,11 @@ import threading
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent.parent
-PLACEHOLDER_LIBRARY_HTML = SCRIPT_DIR / "placeholder_library.html"
-# Binder Art Maker and Collector Hub moved to the store on 2026-11-20
+# Binder Art Maker, Collector Hub and Placeholder Library moved to the store on 2026-11-20
 # (docs/market_inventory.md, option B).
 SHOP_BINDER_ART_URL = "https://poke6s.com/binder-art"
 SHOP_COLLECTOR_HUB_URL = "https://poke6s.com/collector-hub"
+SHOP_PLACEHOLDERS_URL = "https://poke6s.com/placeholders"
 SET_EXPLORER_HTML = SCRIPT_DIR / "set_explorer.html"
 BUDGET_BUILDER_HTML = SCRIPT_DIR / "budget_builder.html"
 SEALED_DEALS_HTML = SCRIPT_DIR / "sealed_deals.html"
@@ -166,35 +166,6 @@ DESKTOP_THEME_CSS = SCRIPT_DIR / "desktop_theme.css"
 AREA_HUB_HTML = SCRIPT_DIR / "area_hub.html"
 ADMIN_HUB_HTML = SCRIPT_DIR / "admin_hub.html"
 DESKTOP_HOME_HTML = SCRIPT_DIR / "desktop_home.html"
-# The placeholder/checklist workflow is intentionally published as static files.
-# These constants define which parts of the imported collector project are safe
-# to expose through the main app without turning it into a database-backed
-# feature first.
-TCG_PLACEHOLDERS_DIR = REPO_ROOT / "TCG Placeholders"
-COLLECTOR_PUBLIC_BUCKETS = {
-    "checklists-sv": TCG_PLACEHOLDERS_DIR / "checklists_sv",
-    "checklists-mega": TCG_PLACEHOLDERS_DIR / "checklists_mega",
-    "print-sv": TCG_PLACEHOLDERS_DIR / "output",
-    "print-mega": TCG_PLACEHOLDERS_DIR / "output_mega",
-    "print-combined": TCG_PLACEHOLDERS_DIR / "output_combined",
-    "docs": TCG_PLACEHOLDERS_DIR / "docs",
-}
-PLACEHOLDER_DOWNLOAD_FILES = {
-    "sv-source-csv": TCG_PLACEHOLDERS_DIR / "placeholders.csv",
-    "mega-source-csv": TCG_PLACEHOLDERS_DIR / "mega_placeholders.csv",
-    # Promos found in the catalog but not yet in mega_placeholders.csv (sync_placeholder_library.py).
-    "mega-auto-promos-csv": TCG_PLACEHOLDERS_DIR / "auto_mega_promos.csv",
-    "prize-pack-series7-csv": TCG_PLACEHOLDERS_DIR / "prize_pack_series7.csv",
-    "prize-pack-series8-csv": TCG_PLACEHOLDERS_DIR / "prize_pack_series8.csv",
-    "combined-normalized-csv": TCG_PLACEHOLDERS_DIR / "output_combined" / "placeholders.normalized.csv",
-    "combined-printable-csv": TCG_PLACEHOLDERS_DIR / "output_combined" / "placeholders.printable_unique.csv",
-    "combined-json": TCG_PLACEHOLDERS_DIR / "output_combined" / "placeholders.json",
-    "combined-validation-report": TCG_PLACEHOLDERS_DIR / "output_combined" / "validation_report.md",
-    "sv-checklist-csv": TCG_PLACEHOLDERS_DIR / "checklists_sv" / "scarlet_violet_checklist_all.csv",
-    "sv-review-queue": TCG_PLACEHOLDERS_DIR / "checklists_sv" / "review_queue.csv",
-    "mega-checklist-csv": TCG_PLACEHOLDERS_DIR / "checklists_mega" / "mega_evolution_checklist_all.csv",
-    "mega-review-queue": TCG_PLACEHOLDERS_DIR / "checklists_mega" / "review_queue.csv",
-}
 IMAGE_DIR_CANDIDATES = [
     SCRIPT_DIR.parents[2] / "images",
     Path("/app/images"),
@@ -313,346 +284,6 @@ def save_index_overview_snapshot(category_id: int, index_key: str, payload: dict
     return path
 
 
-def _collector_bucket_root(bucket: str) -> Path:
-    """Resolve one public collector bucket to its filesystem root."""
-
-    try:
-        return COLLECTOR_PUBLIC_BUCKETS[bucket]
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail="Unknown collector asset bucket.") from exc
-
-
-def collector_asset_path(bucket: str, asset_path: str) -> Path:
-    """Return a safe static collector asset path.
-
-    Expected behavior:
-    - only allow access inside a whitelisted bucket root
-    - reject path traversal
-    - reject missing files
-
-    Why this exists:
-    - the collector workflow is published as static generated artifacts, but we
-      still need a controlled gateway instead of exposing the entire imported
-      folder tree directly.
-    """
-
-    root = _collector_bucket_root(bucket).resolve()
-    target = (root / asset_path).resolve()
-    if not str(target).startswith(str(root)):
-        raise HTTPException(status_code=404, detail="Collector asset not found.")
-    if not target.is_file():
-        raise HTTPException(status_code=404, detail="Collector asset not found.")
-    return target
-
-
-def collector_asset_url(bucket: str, asset_path: str) -> str:
-    """Build a site-relative URL for a whitelisted collector asset."""
-
-    return f"/collector-assets/{bucket}/{asset_path}"
-
-
-def collector_file_count(root: Path, pattern: str) -> int:
-    """Count generated files for hub stats and human-readable summaries."""
-
-    if not root.exists():
-        return 0
-    return sum(1 for _ in root.glob(pattern))
-
-
-def collector_manifest() -> dict:
-    """Describe the published collector resources shown in the collector hub.
-
-    Expected output:
-    - curated resource list with labels, summaries, tags, and lightweight stats
-
-    Why this exists:
-    - the collector hub is a wrapper around pre-generated static assets, so the
-      frontend needs one normalized manifest instead of hard-coding every page.
-    """
-
-    sv_checklist_root = COLLECTOR_PUBLIC_BUCKETS["checklists-sv"]
-    mega_checklist_root = COLLECTOR_PUBLIC_BUCKETS["checklists-mega"]
-    sv_print_root = COLLECTOR_PUBLIC_BUCKETS["print-sv"]
-    mega_print_root = COLLECTOR_PUBLIC_BUCKETS["print-mega"]
-    combined_print_root = COLLECTOR_PUBLIC_BUCKETS["print-combined"]
-    docs_root = COLLECTOR_PUBLIC_BUCKETS["docs"]
-
-    items = [
-        {
-            "id": "sv-checklists",
-            "section": "Checklist Sites",
-            "title": "Scarlet & Violet Checklists",
-            "summary": "Interactive set pages with saved checkboxes, printable tables, and CSV exports.",
-            "href": collector_asset_url("checklists-sv", "index.html"),
-            "preview_href": collector_asset_url("checklists-sv", "index.html"),
-            "stats": [
-                f"{collector_file_count(sv_checklist_root / 'by_set', '*.html')} set pages",
-                f"{collector_file_count(sv_checklist_root / 'csv', '*.csv')} CSV exports",
-            ],
-            "tags": ["SV", "Checklist", "Interactive"],
-        },
-        {
-            "id": "mega-checklists",
-            "section": "Checklist Sites",
-            "title": "Mega Evolution Checklists",
-            "summary": "Mega-era set tracking, promo rows, and Prize Pack carryover in the same checklist format.",
-            "href": collector_asset_url("checklists-mega", "index.html"),
-            "preview_href": collector_asset_url("checklists-mega", "index.html"),
-            "stats": [
-                f"{collector_file_count(mega_checklist_root / 'by_set', '*.html')} set pages",
-                f"{collector_file_count(mega_checklist_root / 'csv', '*.csv')} CSV exports",
-            ],
-            "tags": ["Mega", "Checklist", "Interactive"],
-        },
-        {
-            "id": "combined-placeholders",
-            "section": "Print Dashboards",
-            "title": "Combined Placeholder Print Hub",
-            "summary": "Unified printable placeholder cards across Scarlet & Violet, Mega-era carryover, and Prize Pack sources.",
-            "href": collector_asset_url("print-combined", "index.html"),
-            "preview_href": collector_asset_url("print-combined", "index.html"),
-            "stats": [
-                f"{collector_file_count(combined_print_root / 'by_card_code', '*.html')} card-code views",
-                f"{collector_file_count(combined_print_root / 'by_release_block', '*.html')} release blocks",
-            ],
-            "tags": ["Combined", "Print", "Binder"],
-        },
-        {
-            "id": "mega-placeholders",
-            "section": "Print Dashboards",
-            "title": "Mega Placeholder Print Hub",
-            "summary": "Mega Evolution placeholder sheets grouped for binder work, promos, and release-block printing.",
-            "href": collector_asset_url("print-mega", "index.html"),
-            "preview_href": collector_asset_url("print-mega", "index.html"),
-            "stats": [
-                f"{collector_file_count(mega_print_root / 'by_card_code', '*.html')} card-code views",
-                f"{collector_file_count(mega_print_root / 'by_release_block', '*.html')} release blocks",
-            ],
-            "tags": ["Mega", "Print", "Binder"],
-        },
-        {
-            "id": "sv-placeholders",
-            "section": "Print Dashboards",
-            "title": "Scarlet & Violet Placeholder Print Hub",
-            "summary": "SV-era placeholder cards with release-block and card-code slicing for master set prep.",
-            "href": collector_asset_url("print-sv", "index.html"),
-            "preview_href": collector_asset_url("print-sv", "index.html"),
-            "stats": [
-                f"{collector_file_count(sv_print_root / 'by_card_code', '*.html')} card-code views",
-                f"{collector_file_count(sv_print_root / 'by_release_block', '*.html')} release blocks",
-            ],
-            "tags": ["SV", "Print", "Binder"],
-        },
-        {
-            "id": "release-dates",
-            "section": "Reference Docs",
-            "title": "Set Release Date Notes",
-            "summary": "Human-readable release-date notes for sets, promo blocks, and special releases across eras.",
-            "href": collector_asset_url("docs", "set_release_dates.md"),
-            "preview_href": collector_asset_url("docs", "set_release_dates.md"),
-            "stats": [
-                f"{collector_file_count(docs_root, '*.md')} reference docs",
-                "Source planning notes",
-            ],
-            "tags": ["Reference", "Dates", "Planning"],
-        },
-    ]
-    return {
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-        "project_root_exists": TCG_PLACEHOLDERS_DIR.exists(),
-        "items": items,
-    }
-
-
-def placeholder_download_path(asset_id: str) -> Path:
-    """Resolve one whitelisted placeholder download to a real file."""
-
-    try:
-        target = PLACEHOLDER_DOWNLOAD_FILES[asset_id].resolve()
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail="Unknown placeholder download.") from exc
-    if not target.is_file():
-        raise HTTPException(status_code=404, detail="Placeholder download not found.")
-    return target
-
-
-def _placeholder_size_label(target: Path) -> str:
-    size_bytes = target.stat().st_size
-    if size_bytes >= 1024 * 1024:
-        return f"{size_bytes / (1024 * 1024):.1f} MB"
-    if size_bytes >= 1024:
-        return f"{size_bytes / 1024:.0f} KB"
-    return f"{size_bytes} B"
-
-
-def placeholder_download_manifest() -> dict:
-    """Describe the focused placeholder downloads page.
-
-    This manifest is narrower than `collector_manifest()`: it is intended to
-    answer "what can I download or open right now?" for the placeholder
-    workflow, rather than exposing every collector-oriented lane equally.
-    """
-
-    items = [
-        {
-            "id": "combined-print-hub",
-            "section": "Open In Browser",
-            "title": "Combined Placeholder Print Hub",
-            "summary": "Open the combined printable dashboard with release-block and card-code grouping.",
-            "href": collector_asset_url("print-combined", "index.html"),
-            "kind": "page",
-            "tags": ["Combined", "Print", "Browser"],
-        },
-        {
-            "id": "sv-checklists-hub",
-            "section": "Open In Browser",
-            "title": "Scarlet & Violet Checklist Hub",
-            "summary": "Interactive checklist pages with browser-saved checkboxes and set-level CSV exports.",
-            "href": collector_asset_url("checklists-sv", "index.html"),
-            "kind": "page",
-            "tags": ["SV", "Checklist", "Browser"],
-        },
-        {
-            "id": "mega-checklists-hub",
-            "section": "Open In Browser",
-            "title": "Mega Evolution Checklist Hub",
-            "summary": "Mega-era checklist pages with promo and Prize Pack carryover coverage.",
-            "href": collector_asset_url("checklists-mega", "index.html"),
-            "kind": "page",
-            "tags": ["Mega", "Checklist", "Browser"],
-        },
-        {
-            "id": "sv-source-csv",
-            "section": "Source CSVs",
-            "title": "Scarlet & Violet Source CSV",
-            "summary": "Current hand-edited SV source of truth for placeholder generation.",
-            "href": "/placeholder-downloads/sv-source-csv",
-            "kind": "download",
-            "tags": ["SV", "Source", "CSV"],
-        },
-        {
-            "id": "mega-source-csv",
-            "section": "Source CSVs",
-            "title": "Mega Source CSV",
-            "summary": "Mega-era carryover source used for print and checklist generation.",
-            "href": "/placeholder-downloads/mega-source-csv",
-            "kind": "download",
-            "tags": ["Mega", "Source", "CSV"],
-        },
-        {
-            "id": "mega-auto-promos-csv",
-            "section": "Source CSVs",
-            "title": "New Mega Promos (not confirmed yet)",
-            "summary": "Promos found in the TCGplayer catalog that the hand-edited list doesn't have yet. Already in the print pages; the product each came in still needs checking.",
-            "href": "/placeholder-downloads/mega-auto-promos-csv",
-            "kind": "download",
-            "tags": ["Mega", "Auto", "CSV"],
-        },
-        {
-            "id": "prize-pack-series7-csv",
-            "section": "Source CSVs",
-            "title": "Prize Pack Series 7 Source CSV",
-            "summary": "Standalone Prize Pack Series 7 source rows used in the combined workflow.",
-            "href": "/placeholder-downloads/prize-pack-series7-csv",
-            "kind": "download",
-            "tags": ["Prize Pack", "Source", "CSV"],
-        },
-        {
-            "id": "prize-pack-series8-csv",
-            "section": "Source CSVs",
-            "title": "Prize Pack Series 8 Source CSV",
-            "summary": "Standalone Prize Pack Series 8 source rows used in the combined workflow.",
-            "href": "/placeholder-downloads/prize-pack-series8-csv",
-            "kind": "download",
-            "tags": ["Prize Pack", "Source", "CSV"],
-        },
-        {
-            "id": "combined-normalized-csv",
-            "section": "Generated Downloads",
-            "title": "Combined Normalized CSV",
-            "summary": "Exact generated row export for spreadsheet review across the combined workflow.",
-            "href": "/placeholder-downloads/combined-normalized-csv",
-            "kind": "download",
-            "tags": ["Combined", "Generated", "CSV"],
-        },
-        {
-            "id": "combined-printable-csv",
-            "section": "Generated Downloads",
-            "title": "Combined Printable Unique CSV",
-            "summary": "Deduplicated printable card list for binder placeholder production.",
-            "href": "/placeholder-downloads/combined-printable-csv",
-            "kind": "download",
-            "tags": ["Combined", "Generated", "CSV"],
-        },
-        {
-            "id": "combined-json",
-            "section": "Generated Downloads",
-            "title": "Combined JSON Export",
-            "summary": "Structured placeholder data for scripts, tooling, or future app wiring.",
-            "href": "/placeholder-downloads/combined-json",
-            "kind": "download",
-            "tags": ["Combined", "Generated", "JSON"],
-        },
-        {
-            "id": "combined-validation-report",
-            "section": "Generated Downloads",
-            "title": "Combined Validation Report",
-            "summary": "Markdown audit report covering row counts, duplicates, and missing fields.",
-            "href": "/placeholder-downloads/combined-validation-report",
-            "kind": "download",
-            "tags": ["Combined", "Validation", "Markdown"],
-        },
-        {
-            "id": "sv-checklist-csv",
-            "section": "Checklist Downloads",
-            "title": "Scarlet & Violet Checklist CSV",
-            "summary": "All current SV checklist rows in one downloadable CSV.",
-            "href": "/placeholder-downloads/sv-checklist-csv",
-            "kind": "download",
-            "tags": ["SV", "Checklist", "CSV"],
-        },
-        {
-            "id": "sv-review-queue",
-            "section": "Checklist Downloads",
-            "title": "Scarlet & Violet Review Queue",
-            "summary": "Audit worksheet for checklist corrections, missing rows, and reassignment review.",
-            "href": "/placeholder-downloads/sv-review-queue",
-            "kind": "download",
-            "tags": ["SV", "Checklist", "Review"],
-        },
-        {
-            "id": "mega-checklist-csv",
-            "section": "Checklist Downloads",
-            "title": "Mega Evolution Checklist CSV",
-            "summary": "All current Mega checklist rows in one downloadable CSV.",
-            "href": "/placeholder-downloads/mega-checklist-csv",
-            "kind": "download",
-            "tags": ["Mega", "Checklist", "CSV"],
-        },
-        {
-            "id": "mega-review-queue",
-            "section": "Checklist Downloads",
-            "title": "Mega Evolution Review Queue",
-            "summary": "Review worksheet for Mega checklist corrections and missing rows.",
-            "href": "/placeholder-downloads/mega-review-queue",
-            "kind": "download",
-            "tags": ["Mega", "Checklist", "Review"],
-        },
-    ]
-    for item in items:
-        if item["kind"] != "download":
-            continue
-        target = placeholder_download_path(item["id"])
-        item["filename"] = target.name
-        item["size_label"] = _placeholder_size_label(target)
-    return {
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-        "project_root_exists": TCG_PLACEHOLDERS_DIR.exists(),
-        "source_count": 4,
-        "download_count": sum(1 for item in items if item["kind"] == "download"),
-        "browser_count": sum(1 for item in items if item["kind"] == "page"),
-        "items": items,
-    }
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -948,14 +579,18 @@ def retired_dashboard_lab():
 @app.get("/collector-hub")
 def collector_hub():
     """Collector Hub lives on the shop now (poke6s.com/collector-hub, moved 2026-11-20;
-    storefront/app/collector_hub.py). Its tiles still link to this site's /collector-assets
-    and /placeholder-downloads, and /collector-manifest stays for the Placeholder Library."""
+    storefront/app/collector_hub.py)."""
     return RedirectResponse(SHOP_COLLECTOR_HUB_URL, status_code=301)
 
 
 @app.get("/placeholders")
 def placeholder_library():
-    return FileResponse(PLACEHOLDER_LIBRARY_HTML)
+    """The Placeholder Library lives on the shop now (poke6s.com/placeholders, moved
+    2026-11-20; storefront/app/placeholder_library.py), and so do its files: the routes below
+    forward the old file addresses there. The files are still generated in this checkout's
+    "TCG Placeholders" folder by the nightly sync (scripts/utilities/sync_placeholder_library.py),
+    which the shop reads through a read-only mount."""
+    return RedirectResponse(SHOP_PLACEHOLDERS_URL, status_code=301)
 
 
 @app.get("/binder-art")
@@ -966,25 +601,17 @@ def binder_art():
     return RedirectResponse(SHOP_BINDER_ART_URL, status_code=301)
 
 
-@app.get("/collector-manifest")
-def collector_manifest_route():
-    return collector_manifest()
-
-
-@app.get("/placeholder-downloads-manifest")
-def placeholder_download_manifest_route():
-    return placeholder_download_manifest()
-
-
 @app.get("/placeholder-downloads/{asset_id}")
 def placeholder_download(asset_id: str):
-    target = placeholder_download_path(asset_id)
-    return FileResponse(target, filename=target.name)
+    """Old download address: the shop uses the same ids (placeholder_library.DOWNLOADS)."""
+    return RedirectResponse(f"{SHOP_PLACEHOLDERS_URL}/download/{quote(asset_id, safe='')}", status_code=301)
 
 
 @app.get("/collector-assets/{bucket}/{asset_path:path}")
 def collector_asset(bucket: str, asset_path: str):
-    return FileResponse(collector_asset_path(bucket, asset_path))
+    """Old page and file address: the shop uses the same bucket names (placeholder_library.BUCKETS)."""
+    target = f"{SHOP_PLACEHOLDERS_URL}/files/{quote(bucket, safe='')}/{quote(asset_path, safe='/')}"
+    return RedirectResponse(target, status_code=301)
 
 
 @app.get("/set-explorer")

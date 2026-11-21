@@ -77,7 +77,7 @@
       question: "How does the market work, and what helps me collect?",
       tools: [
         { label: "Collector Hub ↗", href: "https://poke6s.com/collector-hub", text: "On poke6s.com: checklists, print tools, and collection workflows." },
-        { label: "Placeholder Library", href: "/placeholders", text: "Printable binder placeholders and checklist downloads." },
+        { label: "Placeholder Library ↗", href: "https://poke6s.com/placeholders", text: "On poke6s.com: printable binder placeholders and checklist downloads." },
         { label: "Binder Art Maker ↗", href: "https://poke6s.com/binder-art", text: "Free, on poke6s.com: cut one picture into card-size pieces for a full binder page." },
       ],
     },
@@ -101,7 +101,7 @@
     [/^\/discover\b/, "discover"],
     [/^\/(research|set-explorer|index-overview)/, "research"],
     [/^\/(track|account-settings)\b/, "track"],
-    [/^\/(learn|placeholders)\b/, "learn"],
+    [/^\/learn\b/, "learn"],
   ];
 
   // The shop's address. Hard-coded: the market site has no setting for it, and it never changes.

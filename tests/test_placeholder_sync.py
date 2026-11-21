@@ -1,6 +1,6 @@
 import unittest
 
-from scripts.utilities.sync_placeholder_library import describe_promo, nearest_set, promo_number
+from scripts.utilities.sync_placeholder_library import describe_promo, nearest_set, product_match, promo_number
 
 SETS = {"Pitch Black": {}, "30th Celebration": {}, "Mega Evolution": {}}
 
@@ -36,3 +36,30 @@ class HelperTests(unittest.TestCase):
         self.assertEqual(nearest_set(84, known), "Chaos Rising")
         self.assertEqual(nearest_set(5, known), "Chaos Rising")
         self.assertIsNone(nearest_set(5, {}))
+
+
+class ProductMatchTests(unittest.TestCase):
+    # Added 2026-11-20: MEP115 Spritzee and MEP116 Seel were guessed as 30th Celebration from
+    # their neighbours although the catalog lists the Delta Reign blisters they come in.
+    PRODUCTS = [
+        ("Delta Reign", "Delta Reign Single Pack Blister [Spritzee]"),
+        ("Delta Reign", "Delta Reign 3 Pack Blister [Seel]"),
+        ("Delta Reign", "Delta Reign Premium Checklane Blister [Delphox Line]"),
+        ("Delta Reign", "Code Card - Delta Reign Blister [Seel]"),
+        ("Pitch Black", "Pitch Black Premium Checklane Blister [Tyrunt, Tyrantrum] (Target Exclusive)"),
+        ("Pitch Black", "Pitch Black Booster Bundle [Mewtwo]"),
+    ]
+
+    def test_bracketed_card_gives_set_and_product(self):
+        self.assertEqual(product_match("Spritzee", self.PRODUCTS),
+                         ("Delta Reign", "Delta Reign Single Pack Blister [Spritzee]"))
+        self.assertEqual(product_match("Delphox", self.PRODUCTS)[0], "Delta Reign")
+        self.assertEqual(product_match("Tyrunt", self.PRODUCTS)[0], "Pitch Black")
+
+    def test_whole_words_only_and_code_cards_skipped(self):
+        self.assertIsNone(product_match("Mew", self.PRODUCTS))
+        self.assertEqual(product_match("Seel", self.PRODUCTS), ("Delta Reign", "Delta Reign 3 Pack Blister [Seel]"))
+
+    def test_products_from_two_sets_are_ambiguous(self):
+        products = self.PRODUCTS + [("Pitch Black", "Pitch Black Blister [Spritzee]")]
+        self.assertIsNone(product_match("Spritzee", products))

@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-20 (market option B: Binder Art Maker and Collector Hub moved to poke6s.com; missing product pictures; /dashboard-lab removed; blog drafts and scheduled articles; store trust lines and Google review request)
+Last updated: 2026-11-20 (market option B: Binder Art Maker, Collector Hub and Placeholder Library moved to poke6s.com; placeholder sync matches promos to products; missing product pictures; /dashboard-lab removed; blog drafts and scheduled articles; store trust lines and Google review request)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -61,6 +61,19 @@ Recently Completed
 - 2026-11-20 Binder Art Maker: "Pockets to fill" (owner's request). Pick which pockets get the
   picture (e.g. 1 & 4, or 8 & 9); the picture fits the kept pockets and the PDF/ZIP hold only
   those cards. Works with 2x2 to 5x5 pages and 2-page spreads.
+- 2026-11-20 Option B, third piece: Placeholder Library moved to poke6s.com/placeholders with all
+  its print pages, checklists and CSVs, served by the store from the nightly-rebuilt "TCG
+  Placeholders" folder (read-only mount; per-page hashed CSP for their inline scripts). Market
+  /placeholders, /collector-assets/... and /placeholder-downloads/... 301 there. Placeholder sync
+  checked (runs nightly, last run clean, Flowing Fists added today) and fixed: promos whose
+  catalog name gives no set now match a sealed product naming them (MEP115 Spritzee, MEP116 Seel
+  were filed under 30th Celebration; they're Delta Reign blister promos). Owner confirmed
+  MEP111-114 (Delta Reign prerelease, stamped, with Staff copies), 115/116 (blisters) and 117
+  Kyogre (Delta Reign ETB; Pokemon Center ETB copy): now in mega_placeholders.csv. Prize Pack
+  MEP list checked against Bulbapedia (owner pasted it): 28 rows added (staff copies, Game On!,
+  tins, MEP118/120/125-127/131) and 6 corrected. Prize Pack Series 9 added from the official PDF (80 cards; standard or foil in Notes; the list's "PLF"
+  misprint read as PFL); the nightly sync now also rebuilds the Scarlet & Violet checklists so
+  Prize Pack reprints of that era show up.
 - 2026-11-20 Option B, second piece: Collector Hub moved to poke6s.com/collector-hub (server-
   rendered; tiles still open the market's checklist and print files). market /collector-hub 301s.
 - 2026-11-21 Blog: "Let's talk about Master Sets…" (Part 1) tidied: headings, the price
@@ -465,10 +478,18 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     and customer addresses on the internet.
   - [next] Market option B (owner chose it 2026-11-20, docs/market_inventory.md): move the
     collector tools to poke6s.com, one at a time, with 301s from the old addresses. Done:
-    Binder Art Maker and Collector Hub (2026-11-20). Next: the Placeholder Library and its
-    printable checklists (served from "TCG Placeholders/", so the store needs that folder or
-    a copy of the published pages). Then the owner tools into the admin (Supplier Pricing,
-    Supplier Profitability).
+    Binder Art Maker, Collector Hub and Placeholder Library (2026-11-20). Next: the owner
+    tools into the admin (Supplier Pricing, Supplier Profitability).
+  - [watching] The MEP promo list was checked against Bulbapedia's (pasted by the owner
+    2026-11-20): staff copies, Game On! and tin copies, and MEP118/120/125-127/131 added to
+    mega_placeholders.csv ahead of TCGplayer. Jumbo-only cards (No. 500 Pikachu at the Museum,
+    the Jumbo copies) left out: they don't fit binder pockets. Rows marked "release date not
+    confirmed" need dates when known. The nightly sync only notices new numbers, not new
+    variants of a known number, so check Bulbapedia's list after each set's release.
+  - [planned] Placeholder Library: Delta Reign has no hand-checked rows for its own set code
+    (DLR set stamps, box toppers), so it has no checklist page yet; only its promos (MEP111-117)
+    are in. "30th Celebration Classic Collection" was added to set_release_dates.csv as its own
+    set with the same code (30C) as 30th Celebration, worth checking.
   - [waiting] Owner: the "Decide" rows in docs/market_inventory.md (Sealed Deals and Budget
     Builder; End of Day, Embed, Dashboard Lab).
   - [planned] Count the market app's views by ?list= for 2-4 weeks (visitors.py records page
@@ -1140,17 +1161,12 @@ Learn and collector tools (owner, 2026-10-23; "nothing tonight"):
   screener (today's How it works), and cards linking to Collector Hub, Placeholder Library and
   Binder Art Maker.
 - [idea] Collector Hub review: the owner wants it looked at and revised.
-- [waiting] Owner: how was MEP028 Celebratory Fanfare handed out (plain and "Ace Trainer"
-  versions; maybe a Play! Pokémon league prize)? It is the only promo left in
-  `TCG Placeholders/auto_mega_promos.csv`. The other 29 were confirmed with the owner on
-  2026-10-24 and moved into `mega_placeholders.csv` (Pitch Black Build & Battle Box and staff
-  copies, Mega Forces Tins, 30th Celebration collections, ETBs, Battle Decks and the Day/Night
-  Ultra-Premium Collections). Release dates marked "to confirm" there (Figure, Premium and
-  Ultra-Premium Collections, set as 2026-11-06) need checking when those ship.
-- [planned] Placeholder Library follow-ups: Prize Pack Series 9 (in the set catalog, no card
-  list yet; comes as a PDF); placeholders and title cards for whole sets (every card of a
-  master set, from the catalog), not only promos and variants; check Delta Reign's promos
-  appear after its 2026-11-06 release.
+- [planned] Release dates marked "to confirm" or "not confirmed" in mega_placeholders.csv
+  (Figure, Premium and Ultra-Premium Collections set as 2026-11-06; MEP028 Celebratory Fanfare,
+  a Championship reward per the owner 2026-11-20, set as 2025-10-24) need checking.
+- [planned] Placeholder Library follow-up: placeholders and title cards for whole sets (every
+  card of a master set, from the catalog), not only promos and variants. (Prize Pack Series 9
+  and Delta Reign's promos were added 2026-11-20.)
 - [idea] Next big project (owner, 2026-10-23): a Pokémon binder planner, built from the ATLA
   planner (`ATLA Binder/public/index.html`: page sizes 3x3/4x3/4x4/6x6, owned-card tracking,
   collection value). For Pokémon it would read the set's cards and printings from the catalog

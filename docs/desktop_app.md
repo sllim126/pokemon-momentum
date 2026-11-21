@@ -214,16 +214,11 @@ the same strip poke6s.com and the store admin show (step 9a, 2026-11-20); the ph
 own copy in `mobile_app.html`. Change all copies together (list in `site_shell.js`).
 
 
-Placeholder Library (`placeholder_library.html`) and Account (`account_settings.html`) load
-`scripts/dashboards/desktop_theme.css`, served at `/desktop-theme.css`. Collector Hub moved
-to the store on 2026-11-20 (poke6s.com/collector-hub, `storefront/app/collector_hub.py`; the
-market's `/collector-hub` 301s there, and its tiles still open this site's
-`/collector-assets` and `/placeholder-downloads`). Placeholder Library is a scrolling "reading
-page" (since 2026-10-13) that lists every file by who it's for. It takes its items from the
-manifest and its wording from a `COPY` table in the page, keyed by
-item id (a new item falls back to the manifest's summary). Resources open in a new tab;
-nothing is embedded. Its color tokens copy the `:root` block in `desktop_home.html`;
-change both together.
+Account (`account_settings.html`) loads `scripts/dashboards/desktop_theme.css`, served at
+`/desktop-theme.css`. Collector Hub and Placeholder Library moved to the store on 2026-11-20
+(poke6s.com/collector-hub and poke6s.com/placeholders, `storefront/app/collector_hub.py` and
+`placeholder_library.py`). The market's `/collector-hub`, `/placeholders`, `/collector-assets/...`
+and `/placeholder-downloads/...` 301 there; the Learn menu and desktop home link to the store.
 
 Account links each saved list to `/?list=track_<tag>` through its `APP` constant.
 

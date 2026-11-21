@@ -1,16 +1,20 @@
 """The free tools moved from market.poke6s.com to the store on 2026-11-20: Binder Art Maker
 (/binder-art, app/binder_art.py: the page, its CSP, and the set logo list built from a logo
-folder and the TCGCSV groups CSV, both temporary copies here) and Collector Hub
-(/collector-hub, app/collector_hub.py)."""
+folder and the TCGCSV groups CSV, both temporary copies here), Collector Hub
+(/collector-hub, app/collector_hub.py) and Placeholder Library (/placeholders,
+app/placeholder_library.py, serving a temporary copy of the generated "TCG Placeholders" files)."""
 
 from __future__ import annotations
 
+import base64
 import dataclasses
+import hashlib
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
+from storefront.app import collector_hub, placeholder_library
 from storefront.app.binder_art import SetLogos
 from storefront.app.main import create_app
 
@@ -38,10 +42,30 @@ def make_logos(tmp_path: Path) -> tuple[Path, Path]:
     return logo_dir, groups
 
 
+CHECKLIST_SCRIPT = "localStorage.setItem('x', '1');"
+
+
+def make_placeholders(tmp_path: Path) -> Path:
+    """Every bucket page and download the pages link to, plus files that must stay unreachable."""
+    root = tmp_path / "TCG Placeholders"
+    for folder in placeholder_library.BUCKETS.values():
+        (root / folder).mkdir(parents=True, exist_ok=True)
+        (root / folder / "index.html").write_text(
+            f"<html><style>p{{color:red}}</style><body><a href=\"/placeholders\">Back</a>"
+            f"<script>{CHECKLIST_SCRIPT}</script></body></html>", encoding="utf-8")
+    (root / "docs" / "set_release_dates.md").write_text("# Dates\n", encoding="utf-8")
+    for rel in placeholder_library.DOWNLOADS.values():
+        (root / rel).write_text("Card Name,Card Number\nPikachu,MEP001\n", encoding="utf-8")
+    (root / "output_combined" / "notes.py").write_text("secret", encoding="utf-8")   # unlisted type
+    (root / "README.md").write_text("outside every bucket", encoding="utf-8")
+    return root
+
+
 @pytest.fixture()
 def art_client(imported, tmp_path):
     logo_dir, groups = make_logos(tmp_path)
-    settings = dataclasses.replace(imported, set_logo_dir=logo_dir, groups_csv=groups)
+    settings = dataclasses.replace(imported, set_logo_dir=logo_dir, groups_csv=groups,
+                                   placeholder_dir=make_placeholders(tmp_path))
     with TestClient(create_app(settings), follow_redirects=False) as client:
         yield client
 
@@ -91,11 +115,69 @@ def test_listed_in_the_sitemap_and_footer(art_client):
 
 
 def test_collector_hub(art_client):
-    # Moved from the market 2026-11-20 (app/collector_hub.py); its resources still open there.
+    # Moved from the market 2026-11-20 (app/collector_hub.py); its files are the store's own.
     page = art_client.get("/collector-hub")
     assert page.status_code == 200 and "<h1>Collector Hub</h1>" in page.text
-    assert "https://market.poke6s.com/collector-assets/checklists-sv/index.html" in page.text
-    assert "https://market.poke6s.com/placeholder-downloads/combined-printable-csv" in page.text
+    assert 'href="/placeholders/files/checklists-sv/index.html"' in page.text
+    assert 'href="/placeholders/download/combined-printable-csv"' in page.text
+    assert "market.poke6s.com/collector-assets" not in page.text
     assert 'href="/binder-art"' in page.text and "<script>" not in page.text.split("<body>", 1)[1]
     assert "https://shop.test/collector-hub</loc>" in art_client.get("/sitemap.xml").text
     assert 'href="/collector-hub"' in art_client.get("/").text
+
+
+def test_every_collector_hub_link_resolves(art_client):
+    # Each tile's page and download must be among the library's files.
+    for section in collector_hub.SECTIONS:
+        for r in section.resources:
+            bucket, rel = r.asset.split("/", 1)
+            assert bucket in placeholder_library.BUCKETS, r.asset
+            assert art_client.get(placeholder_library.resource_url(r.asset)).status_code == 200, r.asset
+            if r.download:
+                assert r.download[0] in placeholder_library.DOWNLOADS
+                assert art_client.get(placeholder_library.download_url(r.download[0])).status_code == 200
+
+
+def test_placeholder_library_page(art_client):
+    page = art_client.get("/placeholders")
+    assert page.status_code == 200 and "<h1>Placeholder Library</h1>" in page.text
+    assert "Last rebuilt" in page.text and "<script>" not in page.text.split("<body>", 1)[1]
+    for section in placeholder_library.SECTIONS:
+        for item in section.items:
+            href = (placeholder_library.resource_url(item.page) if item.page
+                    else placeholder_library.download_url(item.download))
+            assert f'href="{href}"' in page.text
+            assert art_client.get(href).status_code == 200, href
+    assert "https://shop.test/placeholders</loc>" in art_client.get("/sitemap.xml").text
+    assert 'href="/placeholders"' in art_client.get("/").text
+
+
+def test_generated_pages_get_a_csp_for_their_own_scripts_only(art_client):
+    response = art_client.get("/placeholders/files/checklists-mega/index.html")
+    assert response.status_code == 200 and response.headers["content-type"].startswith("text/html")
+    csp = response.headers["content-security-policy"]
+    digest = base64.b64encode(hashlib.sha256(CHECKLIST_SCRIPT.encode()).digest()).decode()
+    assert f"script-src 'self' 'sha256-{digest}';" in csp
+    assert "style-src 'self' 'unsafe-inline'" in csp and "frame-ancestors 'none'" in csp
+    assert "unsafe-inline" not in csp.split("script-src", 1)[1].split(";", 1)[0]
+    # The rest of the store keeps its strict policy.
+    assert "sha256" not in art_client.get("/placeholders").headers["content-security-policy"]
+
+
+def test_placeholder_files_are_whitelisted(art_client):
+    md = art_client.get("/placeholders/files/docs/set_release_dates.md")
+    assert md.status_code == 200 and md.headers["content-type"].startswith("text/plain")
+    download = art_client.get("/placeholders/download/mega-auto-promos-csv")
+    assert download.status_code == 200 and "attachment" in download.headers["content-disposition"]
+    for bad in ("/placeholders/files/nope/index.html", "/placeholders/files/print-combined/notes.py",
+                "/placeholders/files/print-combined/..%2F..%2FREADME.md", "/placeholders/files/docs/missing.md",
+                "/placeholders/download/not-real"):
+        assert art_client.get(bad).status_code == 404, bad
+
+
+def test_library_says_when_files_are_missing(imported, tmp_path):
+    settings = dataclasses.replace(imported, placeholder_dir=tmp_path / "nowhere")
+    with TestClient(create_app(settings)) as client:
+        page = client.get("/placeholders")
+        assert page.status_code == 200 and "aren't available right now" in page.text
+        assert client.get("/placeholders/download/combined-json").status_code == 404

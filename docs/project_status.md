@@ -97,8 +97,8 @@ PriceCharting download and Squarespace price sync were running.
 | `/budget-builder` | Budget-based recommendation builder | Live; covered by desktop app Budget Builder |
 | `/sealed-deals` | Sealed price-per-pack/value screening | Live; covered by desktop app Sealed Deals |
 | `/account-settings` | Google sign-in, synced lists, saved views, account deletion | Live; restyled 2026-10 |
-| `/collector-hub` | Redirects to poke6s.com/collector-hub (moved to the store); its tiles still open the files served here | Live; moved 2026-11-20 |
-| `/placeholders` | Placeholder/checklist downloads | Live; restyled 2026-10 |
+| `/collector-hub` | Redirects to poke6s.com/collector-hub (moved to the store) | Live; moved 2026-11-20 |
+| `/placeholders` | Redirects to poke6s.com/placeholders (moved to the store), as do the old `/collector-assets/...` and `/placeholder-downloads/...` file addresses | Live; moved 2026-11-20 |
 | `/binder-art` | Redirects to poke6s.com/binder-art: the Binder Art Maker (free tool, one image cut into card-size pieces for a binder page) moved to the store | Live 2026-10-21; moved 2026-11-20 |
 | `/index-overview` | Market-index hub | Live; covered by desktop app Market Stats → Indexes |
 | `/index-overview-*` | English/Japanese and era index detail pages | Live; all routes use one configured detail template |
@@ -233,7 +233,8 @@ Added 2026-10:
 - Desktop app on iPad-portrait widths (<1100 px): the list menu folds into a "☰ Lists" button
 - How it works credits TCGCSV with a support link and drops the empty card column
 - Placeholder Library sync (2026-10-23): `scripts/utilities/sync_placeholder_library.py`, daily
-  04:30 UTC, adds new Mega-era sets and promos from the catalog and rebuilds the library
+  04:30 UTC, adds new Mega-era sets and promos from the catalog and rebuilds the library;
+  since 2026-11-20 a promo whose name gives no set is matched to the sealed product naming it
 
 ## What's next
 
@@ -249,7 +250,7 @@ The repository currently uses three artifact classes:
 1. Hand-authored and reviewed source: application code, tests, documentation, configuration,
    source CSVs, overrides, and additions. These belong in normal source-review commits.
 2. Published generated collector assets: `TCG Placeholders/output*/` and
-   `TCG Placeholders/checklists_*/`. The live Collector Hub serves these files directly, so
+   `TCG Placeholders/checklists_*/`. The store (poke6s.com/placeholders) serves these files directly, so
    they remain versioned until deployment builds them independently. They are marked as
    generated in `.gitattributes` and should be committed separately from builder changes.
 3. Local runtime artifacts: `output/`, `data/raw/`, `data/extracted/`, `data/processed/`,

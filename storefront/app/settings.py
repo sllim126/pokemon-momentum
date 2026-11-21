@@ -102,6 +102,9 @@ class Settings:
     # Empty (STOREFRONT_GOOGLE_REVIEW_URL=) switches the emails off.
     google_review_url: str = "https://g.page/r/CYIrs6Vj97MOEBM/review"
     review_request_days: int = 5
+    # Placeholder Library files (app/placeholder_library.py): the main checkout's generated
+    # "TCG Placeholders" folder, mounted read-only and rebuilt nightly by the market's sync job.
+    placeholder_dir: Path = REPO_ROOT / "TCG Placeholders"
 
     @property
     def stripe_mode(self) -> str:
@@ -194,4 +197,5 @@ def load_settings() -> Settings:
         google_review_url=os.getenv("STOREFRONT_GOOGLE_REVIEW_URL",
                                     "https://g.page/r/CYIrs6Vj97MOEBM/review").strip(),
         review_request_days=_int("STOREFRONT_REVIEW_REQUEST_DAYS", 5),
+        placeholder_dir=Path(os.getenv("STOREFRONT_PLACEHOLDER_DIR", str(REPO_ROOT / "TCG Placeholders"))),
     )

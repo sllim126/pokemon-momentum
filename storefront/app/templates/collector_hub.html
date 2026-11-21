@@ -1,5 +1,6 @@
 {#- Collector Hub (moved from market.poke6s.com 2026-11-20). The resources and their wording
-    are in app/collector_hub.py; they still open on the market site, so those links say ↗. -#}
+    are in app/collector_hub.py; the files are the store's own (/placeholders/...). Only the
+    market's "Sets by release date" link leaves the site, so it alone says ↗. -#}
 {% extends "base.html" %}
 {% block content %}
 <div class="hub-head">
@@ -8,7 +9,7 @@
     Track what you own, and print placeholder cards to keep your binder in order while you collect.</p>
   <p class="hub-actions">
     <a class="btn" href="/binder-art">Binder Art Maker</a>
-    <a class="btn" href="{{ settings.market_base_url }}/placeholders">All files and downloads ↗</a>
+    <a class="btn" href="/placeholders">All files and downloads</a>
   </p>
 </div>
 
@@ -29,8 +30,8 @@
       <h3>{{ r.title }}</h3>
       <p class="muted">{{ r.text }}</p>
       <p class="hub-actions">
-        <a class="btn primary" href="{{ resource_url(settings.market_base_url, r.asset) }}" target="_blank" rel="noopener">{{ r.open_label }} ↗</a>
-        {% if r.download %}<a class="btn" href="{{ download_url(settings.market_base_url, r.download[0]) }}">Download {{ r.download[1] }}</a>{% endif %}
+        <a class="btn primary" href="{{ resource_url(r.asset) }}" target="_blank" rel="noopener">{{ r.open_label }}</a>
+        {% if r.download %}<a class="btn" href="{{ download_url(r.download[0]) }}" download>Download {{ r.download[1] }}</a>{% endif %}
         {% if r.extra %}<a class="btn" href="{{ settings.market_base_url }}{{ r.extra[0] }}">{{ r.extra[1] }} ↗</a>{% endif %}
       </p>
     </li>
@@ -39,7 +40,7 @@
 </section>
 {% endfor %}
 
-<p class="muted small hub-legal">The checklists and print pages open on <a href="{{ settings.market_base_url }}">market.poke6s.com</a>,
+<p class="muted small hub-legal">For prices, see <a href="{{ settings.market_base_url }}">market.poke6s.com</a>,
   our free price-research site. Looking for binders, sleeves or the sets themselves? <a href="/sets">Shop by set</a>.
   Pokémon names and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company.</p>
 {% endblock %}
