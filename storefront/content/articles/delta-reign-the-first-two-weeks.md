@@ -5,7 +5,7 @@ description: Delta Reign's master set has dropped 17% since release day. I compa
 author: Adam Mills
 categories: Market Talk
 tags: Pokémon TCG, Delta Reign, Mega Evolution, TCG Market Analysis, Sealed
-cover: 
+cover: delta-reign-banner-39a57109df
 old_path: 
 draft: true
 ---
@@ -27,6 +27,8 @@ The big cards:
 - **Kecleon** (Illustration Rare, 117/103): $15 → **$24** (+63%)
 
 So it's not all falling. The two Rayquazas came down, but a couple of cards people actually like the art on went *up*. Kecleon is up more than 60%. [ADAM: Kecleon joke here?]
+
+[[cards 728061 728062 726574 726567]]
 
 ## How it compares with the last five sets
 

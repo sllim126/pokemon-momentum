@@ -269,3 +269,7 @@ data/backups/
 
 # Service-account keys and other credential files (e.g. Search Console read access). Never committed.
 secrets/
+
+# Official artwork dropped here for blog banners; it is copied into data/storefront/images
+# for the site and must not go into this public repo.
+storefront/content/images/
