@@ -741,22 +741,58 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   Post new torrents as replies in that thread.
   Schedule (owner, 2026-11-02): monthly torrents start with November 2026 (built 2026-12-02),
   then December 2026 and the full 2026 year together on 2027-01-02, then each month on the
-  2nd. Jan-Oct 2026 get no monthly torrents; they're in the 2026 year one.
+  2nd. Jan-Oct 2026 get no monthly torrents. Owner, 2026-11-17: also a 2026-so-far torrent now,
+  so people can take everything from torrents and fetch only the days since the newest one;
+  keep our own downloads as they are. Built 2026-11-17: `tcgcsv-archive-2026-01-to-10`
+  (304 days plus the product list, 1.21 GB, info hash 9cd6f1b5...; `--months` option added).
+  Seeding since 2026-11-17 (files copied to Z:\TCGCSV through the /mnt/media share, then added
+  in qBittorrent). Next: owner posts the magnet and .torrent in #useful-shares.
   Next: [planned] automate it before 2026-12-02 (build here, push to qBittorrent with the
   LAN seed step, post the magnet link to Discord); needs libtorrent in a host venv and a
   crontab line the owner adds. Until then, build and add by hand on the 2nd.
-- [planned] TCGCSV product-data torrent (owner, 2026-11-11): binaryalias asked in the TCGCSV
-  Discord for the full product list as a torrent, for people's first download; CptSpaceToaster
-  doesn't keep product data in the archives and said to go ahead. We already hold it: the
-  catalogue crawl (`data/tcgcsv_catalogue/`) is complete, 94 games, 93 set lists, 4,733 product
-  files, 655 MB, fetched 2026-11-02 to 11-04 and refreshed every 30 days. As one `.tar.zst`
-  (zstd -19) it is 33 MB. About an hour: add `--catalogue` to
-  `scripts/torrents/build_archive_torrent.py` (one dated `tcgcsv-products-<date>.tar.zst`,
-  README with fetch dates and layout, SHA256SUMS), seed it the same way as the price torrents,
-  reply in the #useful-shares thread. Then a new snapshot each month next to the monthly price
-  torrent (the crawl's next refresh is ~2026-12-02 to 12-04). README must say it is a starting
-  point (sets added since the snapshot are missing; top up from TCGCSV) and has no prices (those
-  are in the archive torrents). Same promise: take it down if CptSpaceToaster asks.
+- [planned] TCGCSV product list inside the torrents (owner, 2026-11-11 and 11-17): binaryalias
+  asked for it; CptSpaceToaster said go ahead; the owner promised it "in the next monthly
+  archive". Done in the builder 2026-11-17: every new torrent carries
+  `tcgcsv-products-<date>.tar.xz` (~32 MB) from the catalogue crawl, plus a README section. The
+  2026 Jan-Oct torrent has it. Keep the crawl's monthly refresh going so each month's copy is fresh.
+- [planned] Automate the monthly torrent (owner, 2026-11-17). On the 2nd of each month, a host
+  cron job: (1) build last month's torrent in a python:3.12-slim container (libtorrent), with
+  the product list; (2) check it: no missing days, every SHA256 matches, libtorrent re-checks
+  the pieces against the files; (3) add it to qBittorrent (192.168.1.207, category TCGCSV,
+  Z:\TCGCSV) and seed it over the LAN until qBittorrent shows 100%; (4) email the owner the
+  .torrent as an attachment with the magnet link and a ready-to-paste #useful-shares post
+  (through the store's Microsoft 365 sender; no new cost); (5) a line in our own Discord
+  alerts if any step fails. The owner posts in the TCGCSV Discord by hand (it's someone
+  else's server). Simpler than first planned: Z:\TCGCSV on the qBittorrent PC is the PlexVault
+  share this server mounts at /mnt/media/TCGCSV, so the script copies the files there and
+  qBittorrent seeds them after a quick check (no LAN seeding step). Unblocked 2026-11-17: adds
+  had silently vanished until qBittorrent was restarted; the script should confirm the torrent
+  appears and alert if not. Needs a crontab line the owner adds. Email goes to
+  admin@poke6s.com unless the owner says otherwise.
+- [waiting] TCGCSV Discord #development, read up to 2026-11-16 (owner's screenshots,
+  2026-11-17). What matters to us:
+  - CptSpaceToaster's hosting costs are real: 120M+ requests and 10 TB+ a month, and the
+    archive's return added ~80 GB on day one (~$200/month if sustained). He bans people who
+    pull the whole archive more than once; "download each archive file once" is the rule. We
+    do exactly that, and the torrents take load off him.
+  - Decided 2026-11-17: keep our downloads as they are (no switch); help through torrents instead.
+    Was: switch our daily prices to the one archive file a day (step 5 of the
+    archive plan above)? It would replace ~1,900 per-group requests a night with 1. Catch: the
+    archive file appears later than the per-group files (the Nov 14 and 15 files arrived by
+    Nov 16 21:30 UTC), so the site's prices would run about a day behind. Not started.
+  - Owner decision: support TCGCSV on Patreon (patreon.com/TCGCSV, from $1/month; a new cost,
+    so the owner's call). Free alternative: his affiliate link,
+    `https://partner.tcgplayer.com/tcgcsv?u=<URL-encoded TCGplayer product URL>` or the short
+    `https://cpt.tcgcsv.com/{code}`. Our TCGplayer links carry our own affiliate code, so only
+    use his where we don't already earn (e.g. a "data from TCGCSV" credit link).
+  - He may add a `tcgcsv_affiliate_url` field to product JSON (alongside `url`, never replacing
+    it). If it shows up, our product parsing should ignore unknown fields (it does today).
+  - "Market price" covers every condition (new cards ~NM/LP, old cards ~MP/HP/Damaged). The
+    site already says so (desktop "About these prices" and the legal footer); nothing to do.
+  - Pikaqian (https://pikaqian.com/docs/) was recommended on 2026-11-05 as a faster, more
+    accurate Pokemon set-list source. [idea] Look at it (terms, cost) before building more
+    set-metadata cleanup of our own.
+  Next read: from 2026-11-16 (JerryTap, 12:42 PM).
 - [idea] Help TCGCSV by seeding a torrent of the price archive (owner offered in the TCGCSV
   Discord #development, 2026-10-19; CptSpaceToaster can't torrent and said "hopefully some
   enterprising folks" would). Archive is about 1 GB, all categories, prices only. Before
@@ -872,6 +908,18 @@ Active Queue
   Tins, 610741 Costco Evolving Skies ETB and Tin, 549339 Gyarados 043/193 Cosmos Holo, 664138
   Hydrapple Cosmos Holo, 567093 JP Charizard ex 139/108, 615352 JP Rainbow Energy (Pokemon VS).
   The other 53 show a stand-in until then (scripts/dashboards/product_image_standins.csv).
+- [planned] Link check of market.poke6s.com, 2026-11-20 (owner asked: no dead links); one fix
+  left, item 3. Headless crawl of 240 pages (desktop and phone, tabs clicked, cards opened): 2,357 links. Result: no
+  dead links. All 2,310 internal links return 200 (/admin is 401, but its link is hidden for
+  visitors); TCGplayer product links (21 sampled), PriceCharting card pages (21), Discord,
+  poke6s.com and TCGCSV all work. Small things found:
+  1. Done: /dashboard-lab (chart 404 on English -> Japanese) was deleted 2026-11-20.
+  2. Done: the 60 products with no TCGplayer image get stand-ins or own pictures
+     (2026-11-20; the [owner] item above lists the seven still without one).
+  3. This server's own DNS (127.0.0.53) can't resolve tcgplayer-cdn.tcgplayer.com (public DNS
+     can: a CloudFront name). Visitors aren't affected; anything on this server that fetches
+     TCGplayer images would be. Check the resolver (Tailscale DNS?).
+  Crawler and checker scripts were one-off (scratchpad); rerun the same way if needed.
 - [planned] Performance review (2026-11-05): the design is sound (nightly snapshot tables, one
   shared read-only DuckDB connection; phone pages answer in 5-95 ms). Fix 1 (dead tables) is
   done, see Recently Completed. Still to do:
@@ -1131,6 +1179,66 @@ Needs Decisions
 
 Future Ideas
 ------------
+
+- [idea] Ideas from tcgquant.com (reviewed 2026-11-20). A paid sealed-investing site (Pokemon
+  and One Piece, about 150 sealed products; free tier plus Premium at $12.99/month or
+  $124.99/year). Data: TCGplayer prices plus eBay listings and sold prices, and grading
+  population counts (PSA, BGS, CGC, TAG). What it has that we don't, roughly most useful first:
+  1. Portfolio with cost basis: what you paid, profit/loss, return, a value chart; CSV import.
+     Our Track lists (Buy List, Watchlist, Favorites) save items but not what was paid.
+  2. Sell targets: an exit price per holding, how far the market is from it, "target hit".
+  3. Daily alert email, sent only when something changed (holdings, watchlist, targets).
+     Discord alerts too.
+  4. Pack EV: expected value per pack and per box from card prices and pull rates. Needs pull
+     rates per set (no free source in our data yet).
+  5. Supply and demand score per sealed product (listings down, sales up, days of stock
+     left). Needs listing counts and sales speed, which TCGCSV doesn't give; their eBay data
+     would need eBay's API (free, but has terms to check). Our sales_volume counts could cover
+     the demand side.
+  6. Offer sheet: price a whole collection at a percentage of market for a buyer, without
+     showing your cost; TCGplayer and eBay sold links for checking.
+  7. Smaller: a CAGR (yearly return) calculator and two-product compare; a "destruction
+     tracker" estimating sealed product opened, from graded population counts.
+  What we have that it doesn't: everything free; Japanese prices; market indexes by era;
+  graded prices from PriceCharting with linkbacks; budget builders (raw and graded); every
+  card, not only 150 sealed products; collector tools (placeholders, binder art); our own store
+  linked from the product. Their track-record page (462 backtested signals, hit rate, average
+  gain) matches our Market Stats -> Track record. If we ever charge, their price points are a
+  reference. Owner to pick which to plan.
+- [idea] Ideas from pokepastor.com (reviewed 2026-11-17; the owner's early inspiration). A
+  one-person Pokemon shop on SortSwift (a paid hosted storefront), mostly singles; ours is
+  sealed only (owner), so its singles tools (condition per card, set/rarity filters) don't
+  apply. Poke6s already links Discord, YouTube, Instagram and the rest in the store footer.
+  Taken forward: trust lines and reviews (next item). Parked unless buying restarts: "sell to
+  us" pages (collection form with photos; bulk count form).
+- [waiting] Trust lines and Google reviews on poke6s.com (owner liked it, 2026-11-17).
+  (1) Short trust lines near the buy button and in the footer, e.g. "selling since <year>",
+  how sealed product is packed, ships in 1 business day from Utah; needs the owner's facts.
+  (2) Ask every customer for a Google review: a link in the order email a few days after it
+  ships (or a separate follow-up email). Needs a Google Business Profile (free; a home
+  business can hide its address and show a service area) and its "ask for reviews" link.
+  Ask everyone, never only happy customers, and never offer anything for a review (Google's
+  rules and the FTC's 2024 fake-review rule). (3) Later, show the rating on the site (a
+  reviews page or a line in the footer), from the Business Profile, not a paid widget.
+- [waiting] One Poke6s account for the store and the market site (owner, 2026-11-17).
+  Reverses "Customer accounts: not planned" in docs/storefront_plan.md. The market site already
+  has Google sign-in accounts (tracking tags, saved views). Proposed: the store signs in with
+  the same Google client, and both sites recognise the same person by their Google account ID,
+  so there are no passwords to keep. Guest checkout stays. What a store account would add: order
+  history (orders matched by email), back-in-stock alerts and a wishlist; later, linking a
+  market watchlist to "buy from Poke6s". Open questions: one shared sign-in at poke6s.com
+  (a cookie for .poke6s.com) or two sign-ins with the same Google button; where the shared
+  user table lives (store SQLite vs. the market's database); privacy page and account
+  deletion covering both sites. Plan with the owner before building.
+
+- [idea] Trade checker (owner, 2026-11-17): is a trade fair? Two sides: "you give" (cards,
+  sealed, slabs) and "you get". Each item priced from our data (TCGplayer market, PriceCharting
+  for graded), totals per side, and how far off the trade is in dollars and percent ("you give
+  $142, you get $118: 17% in their favour"). Open questions before building: condition (the
+  market price isn't a Near Mint price; let people pick a condition or a % of market?), cash
+  added to one side, trade-in vs. sell value (stores trade at 70-80% of market), and whether
+  it lives on desktop, the phone app or both. Could reuse the Deal Checker's item search and
+  pricing. A shareable link of the trade would let both people see the same numbers.
 
 - [planned] Review CollectiKit (collectikit.ai; iOS, Android and web), a free collector app
   its maker shared on r/PokemonTCG (2026-10-28). The owner promised its maker a thorough review.

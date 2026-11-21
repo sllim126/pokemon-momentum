@@ -1,8 +1,16 @@
-"""Build a torrent of TCGCSV's daily price archive for one year or one month.
+"""Build a torrent of TCGCSV's daily price archive for one year, one month or a run of months.
 
 Owner's plan (2026-11-02): help TCGCSV with its bandwidth bill by seeding the archive as
 torrents: one per finished year (2024, 2025, then 2026 on 2027-01-02) and one per month from
-November 2026 on, each built on the 2nd of the following month. CptSpaceToaster OK'd sharing
+November 2026 on, each built on the 2nd of the following month. Owner, 2026-11-17: also a
+2026-so-far torrent (January to October, --months 2026-01:2026-10), so anyone can take the whole
+history from torrents and fetch only the few days since the newest monthly one from tcgcsv.com.
+
+Each new torrent also carries the product list (owner, 2026-11-17; promised in #useful-shares
+on 2026-11-11 after binaryalias asked, and CptSpaceToaster said go ahead): every game's sets and
+products from our catalogue crawl (data/tcgcsv_catalogue/), as one tcgcsv-products-<date>.tar.xz
+(~33 MB). The archive files carry prices by ID only, so this gives the names. --no-catalogue
+leaves it out. 2024 and 2025 were built before this and don't have it. CptSpaceToaster OK'd sharing
 them in the TCGCSV Discord's #useful-shares on 2026-11-02 and can withdraw that at any time
 (TCGCSV passes on TCGplayer data with TCGplayer's permission). See docs/operator_runbook.txt "TCGCSV archive torrents".
 
@@ -10,6 +18,7 @@ For a period it makes, under data/torrents/ (gitignored):
 
     tcgcsv-archive-2024/                 the torrent's folder
         prices-2024-02-08.ppmd.7z ...    hard links to data/raw (no extra disk space)
+        tcgcsv-products-<date>.tar.xz    the product list (sets and products, every game)
         README.txt                       what this is, where it's from, how to open it
         SHA256SUMS.txt                   a checksum per archive file
     tcgcsv-archive-2024.torrent
@@ -22,14 +31,16 @@ Needs libtorrent (`pip install libtorrent`; not in the site's container). Run on
 
     python scripts/torrents/build_archive_torrent.py --year 2024
     python scripts/torrents/build_archive_torrent.py --month 2026-11
+    python scripts/torrents/build_archive_torrent.py --months 2026-01:2026-10
 """
 
 import argparse
 import hashlib
 import os
 import sys
+import tarfile
 import warnings
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import libtorrent as lt
@@ -41,6 +52,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning, module=__name__)
 ROOT = Path(__file__).resolve().parents[2]
 RAW_DIR = ROOT / "data" / "raw"
 TORRENTS_DIR = ROOT / "data" / "torrents"
+CATALOGUE_DIR = ROOT / "data" / "tcgcsv_catalogue"  # written by scripts/download/crawl_tcgcsv_catalogue.py
 FIRST_ARCHIVE_DAY = date(2024, 2, 8)  # TCGCSV's archive starts here
 
 # Free public trackers; peers also find each other through DHT. Trackers sit outside the
@@ -67,15 +79,59 @@ the archive; get them from https://tcgcsv.com/tcgplayer/<categoryId>/groups and
 
 Open with 7-Zip (7z x prices-2024-02-08.ppmd.7z); the files use PPMd compression.
 Check a download with: sha256sum -c SHA256SUMS.txt
-{gaps}
+{gaps}{catalogue}
 Prices are TCGplayer data, shared by TCGCSV with TCGplayer's permission. Credit TCGCSV and
 TCGplayer if you use them, and please follow TCGCSV's usage guidelines
 (https://tcgcsv.com/docs#usage-guidelines) for anything you fetch from TCGCSV directly.
 This torrent exists to take download load off TCGCSV: prefer it to fetching the whole
-archive from tcgcsv.com.
+archive from tcgcsv.com. Torrents cover 2024 and 2025 (a year each), 2026 so far, and each
+month after that, posted in the TCGCSV Discord's #useful-shares. Take those, then fetch only
+the days after the newest torrent from tcgcsv.com, once each.
 
 Packaged by Poke6s Market Watch.
 """
+
+
+CATALOGUE_README = """
+Product list: {name}
+  Every game's sets and products as TCGCSV served them, fetched {first} to {last}
+  (TCGCSV's archive files never held product data). Layout inside:
+      tcgcsv_catalogue/categories.json                     every game
+      tcgcsv_catalogue/<categoryId>/groups.json            that game's sets
+      tcgcsv_catalogue/<categoryId>/<groupId>/products.json   that set's products
+  Open with 7-Zip, or: tar -xJf {name}
+  It is a starting point: sets and products added after {last} are missing, so top up from
+  https://tcgcsv.com/tcgplayer/<categoryId>/groups and .../<groupId>/products. It holds no
+  prices; those are the archive files.
+"""
+
+
+def build_catalogue(folder: Path) -> str:
+    """Pack the catalogue crawl into one .tar.xz in the torrent folder; return its README part.
+
+    xz rather than zstd: same size here (~33 MB from 655 MB) and 7-Zip on Windows opens it.
+    Files go in sorted order so the same catalogue always packs the same way.
+    """
+    files = sorted(p for p in CATALOGUE_DIR.rglob("*.json") if p.name != "state.json")  # state = crawl bookkeeping
+    if not files:
+        raise SystemExit(f"No catalogue in {CATALOGUE_DIR}; run the catalogue crawl or use --no-catalogue.")
+    days = sorted(datetime.fromtimestamp(p.stat().st_mtime, UTC).date() for p in files)
+    name = f"tcgcsv-products-{days[-1].isoformat()}.tar.xz"
+    for old in folder.glob("tcgcsv-products-*.tar.xz"):
+        if old.name != name:
+            old.unlink()  # a rebuild with a newer catalogue replaces the old one
+    target = folder / name
+    if not target.exists():
+        partial = target.with_suffix(".partial")
+        with tarfile.open(partial, "w:xz", preset=9) as tar:
+            for path in files:
+                info = tar.gettarinfo(path, arcname=str(Path("tcgcsv_catalogue") / path.relative_to(CATALOGUE_DIR)))
+                info.uid = info.gid = 0
+                info.uname = info.gname = ""
+                with path.open("rb") as handle:
+                    tar.addfile(info, handle)
+        partial.rename(target)
+    return CATALOGUE_README.format(name=name, first=days[0], last=days[-1])
 
 
 def parse_args() -> argparse.Namespace:
@@ -83,19 +139,34 @@ def parse_args() -> argparse.Namespace:
     period = parser.add_mutually_exclusive_group(required=True)
     period.add_argument("--year", type=int, help="e.g. 2024")
     period.add_argument("--month", help="YYYY-MM, e.g. 2026-11")
+    period.add_argument("--months", help="FIRST:LAST months, YYYY-MM:YYYY-MM, e.g. 2026-01:2026-10")
     parser.add_argument("--allow-gaps", action="store_true", help="Build even if some days are missing.")
+    parser.add_argument("--no-catalogue", action="store_true", help="Leave the product list out.")
     return parser.parse_args()
+
+
+def month_end(year: int, month: int) -> date:
+    """The last day of a month."""
+    return date(year + month // 12, month % 12 + 1, 1) - timedelta(days=1)
 
 
 def period_days(args: argparse.Namespace) -> tuple[str, list[date]]:
     """The torrent's name and every day it should cover (never before the archive's first day)."""
     if args.year:
         start, end, name = date(args.year, 1, 1), date(args.year, 12, 31), f"tcgcsv-archive-{args.year}"
-    else:
+    elif args.month:
         year, month = (int(part) for part in args.month.split("-"))
-        start = date(year, month, 1)
-        end = (date(year + month // 12, month % 12 + 1, 1)) - timedelta(days=1)
+        start, end = date(year, month, 1), month_end(year, month)
         name = f"tcgcsv-archive-{year}-{month:02d}"
+    else:
+        first, _, last = args.months.partition(":")
+        (y1, m1), (y2, m2) = ((int(p) for p in part.split("-")) for part in (first, last))
+        start, end = date(y1, m1, 1), month_end(y2, m2)
+        if end < start:
+            raise SystemExit(f"--months {args.months}: the last month is before the first.")
+        # e.g. tcgcsv-archive-2026-01-to-10, or tcgcsv-archive-2025-11-to-2026-02 across a year
+        name = (f"tcgcsv-archive-{y1}-{m1:02d}-to-{m2:02d}" if y1 == y2
+                else f"tcgcsv-archive-{y1}-{m1:02d}-to-{y2}-{m2:02d}")
     start = max(start, FIRST_ARCHIVE_DAY)
     return name, [start + timedelta(days=i) for i in range((end - start).days + 1)]
 
@@ -126,12 +197,20 @@ def main() -> int:
         if not link.exists():
             os.link(files[day], link)  # same filesystem: no copy, no extra space
         sums.append(f"{sha256(link)}  {link.name}")
+    catalogue = ""
+    if args.no_catalogue:
+        for old in folder.glob("tcgcsv-products-*.tar.xz"):
+            old.unlink()
+    else:
+        catalogue = build_catalogue(folder)
+        packed = next(folder.glob("tcgcsv-products-*.tar.xz"))
+        sums.append(f"{sha256(packed)}  {packed.name}")
     (folder / "SHA256SUMS.txt").write_text("\n".join(sums) + "\n")
     gaps = f"\nMissing days (TCGCSV has no file for them): {', '.join(d.isoformat() for d in missing)}\n" if missing else ""
     label = name.removeprefix("tcgcsv-archive-")
     (folder / "README.txt").write_text(README.format(
         label=label, underline="=" * (len("TCGCSV daily price archive: ") + len(label)),
-        first=present[0], last=present[-1], count=len(present), gaps=gaps))
+        first=present[0], last=present[-1], count=len(present), gaps=gaps, catalogue=catalogue))
 
     storage = lt.file_storage()
     lt.add_files(storage, str(folder))
