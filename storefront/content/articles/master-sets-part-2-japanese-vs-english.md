@@ -94,7 +94,7 @@ Biased opinion: that card is BETTER in Japanese, because there isn't text coveri
 
 ![Bar chart: the top card's share of the master set. In Japanese Mega sets it's 33 to 58 percent, in English 19 to 30 percent, except Phantasmal Flames at 59 percent.](/media/1200/master-sets-top-card-share-7786e99396.webp)
 
-So a Japanese Mega-era master set is really two projects: about 115 cards that are pretty affordable, and one card that costs as much as all of them combined. That changes how you'd plan it. You can finish everything else, then save up for the one card, or decide 99% is good enough. (I know [someone who decided that](/articles/journey-together-master-set-checklist-and-promo-guide).)
+So a Japanese Mega-era master set is really two projects: about 115 cards that are pretty affordable, and one card that costs as much as all of them combined. You can finish everything else, then save up for the one card, or decide 99% is good enough. (I know [someone who decided that](/articles/journey-together-master-set-checklist-and-promo-guide).)
 
 ## A year later: what's the cheapest set now?
 
