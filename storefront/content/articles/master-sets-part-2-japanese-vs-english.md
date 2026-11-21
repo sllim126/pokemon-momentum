@@ -11,7 +11,7 @@ draft: false
 ---
 Almost a year ago I wrote [Let's talk about Master Sets…](/articles/lets-talk-about-master-sets), where I priced every Scarlet & Violet and Mega Evolution set to answer one question from Discord: what's the cheapest set to master on a budget? Since then, that post has turned into the most-read post on this site, so clearly I'm not the only one doing this math.
 
-The follow-up questions I keep seeing (and the ones people are searching to find that post) are basically these two:
+Looking at what people search for when they find that post, it mostly comes down to two questions:
 
 1. **Do I need the whole set, or should I just chase the secret rares?**
 2. **Is a Japanese master set cheaper than an English one?**
@@ -75,6 +75,8 @@ Sometimes. Here are the English sets next to their Japanese versions:
 - Chaos Rising **$410** vs Ninja Spinner **$649**
 - Pitch Black **$502** vs Abyss Eye **$680**
 - Phantasmal Flames **$896** vs Inferno X **$1,440**
+
+Delta Reign is the odd one out. It's the newest Mega set, but it landed in "about even" instead of "English is cheaper." It had only been out for two weeks when I priced it, and a new English set is at its most expensive in its first few weeks ([I looked at that here](/articles/delta-reign-the-first-two-weeks)). My guess is it ends up with the other three once prices settle.
 
 ### Why? One card.
 
