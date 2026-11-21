@@ -1,13 +1,13 @@
 ---
 title: Master Sets, Part 2: Japanese vs English, and Do You Even Need the Bulk?
-date: 2026-11-20
+date: 2026-11-21
 description: Is a Japanese master set cheaper than English? Do you need the bulk, or just the secret rares? I priced eleven English sets against their Japanese versions to find out.
 author: Adam Mills
 categories: 
 tags: Pokémon TCG, Master Sets, Japanese Pokémon Cards, Collecting, TCG Market Analysis
-cover: master-sets-english-vs-japanese-21bcba0d0f
+cover: master-sets-english-vs-japanese-b44ace8dab
 old_path: 
-draft: true
+draft: false
 ---
 Almost a year ago I wrote [Let's talk about Master Sets…](/articles/lets-talk-about-master-sets), where I priced every Scarlet & Violet and Mega Evolution set to answer one question from Discord: what's the cheapest set to master on a budget? Since then, that post has turned into the most-read post on this site, so clearly I'm not the only one doing this math.
 
@@ -39,7 +39,7 @@ To no one's surprise, the secret rares ARE the set. In every set I looked at, th
 - **Prismatic Evolutions:** $3,783 of $4,428 (85%)
 - **Journey Together:** $314 of $392 (80%)
 
-![Bar chart: secret rares make up 80 to 96 percent of the cost of six English master sets. Everything else in Perfect Order costs $35 of $431.](/media/1200/master-sets-secret-rare-share-1efe99c3b7.webp)
+![Bar chart: secret rares make up 80 to 96 percent of the cost of six English master sets. Everything else in Perfect Order costs $35 of $431.](/media/1200/master-sets-secret-rare-share-b1ec4fea18.webp)
 
 Look at Perfect Order: 167 printings (every common, uncommon, rare and reverse holo) add up to about **$35** at market. The other 36 cards are the other $396.
 
@@ -53,7 +53,7 @@ Japanese main sets don't really do reverse holos, so a Japanese master set is us
 
 Sometimes. Here are the English sets next to their Japanese versions:
 
-![Bar chart comparing the cost of eleven English master sets with their Japanese versions. Japanese is far cheaper for the big special sets, about even for main sets, and more expensive for the newest Mega sets.](/media/1200/master-sets-english-vs-japanese-21bcba0d0f.webp)
+![Bar chart comparing the cost of eleven English master sets with their Japanese versions. Japanese is far cheaper for the big special sets, about even for main sets, and more expensive for the newest Mega sets.](/media/1200/master-sets-english-vs-japanese-b44ace8dab.webp)
 
 **The big special sets: Japanese wins, by a lot**
 
@@ -92,7 +92,7 @@ Biased opinion: that card is BETTER in Japanese, because there isn't text coveri
 
 [[cards 662184 655886]]
 
-![Bar chart: the top card's share of the master set. In Japanese Mega sets it's 33 to 58 percent, in English 19 to 30 percent, except Phantasmal Flames at 59 percent.](/media/1200/master-sets-top-card-share-0c54a389bb.webp)
+![Bar chart: the top card's share of the master set. In Japanese Mega sets it's 33 to 58 percent, in English 19 to 30 percent, except Phantasmal Flames at 59 percent.](/media/1200/master-sets-top-card-share-7786e99396.webp)
 
 So a Japanese Mega-era master set is really two projects: about 115 cards that are pretty affordable, and one card that costs as much as all of them combined. That changes how you'd plan it. You can finish everything else, then save up for the one card, or decide 99% is good enough. (I know [someone who decided that](/articles/journey-together-master-set-checklist-and-promo-guide).)
 

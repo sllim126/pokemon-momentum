@@ -1,4 +1,4 @@
-"""Charts for the blog post "Master Sets, Part 2: Japanese vs English" (2026-11-20).
+"""Charts for the blog post "Master Sets, Part 2: Japanese vs English" (2026-11-21).
 
 Data: TCGplayer market prices for 2026-11-18, summed over every printing in each set, worked
 out from prices_db.duckdb and written in below. Dark theme from the storefront's store.css;
@@ -24,18 +24,17 @@ plt.rcParams.update({"font.family": "DejaVu Sans", "text.color": TEXT, "axes.lab
                      "xtick.color": MUTED, "ytick.color": TEXT, "font.size": 13})
 
 
-def base(fig, ax, title, subtitle):
+def base(fig, ax):
     fig.patch.set_facecolor(BG); ax.set_facecolor(BG)
     for s in ax.spines.values(): s.set_visible(False)
     ax.tick_params(length=0)
     ax.grid(axis="x", color=GRID, linewidth=1); ax.set_axisbelow(True)
-    fig.text(0.03, 0.955, title, fontsize=21, fontweight="bold", color=TEXT, va="top")
-    fig.text(0.03, 0.905, subtitle, fontsize=13, color=MUTED, va="top")
+    # No title or subtitle: the article text around each chart already says what it shows.
     fig.text(0.03, 0.02, "Sum of TCGplayer market prices for every printing, Nov 18, 2026. Excludes shipping.  poke6s.com",
              fontsize=10.5, color=FAINT)
 
 
-def legend(fig, items, y=0.855):
+def legend(fig, items, y=0.955):
     x = 0.03
     for label, color in items:
         fig.patches.append(FancyBboxPatch((x, y - 0.008), 0.016, 0.022, boxstyle="round,pad=0,rounding_size=0.004",
@@ -66,9 +65,9 @@ groups = [
         ("Pitch Black", "Abyss Eye", 502, 680),
         ("Chaos Rising", "Ninja Spinner", 410, 649)]),
 ]
-fig, ax = plt.subplots(figsize=(12, 13.5), dpi=200)
-fig.subplots_adjust(left=0.30, right=0.95, top=0.82, bottom=0.05)
-base(fig, ax, "English vs Japanese master sets", "What it costs to complete each set, English next to its Japanese version")
+fig, ax = plt.subplots(figsize=(12, 12.4), dpi=200)
+fig.subplots_adjust(left=0.30, right=0.95, top=0.90, bottom=0.055)
+base(fig, ax)
 legend(fig, [("English", EN), ("Japanese", JP)])
 y, ticks, labels, h = 0, [], [], 0.36
 for gtitle, rows in groups:
@@ -91,10 +90,10 @@ fig.savefig(OUT + "chart1.png", facecolor=BG); plt.close(fig)
 # ---- Chart 2: secret rares vs everything else ----
 rows = [("Mega Evolution", 1200, 1257), ("Phantasmal Flames", 857, 896), ("Destined Rivals", 1145, 1229),
         ("Perfect Order", 396, 431), ("Prismatic Evolutions", 3783, 4428), ("Journey Together", 314, 392)]
-fig, ax = plt.subplots(figsize=(12, 7.2), dpi=200)
-fig.subplots_adjust(left=0.22, right=0.95, top=0.74, bottom=0.10)
-base(fig, ax, "The secret rares are the set", "Share of each English master set's cost, by type of card")
-legend(fig, [("Secret rares (numbered past the set total)", EN), ("Everything else", REST)], y=0.82)
+fig, ax = plt.subplots(figsize=(12, 6.0), dpi=200)
+fig.subplots_adjust(left=0.22, right=0.95, top=0.84, bottom=0.12)
+base(fig, ax)
+legend(fig, [("Secret rares (numbered past the set total)", EN), ("Everything else", REST)], y=0.93)
 for i, (name, sec, full) in enumerate(rows):
     pct = 100 * sec / full
     hbar(ax, i, pct, 0.6, EN); hbar(ax, i, 100 - pct, 0.6, REST, left=pct)
@@ -113,10 +112,10 @@ rows = [("Chaos Rising / Ninja Spinner", "Mega Greninja ex", 26, 58),
         ("Perfect Order / Nihil Zero", "Mega Zygarde ex", 19, 39),
         ("Journey Together / Battle Partners", "Lillie's Clefairy ex", 19, 33),
         ("Phantasmal Flames / Inferno X", "Mega Charizard X ex", 59, 45)]
-fig, ax = plt.subplots(figsize=(12, 9), dpi=200)
-fig.subplots_adjust(left=0.33, right=0.95, top=0.78, bottom=0.08)
-base(fig, ax, "Why? One card.", "The top chase card's share of the whole master set's cost")
-legend(fig, [("English", EN), ("Japanese", JP)], y=0.845)
+fig, ax = plt.subplots(figsize=(12, 8.0), dpi=200)
+fig.subplots_adjust(left=0.33, right=0.95, top=0.88, bottom=0.09)
+base(fig, ax)
+legend(fig, [("English", EN), ("Japanese", JP)], y=0.945)
 h = 0.36
 for i, (pair, card, e, j) in enumerate(rows):
     hbar(ax, i - h / 2, e, h, EN); hbar(ax, i + h / 2, j, h, JP)
