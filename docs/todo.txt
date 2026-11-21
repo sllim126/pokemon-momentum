@@ -56,6 +56,9 @@ Recently Completed
   those cards. Works with 2x2 to 5x5 pages and 2-page spreads.
 - 2026-11-20 Option B, second piece: Collector Hub moved to poke6s.com/collector-hub (server-
   rendered; tiles still open the market's checklist and print files). market /collector-hub 301s.
+- 2026-11-21 Blog: "Let's talk about Master Sets…" (Part 1) tidied: headings, the price
+  table as text, alt text, typos, shorter description, Journey Together link to the checklist
+  post (the old /shop link was dead), and links to Part 2. Part 2 published the same day.
 - 2026-11-20 Blog: "Master Sets, Part 2: Japanese vs English" (3 charts, cover) and "Master
   Sets Have Become an Art Form" drafted as `draft: true` from the 2026-11-18 prices. Articles
   with `draft: false` and a future date are now scheduled: hidden until their date, then live
@@ -145,9 +148,6 @@ High Priority
     still to proofread "Master Sets Have Become an Art Form" (wants binder photos) and fill the
     Kecleon line in Delta Reign. When the art-form post is live, add a link to it at the end of
     Part 2.
-  - Owner also asked: fix the original "Let's talk about Master Sets…" post (dead Journey
-    Together link to /shop, data only in pictures, no headings, 400-character description,
-    typos) and link it to Part 2.
   - Posts can show live product boxes with `[[market <ids>]]` (storefront/README.md "Articles").
   - Topics: Nov 24 Delta Reign, two weeks in (drafted 2026-11-20 from prices to Nov 19:
     `delta-reign-the-first-two-weeks.md`, with market boxes) · Nov 26
