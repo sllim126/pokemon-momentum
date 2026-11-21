@@ -5,7 +5,7 @@ description: Delta Reign's master set has dropped 17% since release day. I compa
 author: Adam Mills
 categories: Market Talk
 tags: Pokémon TCG, Delta Reign, Mega Evolution, TCG Market Analysis, Sealed
-cover: 
+cover: delta-reign-banner-39a57109df
 old_path: 
 draft: true
 ---
@@ -13,31 +13,33 @@ Delta Reign came out on November 6. Every new set raises the same question: do y
 
 I have daily prices for every Mega Evolution set since release, so instead of guessing, I lined Delta Reign up against the last five sets on the same days after release.
 
-*Prices are TCGplayer market prices through November 19. "Master set" means the market price of every printing in the set added together, the same method as [Master Sets, Part 2](/articles/master-sets-part-2-japanese-vs-english).*
+*Prices are TCGplayer market prices through November 20. "Master set" means the market price of every printing in the set added together, the same method as [Master Sets, Part 2](/articles/master-sets-part-2-japanese-vs-english).*
 
 ## Delta Reign so far
 
-The whole master set was worth **$1,121** on release day. Thirteen days later it's **$935**, down **17%**.
+The whole master set was worth **$1,121** on release day. Two weeks later it's **$934**, down **17%**.
 
 The big cards:
 
-- **Mega Rayquaza ex** (Special Illustration Rare, 138/103): $328 → **$283** (−14%)
-- **Mega Rayquaza ex** (Mega Hyper Rare, 141/103): $349 → **$221** (−37%)
-- **Raikou ex** (Special Illustration Rare, 136/103): $82 → **$102** (+25%)
-- **Kecleon** (Illustration Rare, 117/103): $15 → **$27** (+87%)
+- **Mega Rayquaza ex** (Special Illustration Rare, 138/103): $328 → **$292** (−11%)
+- **Mega Rayquaza ex** (Mega Hyper Rare, 141/103): $349 → **$220** (−37%)
+- **Raikou ex** (Special Illustration Rare, 136/103): $82 → **$100** (+23%)
+- **Kecleon** (Illustration Rare, 117/103): $15 → **$24** (+63%)
 
-So it's not all falling. The two Rayquazas came down, but a couple of cards people actually like the art on went *up*. Kecleon nearly doubled. [ADAM: Kecleon joke here?]
+So it's not all falling. The two Rayquazas came down, but a couple of cards people actually like the art on went *up*. Kecleon is up more than 60%. [ADAM: Kecleon joke here?]
+
+[[cards 728061 728062 726574 726567]]
 
 ## How it compares with the last five sets
 
-Here's each set's master set value on day 13, compared with release day:
+Here's each set's master set value on day 14, compared with release day:
 
 - **Phantasmal Flames:** −36%
-- **Chaos Rising:** −33%
-- **Pitch Black:** −29%
+- **Chaos Rising:** −34%
+- **Pitch Black:** −30%
 - **Delta Reign:** −17%
-- **Mega Evolution:** +1%
-- **Perfect Order:** +5%
+- **Mega Evolution:** −9%
+- **Perfect Order:** +4%
 
 Delta Reign is falling more slowly than most. But the first two weeks are just the start. Here's where those same sets were about **three months** after release:
 
@@ -47,7 +49,7 @@ Delta Reign is falling more slowly than most. But the first two weeks are just t
 - **Phantasmal Flames:** −44%
 - **Perfect Order:** −17%
 
-On average, a Mega Evolution set's master set lost **almost half its value in the first 90 days**. Even Perfect Order and Mega Evolution, which held steady through week two, dropped later.
+On average, a Mega Evolution set's master set lost **almost half its value in the first 90 days**. Even Perfect Order and Mega Evolution, which held up best through the first two weeks, dropped later.
 
 ## The chase cards fall the hardest
 
@@ -58,7 +60,7 @@ Top chase cards, release day vs about 90 days later:
 - **Mega Lucario ex** (Mega Evolution): $587 → $327 (−44%)
 - **Mega Charizard X ex** (Phantasmal Flames): $810 → $613 (−24%)
 
-Charizard is the exception, as always. It climbed back to $830 about six months in, before settling at $531 today. Everything else just kept sliding.
+Charizard is the exception, as always. It climbed back to $830 about six months in, before settling at $529 today. Everything else just kept sliding.
 
 ## Sealed holds up better
 
@@ -70,11 +72,11 @@ Booster boxes, release day vs about 90 days later:
 - **Phantasmal Flames:** $287 → $275 (−4%)
 - **Perfect Order:** $207 → $218 (+5%)
 
-That's a much smaller drop than the singles. And the older ones have come back: when I wrote this, a Phantasmal Flames box was **$374** (30% above release), and Mega Evolution was right back at its release price of around $300. Here's where they are today:
+That's a much smaller drop than the singles. And the older ones have come back: when I wrote this, a Phantasmal Flames box was **$372** (30% above release), and Mega Evolution was right back at its release price of around $300. Here's where they are today:
 
 [[market 654137 644298 684444 692939 672394]]
 
-Delta Reign's booster box has gone from $215 to **$193** (−10%), which is right in line with the others. The one to watch is the **Pokémon Center Elite Trainer Box**, which has already halved, from $270 to $135.
+Delta Reign's booster box has gone from $215 to **$194** (−10%), which is right in line with the others. The one to watch is the **Pokémon Center Elite Trainer Box**, which has already halved, from $270 to $135.
 
 Delta Reign's sealed products right now:
 
