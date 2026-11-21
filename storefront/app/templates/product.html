@@ -61,15 +61,9 @@
         <a class="btn" href="/cart" data-view-cart hidden>View cart</a>
       </form>
       <p class="small muted" data-added role="status"></p>
-      <p class="small muted note">Free US shipping on orders over ${{ '{:,}'.format(settings.free_shipping_over_cents // 100) }}. Also on <a href="{{ buy_url }}">TCGplayer</a>.</p>
-      {#- Trust lines (owner, 2026-11-19): facts the owner gave; keep them in step with
-          content/pages/shipping.md and about.md if anything changes. #}
-      <ul class="trust small">
-        <li>Ships within 1 business day</li>
-        <li>Bubble wrap, in a cardboard box</li>
-        <li>Tracking and signature on every order</li>
-        <li>Selling Pokémon since July 2025</li>
-      </ul>
+      {#- The buy box holds only what buying needs (owner, 2026-11-20); the store's promises
+          sit under it in "Shipping and returns". #}
+      <p class="small muted note">Free US shipping on orders over ${{ '{:,}'.format(settings.free_shipping_over_cents // 100) }}.</p>
       {% elif checkout_enabled %}
       <p><strong>Sold out.</strong> Check our TCGplayer store, or email us to ask about a restock.</p>
       <p><a class="btn" href="{{ buy_url }}">TCGplayer store</a>
@@ -85,15 +79,25 @@
       {% endif %}
     </div>
 
-    <dl class="specs">
-      <dt>Shipping</dt><dd>{{ ship_class_labels.get(product.ship_class, product.ship_class) }}. US only. <a href="/shipping">Shipping policy</a></dd>
-      <dt>Returns</dt><dd>Unopened in original wrap within 14 days. <a href="/returns">Returns policy</a></dd>
-    </dl>
+    {#- Shipping and returns (owner's facts, 2026-11-19/20: packed in a box or a padded mailer,
+        whichever suits the order, always tracked and signed for). Keep in step with
+        content/pages/shipping.md, returns.md and about.md if anything changes. #}
+    <section class="assure" aria-labelledby="ship-h">
+      <h2 id="ship-h">Shipping and returns</h2>
+      <ul class="trust small">
+        <li>Ships within 1 business day, US only</li>
+        <li>Tracking and signature on every order</li>
+        <li>Bubble wrapped, in a box or padded mailer</li>
+        <li>Returns: unopened, in original wrap, within 14 days</li>
+      </ul>
+      <p class="small muted"><a href="/shipping">Shipping policy</a> · <a href="/returns">Returns policy</a> ·
+        Selling Pokémon since July 2025{% if checkout_enabled %} · Also on <a href="{{ buy_url }}" rel="sponsored noopener">TCGplayer</a>{% endif %}</p>
+    </section>
 
     {% if product.description_md %}
     <section class="description" aria-labelledby="desc-h">
       <h2 id="desc-h">Details</h2>
-      {{ product.description_md | markdown | safe }}
+      {{ product.description_md | description | safe }}
     </section>
     {% endif %}
   </div>

@@ -44,6 +44,13 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-20 Store product page tidied (owner): the buy box holds only quantity, Add to cart and
+  the free-shipping line; a "Shipping and returns" section under it has the ticks (1 business day,
+  US only; tracking and signature; bubble wrapped in a box or padded mailer; 14-day returns), the
+  policy links, "selling since July 2025" and the TCGplayer link. The internal ship class label is
+  gone. Packing is "a box or a padded mailer" everywhere ("never a padded mailer" removed).
+  Descriptions: a leading "Product Details" heading is dropped and bold with a space inside it
+  ("**Card Text: **") renders (app/markdown.py render_description).
 - 2026-11-20 Store trust lines and the Google review request. Trust lines (owner's facts:
   selling since July 2025; bubble wrap in a cardboard box; tracking and signature on every
   order; ships within 1 business day): a ticked list under Add to cart, plus the About and

@@ -509,6 +509,20 @@ def test_with_a_test_key_products_have_add_to_cart(app_client):
     assert app_client.get("/cart").status_code == 200
 
 
+def test_buy_box_holds_only_buying_and_promises_sit_below(app_client):
+    """Owner, 2026-11-20: the buy box is quantity, Add to cart and the free-shipping line; the
+    store's promises and the TCGplayer link go in "Shipping and returns" under it."""
+    page = app_client.get("/p/pokemon-booster-pack-japanese").text
+    box = page.split('<div class="buy-box">', 1)[1].split("</div>", 1)[0]
+    assert "Add to cart" in box and "Free US shipping" in box
+    assert "TCGplayer" not in box and "trust" not in box
+    below = page.split('<section class="assure"', 1)[1].split("</section>", 1)[0]
+    for text in ["Ships within 1 business day, US only", "Tracking and signature on every order",
+                 "box or padded mailer", "within 14 days", 'href="/shipping"', 'href="/returns"',
+                 "Selling Pokémon since July 2025", 'rel="sponsored noopener">TCGplayer']:
+        assert text in below, text
+
+
 def test_checkout_switch_off_means_catalog_only_even_with_keys(shop, fake):
     # The public launch runs with STOREFRONT_CHECKOUT=0 while the test keys stay in .env.
     off = dataclasses.replace(shop, checkout_switch=False)

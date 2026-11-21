@@ -254,7 +254,11 @@ main section { margin-top: 32px; }
 .buy-box p.note, .buy-box p[data-added] { display: block; }
 .buy-box p[data-added]:empty { display: none; }
 /* Trust lines under Add to cart: a short ticked list, wrapped into two columns when wide. */
-.trust { list-style: none; margin: 10px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 14px; color: var(--muted); }
+.assure { margin-top: 20px; }
+.assure h2, .description h2 { font-size: 1.05rem; margin: 0 0 8px; }
+.assure p { margin: 8px 0 0; }
+.trust { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 4px 14px; color: var(--muted); }
+.trust li { padding-left: 1.3em; text-indent: -1.3em; }  /* wrapped lines start under the text, not the tick */
 .trust li::before { content: "\2713"; color: var(--good); font-weight: 700; margin-right: 6px; }
 .add-to-cart { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 0 0 8px; }
 .add-to-cart select, .cart-line select { background: var(--panel); color: var(--text); border: 1px solid var(--line-strong);
