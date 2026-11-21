@@ -253,10 +253,11 @@ def market_boxes(html: str, market) -> str:
 
     Done per request, not at load time, because the prices change daily. Unknown IDs are
     skipped; a tag with none left disappears, so a post never shows a broken box.
+    Price rows carry no caption: a post with several rows would repeat it, so the article says
+    once, in its own words, that the boxes show today's prices (owner, 2026-11-21).
     """
     if "[[market" not in html and "[[cards" not in html:
         return html
-    latest = (market.data() or {}).get("latest_date")
 
     def replace(match: re.Match) -> str:
         with_price = match.group(1) == "market"
@@ -269,10 +270,7 @@ def market_boxes(html: str, market) -> str:
         if not boxes:
             return ""
         css = "market-boxes market-boxes-cards" if kinds == {"card"} else "market-boxes"
-        day = datetime.fromisoformat(latest) if latest else None
-        as_of = f" as of {day:%B} {day.day}" if day else ""
-        caption = (f"TCGplayer market prices{as_of}, updated daily." if with_price
-                   else "Card images from TCGplayer.")
-        return f'<figure class="{css}">{"".join(boxes)}<figcaption>{caption}</figcaption></figure>'
+        caption = "" if with_price else "<figcaption>Card images from TCGplayer.</figcaption>"
+        return f'<figure class="{css}">{"".join(boxes)}{caption}</figure>'
 
     return MARKET_TAG.sub(replace, html)

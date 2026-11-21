@@ -13,9 +13,11 @@ Delta Reign came out on November 6. Every new set raises the same question: do y
 
 I have daily prices for every Mega Evolution set since release, so instead of guessing, I lined Delta Reign up against the last five sets on the same days after release.
 
-*Prices are TCGplayer market prices through November 20. "Master set" means the market price of every printing in the set added together, the same method as [Master Sets, Part 2](/articles/master-sets-part-2-japanese-vs-english).*
+*"Master set" means the market price of every printing in the set added together, the same method as [Master Sets, Part 2](/articles/master-sets-part-2-japanese-vs-english).*
 
 ## Delta Reign so far
+
+*The prices in the text are TCGplayer market prices as of November 20, 2026. The boxes with pictures show today's TCGplayer market price and update every day, so if you're reading this a few months from now, compare the two and see how the set really did.*
 
 The whole master set was worth **$1,121** on release day. Two weeks later it's **$934**, down **17%**.
 

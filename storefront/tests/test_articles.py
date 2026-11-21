@@ -269,7 +269,7 @@ def test_market_boxes_use_todays_prices():
     assert "$192.54" in out and "▼ 19.1% in 30 days" in out and "Price history" in out
     assert "https://tcgplayer-cdn.tcgplayer.com/product/712094_200w.jpg" in out
     assert "Delta &lt;Reign&gt; ETB" in out                                     # names escaped
-    assert "as of November 19" in out and "Intro." in out and "Outro." in out
+    assert "<figcaption>" not in out and "Intro." in out and "Outro." in out    # no caption on prices
     # Cards show their set, and Japanese products say so (English and Japanese share names).
     market.products["655886"] = {"name": "Mega Charizard X ex - 110/080", "price": 654.46, "kind": "card",
                                  "group_name": "M2: Inferno X", "market": "JP", "roc_30d_pct": -8.0}
