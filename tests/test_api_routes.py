@@ -391,6 +391,18 @@ class ApiRouteTests(unittest.TestCase):
         response = self.client.post("/pricing-upload/compare", cookies={"pm_tracking_token": "token"})
         self.assertIn(response.status_code, (404, 405))
 
+    def test_retired_end_of_day_and_embed_send_old_bookmarks_to_admin(self):
+        # Retired 2026-11-20 (owner): admin-only research views. Signed in or not, the old
+        # addresses land on /admin, and the End of Day data routes are gone.
+        for path in ("/eod-dashboard", "/embed"):
+            response = self.client.get(path, follow_redirects=False)
+            self.assertEqual(response.status_code, 301)
+            self.assertEqual(response.headers["location"], "/admin")
+        self.assertEqual(self.client.head("/embed", follow_redirects=False).status_code, 301)
+        for path in ("/eod/market_details", "/eod/index_list", "/eod/index_components?index=1",
+                     "/eod/series?code=1"):
+            self.assertEqual(self.client.get(path).status_code, 404)
+
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_bug_reports_page_serves_html(self, _get_session_user_mock):
         response = self.client.get("/bug-reports", cookies={"pm_tracking_token": "token"})

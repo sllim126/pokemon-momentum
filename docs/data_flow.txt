@@ -894,10 +894,6 @@ Mobile app (phones, since 2026-10-31; replaced mobile_dashboard.html and dashboa
 
 - [mobile_app.html](/opt/pokemon-momentum/scripts/dashboards/mobile_app.html)
 
-Embed dashboard:
-
-- [embed_dashboard.html](/opt/pokemon-momentum/scripts/dashboards/embed_dashboard.html)
-
 Set explorer:
 
 - [set_explorer.html](/opt/pokemon-momentum/scripts/dashboards/set_explorer.html)
@@ -927,12 +923,6 @@ Additional dashboard behavior:
 - keyboard stepping can walk the current list without repeated mouse clicks
 - tags can stay local-only or sync through the new tracking account flow
 - the account dropdown can jump directly into the `Tracked` tab
-
-Embed dashboard responsibilities (admin-only at `/embed`):
-
-- compact feed designed for embedding in an iframe
-- one chart
-- minimal controls
 
 Set explorer responsibilities:
 

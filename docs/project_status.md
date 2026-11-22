@@ -130,8 +130,6 @@ The following pages require a Google sign-in listed in `POKEMON_MOMENTUM_ADMIN_U
 | Route | Purpose |
 | --- | --- |
 | `/admin` | Index of the admin tools |
-| `/eod-dashboard` | End-of-day market data view |
-| `/embed` | Lightweight internal/embed dashboard |
 | `/bug-reports` | Internal feedback and bug queue |
 | `/supplier-pricing` | Review and save supplier quotes |
 | `/supplier-profitability` | Forwards to the store admin's Supplier Profitability (moved 2026-11-21) |
