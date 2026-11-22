@@ -7,7 +7,7 @@ categories: Market Talk
 tags: Pokémon TCG, Delta Reign, Mega Evolution, TCG Market Analysis, Sealed
 cover: delta-reign-banner-39a57109df
 old_path: 
-draft: true
+draft: false
 ---
 Delta Reign came out on November 6. Every new set raises the same question: do you buy the cards you want now, or wait for prices to settle?
 
