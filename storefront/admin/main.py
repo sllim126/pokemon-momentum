@@ -43,7 +43,7 @@ from ..app.db import connect, latest_migration, migrate
 from ..app.market import MarketReference
 from ..app.settings import Settings, load_settings
 from ..app.stripe_api import StripeClient
-from . import orders_view, overview, packing_slip, pricing_view, products_view, refunds, shipping
+from . import orders_view, overview, packing_slip, pricing_view, products_view, refunds, shipping, supplier_profit
 from .auth import COOKIE_NAME, SESSION_DAYS, Lockout, Sessions, check_password
 
 log = logging.getLogger("storefront.admin")
@@ -110,6 +110,10 @@ class AdminConfig:
     backup_dir: Path | None = None
     # The owner's private costs file, for the Pricing page (pricing_view.py). Read-only mount.
     costs_file: Path | None = None
+    # Supplier Profitability (supplier_profit.py): the quote ledger and the market targets, both
+    # read-only files under data/ (the admin mounts data/ read-only).
+    supplier_quotes_file: Path | None = None
+    market_targets_file: Path | None = None
     # The admin's own restricted Stripe key (Charges and Refunds write), for refunds (refunds.py).
     # The public store never gets it (docker-compose passes it to the admin only).
     stripe_refund_key: str = ""
@@ -127,6 +131,8 @@ def load_config(settings: Settings) -> AdminConfig:
         session_secret=os.getenv("STOREFRONT_ADMIN_SESSION_SECRET", "").strip(),
         backup_dir=Path(os.getenv("STOREFRONT_ADMIN_BACKUP_DIR", str(default_backups))),
         costs_file=Path(os.getenv("STOREFRONT_ADMIN_COSTS_FILE", "/app/costs/store_sku_costs.csv")),
+        supplier_quotes_file=settings.data_dir.parent / "supplier_quotes.csv",
+        market_targets_file=settings.data_dir.parent / "market_prices_latest.csv",
         stripe_refund_key=os.getenv("STOREFRONT_ADMIN_STRIPE_KEY", "").strip(),
     )
 
@@ -155,13 +161,15 @@ def _same_origin(request: Request) -> bool:
 
 
 def create_admin_app(settings: Settings | None = None, config: AdminConfig | None = None,
-                     refund_client=None) -> FastAPI:
+                     refund_client=None, fx_rate: supplier_profit.FxRate | None = None) -> FastAPI:
     """`refund_client`: tests pass a fake with create_refund(); otherwise a StripeClient on the
-    admin's refund key, or None when that key isn't set (the refund form then says so)."""
+    admin's refund key, or None when that key isn't set (the refund form then says so).
+    `fx_rate`: tests pass one with a fake fetch; otherwise the live Frankfurter rate."""
     settings = settings or load_settings()
     config = config or load_config(settings)
     if refund_client is None and config.stripe_refund_key:
         refund_client = StripeClient(config.stripe_refund_key)
+    fx_rate = fx_rate or supplier_profit.FxRate()
     sessions = Sessions(config.session_secret, config.password_hash) if config.ready else None
     lockout = Lockout()
     if not config.ready:
@@ -180,6 +188,8 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
     templates.env.filters["money"] = notify.money
     templates.env.filters["when"] = notify.local_time
     templates.env.filters["hours"] = overview.hours_label
+    # A form number without a pointless ".0" (13800.0 -> 13800, 2.9 -> 2.9).
+    templates.env.filters["num"] = lambda value: f"{value:g}" if isinstance(value, float) else value
     templates.env.globals.update(settings=settings)
     market = MarketReference(settings.market_reference_path)
     # Product photos for the Products pages (the 480 px copies; images.py has the layout).
@@ -870,6 +880,29 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
         log.info("Pricing: %d price(s) applied from the admin, %d skipped as changed", changed, stale)
         return RedirectResponse(f"/pricing?{urlencode({'done': 'applied', 'n': changed, 'stale': stale})}",
                                 status_code=303)
+
+    @app.get("/supplier-profitability", response_class=HTMLResponse)
+    def supplier_profitability(request: Request):
+        """Supplier quotes against store, market and target prices (supplier_profit.py). A GET
+        form: every assumption is a query parameter, so nothing here changes anything."""
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        query = request.query_params
+        typed_rate = supplier_profit.number(query.get("jpy_per_usd"), None)
+        fx = fx_rate.get()
+        a = supplier_profit.read_assumptions(query, fx["rate"] if fx else None)
+        quotes, unmatched = supplier_profit.latest_quotes(config.supplier_quotes_file or Path("/nonexistent"))
+        market_rows = supplier_profit.market_targets(config.market_targets_file or Path("/nonexistent"))
+        with db() as conn:
+            store = supplier_profit.store_prices(conn)
+        result = supplier_profit.build(quotes, unmatched, market_rows, store, a)
+        decision, needle = str(query.get("decision") or ""), str(query.get("q") or "")
+        return page(request, "supplier_profitability.html", cookie, active="suppliers", a=a, fx=fx,
+                    typed_rate=typed_rate, result=result, shown=supplier_profit.visible(result["rows"], decision, needle),
+                    decision=decision, needle=needle, decisions=supplier_profit.DECISIONS,
+                    references=supplier_profit.REFERENCES, quick=supplier_profit.quick_quote(query, a),
+                    query=query)
 
     @app.exception_handler(404)
     async def not_found(request: Request, _exc):
