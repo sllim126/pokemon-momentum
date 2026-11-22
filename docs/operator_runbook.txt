@@ -495,14 +495,15 @@ If poke6s.com is down:
 Store Pricing Ops
 -----------------
 Since 2026-11-20 (storefront plan D11) poke6s.com runs on its own store, so this site keeps
-only the two supplier pages; the Squarespace Export Upload and Singles Listing Intake were
+only Supplier Pricing (Supplier Profitability moved to the store admin, 2026-11-21); the Squarespace Export Upload and Singles Listing Intake were
 retired (their old addresses redirect to `/admin`).
 
 - `/supplier-pricing`
   - upload or OCR supplier screenshots and save reviewed JPY quote rows by SKU
-- `/supplier-profitability`
-  - compare latest supplier costs against market and store prices, with editable supplier-side
-    and buyer-side assumptions
+- Supplier Profitability: moved to the store admin on 2026-11-21
+  (http://192.168.1.240:8011/supplier-profitability, home network only; the market address
+  forwards there). Compares the latest supplier costs against market and store prices, with
+  editable supplier-side and buyer-side assumptions
 
 Inputs:
 
@@ -678,7 +679,7 @@ What each page is expected to do
   - if OCR rows have blank SKU, check `data/supplier_name_mapping.csv`
   - if a quote was saved but not reflected later, confirm the SKU was populated on save
 
-`/supplier-profitability`
+Supplier Profitability (store admin, `/supplier-profitability`; storefront/admin/supplier_profit.py)
 
 - Purpose:
   - answer whether one unit is profitable under current supplier-side and buyer-side assumptions
@@ -690,8 +691,10 @@ What each page is expected to do
   - per-unit rows with landed cost, break-even, target-margin price, and decision status
 - Important interpretation:
   - results are per unit, not whole-order totals
-  - `Estimate from Order` allocates whole-order shipping down to one box
-  - `Manual per Item` ignores order shipping and uses only the manual inbound value
+  - "Split the order's shipping" allocates whole-order shipping down to one box
+  - "Per box" ignores order shipping and uses only the per-box inbound value
+  - an empty field takes the default; 0 stays 0
+  - the JPY/USD rate is Frankfurter's latest (cached an hour); a typed rate wins
 
 Generated target file fields
 ----------------------------

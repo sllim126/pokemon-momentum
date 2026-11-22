@@ -1,0 +1,154 @@
+{#- Supplier Profitability (moved from the market site 2026-11-21): supplier_profit.py does the maths.
+    One GET form holds every assumption, the filter and the quick calculator, so the page needs no
+    script and a set of assumptions can be bookmarked. -#}
+{% extends "base.html" %}
+{% macro field(name, label, value, step="0.01") -%}
+<label>{{ label }}<input type="number" name="{{ name }}" value="{{ value | num }}" step="{{ step }}" inputmode="decimal"></label>
+{%- endmacro %}
+{% macro verdict(decision) -%}
+<span class="badge sp-{{ decision | lower | replace(' ', '-') }}">{{ decision }}</span>
+{%- endmacro %}
+{% macro usd(value) %}{% if value is none %}–{% elif value < 0 %}−${{ '%.2f' % -value }}{% else %}${{ '%.2f' % value }}{% endif %}{% endmacro %}
+{% block title %}Supplier Profitability{% endblock %}
+{% block main %}
+<div class="page-head"><h1>Supplier Profitability</h1>
+  <span class="muted small">{% if fx and not typed_rate %}JPY/USD {{ fx.rate }} from Frankfurter{% if fx.date %}, {{ fx.date }}{% endif %}{% if fx.stale %} (last good rate; refresh failed){% endif %}
+    {%- elif typed_rate %}Using your rate, {{ a.jpy_per_usd | num }} JPY/USD{% else %}Live rate unavailable; using {{ a.jpy_per_usd | num }} JPY/USD{% endif %}</span>
+</div>
+<p class="muted small">Each SKU's newest supplier quote against what it sells for: the landed cost of one box, the price that
+  breaks even and the price that makes the target margin on each channel, and the verdict at that channel's reference price.
+  Quotes come from Supplier Pricing on the market site (<code>data/supplier_quotes.csv</code>).</p>
+
+<form method="get" action="/supplier-profitability" class="sp-form">
+<section class="panel">
+  <h2>Assumptions</h2>
+  <div class="columns sp-halves">
+    <fieldset>
+      <legend>Buying: getting one box to us</legend>
+      <div class="sp-grid">
+        {{ field("jpy_per_usd", "JPY per USD", a.jpy_per_usd) }}
+        {{ field("import_duty_pct", "Import duty %", a.import_duty_pct) }}
+        <label>Inbound shipping
+          <select name="inbound_shipping_mode">
+            <option value="order-estimate" {% if a.inbound_shipping_mode == 'order-estimate' %}selected{% endif %}>Split the order's shipping</option>
+            <option value="manual" {% if a.inbound_shipping_mode == 'manual' %}selected{% endif %}>Per box (below)</option>
+          </select></label>
+        {{ field("order_shipping_jpy", "Order shipping JPY", a.order_shipping_jpy, "1") }}
+        {{ field("order_box_count", "Boxes in the order", a.order_box_count, "1") }}
+        {{ field("inbound_shipping_usd", "Per-box shipping USD", a.inbound_shipping_usd) }}
+        {{ field("handling_cost_usd", "Packaging, handling USD", a.handling_cost_usd) }}
+        {{ field("disbursement_fee_usd", "Disbursement fee USD (per order)", a.disbursement_fee_usd) }}
+      </div>
+      <p class="muted small">Inbound shipping per box now: {{ usd(a.inbound_per_box_usd) }}{% if a.inbound_shipping_mode == 'order-estimate' %}
+        (order shipping ÷ boxes ÷ rate){% endif %}. The disbursement fee is charged once per order, so each box carries
+        {{ usd(a.disbursement_per_box_usd) }}.</p>
+    </fieldset>
+    <fieldset>
+      <legend>Selling: every channel</legend>
+      <div class="sp-grid">
+        {{ field("outbound_shipping_usd", "Shipping to the buyer USD", a.outbound_shipping_usd) }}
+        {{ field("shipping_credit_usd", "Shipping the buyer pays USD", a.shipping_credit_usd) }}
+        {{ field("income_tax_pct", "Income tax %", a.income_tax_pct) }}
+        {{ field("target_margin_pct", "Target margin %", a.target_margin_pct) }}
+      </div>
+      <table class="sp-channels">
+        <thead><tr><th>Channel</th><th>Judged against</th><th class="num">Platform %</th><th class="num">Payment %</th><th class="num">Per sale $</th></tr></thead>
+        <tbody>
+        {% for ch in a.channels.values() %}
+          <tr><td>{{ ch.name }}</td>
+            <td><select name="{{ ch.key }}_reference" aria-label="{{ ch.name }}: judged against">
+              {% for key, label in references.items() %}<option value="{{ key }}" {% if ch.reference == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select></td>
+            <td><input type="number" name="{{ ch.key }}_platform_fee_pct" value="{{ ch.platform_fee_pct | num }}" step="0.01" aria-label="{{ ch.name }} platform fee %"></td>
+            <td><input type="number" name="{{ ch.key }}_payment_fee_pct" value="{{ ch.payment_fee_pct | num }}" step="0.01" aria-label="{{ ch.name }} payment fee %"></td>
+            <td><input type="number" name="{{ ch.key }}_payment_fee_fixed" value="{{ ch.payment_fee_fixed | num }}" step="0.01" aria-label="{{ ch.name }} fee per sale"></td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <p class="muted small">Store price is the poke6s.com price; market and target prices come from
+        <code>data/market_prices_latest.csv</code>.</p>
+    </fieldset>
+  </div>
+  <p class="actions"><button type="submit">Recalculate</button> <a class="button secondary" href="/supplier-profitability">Back to the defaults</a></p>
+</section>
+
+<div class="tiles sp-tiles">
+  <div class="tile"><span class="label">Quoted SKUs</span><strong>{{ result.rows | length }}</strong></div>
+  <div class="tile"><span class="label">Buy</span><strong class="good-text">{{ result.counts['Buy'] }}</strong></div>
+  <div class="tile warn"><span class="label">Thin margin</span><strong>{{ result.counts['Thin margin'] }}</strong></div>
+  <div class="tile bad"><span class="label">Pass</span><strong>{{ result.counts['Pass'] }}</strong></div>
+  <div class="tile"><span class="label">Avg profit, best channel</span><strong>{{ usd(result.avg_best_profit) }}</strong></div>
+</div>
+
+<section class="panel">
+  <div class="page-head"><h2>Quotes ({{ shown | length }}{% if shown | length != result.rows | length %} of {{ result.rows | length }}{% endif %})</h2>
+    <div class="search">
+      <select name="decision" aria-label="Verdict">
+        <option value="">Every verdict</option>
+        {% for d in decisions %}<option value="{{ d }}" {% if decision == d %}selected{% endif %}>{{ d }}</option>{% endfor %}
+      </select>
+      <input type="search" name="q" value="{{ needle }}" placeholder="SKU or title" aria-label="Filter by SKU or title">
+      <button type="submit" class="secondary">Filter</button>
+    </div>
+  </div>
+  {% if result.unmatched %}<p class="muted small">{{ result.unmatched }} quote row(s) have no SKU yet and are left out: match them
+    in Supplier Pricing (or in <code>data/supplier_name_mapping.csv</code>).</p>{% endif %}
+  {% if not result.rows %}
+  <p class="muted">No supplier quotes with a SKU yet.</p>
+  {% elif not shown %}
+  <p class="muted">No quotes match the filter.</p>
+  {% else %}
+  <div class="sp-scroll">
+  <table class="sp-table">
+    <thead><tr><th>Verdict</th><th>Product</th><th class="num">Quote</th><th class="num">Landed</th><th class="num">Lowest floor</th>
+      {% for ch in a.channels.values() %}<th>{{ ch.name }}</th>{% endfor %}</tr></thead>
+    <tbody>
+    {% for row in shown %}
+      <tr>
+        <td>{{ verdict(row.decision) }}<br><span class="muted small">{{ row.best }}</span></td>
+        <td><strong class="wrap">{{ row.title }}</strong><br><span class="muted small">{{ row.sku }}{% if row.supplier %} · {{ row.supplier }}{% endif %}</span></td>
+        <td class="num"><span class="nowrap">{{ '{:,}'.format(row.cost_jpy) }} JPY</span><br><span class="muted small nowrap">{{ row.quote_date }}</span></td>
+        <td class="num">{{ usd(row.landed) }}<br><span class="muted small nowrap">box {{ usd(row.cost_usd) }}</span><br><span class="muted small nowrap">ship {{ usd(row.inbound_usd) }}</span></td>
+        <td class="num">{{ usd(row.floor) }}</td>
+        {% for c in row.channels.values() %}
+        <td class="small">{{ verdict(c.decision) }}<br>{{ c.reference }}: {{ usd(c.reference_price) }}<br>Floor {{ usd(c.for_margin) }}
+          {% if c.profit_after_tax is not none %}<br><span class="muted">{{ usd(c.profit_after_tax) }} after tax · {{ c.margin_after_tax_pct }}%</span>{% endif %}</td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="muted small">Floor: the price that makes the target margin on that channel. Buy: the reference price reaches the
+    floor. Thin margin: it breaks even but misses the target. Pass: it loses money. Income tax is taken off profits only.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Quick calculator</h2>
+  <p class="muted small">Check one quote with the assumptions above. Nothing is saved.</p>
+  <div class="sp-grid sp-quick">
+    <label>Item<input type="text" name="q_item" value="{{ query.get('q_item', '') }}" placeholder="Black Bolt box"></label>
+    <label>Vendor<input type="text" name="q_vendor" value="{{ query.get('q_vendor', '') }}" placeholder="Optional"></label>
+    <label>Vendor price<input type="number" name="q_price" value="{{ query.get('q_price', '') }}" step="0.01" min="0"></label>
+    <label>Currency<select name="q_currency">
+      <option value="jpy" {% if query.get('q_currency', 'jpy') == 'jpy' %}selected{% endif %}>JPY</option>
+      <option value="usd" {% if query.get('q_currency') == 'usd' %}selected{% endif %}>USD</option></select></label>
+    <label>Your site price<input type="number" name="q_site_price" value="{{ query.get('q_site_price', '') }}" step="0.01" placeholder="Optional"></label>
+    <label>Your eBay price<input type="number" name="q_ebay_price" value="{{ query.get('q_ebay_price', '') }}" step="0.01" placeholder="Optional"></label>
+  </div>
+  <p class="actions"><button type="submit">Calculate</button></p>
+  {% if quick %}
+  <div class="sp-quick-result">
+    <dl class="facts"><dt>{{ quick.item or "This quote" }}</dt><dd>{{ quick.price_label }}{% if quick.vendor %} from {{ quick.vendor }}{% endif %}</dd>
+      <dt>Landed</dt><dd>{{ usd(quick.landed) }}</dd><dt>With shipping to the buyer</dt><dd>{{ usd(quick.fixed) }}</dd></dl>
+    {% for c in (quick.site, quick.ebay) %}
+    <dl class="facts"><dt>{{ c.name }}</dt><dd>{{ verdict(c.decision) }}</dd>
+      <dt>Break even</dt><dd>{{ usd(c.break_even) }}</dd><dt>For the target margin</dt><dd>{{ usd(c.for_margin) }}</dd>
+      {% if c.profit_after_tax is not none %}<dt>At {{ usd(c.reference_price) }}</dt><dd>{{ usd(c.profit_after_tax) }} after tax</dd>{% endif %}</dl>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+</form>
+{% endblock %}

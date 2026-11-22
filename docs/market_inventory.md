@@ -1,6 +1,6 @@
 # market.poke6s.com inventory: what to keep, move or retire
 
-Last reviewed: 2026-11-20 (owner chose option B; Binder Art Maker, Collector Hub and Placeholder Library moved)
+Last reviewed: 2026-11-21 (owner chose option B; Binder Art Maker, Collector Hub and Placeholder Library moved; Supplier Profitability into the admin)
 
 ## Why this exists
 
@@ -13,8 +13,8 @@ each piece, so that decision can be made piece by piece.
 
 **Decided 2026-11-20: option B** (below). Done so far: Binder Art Maker (now
 poke6s.com/binder-art), Collector Hub (poke6s.com/collector-hub) and Placeholder Library
-(poke6s.com/placeholders, with all its print pages, checklists and files). Next: the owner
-tools into the admin. The "Decide" rows
+(poke6s.com/placeholders, with all its print pages, checklists and files), and the first owner
+tool, Supplier Profitability, into the store admin (2026-11-21). Next: Supplier Pricing. The "Decide" rows
 are still open.
 
 Already done towards "one site": the same Shop / Market / Admin bar across the top of all three
@@ -83,7 +83,7 @@ Homes: **Market** = stays a research site (at market.poke6s.com or poke6s.com/ma
 | Part | What it does | Suggested home |
 | --- | --- | --- |
 | Supplier Pricing (`/supplier-pricing`) | Read a supplier's price sheet (OCR), save quotes | **Admin.** Owner-only and about buying stock for the store; the costs file is already in the admin |
-| Supplier Profitability (`/supplier-profitability`) | Supplier cost vs market vs store price, per channel | **Admin**, next to the Pricing page (both answer "what should this sell for") |
+| Supplier Profitability (`/supplier-profitability`) | Supplier cost vs market vs store price, per channel | **Admin. Moved 2026-11-21** (admin "Suppliers" tab, `storefront/admin/supplier_profit.py`); the market address forwards signed-in admins there |
 | Bug Reports (`/bug-reports`) | Reports from Discord and review notes | **Admin** (one owner home, step 9c) or stays; Discord stays the inbox either way |
 | End of Day, Embed | Older research views | Kept as they are by D11 (2026-11-14). **Decide** whether they still earn their keep. (Dashboard Lab, the old prototype, was deleted 2026-11-20) |
 | Admin index (`/admin`) | Links to the above | Becomes the "one owner home" (9c) |

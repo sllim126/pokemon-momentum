@@ -392,14 +392,6 @@ class ApiRouteTests(unittest.TestCase):
         self.assertIn(response.status_code, (404, 405))
 
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
-    def test_supplier_profitability_page_serves_html(self, _get_session_user_mock):
-        response = self.client.get("/supplier-profitability", cookies={"pm_tracking_token": "token"})
-
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("text/html", response.headers["content-type"])
-        self.assertIn("Supplier Profitability", response.text)
-
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
     def test_bug_reports_page_serves_html(self, _get_session_user_mock):
         response = self.client.get("/bug-reports", cookies={"pm_tracking_token": "token"})
 
@@ -1095,73 +1087,16 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(prices["JP-TEST-BOX"], {"title": "Test Set Box", "current_price": "129.99", "visible": True})
         self.assertFalse(prices["HIDDEN"]["visible"])
 
-    @patch.object(api, "load_latest_market_targets", return_value={"JP-TEST-BOX": {"market_price": "120.00", "target_price": "125.00", "title": "Test Set Box"}})
-    @patch.object(api, "load_store_prices", return_value={"JP-TEST-BOX": {"current_price": "129.99", "title": "Test Set Box"}})
-    @patch.object(api, "load_latest_supplier_quotes", return_value=([{"sku": "JP-TEST-BOX", "cost_jpy": "6500", "quote_date": "2026-04-27", "supplier_name": "Test Supplier", "item_name_raw": "Test Set Box"}], []))
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
-    def test_supplier_profitability_data_returns_channel_breakdown(
-        self,
-        _get_session_user_mock,
-        _load_latest_supplier_quotes_mock,
-        _load_store_prices_mock,
-        _load_latest_market_targets_mock,
-    ):
-        response = self.client.post(
-            "/supplier-profitability/data",
-            json={
-                "jpy_per_usd": 100,
-                "import_duty_pct": 0,
-                "inbound_shipping_mode": "manual",
-                "inbound_shipping_usd": 5,
-                "handling_cost_usd": 1,
-                "outbound_shipping_usd": 8,
-                "shipping_credit_usd": 0,
-                "disbursement_fee_usd": 0,
-                "income_tax_pct": 25,
-                "target_margin_pct": 15,
-                "channels": {
-                    "site": {"reference_source": "store", "platform_fee_pct": 0, "payment_fee_pct": 3, "payment_fee_fixed": 0.3},
-                    "ebay": {"reference_source": "target", "platform_fee_pct": 13.25, "payment_fee_pct": 0, "payment_fee_fixed": 0.3},
-                    "tcgplayer": {"reference_source": "market", "platform_fee_pct": 10.25, "payment_fee_pct": 2.5, "payment_fee_fixed": 0.3},
-                },
-            },
-            cookies={"pm_tracking_token": "token"},
-        )
-
-        self.assertEqual(response.status_code, 200)
-        payload = response.json()
-        self.assertTrue(payload["ok"])
-        self.assertEqual(payload["stats"]["rows"], 1)
-        row = payload["rows"][0]
-        self.assertEqual(row["sku"], "JP-TEST-BOX")
-        self.assertEqual(row["best_channel_key"], "site")
-        self.assertEqual(row["decision"], "Buy")
-        self.assertEqual(row["channels"]["site"]["reference_source"], "store")
-        self.assertEqual(row["channels"]["site"]["decision"], "Buy")
-        self.assertIn("ebay", row["channels"])
-        self.assertIn("tcgplayer", row["channels"])
-        self.assertGreater(row["channels"]["ebay"]["required_price_for_target_margin"], row["channels"]["site"]["required_price_for_target_margin"])
-
-    @patch.object(api, "load_latest_market_targets", return_value={"JP-TEST-BOX": {"market_price": "120.00", "target_price": "125.00", "title": "Test Set Box"}})
-    @patch.object(api, "load_store_prices", return_value={"JP-TEST-BOX": {"current_price": "129.99", "title": "Test Set Box"}})
-    @patch.object(api, "load_latest_supplier_quotes", return_value=([{"sku": "JP-TEST-BOX", "cost_jpy": "6500", "quote_date": "2026-04-27", "supplier_name": "Test Supplier", "item_name_raw": "Test Set Box"}], []))
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
-    def test_supplier_disbursement_fee_is_split_across_the_order(self, *_mocks):
-        """The $15 disbursement fee is per supplier order, so 10 boxes carry $1.50 each."""
-        def landed(box_count):
-            response = self.client.post(
-                "/supplier-profitability/data",
-                json={"jpy_per_usd": 100, "import_duty_pct": 0, "inbound_shipping_mode": "manual",
-                      "inbound_shipping_usd": 0, "handling_cost_usd": 0, "outbound_shipping_usd": 8,
-                      "disbursement_fee_usd": 15, "order_box_count": box_count},
-                cookies={"pm_tracking_token": "token"},
-            )
-            self.assertEqual(response.status_code, 200)
-            payload = response.json()
-            return payload["rows"][0]["landed_cost_usd"], payload["assumptions"]["disbursement_fee_per_unit_usd"]
-
-        self.assertEqual(landed(10), (66.5, 1.5))  # 6,500 JPY at 100 = $65.00, plus $1.50
-        self.assertEqual(landed(0), (80.0, 15.0))  # no box count: the whole fee
+    def test_supplier_profitability_moved_to_the_store_admin(self, _get_session_user_mock):
+        """Moved 2026-11-21; the maths and its tests are in storefront/admin/supplier_profit.py
+        and storefront/tests/test_admin_suppliers.py."""
+        response = self.client.get("/supplier-profitability", cookies={"pm_tracking_token": "token"}, follow_redirects=False)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["location"], f"{api.STORE_ADMIN_URL}/supplier-profitability")
+        for gone in ("/supplier-profitability/fx",):
+            self.assertEqual(self.client.get(gone, cookies={"pm_tracking_token": "token"}).status_code, 404)
+        self.assertEqual(self.client.post("/supplier-profitability/data", json={}, cookies={"pm_tracking_token": "token"}).status_code, 404)
 
     @patch.object(api, "create_bug_report", return_value=43)
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())

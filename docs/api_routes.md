@@ -37,7 +37,7 @@ The public routes below are public for Pokemon (3 and 85) only until a game is p
 | `/bug-reports` | `bug_reports.html` | admin | Review queue: Discord bug reports, old mobile Feedback form entries and owner review notes from the phone and desktop apps |
 | `/pricing-upload`, `/single-listings-upload` | none | anyone | Retired 2026-11-20 (D11): 301 to `/admin` |
 | `/supplier-pricing` | `supplier_pricing.html` | admin | Read supplier price sheets with OCR (tesseract.js) and compare to market |
-| `/supplier-profitability` | `supplier_profitability.html` | admin | Per-SKU profit for supplier buys; store prices read from `data/storefront/store.db` |
+| `/supplier-profitability` | none | admin | Moved 2026-11-21: 302 to the store admin's Supplier Profitability (`POKEMON_MOMENTUM_STORE_ADMIN_URL`, default http://192.168.1.240:8011) |
 | `/eod-dashboard`, `/embed` (GET and HEAD) | `eod_dashboard.html`, `embed_dashboard.html` | admin | Index/EOD research views |
 
 ## Shared files
@@ -117,6 +117,5 @@ The public routes below are public for Pokemon (3 and 85) only until a game is p
 | --- | --- | --- |
 | `/eod/market_details`, `/eod/index_list`, `/eod/index_components`, `/eod/series` | admin | EOD Historical Data index research |
 | `POST /supplier-pricing/enrich`, `POST /supplier-pricing/save` | admin | Match OCR-read supplier rows to SKUs and market prices; save reviewed quotes |
-| `POST /supplier-profitability/data`, `GET /supplier-profitability/fx` | admin | Profit rows per SKU; latest JPY-per-USD rate |
 | `/lorcana/images.json` | admin | `{ids: [...]}`: the productIds that have a Lorcana image, so the desktop app only asks for images that exist |
 | `/lorcana/images/{product_id}.avif` | admin | Lorcana card image downloaded from Lorcast (`data/lorcana_images/large/`); 404 when there is none, so pages use TCGplayer's image. Admin-only while Lorcana is internal (`docs/lorcana_market_plan.md`) |

@@ -44,6 +44,14 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-21 Supplier Profitability moved into the store admin (market option B, the first owner
+  tool): the "Suppliers" tab, http://192.168.1.240:8011/supplier-profitability
+  (storefront/admin/supplier_profit.py). Same maths as the market page, server-rendered with no
+  script: every assumption is a GET field, so a set can be bookmarked; an empty field takes the
+  default and 0 stays 0 (the market page turned some zeros back into defaults). JPY/USD from
+  Frankfurter, cached an hour, retried after 10 minutes when it fails. The market's
+  /supplier-profitability forwards signed-in admins there (302); its /data and /fx routes and
+  the old page are gone. Checked on the real quotes (42 SKUs) at 1920, 1366 and phone width.
 - 2026-11-21 Link check of market.poke6s.com (2026-11-20, owner asked: no dead links).
   Headless crawl of 240 pages, desktop and phone: 2,357 links, none dead. Its three small
   findings are settled: /dashboard-lab was deleted; the 60 products with no TCGplayer image get
@@ -487,8 +495,15 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     and customer addresses on the internet.
   - [next] Market option B (owner chose it 2026-11-20, docs/market_inventory.md): move the
     collector tools to poke6s.com, one at a time, with 301s from the old addresses. Done:
-    Binder Art Maker, Collector Hub and Placeholder Library (2026-11-20). Next: the owner
-    tools into the admin (Supplier Pricing, Supplier Profitability).
+    Binder Art Maker, Collector Hub and Placeholder Library (2026-11-20); Supplier
+    Profitability into the store admin (2026-11-21). Next: Supplier Pricing into the admin.
+    Two things to settle first: (1) saving quotes. The admin mounts data/ read-only, so
+    data/supplier_quotes.csv has to move (e.g. to data/storefront/, which the admin can write;
+    scripts/build_store_price_targets.py and the admin's Supplier Profitability read it too),
+    and data/supplier_name_mapping.csv with it; (2) the screenshot reading. The page loads
+    tesseract.js from cdn.jsdelivr.net, which the admin's CSP (script-src 'self') blocks: serve
+    a pinned copy from the admin's static folder (free; about 3 MB with its language data) or
+    read screenshots on the server instead.
   - [watching] The MEP promo list was checked against Bulbapedia's (pasted by the owner
     2026-11-20): staff copies, Game On! and tin copies, and MEP118/120/125-127/131 added to
     mega_placeholders.csv ahead of TCGplayer. Jumbo-only cards (No. 500 Pikachu at the Museum,

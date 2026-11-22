@@ -65,7 +65,7 @@ These routes require a Google sign-in whose email is listed in
 - `/embed`
 - `/bug-reports`
 - `/supplier-pricing`
-- `/supplier-profitability`
+- `/supplier-profitability` (forwards to the store admin since 2026-11-21)
 
 
 ## What The Project Does
