@@ -1,0 +1,102 @@
+{#- Supplier Pricing (moved from the market site 2026-11-22): supplier_quotes.py reads, matches and
+    saves. One POST form with three buttons (action = read / check / save), so the page needs no
+    script. `rows` is the checked table (None before the text is read). -#}
+{% extends "base.html" %}
+{% macro usd(value) %}{% if value is none or value == '' %}<span class="muted">–</span>{% else %}${{ '%.2f' % (value | float) }}{% endif %}{% endmacro %}
+{% block title %}Supplier Pricing{% endblock %}
+{% block main %}
+{% include "_suppliers_tabs.html" %}
+<div class="page-head"><h1>Supplier Pricing</h1></div>
+{% if done %}<p class="flash good" role="status">{{ done }}</p>{% endif %}
+{% if error %}<p class="flash bad" role="alert">{{ error }}</p>{% endif %}
+
+<form method="post" action="/supplier-pricing" class="sp-form">
+<input type="hidden" name="form_token" value="{{ form_token }}">
+{#- Enter in a field submits with the form's first button: make that "check" once there's a table,
+    so Enter never re-reads the text over the owner's edits. Off-screen, not display:none, so it counts. -#}
+<button type="submit" name="action" value="{{ 'check' if rows else 'read' }}" class="sr-only" tabindex="-1" aria-hidden="true">Default</button>
+<section class="panel">
+  <h2>1. The price list</h2>
+  <p class="muted small">Paste the supplier's list: one item per line, its yen price at the end ("Mega Dream ¥12,800").
+    To get the text out of a screenshot, use your phone's or computer's text copy (iPhone: press and hold the text;
+    Windows Snipping Tool: Text actions, then Copy all text).</p>
+  <div class="sp-grid">
+    <label>Supplier<input type="text" name="supplier" value="{{ form.supplier }}" maxlength="120"></label>
+    <label>Quote date<input type="date" name="quote_date" value="{{ form.quote_date }}"></label>
+    <label>Screenshot name<input type="text" name="source" value="{{ form.source }}" placeholder="Optional" maxlength="200"></label>
+  </div>
+  <label class="sp-text"><span class="sr-only">Price list text</span>
+    <textarea name="text" rows="8" placeholder="Mega Dream ¥12,800&#10;Nihil Zero 9,800">{{ form.text }}</textarea></label>
+  <p class="actions"><button type="submit" name="action" value="read">Read the text</button>
+    {% if rows %}<span class="muted small">Reading again replaces the table below.</span>{% endif %}</p>
+</section>
+
+{% if rows %}
+<div class="tiles">
+  <div class="tile"><span class="label">Rows</span><strong>{{ summary.rows }}</strong></div>
+  <div class="tile"><span class="label">With a SKU</span><strong>{{ summary.matched }}</strong></div>
+  <div class="tile"><span class="label">With a market price</span><strong>{{ summary.with_market }}</strong></div>
+  <div class="tile {% if summary.review %}warn{% endif %}"><span class="label">To look at</span><strong>{{ summary.review }}</strong></div>
+</div>
+
+<section class="panel">
+  <h2>2. Check the rows</h2>
+  <p class="muted small">Fix any name, price or SKU, then <strong>Check again</strong>. A SKU you type wins; otherwise the
+    name is looked up in the name-to-SKU list. Clear a row's name and price to drop it.</p>
+  <div class="sp-scroll">
+  <table class="sq-table">
+    <thead><tr><th>Supplier item</th><th>Price JPY</th><th>SKU</th><th>Store / market product</th>
+      <th class="num">Store</th><th class="num">Market</th><th class="num">Target</th><th>Match</th></tr></thead>
+    <tbody>
+    {% for row in rows %}
+      <tr>
+        <td><input type="text" name="item" value="{{ row.item }}" aria-label="Row {{ loop.index }}: supplier item"></td>
+        <td><input type="text" name="cost" value="{{ row.cost }}" inputmode="numeric" aria-label="Row {{ loop.index }}: price in yen"></td>
+        <td><input type="text" name="sku" value="{{ row.sku }}" aria-label="Row {{ loop.index }}: SKU"></td>
+        <td class="wrap">{{ row.store_title or '–' }}</td>
+        <td class="num">{{ usd(row.store_price) }}</td>
+        <td class="num">{{ usd(row.market_price) }}</td>
+        <td class="num">{{ usd(row.target_price) }}</td>
+        <td>{% if row.status == 'ok' %}<span class="badge sp-buy">{% if row.from_list %}From the list{% else %}Matched{% endif %}</span>
+          {%- elif row.status == 'new_sku' %}<span class="badge sp-thin-margin" title="Neither the store nor the market list has this SKU">New SKU</span>
+          {%- elif row.status == 'no_sku' %}<span class="badge sp-thin-margin">No SKU</span>
+          {%- else %}<span class="badge sp-pass">Fix name or price</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+      <tr class="muted">
+        <td><input type="text" name="item" value="" placeholder="Add a row" aria-label="New row: supplier item"></td>
+        <td><input type="text" name="cost" value="" inputmode="numeric" aria-label="New row: price in yen"></td>
+        <td><input type="text" name="sku" value="" aria-label="New row: SKU"></td>
+        <td colspan="5"></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="actions"><button type="submit" name="action" value="check" class="secondary">Check again</button></p>
+</section>
+
+<section class="panel">
+  <h2>3. Save the quote</h2>
+  <p class="muted small">Adds every row to <code>data/storefront/supplier_quotes.csv</code> under one quote. Rows without a
+    SKU are kept but left out of Supplier Profitability until they have one.</p>
+  <label class="small"><input type="checkbox" name="remember" value="1" {% if form.remember %}checked{% endif %}>
+    Remember the SKUs I typed for names the list doesn't know yet</label>
+  <p class="actions"><button type="submit" name="action" value="save">Save the quote</button></p>
+</section>
+{% else %}
+<input type="hidden" name="remember" value="1">
+{% endif %}
+</form>
+
+<section class="panel">
+  <h2>Recent quotes</h2>
+  {% if recent %}
+  <table class="sq-recent">
+    <thead><tr><th>Quote date</th><th>Supplier</th><th class="num">Rows</th><th class="num">With a SKU</th><th>Quote id</th></tr></thead>
+    <tbody>{% for q in recent %}<tr><td>{{ q.quote_date }}</td><td>{{ q.supplier }}</td><td class="num">{{ q.rows }}</td>
+      <td class="num">{{ q.matched }}</td><td class="muted small">{{ q.quote_id }}</td></tr>{% endfor %}</tbody>
+  </table>
+  {% else %}<p class="muted">No quotes saved yet.</p>{% endif %}
+  <p class="muted small">See what they're worth on <a href="/supplier-profitability">Supplier Profitability</a>.</p>
+</section>
+{% endblock %}

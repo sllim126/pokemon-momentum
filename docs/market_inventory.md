@@ -1,6 +1,6 @@
 # market.poke6s.com inventory: what to keep, move or retire
 
-Last reviewed: 2026-11-21 (owner chose option B; Binder Art Maker, Collector Hub and Placeholder Library moved; Supplier Profitability into the admin)
+Last reviewed: 2026-11-22 (Supplier Pricing moved; owner chose option B; Binder Art Maker, Collector Hub and Placeholder Library moved; Supplier Profitability into the admin)
 
 ## Why this exists
 
@@ -82,7 +82,7 @@ Homes: **Market** = stays a research site (at market.poke6s.com or poke6s.com/ma
 
 | Part | What it does | Suggested home |
 | --- | --- | --- |
-| Supplier Pricing (`/supplier-pricing`) | Read a supplier's price sheet (OCR), save quotes | **Admin.** Owner-only and about buying stock for the store; the costs file is already in the admin |
+| Supplier Pricing (`/supplier-pricing`) | Read a supplier's price sheet, save quotes | **Admin. Moved 2026-11-22** (admin "Suppliers" tab, "Enter a quote"; `storefront/admin/supplier_quotes.py`). The quote ledger and name-to-SKU list moved to `data/storefront/`; the market address forwards there |
 | Supplier Profitability (`/supplier-profitability`) | Supplier cost vs market vs store price, per channel | **Admin. Moved 2026-11-21** (admin "Suppliers" tab, `storefront/admin/supplier_profit.py`); the market address forwards signed-in admins there |
 | Bug Reports (`/bug-reports`) | Reports from Discord and review notes | **Admin** (one owner home, step 9c) or stays; Discord stays the inbox either way |
 | End of Day, Embed | Older research views | **Retired 2026-11-20** (owner): End of Day showed nothing the Index Overview, Set Explorer and price charts don't; Embed served the old Squarespace site. Old addresses go to `/admin`. (Dashboard Lab was deleted the same day) |

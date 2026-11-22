@@ -19,7 +19,7 @@ JP_SIGNAL_CSV = REPO_ROOT / "data" / "extracted" / "pokemon_jp_product_signal_sn
 EN_SIGNAL_CSV = REPO_ROOT / "data" / "extracted" / "pokemon_product_signal_snapshot.csv"
 RULES_CSV = REPO_ROOT / "data" / "store_price_rules.csv"
 OUTPUT_CSV = REPO_ROOT / "data" / "market_prices_latest.csv"
-SUPPLIER_QUOTES_CSV = REPO_ROOT / "data" / "supplier_quotes.csv"
+SUPPLIER_QUOTES_CSV = REPO_ROOT / "data" / "storefront" / "supplier_quotes.csv"  # written by the store admin's Supplier Pricing (moved 2026-11-22)
 CREATED_SINGLE_LISTINGS_CSV = REPO_ROOT / "output" / "squarespace_created_single_listings.csv"
 
 DEFAULT_JPY_PER_USD = Decimal(os.getenv("SUPPLIER_FLOOR_JPY_PER_USD", "145"))
@@ -155,7 +155,7 @@ def load_latest_supplier_quotes(path: Path) -> dict[str, dict[str, str]]:
     """Load the newest saved supplier quote row for each SKU.
 
     Source file:
-    - `data/supplier_quotes.csv`
+    - `data/storefront/supplier_quotes.csv`
 
     Expected output:
     - dict keyed by SKU

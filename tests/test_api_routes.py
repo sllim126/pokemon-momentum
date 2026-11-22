@@ -1081,34 +1081,17 @@ class ApiRouteTests(unittest.TestCase):
         self.assertEqual(response.headers["x-content-type-options"], "nosniff")
 
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
-    def test_store_prices_come_from_the_store_database(self, _get_session_user_mock):
-        # Supplier pages read poke6s.com prices from the store's own SQLite database (D11).
-        import sqlite3
-
-        with TemporaryDirectory() as tmpdir:
-            db = Path(tmpdir) / "store.db"
-            con = sqlite3.connect(db)
-            con.execute("CREATE TABLE products (sku TEXT, title TEXT, price_cents INTEGER, visible INTEGER)")
-            con.execute("INSERT INTO products VALUES ('JP-TEST-BOX', 'Test Set Box', 12999, 1), ('HIDDEN', 'Hidden', 500, 0)")
-            con.commit()
-            con.close()
-            with patch.object(api, "STORE_DB", db):
-                prices = api.load_store_prices()
-            with patch.object(api, "STORE_DB", Path(tmpdir) / "missing.db"):
-                self.assertEqual(api.load_store_prices(), {})
-        self.assertEqual(prices["JP-TEST-BOX"], {"title": "Test Set Box", "current_price": "129.99", "visible": True})
-        self.assertFalse(prices["HIDDEN"]["visible"])
-
-    @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())
-    def test_supplier_profitability_moved_to_the_store_admin(self, _get_session_user_mock):
-        """Moved 2026-11-21; the maths and its tests are in storefront/admin/supplier_profit.py
-        and storefront/tests/test_admin_suppliers.py."""
-        response = self.client.get("/supplier-profitability", cookies={"pm_tracking_token": "token"}, follow_redirects=False)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.headers["location"], f"{api.STORE_ADMIN_URL}/supplier-profitability")
-        for gone in ("/supplier-profitability/fx",):
-            self.assertEqual(self.client.get(gone, cookies={"pm_tracking_token": "token"}).status_code, 404)
-        self.assertEqual(self.client.post("/supplier-profitability/data", json={}, cookies={"pm_tracking_token": "token"}).status_code, 404)
+    def test_supplier_pages_moved_to_the_store_admin(self, _get_session_user_mock):
+        """Supplier Profitability moved 2026-11-21, Supplier Pricing 2026-11-22; the code and its
+        tests are in storefront/admin/ (supplier_profit.py, supplier_quotes.py) and
+        storefront/tests/ (test_admin_suppliers.py, test_admin_supplier_quotes.py)."""
+        for path in ("/supplier-profitability", "/supplier-pricing"):
+            response = self.client.get(path, cookies={"pm_tracking_token": "token"}, follow_redirects=False)
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.headers["location"], f"{api.STORE_ADMIN_URL}{path}")
+        self.assertEqual(self.client.get("/supplier-profitability/fx", cookies={"pm_tracking_token": "token"}).status_code, 404)
+        for gone in ("/supplier-profitability/data", "/supplier-pricing/enrich", "/supplier-pricing/save"):
+            self.assertEqual(self.client.post(gone, json={}, cookies={"pm_tracking_token": "token"}).status_code, 404, gone)
 
     @patch.object(api, "create_bug_report", return_value=43)
     @patch.object(api, "get_session_user", return_value=type("SessionUser", (), {"username": "sllim126@gmail.com", "user_id": 1})())

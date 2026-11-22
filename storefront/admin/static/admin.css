@@ -232,6 +232,15 @@ table.sp-table { min-width: 1100px; }
 .badge.sp-buy { color: var(--good); border-color: var(--good); }
 .badge.sp-thin-margin { color: var(--warn); border-color: var(--warn); }
 .badge.sp-pass { color: var(--bad); border-color: var(--bad); }
+/* Supplier Pricing (supplier_pricing.html): the price-list box and the editable rows. */
+.sp-text textarea { width: 100%; box-sizing: border-box; min-height: 9rem; resize: vertical; }
+table.sq-table { min-width: 980px; }
+table.sq-table td { padding: 4px 6px; vertical-align: middle; }
+table.sq-table td.wrap { white-space: normal; min-width: 220px; }
+table.sq-table input { width: 100%; min-width: 0; box-sizing: border-box; }
+table.sq-table th:nth-child(1) { width: 24%; }
+table.sq-table th:nth-child(2) { width: 9%; }
+table.sq-table th:nth-child(3) { width: 14%; }
 .sp-quick-result { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 1000px) {
   .sp-halves, .sp-quick-result { grid-template-columns: minmax(0, 1fr); }
