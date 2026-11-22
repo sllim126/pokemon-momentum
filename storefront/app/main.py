@@ -15,6 +15,7 @@ admin are the other writers.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import hmac
 import json
 import logging
@@ -169,6 +170,11 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
                        type_labels=classify.PRODUCT_TYPE_LABELS, language_labels=classify.LANGUAGE_LABELS,
                        footer_pages=pages,
                        social_links=seo.SOCIAL_LINKS)
+    # Cloudflare keeps /static files for 4 hours, so the stylesheet and script links carry a
+    # short hash of their contents (?v=...): a deploy that changes them changes the address.
+    env.globals["static_v"] = {
+        name: hashlib.sha256((APP_DIR / "static" / name).read_bytes()).hexdigest()[:10]
+        for name in ("store.css", "store.js")}
     env.filters["money"] = lambda cents: f"${(cents or 0) / 100:,.2f}"
     env.filters["dollars"] = lambda value: f"${value:,.2f}"
     env.filters["jsonld"] = seo.dump
