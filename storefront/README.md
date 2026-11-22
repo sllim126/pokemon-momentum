@@ -224,7 +224,10 @@ its own, with no restart, because the date is checked on every request. Its page
 be in place when the container starts, so restart after adding one. Workflow for the regular
 posts: Claude (or whoever) drafts each one a few days ahead with fresh data as `draft: true`;
 the owner proofreads it and adds their own voice, then sets `draft: false` and the date it
-should go live. The topic list is in `docs/todo.txt` ("Blog posts").
+should go live. The topic list is in `docs/todo.txt` ("Blog posts"). Every draft or scheduled
+page has a folded "Not live yet" list of all the drafts and scheduled posts, soonest date first,
+so the owner can move from one to the next; live posts don't show it. Anyone with a draft's
+link can see that list too (drafts aren't secret, by the owner's choice).
 
 The 10 posts from Squarespace were converted from the saved copy by `app/article_import.py`
 (slugs from the titles; old `/resources/...` addresses 301 to the new ones, including the old

@@ -241,6 +241,9 @@ def test_scheduled_article_waits_for_its_date(imported, articles_dir):
         page = client.get("/articles/coming-soon")
         assert page.status_code == 200 and "Scheduled: goes live on 2099-01-01" in page.text
         assert "Coming Soon" not in client.get("/articles").text
+        # Draft and scheduled pages list the review queue; live pages don't.
+        assert 'class="review-queue"' in page.text and "/articles/not-ready-yet" in page.text
+        assert 'class="review-queue"' not in client.get("/articles/why-i-built-a-market-screener").text
         assert "coming-soon" not in client.get("/sitemap.xml").text
 
 

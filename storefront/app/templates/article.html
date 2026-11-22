@@ -4,6 +4,15 @@
 <article class="text-page article">
   {% if article.draft %}<p class="draft-note">Draft: not listed on the site yet.</p>{% endif %}
   {% if scheduled %}<p class="draft-note">Scheduled: goes live on {{ article.date }}.</p>{% endif %}
+  {% if waiting %}
+  <details class="review-queue">
+    <summary>Not live yet: {{ waiting | length }} article{{ "s" if waiting | length != 1 }}</summary>
+    <ul>{% for w in waiting %}
+      <li>{% if w.slug == article.slug %}<strong>{{ w.title }}</strong>{% else %}<a href="/articles/{{ w.slug }}">{{ w.title }}</a>{% endif %}
+        <span class="muted">· {{ w.date }} · {{ "draft" if w.draft else "scheduled" }}</span></li>{% endfor %}
+    </ul>
+  </details>
+  {% endif %}
   <header class="article-head">
     {% if article.categories %}<p class="article-cats">{% for c in article.categories %}<a href="/articles?category={{ c | urlencode }}">{{ c }}</a>{% endfor %}</p>{% endif %}
     <h1>{{ article.title }}</h1>

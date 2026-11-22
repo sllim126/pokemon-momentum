@@ -151,6 +151,12 @@ class Articles:
         """True for a finished article whose date hasn't come yet."""
         return not article.draft and article.date > (today or _today())
 
+    def waiting(self, today: str | None = None) -> list[Article]:
+        """Drafts and scheduled articles, soonest date first: the owner's review queue, listed
+        on every draft or scheduled page (article.html) so the next one is a click away."""
+        today = today or _today()
+        return sorted((a for a in self.all if a.draft or a.date > today), key=lambda a: (a.date, a.slug))
+
     def get(self, slug: str) -> Article | None:
         return self.by_slug.get(slug)
 
