@@ -62,7 +62,7 @@ These routes require a Google sign-in whose email is listed in
 
 - `/admin` (index of the tools below)
 - `/bug-reports`
-- `/supplier-pricing`
+- `/supplier-pricing` (forwards to the store admin since 2026-11-22)
 - `/supplier-profitability` (forwards to the store admin since 2026-11-21)
 
 

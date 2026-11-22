@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-11-20
+Last reviewed: 2026-11-22
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -131,7 +131,7 @@ The following pages require a Google sign-in listed in `POKEMON_MOMENTUM_ADMIN_U
 | --- | --- |
 | `/admin` | Index of the admin tools |
 | `/bug-reports` | Internal feedback and bug queue |
-| `/supplier-pricing` | Review and save supplier quotes |
+| `/supplier-pricing` | Forwards to the store admin's Supplier Pricing (moved 2026-11-22) |
 | `/supplier-profitability` | Forwards to the store admin's Supplier Profitability (moved 2026-11-21) |
 
 ## Major completed work

@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-20 (market option B: Binder Art Maker, Collector Hub and Placeholder Library moved to poke6s.com; placeholder sync matches promos to products; missing product pictures; /dashboard-lab removed; blog drafts and scheduled articles; store trust lines and Google review request)
+Last updated: 2026-11-22 (Supplier Pricing moved into the store admin; quote files moved to data/storefront/)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -44,6 +44,15 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-22 Supplier Pricing moved into the store admin (market option B, owner tools):
+  "Suppliers" tab, "Enter a quote", http://192.168.1.240:8011/supplier-pricing
+  (storefront/admin/supplier_quotes.py). Server-rendered, no script: paste the price list,
+  "Read the text", fix rows and SKUs, "Check again", "Save the quote". Typed SKUs for new names
+  are remembered in the name-to-SKU list (a tick box). The quote ledger and the list moved to
+  data/storefront/ (owner OK 2026-11-22), where the admin can write; the nightly price targets
+  read the ledger there. Screenshot OCR (tesseract.js) isn't carried over yet (open question
+  in the option B item). The market's /supplier-pricing forwards to the admin; its match and
+  save routes and page are gone.
 - 2026-11-21 Supplier Profitability moved into the store admin (market option B, the first owner
   tool): the "Suppliers" tab, http://192.168.1.240:8011/supplier-profitability
   (storefront/admin/supplier_profit.py). Same maths as the market page, server-rendered with no
@@ -498,14 +507,12 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - [next] Market option B (owner chose it 2026-11-20, docs/market_inventory.md): move the
     collector tools to poke6s.com, one at a time, with 301s from the old addresses. Done:
     Binder Art Maker, Collector Hub and Placeholder Library (2026-11-20); Supplier
-    Profitability into the store admin (2026-11-21). Next: Supplier Pricing into the admin.
-    Two things to settle first: (1) saving quotes. The admin mounts data/ read-only, so
-    data/supplier_quotes.csv has to move (e.g. to data/storefront/, which the admin can write;
-    scripts/build_store_price_targets.py and the admin's Supplier Profitability read it too),
-    and data/supplier_name_mapping.csv with it; (2) the screenshot reading. The page loads
-    tesseract.js from cdn.jsdelivr.net, which the admin's CSP (script-src 'self') blocks: serve
-    a pinned copy from the admin's static folder (free; about 3 MB with its language data) or
-    read screenshots on the server instead.
+    Profitability (2026-11-21) and Supplier Pricing (2026-11-22) into the store admin.
+    Open: whether Supplier Pricing should read screenshots itself. For now the owner pastes
+    the list's text (phone or Windows text copy). Options if wanted: a pinned tesseract.js copy
+    in the admin's static folder (free, about 3 MB; the admin's CSP blocks the CDN copy) or
+    reading screenshots on the server. Ask the owner. Next owner tool: Bug Reports and the one
+    owner home (step 9c).
   - [watching] The MEP promo list was checked against Bulbapedia's (pasted by the owner
     2026-11-20): staff copies, Game On! and tin copies, and MEP118/120/125-127/131 added to
     mega_placeholders.csv ahead of TCGplayer. Jumbo-only cards (No. 500 Pikachu at the Museum,

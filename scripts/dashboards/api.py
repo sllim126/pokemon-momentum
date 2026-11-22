@@ -19,9 +19,10 @@ Where the data comes from
 
 Rough map of this file (line numbers drift; search for the route string)
 - page routes (HTML files, redirects, phone/desktop switch): `@app.get("/")` onwards
-- Supplier Pricing: /supplier-pricing* (the Squarespace export upload and singles intake were
-  retired 2026-11-20, D11; so were the End of Day and Embed research views, owner 2026-11-20;
-  Supplier Profitability moved to the store admin 2026-11-21)
+- Supplier Pricing and Supplier Profitability moved to the store admin (2026-11-22 and
+  2026-11-21); /supplier-pricing and /supplier-profitability only forward there. The Squarespace
+  export upload and singles intake were retired 2026-11-20, D11; so were the End of Day and
+  Embed research views, owner 2026-11-20
 - sign-in and saved state (tracking_store.py): /tracking/*
 - market data for the apps: /universe, /groups, /search, /group_products, /series,
   /card_details, /sparkline_batch, /index-overview-data
@@ -152,7 +153,6 @@ ACCOUNT_SETTINGS_HTML = SCRIPT_DIR / "account_settings.html"
 BUG_REPORTS_HTML = SCRIPT_DIR / "bug_reports.html"
 REVIEW_NOTE_ATTACHMENTS_DIR = REPO_ROOT / "data" / "review_note_attachments"
 REVIEW_NOTE_PAGES = {"/m-next", "/"}  # pages with the owner's Note tab (phone app, desktop app)
-SUPPLIER_PRICING_HTML = SCRIPT_DIR / "supplier_pricing.html"
 # The store admin (storefront/admin/, home network only), where the owner tools are moving.
 STORE_ADMIN_URL = os.getenv("POKEMON_MOMENTUM_STORE_ADMIN_URL", "http://192.168.1.240:8011").rstrip("/")
 # The mobile app (plan: docs/mobile_app_plan.md). Phones get it at /, /mobile and /dashboard
@@ -652,18 +652,15 @@ def retired_admin_pages():
 
 
 @app.get("/supplier-pricing")
-def supplier_pricing_page(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
-    require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    return FileResponse(SUPPLIER_PRICING_HTML)
-
-
 @app.get("/supplier-profitability")
-def supplier_profitability_page(authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
-    """Supplier Profitability moved to the store admin on 2026-11-21 (storefront/admin/supplier_profit.py,
-    docs/market_inventory.md, option B). The admin is on the home network only, so this forwards
+def supplier_pages_moved(request: Request, authorization: str | None = Header(default=None), tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    """Both supplier pages moved to the store admin (docs/market_inventory.md, option B):
+    Supplier Profitability on 2026-11-21 (storefront/admin/supplier_profit.py), Supplier Pricing
+    on 2026-11-22 (storefront/admin/supplier_quotes.py, with the quote ledger now at
+    data/storefront/supplier_quotes.csv). The admin is on the home network only, so this forwards
     signed-in admins there; 302, not 301, because the admin's address is a setting."""
     require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    return RedirectResponse(f"{STORE_ADMIN_URL}/supplier-profitability", status_code=302)
+    return RedirectResponse(f"{STORE_ADMIN_URL}{request.url.path}", status_code=302)
 
 
 @app.get("/m-next")
@@ -2641,126 +2638,6 @@ def require_admin_user(
     return session_user
 
 
-SUPPLIER_NAME_MAPPING_CSV = SCRIPT_DIR.parents[1] / "data" / "supplier_name_mapping.csv"
-SUPPLIER_QUOTES_CSV = SCRIPT_DIR.parents[1] / "data" / "supplier_quotes.csv"
-# The store's own database (poke6s.com, storefront/). Read-only here: prices are changed in the
-# store admin, never from this site.
-STORE_DB = SCRIPT_DIR.parents[1] / "data" / "storefront" / "store.db"
-
-
-def _normalize_supplier_name(value: str) -> str:
-    """Normalize supplier screenshot item names for mapping-file lookup.
-
-    Expected input:
-    - OCR text or manually edited supplier item names such as "Mega Dream"
-
-    Expected output:
-    - lowercase whitespace-normalized key that matches `supplier_name_mapping.csv`
-    """
-    text = re.sub(r"[^a-z0-9]+", " ", str(value or "").lower()).strip()
-    return re.sub(r"\s+", " ", text)
-
-
-def load_supplier_name_mapping() -> dict[str, str]:
-    """Load supplier raw-name to SKU mappings used during OCR review.
-
-    Source:
-    - `data/supplier_name_mapping.csv`
-
-    Expected output:
-    - dict where key is normalized supplier item name and value is store SKU
-
-    Failure behavior:
-    - returns an empty dict when the mapping file does not exist yet
-    """
-    mapping: dict[str, str] = {}
-    if not SUPPLIER_NAME_MAPPING_CSV.exists():
-        return mapping
-    with SUPPLIER_NAME_MAPPING_CSV.open(newline="") as handle:
-        for row in csv.DictReader(handle):
-            key = _normalize_supplier_name(row.get("supplier_name_raw") or "")
-            sku = str(row.get("sku") or "").strip()
-            if key and sku:
-                mapping[key] = sku
-    return mapping
-
-
-def load_store_prices() -> dict[str, dict]:
-    """Each poke6s.com product's current price, from the store's database (read-only).
-
-    Expected output:
-    - dict keyed by SKU: {"title", "current_price" (dollars, as text), "visible" (bool)}
-    - empty when the store database isn't there or can't be read; the supplier pages then show
-      no store price rather than failing
-    Replaced the Squarespace mapping (output/squarespace_product_mapping.csv) on 2026-11-20 (D11).
-    """
-    if not STORE_DB.exists():
-        return {}
-    try:
-        con = sqlite3.connect(f"file:{STORE_DB}?mode=ro", uri=True, timeout=5)
-        try:
-            rows = con.execute("SELECT sku, title, price_cents, visible FROM products").fetchall()
-        finally:
-            con.close()
-    except sqlite3.Error:
-        logging.getLogger(__name__).exception("Couldn't read store prices from %s", STORE_DB)
-        return {}
-    return {sku: {"title": title, "current_price": f"{price_cents / 100:.2f}", "visible": bool(visible)}
-            for sku, title, price_cents, visible in rows if sku}
-
-
-def load_latest_market_targets() -> dict[str, dict]:
-    """Load the most recent generated pricing targets for SKU-level comparison.
-
-    Expected output:
-    - dict keyed by SKU
-    - each value includes `market_price`, `target_price`, and pricing metadata
-    """
-    market_path = SCRIPT_DIR.parents[1] / "data" / "market_prices_latest.csv"
-    mapping: dict[str, dict] = {}
-    if not market_path.exists():
-        return mapping
-    with market_path.open(newline="") as handle:
-        for row in csv.DictReader(handle):
-            sku = str(row.get("sku") or "").strip()
-            if sku:
-                mapping[sku] = row
-    return mapping
-
-
-def enrich_supplier_rows(rows: list[dict]) -> list[dict]:
-    """Attach store and market context to OCR-reviewed supplier quote rows.
-
-    Expected output:
-    - each row is returned with `sku`, `store_title`, `store_price`, `market_price`,
-      and `target_price` added when available
-    """
-    supplier_mapping = load_supplier_name_mapping()
-    store_mapping = load_store_prices()
-    market_targets = load_latest_market_targets()
-    enriched = []
-    for row in rows:
-        raw_name = str(row.get("item_name_raw") or "").strip()
-        cost_jpy = str(row.get("cost_jpy") or "").strip()
-        sku = str(row.get("sku") or "").strip()
-        if not sku:
-            sku = supplier_mapping.get(_normalize_supplier_name(raw_name), "")
-        store_row = store_mapping.get(sku, {})
-        market_row = market_targets.get(sku, {})
-        enriched.append(
-            {
-                "item_name_raw": raw_name,
-                "cost_jpy": cost_jpy,
-                "sku": sku,
-                "store_title": str(store_row.get("title") or ""),
-                "store_price": str(store_row.get("current_price") or "") or None,
-                "market_price": str(market_row.get("market_price") or "") or None,
-                "target_price": str(market_row.get("target_price") or "") or None,
-            }
-        )
-    return enriched
-
-
 _BROWSE_SET_FILTER_IDS = (
     "all",
     "bulk",
@@ -2993,96 +2870,6 @@ def _browse_species_sort_key(row: dict) -> tuple:
         str(row.get("productName") or "").casefold(),
         number_raw.casefold(),
     )
-
-
-@app.post("/supplier-pricing/enrich")
-def supplier_pricing_enrich(
-    payload: dict,
-    authorization: str | None = Header(default=None),
-    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
-):
-    """Enrich OCR-reviewed supplier rows with SKU, store, and market context."""
-    require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    rows = payload.get("rows") or []
-    if not isinstance(rows, list):
-        raise HTTPException(status_code=400, detail="rows must be a list")
-    return {"ok": True, "rows": enrich_supplier_rows(rows)}
-
-
-@app.post("/supplier-pricing/save")
-def supplier_pricing_save(
-    payload: dict,
-    authorization: str | None = Header(default=None),
-    tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token"),
-):
-    """Persist reviewed supplier quote rows to the historical supplier quote ledger.
-
-    Expected output:
-    - JSON with `quote_id`, `saved_rows`, `matched_skus`, and the CSV path
-    """
-    admin_user = require_admin_user(authorization=authorization, tracking_token=tracking_token)
-    supplier_name = str(payload.get("supplier_name") or "").strip() or "Unknown Supplier"
-    quote_date = str(payload.get("quote_date") or "").strip()
-    source_name = str(payload.get("source_name") or "").strip()
-    source_type = str(payload.get("source_type") or "").strip() or "screenshot"
-    rows = payload.get("rows") or []
-    if not quote_date:
-        raise HTTPException(status_code=400, detail="quote_date is required")
-    if not isinstance(rows, list) or not rows:
-        raise HTTPException(status_code=400, detail="rows must be a non-empty list")
-
-    quote_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    SUPPLIER_QUOTES_CSV.parent.mkdir(parents=True, exist_ok=True)
-    fieldnames = [
-        "quote_id",
-        "quote_date",
-        "supplier_name",
-        "source_name",
-        "source_type",
-        "item_name_raw",
-        "sku",
-        "cost_jpy",
-        "image_name",
-        "notes",
-    ]
-    needs_header = not SUPPLIER_QUOTES_CSV.exists() or SUPPLIER_QUOTES_CSV.stat().st_size == 0
-    saved_rows = 0
-    matched_skus = 0
-    with SUPPLIER_QUOTES_CSV.open("a", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        if needs_header:
-            writer.writeheader()
-        for row in rows:
-            item_name_raw = str(row.get("item_name_raw") or "").strip()
-            cost_jpy = str(row.get("cost_jpy") or "").strip()
-            sku = str(row.get("sku") or "").strip()
-            if not item_name_raw or not cost_jpy:
-                continue
-            writer.writerow(
-                {
-                    "quote_id": quote_id,
-                    "quote_date": quote_date,
-                    "supplier_name": supplier_name,
-                    "source_name": source_name,
-                    "source_type": source_type,
-                    "item_name_raw": item_name_raw,
-                    "sku": sku,
-                    "cost_jpy": cost_jpy,
-                    "image_name": source_name,
-                    "notes": f"saved_by={admin_user.username}",
-                }
-            )
-            saved_rows += 1
-            if sku:
-                matched_skus += 1
-
-    return {
-        "ok": True,
-        "quote_id": quote_id,
-        "saved_rows": saved_rows,
-        "matched_skus": matched_skus,
-        "quotes_path": str(SUPPLIER_QUOTES_CSV),
-    }
 
 
 def verify_google_identity_token(credential: str) -> dict:

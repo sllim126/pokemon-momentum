@@ -389,7 +389,8 @@ that address out for 15 minutes and post a Discord alert.
 | `POST /shipping/tracking`, `POST /shipping/tracking/apply` | Upload Pirate Ship's shipments CSV, see which orders it matches, then mark the ticked ones shipped (each customer gets the tracking email) |
 | `POST /products/<id>/packed` | One unit's packed weight (oz, or "1.5 lb") and box size, for the Pirate Ship file |
 | `/pricing`, `POST /pricing/apply` | Pricing: the repricing rules with a preview; applies only the ticked lines (see "Pricing page") |
-| `/supplier-profitability` | Suppliers: each SKU's newest supplier quote (`data/supplier_quotes.csv`) against store, market and target prices, per channel, with editable assumptions and a quick calculator. Read-only; a GET form. Moved from the market site 2026-11-21 |
+| `/supplier-profitability` | Suppliers: each SKU's newest supplier quote (`data/storefront/supplier_quotes.csv`) against store, market and target prices, per channel, with editable assumptions and a quick calculator. Read-only; a GET form. Moved from the market site 2026-11-21 |
+| `/supplier-pricing` (GET, POST) | Suppliers, "Enter a quote": paste a supplier's price list, check each row's SKU against the name-to-SKU list (`data/storefront/supplier_name_mapping.csv`) with store and market prices beside it, and save the rows as one quote (`admin/supplier_quotes.py`) |
 | `/login`, `POST /login`, `POST /logout` | Sign-in |
 | `/healthz` | `{"ok", "schema", "sign_in_ready"}` (still home network only) |
 
@@ -502,6 +503,7 @@ Rules worth knowing:
 | `tools/reprice.py` | Prices at or near market, never below break-even; hides products that can't be (see "Prices"); `plan()`/`apply()` shared with the admin |
 | `admin/pricing_view.py` | The Pricing page: reads the inputs, checks ticked lines against a fresh plan |
 | `admin/supplier_profit.py` | Supplier Profitability: landed cost, break-even and target-margin prices per channel; the JPY/USD rate |
+| `admin/supplier_quotes.py` | Supplier Pricing: reads a price list's text, matches names to SKUs, appends quotes to the ledger and remembers new matches |
 | `tools/archive_squarespace_site.py` | One-off copy of the old site's pages, blog posts and images |
 | `content/pages/*.md` | About, FAQ, Shipping, Returns, Terms, Privacy, Contact |
 | `admin/main.py` | The admin app: the network walls, sign-in routes, Overview |

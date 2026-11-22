@@ -43,7 +43,8 @@ from ..app.db import connect, latest_migration, migrate
 from ..app.market import MarketReference
 from ..app.settings import Settings, load_settings
 from ..app.stripe_api import StripeClient
-from . import orders_view, overview, packing_slip, pricing_view, products_view, refunds, shipping, supplier_profit
+from . import (orders_view, overview, packing_slip, pricing_view, products_view, refunds, shipping, supplier_profit,
+               supplier_quotes)
 from .auth import COOKIE_NAME, SESSION_DAYS, Lockout, Sessions, check_password
 
 log = logging.getLogger("storefront.admin")
@@ -110,9 +111,11 @@ class AdminConfig:
     backup_dir: Path | None = None
     # The owner's private costs file, for the Pricing page (pricing_view.py). Read-only mount.
     costs_file: Path | None = None
-    # Supplier Profitability (supplier_profit.py): the quote ledger and the market targets, both
-    # read-only files under data/ (the admin mounts data/ read-only).
+    # Supplier Pricing writes the quote ledger and the name-to-SKU list (supplier_quotes.py), so both
+    # live in data/storefront/, the one folder the admin can write. Supplier Profitability
+    # (supplier_profit.py) reads the ledger and the market targets (data/, read-only here).
     supplier_quotes_file: Path | None = None
+    supplier_mapping_file: Path | None = None
     market_targets_file: Path | None = None
     # The admin's own restricted Stripe key (Charges and Refunds write), for refunds (refunds.py).
     # The public store never gets it (docker-compose passes it to the admin only).
@@ -131,7 +134,8 @@ def load_config(settings: Settings) -> AdminConfig:
         session_secret=os.getenv("STOREFRONT_ADMIN_SESSION_SECRET", "").strip(),
         backup_dir=Path(os.getenv("STOREFRONT_ADMIN_BACKUP_DIR", str(default_backups))),
         costs_file=Path(os.getenv("STOREFRONT_ADMIN_COSTS_FILE", "/app/costs/store_sku_costs.csv")),
-        supplier_quotes_file=settings.data_dir.parent / "supplier_quotes.csv",
+        supplier_quotes_file=settings.data_dir / "supplier_quotes.csv",
+        supplier_mapping_file=settings.data_dir / "supplier_name_mapping.csv",
         market_targets_file=settings.data_dir.parent / "market_prices_latest.csv",
         stripe_refund_key=os.getenv("STOREFRONT_ADMIN_STRIPE_KEY", "").strip(),
     )
@@ -903,6 +907,79 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
                     decision=decision, needle=needle, decisions=supplier_profit.DECISIONS,
                     references=supplier_profit.REFERENCES, quick=supplier_profit.quick_quote(query, a),
                     query=query)
+
+    # --- Supplier Pricing (moved from the market site 2026-11-22; supplier_quotes.py) -------------
+
+    quotes_file = config.supplier_quotes_file or Path("/nonexistent")
+    mapping_file = config.supplier_mapping_file or Path("/nonexistent")
+
+    def quote_page(request: Request, cookie: str, form: dict, rows: list[dict] | None = None,
+                   status_code: int = 200, **context) -> Response:
+        return page(request, "supplier_pricing.html", cookie, status_code=status_code, active="suppliers",
+                    form=form, rows=rows, summary=supplier_quotes.summary(rows) if rows else None,
+                    recent=supplier_quotes.recent_quotes(quotes_file), **context)
+
+    @app.get("/supplier-pricing", response_class=HTMLResponse)
+    def supplier_pricing(request: Request):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        query = request.query_params
+        done = None
+        if query.get("saved"):
+            done = (f"Saved quote {query.get('saved')}: {query.get('n', '0')} row(s), "
+                    f"{query.get('m', '0')} with a SKU.")
+            if query.get("r", "0") != "0":
+                done += f" {query.get('r')} new name-to-SKU match(es) remembered."
+        # Today in the store's time zone (the owner's), not the server's UTC.
+        today = datetime.now(UTC).astimezone(notify.MOUNTAIN).date().isoformat()
+        form = {"supplier": supplier_quotes.DEFAULT_SUPPLIER, "quote_date": today,
+                "source": "", "text": "", "remember": True}
+        return quote_page(request, cookie, form, done=done)
+
+    @app.post("/supplier-pricing")
+    async def supplier_pricing_post(request: Request):
+        """One form, three buttons (`action`): "read" splits the pasted text into rows, "check"
+        matches the edited rows again, "save" appends them to the ledger and redirects."""
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        data = await request.form(max_files=0, max_fields=4 * supplier_quotes.MAX_ROWS + 20)
+        if not form_ok(cookie, str(data.get("form_token") or "")):
+            return expired_form()
+        form = {"supplier": str(data.get("supplier") or "").strip() or supplier_quotes.DEFAULT_SUPPLIER,
+                "quote_date": str(data.get("quote_date") or "").strip(),
+                "source": str(data.get("source") or "").strip()[:200],
+                "text": str(data.get("text") or "")[:50_000],
+                "remember": bool(data.get("remember"))}
+        action = str(data.get("action") or "check")
+        if action == "read":
+            rows = supplier_quotes.parse_text(form["text"])
+        else:
+            rows = supplier_quotes.form_rows(data.getlist("item"), data.getlist("cost"), data.getlist("sku"))
+        with db() as conn:
+            store = supplier_profit.store_prices(conn)
+        market = supplier_profit.market_targets(config.market_targets_file or Path("/nonexistent"))
+        checked = supplier_quotes.check(rows, supplier_quotes.load_mapping(mapping_file), store, market)
+        if action == "read" and not checked:
+            return quote_page(request, cookie, form, status_code=400,
+                              error="No rows found: each line needs an item name with a yen price at the end.")
+        if action != "save":
+            return quote_page(request, cookie, form, checked)
+        quote_date = supplier_quotes.valid_date(form["quote_date"])
+        bad = sum(1 for row in checked if row["status"] == "bad")
+        error = ("Nothing to save yet." if not checked else
+                 "Pick the quote's date." if not quote_date else
+                 f"{bad} row(s) need a name and a whole yen price (or clear both to drop the row)." if bad else None)
+        if error:
+            return quote_page(request, cookie, form, checked, status_code=400, error=error)
+        result = supplier_quotes.save(quotes_file, mapping_file, checked, supplier=form["supplier"],
+                                      quote_date=quote_date, source=form["source"], remember=form["remember"])
+        log.info("Supplier Pricing: quote %s saved, %d row(s), %d with a SKU, %d match(es) remembered",
+                 result["quote_id"], result["saved"], result["matched"], result["remembered"])
+        return RedirectResponse("/supplier-pricing?" + urlencode(
+            {"saved": result["quote_id"], "n": result["saved"], "m": result["matched"], "r": result["remembered"]}),
+            status_code=303)
 
     @app.exception_handler(404)
     async def not_found(request: Request, _exc):

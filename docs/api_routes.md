@@ -1,6 +1,6 @@
 # Site routes
 
-Last reviewed: 2026-11-20
+Last reviewed: 2026-11-22
 
 Every route served by `scripts/dashboards/api.py` (FastAPI, port 8001 in the container,
 public at market.poke6s.com). `tests/test_api_routes.py::test_every_route_is_in_the_route_reference`
@@ -36,7 +36,7 @@ The public routes below are public for Pokemon (3 and 85) only until a game is p
 | `/admin` | `admin_hub.html` | admin | Links to the admin tools below |
 | `/bug-reports` | `bug_reports.html` | admin | Review queue: Discord bug reports, old mobile Feedback form entries and owner review notes from the phone and desktop apps |
 | `/pricing-upload`, `/single-listings-upload` | none | anyone | Retired 2026-11-20 (D11): 301 to `/admin` |
-| `/supplier-pricing` | `supplier_pricing.html` | admin | Read supplier price sheets with OCR (tesseract.js) and compare to market |
+| `/supplier-pricing` | none | admin | Moved 2026-11-22: 302 to the store admin's Supplier Pricing (same setting as below) |
 | `/supplier-profitability` | none | admin | Moved 2026-11-21: 302 to the store admin's Supplier Profitability (`POKEMON_MOMENTUM_STORE_ADMIN_URL`, default http://192.168.1.240:8011) |
 | `/eod-dashboard`, `/embed` (GET; `/embed` HEAD too) | none | public | Retired 2026-11-20 (owner): 301 to `/admin` |
 
@@ -115,6 +115,5 @@ The public routes below are public for Pokemon (3 and 85) only until a game is p
 
 | Route | Access | What it does |
 | --- | --- | --- |
-| `POST /supplier-pricing/enrich`, `POST /supplier-pricing/save` | admin | Match OCR-read supplier rows to SKUs and market prices; save reviewed quotes |
 | `/lorcana/images.json` | admin | `{ids: [...]}`: the productIds that have a Lorcana image, so the desktop app only asks for images that exist |
 | `/lorcana/images/{product_id}.avif` | admin | Lorcana card image downloaded from Lorcast (`data/lorcana_images/large/`); 404 when there is none, so pages use TCGplayer's image. Admin-only while Lorcana is internal (`docs/lorcana_market_plan.md`) |

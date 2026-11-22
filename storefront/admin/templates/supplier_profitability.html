@@ -11,13 +11,14 @@
 {% macro usd(value) %}{% if value is none %}–{% elif value < 0 %}−${{ '%.2f' % -value }}{% else %}${{ '%.2f' % value }}{% endif %}{% endmacro %}
 {% block title %}Supplier Profitability{% endblock %}
 {% block main %}
+{% include "_suppliers_tabs.html" %}
 <div class="page-head"><h1>Supplier Profitability</h1>
   <span class="muted small">{% if fx and not typed_rate %}JPY/USD {{ fx.rate }} from Frankfurter{% if fx.date %}, {{ fx.date }}{% endif %}{% if fx.stale %} (last good rate; refresh failed){% endif %}
     {%- elif typed_rate %}Using your rate, {{ a.jpy_per_usd | num }} JPY/USD{% else %}Live rate unavailable; using {{ a.jpy_per_usd | num }} JPY/USD{% endif %}</span>
 </div>
 <p class="muted small">Each SKU's newest supplier quote against what it sells for: the landed cost of one box, the price that
   breaks even and the price that makes the target margin on each channel, and the verdict at that channel's reference price.
-  Quotes come from Supplier Pricing on the market site (<code>data/supplier_quotes.csv</code>).</p>
+  Quotes come from <a href="/supplier-pricing">Enter a quote</a> (<code>data/storefront/supplier_quotes.csv</code>).</p>
 
 <form method="get" action="/supplier-profitability" class="sp-form">
 <section class="panel">
@@ -91,8 +92,9 @@
       <button type="submit" class="secondary">Filter</button>
     </div>
   </div>
-  {% if result.unmatched %}<p class="muted small">{{ result.unmatched }} quote row(s) have no SKU yet and are left out: match them
-    in Supplier Pricing (or in <code>data/supplier_name_mapping.csv</code>).</p>{% endif %}
+  {% if result.unmatched %}<p class="muted small">{{ result.unmatched }} quote row(s) have no SKU yet and are left out. Saved
+    rows aren't edited here: enter the quote again with its SKUs on <a href="/supplier-pricing">Enter a quote</a> (the newest
+    quote per SKU counts).</p>{% endif %}
   {% if not result.rows %}
   <p class="muted">No supplier quotes with a SKU yet.</p>
   {% elif not shown %}

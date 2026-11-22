@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-20 (Store review request emails; Store Pricing Ops after Squarespace; Retire a monitored job; Nightly update keeps the site up: copy and swap; TCGCSV archive torrents: 2026 so far; Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
+Last reviewed: 2026-11-22 (Supplier Pricing moved to the store admin; Store review request emails; Store Pricing Ops after Squarespace; Retire a monitored job; Nightly update keeps the site up: copy and swap; TCGCSV archive torrents: 2026 so far; Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -495,11 +495,13 @@ If poke6s.com is down:
 Store Pricing Ops
 -----------------
 Since 2026-11-20 (storefront plan D11) poke6s.com runs on its own store, so this site keeps
-only Supplier Pricing (Supplier Profitability moved to the store admin, 2026-11-21); the Squarespace Export Upload and Singles Listing Intake were
+no supplier pages: both moved to the store admin's "Suppliers" tab (home network only; the
+market addresses forward there). The Squarespace Export Upload and Singles Listing Intake were
 retired (their old addresses redirect to `/admin`).
 
-- `/supplier-pricing`
-  - upload or OCR supplier screenshots and save reviewed JPY quote rows by SKU
+- Supplier Pricing ("Enter a quote"): moved to the store admin on 2026-11-22
+  (http://192.168.1.240:8011/supplier-pricing). Paste a supplier's price list, check the rows'
+  SKUs, save them as one quote
 - Supplier Profitability: moved to the store admin on 2026-11-21
   (http://192.168.1.240:8011/supplier-profitability, home network only; the market address
   forwards there). Compares the latest supplier costs against market and store prices, with
@@ -508,9 +510,11 @@ retired (their old addresses redirect to `/admin`).
 Inputs:
 
 - Store prices: read-only from the store's database, `data/storefront/store.db`
-  (`load_store_prices()`), so they are always the live poke6s.com prices. Prices are changed in
+  (the store admin reads it there), so they are always the live poke6s.com prices. Prices are changed in
   the store admin (http://192.168.1.240:8011, Products or Pricing), never here.
-- Supplier quotes: `/opt/pokemon-momentum/data/supplier_quotes.csv`
+- Supplier quotes: `/opt/pokemon-momentum/data/storefront/supplier_quotes.csv` (moved from `data/`
+  on 2026-11-22, so the store admin can write it; the name-to-SKU list
+  `supplier_name_mapping.csv` moved with it)
 - Market prices and targets: `/opt/pokemon-momentum/data/market_prices_latest.csv`
 
 Adding a product to the store: the store admin's Products → "Add a product" (storefront/README.md,
@@ -667,17 +671,22 @@ If the `Poke6s` button is missing when it should appear:
 What each page is expected to do
 --------------------------------
 
-`/supplier-pricing`
+Supplier Pricing (store admin, `/supplier-pricing`; storefront/admin/supplier_quotes.py)
 
 - Purpose:
-  - convert supplier screenshots into structured SKU-linked quote rows
+  - turn a supplier's price list into SKU-linked quote rows
 - Inputs:
-  - OCR-reviewed rows containing supplier item name and JPY cost
+  - the list's text, one item per line with its yen price at the end (pasted; to get text out
+    of a screenshot, use the phone's or computer's own text copy)
+- Steps: "Read the text", fix names, prices and SKUs, "Check again", "Save the quote"
 - Outputs:
-  - appended historical quote rows in `data/supplier_quotes.csv`
+  - rows appended to `data/storefront/supplier_quotes.csv`, one quote_id per save
+  - typed SKUs for names the list didn't know are added to
+    `data/storefront/supplier_name_mapping.csv` (unless the box is unticked)
 - Debug questions:
-  - if OCR rows have blank SKU, check `data/supplier_name_mapping.csv`
-  - if a quote was saved but not reflected later, confirm the SKU was populated on save
+  - if rows have a blank SKU, type it in, or add the name to `supplier_name_mapping.csv`
+  - saved rows aren't edited in place: save the quote again with the SKUs (the newest quote
+    per SKU counts)
 
 Supplier Profitability (store admin, `/supplier-profitability`; storefront/admin/supplier_profit.py)
 
@@ -717,7 +726,7 @@ If pricing looks wrong:
 
 1. Check whether the SKU appears in `products_Apr-09_04-31-18PM.csv`.
 2. Check its rule row in `data/store_price_rules.csv`.
-3. Check its latest supplier quote in `data/supplier_quotes.csv`.
+3. Check its latest supplier quote in `data/storefront/supplier_quotes.csv`.
 4. Rebuild targets:
 
 ```bash
