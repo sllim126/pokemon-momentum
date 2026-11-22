@@ -259,6 +259,8 @@ def build(quotes: list[dict], unmatched: int, market: dict[str, dict], store: di
         channels = {key: channel_result(ch, prices[ch.reference], fixed, a) for key, ch in a.channels.items()}
         best_key = min(channels, key=lambda key: _rank(channels[key]))
         floors = [c["for_margin"] for c in channels.values() if c["for_margin"] is not None]
+        best = channels[best_key]
+        market_price = prices["market"]
         rows.append({
             "sku": sku,
             "title": store_row.get("title") or market_row.get("title") or quote.get("item_name_raw") or sku,
@@ -271,9 +273,21 @@ def build(quotes: list[dict], unmatched: int, market: dict[str, dict], store: di
             "landed": money(landed),
             "floor": money(min(floors)) if floors else None,
             "channels": channels,
-            "best": channels[best_key]["name"],
-            "decision": channels[best_key]["decision"],
-            "_rank": _rank(channels[best_key]),
+            "best": best["name"],
+            "best_key": best_key,
+            "decision": best["decision"],
+            # The best channel's numbers, for the Verdict cell and the sorts (SORTS).
+            "best_profit": best["profit_after_tax"],
+            "best_margin_pct": best["margin_after_tax_pct"],
+            # Return on cost: profit after tax per dollar the box costs landed, the "where should
+            # the money go" number (a cheap box with a fair margin can beat a dear one).
+            "roi_pct": (round(best["profit_after_tax"] / landed * 100, 1)
+                        if best["profit_after_tax"] is not None and landed > 0 else None),
+            "market_price": money(market_price),
+            # How far the market price sits above the landed cost, before any fees.
+            "market_gap_pct": (round((market_price - landed) / landed * 100, 1)
+                               if market_price and landed > 0 else None),
+            "_rank": _rank(best),
         })
     rows.sort(key=lambda row: (row["_rank"], row["sku"]))
     profits = [row["channels"][key]["profit_after_tax"] for row in rows for key in row["channels"]
@@ -286,11 +300,67 @@ def build(quotes: list[dict], unmatched: int, market: dict[str, dict], store: di
     }
 
 
-def visible(rows: list[dict], decision: str, needle: str) -> list[dict]:
-    """The rows the page's filter keeps: one decision (or all) and a SKU/title/supplier-name match."""
+# The table's sort orders: key -> label in the Sort menu. Biggest first, except "landed" and
+# "name". Rows missing the number (no reference price, no market price) always sort last.
+# "ch:<channel>" sorts by one channel's margin %; the channel columns' headers link to those.
+SORTS = {
+    "best": "Best buys first",
+    "margin": "Margin % (best channel)",
+    "profit": "Profit $ (best channel)",
+    "roi": "Return on cost %",
+    "market_gap": "Market above landed %",
+    "landed": "Cheapest landed",
+    "newest": "Newest quote",
+    "name": "Name",
+}
+
+
+def _sort_value(row: dict, sort: str):
+    if sort.startswith("ch:"):
+        channel = row["channels"].get(sort[3:])
+        return channel["margin_after_tax_pct"] if channel else None
+    field_for = {"margin": "best_margin_pct", "profit": "best_profit", "roi": "roi_pct",
+                 "market_gap": "market_gap_pct", "landed": "landed", "newest": "quote_date", "name": "title"}
+    value = row.get(field_for.get(sort, ""))
+    return value.lower() if isinstance(value, str) and sort == "name" else value
+
+
+def sort_rows(rows: list[dict], sort: str) -> list[dict]:
+    """The rows in the chosen order (SORTS, or "ch:<channel>"); "best" or an unknown key keeps
+    build()'s order (verdict, then dollars above the target-margin price)."""
+    if sort == "best" or (sort not in SORTS and not sort.startswith("ch:")):
+        return list(rows)
+    ascending = sort in ("landed", "name")
+    present = [row for row in rows if _sort_value(row, sort) is not None]
+    missing = [row for row in rows if _sort_value(row, sort) is None]
+    present.sort(key=lambda row: _sort_value(row, sort), reverse=not ascending)
+    return present + missing
+
+
+def judged_on(rows: list[dict], channel: str) -> list[dict]:
+    """The rows re-judged on one channel only (the "Channel" filter): verdict, profit, margin and
+    return on cost come from that channel instead of the best one. Any other value: unchanged."""
+    out = []
+    for row in rows:
+        result = row["channels"].get(channel)
+        if result is None:
+            return list(rows)
+        profit = result["profit_after_tax"]
+        out.append({**row, "best": result["name"], "best_key": channel, "decision": result["decision"],
+                    "best_profit": profit, "best_margin_pct": result["margin_after_tax_pct"],
+                    "roi_pct": round(profit / row["landed"] * 100, 1) if profit is not None and row["landed"] else None,
+                    "_rank": _rank(result)})
+    out.sort(key=lambda row: (row["_rank"], row["sku"]))
+    return out
+
+
+def visible(rows: list[dict], decision: str, needle: str, min_margin: float | None = None) -> list[dict]:
+    """The rows the page's filter keeps: one decision (or all), a SKU/title/supplier-name match,
+    and (when given) at least `min_margin` % after tax on the row's best (or chosen) channel."""
     needle = needle.strip().lower()
     return [row for row in rows if (decision not in DECISIONS or row["decision"] == decision)
-            and (not needle or needle in f"{row['sku']} {row['title']} {row['supplier_item']}".lower())]
+            and (not needle or needle in f"{row['sku']} {row['title']} {row['supplier_item']}".lower())
+            and (min_margin is None or (row["best_margin_pct"] is not None and row["best_margin_pct"] >= min_margin))]
 
 
 def quick_quote(query: Mapping[str, str], a: Assumptions) -> dict | None:

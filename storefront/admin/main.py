@@ -914,9 +914,30 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
             store = supplier_profit.store_prices(conn)
         result = supplier_profit.build(quotes, unmatched, market_rows, store, a)
         decision, needle = str(query.get("decision") or ""), str(query.get("q") or "")
+        # View choices (all GET parameters, so a view can be bookmarked): judge on one channel,
+        # a minimum margin, and the sort order (supplier_profit.SORTS, or "ch:<channel>").
+        channel = str(query.get("channel") or "")
+        channel = channel if channel in a.channels else ""
+        min_margin = supplier_profit.number(query.get("min_margin"), None)
+        sort = str(query.get("sort") or "best")
+        if channel:
+            result = {**result, "rows": supplier_profit.judged_on(result["rows"], channel)}
+            result["counts"] = {d: sum(1 for row in result["rows"] if row["decision"] == d)
+                                for d in supplier_profit.DECISIONS}
+            profits = [row["best_profit"] for row in result["rows"] if row["best_profit"] is not None]
+            result["avg_best_profit"] = supplier_profit.money(sum(profits) / len(profits)) if profits else None
+        shown = supplier_profit.sort_rows(supplier_profit.visible(result["rows"], decision, needle, min_margin), sort)
+
+        def sort_url(key: str) -> str:
+            # The current view with another sort: every other parameter kept.
+            params = [(k, v) for k, v in query.multi_items() if k != "sort"] + [("sort", key)]
+            return "/supplier-profitability?" + urlencode(params)
+
         return page(request, "supplier_profitability.html", cookie, active="suppliers", a=a, fx=fx,
-                    typed_rate=typed_rate, result=result, shown=supplier_profit.visible(result["rows"], decision, needle),
+                    typed_rate=typed_rate, result=result, shown=shown,
                     decision=decision, needle=needle, decisions=supplier_profit.DECISIONS,
+                    channel=channel, min_margin=min_margin, sort=sort, sorts=supplier_profit.SORTS,
+                    sort_url=sort_url,
                     references=supplier_profit.REFERENCES, quick=supplier_profit.quick_quote(query, a),
                     query=query)
 
