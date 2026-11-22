@@ -44,6 +44,15 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-21 Link check of market.poke6s.com (2026-11-20, owner asked: no dead links).
+  Headless crawl of 240 pages, desktop and phone: 2,357 links, none dead. Its three small
+  findings are settled: /dashboard-lab was deleted; the 60 products with no TCGplayer image get
+  stand-ins (2026-11-20); and the server's "can't resolve tcgplayer-cdn.tcgplayer.com" did not
+  come back on 2026-11-21. The host resolver (127.0.0.53 -> router 192.168.1.200), Cloudflare
+  1.1.1.1 and the pokemon-momentum container all resolve it and download pictures (HTTP 200).
+  Tailscale DNS is not the default route here, so it isn't used for public names. Most likely a
+  passing router DNS failure; nothing to change. If it recurs: `resolvectl query <name>` and
+  `dig @192.168.1.200 <name>`.
 - 2026-11-20 Store product page tidied (owner): the buy box holds only quantity, Add to cart and
   the free-shipping line; a "Shipping and returns" section under it has the ticks (1 business day,
   US only; tracking and signature; bubble wrapped in a box or padded mailer; 14-day returns), the
@@ -908,18 +917,6 @@ Active Queue
   Tins, 610741 Costco Evolving Skies ETB and Tin, 549339 Gyarados 043/193 Cosmos Holo, 664138
   Hydrapple Cosmos Holo, 567093 JP Charizard ex 139/108, 615352 JP Rainbow Energy (Pokemon VS).
   The other 53 show a stand-in until then (scripts/dashboards/product_image_standins.csv).
-- [planned] Link check of market.poke6s.com, 2026-11-20 (owner asked: no dead links); one fix
-  left, item 3. Headless crawl of 240 pages (desktop and phone, tabs clicked, cards opened): 2,357 links. Result: no
-  dead links. All 2,310 internal links return 200 (/admin is 401, but its link is hidden for
-  visitors); TCGplayer product links (21 sampled), PriceCharting card pages (21), Discord,
-  poke6s.com and TCGCSV all work. Small things found:
-  1. Done: /dashboard-lab (chart 404 on English -> Japanese) was deleted 2026-11-20.
-  2. Done: the 60 products with no TCGplayer image get stand-ins or own pictures
-     (2026-11-20; the [owner] item above lists the seven still without one).
-  3. This server's own DNS (127.0.0.53) can't resolve tcgplayer-cdn.tcgplayer.com (public DNS
-     can: a CloudFront name). Visitors aren't affected; anything on this server that fetches
-     TCGplayer images would be. Check the resolver (Tailscale DNS?).
-  Crawler and checker scripts were one-off (scratchpad); rerun the same way if needed.
 - [planned] Performance review (2026-11-05): the design is sound (nightly snapshot tables, one
   shared read-only DuckDB connection; phone pages answer in 5-95 ms). Fix 1 (dead tables) is
   done, see Recently Completed. Still to do:
