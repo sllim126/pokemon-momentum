@@ -442,8 +442,11 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         if found is None:
             raise HTTPException(404)
         crumbs = [("Home", "/"), ("Articles", "/articles"), (found.title, f"/articles/{slug}")]
+        scheduled = articles.is_scheduled(found)
+        # Drafts and scheduled posts list the rest of the review queue; live posts don't.
+        waiting = articles.waiting() if found.draft or scheduled else []
         response = page(request, "article.html", title=found.title, article=found,
-                        scheduled=articles.is_scheduled(found),
+                        scheduled=scheduled, waiting=waiting,
                         body_html=market_boxes(found.html, market),   # today's prices, per view
                         more=articles.more_like(found), crumbs=crumbs, og_type="article",
                         og_image=seo.image_url(settings, found.cover), description=found.description,

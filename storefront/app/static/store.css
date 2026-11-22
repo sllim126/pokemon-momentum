@@ -173,6 +173,11 @@ main section { margin-top: 32px; }
 .text-page h2 { margin-top: 28px; }
 .text-page p, .text-page li { color: #c9d6ee; }
 .draft-note { background: rgba(245, 185, 74, 0.12); border: 1px solid rgba(245, 185, 74, 0.4); color: var(--warn); padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; }
+/* Review queue on draft and scheduled article pages (owner's preview only; live posts don't show it). */
+.review-queue { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; margin: 8px 0; font-size: 0.9rem; }
+.review-queue summary { cursor: pointer; color: var(--muted); }
+.review-queue ul { margin: 8px 0 0; padding-left: 18px; }
+.review-queue li { padding: 2px 0; }
 
 /* footer */
 .site-foot { border-top: 1px solid var(--line); background: var(--panel-3); padding: 24px 0 16px; }
