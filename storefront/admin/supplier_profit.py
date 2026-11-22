@@ -8,8 +8,8 @@ eBay, TCGplayer), and whether today's reference price clears that ("Buy", "Thin 
 "Pass").
 
 Inputs, all read fresh on every page load, never written:
-- data/supplier_quotes.csv: the quote ledger that Supplier Pricing (still on the market site)
-  appends to. The newest row per SKU counts; rows with no SKU are counted as "unmatched".
+- data/storefront/supplier_quotes.csv: the quote ledger that Supplier Pricing (supplier_quotes.py,
+  "Enter a quote") appends to. The newest row per SKU counts; rows with no SKU are counted as "unmatched".
 - data/market_prices_latest.csv: each SKU's market and target price (scripts/build_store_price_targets.py).
 - the store's own products table: the poke6s.com price, for the "Store Price" reference.
 - the JPY-per-USD rate from Frankfurter (free, no key; the market page used the same), cached for
@@ -20,8 +20,8 @@ from the page's form as query parameters, so a page can be bookmarked with its a
 Unlike the market page, a field left at 0 stays 0 (the market treated 0 as "use the default"
 for some fields); a field left empty uses the default.
 
-Every result is per unit (one box), not per order. Supplier costs are the owner's business
-figures: this page is admin-only, like the Pricing page, and never reaches the public store.
+Every result is per unit (one box), not per order. It's an owner tool, so it's admin-only like the
+Pricing page and never reaches the public store.
 """
 
 from __future__ import annotations

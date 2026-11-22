@@ -16,7 +16,9 @@ The flow is three plain form posts, no script, like the rest of the admin:
    for names the list didn't know are added to the list too, unless they untick that.
 
 Files, both under data/storefront/ (the only data folder the admin can write; moved there from
-data/ on 2026-11-22). Neither is committed: supplier costs are the owner's business figures.
+data/ on 2026-11-22). data/storefront/ is git-ignored, so neither is committed. That's because
+they're live data, not because they're secret: suppliers post these prices publicly (owner,
+2026-11-22), and the old copies up to May 2026 stay in the repo's history.
 - supplier_quotes.csv: the ledger, append-only, one row per item per quote (QUOTE_FIELDS).
 - supplier_name_mapping.csv: supplier item name -> SKU (MAPPING_FIELDS), matched on
   `normalize_name`, so case, spacing and punctuation don't matter.
