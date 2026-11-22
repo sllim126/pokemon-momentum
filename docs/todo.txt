@@ -44,6 +44,16 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-22 Refunds tested both ways. From the admin (owner's test order P6-2026-0009): Stripe
+  accepted the admin key's refund, the order note was written and the unit went back on the
+  shelf. From Stripe's own dashboard (P6-2026-0006 and the test order P6-2026-0007): the webhook
+  marks the order refunded but puts no stock back; the owner did that from "Refund or return"
+  with the amount left blank. So refund from the admin when possible.
+- 2026-11-22 P6-2026-0006 refunded as suspected fraud before shipping (owner, Stripe reason
+  "Fraudulent"): on 2026-11-18 a declined card in one name (P6-2026-0004) and a paid card in
+  another, billing addresses in two other states, shipped to two units of the same Garland, TX
+  building five minutes apart, plus two abandoned checkouts for the same ETB. The ETB is back
+  in stock. Watch for more orders to that address; a free Stripe Radar rule can block it.
 - 2026-11-21 Supplier Profitability moved into the store admin (market option B, the first owner
   tool): the "Suppliers" tab, http://192.168.1.240:8011/supplier-profitability
   (storefront/admin/supplier_profit.py). Same maths as the market page, server-rendered with no
@@ -165,8 +175,8 @@ Recently Completed
   email was sent, saved to the outbox or queued. reportlab added to the store image (pinned).
 - 2026-11-18 poke6s.com product pages trimmed (owner): the market box shows only the market
   price (linked to its market.poke6s.com history) and the "% below market" badge; the 30-day
-  trend, the source/date line and the SKU row are gone. First real store order the same night
-  (P6-2026-0006).
+  trend, the source/date line and the SKU row are gone. The first paid store order came the same night
+  (P6-2026-0006), but it turned out to be suspected fraud and was refunded 2026-11-22.
 - 2026-11-17 market.poke6s.com shows a one-line "TCGplayer Cyber Weekend: 10% back in store
   credit" note above the toolbar (desktop) and under the header (phone), only from 9 AM New York
   Nov 28 to 11 PM New York Dec 1, through the affiliate link (not for the signed-in owner),
@@ -468,8 +478,8 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     (its export columns aren't documented, so the reader guesses by header and order number).
   - [done 2026-11-19] Step 4, Refunds and returns from the order page (key in .env as
     STOREFRONT_ADMIN_STRIPE_KEY). [owner] The first real refund is the first real test of the
-    key's write access: if Stripe refuses, the page shows Stripe's message. Owner plans a test
-    order on 2026-11-20 and its refund from the admin on 2026-11-21.
+    key's write access: if Stripe refuses, the page shows Stripe's message. Tested 2026-11-22
+    (P6-2026-0009): the admin refund works.
   - [owner] Pricing page (http://192.168.1.240:8011/pricing, live after the next deploy): 9
     prices would change on 2026-11-18's market (e.g. Ascended Heroes ETB $120.99 -> $119.99).
     Untick any to keep, then apply.
@@ -564,8 +574,8 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   merged and deploy/update_storefront.sh has run; `orders_cli mailing` refuses until then.
 - [planned] A way to join the email list now: the sign-up form shows only while checkout is
   off. A small "News and restocks" box in the footer or on /notify? Owner's call.
-- [planned] A restock command for returns (D8: refunds don't put stock back; done by hand in
-  SQL for P6-2026-0001). Belongs in the Phase 3 admin.
+- [done 2026-11-19] A restock command for returns: the admin's "Refund or return" puts units
+  back (amount blank = stock only). Refunds made in Stripe's dashboard still don't.
 - [planned] Yearly, by 2027-10: bump the cloudflared image tag in docker-compose.yml (2026.10.7
   pinned 2026-11-11; Cloudflare supports a connector version for one year).
 - [planned] Move market.poke6s.com onto the Cloudflare Tunnel too (route to
