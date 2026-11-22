@@ -22,11 +22,11 @@
   {% endif %}
   <meta name="theme-color" content="#08111d">
   <link rel="icon" href="/static/img/favicon.png" type="image/png">
-  <link rel="stylesheet" href="/static/store.css">
+  <link rel="stylesheet" href="/static/store.css?v={{ static_v['store.css'] }}">
   {% for block in jsonld or [] %}
   <script type="application/ld+json">{{ block | jsonld | safe }}</script>
   {% endfor %}
-  <script src="/static/store.js" defer></script>
+  <script src="/static/store.js?v={{ static_v['store.js'] }}" defer></script>
   {#- A page's own stylesheet or scripts (files under /static only: the CSP allows nothing inline). -#}
   {% block head %}{% endblock %}
 </head>
