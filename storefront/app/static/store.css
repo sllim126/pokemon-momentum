@@ -240,6 +240,14 @@ main section { margin-top: 32px; }
 .market-box-trend { color: var(--muted); font-size: 0.85rem; }
 .market-box-link { font-size: 0.85rem; margin-top: 4px; }
 /* A row of single cards only: bigger, card-shaped, for the art. */
+/* A row of 3, 5 or 6 products goes three to a row (3, 3+2, 3+3), so it doesn't end with one
+   box alone under a row of four. :has() counts the boxes; browsers without it keep the default. */
+@media (min-width: 560px) {
+  .market-boxes:not(.market-boxes-cards):has(> .market-box:nth-child(3)):not(:has(> .market-box:nth-child(4))),
+  .market-boxes:not(.market-boxes-cards):has(> .market-box:nth-child(5)):not(:has(> .market-box:nth-child(7))) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
 .market-boxes-cards { grid-template-columns: repeat(auto-fill, minmax(200px, 260px)); }
 .article-body .market-boxes-cards .market-box img { aspect-ratio: 63 / 88; object-fit: cover; background: var(--panel-2); }
 .market-boxes figcaption { grid-column: 1 / -1; color: var(--muted); font-size: 0.8rem; }
