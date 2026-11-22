@@ -227,6 +227,8 @@ output/
 *.zip
 *.tar
 *.gz
+# Except the screenshot reader's pinned language data (storefront/admin/static/vendor/tesseract/README.md).
+!storefront/admin/static/vendor/tesseract/eng.traineddata.gz
 
 # Python cache
 __pycache__/

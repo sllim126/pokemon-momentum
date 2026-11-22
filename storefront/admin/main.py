@@ -68,6 +68,14 @@ SECURITY_HEADERS = {
     "X-Robots-Tag": "noindex, nofollow",
 }
 
+# The screenshot reader on Supplier Pricing (static/supplier-ocr.js) runs tesseract.js from
+# static/vendor/tesseract/. Its worker compiles WebAssembly, which a policy must allow with
+# 'wasm-unsafe-eval' (it allows compiling WebAssembly only, not JavaScript eval). Only those
+# files get it; they're fixed, pinned copies (README there), cached a day so the 7 MB isn't
+# fetched again for every screenshot.
+OCR_PATH = "/static/vendor/tesseract/"
+OCR_CSP = SECURITY_HEADERS["Content-Security-Policy"].replace("script-src 'self'", "script-src 'self' 'wasm-unsafe-eval'")
+
 
 # Order-number and tracking-number patterns live in shipping.py (shared with the Shipping page).
 ORDER_NUMBER, TRACKING = shipping.ORDER_NUMBER, shipping.TRACKING
@@ -211,6 +219,9 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
             response = PlainTextResponse("Form came from another site.", status_code=403)
         else:
             response = await call_next(request)
+            if request.url.path.startswith(OCR_PATH) and response.status_code == 200:
+                response.headers["Content-Security-Policy"] = OCR_CSP
+                response.headers["Cache-Control"] = "private, max-age=86400"
         for name, value in SECURITY_HEADERS.items():
             response.headers.setdefault(name, value)
         return response
@@ -986,7 +997,7 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
         # Today in the store's time zone (the owner's), not the server's UTC.
         today = datetime.now(UTC).astimezone(notify.MOUNTAIN).date().isoformat()
         form = {"supplier": supplier_quotes.DEFAULT_SUPPLIER, "quote_date": today,
-                "source": "", "text": "", "remember": True}
+                "source": "", "text": "", "remember": True, "only_sku": False}
         return quote_page(request, cookie, form, done=done)
 
     @app.post("/supplier-pricing")
@@ -996,31 +1007,42 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
         cookie = signed_in(request)
         if not cookie:
             return to_login()
-        data = await request.form(max_files=0, max_fields=4 * supplier_quotes.MAX_ROWS + 20)
+        data = await request.form(max_files=0, max_fields=5 * supplier_quotes.MAX_ROWS + 20)
         if not form_ok(cookie, str(data.get("form_token") or "")):
             return expired_form()
         form = {"supplier": str(data.get("supplier") or "").strip() or supplier_quotes.DEFAULT_SUPPLIER,
                 "quote_date": str(data.get("quote_date") or "").strip(),
                 "source": str(data.get("source") or "").strip()[:200],
-                "text": str(data.get("text") or "")[:50_000],
-                "remember": bool(data.get("remember"))}
+                "text": str(data.get("text") or "")[:supplier_quotes.MAX_TEXT],
+                "remember": bool(data.get("remember")),
+                # Save only the rows with a SKU: ticked by default for a shop page (most of its
+                # products aren't ones the store sells), unticked for a short list.
+                "only_sku": bool(data.get("only_sku"))}
         action = str(data.get("action") or "check")
         if action == "read":
             rows = supplier_quotes.parse_text(form["text"])
+            form["only_sku"] = any(row["note"] for row in rows)
+            if form["supplier"] == supplier_quotes.DEFAULT_SUPPLIER and form["only_sku"]:
+                form["supplier"] = supplier_quotes.shop_name(form["text"]) or form["supplier"]
         else:
-            rows = supplier_quotes.form_rows(data.getlist("item"), data.getlist("cost"), data.getlist("sku"))
+            rows = supplier_quotes.form_rows(data.getlist("item"), data.getlist("cost"), data.getlist("sku"),
+                                             data.getlist("note"))
         with db() as conn:
             store = supplier_profit.store_prices(conn)
         market = supplier_profit.market_targets(config.market_targets_file or Path("/nonexistent"))
         checked = supplier_quotes.check(rows, supplier_quotes.load_mapping(mapping_file), store, market)
         if action == "read" and not checked:
             return quote_page(request, cookie, form, status_code=400,
-                              error="No rows found: each line needs an item name with a yen price at the end.")
+                              error="No rows found: paste a whole shop page, or a list with one item per line and "
+                                    "its yen price at the end.")
         if action != "save":
             return quote_page(request, cookie, form, checked)
         quote_date = supplier_quotes.valid_date(form["quote_date"])
+        if form["only_sku"]:
+            checked = [row for row in checked if row["sku"]]
         bad = sum(1 for row in checked if row["status"] == "bad")
-        error = ("Nothing to save yet." if not checked else
+        error = ("Nothing to save yet." if not checked and not form["only_sku"] else
+                 "No row has a SKU yet: type some, or untick “only the rows with a SKU”." if not checked else
                  "Pick the quote's date." if not quote_date else
                  f"{bad} row(s) need a name and a whole yen price (or clear both to drop the row)." if bad else None)
         if error:

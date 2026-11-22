@@ -129,3 +129,139 @@ def test_save_needs_a_date(quotes):
     response = quotes.post("/supplier-pricing", data={"form_token": token(quotes), "action": "save", "quote_date": "",
                                                       "item": ["Cheap Box"], "cost": ["1000"], "sku": [""]})
     assert response.status_code == 400 and "Pick the quote" in response.text
+
+
+# --- a whole shop page pasted (MACHO TCG's shape, cut down; owner 2026-11-22) --------------------
+
+SHOP_PAGE = """MACHO TCG
+TOKYO · WHOLESALE
+MIN. ORDER ¥30,000
+Grid
+Price: All
+PRODUCT
+SEALED (SHRINK)
+NO SHRINK
+CARTON
+PREORDER
+MEGA Hadou Seeker Box
+ハドウシーカー
+M7
+SEALED (SHRINK)
+Est. ship Nov 30
+¥10,000
+≈ 63.03 USD
+−
++
+Est. ship Dec 1
+¥9,600
+≈ 60.51 USD
+NO SHRINK
+Est. ship Nov 30
+¥9,800
+≈ 61.77 USD
+Pokemon · Booster Boxes
+3 products
+HOT
+Abyss Eye
+アビスアイ
+M5JAN 4521329462127
+SEALED (SHRINK)
+¥8,000
+≈ 50.43 USD
+6 in stock
+−
++
+NO SHRINK
+¥7,100
+≈ 44.75 USD
+Ask us
+LOOSE PACKS
+¥110
+≈ 0.69 USD
+899 in stock
+Sold in units of 10
+151
+ポケモンカード151
+SV2aJAN 4521329346038
+SEALED (SHRINK)
+¥49,500
+≈ 312.02 USD
+5 in stock
+CARTON
+¥575,000
+≈ 3,624.46 USD
+Ask us
+On request — confirmed before you pay.
+WhatsApp
+Notify me
+Dark Rush
+ダークラッシュ
+ALC-G85
+LOOSE PACKS
+¥900
+≈ 5.67 USD
+Ask us
+MEGA Hadou Seeker Box
+ハドウシーカー
+M7
+SEALED (SHRINK)
+Est. ship Nov 30
+¥10,000
+Your order
+Product subtotal
+¥0
+Total
+¥0
+"""
+
+
+def test_shop_page_is_read_product_by_product():
+    rows = supplier_quotes.parse_text(SHOP_PAGE)
+    # Packs-only Dark Rush is left out; the pre-order listed twice is kept once; the cart's totals
+    # and the column-heading row above the list aren't products.
+    assert [(r["item"], r["cost"]) for r in rows] == [("MEGA Hadou Seeker Box", "10000"), ("Abyss Eye", "8000"),
+                                                       ("151", "49500")]
+    assert rows[0]["note"] == "M7; sealed (shrink), est. ship nov 30; also no shrink ¥9,800"
+    assert rows[1]["note"] == ("M5 JAN 4521329462127; sealed (shrink), 6 in stock; "
+                               "also no shrink ¥7,100, loose packs ¥110")
+    assert rows[2]["note"] == "SV2a JAN 4521329346038; sealed (shrink), 5 in stock; also carton ¥575,000"
+    assert supplier_quotes.shop_name(SHOP_PAGE) == "MACHO TCG (ALC Japan)"
+    # A plain list still reads one line at a time, with no notes.
+    assert supplier_quotes.parse_text("Mega Dream ¥12,800\nNihil Zero 9,800") == [
+        {"item": "Mega Dream", "cost": "12800", "sku": "", "note": ""},
+        {"item": "Nihil Zero", "cost": "9800", "sku": "", "note": ""}]
+
+
+def test_shop_page_saves_only_rows_with_a_sku(quotes):
+    page = quotes.post("/supplier-pricing", data={"form_token": token(quotes), "action": "read",
+                                                  "supplier": supplier_quotes.DEFAULT_SUPPLIER,
+                                                  "quote_date": "2026-11-22", "text": SHOP_PAGE}).text
+    assert 'value="MACHO TCG (ALC Japan)"' in page
+    assert 'name="only_sku" value="1" checked' in page
+    assert 'name="note" value="M5 JAN 4521329462127;' in page and "also no shrink ¥7,100" in page
+    response = quotes.post("/supplier-pricing", data={
+        "form_token": token(quotes), "action": "save", "supplier": "MACHO TCG (ALC Japan)",
+        "quote_date": "2026-11-22", "only_sku": "1", "remember": "1",
+        "item": ["MEGA Hadou Seeker Box", "Abyss Eye", "151"], "cost": ["10000", "8000", "49500"],
+        "sku": ["", "", ""], "note": ["M7; sealed (shrink)", "M5 JAN 4521329462127; sealed (shrink)", "SV2a"]})
+    assert response.status_code == 303 and "n=1" in response.headers["location"]
+    saved = ledger(quotes)
+    assert [(r["item_name_raw"], r["sku"], r["cost_jpy"], r["source_type"]) for r in saved] == [
+        ("Abyss Eye", "JP-AE-BB", "8000", "shop page")]
+    assert saved[0]["notes"] == "saved in the store admin; M5 JAN 4521329462127; sealed (shrink)"
+    # Nothing with a SKU: a message, not an empty quote.
+    refused = quotes.post("/supplier-pricing", data={
+        "form_token": token(quotes), "action": "save", "quote_date": "2026-11-22", "only_sku": "1",
+        "item": ["151"], "cost": ["49500"], "sku": [""], "note": ["SV2a"]})
+    assert refused.status_code == 400 and "No row has a SKU yet" in refused.text
+
+
+def test_screenshot_reader_is_served_with_wasm_allowed(quotes):
+    page = quotes.get("/supplier-pricing").text
+    assert '<p class="sp-ocr" hidden>' in page and 'src="/static/supplier-ocr.js"' in page
+    assert "'wasm-unsafe-eval'" not in quotes.get("/supplier-pricing").headers["content-security-policy"]
+    for name in ("tesseract.min.js", "worker.min.js", "tesseract-core-simd-lstm.wasm.js", "eng.traineddata.gz"):
+        response = quotes.get(f"/static/vendor/tesseract/{name}")
+        assert response.status_code == 200, name
+        assert "script-src 'self' 'wasm-unsafe-eval'" in response.headers["content-security-policy"]
+    assert "'wasm-unsafe-eval'" not in quotes.get("/static/admin.css").headers["content-security-policy"]
