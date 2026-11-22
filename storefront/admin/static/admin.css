@@ -116,8 +116,8 @@ details summary { cursor: pointer; color: var(--accent); }
 .address-form { display: grid; gap: 8px; margin-top: 8px; }
 .address-form .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .address-form button { justify-self: start; }
-button.secondary, a.button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--line-strong); }
-a.button { display: inline-block; text-decoration: none; border-radius: 8px; padding: 9px 16px; background: var(--accent);
+button.secondary, a.button.secondary, label.button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--line-strong); }
+a.button, label.button { cursor: pointer; display: inline-block; text-decoration: none; border-radius: 8px; padding: 9px 16px; background: var(--accent);
   color: #04111f; font-weight: 600; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 6px; }
 form.inline { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -255,3 +255,9 @@ table.sq-table th:nth-child(3) { width: 14%; }
 /* Reports (step 7): the month picker sits in the page head. */
 .month-form { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .month-form input[type=month] { width: auto; }
+
+/* Supplier Pricing: a shop-page row's note (other versions, stock, barcode) under its name, and the
+   screenshot button (shown by supplier-ocr.js only when the reader can run). */
+.sp-note { display: block; max-width: 34em; white-space: normal; margin-top: 2px; }
+.sp-ocr { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 8px; }
+.sp-ocr[hidden] { display: none; }

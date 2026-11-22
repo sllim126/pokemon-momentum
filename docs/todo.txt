@@ -44,6 +44,14 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-22 Supplier Pricing reads a whole copied shop page and screenshots (owner: MACHO TCG's
+  list at shop.alc-japan.co.jp; everyone else sends Facebook screenshots). Shop page: Ctrl+A,
+  Ctrl+C after scrolling to the bottom; each product's sealed (shrink) price becomes a row, the
+  other versions, stock, set code and JAN go in its note (saved in the ledger's notes); the
+  supplier fills in as "MACHO TCG (ALC Japan)"; "Save only the rows with a SKU" is ticked for
+  shop pages. Checked on the live page: all 91 products, 19 matched the name-to-SKU list.
+  Screenshots: "Read a screenshot" runs tesseract.js 5.1.1 in the browser from a pinned copy in
+  admin/static/vendor/tesseract/ (7 MB, served with 'wasm-unsafe-eval'); English only.
 - 2026-11-22 Supplier Pricing moved into the store admin (market option B, owner tools):
   "Suppliers" tab, "Enter a quote", http://192.168.1.240:8011/supplier-pricing
   (storefront/admin/supplier_quotes.py). Server-rendered, no script: paste the price list,
@@ -525,11 +533,12 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
     collector tools to poke6s.com, one at a time, with 301s from the old addresses. Done:
     Binder Art Maker, Collector Hub and Placeholder Library (2026-11-20); Supplier
     Profitability (2026-11-21) and Supplier Pricing (2026-11-22) into the store admin.
-    Open: whether Supplier Pricing should read screenshots itself. For now the owner pastes
-    the list's text (phone or Windows text copy). Options if wanted: a pinned tesseract.js copy
-    in the admin's static folder (free, about 3 MB; the admin's CSP blocks the CDN copy) or
-    reading screenshots on the server. Ask the owner. Next owner tool: Bug Reports and the one
-    owner home (step 9c).
+    Supplier Pricing reads screenshots again and whole shop pages (2026-11-22, see Recently
+    Completed). Next owner tool: Bug Reports and the one owner home (step 9c).
+  - [planned] Supplier Pricing: the other 72 MACHO TCG products have no SKU (sets the store
+    doesn't sell). If the owner starts stocking one, typing its SKU once on the page remembers it.
+    The page has JAN barcodes too; products have a gtin column (empty for all 95): filling it
+    would let the reader match by barcode instead of name.
   - [watching] The MEP promo list was checked against Bulbapedia's (pasted by the owner
     2026-11-20): staff copies, Game On! and tin copies, and MEP118/120/125-127/131 added to
     mega_placeholders.csv ahead of TCGplayer. Jumbo-only cards (No. 500 Pikachu at the Museum,

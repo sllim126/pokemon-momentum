@@ -413,7 +413,7 @@ that address out for 15 minutes and post a Discord alert.
 | `/pricing`, `POST /pricing/apply` | Pricing: the repricing rules with a preview; applies only the ticked lines (see "Pricing page") |
 | `/reports`, `/reports/sales.csv`, `/reports/stripe.csv` | Reports: a month's sales for the books (`?month=YYYY-MM`); read-only (see "Reports page") |
 | `/supplier-profitability` | Suppliers: each SKU's newest supplier quote (`data/storefront/supplier_quotes.csv`) against store, market and target prices, per channel, with editable assumptions and a quick calculator. Read-only; a GET form. Moved from the market site 2026-11-21 |
-| `/supplier-pricing` (GET, POST) | Suppliers, "Enter a quote": paste a supplier's price list, check each row's SKU against the name-to-SKU list (`data/storefront/supplier_name_mapping.csv`) with store and market prices beside it, and save the rows as one quote (`admin/supplier_quotes.py`) |
+| `/supplier-pricing` (GET, POST) | Suppliers, "Enter a quote": paste a supplier's price list (one item per line, or a whole copied shop page such as MACHO TCG's: each product's sealed box price, other versions in a note), or read a screenshot into the box in the browser (tesseract.js from `admin/static/vendor/tesseract/`), check each row's SKU against the name-to-SKU list (`data/storefront/supplier_name_mapping.csv`) with store and market prices beside it, and save the rows as one quote (`admin/supplier_quotes.py`) |
 | `/login`, `POST /login`, `POST /logout` | Sign-in |
 | `/healthz` | `{"ok", "schema", "sign_in_ready"}` (still home network only) |
 
@@ -527,7 +527,8 @@ Rules worth knowing:
 | `admin/pricing_view.py` | The Pricing page: reads the inputs, checks ticked lines against a fresh plan |
 | `admin/reports.py` | The Reports page: shop months, worksheet rows, Utah totals, Stripe fees and refunds |
 | `admin/supplier_profit.py` | Supplier Profitability: landed cost, break-even and target-margin prices per channel; the JPY/USD rate |
-| `admin/supplier_quotes.py` | Supplier Pricing: reads a price list's text, matches names to SKUs, appends quotes to the ledger and remembers new matches |
+| `admin/static/supplier-ocr.js`, `admin/static/vendor/tesseract/` | Supplier Pricing's screenshot reader (the admin's only script; pinned tesseract.js 5.1.1, served with `'wasm-unsafe-eval'`) |
+| `admin/supplier_quotes.py` | Supplier Pricing: reads a price list's text or a copied shop page, matches names to SKUs, appends quotes to the ledger and remembers new matches |
 | `tools/archive_squarespace_site.py` | One-off copy of the old site's pages, blog posts and images |
 | `content/pages/*.md` | About, FAQ, Shipping, Returns, Terms, Privacy, Contact |
 | `admin/main.py` | The admin app: the network walls, sign-in routes, Overview |

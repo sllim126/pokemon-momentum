@@ -1,6 +1,7 @@
 {#- Supplier Pricing (moved from the market site 2026-11-22): supplier_quotes.py reads, matches and
-    saves. One POST form with three buttons (action = read / check / save), so the page needs no
-    script. `rows` is the checked table (None before the text is read). -#}
+    saves. One POST form with three buttons (action = read / check / save); the form works without
+    script. The one script, supplier-ocr.js, only fills the text box from a screenshot (tesseract.js,
+    served from /static/vendor/tesseract/). `rows` is the checked table (None before the text is read). -#}
 {% extends "base.html" %}
 {% macro usd(value) %}{% if value is none or value == '' %}<span class="muted">–</span>{% else %}${{ '%.2f' % (value | float) }}{% endif %}{% endmacro %}
 {% block title %}Supplier Pricing{% endblock %}
@@ -17,16 +18,26 @@
 <button type="submit" name="action" value="{{ 'check' if rows else 'read' }}" class="sr-only" tabindex="-1" aria-hidden="true">Default</button>
 <section class="panel">
   <h2>1. The price list</h2>
-  <p class="muted small">Paste the supplier's list: one item per line, its yen price at the end ("Mega Dream ¥12,800").
-    To get the text out of a screenshot, use your phone's or computer's text copy (iPhone: press and hold the text;
-    Windows Snipping Tool: Text actions, then Copy all text).</p>
+  <p class="muted small">Paste one of these, then <strong>Read the text</strong>:</p>
+  <ul class="muted small">
+    <li><strong>A whole shop page</strong> (e.g. MACHO TCG's list): scroll to the bottom so every product has loaded,
+      then Ctrl+A, Ctrl+C. Each product's sealed box price is used; the other versions, stock and barcode go in its note.</li>
+    <li><strong>A list</strong>: one item per line, its yen price at the end ("Mega Dream ¥12,800").</li>
+    <li><strong>A screenshot</strong> (Messenger): choose it below and its text is read into the box. Check it: the reader
+      can mistake a digit, and it can't read Japanese names.</li>
+  </ul>
+  <p class="sp-ocr" hidden>
+    <label class="button secondary" for="sp-shot">Read a screenshot</label>
+    <input id="sp-shot" type="file" accept="image/png,image/jpeg,image/webp" class="sr-only">
+    <span class="muted small" id="sp-ocr-status" role="status"></span>
+  </p>
   <div class="sp-grid">
     <label>Supplier<input type="text" name="supplier" value="{{ form.supplier }}" maxlength="120"></label>
     <label>Quote date<input type="date" name="quote_date" value="{{ form.quote_date }}"></label>
     <label>Screenshot name<input type="text" name="source" value="{{ form.source }}" placeholder="Optional" maxlength="200"></label>
   </div>
   <label class="sp-text"><span class="sr-only">Price list text</span>
-    <textarea name="text" rows="8" placeholder="Mega Dream ¥12,800&#10;Nihil Zero 9,800">{{ form.text }}</textarea></label>
+    <textarea id="sp-text" name="text" rows="8" placeholder="Mega Dream ¥12,800&#10;Nihil Zero 9,800">{{ form.text }}</textarea></label>
   <p class="actions"><button type="submit" name="action" value="read">Read the text</button>
     {% if rows %}<span class="muted small">Reading again replaces the table below.</span>{% endif %}</p>
 </section>
@@ -50,7 +61,9 @@
     <tbody>
     {% for row in rows %}
       <tr>
-        <td><input type="text" name="item" value="{{ row.item }}" aria-label="Row {{ loop.index }}: supplier item"></td>
+        <td><input type="text" name="item" value="{{ row.item }}" aria-label="Row {{ loop.index }}: supplier item">
+          <input type="hidden" name="note" value="{{ row.note }}">
+          {%- if row.note %}<span class="muted small sp-note">{{ row.note }}</span>{% endif %}</td>
         <td><input type="text" name="cost" value="{{ row.cost }}" inputmode="numeric" aria-label="Row {{ loop.index }}: price in yen"></td>
         <td><input type="text" name="sku" value="{{ row.sku }}" aria-label="Row {{ loop.index }}: SKU"></td>
         <td class="wrap">{{ row.store_title or '–' }}</td>
@@ -64,7 +77,8 @@
       </tr>
     {% endfor %}
       <tr class="muted">
-        <td><input type="text" name="item" value="" placeholder="Add a row" aria-label="New row: supplier item"></td>
+        <td><input type="text" name="item" value="" placeholder="Add a row" aria-label="New row: supplier item">
+          <input type="hidden" name="note" value=""></td>
         <td><input type="text" name="cost" value="" inputmode="numeric" aria-label="New row: price in yen"></td>
         <td><input type="text" name="sku" value="" aria-label="New row: SKU"></td>
         <td colspan="5"></td>
@@ -80,7 +94,9 @@
   <p class="muted small">Adds every row to <code>data/storefront/supplier_quotes.csv</code> under one quote. Rows without a
     SKU are kept but left out of Supplier Profitability until they have one.</p>
   <label class="small"><input type="checkbox" name="remember" value="1" {% if form.remember %}checked{% endif %}>
-    Remember the SKUs I typed for names the list doesn't know yet</label>
+    Remember the SKUs I typed for names the list doesn't know yet</label><br>
+  <label class="small"><input type="checkbox" name="only_sku" value="1" {% if form.only_sku %}checked{% endif %}>
+    Save only the rows with a SKU (the rest are products the store doesn't sell)</label>
   <p class="actions"><button type="submit" name="action" value="save">Save the quote</button></p>
 </section>
 {% else %}
@@ -99,4 +115,6 @@
   {% else %}<p class="muted">No quotes saved yet.</p>{% endif %}
   <p class="muted small">See what they're worth on <a href="/supplier-profitability">Supplier Profitability</a>.</p>
 </section>
+<script src="/static/vendor/tesseract/tesseract.min.js" defer></script>
+<script src="/static/supplier-ocr.js" defer></script>
 {% endblock %}
