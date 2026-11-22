@@ -1,10 +1,11 @@
 # New storefront for poke6s.com: plan
 
-Last reviewed: 2026-11-20
-**Status: live catalog-only on https://poke6s.com/ since 2026-11-11**, self-hosted on the owner's
-server through a Cloudflare Tunnel (runbook "poke6s.com hosting"). Phases 1 and 2 built;
-checkout stays off (Stripe test mode only) until the owner activates live payments. Google
-Search Console is set up, and its numbers are on Grafana's Store dashboard.
+Last reviewed: 2026-11-22
+**Status: live on https://poke6s.com/ since 2026-11-11**, self-hosted on the owner's server
+through a Cloudflare Tunnel (runbook "poke6s.com hosting"); Stripe Checkout has been live since
+2026-11-13. Phases 1 and 2 are live. Phase 3's LAN-only admin now covers orders, shipping,
+products, pricing, refunds, reports and supplier tools. Google Search Console is set up, and its
+numbers are on Grafana's Store dashboard.
 Developer guide for the code: `storefront/README.md`. See "Progress log" at the end.
 
 The owner decided on 2026-10-31 to replace the Squarespace store with our own storefront on
@@ -36,7 +37,7 @@ What the current Squarespace site has and does: `docs/storefront_current_site.md
 
 ## Decided (owner, 2026-10-31)
 
-- **No Squarespace renewal.** The website plan ends 2026-11-14; the domain stays registered.
+- **No Squarespace renewal.** The website plan ended 2026-11-14; the domain stays registered.
 - **Our own storefront on poke6s.com**, hosted on the owner's server. market.poke6s.com stays
   the research site.
 - **Stripe for payments.** Approved, no monthly fee. We use Stripe's hosted Checkout page, so
@@ -405,22 +406,21 @@ Decided by the owner on 2026-11-05, after the Utah State Tax Commission call (D2
 
 ## Order of work
 
-Each phase ends with something that works and is tested. Codex starts with Phase 1 after the
-owner has reviewed this plan. **Phase 0 needs the owner** (accounts and DNS), so it runs alongside.
+Each phase ends with something that works and is tested. The owner reviewed the plan and helped
+complete Phase 0's account and DNS work before launch.
 
-**Phase 0: accounts, DNS and stopgap (owner + Claude)**
-- Squarespace exports (before 2026-11-14) and auto-renew off.
-- Domain forwarding stopgap (D5).
-- Cloudflare account. Move DNS:
+**Phase 0: accounts, DNS and stopgap (owner + Claude; complete)**
+- Squarespace exports saved and auto-renew turned off.
+- Domain forwarding stopgap completed before launch.
+- Cloudflare account and DNS move:
   - copy every record, especially the Microsoft 365 mail records;
   - check mail still flows before and after;
   - this also fixes the existing home-IP item in `docs/todo.txt`.
 - Cloudflare Tunnel for market.poke6s.com first (proves the setup), then poke6s.com at launch.
-- Stripe account in test mode. The owner keeps the live keys until launch.
-- *Done when:* mail works, market.poke6s.com runs through the tunnel, and poke6s.com forwards
-  somewhere useful.
+- Stripe account configured; live Checkout launched 2026-11-13.
+- *Completed:* mail works and both sites run through the tunnel.
 
-**Phase 1: catalog site, local (Codex)**
+**Phase 1: catalog site (Codex; launched 2026-11-11)**
 - `storefront/` app, Dockerfile and compose service; health endpoint; settings from `.env`.
 - SQLite schema with migrations (plain SQL files, applied in order at start-up).
 - Import from the Squarespace export and the intake CSVs; images resized to WebP.
@@ -428,11 +428,10 @@ owner has reviewed this plan. **Phase 0 needs the owner** (accounts and DNS), so
 - Market reference JSON written by the market app, shown on product pages.
 - SEO basics: sitemap, robots, canonical, JSON-LD, Open Graph; redirects CSV.
 - Tests: import, slugs, filters, redirects, sitemap, structured data.
-- *Done when:* the full catalog browses correctly on a phone and a 1920×1080 screen with no
-  console errors, and it's reachable on the LAN. No checkout yet; products show
-  "Coming soon / Buy on TCGplayer".
+- *Completed:* the full catalog browses correctly on phone and desktop and is live at
+  poke6s.com. Checkout followed in Phase 2.
 
-**Phase 2: cart and Stripe checkout, test mode (Codex)**
+**Phase 2: cart and Stripe checkout (Codex; launched 2026-11-13)**
 - Cart, `/checkout`, reservations, the Stripe session, webhook handler, reconciliation job,
   thanks page, order status page.
 - Shipping classes and rates (settings), 3-D Secure rule, promotion codes.

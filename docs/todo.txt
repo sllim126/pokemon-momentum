@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-22 (Supplier Pricing moved into the store admin; quote files moved to data/storefront/)
+Last updated: 2026-11-22 (milestone: store-admin-and-owner-tools)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -22,7 +22,7 @@ Status tags used below:
 When you finish an item, move it to Recently Completed with the date and commit, then
 archive older Recently Completed entries at the next milestone.
 
-Current Focus (2026-11-11)
+Current Focus (2026-11-22)
 --------------------------
 
 - Desktop: the single-page desktop app at `/` (desktop home since 2026-10-12) holds all five areas (Buy,
@@ -32,12 +32,13 @@ Current Focus (2026-11-11)
   2026-10-31; plan and remaining stages in `docs/mobile_app_plan.md`). The old phone and research
   dashboards were deleted; tag `backup/before-mobile-cleanup-2026-10-31` holds their last copy.
 - Storefront: our own store is live on https://poke6s.com/ (self-hosted through a Cloudflare
-  Tunnel since 2026-11-11; checkout live with Stripe since 2026-11-13). Next: point the market
-  site's buy button at it, email the waiting list, then Phase 3 admin. Plan and log: `docs/storefront_plan.md`; hosting and
-  recovery: runbook "poke6s.com hosting".
+  Tunnel since 2026-11-11; checkout live with Stripe since 2026-11-13). The market's buy button
+  opens in-stock store products, and the LAN-only Phase 3 admin covers orders, shipping, products,
+  pricing, refunds, reports and supplier tools. Plan and log: `docs/storefront_plan.md`; hosting
+  and recovery: runbook "poke6s.com hosting".
 - Bug reports go to the Discord `#bug-reports` channel. New pages get no on-site bug form.
-- Dates: Pokémon Black Friday on TCGplayer ~Nov 25 - Dec 1; Squarespace plan ends Nov 14;
-  first monthly TCGCSV archive torrent is due Dec 2.
+- Dates: Delta Reign article refresh/final read Nov 23, publication Nov 24; TCGplayer Cyber
+  Weekend Nov 27-30; first monthly TCGCSV archive torrent due Dec 2.
 - Project map: `docs/project_status.md`. Every server route: `docs/api_routes.md`. Operating
   steps and the job schedule: `docs/operator_runbook.txt`.
 
@@ -229,6 +230,9 @@ High Priority
     set goes out of print · Dec 17 The Pokémon tax (same rarity, different Pokémon) · Dec 19
     Stocking stuffers under $10 · Dec 22 Biggest single-card movers of 2026 · Dec 26 Do prices
     dip after Christmas? · Dec 29 Sealed in 2026 · Dec 31 2026 in Pokémon cards.
+  - [ready] `blog/delta-reign-final` has a one-off, dry-run-capable Discord note helper
+    (`post_discord_note.py`) for the Nov 23 final-read ping. It is intentionally unmerged; decide
+    whether to use/keep it while refreshing the article.
 - [planned] Phone app conveniences the old phone page had (owner, 2026-10-27; confirmed
   2026-11-09). Copy the behaviour from `mobile_dashboard.html` in git tag
   `backup/before-mobile-cleanup-2026-10-31`:
@@ -422,11 +426,11 @@ Required before checkout goes live:
   and guarded by storefront/tests/test_public_surface.py. Applies when Phase 3 starts.
 - [done 2026-11-12] 16. HSTS and Permissions-Policy headers, 32 KB cap on cart/checkout bodies, store.db mode 600 (see Recently Completed).
 
-Own storefront on poke6s.com, replacing Squarespace (owner, 2026-10-31). Plan, costs, phases
-and open decisions: `docs/storefront_plan.md` (progress log at its end). What the Squarespace
-site has today: `docs/storefront_current_site.md`. Our own site, hosted on the owner's server
-behind Cloudflare Tunnel; Stripe hosted Checkout (approved by the owner 2026-10-31). The
-Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
+Own storefront on poke6s.com, replacing Squarespace (owner, 2026-10-31), live since
+2026-11-11 with Stripe Checkout live since 2026-11-13. Plan, costs, phases and open decisions:
+`docs/storefront_plan.md` (progress log at its end). The saved Squarespace reference is
+`docs/storefront_current_site.md`. The site runs on the owner's server behind Cloudflare
+Tunnel; the domain remains registered after the Squarespace website plan ended.
 - [owner] Google Business Profile ("Poke6s, llc"): confirm the business details (Google's
   "Action Required" email, 2026-10-22: hours, phone, website https://poke6s.com) and add a few
   photos (sealed stock, packing). The review request emails are built (Recently Completed).
@@ -448,22 +452,17 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   2026-11-07.
 - [idea] FastAPI warns that `@app.on_event("startup")` (api.py, Track record start-up job) is
   deprecated; moving to a lifespan handler means passing it when `app` is created.
-- [next] Check the 2026-11-06 02:00 nightly update is green: first run with the snapshot
-  builders reading through `prices_by_current_group`. If it fails, see docs/data_flow.txt step 5.
 - [done 2026-11-11, not needed: the new store launched catalog-only] Owner, before 2026-11-14: domain forwarding stopgap (plan decision D5) (the Squarespace
   website plan is cancelled, ending 2026-11-14, confirmed 2026-10-31); no final products export needed (owner, 2026-11-05: no new products; the
   2026-10-31 export is the last). Products, orders and customers/subscribers were exported 2026-10-31; page text, blog
   posts and images were saved by script the same day. No site changes are expected before the
   plan ends other than the daily price sync (owner), so no second copy is needed.
-- [parked] Phase 0 (owner + Claude), paused by the owner 2026-10-31 (no online changes for
-  now): Cloudflare DNS move (copy the Microsoft 365 mail records
-  exactly), Tunnel (replaces the home-IP item below), Stripe test account.
-- [in progress] Phase 1: catalog site, local only (Claude, 2026-10-31, branch
-  `storefront/phase1-catalog`; guide `storefront/README.md`). Built and running on port 8010:
-  importer, shop/search/category/set/product pages, market price + trend, SEO, redirects,
-  draft policy pages, 46 tests. Cloudflare and other online changes paused by the owner.
-  Left before calling it done:
-  - [waiting] Owner: full review of every policy page, the terms and the FAQ before launch,
+- [done 2026-11-11] Phase 0: Cloudflare DNS and Tunnel launched without disrupting Microsoft
+  365 mail; Stripe configuration followed for the 2026-11-13 checkout launch.
+- [done 2026-11-11] Phase 1: catalog site (Claude, 2026-10-31; guide
+  `storefront/README.md`). Importer, shop/search/category/set/product pages, market price +
+  trend, SEO, redirects and policy pages launched on poke6s.com. Follow-up:
+  - [waiting] Owner: full post-launch review of every policy page, the terms and the FAQ,
     including the draft pages in `storefront/content/pages/` (handling time in Shipping,
     tax-record years in Privacy). The old Squarespace text was adapted from another shop's
     (with permission) and will be rewritten; the old cancellation fee (6%) is decided in that
@@ -529,12 +528,12 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
        network. The admin stays off the internet (Tailscale idea below for away from home).
     Not recommended: putting the store admin behind the public sign-in; it would put refunds
     and customer addresses on the internet.
-  - [next] Market option B (owner chose it 2026-11-20, docs/market_inventory.md): move the
-    collector tools to poke6s.com, one at a time, with 301s from the old addresses. Done:
+  - [next] Market option B's next owner-tool move (owner chose option B 2026-11-20,
+    `docs/market_inventory.md`): Bug Reports and the one owner home (step 9c). Completed moves:
     Binder Art Maker, Collector Hub and Placeholder Library (2026-11-20); Supplier
     Profitability (2026-11-21) and Supplier Pricing (2026-11-22) into the store admin.
     Supplier Pricing reads screenshots again and whole shop pages (2026-11-22, see Recently
-    Completed). Next owner tool: Bug Reports and the one owner home (step 9c).
+    Completed). Collector-tool moves keep 301s from the old addresses.
   - [planned] Supplier Pricing: the other 72 MACHO TCG products have no SKU (sets the store
     doesn't sell). If the owner starts stocking one, typing its SKU once on the page remembers it.
     The page has JAN barcodes too; products have a gtin column (empty for all 95): filling it
@@ -573,17 +572,20 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
 - [done 2026-11-20] Host `.venv` rebuilt on Python 3.14 (the system Python had moved from
   3.12): requirements.txt plus playwright 1.63.0, beautifulsoup4, pillow, pyyaml, psutil;
   DuckDB stays 1.5.4. Screenshot checks work again. The old one was deleted the same day.
-- [next] Four market tests fail on a clean checkout of main run in a fresh container
+- [planned] Four market tests fail on a clean checkout of main run in a fresh container
   (2026-11-20): three in tests/test_api_routes.py (groups SQL offset, health route snapshot
   details, set baskets card-only) and one in tests/test_query_support.py (metadata CTE
-  classification fields). Same four before the End of Day / Embed removal. Check them in the
-  real container with `make test-all`; they may depend on files under data/.
+  classification fields). The real project container is green (320 tests + 33 subtests at the
+  2026-11-22 milestone), so make these four tests hermetic when clean-checkout testing is next.
 - [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
   too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
 - [ready] Notification emails get product cards (branch `storefront/mail-product-cards`,
   78eec63; 162 store tests pass): `Products: SKU, SKU` in a message file shows photo, price and
   link per product. Not merged: merge when the owner says. Draft "we're open" email in
   data/storefront/mailings/2026-11-we-are-open.txt; the postal address it needs is set (below).
+- [waiting] Custom binder storefront work is preserved on `storefront/binders` but intentionally
+  not merged (owner, 2026-11-14): wait for real demo images and final design/name/size/price
+  decisions. The branch records the detailed checklist; do not publish its demo products.
 - [planned] Some store photos are tiny (Greninja ex PC 200 px, Perfect Order box 270 px):
   replace them with larger ones (fits with the owner's listing notes).
 - [next] Owner's notes on individual store listings (owner has them, 2026-11-14): go through

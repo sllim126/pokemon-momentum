@@ -11,8 +11,8 @@ It combines:
 - a family of English and Japanese market indexes
 - collector placeholder/checklist resources
 - Google-based synced tracking auth
-- our own storefront on poke6s.com (separate container, self-hosted through a Cloudflare Tunnel;
-  `storefront/README.md`), plus the Squarespace pricing scripts until that plan ends 2026-11-14
+- our own live storefront on poke6s.com (separate container, self-hosted through a Cloudflare
+  Tunnel; `storefront/README.md`) and its LAN-only operations admin
 
 The goal is simple: make it easier to spot what is moving, what may be starting to move, and which sets or products deserve attention.
 
@@ -87,7 +87,7 @@ These routes require a Google sign-in whose email is listed in
 - supports sealed deal screening through `/sealed_deals`
 - supports budget-based recommendations through `/budget_builder`
 - publishes prebuilt market-index snapshots through `/index-overview-data`
-- publishes collector/checklist resources through controlled manifest and asset routes
+- publishes collector/checklist resources at poke6s.com/placeholders
 - supports lightweight synced tags such as:
   - `Favorite`
   - `Watchlist`
@@ -95,8 +95,9 @@ These routes require a Google sign-in whose email is listed in
   - `Buy List`
 - supports Google sign-in for synced tracking accounts
 - routes dashboard TCGplayer outbound links through the configured affiliate link
-- resolves in-stock Squarespace listings for dashboard storefront links
-- supports operator workflows for pricing, supplier economics, and new singles listings
+- resolves in-stock poke6s.com listings for dashboard storefront links
+- supports store-admin workflows for products, orders, shipping, pricing, refunds, reports,
+  supplier quotes and supplier economics
 
 
 ## Storage
@@ -143,10 +144,10 @@ Settings live in `.env` (never commit it). How each one reaches the code matters
 | `POKEMON_MOMENTUM_GOOGLE_CLIENT_ID` | Google sign-in button | Website, via the `environment:` list in `docker-compose.yml` |
 | `POKEMON_MOMENTUM_ADMIN_USERS` | Comma-separated admin emails (exact match; default `sllim126@gmail.com`) | Website environment only. It is **not** in `docker-compose.yml`, so a value in `.env` is ignored until it is added there |
 | `PRICECHARTING_API_TOKEN` | Nightly PriceCharting graded-price CSV | `fetch_pricecharting.py`, which reads `.env` itself |
-| `POKE6S_DISCORD_WEBHOOK_URL`, `POKE6S_DISCORD_MENTION` | Pipeline and price-sync alerts (mention defaults to `@everyone`; `none` disables) | `notify_discord.py` on the host, which reads `.env` itself |
+| `POKE6S_DISCORD_WEBHOOK_URL`, `POKE6S_DISCORD_MENTION` | Pipeline alerts (mention defaults to `@everyone`; `none` disables) | `notify_discord.py` on the host, which reads `.env` itself |
 | `POKE6S_DISCORD_BOT_TOKEN` | "Poke6s Control" bot that copies #bug-reports messages into the admin bug list | `import_discord_bug_reports.py` (runs in the container, reads `.env` itself) |
 | `POKE6S_TCGCSV_USER_AGENT` | Optional override of the `Poke6sMarket/1.0.0` User-Agent | Pipeline runs (`docker-compose run`), via the `environment:` list in `docker-compose.yml`; blank means the default |
-| `SQUARESPACE_*` | Store price sync and listing scripts | The Squarespace scripts, which read `.env` themselves |
+| `SQUARESPACE_*` | Retired/legacy Squarespace scripts only | The scripts read `.env` themselves; no live scheduled sync remains |
 
 The website only sees the variables listed under `environment:` in `docker-compose.yml`;
 add a setting there (and restart) before relying on it inside the app.
