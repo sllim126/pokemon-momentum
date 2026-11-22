@@ -242,3 +242,7 @@ table.sp-table { min-width: 1100px; }
   table.sp-table th:nth-child(3), table.sp-table td:nth-child(3),
   table.sp-channels th:nth-child(3), table.sp-channels td:nth-child(3) { display: table-cell; }
 }
+
+/* Reports (step 7): the month picker sits in the page head. */
+.month-form { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.month-form input[type=month] { width: auto; }

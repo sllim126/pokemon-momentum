@@ -44,6 +44,10 @@ Current Focus (2026-11-11)
 Recently Completed
 ------------------
 
+- 2026-11-22 Store admin Phase 3 step 7, Reports (http://192.168.1.240:8011/reports): the month's
+  sales in the Utah worksheet's columns, the Stripe money file (fees, refunds, net, expected payout
+  date and a TOTAL for the gross-up), Utah tax totals for the month and year, and the month's
+  "Sold on TCGplayer" stock changes. Checked against Stripe for November.
 - 2026-11-22 Refunds tested both ways. From the admin (owner's test order P6-2026-0009): Stripe
   accepted the admin key's refund, the order note was written and the unit went back on the
   shelf. From Stripe's own dashboard (P6-2026-0006 and the test order P6-2026-0007): the webhook
@@ -483,8 +487,11 @@ Squarespace website plan ends 2026-11-14 and is not renewed; the domain stays.
   - [owner] Pricing page (http://192.168.1.240:8011/pricing, live after the next deploy): 9
     prices would change on 2026-11-18's market (e.g. Ascended Heroes ETB $120.99 -> $119.99).
     Untick any to keep, then apply.
-  - [planned] Step 7: reports (sales tax, TCGplayer reconciliation, and the monthly bookkeeping
-    export in the books' existing columns; no QuickBooks import, owner 2026-11-20).
+  - [done 2026-11-22] Step 7: Reports page in the admin (http://192.168.1.240:8011/reports):
+    the month's sales as Utah worksheet rows, Stripe fees/refunds/net for the payout gross-up,
+    Utah tax totals, and "Sold on TCGplayer" stock changes. [owner] At each month end, download
+    both files into the books. If matching payouts by date gets tedious, adding "Payouts: read"
+    and "Balance: read" to the admin's Stripe key would let the file name each payout.
   - [done 2026-11-20] Step 8 (D11): market site's Squarespace Export Upload and Singles
     Listing Intake retired; Supplier pages read store prices from store.db; market Admin page
     links the store admin.

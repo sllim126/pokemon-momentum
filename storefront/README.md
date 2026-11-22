@@ -118,6 +118,28 @@ costs file is missing. Rules come from `data/store_price_rules.csv` and market p
 `data/storefront/market_reference.json` (refreshed at 03:00). The page and the script share
 `reprice.plan()` and `reprice.apply()`, so they always agree.
 
+### Reports page (for the books)
+
+The admin's **Reports** page (http://192.168.1.240:8011/reports, Phase 3 step 7) shows one shop
+month (Utah time) and offers two downloads. poke6s.com orders are not entered in QuickBooks one
+by one (owner, 2026-11-20): QuickBooks sees only Stripe's payouts in the bank feed, and these
+files carry the detail into the books.
+
+- **Sales** (`poke6s-sales-YYYY-MM.csv`): one row per order paid that month, in the columns of
+  the books' Utah sales worksheet (`date, channel, buyer, items, sale_amount, tax_charged,
+  how_paid, delivery_city_state, utah_taxable, source, notes`). `sale_amount` is before tax
+  (items - discount + shipping); a fully refunded order shows 0.00 and "no (refunded)".
+- **Stripe money** (`poke6s-stripe-YYYY-MM.csv`): every charge and refund dated that month with
+  Stripe's fee, the net and the expected payout date, plus a TOTAL line: the gross-up of the
+  month's payouts into sales, tax, shipping and fees. A refund keeps the original fee (Stripe
+  doesn't return it), so a refunded order still costs its fee. Fees are fetched from Stripe on
+  download with the admin's key (`STOREFRONT_ADMIN_STRIPE_KEY`), which can read charges but not
+  payouts, so payouts are matched by date in the bank feed.
+
+The page also shows Utah sales tax totals for the month and year to date (from the store's
+orders; file from Stripe Tax's own report, which these should match) and the month's "Sold on
+TCGplayer" stock changes, to compare with TCGplayer's Sales Summary. Test orders are left out.
+
 ## Save a copy of the old Squarespace site
 
 The Squarespace export has no page text, blog posts or images, so
@@ -389,6 +411,7 @@ that address out for 15 minutes and post a Discord alert.
 | `POST /shipping/tracking`, `POST /shipping/tracking/apply` | Upload Pirate Ship's shipments CSV, see which orders it matches, then mark the ticked ones shipped (each customer gets the tracking email) |
 | `POST /products/<id>/packed` | One unit's packed weight (oz, or "1.5 lb") and box size, for the Pirate Ship file |
 | `/pricing`, `POST /pricing/apply` | Pricing: the repricing rules with a preview; applies only the ticked lines (see "Pricing page") |
+| `/reports`, `/reports/sales.csv`, `/reports/stripe.csv` | Reports: a month's sales for the books (`?month=YYYY-MM`); read-only (see "Reports page") |
 | `/supplier-profitability` | Suppliers: each SKU's newest supplier quote (`data/supplier_quotes.csv`) against store, market and target prices, per channel, with editable assumptions and a quick calculator. Read-only; a GET form. Moved from the market site 2026-11-21 |
 | `/login`, `POST /login`, `POST /logout` | Sign-in |
 | `/healthz` | `{"ok", "schema", "sign_in_ready"}` (still home network only) |
@@ -501,6 +524,7 @@ Rules worth knowing:
 | `content/articles/*.md` | The articles |
 | `tools/reprice.py` | Prices at or near market, never below break-even; hides products that can't be (see "Prices"); `plan()`/`apply()` shared with the admin |
 | `admin/pricing_view.py` | The Pricing page: reads the inputs, checks ticked lines against a fresh plan |
+| `admin/reports.py` | The Reports page: shop months, worksheet rows, Utah totals, Stripe fees and refunds |
 | `admin/supplier_profit.py` | Supplier Profitability: landed cost, break-even and target-margin prices per channel; the JPY/USD rate |
 | `tools/archive_squarespace_site.py` | One-off copy of the old site's pages, blog posts and images |
 | `content/pages/*.md` | About, FAQ, Shipping, Returns, Terms, Privacy, Contact |

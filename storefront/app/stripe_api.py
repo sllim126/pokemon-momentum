@@ -2,6 +2,7 @@
 
 - create_session / retrieve_session / expire_session: Checkout Sessions.
 - create_refund: a refund on a payment (the admin's own restricted key, Phase 3 step 4).
+- list_charges: a payment's charges with fees and refunds (the admin's Reports page, step 7).
 - list_events: recent events, so reconcile() can apply any webhook delivery that was missed.
 - verify_webhook: checks the Stripe-Signature header on webhook deliveries.
 
@@ -75,6 +76,14 @@ class StripeClient:
 
     def create_refund(self, params: dict, idempotency_key: str) -> dict:
         return self._call("POST", "/refunds", params, idempotency_key)
+
+    def list_charges(self, payment_intent: str) -> list[dict]:
+        """A payment's charges, each with its Stripe fee (balance_transaction) and its refunds.
+        The admin key may read charges but not the balance or payouts, so this is how the
+        Reports page learns the fees."""
+        page = self._call("GET", "/charges", {"payment_intent": payment_intent, "limit": 10,
+                                              "expand": ["data.balance_transaction", "data.refunds"]})
+        return page.get("data", [])
 
     def list_events(self, types: list[str], since: int) -> list[dict]:
         """Events of these types created at or after `since` (unix time), oldest first."""
