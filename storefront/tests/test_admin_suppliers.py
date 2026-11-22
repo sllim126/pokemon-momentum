@@ -147,3 +147,36 @@ def test_lower_case_skus_are_the_same_product(tmp_path):
     quotes, unmatched = supplier_profit.latest_quotes(path)
     assert [(q["sku"], q["cost_jpy"]) for q in quotes] == [("JP-BP-BOX", "10500"), ("JP-INFX-BOX", "29800")]
     assert unmatched == 0
+
+
+def test_market_column_metrics_sorts_and_filters(suppliers):
+    page = suppliers.get("/supplier-profitability").text
+    # Market price beside landed: Abyss Eye lands at $76.48 and its market is $80.00.
+    assert "$80.00" in page and "+5% vs landed" in page
+    assert "% on cost" in page
+    # Default: best buys first (the cheap box). Name order sorts by the shown title (the store's
+    # "Pokemon Abyss Eye ..." comes after the market's "Cheap Booster Box").
+    assert page.index("JP-CHEAP-BB") < page.index("JP-AE-BB")
+    by_name = suppliers.get("/supplier-profitability?sort=name").text
+    assert by_name.index("JP-CHEAP-BB") < by_name.index("JP-AE-BB") and 'aria-sort="ascending"' in by_name
+    newest_first = suppliers.get("/supplier-profitability?sort=market_gap").text
+    assert newest_first.index("JP-CHEAP-BB") < newest_first.index("JP-AE-BB")
+    by_landed = suppliers.get("/supplier-profitability?sort=landed").text
+    assert by_landed.index("JP-CHEAP-BB") < by_landed.index("JP-AE-BB")
+    # A heading link keeps the rest of the view and swaps the sort.
+    view = suppliers.get("/supplier-profitability?q=box&income_tax_pct=20&sort=ch:ebay").text
+    assert 'href="/supplier-profitability?q=box&amp;income_tax_pct=20&amp;sort=landed"' in view
+    assert 'aria-sort="descending"' in view and 'value="ch:ebay" selected' in view
+    # A 30% minimum keeps only the cheap box (about 46% after tax; Abyss Eye loses money).
+    high = suppliers.get("/supplier-profitability?min_margin=30").text
+    assert "JP-CHEAP-BB" in high and "JP-AE-BB" not in high and "Quotes (1 of 2)" in high
+    # Judged on eBay only: the verdict cell names eBay.
+    ebay = suppliers.get("/supplier-profitability?channel=ebay").text
+    assert "Avg profit, eBay" in ebay and 'value="ebay" selected' in ebay
+
+
+def test_sort_rows_puts_missing_numbers_last():
+    rows = [{"best_margin_pct": None, "title": "b", "channels": {}}, {"best_margin_pct": 5.0, "title": "a", "channels": {}},
+            {"best_margin_pct": 20.0, "title": "c", "channels": {}}]
+    assert [r["best_margin_pct"] for r in supplier_profit.sort_rows(rows, "margin")] == [20.0, 5.0, None]
+    assert supplier_profit.sort_rows(rows, "nonsense") == rows

@@ -45,6 +45,10 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-22 Supplier Profitability answers "what can I order now and make money?" (owner): a Market
+  column (price and % above landed), the best channel's margin %, profit and return on cost in the
+  Verdict cell, sort by any of those (menu or column headings), judge on one channel only, and a
+  minimum margin filter. All GET parameters, so a view can be bookmarked.
 - 2026-11-22 Supplier Profitability: SKUs compared in upper case (the old market page saved some
   quotes as "jp-bp-box", which showed as separate products beside today's prices; 43 products
   became 34), in the nightly price targets and the name-to-SKU list too. MACHO TCG's spellings of
@@ -506,9 +510,8 @@ Tunnel; the domain remains registered after the Squarespace website plan ended.
     STOREFRONT_ADMIN_STRIPE_KEY). [owner] The first real refund is the first real test of the
     key's write access: if Stripe refuses, the page shows Stripe's message. Tested 2026-11-22
     (P6-2026-0009): the admin refund works.
-  - [owner] Pricing page (http://192.168.1.240:8011/pricing, live after the next deploy): 9
-    prices would change on 2026-11-18's market (e.g. Ascended Heroes ETB $120.99 -> $119.99).
-    Untick any to keep, then apply.
+  - [done 2026-11-22] Pricing page reviewed and applied by the owner (9 changes 2026-11-19,
+    16 on 2026-11-22).
   - [done 2026-11-22] Step 7: Reports page in the admin (http://192.168.1.240:8011/reports):
     the month's sales as Utah worksheet rows, Stripe fees/refunds/net for the payout gross-up,
     Utah tax totals, and "Sold on TCGplayer" stock changes. [owner] At each month end, download

@@ -78,18 +78,28 @@
   <div class="tile"><span class="label">Buy</span><strong class="good-text">{{ result.counts['Buy'] }}</strong></div>
   <div class="tile warn"><span class="label">Thin margin</span><strong>{{ result.counts['Thin margin'] }}</strong></div>
   <div class="tile bad"><span class="label">Pass</span><strong>{{ result.counts['Pass'] }}</strong></div>
-  <div class="tile"><span class="label">Avg profit, best channel</span><strong>{{ usd(result.avg_best_profit) }}</strong></div>
+  <div class="tile"><span class="label">Avg profit, {{ a.channels[channel].name if channel else 'best channel' }}</span><strong>{{ usd(result.avg_best_profit) }}</strong></div>
 </div>
 
 <section class="panel">
   <div class="page-head"><h2>Quotes ({{ shown | length }}{% if shown | length != result.rows | length %} of {{ result.rows | length }}{% endif %})</h2>
-    <div class="search">
+    <div class="search sp-view">
       <select name="decision" aria-label="Verdict">
         <option value="">Every verdict</option>
         {% for d in decisions %}<option value="{{ d }}" {% if decision == d %}selected{% endif %}>{{ d }}</option>{% endfor %}
       </select>
+      <select name="channel" aria-label="Judge on">
+        <option value="">Best channel</option>
+        {% for ch in a.channels.values() %}<option value="{{ ch.key }}" {% if channel == ch.key %}selected{% endif %}>Only {{ ch.name }}</option>{% endfor %}
+      </select>
+      <label class="small">Margin at least
+        <input type="number" name="min_margin" value="{{ min_margin | num if min_margin is not none else '' }}" step="1" placeholder="%" class="sp-min"></label>
+      <select name="sort" aria-label="Sort">
+        {% for key, label in sorts.items() %}<option value="{{ key }}" {% if sort == key %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        {% for ch in a.channels.values() %}<option value="ch:{{ ch.key }}" {% if sort == 'ch:' ~ ch.key %}selected{% endif %}>{{ ch.name }} margin %</option>{% endfor %}
+      </select>
       <input type="search" name="q" value="{{ needle }}" placeholder="SKU or title" aria-label="Filter by SKU or title">
-      <button type="submit" class="secondary">Filter</button>
+      <button type="submit" class="secondary">Show</button>
     </div>
   </div>
   {% if result.unmatched %}<p class="muted small">{{ result.unmatched }} quote row(s) have no SKU yet and are left out. Saved
@@ -102,16 +112,26 @@
   {% else %}
   <div class="sp-scroll">
   <table class="sp-table">
-    <thead><tr><th>Verdict</th><th>Product</th><th class="num">Quote</th><th class="num">Landed</th><th class="num">Lowest floor</th>
-      {% for ch in a.channels.values() %}<th>{{ ch.name }}</th>{% endfor %}</tr></thead>
+    {#- Header links re-sort the current view (sort_url keeps every other setting). -#}
+    {% macro th_sort(key, label, cls='') -%}
+    <th{% if cls %} class="{{ cls }}"{% endif %}{% if sort == key %} aria-sort="{{ 'ascending' if key in ('landed', 'name') else 'descending' }}"{% endif %}>
+      <a href="{{ sort_url(key) }}" class="sp-sort">{{ label }}{% if sort == key %} {{ '▲' if key in ('landed', 'name') else '▼' }}{% endif %}</a></th>
+    {%- endmacro %}
+    <thead><tr>{{ th_sort('best', 'Verdict') }}{{ th_sort('name', 'Product') }}{{ th_sort('newest', 'Quote', 'num') }}
+      {{ th_sort('landed', 'Landed', 'num') }}<th class="num">Lowest floor</th>{{ th_sort('market_gap', 'Market', 'num') }}
+      {% for ch in a.channels.values() %}{{ th_sort('ch:' ~ ch.key, ch.name) }}{% endfor %}</tr></thead>
     <tbody>
     {% for row in shown %}
       <tr>
-        <td>{{ verdict(row.decision) }}<br><span class="muted small">{{ row.best }}</span></td>
+        <td>{{ verdict(row.decision) }}<br><span class="muted small">{{ row.best }}</span>
+          {%- if row.best_margin_pct is not none %}<br><span class="small nowrap">{{ row.best_margin_pct }}% · {{ usd(row.best_profit) }}</span>
+          <br><span class="muted small nowrap" title="Profit after tax per dollar the box costs landed">{{ row.roi_pct }}% on cost</span>{% endif %}</td>
         <td><strong class="wrap">{{ row.title }}</strong><br><span class="muted small">{{ row.sku }}{% if row.supplier %} · {{ row.supplier }}{% endif %}</span></td>
         <td class="num"><span class="nowrap">{{ '{:,}'.format(row.cost_jpy) }} JPY</span><br><span class="muted small nowrap">{{ row.quote_date }}</span></td>
         <td class="num">{{ usd(row.landed) }}<br><span class="muted small nowrap">box {{ usd(row.cost_usd) }}</span><br><span class="muted small nowrap">ship {{ usd(row.inbound_usd) }}</span></td>
         <td class="num">{{ usd(row.floor) }}</td>
+        <td class="num">{{ usd(row.market_price) }}{% if row.market_gap_pct is not none %}<br><span class="muted small nowrap"
+          title="Market price above the landed cost, before fees">{{ '%+.0f' % row.market_gap_pct }}% vs landed</span>{% endif %}</td>
         {% for c in row.channels.values() %}
         <td class="small">{{ verdict(c.decision) }}<br>{{ c.reference }}: {{ usd(c.reference_price) }}<br>Floor {{ usd(c.for_margin) }}
           {% if c.profit_after_tax is not none %}<br><span class="muted">{{ usd(c.profit_after_tax) }} after tax · {{ c.margin_after_tax_pct }}%</span>{% endif %}</td>
@@ -121,7 +141,9 @@
     </tbody>
   </table>
   </div>
-  <p class="muted small">Floor: the price that makes the target margin on that channel. Buy: the reference price reaches the
+  <p class="muted small">Verdict cell: the best channel's (or the chosen channel's) margin and profit after tax, and that
+    profit as a share of the landed cost (“on cost”: what each dollar put into stock earns). Click a heading to sort.
+    Floor: the price that makes the target margin on that channel. Buy: the reference price reaches the
     floor. Thin margin: it breaks even but misses the target. Pass: it loses money. Income tax is taken off profits only.</p>
   {% endif %}
 </section>
