@@ -37,7 +37,7 @@ Current Focus (2026-11-22)
   pricing, refunds, reports and supplier tools. Plan and log: `docs/storefront_plan.md`; hosting
   and recovery: runbook "poke6s.com hosting".
 - Bug reports go to the Discord `#bug-reports` channel. New pages get no on-site bug form.
-- Dates: Delta Reign article refresh/final read Nov 23, publication Nov 24; TCGplayer Cyber
+- Dates: Delta Reign article scheduled for Nov 24 (approved Nov 22); TCGplayer Cyber
   Weekend Nov 27-30; first monthly TCGCSV archive torrent due Dec 2.
 - Project map: `docs/project_status.md`. Every server route: `docs/api_routes.md`. Operating
   steps and the job schedule: `docs/operator_runbook.txt`.
@@ -45,6 +45,9 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-22 Delta Reign, two weeks in: owner's final read done, set to `draft: false`; goes live
+  by itself on 2026-11-24. Prices in the text stay as of Nov 20 (the post says so; the boxes are
+  live), so the planned Nov 23 refresh was dropped. post_discord_note.py merged with it.
 - 2026-11-22 Supplier Profitability: SKUs compared in upper case (the old market page saved some
   quotes as "jp-bp-box", which showed as separate products beside today's prices; 43 products
   became 34), in the nightly price targets and the name-to-SKU list too. MACHO TCG's spellings of
@@ -224,10 +227,6 @@ High Priority
     Kecleon line in Delta Reign. When the art-form post is live, add a link to it at the end of
     Part 2.
   - Posts can show live product boxes with `[[market <ids>]]` (storefront/README.md "Articles").
-  - [next] Delta Reign post (`delta-reign-the-first-two-weeks.md`): owner-edited, prices to
-    Nov 20, still `draft: true`, dated 2026-11-24. On Nov 23: refresh its numbers to the newest
-    prices (the "as of" note too), owner does a final read, then set `draft: false` and deploy
-    so it goes live by itself on the 24th.
   - Topics: Nov 24 Delta Reign, two weeks in (see above) · Nov 26
     Is sealed cheaper on Black Friday? (Nov–Dec 2024/2025) · Nov 28 Gift guide by budget
     ($25/$50/$100, price per pack) · Dec 1 Why a PSA 1 can outsell a PSA 5 · Dec 4 Art-form post
