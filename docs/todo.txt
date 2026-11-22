@@ -45,6 +45,9 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-22 The store answers HEAD requests (storefront/app/head.py): every page gives HEAD the
+  same status and headers as GET, with no body, instead of 405. Link checkers and uptime
+  monitors use HEAD. HEADs show in the request metrics but aren't counted as page views.
 - 2026-11-22 Delta Reign, two weeks in: owner's final read done, set to `draft: false`; goes live
   by itself on 2026-11-24. Prices in the text stay as of Nov 20 (the post says so; the boxes are
   live), so the planned Nov 23 refresh was dropped. post_discord_note.py merged with it.
@@ -585,8 +588,6 @@ Tunnel; the domain remains registered after the Squarespace website plan ended.
   details, set baskets card-only) and one in tests/test_query_support.py (metadata CTE
   classification fields). The real project container is green (320 tests + 33 subtests at the
   2026-11-22 milestone), so make these four tests hermetic when clean-checkout testing is next.
-- [next] Storefront: answer HEAD requests (GET / works; HEAD / returns 405, locally on :8010
-  too). Link checkers and uptime monitors often use HEAD; Google uses GET, so not urgent.
 - [ready] Notification emails get product cards (branch `storefront/mail-product-cards`,
   78eec63; 162 store tests pass): `Products: SKU, SKU` in a message file shows photo, price and
   link per product. Not merged: merge when the owner says. Draft "we're open" email in

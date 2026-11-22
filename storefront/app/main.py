@@ -42,6 +42,7 @@ from .binder_art import SetLogos
 from .placeholder_library import PlaceholderFiles
 from .db import connect, latest_migration, migrate
 from .market import MarketReference
+from .head import HeadAsGet
 from .metrics import install_metrics
 from .visitors import client_ip, install_visitor_counting
 from .markdown import render, render_description, split_front_matter
@@ -158,6 +159,9 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     app = FastAPI(title="Poke6s storefront", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     # Trailing slashes are handled in not_found() with one 301, not Starlette's 307 hop.
     app.router.redirect_slashes = False
+    # HEAD answered as GET without the body (head.py). Added first, so it sits inside the metrics
+    # and visitor counting: they still see HEAD, and monitors' HEADs aren't counted as visits.
+    app.add_middleware(HeadAsGet)
     # Request counts and timings for Grafana; /metrics answers only Prometheus on the host.
     # Registered first so no catch-all page route can shadow it.
     install_metrics(app, "storefront")
