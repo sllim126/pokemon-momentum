@@ -170,9 +170,12 @@ def load_latest_supplier_quotes(path: Path) -> dict[str, dict[str, str]]:
         return latest_by_sku
     with path.open(newline="") as handle:
         for row in csv.DictReader(handle):
-            sku = (row.get("sku") or "").strip()
+            # Upper case, as the store admin's Supplier Profitability does: older quotes have
+            # some SKUs in lower case ("jp-bp-box"), and store SKUs are upper case.
+            sku = (row.get("sku") or "").strip().upper()
             if not sku:
                 continue
+            row = {**row, "sku": sku}
             sort_key = (
                 (row.get("quote_date") or "").strip(),
                 (row.get("quote_id") or "").strip(),

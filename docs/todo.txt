@@ -45,6 +45,12 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-22 Supplier Profitability: SKUs compared in upper case (the old market page saved some
+  quotes as "jp-bp-box", which showed as separate products beside today's prices; 43 products
+  became 34), in the nightly price targets and the name-to-SKU list too. MACHO TCG's spellings of
+  13 sets added to the name-to-SKU list (MEGA Inferno X, Heat Wave Arena, Stella Miracle, Terastal
+  Fest ex, Raising Surf, Shiny Treasure, Mask of Change, Munikis Zero = Nihil Zero, ...) with
+  today's sealed (shrink) prices (quote 20261122T084750Z), so every box now has MACHO's price.
 - 2026-11-22 Supplier Pricing reads a whole copied shop page and screenshots (owner: MACHO TCG's
   list at shop.alc-japan.co.jp; everyone else sends Facebook screenshots). Shop page: Ctrl+A,
   Ctrl+C after scrolling to the bottom; each product's sealed (shrink) price becomes a row, the

@@ -135,3 +135,15 @@ def test_fx_rate_keeps_the_last_good_rate(monkeypatch):
     monkeypatch.setattr(supplier_profit.time, "monotonic", lambda: clock[0])
     assert fx.get() == {"rate": 151.5, "date": "d", "stale": True}
     assert supplier_profit.FxRate(lambda: "not json").get() is None
+
+
+def test_lower_case_skus_are_the_same_product(tmp_path):
+    # The old market page saved some SKUs in lower case; the newest quote wins either way.
+    path = tmp_path / "supplier_quotes.csv"
+    path.write_text("quote_id,quote_date,supplier_name,source_name,source_type,item_name_raw,sku,cost_jpy,image_name,notes\n"
+                    "A,2026-04-22,Facebook Supplier,,screenshot,e Battle Partners,jp-bp-box,11200,,\n"
+                    "B,2026-11-22,Macho TCG,,shop page,Battle partners,JP-BP-BOX,10500,,\n"
+                    "C,2026-04-18,Facebook Supplier,,screenshot,Inferno X,JP-INFx-BOX,29800,,\n", encoding="utf-8")
+    quotes, unmatched = supplier_profit.latest_quotes(path)
+    assert [(q["sku"], q["cost_jpy"]) for q in quotes] == [("JP-BP-BOX", "10500"), ("JP-INFX-BOX", "29800")]
+    assert unmatched == 0

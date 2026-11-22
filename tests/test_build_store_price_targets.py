@@ -169,5 +169,18 @@ class BuildStorePriceTargetsTests(unittest.TestCase):
         self.assertEqual(rows[0]["market_source"], "en")
 
 
+class SupplierQuoteCaseTests(unittest.TestCase):
+    def test_lower_case_skus_join_the_upper_case_product(self):
+        with TemporaryDirectory() as tmp:
+            path = Path(tmp) / "supplier_quotes.csv"
+            path.write_text(
+                "quote_id,quote_date,supplier_name,source_name,source_type,item_name_raw,sku,cost_jpy,image_name,notes\n"
+                "A,2026-04-22,Facebook Supplier,,screenshot,e Battle Partners,jp-bp-box,11200,,\n"
+                "B,2026-11-22,Macho TCG,,shop page,Battle partners,JP-BP-BOX,10500,,\n", encoding="utf-8")
+            latest = build_store_price_targets.load_latest_supplier_quotes(path)
+            self.assertEqual(list(latest), ["JP-BP-BOX"])
+            self.assertEqual(latest["JP-BP-BOX"]["cost_jpy"], "10500")
+
+
 if __name__ == "__main__":
     unittest.main()

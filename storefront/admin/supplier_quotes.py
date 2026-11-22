@@ -223,7 +223,7 @@ def load_mapping(path: Path) -> dict[str, str]:
     if not path.is_file():
         return {}
     with path.open(newline="", encoding="utf-8-sig") as handle:
-        return {normalize_name(row.get("supplier_name_raw") or ""): str(row.get("sku") or "").strip()
+        return {normalize_name(row.get("supplier_name_raw") or ""): str(row.get("sku") or "").strip().upper()
                 for row in csv.DictReader(handle)
                 if normalize_name(row.get("supplier_name_raw") or "") and str(row.get("sku") or "").strip()}
 

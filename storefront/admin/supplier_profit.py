@@ -214,14 +214,16 @@ def latest_quotes(path: Path) -> tuple[list[dict], int]:
         return [], 0
     with path.open(newline="", encoding="utf-8-sig") as handle:
         for row in csv.DictReader(handle):
-            sku = str(row.get("sku") or "").strip()
+            # Upper case: the old market page saved some SKUs in lower case ("jp-bp-box"), and
+            # store SKUs are upper case, so "jp-bp-box" and "JP-BP-BOX" are one product.
+            sku = str(row.get("sku") or "").strip().upper()
             if not sku:
                 unmatched += 1
                 continue
             key = (str(row.get("quote_date") or ""), str(row.get("quote_id") or ""),
                    str(row.get("item_name_raw") or "").lower())
             if sku not in newest or key >= newest[sku][0]:
-                newest[sku] = (key, row)
+                newest[sku] = (key, {**row, "sku": sku})
     return [row for _key, row in sorted(newest.values(), key=lambda kv: str(kv[1].get("sku")))], unmatched
 
 
