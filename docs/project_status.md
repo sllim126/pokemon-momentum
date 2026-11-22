@@ -12,7 +12,7 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
 - Production entry point: `https://market.poke6s.com/`
 - Store: `https://poke6s.com/` is our own storefront, self-hosted on this server since
   2026-11-11 (Cloudflare DNS and Tunnel, free plan). Checkout live with Stripe since
-  2026-11-13 (Utah sales tax through Stripe Tax). Squarespace's website plan ends 2026-11-14. Hosting and recovery steps:
+  2026-11-13 (Utah sales tax through Stripe Tax). Hosting and recovery steps:
   runbook "poke6s.com hosting"
 - Primary branch: `main`
 - Market data: daily English and Japanese TCGCSV-backed updates, fetched per set. TCGCSV's
@@ -21,8 +21,8 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
 - TCGCSV catalogue: set and product lists for all ~94 games, crawled at up to 4,000 requests
   a day (12:00 UTC) into `data/tcgcsv_catalogue/`; games with no product lists (Marvel
   Comics) are skipped after 25 not-founds, and 404s aren't re-asked until due
-- Archive torrents: 2024 and 2025 seeding from the owner's qBittorrent; not shared until
-  CptSpaceToaster agrees (runbook "TCGCSV archive torrents")
+- Archive torrents: 2024, 2025 and January-October 2026 seed from the owner's qBittorrent and
+  are shared in TCGCSV's Discord with CptSpaceToaster's approval (runbook "TCGCSV archive torrents")
 - Nightly update (02:00 UTC) keeps market.poke6s.com up since 2026-11-19: it updates a copy
   of the price database and swaps it in with one rename; the site reopens the new file on its
   next request. Last night's file stays in `data/processed_prev/` (runbook "Nightly update:
@@ -31,8 +31,9 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   tracking, resend emails, notes, address correction, packing and gift slip PDFs, refunds and
   returns); Shipping
   (Pirate Ship file out, tracking file back); Products (price, stock, visibility, details,
-  photos, packed size, adding products, every change logged); Pricing (repricing with a preview).
-  Still to build: reports (`docs/storefront_plan.md` Phase 3)
+  photos, packed size, adding products, every change logged); Pricing (repricing with a preview);
+  refunds and returns; monthly sales/Stripe/tax/TCGplayer reports; Supplier Pricing (pasted shop
+  pages or screenshots) and Supplier Profitability (`docs/storefront_plan.md` Phase 3)
 - Nightly pipeline memory: snapshot scripts cap DuckDB at 10 GB and 4 threads
   (`scripts/common/duckdb_settings.py`) after an out-of-memory kill on 2026-11-02
 - Graded data: nightly PriceCharting snapshot, kept as our own history
@@ -48,28 +49,30 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   Synology NAS (SNMP) and the Valheim servers on Slowheim (read from that machine's own
   Prometheus and Loki). Runbook section "Monitoring"; files in
   `deploy/monitoring/`, `scripts/monitoring/`
-- Alerts: nightly update, Squarespace price sync, the other-games archive, the archive
-  backfill and the catalogue crawl post summaries to Discord
+- Alerts: the nightly update, other-games archive and catalogue crawl post summaries to
+  Discord
 - Other games: Magic, Yu-Gi-Oh and One Piece prices are archived nightly
   (collect only, since 2026-10-12; no site yet) in `data/tcgcsv_archive/`
 - Lorcana research site (`docs/lorcana_market_plan.md`, internal first, research only):
-  Phase 0 data foundation built 2026-11-14 (nightly Lorcana pass, history from 2024-02-08,
-  3,369 Lorcast card images); no pages yet
+  Phase 0 data foundation and Phase 1 admin-only desktop mode built 2026-11-14/15 (nightly
+  Lorcana pass, history from 2024-02-08, card attributes and 3,369 Lorcast images)
 - Storage: DuckDB working database, partitioned Parquet history, and generated snapshots
 - Frontend: static HTML/CSS/JavaScript pages served by FastAPI; a new single-page desktop
   app (`/` on desktop, `docs/desktop_app.md`) covers Buy, Discover, Research, Track and Learn
 - Accounts: Google-backed lightweight tracking accounts with saved tags and views
-- Commerce: listing intake and supplier-profitability workflows. The Squarespace storefront
-  linking and price sync retire with the Squarespace plan on 2026-11-14 (todo "2026-11-14")
+- Commerce: the live store admin owns product intake/editing, pricing, supplier quotes and
+  profitability; retired market-side Squarespace tools redirect to the appropriate admin page
 - Own storefront (poke6s.com, live since 2026-11-11, checkout live since 2026-11-13): separate `storefront`
   container on port 8010, published through the Cloudflare Tunnel (container `cloudflared`),
   code from its own clone `~/poke6s-store`. Phase 1 (catalog, browse, SEO, redirects) since 2026-10-31.
   Phase 2 (cart and Stripe Checkout, test mode; orders in `store.db`) merged 2026-11-05; checkout
   stays off without `STRIPE_SECRET_KEY` and refuses live keys unless `STOREFRONT_ALLOW_LIVE=1`.
-  Articles (the old Squarespace blog) at `/articles`. Free Binder Art Maker at `/binder-art` (can
-  fill just the pockets you pick) and Collector Hub at `/collector-hub` (both moved from the market site 2026-11-20). Marketing emails to the email list
-  (`orders_cli mailing`, with unsubscribe links) since 2026-11-14. Guide: `storefront/README.md`
-- Collector resources: generated placeholder libraries, checklists, print pages, review queues, and downloads
+  Articles at `/articles`. Free Binder Art Maker at `/binder-art` (can fill just the pockets you
+  pick), Collector Hub at `/collector-hub`, and Placeholder Library at `/placeholders` (moved
+  from the market site 2026-11-20). Marketing emails to the email list (`orders_cli mailing`,
+  with unsubscribe links) since 2026-11-14. Guide: `storefront/README.md`
+- Collector resources: nightly-generated placeholder libraries, checklists, print pages, review
+  queues and downloads, served through poke6s.com/placeholders
 - Standalone binder planners: ATLA and KPDH are served by separate read-only nginx
   containers at `/atla/` and `/kpdh/`; collection state stays in each visitor's browser.
   KPDH includes owner-scanned fronts and backs for all eight known Series 1 promos; the
