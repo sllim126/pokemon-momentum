@@ -1,0 +1,86 @@
+{#- Reports for the books (Phase 3, step 7): one shop month of poke6s.com sales. Rules, columns and
+    why the books want them in this shape: admin/reports.py. Nothing on this page changes anything. -#}
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block main %}
+<div class="page-head"><h1>Reports</h1>
+  <form class="month-form" method="get" action="/reports">
+    <label for="month">Month</label>
+    <input id="month" type="month" name="month" value="{{ month }}" required>
+    <button type="submit" class="secondary">Show</button>
+  </form>
+</div>
+{% if error == 'stripe' %}<p class="flash bad" role="alert">Stripe didn't answer the fee lookup (or refused it). Try again in a minute; the
+  admin's log has Stripe's message.</p>
+{% elif error == 'nokey' %}<p class="flash bad" role="alert">The Stripe download needs the admin's Stripe key
+  (<code>STOREFRONT_ADMIN_STRIPE_KEY</code> in <code>.env</code>).</p>{% endif %}
+
+<section class="panel">
+  <h2>Downloads for {{ month }}</h2>
+  <p class="actions">
+    <a class="button" href="/reports/sales.csv?month={{ month }}">Sales (Utah worksheet rows)</a>
+    {% if stripe_ready %}<a class="button secondary" href="/reports/stripe.csv?month={{ month }}">Stripe money (fees and net)</a>{% endif %}
+  </p>
+  <ul class="small">
+    <li><strong>Sales</strong>: one row per order paid this month, in the columns of <code>Tax/sales_tax/utah_sales_worksheet.csv</code>
+      in the books; paste the rows in. Fully refunded orders show 0.00 and “no (refunded)”.</li>
+    <li><strong>Stripe money</strong>: every charge and refund dated this month, with Stripe's fee and what reached the Stripe
+      balance. QuickBooks sees only the payouts; this file splits them into sales, tax, shipping and fees for the ledger
+      (the gross-up). Fees are looked up in Stripe when you download.</li>
+  </ul>
+  <p class="muted small">Not entered in QuickBooks one by one (owner, 2026-11-20). Test orders are left out. Dates are Utah time.</p>
+</section>
+
+<section class="panel">
+  <h2>Orders paid in {{ month }} ({{ rows | length }})</h2>
+  {% if rows %}
+  <table class="history">
+    <thead><tr><th>Date</th><th>Order</th><th>Buyer</th><th>Items</th><th>Ship to</th><th class="num">Before tax</th>
+      <th class="num">Tax</th><th>Utah?</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr><td>{{ r.date }}</td><td><a href="/orders/{{ r.number }}">{{ r.number }}</a></td><td>{{ r.buyer }}</td>
+        <td class="small">{{ r['items'] }}</td><td>{{ r.delivery_city_state }}</td><td class="num">${{ r.sale_amount }}</td>
+        <td class="num">${{ r.tax_charged }}</td><td>{{ r.utah_taxable }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">No paid orders this month.</p>{% endif %}
+</section>
+
+<section class="panel">
+  <h2>Utah sales tax</h2>
+  <table class="history">
+    <thead><tr><th></th><th class="num">{{ month }}</th><th class="num">{{ month[:4] }} to date</th></tr></thead>
+    <tbody>
+      <tr><td>Orders shipped to Utah</td><td class="num">{{ utah_month.utah_orders }}</td><td class="num">{{ utah_year.utah_orders }}</td></tr>
+      <tr><td>Utah sales before tax</td><td class="num">{{ utah_month.utah_sales_cents | money }}</td><td class="num">{{ utah_year.utah_sales_cents | money }}</td></tr>
+      <tr><td>Utah tax collected</td><td class="num">{{ utah_month.utah_tax_cents | money }}</td><td class="num">{{ utah_year.utah_tax_cents | money }}</td></tr>
+      <tr><td>Sales shipped out of state</td><td class="num">{{ utah_month.other_sales_cents | money }}</td><td class="num">{{ utah_year.other_sales_cents | money }}</td></tr>
+      <tr><td>Fully refunded orders (left out)</td><td class="num">{{ utah_month.refunded_orders }}</td><td class="num">{{ utah_year.refunded_orders }}</td></tr>
+    </tbody>
+  </table>
+  {% if utah_year.partial %}<p class="small warn-text">Partly refunded, counted in full; check the tax on:
+    {{ utah_year.partial | join(', ') }}</p>{% endif %}
+  {% if utah_year.other_tax_cents %}<p class="small warn-text">Tax was charged on out-of-state orders ({{ utah_year.other_tax_cents | money }} this year): check Stripe Tax.</p>{% endif %}
+  <p class="muted small">From the store's own orders. Stripe Tax's own report (Stripe → Tax → Reports) is the one to file from;
+    these numbers should match it. In-person, Facebook and Discord sales aren't here: they're in the worksheet already.</p>
+</section>
+
+<section class="panel">
+  <h2>Sold on TCGplayer in {{ month }} ({{ tcgplayer | sum(attribute='units') }} units)</h2>
+  {% if tcgplayer %}
+  <table class="history">
+    <thead><tr><th>Date</th><th>Product</th><th class="num">Units</th><th>Note</th></tr></thead>
+    <tbody>
+    {% for t in tcgplayer %}
+      <tr><td>{{ t.date }}</td><td><a href="/products/{{ t.product_id }}">{{ t.title }}</a> <span class="muted small">{{ t.sku }}</span></td>
+        <td class="num">{{ t.units }}</td><td class="small">{{ t.note }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="muted">No “Sold on TCGplayer” stock changes this month.</p>{% endif %}
+  <p class="muted small">Store stock taken off with “Sold on TCGplayer” on a product page. Compare with TCGplayer's Seller Portal →
+    Reports → Sales Summary: a sale there that's missing here means the store's stock is still too high.</p>
+</section>
+{% endblock %}

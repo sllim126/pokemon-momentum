@@ -30,6 +30,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import quote, urlencode, urlsplit
 
+import requests
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -42,8 +43,9 @@ from ..app.classify import PRODUCT_TYPE_LABELS
 from ..app.db import connect, latest_migration, migrate
 from ..app.market import MarketReference
 from ..app.settings import Settings, load_settings
-from ..app.stripe_api import StripeClient
-from . import orders_view, overview, packing_slip, pricing_view, products_view, refunds, shipping, supplier_profit
+from ..app.stripe_api import StripeClient, StripeError
+from . import (orders_view, overview, packing_slip, pricing_view, products_view, refunds, reports, shipping,
+               supplier_profit)
 from .auth import COOKIE_NAME, SESSION_DAYS, Lockout, Sessions, check_password
 
 log = logging.getLogger("storefront.admin")
@@ -903,6 +905,57 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
                     decision=decision, needle=needle, decisions=supplier_profit.DECISIONS,
                     references=supplier_profit.REFERENCES, quick=supplier_profit.quick_quote(query, a),
                     query=query)
+
+    # --- reports for the books (Phase 3, step 7; rules in reports.py) ----------------------------
+    # GETs only: nothing here changes anything. The Stripe download asks Stripe for fees with the
+    # admin's key (the same client as refunds; it may read charges, not payouts).
+
+    @app.get("/reports", response_class=HTMLResponse)
+    def reports_page(request: Request):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        month = reports.parse_month(request.query_params.get("month"))
+        with db() as conn:
+            orders = reports.sales(conn, month)
+            utah_month = reports.utah_summary(conn, *reports.month_bounds(month))
+            utah_year = reports.utah_summary(conn, *reports.year_bounds(month))
+            tcgplayer = reports.tcgplayer_sales(conn, month)
+        return page(request, "reports.html", cookie, active="reports", month=month,
+                    rows=[{**reports.worksheet_row(o), "number": o["number"]} for o in orders],
+                    utah_month=utah_month, utah_year=utah_year, tcgplayer=tcgplayer,
+                    stripe_ready=refund_client is not None, error=request.query_params.get("error"))
+
+    @app.get("/reports/sales.csv")
+    def reports_sales_csv(request: Request):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        month = reports.parse_month(request.query_params.get("month"))
+        with db() as conn:
+            body = reports.sales_csv(conn, month)
+        return Response(body, media_type="text/csv; charset=utf-8", headers={
+            "Content-Disposition": f'attachment; filename="poke6s-sales-{month}.csv"'})
+
+    @app.get("/reports/stripe.csv")
+    def reports_stripe_csv(request: Request):
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        month = reports.parse_month(request.query_params.get("month"))
+        if refund_client is None or not hasattr(refund_client, "list_charges"):
+            return RedirectResponse(f"/reports?{urlencode({'month': month, 'error': 'nokey'})}", status_code=303)
+        try:
+            with db() as conn:
+                rows = reports.money_rows(conn, refund_client, month)
+        except StripeError as exc:
+            log.warning("Reports: Stripe refused the fee lookup for %s: %s", month, exc)
+            return RedirectResponse(f"/reports?{urlencode({'month': month, 'error': 'stripe'})}", status_code=303)
+        except requests.RequestException as exc:
+            log.warning("Reports: Stripe unreachable for %s: %s", month, type(exc).__name__)
+            return RedirectResponse(f"/reports?{urlencode({'month': month, 'error': 'stripe'})}", status_code=303)
+        return Response(reports.money_csv(rows), media_type="text/csv; charset=utf-8", headers={
+            "Content-Disposition": f'attachment; filename="poke6s-stripe-{month}.csv"'})
 
     @app.exception_handler(404)
     async def not_found(request: Request, _exc):
