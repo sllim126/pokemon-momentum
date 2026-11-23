@@ -506,6 +506,7 @@ Rules worth knowing:
 | `app/notify_list.py` | The email list: sign-up (POST /notify), unsubscribe tokens, who is still subscribed |
 | `app/mailing.py` | Marketing emails to the list, with the legal parts (see "Marketing emails"); HTML in `templates/email/marketing.html` |
 | `app/main.py` | FastAPI app: routes, 404 + redirect handling, security headers, reconcile loop |
+| `app/head.py` | Answers HEAD like GET without the body (FastAPI's GET routes would say 405); sits inside the metrics and visitor counting, so HEADs aren't page views |
 | `app/orders.py` | Cart pricing, checkout, reservations, payment, expiry, refunds, disputes, shipping |
 | `app/product_changes.py` | Admin price, visibility and stock changes, each logged (see "Pages so far") |
 | `app/product_details.py` | Admin: add products, edit details, photos (each change logged) |
