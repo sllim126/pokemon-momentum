@@ -485,7 +485,9 @@ this properly"):
    sign-in): stage 1 done 2026-11-23: the market sets an HttpOnly `poke6s_session` cookie for
    .poke6s.com at sign-in; the store reads it against the market's sessions (read-only,
    `storefront/app/accounts.py`); "Sign in" / "Account" in the store header; `/account` lists
-   the orders placed with the account's email. Stage 2: wishlist. Stage 3: support (email,
+   the orders placed with the account's email. Stage 2 done 2026-11-23: a wishlist (♡ on product
+   pages, a plain form; listed on /account; `app/wishlist.py`, migration 009; dropped when the
+   account is deleted on the market). Stage 3: support (email,
    Discord, and a message box that lands on the admin Overview and pings Discord).
 
 Original scope:

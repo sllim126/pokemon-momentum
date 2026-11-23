@@ -39,6 +39,29 @@
     won't show here; <a href="/contact">contact us</a> if you need one.</p>
   {% endif %}
 
+  <h2 id="wishlist">Your wishlist</h2>
+  {% if saved_items %}
+  <ul class="my-orders wish-list">
+    {% for p in saved_items %}
+    <li>
+      <p class="order-head">
+        <a href="/p/{{ p.slug }}"><strong>{{ p.title }}</strong></a>
+        <span class="pill {{ 'up' if p.in_stock else 'down' }}">{{ 'In stock' if p.in_stock else 'Sold out' }}</span>
+        <span class="num">{{ p.price_cents | money }}</span>
+      </p>
+      <form method="post" action="/wishlist">
+        <input type="hidden" name="product_id" value="{{ p.id }}">
+        <input type="hidden" name="action" value="remove">
+        <input type="hidden" name="back" value="account">
+        <button type="submit" class="btn small">Remove</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">Nothing saved yet. Tap ♡ Save to wishlist on any product.</p>
+  {% endif %}
+
   <p class="muted small">Your account, saved lists and account deletion are managed on
     <a href="{{ manage_url }}">Poke6s Market</a>. Deleting the account doesn't delete past orders: we keep
     those for tax records (see the <a href="/privacy">privacy page</a>).</p>

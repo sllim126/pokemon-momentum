@@ -11,7 +11,7 @@ def product_links(html: str) -> list[str]:
 
 def test_health(client):
     body = client.get("/healthz").json()
-    assert body["ok"] and body["visible_products"] == 7 and body["schema"] == "008_review_requests"
+    assert body["ok"] and body["visible_products"] == 7 and body["schema"] == "009_wishlist"
 
 
 def test_home(client):

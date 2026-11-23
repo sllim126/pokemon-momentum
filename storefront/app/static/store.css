@@ -376,3 +376,9 @@ ul.notice { list-style: none; }
 .my-orders .order-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 4px; }
 .my-orders .order-head .num { margin-left: auto; font-weight: 700; }
 .my-orders p.small { margin: 4px 0 0; }
+
+/* Wishlist (one Poke6s account, stage 2): the ♡ under the buy box, and the list on /account. */
+.wish { margin: 12px 0 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.wish-btn.saved { border-color: var(--accent); color: var(--accent); }
+.wish-list form { margin: 6px 0 0; }
+.btn.small { padding: 4px 10px; font-size: 0.85rem; }

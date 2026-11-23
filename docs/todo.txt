@@ -45,6 +45,10 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-23 One Poke6s account, stage 2: wishlist. "♡ Save to wishlist" under the buy box on every
+  product page (signed out, it goes to sign-in); the list on /account with price, in stock or sold
+  out, and Remove. store.db table `wishlist` (migration 009), keyed by the account's email; the
+  reconcile job drops lists of accounts deleted on the market. Privacy page says so.
 - 2026-11-23 One Poke6s account, stage 1 (Phase 3 step 9b; owner chose to keep market.poke6s.com
   and share the sign-in): the market sets an HttpOnly, Secure `poke6s_session` cookie for
   .poke6s.com at Google sign-in (and /account/store hands an already signed-in visitor over);
@@ -1292,9 +1296,9 @@ Future Ideas
   Ask everyone, never only happy customers, and never offer anything for a review (Google's
   rules and the FTC's 2024 fake-review rule). (3) Later, show the rating on the site (a
   reviews page or a line in the footer), from the Business Profile, not a paid widget.
-- [in progress] One Poke6s account (owner chose option 1, 2026-11-23): stage 1 done (sign-in and
-  My orders). Next: stage 2, a wishlist (♡ on product pages, stored in store.db by email, later
-  back-in-stock emails); stage 3, support: email (mailto with the order number), Discord ("might
+- [in progress] One Poke6s account (owner chose option 1, 2026-11-23): stages 1 (sign-in and
+  My orders) and 2 (wishlist) done. Later: back-in-stock emails from the wishlist. Next: stage 3,
+  support: email (mailto with the order number), Discord ("might
   be faster") and a message box (name, email, order, message) saved in store.db, shown on the
   admin Overview and pinged to the private order channel; honeypot + hourly limits, no CAPTCHA.
   A store-only visitor is asked to sign in again after 30 idle days (the store can't refresh the

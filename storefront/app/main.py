@@ -36,7 +36,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import accounts, catalog, classify, collector_hub, images, notify, notify_list, orders, placeholder_library, redirects, seo, stripe_api
+from . import accounts, catalog, wishlist, classify, collector_hub, images, notify, notify_list, orders, placeholder_library, redirects, seo, stripe_api
 from .articles import Articles, market_boxes
 from .binder_art import SetLogos
 from .placeholder_library import PlaceholderFiles
@@ -134,6 +134,8 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
             counts = orders.reconcile(conn, settings, stripe, settings.base_url)
             # A few days after shipping: the one Google review request per order.
             counts["review_emails"] = orders.send_review_requests(conn, settings, settings.base_url)
+            # Wishlists of accounts deleted on the market site go too (privacy page).
+            counts["wishlists_dropped"] = wishlist.drop_deleted_accounts(conn, settings)
         # Order emails that failed earlier get another try (notify.py, review item 12).
         counts.update({f"email_{k}": v for k, v in notify.retry_queued(settings).items()})
         if any(counts.values()):
@@ -436,7 +438,12 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
             crumbs.append((item["category"]["name"], f"/c/{item['category']['slug']}"))
         crumbs.append((item["title"], f"/p/{slug}"))
         description = f"{item['title']} for {seo.money(item['price_cents'])} USD at Poke6s."
-        return page(request, "product.html", title=item["title"], product=item, market=summary,
+        account = current_account(request)
+        saved = False
+        if account is not None:
+            with db() as conn:
+                saved = wishlist.has(conn, account.email, item["id"])
+        return page(request, "product.html", title=item["title"], product=item, market=summary, saved=saved,
                     below_market=below_market, related=others, crumbs=crumbs,
                     buy_url=tcgplayer_link(item),
                     og_image=seo.image_url(settings, item["image"]), og_type="product",
@@ -738,11 +745,41 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
             for order in my_orders:
                 order["status_url"] = orders.status_url(settings.base_url, order)
                 order["tracking_url"] = notify.tracking_url(order.get("carrier"), order.get("tracking_number"))
-        response = page(request, "account.html", title="Your account", my_orders=my_orders,
+        saved_items = []
+        if account is not None:
+            with db() as conn:
+                saved_items = wishlist.items(conn, account.email)
+        response = page(request, "account.html", title="Your account", my_orders=my_orders, saved_items=saved_items,
                         sign_out_url=accounts.sign_out_url(settings),
                         manage_url=f"{settings.market_base_url}/account-settings")
         response.headers["Cache-Control"] = "private, no-store"
         return response
+
+    @app.post("/wishlist")
+    async def wishlist_change(request: Request):
+        """The ♡ on product pages and Remove on the account page: a plain form post, then back to
+        the page it came from. Signed out: off to sign in. The sign-in cookie is SameSite=Lax, so
+        another site's form can't post as the visitor; the Origin check is a second wall."""
+        origin = request.headers.get("origin")
+        if origin and origin.rstrip("/") not in (settings.base_url, site_url(request)):
+            return PlainTextResponse("Form came from another site.", status_code=403)
+        account = current_account(request)
+        if account is None:
+            return RedirectResponse(accounts.sign_in_url(settings), status_code=303)
+        form = await request.form()
+        try:
+            product_id = int(str(form.get("product_id") or ""))
+        except ValueError:
+            return PlainTextResponse("No such product.", status_code=400)
+        with writer() as conn:
+            if form.get("action") == "remove":
+                wishlist.remove(conn, account.email, product_id)
+            else:
+                wishlist.add(conn, account.email, product_id)
+            slug = conn.execute("SELECT slug FROM products WHERE id = ?", (product_id,)).fetchone()
+        # Back to the product page, or the account page (only these two: no open redirect).
+        target = "/account#wishlist" if form.get("back") == "account" or slug is None else f"/p/{slug[0]}"
+        return RedirectResponse(target, status_code=303)
 
     # --- text pages (registered last so they never shadow the routes above) --------------
 

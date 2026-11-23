@@ -11,7 +11,7 @@ from storefront.app.db import connect, migrate
 
 def test_migrations_apply_once(tmp_path):
     db = tmp_path / "store.db"
-    assert migrate(db) == ["001_catalog", "002_orders", "003_notify_list", "004_mailing_list_unsubscribe", "005_product_changes", "006_product_details_log", "007_shipping", "008_review_requests"]
+    assert migrate(db) == ["001_catalog", "002_orders", "003_notify_list", "004_mailing_list_unsubscribe", "005_product_changes", "006_product_details_log", "007_shipping", "008_review_requests", "009_wishlist"]
     assert migrate(db) == []
     conn = connect(db)
     assert conn.execute("SELECT count(*) FROM categories").fetchone()[0] == 9
