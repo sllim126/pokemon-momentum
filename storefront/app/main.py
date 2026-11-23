@@ -36,7 +36,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import catalog, classify, collector_hub, images, notify, notify_list, orders, placeholder_library, redirects, seo, stripe_api
+from . import accounts, catalog, classify, collector_hub, images, notify, notify_list, orders, placeholder_library, redirects, seo, stripe_api
 from .articles import Articles, market_boxes
 from .binder_art import SetLogos
 from .placeholder_library import PlaceholderFiles
@@ -259,14 +259,25 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         numbers.intersection_update(r["number"] for r in rows)
         return len(rows), sum(r["units"] for r in rows)
 
+    def current_account(request: Request) -> accounts.Account | None:
+        """The signed-in Poke6s account (accounts.py), looked up once per request."""
+        if not hasattr(request.state, "account"):
+            request.state.account = accounts.account_for(settings, request.cookies.get(accounts.COOKIE))
+        return request.state.account
+
     def page(request: Request, template: str, status_code: int = 200, **context) -> HTMLResponse:
         with db() as conn:
             nav = catalog.nav_categories(conn)
         path = request.url.path
         context.setdefault("canonical", f"{settings.base_url}{path}")
         context.setdefault("og_image", seo.image_url(settings, None))
+        account = current_account(request)
         response = templates.TemplateResponse(
-            request, template, {"nav": nav, "path": path, **context}, status_code=status_code)
+            request, template, {"nav": nav, "path": path, "account": account,
+                                "sign_in_url": accounts.sign_in_url(settings), **context}, status_code=status_code)
+        if account is not None:
+            # The header names the account: never let a shared cache keep a signed-in page.
+            response.headers["Cache-Control"] = "private, no-store"
         return response
 
     @app.middleware("http")
@@ -714,6 +725,24 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
                 return orders.handle_event(conn, settings, event, base)
 
         return {"ok": True, "result": await asyncio.to_thread(run)}
+
+    # --- the Poke6s account (step 9b; accounts.py): sign-in happens on the market site ------
+
+    @app.get("/account", response_class=HTMLResponse)
+    def account_page(request: Request):
+        account = current_account(request)
+        my_orders = []
+        if account is not None:
+            with db() as conn:
+                my_orders = accounts.my_orders(conn, account)
+            for order in my_orders:
+                order["status_url"] = orders.status_url(settings.base_url, order)
+                order["tracking_url"] = notify.tracking_url(order.get("carrier"), order.get("tracking_number"))
+        response = page(request, "account.html", title="Your account", my_orders=my_orders,
+                        sign_out_url=accounts.sign_out_url(settings),
+                        manage_url=f"{settings.market_base_url}/account-settings")
+        response.headers["Cache-Control"] = "private, no-store"
+        return response
 
     # --- text pages (registered last so they never shadow the routes above) --------------
 

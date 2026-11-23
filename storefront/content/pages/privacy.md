@@ -30,10 +30,20 @@ it. Every email has an unsubscribe link that works in one click, with no sign-in
 keep only a note that your address is unsubscribed, so it isn't emailed again. You can also
 email [admin@poke6s.com](mailto:admin@poke6s.com) and we'll remove it.
 
+## Your Poke6s account
+
+You can shop as a guest. If you sign in, it's with Google, through
+[Poke6s Market](https://market.poke6s.com/account-settings), so one account covers both sites.
+Google tells us your email address and that it's verified; we never see your Google password.
+The account keeps that email address, and your account page shows the orders placed with it.
+You can delete the account on the Market's account page at any time. Orders aren't deleted
+with it: we keep those for tax records, as above.
+
 ## Cookies and visit counts
 
 This site sets no tracking cookies and runs no tracking scripts. Your cart is kept in your
-own browser.
+own browser. If you sign in, one cookie (`poke6s_session`) keeps you signed in on poke6s.com
+and market.poke6s.com; signing out removes it.
 
 To see how the site is used, our own server keeps daily totals: how many people visited,
 which pages were viewed, the kind of device (phone, tablet or computer), and the website
