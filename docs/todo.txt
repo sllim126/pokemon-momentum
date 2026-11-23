@@ -45,6 +45,12 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-23 Notification emails get product cards (owner asked to close it out): a
+  `Products: SKU, SKU` line (up to 6) in a message file shows each product's photo, title, price
+  and link, read from the store when the email is built; a hidden, sold-out or unknown SKU stops
+  the send. Built 2026-11-14, brought onto current main and checked with a preview of the
+  "we're open" draft (data/storefront/mailings/2026-11-we-are-open.txt, all four products in
+  stock). Sending it to the one sign-up is still the owner's call (`orders_cli mailing`).
 - 2026-11-23 Owner home (Phase 3 step 9c, owner chose "option 3"): the store admin's Overview lists
   open bug reports (Discord, phone app, market site; read-only from data/processed/tracking.sqlite3),
   flags them under Needs attention, and has Owner links (market admin, Discord #bug-reports).
@@ -590,10 +596,6 @@ Tunnel; the domain remains registered after the Squarespace website plan ended.
   details, set baskets card-only) and one in tests/test_query_support.py (metadata CTE
   classification fields). The real project container is green (320 tests + 33 subtests at the
   2026-11-22 milestone), so make these four tests hermetic when clean-checkout testing is next.
-- [ready] Notification emails get product cards (branch `storefront/mail-product-cards`,
-  78eec63; 162 store tests pass): `Products: SKU, SKU` in a message file shows photo, price and
-  link per product. Not merged: merge when the owner says. Draft "we're open" email in
-  data/storefront/mailings/2026-11-we-are-open.txt; the postal address it needs is set (below).
 - [waiting] Custom binder storefront work is preserved on `storefront/binders` but intentionally
   not merged (owner, 2026-11-14): wait for real demo images and final design/name/size/price
   decisions. The branch records the detailed checklist; do not publish its demo products.
