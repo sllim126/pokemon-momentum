@@ -1477,6 +1477,11 @@ Public endpoints with limits (since 2026-10-13):
 
 Bug report checks
 -----------------
+The open reports (Discord, the phone app's feedback form, the old market form) are listed on the
+store admin's Overview (http://192.168.1.240:8011/, "Bug reports"). Read and resolve them with
+`docker-compose exec -T pokemon-momentum python scripts/utilities/bug_reports.py list | show N |
+resolve N` (`--status new` reopens). The market's old /bug-reports page still lists them too.
+
 Bug reports are handled in the Discord #bug-reports channel (invite:
 https://discord.gg/AejcWHkCG). Since 2026-10-12 every "Report a Bug" link on the site opens
 that invite: the old dashboard's account menu, and the mobile menu and Support > Bug tab.

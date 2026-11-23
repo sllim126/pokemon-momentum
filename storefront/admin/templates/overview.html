@@ -68,7 +68,8 @@
         {% if d.emails.retrying %}<li class="warn">{{ d.emails.retrying }} order email{{ '' if d.emails.retrying == 1 else 's' }} waiting to retry (every 15 minutes).</li>{% endif %}
         {% if d.backup.stale %}<li class="bad">{% if d.backup.found %}The last backup is {{ d.backup.hours | hours }} old: the nightly job may have failed.{% else %}No backup found.{% endif %} See the runbook, "Store backups".</li>{% endif %}
         {% if not d.status.checkout_on %}<li class="warn">Checkout is {{ d.status.checkout | trim('.') }}.</li>{% endif %}
-        {% if not (d.disputed or d.emails.failed or d.emails.retrying or d.backup.stale or not d.status.checkout_on) %}<li class="good">All clear.</li>{% endif %}
+        {% if d.bugs.open %}<li class="warn">{{ d.bugs.open }} open bug report{{ '' if d.bugs.open == 1 else 's' }} (below).</li>{% endif %}
+        {% if not (d.disputed or d.emails.failed or d.emails.retrying or d.backup.stale or not d.status.checkout_on or d.bugs.open) %}<li class="good">All clear.</li>{% endif %}
       </ul>
     </section>
 
@@ -82,6 +83,32 @@
       {% else %}<p class="muted">Nothing on show is sold out.</p>{% endif %}
       {% if d.last_one %}<p class="muted small">{{ d.last_one }} product{{ '' if d.last_one == 1 else 's' }} down to the last one.</p>{% endif %}
       {% if d.held %}<p class="muted small">{{ d.held }} unit{{ '' if d.held == 1 else 's' }} held by checkouts in progress.</p>{% endif %}
+    </section>
+
+    <section class="panel" id="bugs">
+      <h2>Bug reports{% if d.bugs.open %} ({{ d.bugs.open }} open){% endif %}</h2>
+      {% if not d.bugs.found %}<p class="muted small">The market site's report queue isn't readable from here.</p>
+      {% elif d.bugs.newest %}
+      <ul class="plain bug-list">
+        {% for b in d.bugs.newest %}<li><strong>#{{ b.id }}</strong> {{ b.title }}<br>
+          <span class="muted small">{{ b.source }} · {{ b.created_at[:10] }}</span></li>{% endfor %}
+      </ul>
+      {% if d.bugs.open > d.bugs.newest | length %}<p class="muted small">and {{ d.bugs.open - d.bugs.newest | length }} older.</p>{% endif %}
+      {% else %}<p class="muted">None open.</p>{% endif %}
+      <p class="muted small">Reports from Discord #bug-reports (copied every 15 minutes), the phone app's feedback form and
+        the market site. To work on one, ask an agent to “look at bug report #N”; it's marked resolved with
+        <code>scripts/utilities/bug_reports.py resolve N</code>.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Owner links</h2>
+      <ul class="plain">
+        <li><a href="{{ settings.market_base_url }}/admin" target="_blank" rel="noopener">Market site admin</a>
+          <span class="muted small">research tools and job status</span></li>
+        <li><a href="https://discord.gg/AejcWHkCG" target="_blank" rel="noopener">Discord #bug-reports</a>
+          <span class="muted small">where visitors report problems</span></li>
+        <li><a href="/supplier-profitability">Supplier Profitability</a> · <a href="/reports">Reports</a></li>
+      </ul>
     </section>
 
     <section class="panel">
