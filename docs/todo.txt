@@ -45,6 +45,9 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-23 The "we're open" email went to the email list (one subscriber; owner's OK after a
+  test copy), with product cards for four in-stock products
+  (data/storefront/mailings/2026-11-we-are-open.txt).
 - 2026-11-23 One Poke6s account, stage 1 (Phase 3 step 9b; owner chose to keep market.poke6s.com
   and share the sign-in): the market sets an HttpOnly, Secure `poke6s_session` cookie for
   .poke6s.com at Google sign-in (and /account/store hands an already signed-in visitor over);
@@ -415,7 +418,7 @@ Live now:
   affiliate link, plus a "we're rebuilding" note and an "email me when we open" list (see
   Recently Completed). Follow-ups:
   - [done 2026-11-14] Checkout opened; the note and form went away on their own. The "we're
-    open" email wasn't sent (see the [owner] item on the one sign-up).
+    open" email went to the list on 2026-11-23 (see Recently Completed).
   - [done 2026-11-14] Unsubscribe links and the postal address are in every marketing email
     (storefront/app/mailing.py).
 - [done 2026-11-11] 6. Odd addresses no longer cause 500 errors (see Recently Completed).
@@ -608,13 +611,9 @@ Tunnel; the domain remains registered after the Squarespace website plan ended.
   replace them with larger ones (fits with the owner's listing notes).
 - [next] Owner's notes on individual store listings (owner has them, 2026-11-14): go through
   them one listing at a time.
-- [owner] The email list has one sign-up (a visitor, 2026-11-12 from /notify), not none: send
-  them a short "we're open" email with `orders_cli mailing`, or not. Owner's call.
-- [ready] Postal address for marketing emails: STOREFRONT_POSTAL_ADDRESS is set in .env
-  (2026-11-20). No PO box: the owner chose the business's street address (already on its Google
-  Business Profile and state registration); it lives only in .env, never in the repo. It reaches
-  the store container once the storefront/trust-lines branch (docker-compose passes it) is
-  merged and deploy/update_storefront.sh has run; `orders_cli mailing` refuses until then.
+- Postal address for marketing emails: STOREFRONT_POSTAL_ADDRESS in .env (2026-11-20), the
+  business's street address (owner's choice; already on its Google Business Profile and state
+  registration). It lives only in .env, never in the repo.
 - [planned] A way to join the email list now: the sign-up form shows only while checkout is
   off. A small "News and restocks" box in the footer or on /notify? Owner's call.
 - [done 2026-11-19] A restock command for returns: the admin's "Refund or return" puts units
