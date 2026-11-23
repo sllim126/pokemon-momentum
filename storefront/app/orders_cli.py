@@ -129,7 +129,7 @@ def run_mailing(settings, conn, args) -> int:
     path = Path(args.message_file)
     message = mailing.parse_message(path.read_text(encoding="utf-8"))
     sending = bool(args.send or args.test_to)
-    found = mailing.problems(settings, message, sending=sending)
+    found = mailing.problems(settings, message, sending=sending, conn=conn)
     if found:
         print("Fix these first:\n- " + "\n- ".join(found), file=sys.stderr)
         return 1
@@ -138,14 +138,24 @@ def run_mailing(settings, conn, args) -> int:
         counts = mailing.send_to_list(settings, conn, message)
         print(f"Sent to {counts['sent']}; {counts['failed']} failed and are queued for retry (see Discord).")
         return 0 if not counts["failed"] else 1
+    cards = mailing.load_products(settings, conn, message.skus)[0]
     if args.test_to:
-        ok = mailing.send_one(settings, message, args.test_to, "test-copy-no-real-token-here", "")
+        ok = mailing.send_one(settings, message, args.test_to, "test-copy-no-real-token-here", "", cards)
         print(f"Test copy {'sent' if ok else 'failed (queued; see Discord)'} to {args.test_to}.")
         return 0 if ok else 1
-    body, html, _ = mailing.render(settings, message, mailing.unsubscribe_url(settings, "preview"), "November 14, 2026")
+    body, html, pictures = mailing.render(settings, message, mailing.unsubscribe_url(settings, "preview"),
+                                          "November 14, 2026", cards)
+    # The real email carries its pictures inside it (cid:); the preview saves them beside the
+    # page instead so a browser can show them.
+    folder = path.with_suffix(".preview-files")
+    folder.mkdir(exist_ok=True)
+    for number, (cid, data, subtype) in enumerate(pictures, start=1):
+        name = f"picture-{number}.{'jpg' if subtype == 'jpeg' else subtype}"
+        (folder / name).write_bytes(data)
+        html = html.replace(f"cid:{cid}", f"{folder.name}/{name}")
     path.with_suffix(".preview.txt").write_text(body, encoding="utf-8")
     path.with_suffix(".preview.html").write_text(html, encoding="utf-8")
-    print(f"Looks fine. Preview written next to {path.name} (.preview.html shows no logo: it is attached when sent).")
+    print(f"Looks fine. Preview: {path.with_suffix('.preview.html')} (open it in a browser).")
     print(f"{len(people)} subscribed address(es) would get it. Next: --test-to you@example.com, then --send.")
     return 0
 
