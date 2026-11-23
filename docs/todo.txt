@@ -45,6 +45,10 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-23 Emails in dark mode: the logo showed as a navy box in Gmail on iPhone (owner's test
+  email). Order and marketing emails now use logo-email.png, the logo with a transparent
+  background. The marketing footer no longer says "Poke6s LLC" twice (the .env address already
+  starts with it).
 - 2026-11-23 Notification emails get product cards (owner asked to close it out): a
   `Products: SKU, SKU` line (up to 6) in a message file shows each product's photo, title, price
   and link, read from the store when the email is built; a hidden, sold-out or unknown SKU stops
@@ -427,11 +431,6 @@ Required before checkout goes live:
   retry, alerts, resend and DKIM (see Recently Completed). Entra client secret expires
   2028-11: renew it before then (Entra > App registrations > poke6s-store-mail).
 - [idea] Tighten DMARC from p=none to p=quarantine once a few weeks of mail all pass.
-- [planned] Order emails in dark mode (owner, 2026-11-12: "the logo appears off"). The logo PNG
-  has its own navy background (#000a1b) matching the email header; dark-mode mail apps recolour
-  the header but not the image, so it shows as a box. Options: a transparent logo with a light
-  outline, or a deliberate rounded "badge"; plus color-scheme meta tags for Apple Mail. Ask the
-  owner which app showed it (screenshot) before changing storefront/app/templates/email/order.html.
 - [idea] Live parcel tracking on the order page (owner, 2026-11-12): show the carrier's latest
   status ("In transit, Salt Lake City") instead of only linking out. USPS, UPS and FedEx each
   have a free developer API (USPS: developers.usps.com, OAuth client; UPS and FedEx: developer
