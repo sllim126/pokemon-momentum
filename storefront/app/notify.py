@@ -45,7 +45,10 @@ from .settings import Settings
 log = logging.getLogger("storefront.notify")
 MOUNTAIN = ZoneInfo("America/Denver")
 APP_DIR = Path(__file__).resolve().parent
-LOGO = APP_DIR / "static" / "img" / "logo.png"
+# The emails' logo: the site logo with its navy background made transparent (blue on nothing).
+# Dark-mode mail apps (Gmail on iPhone, 2026-11-23) recolour the navy header but not pictures,
+# so the old logo's own navy showed as a box; with no background of its own it reads on both.
+LOGO = APP_DIR / "static" / "img" / "logo-email.png"
 GRAPH = "https://graph.microsoft.com/v1.0"
 GIVE_UP_AFTER_SECONDS = 24 * 3600
 _graph_token: dict = {}   # {"value": ..., "expires": monotonic time}; one per process
