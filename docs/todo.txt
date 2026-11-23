@@ -239,6 +239,7 @@ High Priority
     still to proofread "Master Sets Have Become an Art Form" (wants binder photos) and fill the
     Kecleon line in Delta Reign. When the art-form post is live, add a link to it at the end of
     Part 2.
+  - How to write and publish one (any agent): `docs/blog_guide.md`.
   - Posts can show live product boxes with `[[market <ids>]]` (storefront/README.md "Articles").
   - Topics: Nov 24 Delta Reign, two weeks in (see above) · Nov 26
     Is sealed cheaper on Black Friday? (Nov–Dec 2024/2025) · Nov 28 Gift guide by budget
@@ -248,9 +249,6 @@ High Priority
     set goes out of print · Dec 17 The Pokémon tax (same rarity, different Pokémon) · Dec 19
     Stocking stuffers under $10 · Dec 22 Biggest single-card movers of 2026 · Dec 26 Do prices
     dip after Christmas? · Dec 29 Sealed in 2026 · Dec 31 2026 in Pokémon cards.
-  - [ready] `blog/delta-reign-final` has a one-off, dry-run-capable Discord note helper
-    (`post_discord_note.py`) for the Nov 23 final-read ping. It is intentionally unmerged; decide
-    whether to use/keep it while refreshing the article.
 - [planned] Phone app conveniences the old phone page had (owner, 2026-10-27; confirmed
   2026-11-09). Copy the behaviour from `mobile_dashboard.html` in git tag
   `backup/before-mobile-cleanup-2026-10-31`:
