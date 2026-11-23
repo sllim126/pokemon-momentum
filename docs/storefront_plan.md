@@ -210,7 +210,8 @@ Prices as published on 2026-10-31; check current pricing before relying on them.
 
 ### Not planned
 
-- Customer accounts and passwords: guest checkout plus the order status page is enough.
+- Passwords. (Customer accounts were "not planned" until the owner chose one Poke6s account,
+  2026-11-23: Google sign-in shared with the market site, step 9b. Guest checkout stays.)
 - Storing card details. Stripe holds all payment data; our server sees only order totals and
   the shipping address.
 - An on-site contact or bug form (bugs go to Discord `#bug-reports`).
@@ -479,7 +480,13 @@ this properly"):
    bigger: fold market.poke6s.com into poke6s.com (todo "[idea] Bigger, a project of its own").
    9a (one look) done 2026-11-20. Option B (market owner tools into the admin) done 2026-11-22.
    9c (one owner home) done 2026-11-23: the admin Overview lists open bug reports and owner
-   links. Left: 9b, one Poke6s account.
+   links.
+   9b (one Poke6s account, owner chose 2026-11-23 to keep market.poke6s.com and share the
+   sign-in): stage 1 done 2026-11-23: the market sets an HttpOnly `poke6s_session` cookie for
+   .poke6s.com at sign-in; the store reads it against the market's sessions (read-only,
+   `storefront/app/accounts.py`); "Sign in" / "Account" in the store header; `/account` lists
+   the orders placed with the account's email. Stage 2: wishlist. Stage 3: support (email,
+   Discord, and a message box that lands on the admin Overview and pings Discord).
 
 Original scope:
 - LAN-only admin: products and photos, stock adjustments, orders, ship with tracking, refunds. Rules: "How it fits

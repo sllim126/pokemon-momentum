@@ -510,6 +510,7 @@ Rules worth knowing:
 
 | File | What it does |
 |---|---|
+| `app/accounts.py` | Who's signed in: the market's shared `poke6s_session` cookie checked against its session table (read-only); "My orders" |
 | `app/notify_list.py` | The email list: sign-up (POST /notify), unsubscribe tokens, who is still subscribed |
 | `app/mailing.py` | Marketing emails to the list, with the legal parts (see "Marketing emails"); HTML in `templates/email/marketing.html` |
 | `app/main.py` | FastAPI app: routes, 404 + redirect handling, security headers, reconcile loop |
@@ -570,6 +571,7 @@ The writer for the market prices lives with the market app:
 | `POST /checkout` | Same body → `{"url": <Stripe checkout page>}`; 409 with a new quote if the cart changed, 503 when checkout is off |
 | `/order/thanks?session_id=` | After payment (confirms with Stripe if the webhook hasn't arrived) |
 | `/order/<number>?k=<token>` | Order status; the link is in the order emails |
+| `/account` | Your account (one Poke6s account): signed out, a "Sign in with Google" link to the market site; signed in, the live orders placed with that email (`app/accounts.py`). Never cached |
 | `POST /stripe/webhook` | Stripe events (signature checked; each event applied once) |
 | `/unsubscribe/<token>` | Email list opt-out: GET shows a confirm button, POST unsubscribes (also mail apps' one-click unsubscribe) |
 | `/<page>` | Markdown pages from `content/pages/` |

@@ -1,0 +1,47 @@
+{#- Your account (one Poke6s account, storefront plan step 9b; app/accounts.py). Signing in and
+    out happen on the market site, which shares the sign-in with this store. `account` is None
+    when signed out; `my_orders` are the live orders placed with the account's email. -#}
+{% extends "base.html" %}
+{% set labels = {'paid': 'Paid, being packed', 'shipped': 'Shipped', 'refunded': 'Refunded',
+                 'partially_refunded': 'Partly refunded'} %}
+{% block content %}
+<section class="account">
+  <h1>Your account</h1>
+  {% if not account %}
+  <p>Sign in with Google to see your orders and their tracking. It's the same account as on
+    <a href="{{ settings.market_base_url }}">Poke6s Market</a>, so one sign-in covers both.</p>
+  <p><a class="btn primary" href="{{ sign_in_url }}">Sign in with Google</a></p>
+  <p class="muted">You don't need an account to buy: checkout works as a guest. Ordered before?
+    Sign in with the same email address and those orders appear here.</p>
+  {% else %}
+  <p class="account-head">Signed in as <strong>{{ account.email }}</strong>
+    <a class="btn" href="{{ sign_out_url }}">Sign out</a></p>
+
+  <h2>Your orders</h2>
+  {% if my_orders %}
+  <ul class="my-orders">
+    {% for o in my_orders %}
+    <li>
+      <p class="order-head">
+        <a href="{{ o.status_url }}"><strong>{{ o.number }}</strong></a>
+        <span class="muted">{{ (o.paid_at or o.created_at)[:10] }}</span>
+        <span class="pill {{ 'up' if o.status in ('paid', 'shipped') else 'good' }}">{{ labels.get(o.status, o.status) }}</span>
+        <span class="num">{{ o.total_cents | money }}</span>
+      </p>
+      <p class="small">{% for i in o['items'] %}{{ i.quantity }} × {{ i.title }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+      {% if o.status == 'shipped' and o.tracking_number %}<p class="small">Tracking: {{ o.carrier or '' }} {{ o.tracking_number }}
+        {%- if o.tracking_url %} · <a href="{{ o.tracking_url }}" rel="noopener" target="_blank">Track package</a>{% endif %}</p>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">No orders with {{ account.email }} yet. Orders placed with another email address
+    won't show here; <a href="/contact">contact us</a> if you need one.</p>
+  {% endif %}
+
+  <p class="muted small">Your account, saved lists and account deletion are managed on
+    <a href="{{ manage_url }}">Poke6s Market</a>. Deleting the account doesn't delete past orders: we keep
+    those for tax records (see the <a href="/privacy">privacy page</a>).</p>
+  {% endif %}
+</section>
+{% endblock %}

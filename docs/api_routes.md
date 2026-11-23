@@ -94,8 +94,10 @@ The public routes below are public for Pokemon (3 and 85) only until a game is p
 | Route | Access | What it does |
 | --- | --- | --- |
 | `GET /tracking/auth_config` | public | Google client settings for the sign-in button |
-| `POST /tracking/google_session` | public | Exchange a Google sign-in for a site token |
-| `GET /tracking/session`, `DELETE /tracking/session` | signed in | Who is signed in (and whether they're an admin); sign out |
+| `POST /tracking/google_session` | public | Exchange a Google sign-in for a site token; also sets the shared `poke6s_session` cookie for .poke6s.com (one Poke6s account, step 9b) |
+| `GET /account/store` | public | The store's "Sign in" link: signed in here, sets the shared cookie and goes to poke6s.com/account; otherwise to `/account-settings` first, which comes back |
+| `GET /account/sign-out` | public | The store's "Sign out" link: ends the shared session and clears the cookie, then back to poke6s.com |
+| `GET /tracking/session`, `DELETE /tracking/session` | signed in | Who is signed in (and whether they're an admin); sign out (here and on poke6s.com) |
 | `POST /tracking/session` | public | Retired username + PIN sign-in; always refuses |
 | `GET/PUT /tracking/tags`, `POST /tracking/tags/merge` | signed in | Saved lists (Buy List, Watchlist, Favorites, Needs Review) |
 | `GET/POST /tracking/views`, `DELETE /tracking/views/{view_id}` | signed in | Saved views |

@@ -180,6 +180,19 @@ ADMIN_USERNAMES = {
     if username.strip()
 }
 GOOGLE_CLIENT_ID = os.getenv("POKEMON_MOMENTUM_GOOGLE_CLIENT_ID", "").strip()
+# One Poke6s account (storefront plan, step 9b, owner 2026-11-23): signing in here also sets
+# SHARED_SESSION_COOKIE for the whole SHARED_COOKIE_DOMAIN, so poke6s.com (the store) knows who's
+# signed in. Unlike pm_tracking_token (written by page scripts for this site only), the server
+# sets it: HttpOnly (page scripts can't read it), Secure, SameSite=Lax. It holds the same session
+# token; the store checks it against tracking_sessions read-only. Only set when the request came
+# in on that domain (not on a LAN address or in tests).
+SHARED_SESSION_COOKIE = "poke6s_session"
+SHARED_COOKIE_DOMAIN = os.getenv("POKEMON_MOMENTUM_SHARED_COOKIE_DOMAIN", "poke6s.com").strip().lstrip(".")
+SHARED_COOKIE_MAX_AGE = 180 * 24 * 3600   # SESSION_MAX_DAYS; the server still checks idle expiry
+# Where the store's account page is: the hand-off below always returns here, never to a
+# caller-supplied address (no open redirect).
+STORE_ACCOUNT_URL = os.getenv("POKEMON_MOMENTUM_STORE_ACCOUNT_URL", "https://poke6s.com/account").strip()
+STORE_HOME_URL = STORE_ACCOUNT_URL.rsplit("/account", 1)[0] + "/"
 INDEX_OVERVIEW_CACHE_TTL_SECONDS = 15 * 60
 _INDEX_OVERVIEW_CACHE: dict[tuple[int, str], tuple[datetime, dict]] = {}
 INDEX_OVERVIEW_SNAPSHOT_SUFFIX = "index_overview_snapshot.json"
@@ -2932,8 +2945,52 @@ def tracking_auth_config():
     }
 
 
+def _shared_cookie_host_ok(request: Request) -> bool:
+    """The shared cookie can only be set from a host on SHARED_COOKIE_DOMAIN (browsers refuse it
+    elsewhere, and a LAN address or test client shouldn't try)."""
+    host = (request.headers.get("host") or "").split(":")[0].lower()
+    return bool(SHARED_COOKIE_DOMAIN) and (host == SHARED_COOKIE_DOMAIN or host.endswith("." + SHARED_COOKIE_DOMAIN))
+
+
+def set_shared_session_cookie(response, request: Request, token: str) -> None:
+    if _shared_cookie_host_ok(request):
+        response.set_cookie(SHARED_SESSION_COOKIE, token, max_age=SHARED_COOKIE_MAX_AGE, path="/",
+                            domain=SHARED_COOKIE_DOMAIN, secure=True, httponly=True, samesite="lax")
+
+
+def clear_shared_session_cookie(response, request: Request) -> None:
+    if _shared_cookie_host_ok(request):
+        response.delete_cookie(SHARED_SESSION_COOKIE, path="/", domain=SHARED_COOKIE_DOMAIN,
+                               secure=True, httponly=True, samesite="lax")
+
+
+@app.get("/account/store")
+def account_to_store(request: Request, tracking_token: str | None = Cookie(default=None, alias="pm_tracking_token")):
+    """The store's "Sign in" link lands here. Signed in on this site: set the shared cookie and go
+    to the store's account page. Not signed in: the Account page first, which comes back here
+    after Google sign-in (its ?return= only takes plain paths)."""
+    token = (tracking_token or "").strip()
+    if not token or get_session_user(token) is None:
+        return RedirectResponse("/account-settings?return=/account/store", status_code=303)
+    response = RedirectResponse(STORE_ACCOUNT_URL, status_code=303)
+    set_shared_session_cookie(response, request, token)
+    return response
+
+
+@app.get("/account/sign-out")
+def account_sign_out(request: Request, shared: str | None = Cookie(default=None, alias=SHARED_SESSION_COOKIE)):
+    """The store's "Sign out" link: ends the session (on both sites) and goes back to the store.
+    A GET on purpose (a plain link from the other site); the worst a forged link can do is sign
+    someone out."""
+    if shared:
+        delete_session(shared)
+    response = RedirectResponse(STORE_HOME_URL, status_code=303)
+    clear_shared_session_cookie(response, request)
+    return response
+
+
 @app.post("/tracking/google_session")
-def tracking_google_session(payload: dict):
+def tracking_google_session(payload: dict, request: Request):
     """Sign in with Google: create the account on first use, then start a session.
 
     Answers like /tracking/session: {token, user: {username, is_admin}}. The account is the
@@ -2949,13 +3006,16 @@ def tracking_google_session(payload: dict):
         user_id = int(existing["id"])
         username_out = existing["username"]
     token = create_session(user_id)
-    return {
+    response = JSONResponse({
         "token": token,
         "user": {
             "username": username_out,
             "is_admin": is_admin_username(username_out),
         },
-    }
+    })
+    # Signed in on poke6s.com too (one Poke6s account, step 9b).
+    set_shared_session_cookie(response, request, token)
+    return response
 
 
 @app.get("/tracking/session")
@@ -2968,11 +3028,17 @@ def tracking_session_status(
 
 
 @app.delete("/tracking/session")
-def tracking_session_delete(authorization: str | None = Header(default=None)):
+def tracking_session_delete(request: Request, authorization: str | None = Header(default=None),
+                            shared: str | None = Cookie(default=None, alias=SHARED_SESSION_COOKIE)):
     if authorization and authorization.lower().startswith("bearer "):
         token = authorization.split(" ", 1)[1].strip()
         delete_session(token)
-    return {"ok": True}
+    if shared:
+        delete_session(shared)
+    # Signing out here signs out of poke6s.com too.
+    response = JSONResponse({"ok": True})
+    clear_shared_session_cookie(response, request)
+    return response
 
 
 @app.get("/tracking/tags")
@@ -3207,10 +3273,12 @@ def tracking_items_resolve(payload: dict | None = None):
 
 
 @app.delete("/tracking/account")
-def tracking_delete_account(payload: dict | None = None, authorization: str | None = Header(default=None)):
+def tracking_delete_account(request: Request, payload: dict | None = None, authorization: str | None = Header(default=None)):
     session_user = require_tracking_user(authorization)
     delete_user(session_user.user_id)
-    return {"ok": True}
+    response = JSONResponse({"ok": True})
+    clear_shared_session_cookie(response, request)
+    return response
 
 
 # Limits for the anonymous mobile Feedback form (bug reports go to Discord): text is
