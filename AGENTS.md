@@ -55,6 +55,11 @@ coding agent. Read this first, then `docs/todo.txt`.
   dashboard (`dashboard.html`) were deleted on 2026-10-31; git tag
   `backup/before-mobile-cleanup-2026-10-31` holds the last copy.
 - **Bug reports go to Discord** (`#bug-reports`). Don't add on-site bug forms to new pages.
+  Discord messages (every 15 minutes) and the phone app's feedback form land in one queue; the
+  store admin's Overview lists the open ones. When the owner says "look at bug report #N", read
+  it with `docker-compose exec -T pokemon-momentum python scripts/utilities/bug_reports.py show N`,
+  fix it, then `... bug_reports.py resolve N`. Reports may hold a visitor's name or email: never
+  copy those into commits or docs.
 - **Private folders, never committed:** `docs/chat_history/` (past Codex and ChatGPT chats, for
   background; older decisions there may have been reversed since, and the docs win) and
   `docs/private/` (the owner's store rules and business ideas). Both are git-ignored. Read them

@@ -146,9 +146,50 @@ def store_status(settings: Settings) -> dict:
             "email": settings.email_transport, "tax": settings.tax_mode}
 
 
-def build(conn: sqlite3.Connection, settings: Settings, backup_dir: Path, now: datetime | None = None) -> dict:
+# Bug reports (owner home, Phase 3 step 9c). Visitors report bugs in Discord #bug-reports, the
+# phone app's feedback form, or (older) the market site; all land in the market site's
+# `bug_reports` table (data/processed/tracking.sqlite3), which the admin reads read-only. They're
+# resolved by whoever fixes them: scripts/utilities/bug_reports.py resolve <id>.
+DONE_STATUSES = ("resolved", "closed", "duplicate", "wontfix")
+BUG_LIST_LIMIT = 5
+
+
+def _bug_source(page_path: str | None) -> str:
+    path = (page_path or "").lower()
+    if path.startswith("discord"):
+        return "Discord"
+    if path.startswith("/m") or path.startswith("/mobile"):
+        return "Phone app"
+    return "Market site"
+
+
+def bug_reports(db_path: Path | None) -> dict:
+    """{"found", "open" (count), "newest" (up to BUG_LIST_LIMIT open reports, newest first)}.
+    found=False when the market's database isn't there (a fresh install or tests)."""
+    if not db_path or not db_path.is_file():
+        return {"found": False, "open": 0, "newest": []}
+    marks = ",".join("?" * len(DONE_STATUSES))
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True)
+    conn.row_factory = sqlite3.Row
+    try:
+        where = f"WHERE coalesce(status, 'new') NOT IN ({marks})"
+        count = conn.execute(f"SELECT count(*) FROM bug_reports {where}", DONE_STATUSES).fetchone()[0]
+        rows = conn.execute(f"SELECT id, created_at, page_path, title FROM bug_reports {where} "
+                            "ORDER BY created_at DESC LIMIT ?", (*DONE_STATUSES, BUG_LIST_LIMIT)).fetchall()
+    except sqlite3.Error:
+        return {"found": False, "open": 0, "newest": []}
+    finally:
+        conn.close()
+    return {"found": True, "open": count,
+            "newest": [{"id": r["id"], "created_at": r["created_at"], "source": _bug_source(r["page_path"]),
+                        "title": (r["title"] or "(no title)")[:120]} for r in rows]}
+
+
+def build(conn: sqlite3.Connection, settings: Settings, backup_dir: Path, now: datetime | None = None,
+          bug_db: Path | None = None) -> dict:
     now = now or datetime.now(UTC)
     return {
+        "bugs": bug_reports(bug_db),
         "to_ship": to_ship(conn, now),
         "disputed": disputed(conn),
         "recent": recent_orders(conn),

@@ -477,6 +477,9 @@ this properly"):
 9. (Owner, 2026-11-20: approved) Make the three sites feel like one: shared header and look,
    one Poke6s account, one owner home; the store admin stays on the home network. Possibly
    bigger: fold market.poke6s.com into poke6s.com (todo "[idea] Bigger, a project of its own").
+   9a (one look) done 2026-11-20. Option B (market owner tools into the admin) done 2026-11-22.
+   9c (one owner home) done 2026-11-23: the admin Overview lists open bug reports and owner
+   links. Left: 9b, one Poke6s account.
 
 Original scope:
 - LAN-only admin: products and photos, stock adjustments, orders, ship with tracking, refunds. Rules: "How it fits

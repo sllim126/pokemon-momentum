@@ -84,9 +84,9 @@ Homes: **Market** = stays a research site (at market.poke6s.com or poke6s.com/ma
 | --- | --- | --- |
 | Supplier Pricing (`/supplier-pricing`) | Read a supplier's price sheet, save quotes | **Admin. Moved 2026-11-22** (admin "Suppliers" tab, "Enter a quote"; `storefront/admin/supplier_quotes.py`). The quote ledger and name-to-SKU list moved to `data/storefront/`; the market address forwards there |
 | Supplier Profitability (`/supplier-profitability`) | Supplier cost vs market vs store price, per channel | **Admin. Moved 2026-11-21** (admin "Suppliers" tab, `storefront/admin/supplier_profit.py`); the market address forwards signed-in admins there |
-| Bug Reports (`/bug-reports`) | Reports from Discord and review notes | **Admin** (one owner home, step 9c) or stays; Discord stays the inbox either way |
+| Bug Reports (`/bug-reports`) | Reports from Discord and review notes | **Admin Overview, 2026-11-23** (owner chose option 3): open reports listed on the owner home; Discord stays the inbox; `scripts/utilities/bug_reports.py` reads and resolves them. The five reports from April to October were resolved (fixed by the rebuild) |
 | End of Day, Embed | Older research views | **Retired 2026-11-20** (owner): End of Day showed nothing the Index Overview, Set Explorer and price charts don't; Embed served the old Squarespace site. Old addresses go to `/admin`. (Dashboard Lab was deleted the same day) |
-| Admin index (`/admin`) | Links to the above | Becomes the "one owner home" (9c) |
+| Admin index (`/admin`) | Links to the above | **Owner home is the store admin's Overview (9c, 2026-11-23)**: bug reports and owner links there; the market Admin page stays for the research tools and links back |
 
 ### 5. Accounts
 

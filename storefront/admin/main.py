@@ -125,6 +125,7 @@ class AdminConfig:
     # (supplier_profit.py) reads the ledger and the market targets (data/, read-only here).
     supplier_quotes_file: Path | None = None
     supplier_mapping_file: Path | None = None
+    bug_reports_db: Path | None = None
     market_targets_file: Path | None = None
     # The admin's own restricted Stripe key (Charges and Refunds write), for refunds (refunds.py).
     # The public store never gets it (docker-compose passes it to the admin only).
@@ -146,6 +147,8 @@ def load_config(settings: Settings) -> AdminConfig:
         supplier_quotes_file=settings.data_dir / "supplier_quotes.csv",
         supplier_mapping_file=settings.data_dir / "supplier_name_mapping.csv",
         market_targets_file=settings.data_dir.parent / "market_prices_latest.csv",
+        # The market site's bug report queue, read-only (Overview, owner home).
+        bug_reports_db=settings.data_dir.parent / "processed" / "tracking.sqlite3",
         stripe_refund_key=os.getenv("STOREFRONT_ADMIN_STRIPE_KEY", "").strip(),
     )
 
@@ -297,7 +300,8 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
         if not cookie:
             return to_login()
         with db() as conn:
-            data = overview.build(conn, settings, config.backup_dir or Path("/nonexistent"))
+            data = overview.build(conn, settings, config.backup_dir or Path("/nonexistent"),
+                                  bug_db=config.bug_reports_db)
         return page(request, "overview.html", cookie, data=data, active="overview",
                     now=datetime.now(UTC).isoformat())
 

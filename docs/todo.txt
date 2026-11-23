@@ -45,6 +45,12 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-23 Owner home (Phase 3 step 9c, owner chose "option 3"): the store admin's Overview lists
+  open bug reports (Discord, phone app, market site; read-only from data/processed/tracking.sqlite3),
+  flags them under Needs attention, and has Owner links (market admin, Discord #bug-reports).
+  scripts/utilities/bug_reports.py list / show N / resolve N for agents (AGENTS.md). The five old
+  reports (April-October: phone search, layout, search debounce, sign-in) were checked against the
+  phone app and resolved. Market option B is finished: every owner tool is in the admin.
 - 2026-11-22 Delta Reign, two weeks in: owner's final read done, set to `draft: false`; goes live
   by itself on 2026-11-24. Prices in the text stay as of Nov 20 (the post says so; the boxes are
   live), so the planned Nov 23 refresh was dropped. post_discord_note.py merged with it.
@@ -536,12 +542,10 @@ Tunnel; the domain remains registered after the Squarespace website plan ended.
        network. The admin stays off the internet (Tailscale idea below for away from home).
     Not recommended: putting the store admin behind the public sign-in; it would put refunds
     and customer addresses on the internet.
-  - [next] Market option B's next owner-tool move (owner chose option B 2026-11-20,
-    `docs/market_inventory.md`): Bug Reports and the one owner home (step 9c). Completed moves:
-    Binder Art Maker, Collector Hub and Placeholder Library (2026-11-20); Supplier
-    Profitability (2026-11-21) and Supplier Pricing (2026-11-22) into the store admin.
-    Supplier Pricing reads screenshots again and whole shop pages (2026-11-22, see Recently
-    Completed). Collector-tool moves keep 301s from the old addresses.
+  - [done 2026-11-23] Market option B (owner chose it 2026-11-20, `docs/market_inventory.md`):
+    Binder Art Maker, Collector Hub and Placeholder Library to poke6s.com (2026-11-20); Supplier
+    Profitability (2026-11-21), Supplier Pricing (2026-11-22) and Bug Reports with the owner
+    home, 9c (2026-11-23) into the store admin. Step 9 has 9b (one Poke6s account) left.
   - [planned] Supplier Pricing: the other 72 MACHO TCG products have no SKU (sets the store
     doesn't sell). If the owner starts stocking one, typing its SKU once on the page remembers it.
     The page has JAN barcodes too; products have a gtin column (empty for all 95): filling it
