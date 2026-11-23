@@ -11,7 +11,7 @@
     card per row; the rest keep two narrow ones, which still read fine.
 
     Variables: message (subject, preheader, heading, paragraphs, button_text, button_url), why,
-    unsubscribe_url, postal_address, contact_email, site_url, logo_cid, cards (sku, title,
+    unsubscribe_url, postal_address (the company name and address, mailing.postal_line), contact_email, site_url, logo_cid, cards (sku, title,
     price_cents, url, cid). -#}
 {%- set navy = "#000a1b" -%}
 {%- set accent = "#1f7ae0" -%}
@@ -100,7 +100,7 @@
   <tr><td style="background:#f6f8fb; border-top:1px solid {{ line }}; padding:20px 32px; font-size:12px; line-height:1.7; color:{{ muted }}; text-align:center;">
     {{ why }}<br>
     <a href="{{ unsubscribe_url }}" style="color:{{ accent }}; font-weight:600;">Unsubscribe</a> (one click, no sign-in)<br>
-    Poke6s LLC · {{ postal_address }}<br>
+    {{ postal_address }}<br>
     Questions? Reply to this email or write to <a href="mailto:{{ contact_email }}" style="color:{{ muted }};">{{ contact_email }}</a><br>
     <a href="{{ site_url }}/privacy" style="color:{{ muted }};">Privacy</a> ·
     <a href="{{ site_url }}" style="color:{{ muted }};">poke6s.com</a>

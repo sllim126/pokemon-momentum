@@ -211,14 +211,21 @@ def render(settings: Settings, message: Message, unsubscribe_url: str, signed_up
     if message.button_url:
         text_parts.append(f"{message.button_text}: {message.button_url}")
     text_parts += ["Poke6s", "--", why, f"Unsubscribe (one click, no sign-in): {unsubscribe_url}",
-                   f"Poke6s LLC, {settings.postal_address}",
+                   postal_line(settings),
                    f"Questions? Reply to this email or write to {settings.contact_email}."]
     logo_cid = make_msgid(idstring="logo", domain="poke6s.com")[1:-1]
     html = _email_templates.get_template("marketing.html").render(
-        message=message, why=why, unsubscribe_url=unsubscribe_url, postal_address=settings.postal_address,
+        message=message, why=why, unsubscribe_url=unsubscribe_url, postal_address=postal_line(settings),
         contact_email=settings.contact_email, site_url=settings.base_url, logo_cid=logo_cid, cards=cards)
     logo = [(logo_cid, notify.LOGO.read_bytes(), "png")] if notify.LOGO.exists() else []
     return "\n\n".join(text_parts) + "\n", html, logo + attachments
+
+
+def postal_line(settings: Settings) -> str:
+    """The footer's sender line: the company name and postal address. The address in .env may
+    already start with the name ("Poke6s LLC, ..."); then it isn't added twice."""
+    address = settings.postal_address.strip()
+    return address if address.lower().startswith("poke6s") else f"Poke6s LLC, {address}"
 
 
 def unsubscribe_url(settings: Settings, token: str) -> str:

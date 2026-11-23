@@ -202,3 +202,20 @@ def test_preview_shows_the_photos_from_files(ready, tmp_path, monkeypatch):
     html = (tmp_path / "news.preview.html").read_text(encoding="utf-8")
     assert "cid:" not in html and "news.preview-files/picture-2.jpg" in html
     assert (tmp_path / "news.preview-files" / "picture-2.jpg").exists()
+
+
+def test_postal_line_names_the_company_once(imported):
+    """The .env address may already start with the company name (owner's test email, 2026-11-23)."""
+    from storefront.app.mailing import postal_line
+    assert postal_line(dataclasses.replace(imported, postal_address="PO Box 1, Example, UT 84000")) == \
+        "Poke6s LLC, PO Box 1, Example, UT 84000"
+    assert postal_line(dataclasses.replace(imported, postal_address="Poke6s LLC, PO Box 1, Example, UT 84000")) == \
+        "Poke6s LLC, PO Box 1, Example, UT 84000"
+
+
+def test_email_logo_has_a_transparent_background():
+    """Dark-mode mail apps recolour the header, not pictures: the logo must have no background."""
+    from PIL import Image
+    from storefront.app import notify
+    with Image.open(notify.LOGO) as logo:
+        assert logo.mode == "RGBA" and logo.getpixel((0, 0))[3] == 0
