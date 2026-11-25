@@ -54,6 +54,9 @@ DOWNLOADS = {
     "sv-review-queue": "checklists_sv/review_queue.csv",
     "mega-checklist-csv": "checklists_mega/mega_evolution_checklist_all.csv",
     "mega-review-queue": "checklists_mega/review_queue.csv",
+    # Made by hand (the owner's Publisher file, exported to PDF), not by the nightly build: a
+    # title card for each Journey Together promo, saying which product it came from.
+    "jtg-title-cards": "title_cards/journey_together_promo_title_cards.pdf",
 }
 
 # What may be served, and as what. Markdown shows as plain text so it reads in the browser.
@@ -62,6 +65,7 @@ MEDIA_TYPES = {
     ".csv": "text/csv; charset=utf-8",
     ".json": "application/json",
     ".md": "text/plain; charset=utf-8",
+    ".pdf": "application/pdf",
 }
 
 # Pages whose dates say when the library was last rebuilt (the nightly job rewrites them).
@@ -165,6 +169,12 @@ SECTIONS = (
              "Ticks are saved in your browser.", "Collectors", page="checklists-mega/index.html"),
         Item("Scarlet & Violet checklists", "Tick-off checklists for every Scarlet & Violet set.", "Collectors",
              page="checklists-sv/index.html"),
+    )),
+    Section("Title cards", "Printable cards to sit next to a card in your binder and say where it came from.", (
+        Item("Journey Together promo title cards", "A card for every Journey Together promo and the product, "
+             "event or store it came from: stamped Snorlax, premium collections, pre-release and staff cards, "
+             "tournament promos and the Japanese promos. Print, cut along the lines and sleeve.", "Collectors",
+             download="jtg-title-cards"),
     )),
     Section("Checklists as spreadsheets",
             "The checklists as CSV files that open in Excel, Numbers or Google Sheets.", (

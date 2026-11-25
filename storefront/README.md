@@ -187,6 +187,10 @@ and serves the files: `/placeholders/files/<bucket>/<path>` (the generated print
 pages and their CSVs) and `/placeholders/download/<id>` (as attachments). Only the folders in
 `BUCKETS`, the files in `DOWNLOADS` and the types in `MEDIA_TYPES` are reachable.
 
+One download is made by hand, not generated: `TCG Placeholders/title_cards/` holds the owner's
+Journey Together promo title cards (exported from Publisher to PDF), listed under "Title cards".
+To add another, put the PDF in that folder, commit it, and add a `DOWNLOADS` id and an `Item`.
+
 The files are not part of the store. They are generated in the main checkout's
 "TCG Placeholders" folder, rebuilt every night at 04:30 UTC by the market's
 `scripts/utilities/sync_placeholder_library.py` (docs/tcg_placeholders_guide.md), and mounted

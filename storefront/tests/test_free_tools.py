@@ -55,6 +55,7 @@ def make_placeholders(tmp_path: Path) -> Path:
             f"<script>{CHECKLIST_SCRIPT}</script></body></html>", encoding="utf-8")
     (root / "docs" / "set_release_dates.md").write_text("# Dates\n", encoding="utf-8")
     for rel in placeholder_library.DOWNLOADS.values():
+        (root / rel).parent.mkdir(parents=True, exist_ok=True)   # title_cards/ isn't a bucket
         (root / rel).write_text("Card Name,Card Number\nPikachu,MEP001\n", encoding="utf-8")
     (root / "output_combined" / "notes.py").write_text("secret", encoding="utf-8")   # unlisted type
     (root / "README.md").write_text("outside every bucket", encoding="utf-8")
@@ -169,6 +170,8 @@ def test_placeholder_files_are_whitelisted(art_client):
     assert md.status_code == 200 and md.headers["content-type"].startswith("text/plain")
     download = art_client.get("/placeholders/download/mega-auto-promos-csv")
     assert download.status_code == 200 and "attachment" in download.headers["content-disposition"]
+    pdf = art_client.get("/placeholders/download/jtg-title-cards")   # hand-made, not generated
+    assert pdf.status_code == 200 and pdf.headers["content-type"] == "application/pdf"
     for bad in ("/placeholders/files/nope/index.html", "/placeholders/files/print-combined/notes.py",
                 "/placeholders/files/print-combined/..%2F..%2FREADME.md", "/placeholders/files/docs/missing.md",
                 "/placeholders/download/not-real"):
