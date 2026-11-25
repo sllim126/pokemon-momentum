@@ -147,7 +147,7 @@ def test_quote_prices_come_from_the_database(app_client):
 
 @pytest.mark.parametrize("items, ship_class, shipping", [
     ((("JP-PACK-A", 1),), "small-sealed", 1000),
-    ((("JP-PACK-A", 1), ("ENG-G25-TIN", 1)), "large-sealed", 2000),     # the largest class wins
+    ((("JP-PACK-A", 1), ("ENG-G25-TIN", 1)), "large-sealed", 1000),     # the largest class wins
     ((("111", 1),), "accessory", 1000),
     ((("JP-AE-BB", 3),), "large-sealed", 0),                            # $215.97: free over $150
 ])
@@ -155,6 +155,13 @@ def test_shipping_class_and_free_shipping(app_client, items, ship_class, shippin
     quote = app_client.post("/cart/quote", json=cart(*items)).json()
     assert (quote["ship_class"], quote["shipping_cents"]) == (ship_class, shipping)
     assert quote["total_cents"] == quote["subtotal_cents"] + shipping
+
+
+def test_oversize_box_ships_at_the_higher_rate(app_client, shop):
+    with connect(shop.db_path, writer=True) as conn:
+        conn.execute("UPDATE products SET ship_class = 'oversize' WHERE sku = 'ENG-G25-TIN'")
+    quote = app_client.post("/cart/quote", json=cart(("JP-PACK-A", 1), ("ENG-G25-TIN", 1))).json()
+    assert (quote["ship_class"], quote["shipping_cents"]) == ("oversize", 2000)   # the largest class wins
 
 
 def test_quote_reports_how_far_from_free_shipping(app_client):
@@ -262,7 +269,7 @@ def test_paid_webhook_turns_the_reservation_into_a_sale(app_client, shop, fake):
     number = number_of(fake, session_id)
     order = order_row(shop, number)
     assert order["status"] == "paid" and order["email"] == "buyer@example.com"
-    assert order["tax_cents"] == 500 and order["total_cents"] == 7199 + 2000 + 500
+    assert order["tax_cents"] == 500 and order["total_cents"] == 7199 + 1000 + 500
     assert order["shipping"]["address"]["state"] == "UT"
     with connect(shop.db_path) as conn:
         reasons = [r[0] for r in conn.execute("SELECT reason FROM stock_movements WHERE reference = ?", (number,))]

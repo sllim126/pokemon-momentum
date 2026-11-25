@@ -28,7 +28,7 @@
       <legend>Buying: getting one box to us</legend>
       <div class="sp-grid">
         {{ field("jpy_per_usd", "JPY per USD", a.jpy_per_usd) }}
-        {{ field("import_duty_pct", "Import duty %", a.import_duty_pct) }}
+        {{ field("import_duty_pct", "Import duties %", a.import_duty_pct) }}
         <label>Inbound shipping
           <select name="inbound_shipping_mode">
             <option value="order-estimate" {% if a.inbound_shipping_mode == 'order-estimate' %}selected{% endif %}>Split the order's shipping</option>
@@ -38,8 +38,12 @@
         {{ field("order_box_count", "Boxes in the order", a.order_box_count, "1") }}
         {{ field("inbound_shipping_usd", "Per-box shipping USD", a.inbound_shipping_usd) }}
         {{ field("handling_cost_usd", "Packaging, handling USD", a.handling_cost_usd) }}
-        {{ field("disbursement_fee_usd", "Disbursement fee USD (per order)", a.disbursement_fee_usd) }}
+        {{ field("disbursement_fee_usd", "Clearance / broker fee USD (per order)", a.disbursement_fee_usd) }}
       </div>
+      <p class="muted small">Defaults are MACHO TCG's real US checkout (2026-11-25): it prepays the duty (12.5% of
+        the product after its bulk discount) and a ¥3,000 clearance fee per parcel; FedEx was ¥12,900 for 10 boxes,
+        ¥18,500 for 18 and ¥23,200 for 30 (one 10 kg parcel): type your order's size above. For a
+        seller whose duty FedEx bills later, about 10–11% duty and a $14 fee has been typical.</p>
       <p class="muted small">Inbound shipping per box now: {{ usd(a.inbound_per_box_usd) }}{% if a.inbound_shipping_mode == 'order-estimate' %}
         (order shipping ÷ boxes ÷ rate){% endif %}. The disbursement fee is charged once per order, so each box carries
         {{ usd(a.disbursement_per_box_usd) }}.</p>

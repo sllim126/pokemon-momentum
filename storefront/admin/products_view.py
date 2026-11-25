@@ -25,7 +25,8 @@ FIELD_LABELS = {"price": "Price", "compare_at": "“Was” price", "visible": "V
                 "featured": "Featured", "max_per_order": "Per-order limit", "created": "Added",
                 "title": "Title", "description": "Description", "product_type": "Kind",
                 "language": "Language", "set_name": "Set", "tcgplayer_ids": "TCGplayer IDs",
-                "gtin": "Barcode", "photo": "Photo", "packed_size": "Packed size"}
+                "gtin": "Barcode", "photo": "Photo", "packed_size": "Packed size",
+                "ship_class": "Shipping class"}
 STOCK_LABELS = {"sale": "Sold here", "reservation": "In a checkout", "release": "Checkout ended",
                 "restock": "Received", "adjustment": "Counted", "tcgplayer_sale": "Sold on TCGplayer",
                 "import": "Imported"}

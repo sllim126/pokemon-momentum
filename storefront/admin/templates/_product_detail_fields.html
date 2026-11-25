@@ -14,5 +14,7 @@
   </select></label>
 <label>Set <input name="set_name" maxlength="80" value="{{ v.set_name }}" placeholder="From TCGplayer if empty"></label>
 <label>Barcode (UPC), optional <input name="gtin" inputmode="numeric" maxlength="20" autocomplete="off" value="{{ v.gtin }}"></label>
+<label class="wide check"><input type="checkbox" name="oversize" value="1"{% if v.oversize %} checked{% endif %}>
+  Oversize box: ships at the higher rate (Costco bundles, premium collections)</label>
 <label class="wide">Description (Markdown: **bold**, - lists, blank line between paragraphs)
   <textarea name="description_md" rows="6" maxlength="10000">{{ v.description_md }}</textarea></label>

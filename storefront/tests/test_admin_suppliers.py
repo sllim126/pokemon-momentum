@@ -57,9 +57,9 @@ def test_lists_the_newest_quote_per_sku_with_its_verdict(suppliers):
     page = suppliers.get("/supplier-profitability").text
     assert 'href="/supplier-profitability" aria-current="page"' in page   # the Suppliers tab
     assert "JPY/USD 150.0 from Frankfurter, 2026-11-20" in page
-    # 9000 JPY at 150 = $60, +10% duty, 13800 JPY shipping / 11 boxes, $0.75 handling, $15 / 11 boxes.
+    # 9000 JPY at 150 = $60, +12.5% duty, 12900 JPY shipping / 10 boxes, $0.75 handling, $18.85 / 10 boxes.
     assert "9,000 JPY" in page and "12,000 JPY" not in page
-    assert "$76.48" in page
+    assert "$78.74" in page
     assert "Pokemon Abyss Eye Booster Box - Japanese" in page   # the store's own title wins
     assert "Store price: $71.99" in page
     assert "1 quote row(s) have no SKU yet" in page
@@ -73,8 +73,8 @@ def test_rate_is_fetched_once_and_a_typed_rate_wins(suppliers):
     page = suppliers.get("/supplier-profitability", params={"jpy_per_usd": "300"}).text
     assert suppliers.fx_calls == [1]
     assert "Using your rate, 300 JPY/USD" in page
-    # $30 + $3 duty + 13800/11/300 shipping + $0.75 + $15/11.
-    assert "$39.30" in page
+    # $30 + $3.75 duty + 12900/10/300 shipping + $0.75 + $18.85/10.
+    assert "$40.69" in page
 
 
 def test_assumptions_and_zero_stay_as_typed(suppliers):
@@ -151,8 +151,8 @@ def test_lower_case_skus_are_the_same_product(tmp_path):
 
 def test_market_column_metrics_sorts_and_filters(suppliers):
     page = suppliers.get("/supplier-profitability").text
-    # Market price beside landed: Abyss Eye lands at $76.48 and its market is $80.00.
-    assert "$80.00" in page and "+5% vs landed" in page
+    # Market price beside landed: Abyss Eye lands at $78.74 and its market is $80.00.
+    assert "$80.00" in page and "+2% vs landed" in page
     assert "% on cost" in page
     # Default: best buys first (the cheap box). Name order sorts by the shown title (the store's
     # "Pokemon Abyss Eye ..." comes after the market's "Cheap Booster Box").
