@@ -1,5 +1,5 @@
 """Post a job summary (nightly update, Squarespace price sync, the collect-only TCGCSV
-archive, or the TCGCSV archive backfill) to a Discord webhook.
+archive, the TCGCSV archive backfill, the catalogue crawl or the monthly torrent) to a Discord webhook.
 
 Runs on the host (stdlib only) at the end of run_daily_update_host.sh,
 run_squarespace_price_sync.sh and run_tcgcsv_collect_host.sh, so it still reports when Docker or the job itself is
@@ -241,6 +241,34 @@ def catalogue_summary(args: argparse.Namespace, lines: list[str]) -> tuple[str, 
     return "⏳ part done, continues tomorrow", GREEN, fields
 
 
+def monthly_torrent_summary(args: argparse.Namespace, lines: list[str]) -> tuple[str, int, list[dict] | None]:
+    """The monthly TCGCSV torrent (publish_monthly_torrent.py). Exit 3 means last month's last
+    day hasn't been downloaded yet: grey, tried again tomorrow. A run that finds the month
+    already published (the 3rd to the 5th) posts nothing."""
+    def after(prefix: str) -> str:
+        return next((line.split(prefix, 1)[1].strip() for line in lines if prefix in line), "")
+    if args.exit_code == 0 and after("Already published:"):
+        return "✅ already published", GREEN, None
+    if args.exit_code == 3:
+        return "⏸ waiting for last month's final day; tries again tomorrow", GREY, [
+            {"name": "Waiting", "value": after("WAITING:")[:900] or "?", "inline": False}]
+    if args.exit_code != 0:
+        detail = [line.split("] ", 1)[-1] for line in lines if "FAILED" in line or "Traceback" in line]
+        return f"❌ FAILED (exit {args.exit_code})", RED, [
+            {"name": "What went wrong", "value": f"```\n{chr(10).join(detail[-6:])[-950:] or 'No error line; check the log.'}\n```",
+             "inline": False}]
+    published = after("PUBLISHED")
+    fields = [{"name": "Torrent", "value": published[:900] or "?", "inline": False}]
+    emailed = after("Emailed the .torrent and the post to")
+    if emailed:
+        fields.append({"name": "Next step (owner)", "value": f"Email sent to {emailed}: paste its message into the "
+                       "#useful-shares torrents thread in the TCGCSV Discord, with the .torrent attached.", "inline": False})
+    magnet = after("Magnet:")
+    if magnet:
+        fields.append({"name": "Magnet", "value": f"```\n{magnet[:990]}\n```", "inline": False})
+    return "✅ built, checked and seeding", GREEN, fields
+
+
 # Job name -> (message title, default log file, summary builder).
 JOBS = {
     "daily-update": ("Nightly market update", ROOT / "logs" / "daily_update.log", daily_update_summary),
@@ -248,6 +276,7 @@ JOBS = {
     "collect": ("Other games price archive", ROOT / "logs" / "tcgcsv_collect.log", collect_summary),
     "archive-backfill": ("TCGCSV archive backfill", ROOT / "logs" / "archive_backfill.log", backfill_summary),
     "catalogue": ("TCGCSV catalogue crawl", ROOT / "logs" / "tcgcsv_catalogue.log", catalogue_summary),
+    "monthly-torrent": ("TCGCSV monthly torrent", ROOT / "logs" / "monthly_torrent.log", monthly_torrent_summary),
 }
 
 

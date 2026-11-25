@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-22 (Supplier Pricing moved to the store admin; Store review request emails; Store Pricing Ops after Squarespace; Retire a monitored job; Nightly update keeps the site up: copy and swap; TCGCSV archive torrents: 2026 so far; Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
+Last reviewed: 2026-11-25 (TCGCSV archive torrents: the monthly job; Supplier Pricing moved to the store admin; Store review request emails; Store Pricing Ops after Squarespace; Retire a monitored job; Nightly update keeps the site up: copy and swap; TCGCSV archive torrents: 2026 so far; Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -19,6 +19,7 @@ crontab changes). Each job is explained further down in this file.
 | Daily 04:30 | Placeholder Library sync (new Mega-era sets and promos) | cron: `scripts/utilities/sync_placeholder_library.py` | `logs/placeholder_sync.log` |
 | Daily 12:00 | TCGCSV catalogue crawl (sets and products for every game, at most 4,000 requests a day; Discord summary) | cron: `scripts/pipeline/run_tcgcsv_catalogue_host.sh` | `logs/tcgcsv_catalogue.log` |
 | Daily 21:30 | TCGCSV archive backfill, from 2026-11-01 (one request a night while the archive is offline; downloads the gap when it returns; Discord summary) | cron: `scripts/pipeline/run_archive_backfill_host.sh` | `logs/archive_backfill.log` |
+| 2nd-5th of the month, 01:30 | TCGCSV monthly torrent, from 2026-12-02: builds last month's torrent, copies it to the share, has qBittorrent check and seed it, emails the owner the .torrent and a post for #useful-shares; the 3rd-5th only retry if a day was missing (see "TCGCSV archive torrents"; Discord summary) | cron: `scripts/pipeline/run_monthly_torrent_host.sh` | `logs/monthly_torrent.log` |
 | Every 5 min | Keep market.poke6s.com's A record on the current home IP (Cloudflare API; Discord note when it changes) | cron: `scripts/utilities/update_market_dns.py` | `logs/market_dns.log` |
 | Every 15 min | Copy Discord #bug-reports into the review queue | cron: `scripts/utilities/import_discord_bug_reports.py` | `logs/discord_bug_import.log` |
 | Fri 15:00 | Weekly Discord posts | cron: `scripts/utilities/post_weekly_discord.py` | `logs/discord_weekly.log` |
@@ -1118,6 +1119,27 @@ though qBittorrent still uploads on connections it opens itself.
   `tcgcsv-products-<newest fetch date>.tar.xz` (~32 MB; xz because 7-Zip on Windows opens it),
   described in the README and listed in SHA256SUMS. `--no-catalogue` leaves it out. 2024 and
   2025 predate it.
+- Monthly job (from 2026-12-02; cron 01:30 UTC on the 2nd to the 5th):
+  `scripts/pipeline/run_monthly_torrent_host.sh` runs `scripts/torrents/publish_monthly_torrent.py`,
+  which does the steps above for last month by itself: build (throwaway container, as root,
+  then chown), copy to `/mnt/media/TCGCSV` and check every file against SHA256SUMS, add to
+  qBittorrent (save path `Z:\TCGCSV`, category TCGCSV, tag "public") and wait until its own
+  check reaches 100%, then email admin@poke6s.com the .torrent with a ready-to-paste message
+  for the #useful-shares thread (store's Microsoft 365 sender; `TORRENT_NOTIFY_TO` in `.env`
+  changes the address). The owner pastes that message by hand. Finished months get
+  `data/torrents/<name>.published`, so the later runs stop at once.
+  - The last day of a month arrives with the archive backfill around 21:30 UTC on the 1st. If
+    a day is still missing, the run says "waiting" (grey in Discord, no ping) and tries again
+    the next day; on the 5th it fails instead. Then check the backfill log, or build by hand
+    with `--allow-gaps` (the README lists the gap).
+  - Every step is safe to repeat: a rerun skips the build if the .torrent exists and the add
+    if qBittorrent already has it. Manual run for a given month:
+    `python3 scripts/torrents/publish_monthly_torrent.py --month 2026-11` (`--no-email` to
+    skip the email; the month then isn't marked done).
+  - "never listed it: it's stuck" in Discord = the qBittorrent problem above: restart
+    qBittorrent on the PC, then rerun the script (or wait for the next day's run).
+  - Tested 2026-11-25 with a throwaway October build (deleted afterwards): build, share copy and
+    checksums, qBittorrent's 100% check, the upload's format and the email all worked.
 - Info hashes: 2024 `b4e6415457ba8f5a841cceb149242d48542f58de`,
   2025 `90554b38726121571b352ae75fd1143aff4a5064`,
   2026-01-to-10 `9cd6f1b5725199a554ddd393f7073e432ca7aba8` (304 days plus the product list,

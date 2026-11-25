@@ -45,6 +45,12 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-25 Monthly TCGCSV torrent job (owner, 2026-11-17): on the 2nd of each month
+  `scripts/pipeline/run_monthly_torrent_host.sh` builds last month's torrent, copies it to the
+  PlexVault share with a checksum check, adds it to qBittorrent and waits for its 100% check,
+  and emails admin@poke6s.com the .torrent plus a ready-to-paste #useful-shares message; Discord
+  gets a summary, Grafana the job status. Waits (grey) through the 5th if a day is missing.
+  Tested with a throwaway October build. Needs the owner's crontab line (deploy/crontab.txt).
 - 2026-11-23 One Poke6s account, stage 1 (Phase 3 step 9b; owner chose to keep market.poke6s.com
   and share the sign-in): the market sets an HttpOnly, Secure `poke6s_session` cookie for
   .poke6s.com at Google sign-in (and /account/store hands an already signed-in visitor over);
@@ -831,28 +837,14 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   (304 days plus the product list, 1.21 GB, info hash 9cd6f1b5...; `--months` option added).
   Seeding since 2026-11-17 (files copied to Z:\TCGCSV through the /mnt/media share, then added
   in qBittorrent). Next: owner posts the magnet and .torrent in #useful-shares.
-  Next: [planned] automate it before 2026-12-02 (build here, push to qBittorrent with the
-  LAN seed step, post the magnet link to Discord); needs libtorrent in a host venv and a
-  crontab line the owner adds. Until then, build and add by hand on the 2nd.
+  Monthly job built 2026-11-25 (branch `tcgcsv/monthly-torrent-job`; see Recently Completed):
+  [owner] add its crontab line before 2026-12-02 (deploy/crontab.txt, the `monthly-torrent`
+  line), then paste the emailed post into #useful-shares when November's arrives.
 - [planned] TCGCSV product list inside the torrents (owner, 2026-11-11 and 11-17): binaryalias
   asked for it; CptSpaceToaster said go ahead; the owner promised it "in the next monthly
   archive". Done in the builder 2026-11-17: every new torrent carries
   `tcgcsv-products-<date>.tar.xz` (~32 MB) from the catalogue crawl, plus a README section. The
   2026 Jan-Oct torrent has it. Keep the crawl's monthly refresh going so each month's copy is fresh.
-- [planned] Automate the monthly torrent (owner, 2026-11-17). On the 2nd of each month, a host
-  cron job: (1) build last month's torrent in a python:3.12-slim container (libtorrent), with
-  the product list; (2) check it: no missing days, every SHA256 matches, libtorrent re-checks
-  the pieces against the files; (3) add it to qBittorrent (192.168.1.207, category TCGCSV,
-  Z:\TCGCSV) and seed it over the LAN until qBittorrent shows 100%; (4) email the owner the
-  .torrent as an attachment with the magnet link and a ready-to-paste #useful-shares post
-  (through the store's Microsoft 365 sender; no new cost); (5) a line in our own Discord
-  alerts if any step fails. The owner posts in the TCGCSV Discord by hand (it's someone
-  else's server). Simpler than first planned: Z:\TCGCSV on the qBittorrent PC is the PlexVault
-  share this server mounts at /mnt/media/TCGCSV, so the script copies the files there and
-  qBittorrent seeds them after a quick check (no LAN seeding step). Unblocked 2026-11-17: adds
-  had silently vanished until qBittorrent was restarted; the script should confirm the torrent
-  appears and alert if not. Needs a crontab line the owner adds. Email goes to
-  admin@poke6s.com unless the owner says otherwise.
 - [waiting] TCGCSV Discord #development, read up to 2026-11-16 (owner's screenshots,
   2026-11-17). What matters to us:
   - CptSpaceToaster's hosting costs are real: 120M+ requests and 10 TB+ a month, and the
