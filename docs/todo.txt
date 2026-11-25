@@ -45,6 +45,11 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-25 Nightly repricing safeguards (pricing review, owner): "Keep this price (nightly repricing
+  leaves it alone)" on the admin's price form, ticked by default (products.price_manual, migration
+  011, logged in the history); changes over 30% in one night held for the owner and listed in
+  Discord ("held"). The Costco Surging Sparks 2-pack got its TCGplayer ID (650397), so it has a
+  market price ($179.62). Dry run on live data: 12 small changes tonight, none held.
 - 2026-11-25 Matching footers (step 9a's last piece): the Poke6s family footer, a slim strip
   (Shop, Market, Articles, Contact, Privacy, Terms, ©) like the family bar, now closes the store,
   the admin and the market's desktop pages (site_shell.js); the phone app puts the same links at

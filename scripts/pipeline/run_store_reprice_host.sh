@@ -9,7 +9,9 @@
 # skipped, and every change shows in the admin's product history as "repricing".
 #
 # Safety: --max-market-age-days 2 changes nothing (exit 2, orange in Discord) if the market
-# prices weren't refreshed. The costs file is found through STOREFRONT_COSTS_DIR in .env
+# prices weren't refreshed. --max-change-pct 30 holds back any single change over 30% (listed in
+# Discord as "held", for the owner to check on the Pricing page). Products priced by hand in the
+# admin ("Keep this price") are left alone. The costs file is found through STOREFRONT_COSTS_DIR in .env
 # (the same folder the admin's Pricing page reads); only that one line of .env is read, and
 # the output holds prices only, never costs.
 #
@@ -32,7 +34,7 @@ COSTS_DIR="$(grep -m1 '^STOREFRONT_COSTS_DIR=' "$ROOT/.env" 2>/dev/null | cut -d
     false
   else
     python3 -u "$ROOT/storefront/tools/reprice.py" --costs "$COSTS_DIR/store_sku_costs.csv" \
-      --apply --max-market-age-days 2 "$@"
+      --apply --max-market-age-days 2 --max-change-pct 30 "$@"
   fi
 } >> "$LOG_FILE" 2>&1
 STATUS=$?

@@ -570,16 +570,19 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
 
     @app.post("/products/{product_id:int}/price")
     def product_price(request: Request, product_id: int, form_token: str = Form(""), price: str = Form(""),
-                      compare_at: str = Form(""), reason: str = Form(""), confirm: str = Form("")):
+                      compare_at: str = Form(""), reason: str = Form(""), confirm: str = Form(""),
+                      price_manual: str = Form("")):
         cookie = signed_in(request)
         if not cookie:
             return to_login()
         if not form_ok(cookie, form_token):
             return expired_form()
-        typed = {"price": price, "compare_at": compare_at, "reason": reason}
+        typed = {"price": price, "compare_at": compare_at, "reason": reason, "price_manual": bool(price_manual)}
         try:
+            # "Keep this price" (ticked by default): the nightly repricing leaves it alone.
             wanted = {"price_cents": product_changes.parse_money(price),
-                      "compare_at_cents": product_changes.parse_money(compare_at)}
+                      "compare_at_cents": product_changes.parse_money(compare_at),
+                      "price_manual": 1 if price_manual else 0}
             with writer() as conn:
                 changed = product_changes.update_product(conn, product_id, wanted, reason, confirmed=bool(confirm))
         except ValueError as exc:

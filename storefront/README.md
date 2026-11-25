@@ -105,10 +105,17 @@ Squarespace importer resets prices and visibility, so run this again after any i
 Pricing page or at night, sets a price under it.
 
 **Nightly** (owner, 2026-11-25): `scripts/pipeline/run_store_reprice_host.sh` runs it with
-`--apply --max-market-age-days 2` at 03:30 UTC, after the 03:00 market prices and the 03:15
-backup. Stale market prices change nothing (exit 2, orange in Discord); the prices it changed
-are posted to Discord (`store-reprice`) and show in each product's history as "repricing". The
-costs file is found through `STOREFRONT_COSTS_DIR` in `.env`, the folder the Pricing page reads.
+`--apply --max-market-age-days 2 --max-change-pct 30` at 03:30 UTC, after the 03:00 market
+prices and the 03:15 backup. Stale market prices change nothing (exit 2, orange in Discord); the
+prices it changed are posted to Discord (`store-reprice`) and show in each product's history as
+"repricing". A change over 30% in one night is held back and listed in Discord as "held" for the
+owner to check on the Pricing page (a bad market reading can't move a price far). The costs file
+is found through `STOREFRONT_COSTS_DIR` in `.env`, the folder the Pricing page reads.
+
+**Priced by hand** (`products.price_manual`, migration 011): the admin's price form has "Keep this
+price (nightly repricing leaves it alone)", ticked by default, so a price typed there isn't put
+back the next night. Untick it and save to hand the product back to its rule. The switch is in
+the product's history; the Pricing page lists such products under "Left alone".
 
 ### Pricing page
 

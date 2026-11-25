@@ -36,6 +36,11 @@
         {% if price_error and 'big change' in price_error %}
         <label class="wide check"><input type="checkbox" name="confirm" value="1"> Yes, this price is right</label>
         {% endif %}
+        {#- Ticked by default: a price typed here would otherwise be put back by the nightly run.
+            Untick and save to hand the product back to its market rule. -#}
+        <label class="wide check"><input type="checkbox" name="price_manual" value="1"
+          {% if (t.price_manual if t.price_manual is defined else True) %}checked{% endif %}>
+          Keep this price (nightly repricing leaves it alone)</label>
         <button type="submit">Save price</button>
       </form>
       <dl class="facts small">
@@ -45,7 +50,10 @@
           we're <strong>{{ '%+d' % p.vs_market }}%</strong> {% if p.vs_market >= 0 %}above{% else %}below{% endif %} it
           {% else %}<span class="muted">no market price for this product</span>{% endif %}</dd>
       </dl>
-      <p class="muted small">Running the repricing tool (storefront/tools/reprice.py) can change a price that follows a market rule; it shows up here as “repricing”.</p>
+      <p class="muted small">{% if p.price_manual %}<strong>Priced by hand:</strong> the nightly repricing leaves this
+        price alone. To hand it back, untick “Keep this price” and save.
+        {%- else %}Nightly repricing (03:30 UTC) sets this price from its market rule, never below break-even; changes
+        show here as “repricing”.{% endif %}</p>
     </section>
 
     <section class="panel" id="photos">
