@@ -45,6 +45,11 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-25 Shipping (owner): $10 for everything; a booster box ships in a 6x6x6 for about
+  $7.50, two for about $10 (Pirate Ship). New "Oversize box" tick on the admin Details panel ships
+  at $20 (migration 012). Oversize: both Costco bundles, Unova Heavy Hitters, Greninja ex, Mega
+  Charizard ex and Crown Zenith Morpeko premium collections. Not oversize: Knock Out Collection,
+  151 Alakazam ex box. Free over $150 unchanged; PokeNE's current terms couldn't be read.
 - 2026-11-25 Pricing review, buying side (owner): Supplier Profitability's import defaults are now
   MACHO TCG's real US checkout (two carts: DDP, duties 12.5% of the product + ¥3,000 clearance per
   parcel; FedEx ¥18,500 for 18 boxes, ¥12,900 for 10). The books show earlier DAP orders: 15%
