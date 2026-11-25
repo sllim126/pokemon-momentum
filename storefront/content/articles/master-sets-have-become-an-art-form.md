@@ -5,7 +5,7 @@ description: When you can't find cards, you make the binder beautiful: the Michi
 author: Adam Mills
 categories: Collecting
 tags: Pokémon TCG, Master Sets, Binders, Collecting, Michi Method
-cover: 
+cover: delta-reign-official-binder-inserts-038b5ec031
 old_path: 
 draft: true
 ---
@@ -23,6 +23,10 @@ When you can't find product on the shelf, you don't stop caring about your colle
 - **Full-page art.** One picture cut into card-size pieces so a whole binder page becomes a single image. We built a free [Binder Art Maker](/binder-art) for exactly this: pick a picture, choose 2×2 up to 4×4, add a set logo if you want, and print it with cut marks.
 
 Honestly? It's starting to look like a gateway into scrapbooking. And I mean that as a compliment. Pokémon Japan even leaned into it. Their official video for Masayoshi Oishi's ["Pokémon All Stars 1025"](https://www.youtube.com/watch?v=PqOBtBOsB_I) is a beautiful piece built around an actual scrapbook-style Pokédex. Turns out "gotta catch 'em all" and "gotta paste 'em all" scratch the same itch.
+
+The Pokémon Company noticed too. On November 6 it posted [official printable binder inserts for Delta Reign](https://www.pokemon.com/us/features/collect-pokemon-tcg-mega-evolution-delta-reign-with-printable-binder-inserts): a [placeholder for every card in the set](https://www.pokemon.com/static-assets/cms3/us/pdf/trading-card-game/2026/binder-inserts/me06-placeholder-inserts-en.pdf), with its name and number, and a set of [art inserts](https://www.pokemon.com/static-assets/cms3/us/pdf/trading-card-game/2026/binder-inserts/me06-art-insert-en.pdf) for building your own mini collections. Print, cut, slide them in. When the company that makes the cards starts publishing binder art, it's not a fad anymore.
+
+![A Delta Reign binder open on two pages, with cards mixed in among full-size art inserts. Image: The Pokémon Company.](/media/1200/delta-reign-official-binder-inserts-038b5ec031.webp)
 
 What I love about it is that it's the opposite of the stress I wrote about [the first time](/articles/lets-talk-about-master-sets). Arranging a binder page doesn't depend on what's in stock or what a card sold for yesterday. It's just you, your cards and a free evening.
 
