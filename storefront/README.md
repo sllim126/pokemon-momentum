@@ -237,9 +237,9 @@ allows pictures from `tcgplayer-cdn.tcgplayer.com` for this.
 **TCGplayer links.** `[Perfect Order ETB](tcgplayer:672401)` links to that product's TCGplayer
 page through the shop's affiliate link (`STOREFRONT_TCGPLAYER_AFFILIATE`, the same one as the
 "Buy on TCGplayer" button), marked `rel="sponsored"`. A post that uses them says once that
-they're affiliate links. Products we have in stock link to our own page instead, automatically.
-Box pictures are links too: to our product page when we have it in stock
-(`catalog.stocked_by_tcgplayer_id`), otherwise to TCGplayer through the affiliate link. A page
+they're affiliate links. Products we have in stock link to our own page instead, automatically, when our price is at or below TCGplayer's market price (whichever is cheaper wins).
+Box pictures are links too: to our product page when we have it in stock at or below
+TCGplayer's market price (`catalog.stocked_by_tcgplayer_id`), otherwise to TCGplayer through the affiliate link. A page
 with affiliate links that doesn't mention them in its text gets a one-line note under the post.
 
 **Scheduling.** A finished article (`draft: false`) with a future `date` is scheduled: it stays

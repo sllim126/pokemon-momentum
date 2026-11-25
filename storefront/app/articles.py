@@ -302,6 +302,23 @@ def market_boxes(html: str, market, link_for=None) -> str:
 TCGPLAYER_LINK = re.compile(r'<a href="tcgplayer:(\d+)">')
 
 
+def cheaper_here(ours: dict[str, tuple[str, int]], market) -> dict[str, str]:
+    """{TCGplayer ID: our page} for the products a post should send readers to us for.
+
+    `ours` is catalog.stocked_by_tcgplayer_id: (our page, our price in cents) for everything we
+    have in stock. Readers go to whichever is cheaper (owner, 2026-11-25): our page when our
+    price is at or below TCGplayer's market price, or when there's no market price to compare;
+    otherwise the link stays on TCGplayer (affiliate).
+    """
+    found = {}
+    for product_id, (address, cents) in ours.items():
+        entry = market.entry(product_id)
+        theirs = entry.get("price") if entry else None
+        if not theirs or cents <= round(float(theirs) * 100):
+            found[product_id] = address
+    return found
+
+
 def tcgplayer_url(product_id: str, affiliate_base: str) -> str:
     """A product's TCGplayer page, through the affiliate link when there is one."""
     target = f"https://www.tcgplayer.com/product/{product_id}"
