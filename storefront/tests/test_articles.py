@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from storefront.app import article_import
-from storefront.app.articles import Articles, market_boxes, parse
+from storefront.app.articles import Articles, market_boxes, parse, tcgplayer_links
 from storefront.app.main import create_app
 
 NEWER = """---
@@ -295,3 +295,14 @@ def test_article_page_allows_tcgplayer_pictures(blog_client):
     csp = blog_client.get("/articles/journey-together-master-set-checklist").headers["content-security-policy"]
     assert "img-src 'self' data: https://tcgplayer-cdn.tcgplayer.com" in csp
     assert "tcgplayer" not in blog_client.get("/articles").headers["content-security-policy"]
+
+
+def test_tcgplayer_links_use_the_affiliate_link():
+    """[name](tcgplayer:<id>) goes to the product page through the affiliate link, as sponsored."""
+    html = parse("x", "---\ntitle: X\n---\nBuy [the ETB](tcgplayer:672401) or [ours](/shop).").html
+    out = tcgplayer_links(html, "https://partner.tcgplayer.com/abc")
+    assert ('<a href="https://partner.tcgplayer.com/abc?u=https%3A%2F%2Fwww.tcgplayer.com%2Fproduct%2F672401" '
+            'rel="sponsored noopener">the ETB</a>') in out
+    assert '<a href="/shop">ours</a>' in out          # other links untouched
+    plain = tcgplayer_links(html, "")
+    assert 'href="https://www.tcgplayer.com/product/672401" rel="sponsored noopener"' in plain

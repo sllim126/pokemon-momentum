@@ -37,7 +37,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import accounts, catalog, support, wishlist, classify, collector_hub, images, notify, notify_list, orders, placeholder_library, redirects, seo, stripe_api
-from .articles import Articles, market_boxes
+from .articles import Articles, market_boxes, tcgplayer_links
 from .binder_art import SetLogos
 from .placeholder_library import PlaceholderFiles
 from .db import connect, latest_migration, migrate
@@ -483,7 +483,8 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         waiting = articles.waiting() if found.draft or scheduled else []
         response = page(request, "article.html", title=found.title, article=found,
                         scheduled=scheduled, waiting=waiting,
-                        body_html=market_boxes(found.html, market),   # today's prices, per view
+                        body_html=tcgplayer_links(market_boxes(found.html, market),   # today's prices, per view
+                                                  settings.tcgplayer_affiliate_base),
                         more=articles.more_like(found), crumbs=crumbs, og_type="article",
                         og_image=seo.image_url(settings, found.cover), description=found.description,
                         jsonld=[seo.article_jsonld(settings, found), seo.breadcrumbs_jsonld(settings, crumbs)])

@@ -13,7 +13,7 @@ If someone on your Christmas list is into Pokémon cards (and let's be honest, w
 
 Here's a guide by budget, using what things actually sell for right now. It's also Cyber Weekend, so if you buy on TCGplayer through Monday night you get 10% back in store credit. (More on that in [the Black Friday post](/articles/is-pokemon-sealed-cheaper-on-black-friday).)
 
-*Prices in the text are TCGplayer market prices as of November 24. The boxes with pictures show today's market price and update every day.*
+*Prices in the text are TCGplayer market prices as of November 24. The boxes with pictures show today's market price and update every day. Product names link to TCGplayer; those are affiliate links, so Poke6s may earn a small commission if you buy through them.*
 
 **If you only read one line:** for most Pokémon fans, an Elite Trainer Box from a new set (**$62 to $75**) is the safe bet. It's the classic gift: nine packs, plus sleeves, dice and a box to keep it all in.
 
@@ -36,44 +36,44 @@ The ETB costs more per pack because you're paying for the extras. For a gift, th
 
 ## Under $10: stocking stuffers
 
-A single booster pack. Newer regular sets are about **$6**. A Phantasmal Flames pack is about $12, a little over budget, if they really want a shot at the Charizard.
+A single booster pack. Newer regular sets are about **$6**. A [Phantasmal Flames pack](tcgplayer:654144) is about $12, a little over budget, if they really want a shot at the Charizard.
 
 [[market 672398 684446 712099 654144]]
 
 ## Under $25
 
-- **3-pack blisters** (three packs and a promo card): Perfect Order **$20**, Delta Reign **$21**.
+- **3-pack blisters** (three packs and a promo card): [Perfect Order](tcgplayer:672393) **$20**, [Delta Reign](tcgplayer:712093) **$21**.
 - **Mega Heroes mini tins** (a couple of packs, a coin and a tin to keep cards in): about **$21 to $25**. Pick the Pokémon they like.
 
 [[market 672393 712093 649394 649400]]
 
 ## $25 to $50
 
-- **Booster bundles** (6 packs): Perfect Order **$34**, Chaos Rising **$38**, Delta Reign **$43**. The best value in this range.
-- **Build & Battle Box** (a ready-to-play 40-card deck plus 4 packs): about **$36**. The best pick for a kid who wants to actually *play* the game, not just open packs.
+- **Booster bundles** (6 packs): [Perfect Order](tcgplayer:672396) **$34**, [Chaos Rising](tcgplayer:684456) **$38**, [Delta Reign](tcgplayer:712097) **$43**. The best value in this range.
+- **[Build & Battle Box](tcgplayer:672400)** (a ready-to-play 40-card deck plus 4 packs): about **$36**. The best pick for a kid who wants to actually *play* the game, not just open packs.
 - **Prismatic Evolutions mini tins** (about **$33 to $42**). For the Eevee fan. You're paying the Prismatic premium, but each tin has a different Eeveelution on it, and to an Eevee fan, which one matters.
 
 [[market 672396 712097 672400 593459]]
 
 ## $50 to $100
 
-- **Elite Trainer Box**: the classic Pokémon gift. Perfect Order **$62**, Chaos Rising **$67**, Pitch Black **$70**, Delta Reign **$75**. Nine packs, sleeves, dice, card dividers and a sturdy box to keep it all in.
-- **A Japanese booster box** for someone who already has the English sets: 30 packs of Japanese cards (5 cards a pack, not 10) for about **$72 to $81** (Abyss Eye, Nihil Zero, Storm Emeralda, Ninja Spinner). Japanese cards look great in a binder. The box costs less than half an English one, but you also get fewer cards (150 instead of 360), so it's about the same price per card. [We carry Ninja Spinner boxes](/p/pokemon-ninja-spinner-booster-box-japanese) if you want one.
+- **Elite Trainer Box**: the classic Pokémon gift. [Perfect Order](tcgplayer:672401) **$62**, [Chaos Rising](tcgplayer:684450) **$67**, [Pitch Black](tcgplayer:692947) **$70**, [Delta Reign](tcgplayer:712102) **$75**. Nine packs, sleeves, dice, card dividers and a sturdy box to keep it all in.
+- **A Japanese booster box** for someone who already has the English sets: 30 packs of Japanese cards (5 cards a pack, not 10) for about **$72 to $81** ([Abyss Eye](tcgplayer:695112), [Nihil Zero](tcgplayer:674449), [Storm Emeralda](tcgplayer:709110), Ninja Spinner). Japanese cards look great in a binder. The box costs less than half an English one, but you also get fewer cards (150 instead of 360), so it's about the same price per card. [We carry Ninja Spinner boxes](/p/pokemon-ninja-spinner-booster-box-japanese) if you want one.
 
 [[market 672401 712102 684450 683774]]
 
 ## $100 to $200
 
-- **A booster box**: Pitch Black **$172**, Perfect Order **$173**, Chaos Rising **$177**, Delta Reign **$194**. 36 packs, the cheapest price per pack, and a whole evening of opening.
-- **Prismatic Evolutions ETB**, about **$118**. The most-wanted ETB of the last two years, and down from over $200 at the end of June.
-- **Pokémon Center ETBs** (originally sold only on the Pokémon Center's own website: more packs than a regular ETB, plus a promo card): Perfect Order **$100**, Chaos Rising **$111**.
+- **A booster box**: [Pitch Black](tcgplayer:692939) **$172**, [Perfect Order](tcgplayer:672394) **$173**, [Chaos Rising](tcgplayer:684444) **$177**, [Delta Reign](tcgplayer:712094) **$194**. 36 packs, the cheapest price per pack, and a whole evening of opening.
+- **[Prismatic Evolutions ETB](tcgplayer:593355)**, about **$118**. The most-wanted ETB of the last two years, and down from over $200 at the end of June.
+- **Pokémon Center ETBs** (originally sold only on the Pokémon Center's own website: more packs than a regular ETB, plus a promo card): [Perfect Order](tcgplayer:672404) **$100**, [Chaos Rising](tcgplayer:684452) **$111**.
 
 [[market 672394 712094 593355 684452]]
 
 ## Going all out
 
-- **Phantasmal Flames booster box**, about **$367**. The Mega Charizard X set. If the person you're shopping for has ever said "I just want the Charizard," this is the one. (Odds are they won't pull it. Don't tell them that.)
-- **Prismatic Evolutions Super-Premium Collection**, about **$240**. Packs, promos and a lot of Eevee.
+- **[Phantasmal Flames booster box](tcgplayer:654137)**, about **$367**. The Mega Charizard X set. If the person you're shopping for has ever said "I just want the Charizard," this is the one. (Odds are they won't pull it. Don't tell them that.)
+- **[Prismatic Evolutions Super-Premium Collection](tcgplayer:622770)**, about **$240**. Packs, promos and a lot of Eevee.
 
 [[market 654137 622770]]
 
