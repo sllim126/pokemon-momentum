@@ -48,6 +48,6 @@ There's no master set police. You make the rules, and you decide when it's done.
 - **Can't find packs?** Pick a Pokémon, an artist or a type and start a binder you can build one single at a time.
 - **Already have a binder?** Pick your favorite page and redo just that one, Michi style. See if you like it before you redo the whole thing. The [Binder Art Maker](/binder-art) makes a good first page.
 - **Want it to feel finished?** Print [placeholders](/placeholders) for what's missing. A binder with no empty pockets feels done long before it actually is.
-- **Add title cards.** I put title cards in my [Journey Together master set](/articles/journey-together-master-set-checklist-and-promo-guide) to remember which product each card came from and to break the binder up a bit: all the promos, then the prize pack cards, then the Japanese promos, and so on. I've made them available to download as well.
+- **Add title cards.** I put title cards in my [Journey Together master set](/articles/journey-together-master-set-checklist-and-promo-guide) to remember which product each card came from and to break the binder up a bit: all the promos, then the prize pack cards, then the Japanese promos, and so on. You can [download them](/placeholders) from the Placeholder Library too.
 
 Collect what makes you happy, set a budget before you start, and then go make it pretty. The best master set is the one you enjoy finishing, and enjoy looking at.
