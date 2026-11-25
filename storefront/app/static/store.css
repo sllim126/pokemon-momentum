@@ -185,6 +185,16 @@ main section { margin-top: 32px; }
 .foot-grid h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--faint); }
 .foot-grid nav a { display: block; padding: 4px 0; color: var(--muted); text-decoration: none; }
 .foot-grid nav a:hover { color: var(--text); }
+.site-foot .notify-form { margin-top: 14px; max-width: 380px; }
+/* The Poke6s family footer: the bottom twin of .ps-family, shared with the market and the admin
+   (same colours and type; copies in the market's site_shell.js and mobile_app.html, admin.css). */
+.ps-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 3px 16px; margin-top: 12px;
+  background: #050b14; border-top: 1px solid rgba(136, 162, 205, 0.16);
+  font: 600 12.5px/1.4 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; color: #93a6c8; }
+.ps-foot a { color: #93a6c8; text-decoration: none; padding: 3px 10px; border-radius: 999px; }
+.ps-foot a:hover { color: #eaf1ff; }
+.ps-foot span { margin-left: auto; padding: 3px 10px; font-weight: 500; }
+.site-foot { padding-bottom: 0; }
 
 @media (min-width: 640px) {
   .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }

@@ -35,7 +35,7 @@
           <td class="num">{{ x.market | money }}</td>
           <td class="num"><strong>{{ x.new | money }}</strong><br><span class="small {% if x.new > x.now %}warn-text{% else %}good-text{% endif %}">{{ '%+.2f' % ((x.new - x.now) / 100) }}</span></td>
           <td class="num">{{ '%+d' % x.vs_market }}%</td>
-          <td class="small">{% if x.raised %}raised to break-even{% endif %}</td>
+          <td class="small">{% if x.raised %}raised to floor{% endif %}</td>
         </tr>
       {% endfor %}
       </tbody>
@@ -62,7 +62,7 @@
           {% for x in result.steady %}
             <tr><td><a href="/products/{{ x.id }}">{{ x.title }}</a></td><td class="num">{{ x.now | money }}</td>
               <td class="num">{{ x.market | money }}</td><td class="num">{{ '%+d' % x.vs_market }}%</td>
-              <td class="small">{% if x.raised %}at break-even{% endif %}</td></tr>
+              <td class="small">{% if x.raised %}at floor{% endif %}</td></tr>
           {% endfor %}
           </tbody>
         </table>

@@ -5,8 +5,9 @@ For each visible product that has a price rule and a market price:
 
     target = the product's rule in data/store_price_rules.csv, applied to today's market price
              ("market": the market price; "market_minus_5_pct_99": 5% under, ending in .99)
-    floor  = the lowest price that doesn't lose money on a poke6s.com sale (see break_even)
-    new    = the higher of the two
+    floor  = the lowest price that doesn't lose money on a poke6s.com sale (see break_even), or
+             the product's own minimum (min_price in the rules file), whichever is higher
+    new    = the higher of target and floor
 
 Products without a rule ("manual"), a market price or a cost are left alone and listed, so a
 missing cost can never lead to a loss-making price.
@@ -23,6 +24,11 @@ Costs are private and never in this repository. They come from a CSV given with 
 With --hide-above-market, a product whose break-even is above market is hidden instead of
 listed above market (owner, 2026-11-11). It still gets its break-even price. Hidden products
 that could sell at or under market again are listed; show them with --show SKU --apply.
+
+Run unattended every night (owner, 2026-11-25: "fine with automatic repricing, so long as it
+doesn't dip below my profitability amount"): scripts/pipeline/run_store_reprice_host.sh, after
+the 03:00 market reference and the 03:15 backup. With --max-market-age-days the run changes
+nothing when the market prices are older than that, so a failed refresh can't reprice on old data.
 
 Dry run by default: prints the table and changes nothing. --apply writes everything in one
 transaction and logs each change in product_changes (the admin's product history, marked
@@ -42,6 +48,7 @@ import json
 import math
 import sqlite3
 import sys
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -94,10 +101,14 @@ def break_even(cost: dict, free_shipping_over: float) -> tuple[float, float]:
     return paid_shipping, free_shipping
 
 
-def new_price(target: float, cost: dict, free_shipping_over: float) -> tuple[float, bool]:
-    """(price, raised_to_floor). Floors are rounded up to a .99 ending."""
+def new_price(target: float, cost: dict, free_shipping_over: float,
+              min_price: float | None = None) -> tuple[float, bool]:
+    """(price, raised_to_floor). Break-even floors are rounded up to a .99 ending; the owner's
+    min_price is used as written."""
     paid, free = break_even(cost, free_shipping_over)
     price, raised = target, False
+    if min_price is not None and price < min_price:
+        price, raised = min_price, True
     if price < paid:
         price, raised = ending_99_up(paid), True
     if price >= free_shipping_over and price < free:
@@ -133,6 +144,18 @@ def load_rules(path: Path) -> dict[str, str]:
         return {r["sku"].strip(): r["pricing_mode"].strip() for r in csv.DictReader(handle)}
 
 
+def load_min_prices(path: Path) -> dict[str, float]:
+    """sku -> the owner's minimum price (the rules file's min_price column, in dollars), for the
+    products that have one. Repricing never goes under it, whatever the market does."""
+    floors = {}
+    with path.open(encoding="utf-8", newline="") as handle:
+        for row in csv.DictReader(handle):
+            raw = (row.get("min_price") or "").strip().lstrip("$")
+            if raw:
+                floors[row["sku"].strip()] = float(raw)   # a typo fails loudly rather than being skipped
+    return floors
+
+
 def load_products(con: sqlite3.Connection) -> list[dict]:
     return [dict(r) for r in con.execute(
         "SELECT id, sku, title, price_cents, compare_at_cents, tcgplayer_product_ids, visible, stock, track_stock "
@@ -140,7 +163,8 @@ def load_products(con: sqlite3.Connection) -> list[dict]:
 
 
 def plan(products: list[dict], costs: dict, reference: dict, rules: dict, *,
-         free_shipping_over: float = 150.0, hide_above_market: bool = False) -> dict:
+         free_shipping_over: float = 150.0, hide_above_market: bool = False,
+         min_prices: dict | None = None) -> dict:
     """Work out every product's new price without changing anything.
 
     Returns lists of dicts (prices in cents):
@@ -165,7 +189,7 @@ def plan(products: list[dict], costs: dict, reference: dict, rules: dict, *,
             if visible:
                 skipped.append({**base, "reason": reason})
             continue
-        price, raised = new_price(target, costs[sku], free_shipping_over)
+        price, raised = new_price(target, costs[sku], free_shipping_over, (min_prices or {}).get(sku))
         new = round(price * 100)
         if not visible:
             # Hidden products are only reported: worth showing again once they can sell at or
@@ -225,6 +249,14 @@ def apply(con: sqlite3.Connection, changes: list[dict], *, hide: list[dict] = ()
     return changed
 
 
+def market_age_days(latest_date: str | None, today: date | None = None) -> int | None:
+    """Days since the market reference's latest_date (YYYY-MM-DD), or None if it has none."""
+    try:
+        return ((today or date.today()) - date.fromisoformat(str(latest_date)[:10])).days
+    except ValueError:
+        return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     parser.add_argument("--costs", type=Path, required=True, help="private sku,unit_cost,... CSV")
@@ -238,20 +270,29 @@ def main() -> int:
     parser.add_argument("--show", nargs="+", default=[], metavar="SKU",
                         help="show hidden products again (with --apply)")
     parser.add_argument("--apply", action="store_true", help="write the changes")
+    parser.add_argument("--max-market-age-days", type=int, default=None,
+                        help="change nothing if the market prices are older than this (the nightly run uses 2)")
     args = parser.parse_args()
 
     reference = json.loads(args.market.read_text(encoding="utf-8"))
+    if args.max_market_age_days is not None:
+        age = market_age_days(reference.get("latest_date"))
+        if age is None or age > args.max_market_age_days:
+            print(f"Market prices are from {reference.get('latest_date') or 'an unknown date'}, older than "
+                  f"{args.max_market_age_days} day(s): nothing changed.")
+            return 2
     con = sqlite3.connect(args.db)
     con.row_factory = sqlite3.Row
     products = load_products(con)
     result = plan(products, load_costs(args.costs), reference, load_rules(args.rules),
-                  free_shipping_over=args.free_shipping_over, hide_above_market=args.hide_above_market)
+                  free_shipping_over=args.free_shipping_over, hide_above_market=args.hide_above_market,
+                  min_prices=load_min_prices(args.rules))
 
     print(f"Market prices from {result['market_date']}. "
           f"{'APPLYING' if args.apply else 'Dry run: nothing changes'}.\n")
     print(f"{'SKU':20} {'now':>9} {'market':>9} {'rule':>9} {'new':>9} {'vs mkt':>7}  note")
     for item in result["priced"]:
-        note = "HIDE: break-even is above market" if item["hide"] else "raised to break-even" if item["raised"] else ""
+        note = "HIDE: break-even is above market" if item["hide"] else "raised to floor" if item["raised"] else ""
         print(f"{item['sku'][:20]:20} {money(item['now'] / 100):>9} {money(item['market'] / 100):>9} "
               f"{money(item['target'] / 100):>9} {money(item['new'] / 100):>9} {item['vs_market']:>+6d}%  {note}")
     changes = [item for item in result["priced"] if item["change"]]
@@ -277,6 +318,10 @@ def main() -> int:
         changed = apply(con, changes, hide=hide, show=[by_sku[sku] for sku in args.show if not by_sku[sku]["visible"]],
                         market_date=result["market_date"])
         print(f"Applied: {changed} price(s), {len(hide)} hidden, {len(args.show)} shown.")
+        # One line per change for the nightly job's Discord summary (notify_discord.py, store-reprice).
+        for item in changes:
+            note = " (at its floor)" if item["raised"] else ""
+            print(f"Changed: {item['sku']} {money(item['now'] / 100)} -> {money(item['new'] / 100)}{note}")
     con.close()
     return 0
 

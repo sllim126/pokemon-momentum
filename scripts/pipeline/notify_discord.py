@@ -269,6 +269,24 @@ def monthly_torrent_summary(args: argparse.Namespace, lines: list[str]) -> tuple
     return "✅ built, checked and seeding", GREEN, fields
 
 
+def store_reprice_summary(args: argparse.Namespace, lines: list[str]) -> tuple[str, int, list[dict] | None]:
+    """The nightly store repricing (storefront/tools/reprice.py via run_store_reprice_host.sh).
+    Posts the prices it changed (prices only, never costs); a night with no change posts
+    nothing. Exit 2: the market prices were stale, so nothing changed."""
+    if args.exit_code == 2:
+        stale = next((line for line in lines if line.startswith("Market prices are from")), "")
+        return "⏸ market prices are old: nothing changed", ORANGE, [
+            {"name": "Why", "value": stale[:900] or "?", "inline": False}]
+    if args.exit_code != 0:
+        return f"❌ FAILED (exit {args.exit_code})", RED, [error_field(lines)]
+    changed = [line[len("Changed: "):] for line in lines if line.startswith("Changed: ")]
+    if not changed:
+        return "✅ no price changes", GREEN, None
+    text = "\n".join(changed)
+    return f"✅ {len(changed)} price(s) changed", GREEN, [
+        {"name": "Changes (never under a product's floor)", "value": f"```\n{text[-990:]}\n```", "inline": False}]
+
+
 # Job name -> (message title, default log file, summary builder).
 JOBS = {
     "daily-update": ("Nightly market update", ROOT / "logs" / "daily_update.log", daily_update_summary),
@@ -277,6 +295,7 @@ JOBS = {
     "archive-backfill": ("TCGCSV archive backfill", ROOT / "logs" / "archive_backfill.log", backfill_summary),
     "catalogue": ("TCGCSV catalogue crawl", ROOT / "logs" / "tcgcsv_catalogue.log", catalogue_summary),
     "monthly-torrent": ("TCGCSV monthly torrent", ROOT / "logs" / "monthly_torrent.log", monthly_torrent_summary),
+    "store-reprice": ("Store repricing", ROOT / "logs" / "store_reprice.log", store_reprice_summary),
 }
 
 

@@ -37,5 +37,17 @@
   <main>
     {% block main %}{% endblock %}
   </main>
+  {#- The Poke6s family footer, the same strip as the store and the market (step 9a, 2026-11-25;
+      store copy in storefront/app/templates/base.html). The admin's links open the public sites
+      in a new tab, like the family bar above. #}
+  <nav class="ps-foot" aria-label="Poke6s">
+    <a href="{{ settings.base_url }}" target="_blank" rel="noopener">Shop</a>
+    <a href="{{ settings.market_base_url }}" target="_blank" rel="noopener">Market</a>
+    <a href="{{ settings.base_url }}/articles" target="_blank" rel="noopener">Articles</a>
+    <a href="{{ settings.base_url }}/contact" target="_blank" rel="noopener">Contact</a>
+    <a href="{{ settings.base_url }}/privacy" target="_blank" rel="noopener">Privacy</a>
+    <a href="{{ settings.base_url }}/terms" target="_blank" rel="noopener">Terms</a>
+    <span>Admin · home network only</span>
+  </nav>
 </body>
 </html>

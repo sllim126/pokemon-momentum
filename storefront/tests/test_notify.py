@@ -35,7 +35,19 @@ def test_rebuilding_note_only_while_checkout_is_off(imported):
     on = dataclasses.replace(imported, stripe_secret_key="sk_test_fake", stripe_webhook_secret="whsec_x")
     with TestClient(create_app(on)) as shop:
         html = shop.get(PRODUCT).text
-        assert "rebuilding" not in html and 'action="/notify"' not in html
+        # With checkout on, the list lives on as "News and restocks" in the footer only (owner,
+        # 2026-11-25): one form, not the product page's pre-launch one.
+        assert "rebuilding" not in html and html.count('action="/notify"') == 1
+        assert "News and restocks" in html and 'id="notify-foot"' in html
+        page = shop.get("/notify").text
+        assert "<h1>News and restocks</h1>" in page and page.count('action="/notify"') == 1
+
+
+def test_footer_strip_and_signup_while_checkout_is_off(client):
+    html = client.get(PRODUCT).text
+    # The product page's form and the footer's both show; their inputs keep separate ids.
+    assert html.count('action="/notify"') == 2 and 'id="notify-email"' in html and 'id="notify-foot"' in html
+    assert '<nav class="ps-foot" aria-label="Poke6s">' in html and 'href="/privacy">Privacy</a>' in html
 
 
 def test_join_the_list(client, imported):

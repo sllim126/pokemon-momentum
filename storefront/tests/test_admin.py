@@ -140,6 +140,8 @@ def test_sign_in_and_out(admin):
     sign_in(admin)
     page = admin.get("/")
     assert page.status_code == 200 and "To ship" in page.text
+    # The Poke6s family footer, as on the store and the market (step 9a).
+    assert '<nav class="ps-foot" aria-label="Poke6s">' in page.text and "/privacy" in page.text
     cookie = admin.cookies.get(COOKIE_NAME)
     # Signing out needs the page's form token.
     assert admin.post("/logout", data={"form_token": "wrong"}).status_code == 403

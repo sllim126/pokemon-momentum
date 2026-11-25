@@ -589,8 +589,13 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
 
     @app.get("/notify", response_class=HTMLResponse)
     def notify_page(request: Request, joined: str = "", error: str = ""):
-        return page(request, "notify.html", title="Get an email when we open",
-                    description="Join the list and we'll email you when checkout opens on poke6s.com.",
+        # Before launch: "email me when we open". With checkout on, the same list is "News and
+        # restocks" (the footer form posts here too).
+        if settings.checkout_enabled:
+            title, description = "News and restocks", "Get an email about new stock, restocks and sales at Poke6s."
+        else:
+            title, description = "Get an email when we open", "Join the list and we'll email you when checkout opens on poke6s.com."
+        return page(request, "notify.html", title=title, description=description,
                     joined=joined == "1", error=error == "1")
 
     @app.post("/notify")

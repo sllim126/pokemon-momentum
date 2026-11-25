@@ -76,6 +76,8 @@
       <div>
         <img src="/static/img/logo.png" alt="" width="120" height="42">
         <p class="muted">Sealed Pokémon TCG, English and Japanese, priced against the live market.</p>
+        {#- The email list in every footer (owner, 2026-11-25); /notify is the form's own page. #}
+        {% if path != '/notify' %}{% with notify_id='notify-foot' %}{% include "_notify_form.html" %}{% endwith %}{% endif %}
       </div>
       <nav aria-label="Help">
         <h2>Help</h2>
@@ -95,7 +97,15 @@
         {% for name, url in social_links %}<a href="{{ url }}" rel="noopener me">{{ name }}</a>{% endfor %}
       </nav>
     </div>
-    <p class="wrap muted small">© {{ year }} Poke6s LLC. Pokémon and its trademarks are © Nintendo, Creatures and GAME FREAK; this shop is not affiliated with them.</p>
+    <p class="wrap muted small">Pokémon and its trademarks are © Nintendo, Creatures and GAME FREAK; this shop is not affiliated with them.</p>
+    {#- The Poke6s family footer: the same strip closes the store, the market and the admin (step 9a,
+        2026-11-25), as the family bar opens them. Copies: market site_shell.js and mobile_app.html,
+        admin base.html; keep the links in step. #}
+    <nav class="ps-foot" aria-label="Poke6s">
+      <a href="/">Shop</a><a href="{{ settings.market_base_url }}">Market</a><a href="/articles">Articles</a>
+      <a href="/contact">Contact</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a>
+      <span>© {{ year }} Poke6s LLC</span>
+    </nav>
   </footer>
 </body>
 </html>

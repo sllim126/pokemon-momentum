@@ -213,6 +213,13 @@ ol.steps li { margin-bottom: 4px; }
 .ps-family a { color: #93a6c8; text-decoration: none; padding: 3px 10px; border-radius: 999px; }
 .ps-family a:hover { color: #eaf1ff; }
 .ps-family a[aria-current="page"] { color: #eaf1ff; background: rgba(77, 163, 255, 0.16); }
+/* The Poke6s family footer (same strip as the store's .ps-foot in store.css). */
+.ps-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 3px 16px; margin-top: 24px;
+  background: #050b14; border-top: 1px solid rgba(136, 162, 205, 0.16);
+  font: 600 12.5px/1.4 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; color: #93a6c8; }
+.ps-foot a { color: #93a6c8; text-decoration: none; padding: 3px 10px; border-radius: 999px; }
+.ps-foot a:hover { color: #eaf1ff; }
+.ps-foot span { margin-left: auto; padding: 3px 10px; font-weight: 500; }
 
 /* Supplier Profitability (supplier_profit.py, moved from the market site 2026-11-21) */
 .sp-form fieldset { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; margin: 0; min-width: 0; }
