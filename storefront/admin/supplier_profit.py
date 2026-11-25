@@ -43,19 +43,34 @@ FX_URL = "https://api.frankfurter.dev/v2/rates?base=USD&quotes=JPY"
 FX_CACHE_SECONDS = 3600
 FX_RETRY_SECONDS = 600
 
-# The page's starting assumptions (the market page's defaults). Shipping and fees in USD unless
-# the name says JPY; percentages as percent (10 = 10%).
+# The page's starting assumptions. Shipping and fees in USD unless the name says JPY; percentages
+# as percent (10 = 10%).
+#
+# Import costs are MACHO TCG's real US checkout (owner's carts, 2026-11-25): it ships DDP, so
+# its total already holds the duty and the carrier's clearance fee, and nothing is billed later.
+#   - duties: 12.5% of the product value ("Import duties & handling" minus the clearance fee,
+#     in both a ¥96,400 and a ¥176,400 cart), on top of the US tariff explanation in the books
+#     (15% on the declared value; cards themselves are duty-free).
+#   - FedEx shipping: ¥12,900 for 10 boxes, ¥18,500 for 18, ¥23,200 for 30 (still one 10 kg
+#     parcel). The default is the 10-box cart: the owner's standard order is 2-4 boxes of each
+#     fast seller (owner, 2026-11-25: "time is money, I'm trying to grow, not just hold it").
+#   - the duty is on the subtotal after MACHO's bulk discount (0.2% over ¥100,000), checked to
+#     the yen on a 30-box cart.
+#   - clearance: ¥3,000 per parcel (~$18.85), carried by the boxes in the order.
+# Sellers who ship DAP (FedEx bills the duty weeks later) have cost about 10-11% of what was
+# paid plus FedEx's $14 fee, because they declare low values: type those in for such a quote.
 DEFAULTS = {
-    "import_duty_pct": 10.0,
+    "import_duty_pct": 12.5,
     # "order-estimate": order_shipping_jpy / order_box_count per box; "manual": inbound_shipping_usd.
     "inbound_shipping_mode": "order-estimate",
-    "order_shipping_jpy": 13800.0,
-    "order_box_count": 11.0,
+    "order_shipping_jpy": 12900.0,
+    "order_box_count": 10.0,
     "inbound_shipping_usd": 5.50,
     "handling_cost_usd": 0.75,
-    # Charged once per supplier order, so each box carries its share (owner, 2026-10-27,
-    # confirmed 2026-11-09). Without a box count, one box carries the whole fee.
-    "disbursement_fee_usd": 15.00,
+    # Charged once per supplier order, so each box carries its share. MACHO's US clearance fee
+    # (¥3,000 a parcel, 2026-11-25); before that FedEx's disbursement fee ($14-15, 2026-10-27).
+    # Without a box count, one box carries the whole fee.
+    "disbursement_fee_usd": 18.85,
     "outbound_shipping_usd": 7.25,
     "shipping_credit_usd": 0.0,
     "income_tax_pct": 25.0,
