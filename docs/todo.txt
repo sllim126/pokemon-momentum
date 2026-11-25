@@ -45,6 +45,9 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-25 "Master Sets Have Become an Art Form" scheduled for Dec 4 (owner): owner's edits, The
+  Pokémon Company's official Delta Reign binder inserts (cover and text), links to the Placeholder
+  Library, the new Journey Together title cards download and Card Binder Ideas' cover gallery.
 - 2026-11-25 "Why a Grade 1 Pokémon Card Can Sell for More Than a Grade 5" scheduled for Dec 1
   (owner): the Claude and Codex drafts merged into one, Nov 25 PriceCharting prices, three charts
   (`scripts/blog/grade1_charts.py`), collector views from five Reddit threads, and the owner's
@@ -320,13 +323,12 @@ High Priority
   and adds their own voice before it goes live (set `draft: false` + the date to schedule it).
   Graded prices from PriceCharting must link back to PriceCharting. Swap a topic if the data
   turns out boring.
-  - "Master Sets, Part 2" published 2026-11-21 (charts re-rendered without titles). Owner
-    still to proofread "Master Sets Have Become an Art Form" (wants binder photos) and fill the
-    Kecleon line in Delta Reign. When the art-form post is live, add a link to it at the end of
-    Part 2.
+  - "Master Sets, Part 2" published 2026-11-21 (charts re-rendered without titles).
+  - [next] On or after Dec 4, once "Master Sets Have Become an Art Form" is live: add a link to
+    it at the end of Part 2 (not before: a scheduled post's page says "Scheduled" to readers).
   - How to write and publish one (any agent): `docs/blog_guide.md`.
-  - [waiting] Art-form post: owner is asking binder-cover artists on Instagram for permission
-    to show their covers (2026-11-25). Card Binder Ideas' gallery is linked, but its covers belong
+  - [waiting] Art-form post: owner asked three binder-cover artists on Instagram for permission
+    to show their covers (2026-11-25; the post goes out Dec 4 either way). Card Binder Ideas' gallery is linked, but its covers belong
     to the collectors who made them, so nothing is copied without the artist's written OK; then
     store the picture (git-ignored) and credit the artist with a link to their post.
   - [next] Gift guide (`pokemon-tcg-gift-guide-by-budget.md`, Nov 28): reviewed, prices to Nov 24
@@ -337,7 +339,7 @@ High Priority
   - Topics: Nov 24 Delta Reign, two weeks in (see above) · Nov 26
     Is sealed cheaper on Black Friday? (Nov–Dec 2024/2025) · Nov 28 Gift guide by budget
     ($25/$50/$100, price per pack) · Dec 1 Why a Grade 1 can outsell a Grade 5 (scheduled) · Dec 4 Art-form post
-    (drafted) · Dec 8 Best booster box deal, English and Japanese · Dec 10 30th Celebration,
+    (scheduled) · Dec 8 Best booster box deal, English and Japanese · Dec 10 30th Celebration,
     three months in · Dec 12 Cards that sell for more in Japanese · Dec 15 What happens when a
     set goes out of print · Dec 17 The Pokémon tax (same rarity, different Pokémon) · Dec 19
     Stocking stuffers under $10 · Dec 22 Biggest single-card movers of 2026 · Dec 26 Do prices

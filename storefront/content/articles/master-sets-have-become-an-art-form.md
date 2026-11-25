@@ -7,7 +7,7 @@ categories: Collecting
 tags: Pokémon TCG, Master Sets, Binders, Collecting, Michi Method
 cover: delta-reign-official-binder-inserts-038b5ec031
 old_path: 
-draft: true
+draft: false
 ---
 I've written two posts now about what master sets *cost*: [the first one](/articles/lets-talk-about-master-sets) priced every Scarlet & Violet and Mega Evolution set, and [Part 2](/articles/master-sets-part-2-japanese-vs-english) compared English and Japanese sets and asked whether you even need the bulk.
 
