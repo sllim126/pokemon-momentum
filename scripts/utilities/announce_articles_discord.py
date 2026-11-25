@@ -1,8 +1,8 @@
 """Announce new blog posts in the Poke6s Discord's #general-site-updates channel.
 
 A post goes live either when it is merged with today's date or, when scheduled, at midnight
-Mountain time on its date, with nothing to trigger a message. So this runs hourly from the
-host crontab (daytime only, see deploy/crontab.txt) and asks the store itself what is live:
+Mountain time on its date, with nothing to trigger a message. So this runs every morning at
+8:05 Mountain from the host crontab (deploy/crontab.txt) and asks the store itself what is live:
 the article addresses in the local storefront's sitemap (http://localhost:8010/sitemap.xml)
 are exactly the published posts, since drafts and scheduled posts are left out of it.
 
@@ -16,7 +16,7 @@ file, only records what is already live, so the back catalogue is never posted.
 
 Settings: POKE6S_DISCORD_BOT_TOKEN from the environment or .env (never printed), the same bot
 as post_weekly_discord.py. If the store doesn't answer, nothing is posted or recorded and the
-next hourly run tries again. Exit codes: 0 ok, 1 error.
+next morning's run tries again. Exit codes: 0 ok, 1 error.
 """
 
 import argparse
@@ -96,6 +96,6 @@ def main() -> int:
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except Exception as error:  # noqa: BLE001  (logged; the next hourly run retries)
+    except Exception as error:  # noqa: BLE001  (logged; the next run retries)
         print(f"error: {type(error).__name__}: {error}")
         sys.exit(1)

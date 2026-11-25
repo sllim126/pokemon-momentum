@@ -96,7 +96,7 @@ Last reviewed: 2026-11-25.
 5. When the owner approves: set `draft: false`, keep the date, merge and deploy. A post with a
    future date is scheduled and goes live by itself on that date (Mountain time); check the page
    says "Scheduled: goes live on <date>". Move the item to Recently Completed in `docs/todo.txt`.
-   Discord #general-site-updates gets a "New on the blog" message by itself within the hour once
-   the post is live (8 am-9 pm Mountain; `scripts/utilities/announce_articles_discord.py`).
+   Discord #general-site-updates gets a "New on the blog" message by itself at 8:05 am Mountain
+   on the day it goes live, or the next morning if it went live later in the day ( `scripts/utilities/announce_articles_discord.py`).
 6. Reader feedback (often pasted from Discord) is applied the same way: branch, edit, wait for
    "merge and deploy".
