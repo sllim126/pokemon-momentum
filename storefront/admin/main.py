@@ -38,7 +38,7 @@ from fastapi.templating import Jinja2Templates
 
 from ..app import notify
 from ..app import orders as store_orders
-from ..app import product_changes, product_details
+from ..app import product_changes, product_details, support
 from ..app.classify import PRODUCT_TYPE_LABELS
 from ..app.db import connect, latest_migration, migrate
 from ..app.market import MarketReference
@@ -306,6 +306,19 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
                     now=datetime.now(UTC).isoformat())
 
     # --- orders (Phase 3, step 2) -------------------------------------------------------------
+
+    @app.post("/support/{message_id:int}/answered")
+    def support_answered(request: Request, message_id: int, form_token: str = Form("")):
+        """Overview: a Contact-page message was answered (by email); it leaves the list."""
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        if not form_ok(cookie, form_token):
+            return expired_form()
+        with writer() as conn:
+            support.mark_answered(conn, message_id)
+        log.info("Support message #%s marked answered", message_id)
+        return RedirectResponse("/#support", status_code=303)
 
     @contextmanager
     def writer() -> Iterator[sqlite3.Connection]:

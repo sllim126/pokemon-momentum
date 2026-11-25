@@ -40,6 +40,13 @@ page shows the orders placed with it. You can delete the account on the Market's
 at any time; your wishlist goes with it. Orders aren't deleted with it: we keep those for tax
 records, as above.
 
+## Messages you send us
+
+If you use the message box on the [Contact](/contact) page, we keep your name, email address,
+order number (if you give one) and message, to answer you. Our message alert says only that a
+message arrived, never what's in it. We delete answered messages after a year. Email and
+Discord messages stay in those services.
+
 ## Cookies and visit counts
 
 This site sets no tracking cookies and runs no tracking scripts. Your cart is kept in your

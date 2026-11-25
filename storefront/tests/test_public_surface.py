@@ -18,6 +18,7 @@ PUBLIC_WRITES = {
     "/stripe/webhook",   # Stripe's own calls, signature-checked
     "/unsubscribe/{token}",  # email list opt-out: must work from the email, no sign-in (CAN-SPAM)
     "/wishlist",  # the ♡: needs the shared sign-in (SameSite=Lax cookie) and refuses other origins
+    "/support",  # the Contact page's message box: honeypot, hourly limits, length limits, origin check
 }
 
 

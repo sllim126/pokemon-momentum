@@ -29,6 +29,7 @@
         <span class="num">{{ o.total_cents | money }}</span>
       </p>
       <p class="small">{% for i in o['items'] %}{{ i.quantity }} × {{ i.title }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+      <p class="small"><a href="/contact?order={{ o.number | urlencode }}#support">Get help with this order</a></p>
       {% if o.status == 'shipped' and o.tracking_number %}<p class="small">Tracking: {{ o.carrier or '' }} {{ o.tracking_number }}
         {%- if o.tracking_url %} · <a href="{{ o.tracking_url }}" rel="noopener" target="_blank">Track package</a>{% endif %}</p>{% endif %}
     </li>

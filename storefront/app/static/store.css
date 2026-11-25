@@ -382,3 +382,22 @@ ul.notice { list-style: none; }
 .wish-btn.saved { border-color: var(--accent); color: var(--accent); }
 .wish-list form { margin: 6px 0 0; }
 .btn.small { padding: 4px 10px; font-size: 0.85rem; }
+
+/* Contact page: email, Discord and the message box (one Poke6s account, stage 3). */
+.support { margin-top: 28px; }
+.support-ways { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 12px 0 20px; }
+.support-way { display: grid; gap: 4px; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+  text-decoration: none; color: var(--text); }
+.support-way:hover { border-color: var(--accent); }
+.support-icon { width: 26px; height: 26px; fill: none; stroke: var(--accent); stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round; }
+.support-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.support-form label { display: grid; gap: 4px; font-weight: 600; align-content: end; }
+.support-form .optional { font-weight: 400; }
+.support-form .wide { grid-column: 1 / -1; }
+.support-form input, .support-form textarea { width: 100%; box-sizing: border-box; font: inherit; color: var(--text);
+  background: var(--bg, transparent); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; }
+.support-form .trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.flash { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); }
+.flash.good { border-left: 4px solid var(--good); }
+.flash.bad { border-left: 4px solid var(--bad); }

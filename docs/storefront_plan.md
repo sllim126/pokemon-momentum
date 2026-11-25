@@ -214,7 +214,8 @@ Prices as published on 2026-10-31; check current pricing before relying on them.
   2026-11-23: Google sign-in shared with the market site, step 9b. Guest checkout stays.)
 - Storing card details. Stripe holds all payment data; our server sees only order totals and
   the shipping address.
-- An on-site contact or bug form (bugs go to Discord `#bug-reports`).
+- An on-site bug form (bugs go to Discord `#bug-reports`). A support message box was added to
+  /contact at the owner's request (2026-11-23, step 9b stage 3), beside email and Discord.
 
 ## Addresses (URL scheme)
 
@@ -487,7 +488,11 @@ this properly"):
    `storefront/app/accounts.py`); "Sign in" / "Account" in the store header; `/account` lists
    the orders placed with the account's email. Stage 2 done 2026-11-23: a wishlist (♡ on product
    pages, a plain form; listed on /account; `app/wishlist.py`, migration 009; dropped when the
-   account is deleted on the market). Stage 3: support (email,
+   account is deleted on the market). Stage 3 done 2026-11-25: support on /contact and from each
+   order on /account: email, Discord ("often the fastest") and a message box (`app/support.py`,
+   migration 010) that pings Discord with the message number only and lists on the admin
+   Overview with Reply and Mark answered; answered messages deleted after a year. (Planned as:
+   support (email,
    Discord, and a message box that lands on the admin Overview and pings Discord).
 
 Original scope:
