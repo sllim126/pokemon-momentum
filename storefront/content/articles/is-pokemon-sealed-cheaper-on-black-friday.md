@@ -7,11 +7,11 @@ categories: Market Talk
 tags: Pokémon TCG, Sealed, Black Friday, TCG Market Analysis, Booster Boxes, Elite Trainer Boxes
 cover: 
 old_path: 
-draft: true
+draft: false
 ---
-Every year around now, someone asks if they should wait for Black Friday to buy that booster box or Elite Trainer Box. It's a fair question. Everything else goes on sale, so why not Pokémon?
+Every year around now, everyone's wondering if they should wait for Black Friday to buy that booster box or Elite Trainer Box. It's a fair question. Everything else goes on sale, so why not Pokémon sealed products (on the secondary market, of course)?
 
-I have daily TCGplayer prices going back to early 2024, so I checked what actually happened to sealed products around the last two Black Fridays (November 29, 2024 and November 28, 2025).
+So, with the daily TCGplayer prices I have going back to early 2024, I decided to check what actually happened to sealed products around the last two Black Fridays (November 29, 2024 and November 28, 2025).
 
 *TCGplayer's market price is based on what things actually sold for, so if Black Friday made sealed product cheaper across the board, it would show up here. I compared each product's price two weeks before Black Friday with Black Friday itself and the six weeks after. English sealed products worth $20 or more: 879 products in 2024, 1,261 in 2025.*
 
@@ -31,6 +31,12 @@ For the typical sealed product, the price on Black Friday was about the same as 
 - Two weeks later: +2%
 - Six weeks later: +4%
 
+Here's the same thing day by day. The solid lines show the share of products priced higher than two weeks before, the dashed lines the share priced lower:
+
+![Share of sealed products priced higher and lower than two weeks before Black Friday, day by day, 2024 and 2025. By Black Friday about half were priced higher and about one in five lower; six weeks later about seven in ten were higher.](/media/1200/black-friday-priced-higher-lower-1d68a3ad1c.webp)
+
+By Black Friday, about half were already priced higher and only about 1 in 5 lower. Six weeks later, about 7 in 10 were higher. Both years look almost the same.
+
 Real Black Friday dips were rare. During Black Friday week, only **22 of about 1,000** products (2%) sold for 10% or more below their price two weeks earlier in 2024, and **53 of about 1,350** (4%) in 2025.
 
 ## Booster boxes and ETBs went up the most
@@ -40,6 +46,8 @@ In 2024, the products people actually buy as gifts climbed the most:
 - **Elite Trainer Boxes:** +3% on Black Friday, +10% two weeks later, **+18%** by mid-January
 - **Booster boxes:** +1% on Black Friday, +4% two weeks later, **+13%** by mid-January
 - **Booster bundles:** +9% on Black Friday, **+22%** by mid-January
+
+![2024 median price change by product type on Black Friday, two weeks later and six weeks later: booster bundles +9%, +8%, +22%; Elite Trainer Boxes +3%, +10%, +18%; booster boxes +1%, +4%, +13%; all sealed $20+ +0%, +2%, +6%.](/media/1200/black-friday-2024-by-type-c43ae3a9d7.webp)
 
 Some examples, two weeks before Black Friday 2024 → Black Friday → mid-January:
 
@@ -73,9 +81,11 @@ So it's not a sale in the "prices are lower" sense. But if you were going to buy
 ## So when should you buy?
 
 - **Buying gifts on TCGplayer?** Buy during Cyber Weekend (November 27 to 30) at the latest, and don't wait past it. The price won't be any lower than the week before, but you'll get 10% back in store credit. Waiting until later in December didn't save money either year, and in 2024 waiting just two weeks past Black Friday cost about 10% on ETBs.
-- **The real Black Friday deals are at retail.** Big stores sometimes drop ETBs and tins to MSRP or below for a day. Those sales don't show up in the market price, and they sell out fast, but if you see one, that's the deal.
+- **The real Black Friday deals are at retail.** Big stores sometimes drop ETBs and tins to MSRP or below for a day. Those sales don't show up in the market price, and they sell out fast, but if you see one, that's the deal. That's if you can find any. We're still deep in scalper territory, and unless you're willing to put in the time, what you'll find on the shelves may be limited. It's getting better, but slowly.
 - **Want a new set?** Black Friday doesn't matter. Give it a couple of months and the singles and most sealed will come down on their own.
 
 Here's what a few gift picks cost today, from a stocking stuffer up to a booster box:
 
 [[market 712097 712102 593355 672394 712094]]
+
+If you'd rather skip the hunt, we have sealed product in stock in [our shop](/shop).

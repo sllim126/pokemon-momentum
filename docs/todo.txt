@@ -45,6 +45,8 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-25 Black Friday post: two charts (`scripts/blog/black_friday_charts.py`), owner's
+  intro and retail/scalper line, link to the shop; set to publish, goes live 2026-11-26.
 - 2026-11-23 The "we're open" email went to the email list (one subscriber; owner's OK after a
   test copy), with product cards for four in-stock products
   (data/storefront/mailings/2026-11-we-are-open.txt).
