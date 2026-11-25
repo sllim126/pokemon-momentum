@@ -620,7 +620,7 @@ Tunnel; the domain remains registered after the Squarespace website plan ended.
     home, 9c (2026-11-23) into the store admin. Step 9 has 9b (one Poke6s account) left.
   - [planned] Supplier Profitability, the profit view (owner 2026-11-25: "an accurate profit for each
   system, and where I should source it from"): per box, both sources (import landed vs TCGplayer
-  market + Utah tax + shipping) on each channel (own site with the buyer's $20 shipping, eBay,
+  market + Utah tax + shipping) on each channel (own site with the buyer's $10 shipping, eBay,
   TCGplayer), the best route and runner-up, ranked by how fast the box sells first (turnover over
   stacking, owner 2026-11-25), plus 30-day trend, supplier stock, quote age, and a
   "TCGplayer sales" box the owner fills from TCGplayer's page (sold per day, listed quantity,

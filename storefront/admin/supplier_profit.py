@@ -71,7 +71,7 @@ DEFAULTS = {
     # (¥3,000 a parcel, 2026-11-25); before that FedEx's disbursement fee ($14-15, 2026-10-27).
     # Without a box count, one box carries the whole fee.
     "disbursement_fee_usd": 18.85,
-    "outbound_shipping_usd": 7.25,
+    "outbound_shipping_usd": 7.50,   # one box in a 6x6x6 via Pirate Ship (owner, 2026-11-25)
     "shipping_credit_usd": 0.0,
     "income_tax_pct": 25.0,
     "target_margin_pct": 15.0,
