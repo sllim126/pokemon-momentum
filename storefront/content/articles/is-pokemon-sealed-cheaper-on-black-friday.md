@@ -13,7 +13,7 @@ Every year around now, everyone's wondering if they should wait for Black Friday
 
 So, with the daily TCGplayer prices I have going back to early 2024, I decided to check what actually happened to sealed products around the last two Black Fridays (November 29, 2024 and November 28, 2025).
 
-*TCGplayer's market price is based on what things actually sold for, so if Black Friday made sealed product cheaper across the board, it would show up here. I compared each product's price two weeks before Black Friday with Black Friday itself and the six weeks after. English sealed products worth $20 or more: 879 products in 2024, 1,261 in 2025.*
+*TCGplayer's market price is based on what things actually sold for, so if Black Friday made sealed product cheaper across the board, it would show up here. I compared each product's price two weeks before Black Friday with Black Friday itself and the six weeks after. English sealed products worth $20 or more: 879 products in 2024, 1,261 in 2025. Product names link to TCGplayer; those are affiliate links, so Poke6s may earn a small commission if you buy through them.*
 
 ## Short answer: no
 
@@ -54,10 +54,10 @@ In 2024, the products people actually buy as gifts climbed the most:
 
 Some examples, two weeks before Black Friday 2024 → Black Friday → mid-January:
 
-- **Surging Sparks booster box:** $176 → $210 → $246
-- **Surging Sparks ETB:** $49 → $59 → $78
-- **Stellar Crown booster box:** $108 → $119 → $159
-- **Paldean Fates ETB:** $56 → $67 → $89
+- **[Surging Sparks booster box](tcgplayer:565606):** $176 → $210 → $246
+- **[Surging Sparks ETB](tcgplayer:565630):** $49 → $59 → $78
+- **[Stellar Crown booster box](tcgplayer:557354):** $108 → $119 → $159
+- **[Paldean Fates ETB](tcgplayer:528040):** $56 → $67 → $89
 
 And here's where those four are today. Nobody who waited on them got a better price. (These boxes show live TCGplayer market prices and update every day, so they won't match the dated numbers in the text.)
 
@@ -65,17 +65,17 @@ And here's where those four are today. Nobody who waited on them got a better pr
 
 2025 was calmer. ETBs and booster boxes stayed about flat through December, and booster bundles drifted down a few percent. But even in a quiet year, Black Friday itself wasn't the cheap day:
 
-- **Mega Evolution booster box:** $223 two weeks before → **$257** on Black Friday → $248 in January
-- **Journey Together booster box:** $237 → $238 → $248
-- **Destined Rivals booster box:** $383 → $397 → $402
+- **[Mega Evolution booster box](tcgplayer:644298):** $223 two weeks before → **$257** on Black Friday → $248 in January
+- **[Journey Together booster box](tcgplayer:610931):** $237 → $238 → $248
+- **[Destined Rivals booster box](tcgplayer:624679):** $383 → $397 → $402
 
 ## What did get cheaper
 
 Not everything went up. About 1 in 4 products cost less on Black Friday than two weeks before. Most of those were only a dollar or two off, and about half were back above their old price by January. But a few kinds of product really did drop:
 
-- **Brand-new sets settling down.** Phantasmal Flames came out two weeks before Black Friday 2025. Its Pokémon Center ETB went from **$389 to $195**, its 3-pack blisters from about $45 to $24, and its booster box from $287 to $278 on Black Friday and $221 by Christmas, before coming back up. (Same pattern I found for [Delta Reign](/articles/delta-reign-the-first-two-weeks).)
-- **Pokémon Center ETBs.** In 2025, Stellar Crown's went from $191 to $119 and Mega Evolution's from $209 to $173.
-- **Big premium collections.** The Prismatic Evolutions Premium Figure Collection went from **$229 to $126**, Team Rocket's Moltres ex Ultra-Premium Collection from $278 to $220, and the Mega Charizard X ex Ultra-Premium Collection from $222 to $183.
+- **Brand-new sets settling down.** Phantasmal Flames came out two weeks before Black Friday 2025. Its [Pokémon Center ETB](tcgplayer:654135) went from **$389 to $195**, its 3-pack blisters from about $45 to $24, and its [booster box](tcgplayer:654137) from $287 to $278 on Black Friday and $221 by Christmas, before coming back up. (Same pattern I found for [Delta Reign](/articles/delta-reign-the-first-two-weeks).)
+- **Pokémon Center ETBs.** In 2025, [Stellar Crown's](tcgplayer:557340) went from $191 to $119 and [Mega Evolution's](tcgplayer:648415) from $209 to $173.
+- **Big premium collections.** The [Prismatic Evolutions Premium Figure Collection](tcgplayer:650799) went from **$229 to $126**, [Team Rocket's Moltres ex Ultra-Premium Collection](tcgplayer:656997) from $278 to $220, and the [Mega Charizard X ex Ultra-Premium Collection](tcgplayer:654213) from $222 to $183.
 - **In 2024, odds and ends.** Older theme decks, Build & Battle Boxes and 3-pack blisters from past sets, mostly a few dollars off. Not the usual gifts: only 7 of 40 booster boxes and 13 of 93 ETBs were cheaper that year.
 
 None of these were Black Friday sales. Most of them kept falling for weeks afterwards. So if you're hunting for a deal, look at the newest set's premium products. They do come down, just not because it's Black Friday.
