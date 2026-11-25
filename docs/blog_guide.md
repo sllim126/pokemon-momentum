@@ -46,7 +46,8 @@ Last reviewed: 2026-11-23.
   Five leaves a gap; add or drop one if it makes sense.
 - Product names can link to TCGplayer through the affiliate link: `[Perfect Order](tcgplayer:672401)`.
   Add one line to the italic data note saying they're affiliate links (Poke6s may earn a small
-  commission). Products we stock link to our own shop page instead, not TCGplayer.
+  commission). Products we have in stock link to our own shop page automatically, so the tag
+  can be used for any product.
 - Single cards must be in `data/storefront/market_reference.json` to show. The nightly build
   picks up IDs from article tags; to see them at once, rebuild it:
   `docker-compose exec -T pokemon-momentum python scripts/build_storefront_market_reference.py`.

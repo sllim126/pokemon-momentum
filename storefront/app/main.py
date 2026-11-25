@@ -478,7 +478,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         if found is None:
             raise HTTPException(404)
         crumbs = [("Home", "/"), ("Articles", "/articles"), (found.title, f"/articles/{slug}")]
-        if "[[market" in found.html or "[[cards" in found.html:
+        if any(tag in found.html for tag in ("[[market", "[[cards", "tcgplayer:")):
             with db() as conn:
                 stocked = catalog.stocked_by_tcgplayer_id(conn)
         else:
@@ -495,7 +495,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         response = page(request, "article.html", title=found.title, article=found,
                         scheduled=scheduled, waiting=waiting,
                         body_html=tcgplayer_links(market_boxes(found.html, market, box_link),   # today's prices, per view
-                                                  settings.tcgplayer_affiliate_base),
+                                                  settings.tcgplayer_affiliate_base, stocked),
                         more=articles.more_like(found), crumbs=crumbs, og_type="article",
                         og_image=seo.image_url(settings, found.cover), description=found.description,
                         jsonld=[seo.article_jsonld(settings, found), seo.breadcrumbs_jsonld(settings, crumbs)])

@@ -45,6 +45,10 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-25 Article links (owner): `[name](tcgplayer:<id>)` in a post links to TCGplayer through
+  the affiliate link (rel=sponsored), and price-box pictures are links too. Products we have in
+  stock link to our own page instead, text and pictures alike. Used in the gift guide (23 links)
+  and the Black Friday post (14); posts with affiliate links that don't say so get a one-line note.
 - 2026-11-25 Nightly repricing safeguards (pricing review, owner): "Keep this price (nightly repricing
   leaves it alone)" on the admin's price form, ticked by default (products.price_manual, migration
   011, logged in the history); changes over 30% in one night held for the owner and listed in
