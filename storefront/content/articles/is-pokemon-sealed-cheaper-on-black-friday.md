@@ -17,27 +17,30 @@ So, with the daily TCGplayer prices I have going back to early 2024, I decided t
 
 ## Short answer: no
 
-For the typical sealed product, the price on Black Friday was about the same as two weeks earlier. Then it kept going up.
+Prices didn't drop on Black Friday. For most products they had already started creeping up, and they kept going afterwards.
 
-**2024, the typical product:**
+Here's how I checked. I took every sealed product's price two weeks before Black Friday, then looked at it again every day after that: was it selling for more, the same, or less? This is 2025:
 
-- Black Friday: +0.1%
-- Two weeks later: +2%
-- Six weeks later (mid-January): +6%
+![2025, day by day: the share of sealed products selling for more, the same or less than two weeks before Black Friday. On Black Friday about 5 in 10 cost more, 3 in 10 the same and 2 in 10 less; six weeks later about 7 in 10 cost more and 2 in 10 less.](/media/1200/black-friday-2025-more-same-less-2e833b24ea.webp)
 
-**2025, the typical product:**
+Pick any day and read straight up. On the far left almost everything is gray, because that's the starting price. Then, day by day, more products move into orange (more expensive) than into blue (cheaper).
 
-- Black Friday: +0.3%
-- Two weeks later: +2%
-- Six weeks later: +4%
+On Black Friday 2025, out of every 10 products:
 
-Here's how it looked day by day. The solid lines show the share of products priced higher than two weeks before, the dashed lines the share priced lower:
+- about **5** cost more than two weeks earlier
+- about **3** hadn't moved
+- only **2** cost less
 
-![Share of sealed products priced higher and lower than two weeks before Black Friday, day by day, 2024 and 2025. By Black Friday about half were priced higher and about one in five lower; six weeks later about seven in ten were higher.](/media/1200/black-friday-priced-higher-lower-1d68a3ad1c.webp)
+Six weeks later, 7 cost more and still only about 2 cost less. 2024 looked almost exactly the same.
 
-By Black Friday, about half were already priced higher and only about 1 in 5 lower. Six weeks later, about 7 in 10 were higher. Both years look almost the same.
+**How much more?** Take the product in the middle (half went up more, half less):
 
-Real Black Friday dips were rare. During Black Friday week, only **22 of about 1,000** products (2%) sold for 10% or more below their price two weeks earlier in 2024, and **53 of about 1,350** (4%) in 2025.
+- **2024:** +0.1% on Black Friday, +2% two weeks later, **+6%** by mid-January
+- **2025:** +0.3% on Black Friday, +2% two weeks later, **+4%** by mid-January
+
+So on Black Friday itself the typical price had barely moved. It's waiting until after that costs you.
+
+And the big markdowns people hope for? Rare. During Black Friday week, only **22 of about 1,000** products (2%) sold for at least 10% less than two weeks earlier in 2024, and **53 of about 1,350** (4%) in 2025.
 
 ## The gift boxes went up the most
 

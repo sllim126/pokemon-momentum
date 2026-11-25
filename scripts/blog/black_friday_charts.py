@@ -4,8 +4,8 @@ Data: TCGplayer market prices from prices_db.duckdb, the same method as the post
 English sealed products (no card number, cases left out), priced $20 or more two weeks before
 Black Friday, and priced (within two days) at every checkpoint the post uses: 4, 2 and 1 weeks
 before, Black Friday, 3 days, 2, 4 and 6 weeks after. Each product's change is measured from its
-price two weeks before. Chart 1 shows the share of products priced higher and lower each
-day; chart 2 the median product by type.
+price two weeks before. Chart 1 shows, day by day, how many of the 2025 products cost more, the same or
+less than that; chart 2 the median product by type in 2024.
 Colours: the storefront's dark theme; 2024 #4096f0 and 2025 #d95926 are the validated pair from
 master_sets_part2_charts.py.
 
@@ -99,34 +99,38 @@ samples = {year: load(con, bf) for year, bf in BLACK_FRIDAYS.items()}
 for year, sample in samples.items():
     print(year, len(sample), "products")
 
-# ---- Chart 1: share of products priced higher / lower than two weeks before, day by day ----
+# ---- Chart 1: 2025, every product as more expensive / same price / cheaper, day by day ----
 # Not the median: about half the products sit at their old price for days at a time, so the
 # median reads exactly 0% until more than half have moved, then jumps, which looks like a
-# Black Friday trigger that isn't there. The shares show the drift as it happens.
+# Black Friday trigger that isn't there. Three bands that add up to 100% read as "out of 10
+# products, how many cost more / the same / less than two weeks before". 2024 is nearly
+# identical (printed below), so one year keeps the chart simple.
+HIGHER, SAME, LOWER = Y2025, "#3a4a66", Y2024
 fig, ax = plt.subplots(figsize=(12, 6.6), dpi=200)
-fig.subplots_adjust(left=0.08, right=0.86, top=0.86, bottom=0.17)
-frame(fig, ax, "Share of products priced above / below their price two weeks before Black Friday. English sealed, $20+. "
-               "TCGplayer market prices.  poke6s.com")
-ax.grid(axis="y", color=GRID, linewidth=1)
-legend(fig, [(f"{y}  ({len(samples[y]):,} products)", c) for y, c in ((2024, Y2024), (2025, Y2025))], y=0.94)
-days = range(-13, 43)
-for year, color in ((2024, Y2024), (2025, Y2025)):
-    for sign, style in ((1, "-"), (-1, (0, (5, 3)))):
-        line = []
-        for d in days:
-            vals = [ch[d] for _, ch in samples[year] if d in ch]
-            line.append(100 * sum(1 for v in vals if v * sign > 0) / len(vals))
-        ax.plot(list(days), line, color=color, linewidth=2.6, linestyle=style, solid_capstyle="round")
-        print(year, "higher" if sign > 0 else "lower", "BF", round(line[13]), "+14", round(line[27]), "+42", round(line[-1]))
-for label, y in (("priced higher", 72), ("priced lower", 22)):
-    ax.text(43, y, label, color=MUTED, fontsize=12.5, va="center")
-ax.axvline(0, color=MUTED, linewidth=1.2, linestyle=(0, (2, 4)))
-ax.text(0.6, 97, "Black Friday", color=MUTED, fontsize=12, va="top")
-ax.set_ylim(0, 100); ax.set_xlim(-14, 42.5)
-ax.set_yticks([0, 25, 50, 75, 100])
+fig.subplots_adjust(left=0.09, right=0.95, top=0.95, bottom=0.17)
+frame(fig, ax, "2025: each of 1,261 English sealed products ($20+) compared with its own price two weeks before "
+               "Black Friday. TCGplayer market prices.  poke6s.com")
+days = list(range(-13, 43))
+for year in (2024, 2025):
+    up, same, down = [], [], []
+    for d in days:
+        vals = [ch[d] for _, ch in samples[year] if d in ch]
+        up.append(100 * sum(v > 0 for v in vals) / len(vals))
+        down.append(100 * sum(v < 0 for v in vals) / len(vals))
+        same.append(100 - up[-1] - down[-1])
+    for name, i in (("Black Friday", 13), ("+2 weeks", 27), ("+6 weeks", -1)):
+        print(year, name, "higher", round(up[i]), "same", round(same[i]), "lower", round(down[i]))
+ax.stackplot(days, down, same, up, colors=[LOWER, SAME, HIGHER], edgecolor=BG, linewidth=1.5)
+ax.text(30, 10, "Cheaper", color="#08111d", fontsize=15, fontweight="bold", ha="center", va="center")
+ax.text(-7, 45, "Same price", color=TEXT, fontsize=15, fontweight="bold", ha="center", va="center")
+ax.text(30, 62, "More expensive", color="#08111d", fontsize=15, fontweight="bold", ha="center", va="center")
+ax.axvline(0, color=TEXT, linewidth=1.4, linestyle=(0, (2, 3)))
+ax.text(0.5, 97, "Black Friday", color=TEXT, fontsize=12.5, va="top", fontweight="bold")
+ax.set_ylim(0, 100); ax.set_xlim(-13, 42)
+ax.set_yticks([0, 20, 40, 60, 80, 100])
+ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v / 10:.0f} in 10" if v else "0"))
 ax.set_xticks([-13, 0, 14, 28, 42])
 ax.set_xticklabels(["2 weeks\nbefore", "Black\nFriday", "2 weeks\nafter", "4 weeks\nafter", "6 weeks\nafter"])
-ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:.0f}%"))
 fig.savefig(OUT + "bf_chart1.png", facecolor=BG); plt.close(fig)
 
 # ---- Chart 2: 2024 by product type, Black Friday / two weeks / six weeks after ----
