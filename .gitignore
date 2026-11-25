@@ -275,3 +275,7 @@ secrets/
 # Official artwork dropped here for blog banners; it is copied into data/storefront/images
 # for the site and must not go into this public repo.
 storefront/content/images/
+
+# Agency FB (a Microsoft font) for the grandmaster title cards: the owner's own copy, licensed to
+# them, not for this public repo (TCG Placeholders/tools/build_title_cards.py).
+TCG Placeholders/fonts/

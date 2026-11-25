@@ -1420,9 +1420,17 @@ Learn and collector tools (owner, 2026-10-23; "nothing tonight"):
 - [planned] Release dates marked "to confirm" or "not confirmed" in mega_placeholders.csv
   (Figure, Premium and Ultra-Premium Collections set as 2026-11-06; MEP028 Celebratory Fanfare,
   a Championship reward per the owner 2026-11-20, set as 2025-10-24) need checking.
-- [planned] Placeholder Library follow-up: placeholders and title cards for whole sets (every
-  card of a master set, from the catalog), not only promos and variants. (Prize Pack Series 9
-  and Delta Reign's promos were added 2026-11-20.)
+- [in progress] Grandmaster title cards (owner, 2026-11-25): the Journey Together title-card look
+  extended to every printing of every Scarlet & Violet set, then the Mega sets.
+  `TCG Placeholders/tools/build_title_cards.py` is written (branch
+  placeholders/grandmaster-title-cards); all 16 SV sets build (183-534 cards each). Stopped at:
+  waiting for the owner's Agency FB Bold file (AGENCYB.TTF) in `TCG Placeholders/fonts/`; the
+  copy embedded in their PDF only has the letters they typed. Then: build the PDFs, owner checks
+  JTG against their sheet, add them to the Placeholder Library (store `placeholder_library.py`
+  DOWNLOADS), then `--era mega`.
+- [planned] Placeholder Library follow-up: placeholders for whole sets (every card of a master
+  set, from the catalog), not only promos and variants. (Prize Pack Series 9 and Delta Reign's
+  promos were added 2026-11-20; title cards for whole sets: see the item above.)
 - [idea] Next big project (owner, 2026-10-23): a Pokémon binder planner, built from the ATLA
   planner (`ATLA Binder/public/index.html`: page sizes 3x3/4x3/4x4/6x6, owned-card tracking,
   collection value). For Pokémon it would read the set's cards and printings from the catalog
