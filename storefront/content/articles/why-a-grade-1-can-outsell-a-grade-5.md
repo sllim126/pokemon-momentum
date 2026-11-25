@@ -104,7 +104,7 @@ None of that changes the overall pattern, since it shows up across thousands of 
 - **Got a badly damaged copy of a popular card?** Don't write it off. A Grade 1 slab of a chase card can be worth more than you'd expect, sometimes more than a clean ungraded copy.
 - **Check the sold listings first.** Look for that exact card, printing, grade and grading company, and how many actually sold, not what sellers are asking.
 - **Do the math.** Take the grading fee, shipping both ways, insurance and selling fees (about 13% on most marketplaces) off the price you'd expect, and compare that with what the card would sell for ungraded.
-- **A damaged card isn't guaranteed a 1.** It could come back a 2, the cheapest grade of all, and that's where the plan falls apart. Graders aren't always consistent at the bottom of the scale either: collectors in those threads tell of cards coming back a 2 twice in a row.
+- **A damaged card isn't guaranteed a 1.** It could come back a 2, the cheapest grade of all, and that's where the plan falls apart. The bottom of the scale is hard to aim for: one collector in those threads sent a card to CGC twice hoping for a 1 and got a 2 both times.
 - **Buying one?** Look at the back. The 1s that sell best look good from the front, but check what you're paying for.
 - **Expensive vintage is different.** Over $500, the higher grade is still worth more most of the time.
 
