@@ -1,12 +1,16 @@
-{#- One-field sign-up for the "email me when we open" list (POST /notify, notify_list.py). The
-    "website" field is a trap for bots: hidden from people, ignored when filled. #}
+{#- One-field sign-up for the email list (POST /notify, notify_list.py). The "website" field is a
+    trap for bots: hidden from people, ignored when filled.
+    While checkout is off it is the "email me when we open" form (product pages, /notify); once
+    checkout is on, the same list is "News and restocks" (footer, /notify; owner, 2026-11-25).
+    `notify_id` keeps the input's id unique when a page shows the form twice (footer and page). #}
+{% set nid = notify_id or 'notify-email' %}
 <form class="notify-form" action="/notify" method="post">
-  <label for="notify-email">Email me when the store opens</label>
+  <label for="{{ nid }}">{{ 'News and restocks' if checkout_enabled else 'Email me when the store opens' }}</label>
   <div class="notify-row">
-    <input id="notify-email" type="email" name="email" required maxlength="254" autocomplete="email" placeholder="you@example.com">
-    <button type="submit" class="btn">Join the list</button>
+    <input id="{{ nid }}" type="email" name="email" required maxlength="254" autocomplete="email" placeholder="you@example.com">
+    <button type="submit" class="btn">{{ 'Sign up' if checkout_enabled else 'Join the list' }}</button>
   </div>
   <input type="hidden" name="source" value="{{ path }}">
   <div class="trap" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
-  <p class="small muted">One email when we open. <a href="/privacy">Privacy</a>.</p>
+  <p class="small muted">{% if checkout_enabled %}New stock, restocks and sales, now and then. Unsubscribe in one click{% else %}One email when we open{% endif %}. <a href="/privacy">Privacy</a>.</p>
 </form>

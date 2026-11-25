@@ -100,6 +100,16 @@ python3 storefront/tools/reprice.py --costs <store_sku_costs.csv> --show ENG-PO-
 Products without a rule, a market price or a cost are left alone and listed. Re-running the
 Squarespace importer resets prices and visibility, so run this again after any import.
 
+**Floors.** A product's floor is the higher of break-even and its `min_price` in the rules file
+(the owner's own minimum; six Mega Collection products have $29.99). No run, by hand, on the
+Pricing page or at night, sets a price under it.
+
+**Nightly** (owner, 2026-11-25): `scripts/pipeline/run_store_reprice_host.sh` runs it with
+`--apply --max-market-age-days 2` at 03:30 UTC, after the 03:00 market prices and the 03:15
+backup. Stale market prices change nothing (exit 2, orange in Discord); the prices it changed
+are posted to Discord (`store-reprice`) and show in each product's history as "repricing". The
+costs file is found through `STOREFRONT_COSTS_DIR` in `.env`, the folder the Pricing page reads.
+
 ### Pricing page
 
 The admin's **Pricing** page (http://192.168.1.240:8011/pricing, Phase 3 step 6) runs the same

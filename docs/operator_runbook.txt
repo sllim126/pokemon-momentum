@@ -1,7 +1,7 @@
 Pokemon Momentum Operator Runbook
 =================================
 
-Last reviewed: 2026-11-25 (TCGCSV archive torrents: the monthly job; Supplier Pricing moved to the store admin; Store review request emails; Store Pricing Ops after Squarespace; Retire a monitored job; Nightly update keeps the site up: copy and swap; TCGCSV archive torrents: 2026 so far; Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
+Last reviewed: 2026-11-25 (Nightly store repricing; TCGCSV archive torrents: the monthly job; Supplier Pricing moved to the store admin; Store review request emails; Store Pricing Ops after Squarespace; Retire a monitored job; Nightly update keeps the site up: copy and swap; TCGCSV archive torrents: 2026 so far; Upgrading DuckDB; Lorcana in the nightly update, collect-only job drops Lorcana, Lorcana images; Store marketing emails; Monitoring: home lab machines, Plex, PBS, ZFS, Slowheim, SMART, internet uptime, Store, Google search; poke6s.com hosting)
 
 Schedule at a glance (all times UTC)
 ------------------------------------
@@ -15,6 +15,7 @@ crontab changes). Each job is explained further down in this file.
 | Daily 02:00 | Nightly market update: TCGCSV prices, metadata, snapshots, parquet, PriceCharting, indexes for Pokemon English and Japanese, then Lorcana (no indexes yet), all written to a copy of the database that is swapped in at the end, so the site stays up (see "Nightly update: copy and swap"); Discord summary | `pokemon-momentum-daily-update.timer` | `logs/daily_update.log` |
 | Daily 03:00 | Storefront market prices (`data/storefront/market_reference.json`, read by the new shop's product pages) | cron: `scripts/build_storefront_market_reference.py` | `logs/storefront_market_reference.log` |
 | Daily 03:15 | Store backup: `store.db`, visit counts, outbox and photos into `data/backups/storefront/` (30 days; see "Store backups") | cron: `storefront/tools/backup_store.py backup` | `logs/storefront_backup.log` |
+| Daily 03:30 | Store repricing: every rule-priced product follows the market, never under its floor (break-even from the private costs file, or the rules file's `min_price`); stale market prices change nothing; Discord lists the changes (see storefront/README.md "Prices") | cron: `scripts/pipeline/run_store_reprice_host.sh` | `logs/store_reprice.log` |
 | Daily 03:30 | Other games price archive (collect only: Magic, Yu-Gi-Oh, One Piece) | `pokemon-momentum-tcgcsv-collect.timer` | see "Other games archive" |
 | Daily 04:30 | Placeholder Library sync (new Mega-era sets and promos) | cron: `scripts/utilities/sync_placeholder_library.py` | `logs/placeholder_sync.log` |
 | Daily 12:00 | TCGCSV catalogue crawl (sets and products for every game, at most 4,000 requests a day; Discord summary) | cron: `scripts/pipeline/run_tcgcsv_catalogue_host.sh` | `logs/tcgcsv_catalogue.log` |

@@ -14,8 +14,9 @@
  * the navigation and the hubs can never disagree.
  *
  * Above the header sits the Poke6s family bar (Shop / Market), the same strip poke6s.com and the
- * store admin show, so the sites read as one (step 9a, 2026-11-20). The phone app
- * (mobile_app.html) has its own copy because it doesn't load this script.
+ * store admin show, so the sites read as one (step 9a, 2026-11-20); the matching footer strip
+ * (.ps-foot, 2026-11-25) closes every page. The phone app (mobile_app.html) has its own copy of
+ * both because it doesn't load this script.
  *
  * The links point at the older page addresses on purpose: on desktop the server forwards
  * each one to the matching desktop-app view (desktop_app_redirect in api.py), while
@@ -114,6 +115,12 @@
     .ps-family a { color: #93a6c8; text-decoration: none; padding: 3px 10px; border-radius: 999px; }
     .ps-family a:hover { color: #eaf1ff; }
     .ps-family a[aria-current="page"] { color: #eaf1ff; background: rgba(77, 163, 255, 0.16); }
+    .ps-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 3px 16px; flex: none;
+      background: #050b14; border-top: 1px solid rgba(136, 162, 205, 0.16); color: #93a6c8;
+      font: 600 12.5px/1.4 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .ps-foot a { color: #93a6c8; text-decoration: none; padding: 3px 10px; border-radius: 999px; }
+    .ps-foot a:hover { color: #eaf1ff; }
+    .ps-foot span { margin-left: auto; padding: 3px 10px; font-weight: 500; }
     .ps-shell { position: relative; z-index: 1000; font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
       background: rgba(8, 17, 29, 0.94); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(136, 162, 205, 0.2); }
     .ps-shell-inner { max-width: 1440px; margin: 0 auto; padding: 8px 16px; display: flex; align-items: center; gap: 16px; }
@@ -205,6 +212,20 @@
     return bar;
   }
 
+  // The Poke6s family footer: the same strip closes poke6s.com, the market and the store admin
+  // (step 9a, 2026-11-25). Store copy: storefront/app/templates/base.html; keep the links in step.
+  // It is appended last in <body>; the desktop app's flex column gives it its ~25 px.
+  function buildFamilyFooter() {
+    const foot = document.createElement("nav");
+    foot.className = "ps-foot";
+    foot.setAttribute("aria-label", "Poke6s");
+    const year = new Date().getFullYear();
+    foot.innerHTML = `<a href="${SHOP_URL}">Shop</a><a href="/">Market</a><a href="${SHOP_URL}articles">Articles</a>`
+      + `<a href="${SHOP_URL}contact">Contact</a><a href="${SHOP_URL}privacy">Privacy</a>`
+      + `<a href="${SHOP_URL}terms">Terms</a><span>© ${year} Poke6s LLC</span>`;
+    return foot;
+  }
+
   function mount() {
     if (document.querySelector(".ps-shell")) return;
     const style = document.createElement("style");
@@ -216,6 +237,7 @@
     else document.body.insertBefore(header, document.body.firstChild);
     // Pages with their own logo (data-shell="nav") get the bar too, at the very top.
     if (!document.querySelector(".ps-family")) document.body.insertBefore(buildFamilyBar(), document.body.firstChild);
+    if (!document.querySelector(".ps-foot")) document.body.appendChild(buildFamilyFooter());
   }
 
   window.Poke6sShell = { AREAS, currentArea };

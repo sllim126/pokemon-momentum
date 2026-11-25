@@ -1,15 +1,23 @@
+{#- /notify: the email list's own page. Before launch it was "email me when we open"; with checkout
+    on it is the "News and restocks" list (the footer form posts here too). #}
 {% extends "base.html" %}
 {% block content %}
 <section class="notify-page">
-  <h1>Get an email when we open</h1>
+  <h1>{{ 'News and restocks' if checkout_enabled else 'Get an email when we open' }}</h1>
   {% if joined %}
-  <p class="notice good" role="status"><strong>You're on the list.</strong> We'll email you once when
-    checkout opens on poke6s.com.</p>
+  <p class="notice good" role="status"><strong>You're on the list.</strong>
+    {% if checkout_enabled %}We'll email you about new stock, restocks and sales.{% else %}We'll email you once when
+    checkout opens on poke6s.com.{% endif %}</p>
   <p><a class="btn" href="/shop">Keep browsing</a></p>
   {% else %}
   {% if error %}<p class="notice bad" role="alert">That email address doesn't look right. Please check it and try again.</p>{% endif %}
+  {% if checkout_enabled %}
+  <p>Get an email when new stock lands, when a sold-out product comes back, and when there's a sale.
+    Every email has a one-click unsubscribe.</p>
+  {% else %}
   <p>We're rebuilding our store. You can browse everything now; checkout opens here soon. Want
     something today? Each product links to it on TCGplayer.</p>
+  {% endif %}
   {% include "_notify_form.html" %}
   {% endif %}
 </section>

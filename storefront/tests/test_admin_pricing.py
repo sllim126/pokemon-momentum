@@ -61,7 +61,7 @@ def test_preview_lists_changes_without_changing_anything(priced, imported):
     set_price(imported, "JP-AE-BB", 5000)
     page = priced.get("/pricing").text
     assert "$94.99" in page                      # 5% under $100, ending in .99
-    assert "$93.99" in page and "raised to break-even" in page   # $80 market, but cost 90 + fees
+    assert "$93.99" in page and "raised to floor" in page   # $80 market, but cost 90 + fees
     assert COST_SECRET not in page               # costs are never shown
     assert price_of(imported, "ENG-BB-BB") == 12000 and price_of(imported, "JP-AE-BB") == 5000
     assert 'href="/pricing"' in page

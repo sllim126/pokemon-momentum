@@ -474,6 +474,12 @@
       font-size: 10.5px;
       line-height: 1.35;
     }
+    /* The Poke6s family footer links (step 9a, 2026-11-25): the store, the market's desktop pages
+       and the admin end with a .ps-foot strip (site_shell.js); here, above the tab bar, the same
+       links lead the legal line instead, so the phone loses no height to a second strip. */
+    .legal .ps-foot-links a { color: #93a6c8; text-decoration: none; font-weight: 600; padding: 2px 0; }
+    .legal .ps-foot-links a + a::before { content: "·"; color: var(--faint); padding: 0 5px; font-weight: 400; }
+    .legal .ps-foot-links::after { content: " —"; }
     /* Phones get the short legal line (the full text is the footer's tooltip and on wider screens). */
     .legal .short { display: none; }
     @media (max-width: 699px) { .legal .long { display: none; } .legal .short { display: inline; } }
@@ -706,6 +712,7 @@
   </section>
 
   <footer class="legal" title="Poke6s Market Watch is a research tool, not financial or pricing advice, and no guarantee of current or future prices. Market prices follow whichever condition sells most, not Near Mint; check recent sales and the card itself before you buy or sell. Pokémon names, characters, logos and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company / The Pokémon Company International. Poke6s Market Watch is independent and not affiliated with or endorsed by them. Market prices from TCGplayer; graded prices from PriceCharting. TCGplayer links are affiliate links.">
+    <span class="ps-foot-links"><a href="https://poke6s.com/">Shop</a><a href="https://poke6s.com/contact">Contact</a><a href="https://poke6s.com/privacy">Privacy</a><a href="https://poke6s.com/terms">Terms</a></span>
     <span class="long">Research tool, not financial advice. Pokémon names and trademarks belong to Nintendo, Creatures Inc., GAME FREAK inc. and The Pokémon Company; Poke6s Market Watch is independent and not affiliated with them. Prices from TCGplayer and PriceCharting are a guide, not a guarantee: do your own homework before you buy or sell. TCGplayer links are affiliate links.</span>
     <span class="short">Not financial advice; prices are a guide, do your own homework. Pokémon trademarks belong to Nintendo, Creatures, GAME FREAK and The Pokémon Company; we're not affiliated. Prices: TCGplayer (affiliate links) and PriceCharting.</span>
   </footer>

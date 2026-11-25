@@ -8,7 +8,7 @@ Inputs, all read fresh on every page load:
 - the private costs file (never in this repository): STOREFRONT_ADMIN_COSTS_FILE, by default
   /app/costs/store_sku_costs.csv, a read-only mount of the owner's folder set in .env
   (STOREFRONT_COSTS_DIR; docker-compose.yml). Costs are never shown: only prices and a
-  "raised to break-even" note, as in reprice.py's output.
+  "raised to floor" note (break-even or the product's min_price), as in reprice.py's output.
 - data/store_price_rules.csv (which rule each SKU follows)
 - data/storefront/market_reference.json (today's market prices)
 
@@ -35,10 +35,11 @@ def load(conn: sqlite3.Connection, costs_path: Path, rules_path: Path, market_pa
     try:
         costs = reprice.load_costs(costs_path)
         rules = reprice.load_rules(rules_path)
+        min_prices = reprice.load_min_prices(rules_path)
         reference = json.loads(market_path.read_text(encoding="utf-8"))
     except (OSError, ValueError, KeyError) as exc:
         return {"error": f"Couldn't read the pricing inputs ({type(exc).__name__})."}
-    result = reprice.plan(reprice.load_products(conn), costs, reference, rules)
+    result = reprice.plan(reprice.load_products(conn), costs, reference, rules, min_prices=min_prices)
     result["changes"] = [item for item in result["priced"] if item["change"]]
     result["steady"] = [item for item in result["priced"] if not item["change"]]
     return result

@@ -45,6 +45,22 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-25 Matching footers (step 9a's last piece): the Poke6s family footer, a slim strip
+  (Shop, Market, Articles, Contact, Privacy, Terms, ©) like the family bar, now closes the store,
+  the admin and the market's desktop pages (site_shell.js); the phone app puts the same links at
+  the start of its legal line (no extra strip above the tab bar). Desktop app checked at 1920 and
+  1366: still no page scroll.
+- 2026-11-25 "News and restocks" sign-up in every store footer (and /notify with that title)
+  now that checkout is on; before launch the same form said "email me when we open". Same list,
+  same privacy text.
+- 2026-11-25 Nightly store repricing (owner: automatic is fine "so long as it doesn't dip below my
+  profitability amount"): scripts/pipeline/run_store_reprice_host.sh at 03:30 UTC, after the
+  market prices and the backup. Floor = break-even from the private costs file or the rules
+  file's min_price, whichever is higher. Fixed on the way: min_price ($29.99 on six Mega
+  Collection products) was never enforced; none had gone under it. Stale market prices change
+  nothing; Discord lists each change. Dry run on 2026-11-24 prices: 11 changes, every product
+  whose market is under its floor stays at the floor.
+
 - 2026-11-25 Monthly TCGCSV torrent job (owner, 2026-11-17): on the 2nd of each month
   `scripts/pipeline/run_monthly_torrent_host.sh` builds last month's torrent, copies it to the
   PlexVault share with a checksum check, adds it to qBittorrent and waits for its 100% check,
@@ -407,10 +423,9 @@ Live now:
 - [done 2026-11-11] 1. Unsafe redirect fixed (see Recently Completed).
 - [done 2026-11-11] 2. Privacy page corrected (see Recently Completed).
 - [done 2026-11-11] 3. Catalog mode and repricing (see Recently Completed). Follow-ups:
-  - [planned] Run `storefront/tools/reprice.py --apply` nightly (no --hide-above-market) after the
-    03:00 market reference job, so prices follow the market (needs a crontab line; the costs
-    file path is the owner's). Until then, the admin's Pricing page (2026-11-19) does it with a
-    preview; owner to say whether nightly is still wanted.
+  - [done 2026-11-25] Nightly repricing at 03:30 (owner: fine "so long as it doesn't dip below my
+    profitability amount"): never under break-even or the product's min_price (see Recently
+    Completed).
   - [owner] Check three cost matches marked "check" in the private costs file (Destined Rivals
     pack and 4-pack art set, Poke Ball Tin H24), and add costs for anything newly listed;
     products without a cost are never repriced.
@@ -569,7 +584,7 @@ Tunnel; the domain remains registered after the Squarespace website plan ended.
     the home network): make poke6s.com, market.poke6s.com and the store admin feel like one
     site. Layers, smallest first:
     a. [done 2026-11-20] One look and navigation: the Poke6s bar (Shop / Market, and Admin in
-       the admin) across the top of all three sites. Matching footers still to do.
+       the admin) across the top of all three sites. Matching footers done 2026-11-25.
     b. One Poke6s account: the market site's accounts become the store's too, through a
        sign-in cookie shared across poke6s.com and market.poke6s.com. Checkout stays guest
        (Stripe); an account would add order history, saved "notify me" items and the
@@ -636,8 +651,7 @@ Tunnel; the domain remains registered after the Squarespace website plan ended.
 - Postal address for marketing emails: STOREFRONT_POSTAL_ADDRESS in .env (2026-11-20), the
   business's street address (owner's choice; already on its Google Business Profile and state
   registration). It lives only in .env, never in the repo.
-- [planned] A way to join the email list now: the sign-up form shows only while checkout is
-  off. A small "News and restocks" box in the footer or on /notify? Owner's call.
+- [done 2026-11-25] A way to join the email list now: "News and restocks" in every store footer.
 - [done 2026-11-19] A restock command for returns: the admin's "Refund or return" puts units
   back (amount blank = stock only). Refunds made in Stripe's dashboard still don't.
 - [planned] Yearly, by 2027-10: bump the cloudflared image tag in docker-compose.yml (2026.10.7
@@ -699,6 +713,9 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   one script file, so a new list only needs adding once. Today they are copied; a test
   (`test_new_mobile_app_lists_match_desktop_lists`) checks the phone keys exist on desktop.
 
+- [planned] Market Sealed Deals on a phone (/sealed-deals at 390 px) is 1644 px wide, so the whole
+  page scrolls sideways (found 2026-11-25 while checking the footers; the live page does it too).
+  Phones mostly use the phone app, but the old address still opens it.
 - [next] Touchscreen and iPad pass (owner, 2026-10-21; before the Nov 1 launch). Use the
   desktop app and the desktop pages on an iPad (1024 and 1180 px wide, portrait and landscape)
   and a touchscreen laptop: things that only work on hover (tooltips, menus, chart readouts),
