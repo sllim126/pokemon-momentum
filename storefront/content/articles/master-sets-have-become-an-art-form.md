@@ -1,9 +1,9 @@
 ---
 title: Master Sets Have Become an Art Form
 date: 2026-12-04
-description: When you can't find cards, you make your binder beautiful. How the Michi method, custom binder art and placeholders turned master sets into a craft, and all the other kinds of master sets you can build.
+description: When you can't find cards, you make the binder beautiful: the Michi method, binder art, placeholders, and master sets that aren't one set.
 author: Adam Mills
-categories: 
+categories: Collecting
 tags: Pokémon TCG, Master Sets, Binders, Collecting, Michi Method
 cover: 
 old_path: 
@@ -19,7 +19,7 @@ When you can't find product on the shelf, you don't stop caring about your colle
 
 - **The "Michi method."** Instead of nine cards on every page, collectors leave gaps and fill them with printed art, Pokémon images, set logos and little notes, so each page reads like a display rather than storage. Search for it and you'll lose an afternoon.
 - **Custom binders.** Etsy and independent artists are selling binder covers, spine labels and page inserts made for specific sets or specific Pokémon. The binder itself has become part of the collection.
-- **Placeholders and title pages.** Printed placeholders for the cards you're still chasing, and custom divider pages between the base set, the reverse holos and the secret rares.
+- **Placeholders and title pages.** Printed placeholders for the cards you're still chasing, and custom divider pages between the base set, the reverse holos and the secret rares. Our [Placeholder Library](/placeholders) has free printable ones for every Scarlet & Violet and Mega Evolution set.
 - **Full-page art.** One picture cut into card-size pieces so a whole binder page becomes a single image. We built a free [Binder Art Maker](/binder-art) for exactly this: pick a picture, choose 2×2 up to 4×4, add a set logo if you want, and print it with cut marks.
 
 Honestly? It's starting to look like a gateway into scrapbooking. And I mean that as a compliment. Pokémon Japan even leaned into it. Their official video for Masayoshi Oishi's ["Pokémon All Stars 1025"](https://www.youtube.com/watch?v=PqOBtBOsB_I) is a beautiful piece built around an actual scrapbook-style Pokédex. Turns out "gotta catch 'em all" and "gotta paste 'em all" scratch the same itch.
@@ -43,6 +43,6 @@ There's no master set police. You make the rules, and you decide when it's done.
 
 - **Can't find packs?** Pick a Pokémon, an artist or a type and start a binder you can build one single at a time.
 - **Already have a binder?** Pick your favorite page and redo just that one, Michi style. See if you like it before you redo the whole thing. The [Binder Art Maker](/binder-art) makes a good first page.
-- **Want it to feel finished?** Print placeholders for what's missing. A binder with no empty pockets feels done long before it actually is.
+- **Want it to feel finished?** Print [placeholders](/placeholders) for what's missing. A binder with no empty pockets feels done long before it actually is.
 
 Collect what makes you happy, set a budget before you start, and then go make it pretty. The best master set is the one you enjoy finishing, and enjoy looking at.
