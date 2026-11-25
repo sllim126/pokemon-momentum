@@ -7,11 +7,11 @@ categories: Market Talk
 tags: Pokémon TCG, Sealed, Black Friday, TCG Market Analysis, Booster Boxes, Elite Trainer Boxes
 cover: 
 old_path: 
-draft: true
+draft: false
 ---
 Every year around now, everyone's wondering if they should wait for Black Friday to buy that booster box or Elite Trainer Box. It's a fair question. Everything else goes on sale, so why not Pokémon sealed products (on the secondary market, of course)?
 
-So, with the daily TCGplayer prices I have going back to early 2024, so I decided to check what actually happened to sealed products around the last two Black Fridays (November 29, 2024 and November 28, 2025).
+So, with the daily TCGplayer prices I have going back to early 2024, I decided to check what actually happened to sealed products around the last two Black Fridays (November 29, 2024 and November 28, 2025).
 
 *TCGplayer's market price is based on what things actually sold for, so if Black Friday made sealed product cheaper across the board, it would show up here. I compared each product's price two weeks before Black Friday with Black Friday itself and the six weeks after. English sealed products worth $20 or more: 879 products in 2024, 1,261 in 2025.*
 
