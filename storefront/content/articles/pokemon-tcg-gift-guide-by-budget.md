@@ -9,9 +9,9 @@ cover:
 old_path: 
 draft: true
 ---
-If someone on your list is into Pokémon cards and you're not, the shelf (or the TCGplayer search page) is a lot. Same set, six different boxes, prices all over the place.
+If someone on your Christmas list is into Pokémon cards (and let's be honest, who isn't into Pokémon cards this year?) and you have no idea what to get, the shelf at your big box store, local game store or online stores like eBay or TCGplayer is a lot to process. Same cards, a bunch of different boxes, prices all over the place. So what do you get? What's a good deal, and when are you getting ripped off?
 
-So here's a guide by budget, using what things actually sell for right now. It's also Cyber Weekend, so if you buy on TCGplayer through Monday night you get 10% back in store credit. (More on that in [the Black Friday post](/articles/is-pokemon-sealed-cheaper-on-black-friday).)
+Here's a guide by budget, using what things actually sell for right now. It's also Cyber Weekend, so if you buy on TCGplayer through Monday night you get 10% back in store credit. (More on that in [the Black Friday post](/articles/is-pokemon-sealed-cheaper-on-black-friday).)
 
 *Prices in the text are TCGplayer market prices as of November 24. The boxes with pictures show today's market price and update every day.*
 
@@ -19,16 +19,18 @@ So here's a guide by budget, using what things actually sell for right now. It's
 
 ## First, the one tip that saves the most
 
-**Buy the newer, regular sets.** Right now that's Perfect Order, Chaos Rising, Pitch Black and Delta Reign. They're in print, easy to find, and cost about **$5 to $8 a pack** whatever box they come in.
+**Buy the newer, regular sets.** Right now that's Perfect Order, Chaos Rising, Pitch Black and Delta Reign. They're in print, easier to find, and cost about **$5 to $8 a pack** whatever box they come in.
 
 The special sets (Prismatic Evolutions, Black Bolt, White Flare, Ascended Heroes) and anything with a Charizard on the front (Phantasmal Flames) cost **two to three times as much per pack**. They're great sets, but you're paying for the hype, and the person opening them gets the same number of cards.
 
-Every box on the shelf is basically packs plus extras. A pack is 10 random cards, and opening them is the fun part, so the price per pack is the easiest way to compare. Here's what a pack costs in each kind of box, for the four newest regular sets:
+Every box on the shelf is basically packs plus extras. A pack is 10 random cards, and opening them is the fun part, so the price per pack is the easiest way to compare. The names don't help, so here's what each one is, using Perfect Order as the example (left to right):
 
-- **Booster box** (36 packs): **$4.80 to $5.40** a pack, the cheapest way to buy packs
-- **Booster pack** on its own: **$5.60 to $6.20**
-- **Booster bundle** (6 packs): **$5.60 to $7.20** a pack
-- **Elite Trainer Box** (9 packs, plus sleeves, dice, dividers and the box): **$6.90 to $8.30** a pack
+[[market 672398 672396 672401 672394]]
+
+- **Booster pack:** one foil pack of 10 random cards. **$5.60 to $6.20** for the four newest regular sets.
+- **Booster bundle:** 6 packs in a small cardboard box. Despite the name, this is the one that comes in a box. **$5.60 to $7.20** a pack.
+- **Elite Trainer Box (ETB):** 9 packs, plus card sleeves, dice, card dividers and a sturdy box to keep the cards in. **$6.90 to $8.30** a pack.
+- **Booster box:** 36 packs in a shrink-wrapped display box, and nothing else. It's what stores open to sell packs one at a time. The cheapest way to buy packs: **$4.80 to $5.40** a pack.
 
 The ETB costs more per pack because you're paying for the extras. For a gift, that's often worth it. The box is part of the fun.
 
