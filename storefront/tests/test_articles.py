@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from storefront.app import article_import
-from storefront.app.articles import Articles, market_boxes, parse, tcgplayer_links
+from storefront.app.articles import Articles, cheaper_here, market_boxes, parse, tcgplayer_links
 from storefront.app.main import create_app
 
 NEWER = """---
@@ -319,3 +319,10 @@ def test_market_box_pictures_link_to_where_you_can_buy():
     assert '<a class="market-box-pic" href="/p/ours"><img' in out
     assert '<a class="market-box-pic" href="https://partner.example/x?u=2" rel="sponsored noopener"><img' in out
     assert "market-box-pic" not in market_boxes(html, market)          # no link function: no links
+
+
+def test_links_go_to_whichever_is_cheaper():
+    """Our page only when we're at or below TCGplayer's market price (or it has none)."""
+    market = _StubMarket({"1": {"price": 80.00}, "2": {"price": 72.00}, "3": {"price": 50.00}})
+    ours = {"1": ("/p/cheap", 7699), "2": ("/p/dear", 9699), "3": ("/p/same", 5000), "4": ("/p/new", 1000)}
+    assert cheaper_here(ours, market) == {"1": "/p/cheap", "3": "/p/same", "4": "/p/new"}

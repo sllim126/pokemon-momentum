@@ -37,7 +37,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import accounts, catalog, support, wishlist, classify, collector_hub, images, notify, notify_list, orders, placeholder_library, redirects, seo, stripe_api
-from .articles import Articles, market_boxes, tcgplayer_links, tcgplayer_url
+from .articles import Articles, cheaper_here, market_boxes, tcgplayer_links, tcgplayer_url
 from .binder_art import SetLogos
 from .placeholder_library import PlaceholderFiles
 from .db import connect, latest_migration, migrate
@@ -480,7 +480,8 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         crumbs = [("Home", "/"), ("Articles", "/articles"), (found.title, f"/articles/{slug}")]
         if any(tag in found.html for tag in ("[[market", "[[cards", "tcgplayer:")):
             with db() as conn:
-                stocked = catalog.stocked_by_tcgplayer_id(conn)
+                ours = catalog.stocked_by_tcgplayer_id(conn)
+            stocked = cheaper_here(ours, market)
         else:
             stocked = {}
 

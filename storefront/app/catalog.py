@@ -224,13 +224,14 @@ def product_redirect(conn: sqlite3.Connection, old_path: str) -> str | None:
     return f"/p/{row['slug']}" if row["visible"] else "/shop"
 
 
-def stocked_by_tcgplayer_id(conn: sqlite3.Connection) -> dict[str, str]:
-    """{TCGplayer product ID: /p/<slug>} for every visible, in-stock product, so an article's
-    product pictures send shoppers to our own page for things we sell (articles.market_boxes)."""
-    found: dict[str, str] = {}
-    for row in conn.execute("""SELECT slug, tcgplayer_product_ids FROM products
+def stocked_by_tcgplayer_id(conn: sqlite3.Connection) -> dict[str, tuple[str, int]]:
+    """{TCGplayer product ID: (/p/<slug>, our price in cents)} for every visible, in-stock
+    product, so an article can link products we sell to our own page when we're the better
+    price (main.py, the article route)."""
+    found: dict[str, tuple[str, int]] = {}
+    for row in conn.execute("""SELECT slug, price_cents, tcgplayer_product_ids FROM products
                                WHERE visible = 1 AND (track_stock = 0 OR stock > 0)"""):
         for pid in (row["tcgplayer_product_ids"] or "").split("|"):
             if pid.strip().isdigit():
-                found.setdefault(pid.strip(), f"/p/{row['slug']}")
+                found.setdefault(pid.strip(), (f"/p/{row['slug']}", row["price_cents"]))
     return found
