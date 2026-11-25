@@ -204,3 +204,21 @@ def test_parse_ids():
     assert product_details.parse_ids("") == []
     with pytest.raises(ValueError):
         product_details.parse_ids("tcgplayer.com/product/630431")
+
+
+def test_oversize_box_switches_shipping_and_is_logged(signed, imported):
+    # Owner, 2026-11-25: $10 shipping for everything except big boxes, ticked "Oversize" ($20).
+    product_id = product_id_from(add(signed))
+    page = signed.get(f"/products/{product_id}").text
+    assert 'name="oversize"' in page
+    data = {"form_token": token(page), "title": "Black Bolt Bundle - English", "product_type": "booster-bundle",
+            "language": "en", "set_name": "Black Bolt", "tcgplayer_ids": "630431", "gtin": "",
+            "description_md": "", "oversize": "1"}
+    signed.post(f"/products/{product_id}/details", data=data)
+    assert fetch(imported, product_id)["ship_class"] == "oversize"
+    assert "Shipping class" in signed.get(f"/products/{product_id}").text
+    retitled = signed.post(f"/products/{product_id}/details", data={**data, "title": "Black Bolt Bundle (6) - English"})
+    assert retitled.headers["location"].endswith("done=details")
+    assert fetch(imported, product_id)["ship_class"] == "oversize"      # other edits keep it
+    signed.post(f"/products/{product_id}/details", data={k: v for k, v in data.items() if k != "oversize"})
+    assert fetch(imported, product_id)["ship_class"] == "small-sealed"  # unticked: back to the type's class

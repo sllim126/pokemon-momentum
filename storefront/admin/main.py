@@ -533,7 +533,8 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
         ids = [i for i in product["tcgplayer_product_ids"].split("|") if i]
         details = context.pop("typed_details", None) or {
             **{key: product[key] or "" for key in ("title", "product_type", "set_name", "gtin", "description_md")},
-            "language": product["language"] or "", "tcgplayer_ids": ", ".join(ids)}
+            "language": product["language"] or "", "tcgplayer_ids": ", ".join(ids),
+            "oversize": "1" if product["ship_class"] == "oversize" else ""}
         packed = context.pop("typed_packed", None) or {
             key: f"{product[column]:g}" if product[column] else ""
             for key, column in (("weight", "weight_oz"), ("length", "length_in"), ("width", "width_in"),
@@ -636,7 +637,8 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
 
     def detail_fields(**typed) -> dict:
         return {key: (typed.get(key) or "") for key in
-                ("sku", "title", "product_type", "language", "set_name", "tcgplayer_ids", "gtin", "description_md")}
+                ("sku", "title", "product_type", "language", "set_name", "tcgplayer_ids", "gtin", "description_md",
+                 "oversize")}
 
     def new_product_page(request: Request, cookie: str, form: dict, status_code: int = 200, **context) -> Response:
         try:
@@ -662,7 +664,7 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
                        sku: str = Form(""), title: str = Form(""), product_type: str = Form(""),
                        language: str = Form(""), set_name: str = Form(""), tcgplayer_ids: str = Form(""),
                        gtin: str = Form(""), description_md: str = Form(""), price: str = Form(""),
-                       stock: str = Form("0")):
+                       stock: str = Form("0"), oversize: str = Form("")):
         cookie = signed_in(request)
         if not cookie:
             return to_login()
@@ -670,7 +672,7 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
             return expired_form()
         form = {**detail_fields(sku=sku, title=title, product_type=product_type, language=language,
                                 set_name=set_name, tcgplayer_ids=tcgplayer_ids, gtin=gtin,
-                                description_md=description_md), "price": price, "stock": stock}
+                                description_md=description_md, oversize=oversize), "price": price, "stock": stock}
         if action == "check":
             # Look the TCGplayer IDs up and fill in whatever is still empty; nothing is saved.
             try:
@@ -704,14 +706,15 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
     def product_edit_details(request: Request, product_id: int, form_token: str = Form(""), title: str = Form(""),
                              product_type: str = Form(""), language: str = Form(""), set_name: str = Form(""),
                              tcgplayer_ids: str = Form(""), gtin: str = Form(""), description_md: str = Form(""),
-                             reason: str = Form("")):
+                             oversize: str = Form(""), reason: str = Form("")):
         cookie = signed_in(request)
         if not cookie:
             return to_login()
         if not form_ok(cookie, form_token):
             return expired_form()
         fields = detail_fields(title=title, product_type=product_type, language=language, set_name=set_name,
-                               tcgplayer_ids=tcgplayer_ids, gtin=gtin, description_md=description_md)
+                               tcgplayer_ids=tcgplayer_ids, gtin=gtin, description_md=description_md,
+                               oversize=oversize)
         try:
             with writer() as conn:
                 changed = product_details.update_details(conn, product_id, fields, market, reason)

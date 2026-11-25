@@ -138,7 +138,10 @@ def _clean(fields: dict, market: MarketReference) -> dict:
         "set_code": set_code, "set_name": set_name or None,
         "set_slug": classify.slugify(set_name) if set_name else None,
         "tcgplayer_product_ids": "|".join(ids), "gtin": gtin or None, "description_md": description,
-        "ship_class": classify.ship_class_for_type(product_type),
+        # "Oversize" (ticked on the form) overrides the type's class for big boxes; only sealed
+        # products can be oversize.
+        "ship_class": ("oversize" if fields.get("oversize") and kind in ("sealed", "bulk")
+                       else classify.ship_class_for_type(product_type)),
     }
 
 
@@ -225,15 +228,24 @@ def update_details(conn: sqlite3.Connection, product_id: int, fields: dict, mark
         if row["kind"] == "single":
             raise ValueError("Singles aren't edited here (D10: singles stay on TCGplayer).")
         changed = [key for key in DETAIL_FIELDS if clean[key] != row[key]]
+        # The class only changes when the Oversize box flips or the type/title does, so a class
+        # an import set is never rewritten by an unrelated edit.
+        was_oversize = row["ship_class"] == "oversize"
+        ship_changed = (clean["ship_class"] == "oversize") != was_oversize or (
+            {"product_type", "title"} & set(changed) and clean["ship_class"] != row["ship_class"])
+        if ship_changed:
+            changed.append("ship_class")
         if not changed:
             conn.rollback()
             return []
         # The derived columns follow along: kind and shipping class with the type (or a title
         # that now says "bulk"), the set code and slug with the set, the search text with all.
         # Only what the change touches, so an untouched imported value is never rewritten.
-        columns = {key: clean[key] for key in changed}
+        columns = {key: clean[key] for key in changed if key in DETAIL_FIELDS}
         if {"product_type", "title"} & set(changed):
-            columns.update(kind=clean["kind"], ship_class=clean["ship_class"])
+            columns.update(kind=clean["kind"])
+        if ship_changed:
+            columns.update(ship_class=clean["ship_class"])
         if {"set_name", "tcgplayer_product_ids"} & set(changed):
             columns.update(set_code=clean["set_code"], set_slug=clean["set_slug"])
         columns.update(search_text=_search_text(row["sku"], clean), updated_at=at)
@@ -242,6 +254,9 @@ def update_details(conn: sqlite3.Connection, product_id: int, fields: dict, mark
         if "product_type" in changed:
             _set_category(conn, product_id, clean["product_type"])
         for key in changed:
+            if key == "ship_class":
+                _log(conn, product_id, "ship_class", row["ship_class"], clean["ship_class"], reason, at)
+                continue
             old, new = row[key], clean[key]
             if key == "description_md":   # long text: the history notes the change, not the text
                 old, new = f"{len(old or '')} characters", f"{len(new or '')} characters"

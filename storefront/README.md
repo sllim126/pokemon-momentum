@@ -287,7 +287,8 @@ visitor is the CF-Connecting-IP address when the request comes from the tunnel, 
 Live keys (`sk_live_...`) are refused unless `STOREFRONT_ALLOW_LIVE=1`; going live is the
 owner's call. Other settings (all optional, defaults in `app/settings.py`):
 `STOREFRONT_FREE_SHIPPING_OVER_CENTS` (15000), `STOREFRONT_SHIP_<CLASS>_CENTS` (small sealed
-1000, large sealed 1000, accessory 1000, single 1000), `STOREFRONT_TAX_MODE`
+1000, large sealed 1000, oversize 2000, accessory 1000, single 1000; a product is oversize when
+"Oversize box" is ticked on its admin Details panel), `STOREFRONT_TAX_MODE`
 (decision D2: `stripe` = Stripe Tax adds Utah sales tax on top at checkout, once Utah is
 registered under Tax -> Registrations in the Stripe dashboard; `none` = no tax, the default;
 anything else keeps checkout off), `STOREFRONT_DISCORD_WEBHOOK_URL` (order

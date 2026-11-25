@@ -46,9 +46,10 @@ log = logging.getLogger("storefront.orders")
 MAX_LINES = 50
 MAX_QTY = 10                 # per line, when the product has no max_per_order of its own
 # Shipping classes from smallest to largest; the cart ships at its largest class's rate.
-SHIP_CLASS_ORDER = ["single", "accessory", "small-sealed", "large-sealed"]
+SHIP_CLASS_ORDER = ["single", "accessory", "small-sealed", "large-sealed", "oversize"]   # the largest in a cart sets the rate
 SHIP_CLASS_NAMES = {"single": "single cards", "accessory": "accessories",
-                    "small-sealed": "small sealed", "large-sealed": "large sealed"}
+                    "small-sealed": "small sealed", "large-sealed": "large sealed",
+                    "oversize": "oversize box"}
 GENERAL_GOODS_TAX_CODE = "txcd_99999999"   # Stripe Tax: general tangible goods
 
 

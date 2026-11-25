@@ -30,9 +30,11 @@ def _bool(value: str | None, default: bool = False) -> bool:
 # costs: about $7.50 for a small box and $15-25 for a large one, plus tracking and signature
 # confirmation on every order). Owner, 2026-11-25: $10 for everything. A Japanese booster box
 # ships in a 6x6x6 box for about $7.50 and two for about $10 through Pirate Ship, and boxed small
-# sealed runs $6-7.50. The classes stay so one can be priced apart again later.
-# Override each with STOREFRONT_SHIP_<CLASS>_CENTS.
-DEFAULT_SHIP_RATES = {"single": 1000, "accessory": 1000, "small-sealed": 1000, "large-sealed": 1000}
+# sealed runs $6-7.50. Big boxes (Costco bundles, premium collections) stay $20: the owner ticks
+# "Oversize" on the product's Details panel (migration 012). The other classes stay so one can be
+# priced apart again later. Override each with STOREFRONT_SHIP_<CLASS>_CENTS.
+DEFAULT_SHIP_RATES = {"single": 1000, "accessory": 1000, "small-sealed": 1000, "large-sealed": 1000,
+                      "oversize": 2000}
 
 
 @dataclass(frozen=True)

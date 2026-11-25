@@ -157,6 +157,13 @@ def test_shipping_class_and_free_shipping(app_client, items, ship_class, shippin
     assert quote["total_cents"] == quote["subtotal_cents"] + shipping
 
 
+def test_oversize_box_ships_at_the_higher_rate(app_client, shop):
+    with connect(shop.db_path, writer=True) as conn:
+        conn.execute("UPDATE products SET ship_class = 'oversize' WHERE sku = 'ENG-G25-TIN'")
+    quote = app_client.post("/cart/quote", json=cart(("JP-PACK-A", 1), ("ENG-G25-TIN", 1))).json()
+    assert (quote["ship_class"], quote["shipping_cents"]) == ("oversize", 2000)   # the largest class wins
+
+
 def test_quote_reports_how_far_from_free_shipping(app_client):
     quote = app_client.post("/cart/quote", json=cart(("JP-AE-BB", 1), ("JP-PACK-A", 1))).json()
     assert quote["subtotal_cents"] == 7699
