@@ -280,11 +280,21 @@ def store_reprice_summary(args: argparse.Namespace, lines: list[str]) -> tuple[s
     if args.exit_code != 0:
         return f"❌ FAILED (exit {args.exit_code})", RED, [error_field(lines)]
     changed = [line[len("Changed: "):] for line in lines if line.startswith("Changed: ")]
-    if not changed:
+    held = [line[len("Held: "):] for line in lines if line.startswith("Held: ")]
+    if not changed and not held:
         return "✅ no price changes", GREEN, None
-    text = "\n".join(changed)
-    return f"✅ {len(changed)} price(s) changed", GREEN, [
-        {"name": "Changes (never under a product's floor)", "value": f"```\n{text[-990:]}\n```", "inline": False}]
+    fields = []
+    if changed:
+        text = "\n".join(changed)
+        fields.append({"name": "Changes (never under a product's floor)", "value": f"```\n{text[-990:]}\n```",
+                       "inline": False})
+    if held:
+        # Over 30% in one night: left for the owner (a bad market reading can't move a price far).
+        text = "\n".join(held)
+        fields.append({"name": "Held for you (over 30%): check on the Pricing page", "value": f"```\n{text[-990:]}\n```",
+                       "inline": False})
+    title = f"✅ {len(changed)} price(s) changed" + (f", ⚠ {len(held)} held" if held else "")
+    return title, ORANGE if held else GREEN, fields
 
 
 # Job name -> (message title, default log file, summary builder).

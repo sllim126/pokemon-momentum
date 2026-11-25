@@ -83,7 +83,8 @@ def _value(field: str, value) -> str | None:
 
 def update_product(conn: sqlite3.Connection, product_id: int, wanted: dict, reason: str = "", *,
                    confirmed: bool = False, source: str = "admin", now: datetime | None = None) -> list[str]:
-    """Change any of price_cents, compare_at_cents, visible, featured, max_per_order.
+    """Change any of price_cents, compare_at_cents, visible, featured, max_per_order, price_manual
+    (1 = priced by hand: the nightly repricing leaves it alone; migration 011).
 
     `wanted` holds only the fields the form sent. Unchanged fields are skipped; the changed ones
     are written and logged in one transaction. Returns the changed field names ([] if nothing
@@ -95,7 +96,7 @@ def update_product(conn: sqlite3.Connection, product_id: int, wanted: dict, reas
     try:
         row = _product(conn, product_id)
         new = {key: wanted.get(key, row[key]) for key in
-               ("price_cents", "compare_at_cents", "visible", "featured", "max_per_order")}
+               ("price_cents", "compare_at_cents", "visible", "featured", "max_per_order", "price_manual")}
         price = new["price_cents"]
         if price is None or not MIN_PRICE_CENTS <= price <= MAX_PRICE_CENTS:
             raise ValueError("The price must be between $0.50 and $10,000.")

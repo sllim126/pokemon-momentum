@@ -50,3 +50,27 @@ def test_market_age():
     assert reprice.market_age_days("2026-11-24", today) == 1
     assert reprice.market_age_days(None, today) is None
     assert reprice.market_age_days("garbage", today) is None
+
+
+def test_priced_by_hand_is_left_alone():
+    # Owner ticked "Keep this price" in the admin (products.price_manual, migration 011).
+    row = {**product("A", 3499), "price_manual": 1}
+    result = reprice.plan([row], {"A": COST}, {"products": {"1": {"price": 25}}}, {"A": "market"})
+    assert not result["priced"] and result["skipped"][0]["reason"] == "priced by hand"
+
+
+def test_big_changes_are_held():
+    assert reprice.too_big({"now": 10000, "new": 13100}, 30)        # +31%
+    assert reprice.too_big({"now": 10000, "new": 6900}, 30)         # -31%
+    assert not reprice.too_big({"now": 10000, "new": 12999}, 30)
+    assert not reprice.too_big({"now": 0, "new": 999}, 30)          # no price yet: nothing to compare
+
+
+def test_old_database_without_the_switch(tmp_path):
+    import sqlite3
+    con = sqlite3.connect(tmp_path / "old.db")
+    con.row_factory = sqlite3.Row
+    con.execute("CREATE TABLE products (id INTEGER, sku TEXT, title TEXT, price_cents INTEGER, compare_at_cents INTEGER, "
+                "tcgplayer_product_ids TEXT, visible INTEGER, stock INTEGER, track_stock INTEGER)")
+    con.execute("INSERT INTO products VALUES (1, 'A', 'A', 999, NULL, '1', 1, 1, 1)")
+    assert reprice.load_products(con)[0]["price_manual"] == 0

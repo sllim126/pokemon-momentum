@@ -191,3 +191,22 @@ def test_expired_form_token_is_refused(signed, imported):
     response = signed.post(f"/products/{p['id']}/price", data={"form_token": "nope", "price": "9.99", "reason": "x"})
     assert response.status_code == 403
     assert fetch(imported, p["id"])["price_cents"] == p["price_cents"]
+
+
+def test_keep_this_price_switch(signed, imported):
+    # Ticked by default, so a typed price isn't put back by the nightly repricing (migration 011).
+    p = a_product(imported, visible=1)
+    path = f"/products/{p['id']}/price"
+    page = signed.get(f"/products/{p['id']}").text
+    assert 'name="price_manual" value="1"\n          checked' in page and "Nightly repricing (03:30 UTC)" in page
+    new = p["price_cents"] + 100
+    post(signed, path, price=f"{new / 100:.2f}", reason="hand price", price_manual="1")
+    assert fetch(imported, p["id"])["price_manual"] == 1
+    assert "Priced by hand:" in signed.get(f"/products/{p['id']}").text
+    # Unticked, same price: the product goes back to its rule, and the history says so.
+    response = post(signed, path, price=f"{new / 100:.2f}", reason="back to the rule")
+    assert response.status_code == 303 and fetch(imported, p["id"])["price_manual"] == 0
+    with connect(imported.db_path) as conn:
+        fields = [r["field"] for r in conn.execute("SELECT field FROM product_changes WHERE product_id = ? ORDER BY id",
+                                                   (p["id"],))]
+    assert fields.count("price_manual") == 2

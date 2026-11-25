@@ -81,3 +81,20 @@ class ArchiveBackfillSummaryTests(unittest.TestCase):
         routine = ["Missing archive files 2026-11-05 to 2026-11-05: 1; already asked for today: 0; to fetch now: 1",
                    "OK prices-2026-11-05.ppmd.7z (3,000,000 bytes)"]
         self.assertIsNone(notify_discord.backfill_summary(argparse.Namespace(exit_code=0), routine)[2])
+
+
+class StoreRepriceSummaryTests(unittest.TestCase):
+    """The nightly store repricing's Discord message: changes, and changes held for the owner."""
+
+    def test_changes_and_held(self):
+        lines = ["Changed: ENG-CR-BUNDLE $30.99 -> $35.99",
+                 "Held: ENG-SS-Costco $173.99 -> $99.99 is over 30%: check it on the Pricing page"]
+        status, color, fields = notify_discord.store_reprice_summary(argparse.Namespace(exit_code=0), lines)
+        self.assertEqual(status, "✅ 1 price(s) changed, ⚠ 1 held")
+        self.assertEqual(color, notify_discord.ORANGE)
+        self.assertIn("ENG-CR-BUNDLE", fields[0]["value"])
+        self.assertIn("Held for you", fields[1]["name"])
+
+    def test_quiet_night(self):
+        status, color, fields = notify_discord.store_reprice_summary(argparse.Namespace(exit_code=0), ["Applied: 0"])
+        self.assertEqual((status, color, fields), ("✅ no price changes", notify_discord.GREEN, None))

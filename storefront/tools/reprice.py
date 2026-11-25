@@ -29,6 +29,9 @@ Run unattended every night (owner, 2026-11-25: "fine with automatic repricing, s
 doesn't dip below my profitability amount"): scripts/pipeline/run_store_reprice_host.sh, after
 the 03:00 market reference and the 03:15 backup. With --max-market-age-days the run changes
 nothing when the market prices are older than that, so a failed refresh can't reprice on old data.
+With --max-change-pct, a change bigger than that is held back and listed ("Held: ...") for the
+owner to check on the admin's Pricing page. Products the owner priced by hand in the admin
+(products.price_manual, migration 011) are left alone ("priced by hand").
 
 Dry run by default: prints the table and changes nothing. --apply writes everything in one
 transaction and logs each change in product_changes (the admin's product history, marked
@@ -156,10 +159,21 @@ def load_min_prices(path: Path) -> dict[str, float]:
     return floors
 
 
+def too_big(item: dict, max_change_pct: float) -> bool:
+    """A planned change bigger than max_change_pct percent of today's price (either way)."""
+    return bool(item["now"]) and abs(item["new"] - item["now"]) / item["now"] * 100 > max_change_pct
+
+
 def load_products(con: sqlite3.Connection) -> list[dict]:
     return [dict(r) for r in con.execute(
-        "SELECT id, sku, title, price_cents, compare_at_cents, tcgplayer_product_ids, visible, stock, track_stock "
+        "SELECT id, sku, title, price_cents, compare_at_cents, tcgplayer_product_ids, visible, stock, track_stock, "
+        f"{'price_manual' if _has_column(con, 'products', 'price_manual') else '0 AS price_manual'} "
         "FROM products ORDER BY title")]
+
+
+def _has_column(con: sqlite3.Connection, table: str, column: str) -> bool:
+    # A database from before migration 011 has no price_manual: every price follows its rule.
+    return any(row[1] == column for row in con.execute(f"PRAGMA table_info({table})"))
 
 
 def plan(products: list[dict], costs: dict, reference: dict, rules: dict, *,
@@ -181,7 +195,8 @@ def plan(products: list[dict], costs: dict, reference: dict, rules: dict, *,
         mode = rules.get(sku, "")
         market = market_price(reference, row["tcgplayer_product_ids"])
         target = rule_target(market, mode) if market is not None else None
-        reason = ("no price rule" if not mode else "manual price" if target is None and market
+        reason = ("priced by hand" if row.get("price_manual") else
+                  "no price rule" if not mode else "manual price" if target is None and market
                   else "no market price" if market is None else "no cost on file"
                   if sku not in costs else "")
         base = {"id": row["id"], "sku": sku, "title": row["title"], "now": row["price_cents"], "mode": mode}
@@ -272,6 +287,10 @@ def main() -> int:
     parser.add_argument("--apply", action="store_true", help="write the changes")
     parser.add_argument("--max-market-age-days", type=int, default=None,
                         help="change nothing if the market prices are older than this (the nightly run uses 2)")
+    parser.add_argument("--max-change-pct", type=float, default=None,
+                        help="hold back any price change bigger than this %% for a person to check on the "
+                             "admin's Pricing page (the nightly run uses 30: a bad market reading can't move "
+                             "a price far overnight)")
     args = parser.parse_args()
 
     reference = json.loads(args.market.read_text(encoding="utf-8"))
@@ -296,8 +315,16 @@ def main() -> int:
         print(f"{item['sku'][:20]:20} {money(item['now'] / 100):>9} {money(item['market'] / 100):>9} "
               f"{money(item['target'] / 100):>9} {money(item['new'] / 100):>9} {item['vs_market']:>+6d}%  {note}")
     changes = [item for item in result["priced"] if item["change"]]
+    held = []
+    if args.max_change_pct is not None:
+        held = [item for item in changes if too_big(item, args.max_change_pct)]
+        changes = [item for item in changes if item not in held]
     hide = [item for item in result["priced"] if item["hide"]]
     print(f"\n{len(changes)} price(s) change; {len(hide)} product(s) to hide.")
+    # One line per held change for the nightly job's Discord summary (notify_discord.py).
+    for item in held:
+        print(f"Held: {item['sku']} {money(item['now'] / 100)} -> {money(item['new'] / 100)} "
+              f"is over {args.max_change_pct:g}%: check it on the Pricing page")
     if result["skipped"]:
         print("\nLeft alone:")
         for item in result["skipped"]:
