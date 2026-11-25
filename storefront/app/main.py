@@ -763,6 +763,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
 
     @app.get("/account", response_class=HTMLResponse)
     def account_page(request: Request):
+        """The account page: signed out, a sign-in link; signed in, the orders placed with the account's email."""
         account = current_account(request)
         my_orders = []
         if account is not None:

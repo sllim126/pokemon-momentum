@@ -316,6 +316,7 @@ SORTS = {
 
 
 def _sort_value(row: dict, sort: str):
+    """The value a row sorts on for one sort key ("ch:<channel>" sorts by that channel's margin); None sorts last."""
     if sort.startswith("ch:"):
         channel = row["channels"].get(sort[3:])
         return channel["margin_after_tax_pct"] if channel else None
