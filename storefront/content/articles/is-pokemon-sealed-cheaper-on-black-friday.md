@@ -69,9 +69,20 @@ And here's where those four are today. Nobody who waited on them got a better pr
 - **Journey Together booster box:** $237 → $238 → $248
 - **Destined Rivals booster box:** $383 → $397 → $402
 
-## The exception: brand-new sets
+## What did get cheaper
 
-The things that did get cheaper over the holidays were new releases settling down, and that happens whatever the date. Phantasmal Flames came out two weeks before Black Friday 2025. Its booster box went from $287 to $278 on Black Friday and $221 by Christmas, then came back up. (Same pattern I found for [Delta Reign](/articles/delta-reign-the-first-two-weeks).)
+Not everything went up. About 1 in 4 products cost less on Black Friday than two weeks before. Most of those were only a dollar or two off, and about half were back above their old price by January. But a few kinds of product really did drop:
+
+- **Brand-new sets settling down.** Phantasmal Flames came out two weeks before Black Friday 2025. Its Pokémon Center ETB went from **$389 to $195**, its 3-pack blisters from about $45 to $24, and its booster box from $287 to $278 on Black Friday and $221 by Christmas, before coming back up. (Same pattern I found for [Delta Reign](/articles/delta-reign-the-first-two-weeks).)
+- **Pokémon Center ETBs.** In 2025, Stellar Crown's went from $191 to $119 and Mega Evolution's from $209 to $173.
+- **Big premium collections.** The Prismatic Evolutions Premium Figure Collection went from **$229 to $126**, Team Rocket's Moltres ex Ultra-Premium Collection from $278 to $220, and the Mega Charizard X ex Ultra-Premium Collection from $222 to $183.
+- **In 2024, odds and ends.** Older theme decks, Build & Battle Boxes and 3-pack blisters from past sets, mostly a few dollars off. Not the usual gifts: only 7 of 40 booster boxes and 13 of 93 ETBs were cheaper that year.
+
+None of these were Black Friday sales. Most of them kept falling for weeks afterwards. So if you're hunting for a deal, look at the newest set's premium products. They do come down, just not because it's Black Friday.
+
+Here are six of them today. Most have climbed back up since, some above where they started, so the dip is a window, not a new normal:
+
+[[market 654135 557340 648415 650799 656997 654213]]
 
 ## But TCGplayer's Cyber Weekend still counts
 
