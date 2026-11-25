@@ -12,8 +12,11 @@ each chart's note credits PriceCharting, and the post links every example card's
 
 Chart 1: price by grade (1-9) for three example cards, one panel each with its own dollar
 scale (their prices differ too much to share an axis). Chart 2: share of cards whose Grade 1
-is above the Grade 5, by the card's Grade 5 price. Colours: the storefront's dark theme, with
-the validated #4096f0 / #d95926 pair from master_sets_part2_charts.py.
+is above the Grade 5, by the card's Grade 5 price. Chart 3: the post's five example cards,
+ungraded / Grade 1 / Grade 5 / Grade 9 as coloured dots on one dollar axis. Colours: the
+storefront's dark theme, with the validated #4096f0 / #d95926 pair from
+master_sets_part2_charts.py; chart 3 uses the dataviz reference palette's first four dark slots
+(blue, orange, aqua, yellow), which pass its validator on this background.
 
     mkdir -p .chart_tmp
     docker-compose exec -T pokemon-momentum python scripts/blog/grade1_charts.py
@@ -138,5 +141,51 @@ fig.text(0.02, 0.03, f"Bar: share of cards whose Grade 1 is above their Grade 5.
          f"of the Grade 5.\n{len(both):,} cards, any grading company. PriceCharting, {DATE}.  poke6s.com",
          fontsize=10.5, color=FAINT)
 fig.savefig(OUT + "grade1_chart2.png", facecolor=BG)
+plt.close(fig)
+
+# ---- Chart 3: the five example cards, four prices each on one dollar axis ----
+# Order and colours match the text's "Ungraded -> Grade 1 -> Grade 5 -> Grade 9" lists.
+SERIES = (("Ungraded", "raw", "#199e70"), ("Grade 1", 1, "#d95926"), ("Grade 5", 5, "#c98500"),
+          ("Grade 9", 9, "#3987e5"))
+CARDS = (("2513027", "Rayquaza VMAX #218"), ("11069001", "Mega Charizard X ex #125"),
+         ("5834844", "Pikachu with Grey Felt Hat #85"), ("8244604", "Umbreon ex #161"),
+         ("630417", "Charizard #4, Base Set"))
+fig, ax = plt.subplots(figsize=(12, 6.2), dpi=200)
+fig.patch.set_facecolor(BG)
+ax.set_facecolor(BG)
+fig.subplots_adjust(left=0.25, right=0.96, top=0.86, bottom=0.17)
+for side in ax.spines.values():
+    side.set_visible(False)
+ax.tick_params(length=0)
+ax.grid(axis="x", color=GRID, linewidth=1)
+ax.set_axisbelow(True)
+for i, (pc_id, label) in enumerate(CARDS):
+    p = cards[pc_id]
+    values = [p[key] for _, key, _ in SERIES]
+    ax.plot([min(values), max(values)], [i, i], color=FAINT, linewidth=2, zorder=1)
+    # Dots closer than $40 would hide each other: drop the later one a little lower. Grade 1 is
+    # placed first so it stays on the line, under its price label.
+    placed = []
+    for (name, key, color), v in sorted(zip(SERIES, values), key=lambda pair: pair[0][1] != 1):
+        y = i + 0.2 * sum(abs(v - other) < 40 for other in placed)
+        placed.append(v)
+        ax.plot(v, y, "o", color=color, markersize=13 if key == 1 else 11, markeredgecolor=BG,
+                markeredgewidth=2, zorder=3 if key == 1 else 2)
+    # Only the Grade 1 price is written on the chart; the text lists all four.
+    ax.annotate(f"${p[1]:,.0f}", (p[1], i), xytext=(0, 11), textcoords="offset points", ha="center",
+                fontsize=11.5, color=TEXT, fontweight="bold")
+    print(label, values)
+ax.set_yticks(range(len(CARDS)))
+ax.set_yticklabels([label for _, label in CARDS], color=TEXT)
+ax.set_ylim(len(CARDS) - 0.5, -0.7)
+ax.set_xlim(0, 2300)
+ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"${v:,.0f}"))
+x = 0.25
+for name, _, color in SERIES:
+    fig.text(x, 0.925, "●", color=color, fontsize=16, va="center")
+    fig.text(x + 0.02, 0.925, name, color=TEXT, fontsize=13, va="center")
+    x += 0.04 + 0.011 * len(name)
+fig.text(0.02, 0.03, f"Any grading company. PriceCharting, {DATE}.  poke6s.com", fontsize=10.5, color=FAINT)
+fig.savefig(OUT + "grade1_chart3.png", facecolor=BG)
 plt.close(fig)
 print("ok")

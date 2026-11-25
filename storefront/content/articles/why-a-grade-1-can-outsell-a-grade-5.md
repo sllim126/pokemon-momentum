@@ -9,9 +9,11 @@ cover: grade-1-price-by-grade-f92629628b
 old_path: 
 draft: true
 ---
-You'd expect graded prices to climb with the grade: a 1 is the worst condition a grader will put in a slab, so it should be the cheapest. For most Pokémon cards it isn't. A Grade 1 usually sells for more than a Grade 5, and often for more than the same card ungraded.
+You'd expect graded prices to climb with the grade: a 1 is the worst condition a grader will put in a slab, so it should be the cheapest, right? For most Pokémon cards it isn't. A Grade 1 usually sells for more than a Grade 5, and often for more than the same card ungraded.
 
-*Graded prices are from [PriceCharting](https://www.pricecharting.com/category/pokemon-cards) as of November 25, 2026. Their grades cover any grading company, not only PSA. I compared every Pokémon card that has both a Grade 1 and a Grade 5 price: 4,687 cards, English and Japanese.*
+*Graded prices are from [PriceCharting](https://www.pricecharting.com/category/pokemon-cards) as of November 25, 2026. Their grades cover any grading company, not only PSA.*
+
+To answer this question, I compared every Pokémon card that has both a Grade 1 and a Grade 5 price: 4,687 cards, English and Japanese.
 
 ## What a Grade 1 actually is
 
@@ -19,7 +21,7 @@ On [PSA's scale](https://www.psacard.com/gradingstandards) a 1 is "Poor": heavy 
 
 Grade 5 is "Excellent": some corner wear and maybe a light crease, but it still looks like a nice card from a few feet away. So the question is why the wrecked one is worth more.
 
-A 1 doesn't always look wrecked, though. Plenty have a clean front and all the damage on the back: a crease that runs through the card, water damage, warping. Those are the 1s collectors like best.
+A 1 doesn't always look wrecked, though. Plenty have a clean front and all the damage on the back: a crease that runs through the card, water damage, warping. Those are the 1s that collectors like best.
 
 ## How often a 1 beats a 5
 
@@ -63,6 +65,10 @@ The Pikachu is the extreme one: its Grade 1 is worth more than twice a Grade 9. 
 
 - **[Charizard #4, Base Set](https://www.pricecharting.com/game/pokemon-base-set/charizard-4):** $345 → $329 → $400 → $2,121
 
+The same five cards side by side, with the Grade 1 price marked:
+
+![Five cards with their ungraded, Grade 1, Grade 5 and Grade 9 prices on one dollar scale. For Rayquaza VMAX, Mega Charizard X ex and Pikachu with Grey Felt Hat, Grade 1 is the highest of the four; Umbreon ex's Grade 1 is above its Grade 5 but below ungraded; for Base Set Charizard, Grade 1 is the lowest and Grade 9 is far higher.](/media/1200/grade-1-examples-by-grade-7f0b656461.webp)
+
 Here are the four modern cards today. These boxes show the ungraded TCGplayer market price and update every day, so they won't match the dated numbers above.
 
 [[market 246733 662184 518861 610516]]
@@ -78,7 +84,7 @@ The price data can't prove either one: it doesn't count how many slabs exist at 
 
 ## What collectors say
 
-I read through five Reddit threads about PSA 1s from 2024 to 2026 ([1](https://www.reddit.com/r/PokemonTCG/comments/1efqyrj/what_do_you_guys_think_about_psa_1s/), [2](https://www.reddit.com/r/PokeInvesting/comments/1oay2gn/do_people_really_buy_psa_1_at_this_point_while_a/), [3](https://www.reddit.com/r/PokemonTCG/comments/1qkk831/my_dad_knows_nothing_about_pokemon_but_has_been/), [4](https://www.reddit.com/r/PokemonTCG/comments/1k91vxi/any_psa_1_fans/), [5](https://www.reddit.com/r/PokemonTCG/comments/1hggpss/forget_psa_10s_lets_see_those_psa_1s/)). Most of the comments are fans, and the reasons line up with the numbers:
+I've read through plenty of Reddit threads about PSA 1s (Here's a few I pulled quotes from, but there are plenty more to read through: [1](https://www.reddit.com/r/PokemonTCG/comments/1efqyrj/what_do_you_guys_think_about_psa_1s/), [2](https://www.reddit.com/r/PokeInvesting/comments/1oay2gn/do_people_really_buy_psa_1_at_this_point_while_a/), [3](https://www.reddit.com/r/PokemonTCG/comments/1qkk831/my_dad_knows_nothing_about_pokemon_but_has_been/), [4](https://www.reddit.com/r/PokemonTCG/comments/1k91vxi/any_psa_1_fans/), [5](https://www.reddit.com/r/PokemonTCG/comments/1hggpss/forget_psa_10s_lets_see_those_psa_1s/)). Most of the comments are fans, and the reasons line up with the numbers:
 
 - **They have a story.** "To me a PSA 1 is the PSA 10 version for a card that was enjoyed to its full potential." Another: "All 10s should theoretically be the same," while every 1 is different.
 - **They're hard to get.** "It's either not graded by PSA because it's too damaged or it's a 2." Several people think a 1 is harder to hit than a 10.
@@ -109,3 +115,9 @@ None of that changes the overall pattern, since it shows up across thousands of 
 - **Expensive vintage is different.** Over $500, the higher grade is still worth more most of the time.
 
 And please don't damage a card to chase the number. Trimming or recolouring gets it sent back without a grade, and there's no telling whether a bent card comes back a 1 or a 2.
+
+## If you just want the card
+
+If you're after the best value for a card rather than a particular grade, look in the middle: Grades 4 to 6. A 1, 2 or 3 has obvious wear, and 7 to 10 are near mint or mint and priced like it. The middle is where nobody's looking, and the prices show it. Across the 4,533 cards with a price at every grade, the typical Grade 4 cost about two-thirds of the ungraded price, and a Grade 5 about 87%. A Grade 6 cost a little more than ungraded, about 1.2 times.
+
+So a mid-grade slab often gets you the card, checked as real by a grader, in a known condition, with plenty of copies to choose from, for less than an ungraded copy.
