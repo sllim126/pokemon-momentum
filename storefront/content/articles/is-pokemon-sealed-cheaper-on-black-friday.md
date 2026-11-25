@@ -81,9 +81,11 @@ So it's not a sale in the "prices are lower" sense. But if you were going to buy
 ## So when should you buy?
 
 - **Buying gifts on TCGplayer?** Buy during Cyber Weekend (November 27 to 30) at the latest, and don't wait past it. The price won't be any lower than the week before, but you'll get 10% back in store credit. Waiting until later in December didn't save money either year, and in 2024 waiting just two weeks past Black Friday cost about 10% on ETBs.
-- **The real Black Friday deals are at retail.** Big stores sometimes drop ETBs and tins to MSRP or below for a day. Those sales don't show up in the market price, and they sell out fast, but if you see one, that's the deal.
+- **The real Black Friday deals are at retail.** Big stores sometimes drop ETBs and tins to MSRP or below for a day. Those sales don't show up in the market price, and they sell out fast, but if you see one, that's the deal. That's if you can find any. We're still deep in scalper territory, and unless you're willing to put in the time, what you'll find on the shelves may be limited. It's getting better, but slowly.
 - **Want a new set?** Black Friday doesn't matter. Give it a couple of months and the singles and most sealed will come down on their own.
 
 Here's what a few gift picks cost today, from a stocking stuffer up to a booster box:
 
 [[market 712097 712102 593355 672394 712094]]
+
+If you'd rather skip the hunt, we have sealed product in stock in [our shop](/shop).
