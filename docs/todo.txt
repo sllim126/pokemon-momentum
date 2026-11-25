@@ -262,7 +262,8 @@ High Priority
     Part 2.
   - How to write and publish one (any agent): `docs/blog_guide.md`.
   - [next] Gift guide (`pokemon-tcg-gift-guide-by-budget.md`, Nov 28): reviewed, prices to Nov 24
-    on `blog/gift-guide-review`. Refresh every price again on Nov 27 (owner, 2026-11-25), then the
+    on `blog/gift-guide-review`. On Nov 27 (owner, 2026-11-25): refresh every price, re-read the
+    text against the new numbers (claims, budget sections, wording), then the
     owner's OK to publish.
   - Posts can show live product boxes with `[[market <ids>]]` (storefront/README.md "Articles").
   - Topics: Nov 24 Delta Reign, two weeks in (see above) · Nov 26
