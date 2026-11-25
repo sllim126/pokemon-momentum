@@ -80,6 +80,10 @@ Not everything went up. About 1 in 4 products cost less on Black Friday than two
 
 None of these were Black Friday sales. Most of them kept falling for weeks afterwards. So if you're hunting for a deal, look at the newest set's premium products. They do come down, just not because it's Black Friday.
 
+Here are six of them today. Most have climbed back up since, some above where they started, so the dip is a window, not a new normal:
+
+[[market 654135 557340 648415 650799 656997 654213]]
+
 ## But TCGplayer's Cyber Weekend still counts
 
 The prices don't drop, but TCGplayer runs its own promotion over the holiday weekend, and it's back this year: **10% back in TCGplayer store credit on everything**, across every game, from 9 a.m. Eastern on Black Friday, November 27, to 11 p.m. Eastern on Cyber Monday, November 30. Subscribers get 13% or more.
