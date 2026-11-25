@@ -115,6 +115,10 @@ Why it is here:
 
 ## 3. Generated Output Folders
 
+(One folder isn't generated: `TCG Placeholders/title_cards/` holds hand-made PDFs, such as the
+Journey Together promo title cards, which the Placeholder Library offers as downloads. The
+builders and the nightly sync never write or delete there.)
+
 ### Print outputs
 
 - `TCG Placeholders/output/`
