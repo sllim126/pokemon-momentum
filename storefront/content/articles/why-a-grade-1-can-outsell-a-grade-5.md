@@ -19,6 +19,8 @@ On [PSA's scale](https://www.psacard.com/gradingstandards) a 1 is "Poor": heavy 
 
 Grade 5 is "Excellent": some corner wear and maybe a light crease, but it still looks like a nice card from a few feet away. So the question is why the wrecked one is worth more.
 
+A 1 doesn't always look wrecked, though. Plenty have a clean front and all the damage on the back: a crease that runs through the card, water damage, warping. Those are the 1s collectors like best.
+
 ## How often a 1 beats a 5
 
 - **82%** of those cards had a Grade 1 price above their Grade 5 price.
@@ -69,10 +71,23 @@ Here are the four modern cards today. These boxes show the ungraded TCGplayer ma
 
 Two things, as far as I can tell:
 
-1. **Hardly anyone grades a wrecked card.** Grading costs more than most damaged cards are worth, so very few Grade 1s exist. Mid grades are what you get when someone hoped for a 9 or 10 and missed, and there are plenty of those.
-2. **Some collectors want the 1s.** The worst possible copy is a collection of its own, and a few people chase complete sets of Grade 1s. With so few copies around, a couple of buyers are enough to set the price.
+1. **Hardly anyone grades a wrecked card.** Grading costs more than most damaged cards are worth, so very few Grade 1s exist. Mid grades are what you get when someone hoped for a 9 or 10 and missed, and there are plenty of those. And a card that's damaged enough for a 1 can just as easily come back a 2, or not be graded at all.
+2. **Some collectors want the 1s.** The worst possible copy is a collection of its own: some people collect only 1s, some want the same card in every grade from 1 to 10, and a lot of 1s are childhood cards their owners wanted to keep safe. With so few copies around, a couple of buyers are enough to set the price.
 
 The price data can't prove either one: it doesn't count how many slabs exist at each grade or say why anyone bought. But both fit what the numbers show, especially the cliff at Grade 2.
+
+## What collectors say
+
+I read through five Reddit threads about PSA 1s from 2024 to 2026 ([1](https://www.reddit.com/r/PokemonTCG/comments/1efqyrj/what_do_you_guys_think_about_psa_1s/), [2](https://www.reddit.com/r/PokeInvesting/comments/1oay2gn/do_people_really_buy_psa_1_at_this_point_while_a/), [3](https://www.reddit.com/r/PokemonTCG/comments/1qkk831/my_dad_knows_nothing_about_pokemon_but_has_been/), [4](https://www.reddit.com/r/PokemonTCG/comments/1k91vxi/any_psa_1_fans/), [5](https://www.reddit.com/r/PokemonTCG/comments/1hggpss/forget_psa_10s_lets_see_those_psa_1s/)). Most of the comments are fans, and the reasons line up with the numbers:
+
+- **They have a story.** "To me a PSA 1 is the PSA 10 version for a card that was enjoyed to its full potential." Another: "All 10s should theoretically be the same," while every 1 is different.
+- **They're hard to get.** "It's either not graded by PSA because it's too damaged or it's a 2." Several people think a 1 is harder to hit than a 10.
+- **Nobody wants a 2.** One fan ranks 1s second only to 10s: "2's are bad because they are very forgettable and no one wants them." That's the cliff in the first chart, in one sentence. One owner said their PSA 2 1st Edition Gyarados was worth $310 and a 1 was worth $410, and wondered whether to crack it and try. ("I dont know if i have the heart to do it.")
+- **The clean-looking ones are the dream.** The most upvoted comment on a 1,500-upvote post was "Love that its a 1 but still very clear."
+
+The skeptics are fewer, but they make fair points. Some see 1s as "just damaged cards", and one called collecting them "no different than collecting PSA10s, just uglier and cheaper… mostly a gimmick." The most upvoted worry, in two different threads, is deliberate damage: a card that "could have been a 6 but someone has purposefully mistreated it." Even the fans draw that line. They want a 1 that earned it through play, age or accidents, not one that was bent on purpose.
+
+Over the two years, the tone changed a little. In 2024 people were asking what everyone thought of 1s. By 2026 "they definitely carry a premium" goes by without anyone arguing.
 
 ## A word about the numbers
 
@@ -89,7 +104,8 @@ None of that changes the overall pattern, since it shows up across thousands of 
 - **Got a badly damaged copy of a popular card?** Don't write it off. A Grade 1 slab of a chase card can be worth more than you'd expect, sometimes more than a clean ungraded copy.
 - **Check the sold listings first.** Look for that exact card, printing, grade and grading company, and how many actually sold, not what sellers are asking.
 - **Do the math.** Take the grading fee, shipping both ways, insurance and selling fees (about 13% on most marketplaces) off the price you'd expect, and compare that with what the card would sell for ungraded.
-- **A damaged card isn't guaranteed a 1.** It could come back a 2, the cheapest grade of all, and that's where the plan falls apart.
+- **A damaged card isn't guaranteed a 1.** It could come back a 2, the cheapest grade of all, and that's where the plan falls apart. Graders aren't always consistent at the bottom of the scale either: collectors in those threads tell of cards coming back a 2 twice in a row.
+- **Buying one?** Look at the back. The 1s that sell best look good from the front, but check what you're paying for.
 - **Expensive vintage is different.** Over $500, the higher grade is still worth more most of the time.
 
 And please don't damage a card to chase the number. Trimming or recolouring gets it sent back without a grade, and there's no telling whether a bent card comes back a 1 or a 2.
