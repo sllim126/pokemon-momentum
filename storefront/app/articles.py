@@ -24,6 +24,9 @@ a row of boxes with each product's TCGplayer picture, today's market price and 3
 filled in on every page view from market_reference.json (market_boxes below), so the prices in
 an old post stay current. `[[cards <id> ...]]` shows just the pictures, names and sets.
 Products missing from that file are left out.
+TCGplayer links: `[Perfect Order ETB](tcgplayer:672401)` links to that product's TCGplayer page
+through the shop's affiliate link, marked rel="sponsored" (tcgplayer_links below). A post that
+uses them says so once (the "affiliate links" note).
 A finished article (draft: false) with a future date is scheduled: hidden the same way, with a
 "scheduled" note, until its date arrives (Articles.published).
 
@@ -37,7 +40,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from urllib.parse import quote, unquote
+from urllib.parse import quote, unquote, urlencode
 from zoneinfo import ZoneInfo
 
 from markdown_it import MarkdownIt
@@ -280,3 +283,26 @@ def market_boxes(html: str, market) -> str:
         return f'<figure class="{css}">{"".join(boxes)}{caption}</figure>'
 
     return MARKET_TAG.sub(replace, html)
+
+
+# --- TCGplayer links --------------------------------------------------------------------------
+
+# `[name](tcgplayer:<product id>)` as markdown-it renders it.
+TCGPLAYER_LINK = re.compile(r'<a href="tcgplayer:(\d+)">')
+
+
+def tcgplayer_links(html: str, affiliate_base: str) -> str:
+    """Point each tcgplayer:<id> link at that product's TCGplayer page, wrapped in the affiliate
+    link (settings.tcgplayer_affiliate_base: <base>?u=<product page>), the same way the shop's
+    "Buy on TCGplayer" button does (main.tcgplayer_link). With no affiliate base, the plain
+    product page. rel="sponsored" tells search engines it's an affiliate link (owner, 2026-11-25).
+    """
+    if "tcgplayer:" not in html:
+        return html
+
+    def replace(match: re.Match) -> str:
+        target = f"https://www.tcgplayer.com/product/{match.group(1)}"
+        href = f"{affiliate_base}?{urlencode({'u': target})}" if affiliate_base else target
+        return f'<a href="{html_lib.escape(href)}" rel="sponsored noopener">'
+
+    return TCGPLAYER_LINK.sub(replace, html)

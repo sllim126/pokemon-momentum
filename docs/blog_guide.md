@@ -44,6 +44,9 @@ Last reviewed: 2026-11-23.
   point is the art (pictures, names and sets only).
 - Rows of 3, 4 or 6 products lay out cleanly (3 and 6 go three to a row, 4 fit on one row).
   Five leaves a gap; add or drop one if it makes sense.
+- Product names can link to TCGplayer through the affiliate link: `[Perfect Order](tcgplayer:672401)`.
+  Add one line to the italic data note saying they're affiliate links (Poke6s may earn a small
+  commission). Products we stock link to our own shop page instead, not TCGplayer.
 - Single cards must be in `data/storefront/market_reference.json` to show. The nightly build
   picks up IDs from article tags; to see them at once, rebuild it:
   `docker-compose exec -T pokemon-momentum python scripts/build_storefront_market_reference.py`.

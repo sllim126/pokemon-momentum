@@ -217,6 +217,11 @@ single cards is shown bigger, card-shaped, for the art; cards also show their se
 Japanese products say "Japanese". The article page's CSP
 allows pictures from `tcgplayer-cdn.tcgplayer.com` for this.
 
+**TCGplayer links.** `[Perfect Order ETB](tcgplayer:672401)` links to that product's TCGplayer
+page through the shop's affiliate link (`STOREFRONT_TCGPLAYER_AFFILIATE`, the same one as the
+"Buy on TCGplayer" button), marked `rel="sponsored"`. A post that uses them says once that
+they're affiliate links. Products we sell link to our own page instead.
+
 **Scheduling.** A finished article (`draft: false`) with a future `date` is scheduled: it stays
 off the list, the home page and the sitemap until that date (Mountain time), then appears on
 its own, with no restart, because the date is checked on every request. Its page shows a
