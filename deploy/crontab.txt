@@ -11,9 +11,9 @@
 * * * * * cd /opt/pokemon-momentum && /usr/bin/python3 scripts/monitoring/collect_status.py >> logs/monitoring_collector.log 2>&1
 */15 * * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin /usr/bin/python3 scripts/monitoring/run_job.py discord-bug-import -- docker-compose exec -T pokemon-momentum python scripts/utilities/import_discord_bug_reports.py >> logs/discord_bug_import.log 2>&1
 0 15 * * 5 cd /opt/pokemon-momentum && /usr/bin/python3 scripts/monitoring/run_job.py discord-weekly -- /usr/bin/python3 scripts/utilities/post_weekly_discord.py >> logs/discord_weekly.log 2>&1
-# New blog posts to #general-site-updates, hourly 8:05 am-9:05 pm Mountain (MST; an hour later in summer),
-# so a post scheduled for midnight is announced in the morning.
-5 15-23,0-4 * * * cd /opt/pokemon-momentum && /usr/bin/python3 scripts/monitoring/run_job.py discord-articles -- /usr/bin/python3 scripts/utilities/announce_articles_discord.py >> logs/discord_articles.log 2>&1
+# New blog posts to #general-site-updates, daily 8:05 am Mountain (MST; 9:05 in summer), so a post
+# scheduled for midnight is announced in the morning. A post made live later in the day waits until the next morning.
+5 15 * * * cd /opt/pokemon-momentum && /usr/bin/python3 scripts/monitoring/run_job.py discord-articles -- /usr/bin/python3 scripts/utilities/announce_articles_discord.py >> logs/discord_articles.log 2>&1
 30 4 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin /usr/bin/python3 scripts/monitoring/run_job.py placeholder-sync -- docker-compose exec -T pokemon-momentum python scripts/utilities/sync_placeholder_library.py >> logs/placeholder_sync.log 2>&1
 0 3 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin /usr/bin/python3 scripts/monitoring/run_job.py storefront-market-reference -- docker-compose exec -T pokemon-momentum python scripts/build_storefront_market_reference.py >> logs/storefront_market_reference.log 2>&1
 30 21 * * * cd /opt/pokemon-momentum && PATH=/usr/local/bin:/usr/bin:/bin /usr/bin/python3 scripts/monitoring/run_job.py archive-backfill -- scripts/pipeline/run_archive_backfill_host.sh

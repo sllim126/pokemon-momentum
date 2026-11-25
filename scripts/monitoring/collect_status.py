@@ -98,7 +98,7 @@ JOBS = {
     "discord-bug-import": ("cron", 15 * 60),
     "market-dns": ("cron", 5 * 60),
     "discord-weekly": ("cron", 7 * DAY),
-    "discord-articles": ("cron", DAY),  # hourly by day; quiet overnight
+    "discord-articles": ("cron", DAY),
 }
 
 TODO_TAGS = ("next", "in progress", "waiting", "planned", "parked", "idea", "watching")

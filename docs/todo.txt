@@ -45,9 +45,9 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
-- 2026-11-25 New blog posts are announced in Discord #general-site-updates (owner): hourly cron
+- 2026-11-25 New blog posts are announced in Discord #general-site-updates (owner): daily cron
   `scripts/utilities/announce_articles_discord.py` reads the store's sitemap and posts "New on the
-  blog: <title>" plus the link, once per post, including scheduled ones on their day.
+  blog: <title>" plus the link, once per post, daily at 8:05 am Mountain (scheduled posts on their day).
 
 - 2026-11-25 Article links (owner): `[name](tcgplayer:<id>)` in a post links to TCGplayer through
   the affiliate link (rel=sponsored), and price-box pictures are links too. Products we have in
