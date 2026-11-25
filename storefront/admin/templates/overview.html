@@ -68,8 +68,9 @@
         {% if d.emails.retrying %}<li class="warn">{{ d.emails.retrying }} order email{{ '' if d.emails.retrying == 1 else 's' }} waiting to retry (every 15 minutes).</li>{% endif %}
         {% if d.backup.stale %}<li class="bad">{% if d.backup.found %}The last backup is {{ d.backup.hours | hours }} old: the nightly job may have failed.{% else %}No backup found.{% endif %} See the runbook, "Store backups".</li>{% endif %}
         {% if not d.status.checkout_on %}<li class="warn">Checkout is {{ d.status.checkout | trim('.') }}.</li>{% endif %}
+        {% if d.support.open %}<li class="warn">{{ d.support.open }} support message{{ '' if d.support.open == 1 else 's' }} to answer (below).</li>{% endif %}
         {% if d.bugs.open %}<li class="warn">{{ d.bugs.open }} open bug report{{ '' if d.bugs.open == 1 else 's' }} (below).</li>{% endif %}
-        {% if not (d.disputed or d.emails.failed or d.emails.retrying or d.backup.stale or not d.status.checkout_on or d.bugs.open) %}<li class="good">All clear.</li>{% endif %}
+        {% if not (d.disputed or d.emails.failed or d.emails.retrying or d.backup.stale or not d.status.checkout_on or d.bugs.open or d.support.open) %}<li class="good">All clear.</li>{% endif %}
       </ul>
     </section>
 
@@ -83,6 +84,28 @@
       {% else %}<p class="muted">Nothing on show is sold out.</p>{% endif %}
       {% if d.last_one %}<p class="muted small">{{ d.last_one }} product{{ '' if d.last_one == 1 else 's' }} down to the last one.</p>{% endif %}
       {% if d.held %}<p class="muted small">{{ d.held }} unit{{ '' if d.held == 1 else 's' }} held by checkouts in progress.</p>{% endif %}
+    </section>
+
+    <section class="panel" id="support">
+      <h2>Support messages{% if d.support.open %} ({{ d.support.open }} to answer){% endif %}</h2>
+      {% if d.support.newest %}
+      <ul class="plain support-list">
+        {% for m in d.support.newest %}
+        <li><strong>#{{ m.id }}</strong> {{ m.name }}{% if m.order_number %} · <a href="/orders/{{ m.order_number }}">{{ m.order_number }}</a>{% endif %}
+          <span class="muted small">{{ m.created_at | when }}{% if m.signed_in %} · signed in{% endif %}</span>
+          <p class="small support-text">{{ m.message }}</p>
+          <p class="actions small">
+            <a class="button secondary" href="mailto:{{ m.email }}?subject={{ ('Re: your message to Poke6s' ~ ((' (' ~ m.order_number ~ ')') if m.order_number else '')) | urlencode }}">Reply to {{ m.email }}</a>
+            <form method="post" action="/support/{{ m.id }}/answered" class="inline-form">
+              <input type="hidden" name="form_token" value="{{ form_token }}">
+              <button type="submit" class="secondary">Mark answered</button>
+            </form></p>
+        </li>
+        {% endfor %}
+      </ul>
+      {% if d.support.open > d.support.newest | length %}<p class="muted small">and {{ d.support.open - d.support.newest | length }} older.</p>{% endif %}
+      {% else %}<p class="muted">None waiting.</p>{% endif %}
+      <p class="muted small">From the Contact page's message box. Each new one also pings Discord with its number.</p>
     </section>
 
     <section class="panel" id="bugs">

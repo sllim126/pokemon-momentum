@@ -29,6 +29,7 @@
         <span class="num">{{ o.total_cents | money }}</span>
       </p>
       <p class="small">{% for i in o['items'] %}{{ i.quantity }} × {{ i.title }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+      <p class="small"><a href="/contact?order={{ o.number | urlencode }}#support">Get help with this order</a></p>
       {% if o.status == 'shipped' and o.tracking_number %}<p class="small">Tracking: {{ o.carrier or '' }} {{ o.tracking_number }}
         {%- if o.tracking_url %} · <a href="{{ o.tracking_url }}" rel="noopener" target="_blank">Track package</a>{% endif %}</p>{% endif %}
     </li>
@@ -37,6 +38,29 @@
   {% else %}
   <p class="muted">No orders with {{ account.email }} yet. Orders placed with another email address
     won't show here; <a href="/contact">contact us</a> if you need one.</p>
+  {% endif %}
+
+  <h2 id="wishlist">Your wishlist</h2>
+  {% if saved_items %}
+  <ul class="my-orders wish-list">
+    {% for p in saved_items %}
+    <li>
+      <p class="order-head">
+        <a href="/p/{{ p.slug }}"><strong>{{ p.title }}</strong></a>
+        <span class="pill {{ 'up' if p.in_stock else 'down' }}">{{ 'In stock' if p.in_stock else 'Sold out' }}</span>
+        <span class="num">{{ p.price_cents | money }}</span>
+      </p>
+      <form method="post" action="/wishlist">
+        <input type="hidden" name="product_id" value="{{ p.id }}">
+        <input type="hidden" name="action" value="remove">
+        <input type="hidden" name="back" value="account">
+        <button type="submit" class="btn small">Remove</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">Nothing saved yet. Tap ♡ Save to wishlist on any product.</p>
   {% endif %}
 
   <p class="muted small">Your account, saved lists and account deletion are managed on

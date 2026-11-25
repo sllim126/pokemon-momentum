@@ -36,7 +36,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import accounts, catalog, classify, collector_hub, images, notify, notify_list, orders, placeholder_library, redirects, seo, stripe_api
+from . import accounts, catalog, support, wishlist, classify, collector_hub, images, notify, notify_list, orders, placeholder_library, redirects, seo, stripe_api
 from .articles import Articles, market_boxes
 from .binder_art import SetLogos
 from .placeholder_library import PlaceholderFiles
@@ -64,6 +64,10 @@ UNITS_HELD_PER_VISITOR = 12
 VISITOR_TABLE_TIDY_AT = 1000
 # Sign-ups for the "email me when the store opens" list, per visitor per hour.
 SIGNUPS_PER_HOUR = 5
+# Support messages (/contact's message box): per visitor, and for the whole site so faked
+# addresses can't flood the admin either.
+SUPPORT_PER_HOUR = 3
+SUPPORT_SITE_PER_HOUR = 30
 log = logging.getLogger("storefront")
 
 SECURITY_HEADERS = {
@@ -126,6 +130,8 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         stripe = stripe_api.StripeClient(settings.stripe_secret_key)
     checkout_attempts: dict[str, deque] = defaultdict(deque)
     signup_attempts: dict[str, deque] = defaultdict(deque)
+    support_attempts: dict[str, deque] = defaultdict(deque)
+    support_site: deque = deque()
     # Order numbers of each visitor's checkouts, to count what they still hold (held_by).
     open_checkouts: dict[str, set[str]] = defaultdict(set)
 
@@ -134,6 +140,10 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
             counts = orders.reconcile(conn, settings, stripe, settings.base_url)
             # A few days after shipping: the one Google review request per order.
             counts["review_emails"] = orders.send_review_requests(conn, settings, settings.base_url)
+            # Wishlists of accounts deleted on the market site go too (privacy page).
+            counts["wishlists_dropped"] = wishlist.drop_deleted_accounts(conn, settings)
+            # Answered support messages are kept a year (privacy page).
+            counts["support_dropped"] = support.drop_old(conn)
         # Order emails that failed earlier get another try (notify.py, review item 12).
         counts.update({f"email_{k}": v for k, v in notify.retry_queued(settings).items()})
         if any(counts.values()):
@@ -173,7 +183,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
     env.globals.update(settings=settings, checkout_enabled=settings.checkout_enabled, tax_note=orders.tax_note(settings), year=datetime.now(UTC).year, sort_labels=catalog.SORT_LABELS,
                        type_labels=classify.PRODUCT_TYPE_LABELS, language_labels=classify.LANGUAGE_LABELS,
                        footer_pages=pages,
-                       social_links=seo.SOCIAL_LINKS)
+                       social_links=seo.SOCIAL_LINKS, discord_url=dict(seo.SOCIAL_LINKS).get("Discord", ""))
     # Cloudflare keeps /static files for 4 hours, so the stylesheet and script links carry a
     # short hash of their contents (?v=...): a deploy that changes them changes the address.
     env.globals["static_v"] = {
@@ -436,7 +446,12 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
             crumbs.append((item["category"]["name"], f"/c/{item['category']['slug']}"))
         crumbs.append((item["title"], f"/p/{slug}"))
         description = f"{item['title']} for {seo.money(item['price_cents'])} USD at Poke6s."
-        return page(request, "product.html", title=item["title"], product=item, market=summary,
+        account = current_account(request)
+        saved = False
+        if account is not None:
+            with db() as conn:
+                saved = wishlist.has(conn, account.email, item["id"])
+        return page(request, "product.html", title=item["title"], product=item, market=summary, saved=saved,
                     below_market=below_market, related=others, crumbs=crumbs,
                     buy_url=tcgplayer_link(item),
                     og_image=seo.image_url(settings, item["image"]), og_type="product",
@@ -738,11 +753,77 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
             for order in my_orders:
                 order["status_url"] = orders.status_url(settings.base_url, order)
                 order["tracking_url"] = notify.tracking_url(order.get("carrier"), order.get("tracking_number"))
-        response = page(request, "account.html", title="Your account", my_orders=my_orders,
+        saved_items = []
+        if account is not None:
+            with db() as conn:
+                saved_items = wishlist.items(conn, account.email)
+        response = page(request, "account.html", title="Your account", my_orders=my_orders, saved_items=saved_items,
                         sign_out_url=accounts.sign_out_url(settings),
                         manage_url=f"{settings.market_base_url}/account-settings")
         response.headers["Cache-Control"] = "private, no-store"
         return response
+
+    @app.post("/wishlist")
+    async def wishlist_change(request: Request):
+        """The ♡ on product pages and Remove on the account page: a plain form post, then back to
+        the page it came from. Signed out: off to sign in. The sign-in cookie is SameSite=Lax, so
+        another site's form can't post as the visitor; the Origin check is a second wall."""
+        origin = request.headers.get("origin")
+        if origin and origin.rstrip("/") not in (settings.base_url, site_url(request)):
+            return PlainTextResponse("Form came from another site.", status_code=403)
+        account = current_account(request)
+        if account is None:
+            return RedirectResponse(accounts.sign_in_url(settings), status_code=303)
+        form = await request.form()
+        try:
+            product_id = int(str(form.get("product_id") or ""))
+        except ValueError:
+            return PlainTextResponse("No such product.", status_code=400)
+        with writer() as conn:
+            if form.get("action") == "remove":
+                wishlist.remove(conn, account.email, product_id)
+            else:
+                wishlist.add(conn, account.email, product_id)
+            slug = conn.execute("SELECT slug FROM products WHERE id = ?", (product_id,)).fetchone()
+        # Back to the product page, or the account page (only these two: no open redirect).
+        target = "/account#wishlist" if form.get("back") == "account" or slug is None else f"/p/{slug[0]}"
+        return RedirectResponse(target, status_code=303)
+
+    @app.post("/support")
+    async def support_send(request: Request):
+        """The Contact page's message box (support.py). Saved, then a Discord ping with the
+        message number only; the owner answers by email from the admin Overview."""
+        origin = request.headers.get("origin")
+        if origin and origin.rstrip("/") not in (settings.base_url, site_url(request)):
+            return PlainTextResponse("Form came from another site.", status_code=403)
+        form = await request.form()
+        # Bots fill every field; people never see "website" (hidden with CSS).
+        if str(form.get("website") or ""):
+            return RedirectResponse("/contact?sent=1#support", status_code=303)
+        fields, error = support.clean(str(form.get("name") or ""), str(form.get("email") or ""),
+                                      str(form.get("order_number") or ""), str(form.get("message") or ""))
+        if fields is None:
+            typed = {key: str(form.get(key) or "")[:support.MAX_MESSAGE]
+                     for key in ("name", "email", "order_number", "message")}
+            return contact_page(request, pages.get("contact"), status_code=400, error=error, typed=typed)
+        now = time.monotonic()
+        tidy(support_attempts, lambda v: not v or now - v[-1] > 3600)
+        attempts = support_attempts[visitor(request)]
+        for queue in (attempts, support_site):
+            while queue and now - queue[0] > 3600:
+                queue.popleft()
+        if len(attempts) >= SUPPORT_PER_HOUR or len(support_site) >= SUPPORT_SITE_PER_HOUR:
+            return PlainTextResponse("Too many messages from here right now. Please email admin@poke6s.com instead.",
+                                     status_code=429)
+        attempts.append(now)
+        support_site.append(now)
+        account = current_account(request)
+        with writer() as conn:
+            number = support.add(conn, fields, signed_in=bool(account and account.email == fields["email"]))
+        about = f" about {fields['order_number']}" if fields["order_number"] else ""
+        await asyncio.to_thread(notify.discord, settings,
+                                f"New support message #{number}{about} on poke6s.com. Read it on the admin Overview.")
+        return RedirectResponse("/contact?sent=1#support", status_code=303)
 
     # --- text pages (registered last so they never shadow the routes above) --------------
 
@@ -751,8 +832,25 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         found = pages.get(slug)
         if found is None:
             raise HTTPException(404)
+        if slug == "contact":
+            return contact_page(request, found)
         return page(request, "page.html", title=found["title"], page_data=found,
                     description=found["description"])
+
+    def contact_page(request: Request, found: dict, status_code: int = 200, error: str = "",
+                     typed: dict | None = None) -> HTMLResponse:
+        """/contact with its three ways to reach us (templates/_support.html). ?order= fills in the
+        order number (from "Get help with this order"); a signed-in visitor's email is filled in."""
+        account = current_account(request)
+        query = request.query_params
+        order = str(query.get("order") or "").strip().upper()
+        form = typed or {"name": "", "email": account.email if account else "",
+                         "order_number": order if support.ORDER_NUMBER.match(order) else "", "message": ""}
+        response = page(request, "page.html", status_code=status_code, title=found["title"], page_data=found,
+                        description=found["description"], support_form=form, support_error=error,
+                        support_sent=query.get("sent") == "1")
+        response.headers["Cache-Control"] = "private, no-store"
+        return response
 
     return app
 
