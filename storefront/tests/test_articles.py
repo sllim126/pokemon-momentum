@@ -306,3 +306,14 @@ def test_tcgplayer_links_use_the_affiliate_link():
     assert '<a href="/shop">ours</a>' in out          # other links untouched
     plain = tcgplayer_links(html, "")
     assert 'href="https://www.tcgplayer.com/product/672401" rel="sponsored noopener"' in plain
+
+
+def test_market_box_pictures_link_to_where_you_can_buy():
+    """Pictures link to our page for products we stock, else to TCGplayer as sponsored."""
+    market = _StubMarket({"1": {"name": "Ours", "price": 10.0}, "2": {"name": "Theirs", "price": 20.0}})
+    html = parse("x", "[[market 1 2]]\n").html
+    links = {"1": ("/p/ours", False), "2": ("https://partner.example/x?u=2", True)}
+    out = market_boxes(html, market, links.get)
+    assert '<a class="market-box-pic" href="/p/ours"><img' in out
+    assert '<a class="market-box-pic" href="https://partner.example/x?u=2" rel="sponsored noopener"><img' in out
+    assert "market-box-pic" not in market_boxes(html, market)          # no link function: no links

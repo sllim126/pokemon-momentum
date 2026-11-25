@@ -222,3 +222,15 @@ def product_redirect(conn: sqlite3.Connection, old_path: str) -> str | None:
         return None
     # A hidden product's old address goes to the shop rather than to a 404.
     return f"/p/{row['slug']}" if row["visible"] else "/shop"
+
+
+def stocked_by_tcgplayer_id(conn: sqlite3.Connection) -> dict[str, str]:
+    """{TCGplayer product ID: /p/<slug>} for every visible, in-stock product, so an article's
+    product pictures send shoppers to our own page for things we sell (articles.market_boxes)."""
+    found: dict[str, str] = {}
+    for row in conn.execute("""SELECT slug, tcgplayer_product_ids FROM products
+                               WHERE visible = 1 AND (track_stock = 0 OR stock > 0)"""):
+        for pid in (row["tcgplayer_product_ids"] or "").split("|"):
+            if pid.strip().isdigit():
+                found.setdefault(pid.strip(), f"/p/{row['slug']}")
+    return found
