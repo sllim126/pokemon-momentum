@@ -20,6 +20,9 @@
   </header>
   {% if article.cover and not article.cover_in_body %}<img class="article-cover" src="/media/1200/{{ article.cover }}.webp" alt="" width="1200" height="675">{% endif %}
   <div class="article-body">{{ body_html | safe }}</div>
+  {% if 'rel="sponsored' in body_html and 'affiliate link' not in body_html %}
+  <p class="small muted">TCGplayer links on this page are affiliate links: Poke6s may earn a small commission.</p>
+  {% endif %}
   {% if article.tags %}
   <ul class="chips article-tags" aria-label="Tags">{% for t in article.tags %}<li><a class="chip" href="/articles?tag={{ t | urlencode }}">{{ t }}</a></li>{% endfor %}</ul>
   {% endif %}

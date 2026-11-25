@@ -260,6 +260,8 @@ main section { margin-top: 32px; }
 }
 .market-boxes-cards { grid-template-columns: repeat(auto-fill, minmax(200px, 260px)); }
 .article-body .market-boxes-cards .market-box img { aspect-ratio: 63 / 88; object-fit: cover; background: var(--panel-2); }
+.market-box-pic { display: block; }
+.market-box-pic:hover img { opacity: 0.88; }
 .market-boxes figcaption { grid-column: 1 / -1; color: var(--muted); font-size: 0.8rem; }
 .article-tags { margin: 28px 0 8px; }
 .article-tags .chip { font-weight: 500; font-size: 0.85rem; padding: 6px 12px; }

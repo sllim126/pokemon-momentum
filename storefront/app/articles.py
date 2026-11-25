@@ -221,7 +221,7 @@ TCGPLAYER_IMAGE = "https://tcgplayer-cdn.tcgplayer.com/product/{id}_{size}w.jpg"
 TCGPLAYER_CARD_LARGE = "https://tcgplayer-cdn.tcgplayer.com/product/{id}_in_1000x1000.jpg"
 
 
-def _market_box(product_id: str, entry: dict, with_price: bool = True) -> str:
+def _market_box(product_id: str, entry: dict, with_price: bool = True, buy_link: tuple[str, bool] | None = None) -> str:
     name = html_lib.escape(entry.get("name") or "")
     price = f'<span class="market-box-price">${float(entry["price"]):,.2f}</span>' if with_price else ""
     change = entry.get("roc_30d_pct")
@@ -250,18 +250,27 @@ def _market_box(product_id: str, entry: dict, with_price: bool = True) -> str:
     else:
         small, large = TCGPLAYER_IMAGE.format(id=product_id, size=200), TCGPLAYER_IMAGE.format(id=product_id, size=400)
         width, height = 200, 200
-    return (f'<div class="market-box"><img src="{small}" srcset="{small} 1x, {large} 2x" alt="{name}" '
-            f'width="{width}" height="{height}" loading="lazy">'
+    picture = (f'<img src="{small}" srcset="{small} 1x, {large} 2x" alt="{name}" '
+               f'width="{width}" height="{height}" loading="lazy">')
+    if buy_link:
+        # The picture links to where you can buy it: our page if we stock it, else TCGplayer
+        # through the affiliate link (owner, 2026-11-25). See market_boxes.
+        href, sponsored = buy_link
+        rel = ' rel="sponsored noopener"' if sponsored else ""
+        picture = f'<a class="market-box-pic" href="{html_lib.escape(href)}"{rel}>{picture}</a>'
+    return (f'<div class="market-box">{picture}'
             f'<div class="market-box-text"><span class="market-box-name">{name}</span>{detail}'
             f'{price}{trend}{history}</div></div>')
 
 
-def market_boxes(html: str, market) -> str:
+def market_boxes(html: str, market, link_for=None) -> str:
     """Replace each [[market ...]] / [[cards ...]] paragraph with boxes from `market` (a
     MarketReference). [[cards ...]] shows only the pictures, names and sets, for the art.
 
     Done per request, not at load time, because the prices change daily. Unknown IDs are
     skipped; a tag with none left disappears, so a post never shows a broken box.
+    `link_for(product_id)` returns (address, is_affiliate) for the picture's link, or None for no
+    link (main.py: our product page when we stock it, else TCGplayer's affiliate link).
     Price rows carry no caption: a post with several rows would repeat it, so the article says
     once, in its own words, that the boxes show today's prices (owner, 2026-11-21).
     """
@@ -274,7 +283,8 @@ def market_boxes(html: str, market) -> str:
         for product_id in match.group(2).split():
             entry = market.entry(product_id)
             if entry and entry.get("price"):
-                boxes.append(_market_box(product_id, entry, with_price))
+                boxes.append(_market_box(product_id, entry, with_price,
+                                         link_for(product_id) if link_for else None))
                 kinds.add(entry.get("kind"))
         if not boxes:
             return ""
@@ -291,6 +301,12 @@ def market_boxes(html: str, market) -> str:
 TCGPLAYER_LINK = re.compile(r'<a href="tcgplayer:(\d+)">')
 
 
+def tcgplayer_url(product_id: str, affiliate_base: str) -> str:
+    """A product's TCGplayer page, through the affiliate link when there is one."""
+    target = f"https://www.tcgplayer.com/product/{product_id}"
+    return f"{affiliate_base}?{urlencode({'u': target})}" if affiliate_base else target
+
+
 def tcgplayer_links(html: str, affiliate_base: str) -> str:
     """Point each tcgplayer:<id> link at that product's TCGplayer page, wrapped in the affiliate
     link (settings.tcgplayer_affiliate_base: <base>?u=<product page>), the same way the shop's
@@ -301,8 +317,7 @@ def tcgplayer_links(html: str, affiliate_base: str) -> str:
         return html
 
     def replace(match: re.Match) -> str:
-        target = f"https://www.tcgplayer.com/product/{match.group(1)}"
-        href = f"{affiliate_base}?{urlencode({'u': target})}" if affiliate_base else target
+        href = tcgplayer_url(match.group(1), affiliate_base)
         return f'<a href="{html_lib.escape(href)}" rel="sponsored noopener">'
 
     return TCGPLAYER_LINK.sub(replace, html)
