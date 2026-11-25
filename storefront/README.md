@@ -449,6 +449,7 @@ that address out for 15 minutes and post a Discord alert.
 | `/pricing`, `POST /pricing/apply` | Pricing: the repricing rules with a preview; applies only the ticked lines (see "Pricing page") |
 | `/reports`, `/reports/sales.csv`, `/reports/stripe.csv` | Reports: a month's sales for the books (`?month=YYYY-MM`); read-only (see "Reports page") |
 | `/supplier-profitability` | Suppliers: each SKU's newest supplier quote (`data/storefront/supplier_quotes.csv`) against store, market and target prices, per channel, with editable assumptions and a quick calculator. Market column (market price and its % above landed); the Verdict cell shows the best channel's margin, profit and return on cost. Sort (best buys, margin %, profit $, return on cost, market gap, cheapest landed, newest, name, or one channel's margin; also by clicking a heading), judge on one channel only, minimum margin %. Read-only; a GET form. Moved from the market site 2026-11-21 |
+| `/supplier-best-buys` | Suppliers → Best buys: per box, every route (import or buy on TCGplayer + Utah tax; sell on the own site with its real buyer shipping, eBay or TCGplayer), the best route and the best one off the own site, fastest TCGplayer sellers first, and a suggested order (4 fast / 2 steady / 1 slow, halved when falling, less stock, never at a loss). POST `/supplier-best-buys/sales` appends the owner's TCGplayer sales numbers to `data/storefront/tcgplayer_sales.csv` |
 | `/supplier-pricing` (GET, POST) | Suppliers, "Enter a quote": paste a supplier's price list (one item per line, or a whole copied shop page such as MACHO TCG's: each product's sealed box price, other versions in a note), or read a screenshot into the box in the browser (tesseract.js from `admin/static/vendor/tesseract/`), check each row's SKU against the name-to-SKU list (`data/storefront/supplier_name_mapping.csv`) with store and market prices beside it, and save the rows as one quote (`admin/supplier_quotes.py`) |
 | `/login`, `POST /login`, `POST /logout` | Sign-in |
 | `/healthz` | `{"ok", "schema", "sign_in_ready"}` (still home network only) |
@@ -567,6 +568,7 @@ Rules worth knowing:
 | `admin/pricing_view.py` | The Pricing page: reads the inputs, checks ticked lines against a fresh plan |
 | `admin/reports.py` | The Reports page: shop months, worksheet rows, Utah totals, Stripe fees and refunds |
 | `admin/supplier_profit.py` | Supplier Profitability: landed cost, break-even and target-margin prices per channel; the JPY/USD rate |
+| `admin/best_buys.py` | Best buys: buy-and-sell routes per box, sales speed from the owner's TCGplayer numbers, suggested order |
 | `admin/static/supplier-ocr.js`, `admin/static/vendor/tesseract/` | Supplier Pricing's screenshot reader (the admin's only script; pinned tesseract.js 5.1.1, served with `'wasm-unsafe-eval'`) |
 | `admin/supplier_quotes.py` | Supplier Pricing: reads a price list's text or a copied shop page, matches names to SKUs, appends quotes to the ledger and remembers new matches |
 | `tools/archive_squarespace_site.py` | One-off copy of the old site's pages, blog posts and images |

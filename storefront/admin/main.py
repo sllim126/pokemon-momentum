@@ -45,7 +45,7 @@ from ..app.market import MarketReference
 from ..app.settings import Settings, load_settings
 from ..app.stripe_api import StripeClient, StripeError
 from . import (orders_view, overview, packing_slip, pricing_view, products_view, refunds, reports, shipping,
-               supplier_profit, supplier_quotes)
+               supplier_profit, supplier_quotes, best_buys)
 from .auth import COOKIE_NAME, SESSION_DAYS, Lockout, Sessions, check_password
 
 log = logging.getLogger("storefront.admin")
@@ -125,6 +125,8 @@ class AdminConfig:
     # (supplier_profit.py) reads the ledger and the market targets (data/, read-only here).
     supplier_quotes_file: Path | None = None
     supplier_mapping_file: Path | None = None
+    # Best buys (best_buys.py): the TCGplayer sales numbers the owner types in, appended here.
+    tcgplayer_sales_file: Path | None = None
     bug_reports_db: Path | None = None
     market_targets_file: Path | None = None
     # The admin's own restricted Stripe key (Charges and Refunds write), for refunds (refunds.py).
@@ -146,6 +148,7 @@ def load_config(settings: Settings) -> AdminConfig:
         costs_file=Path(os.getenv("STOREFRONT_ADMIN_COSTS_FILE", "/app/costs/store_sku_costs.csv")),
         supplier_quotes_file=settings.data_dir / "supplier_quotes.csv",
         supplier_mapping_file=settings.data_dir / "supplier_name_mapping.csv",
+        tcgplayer_sales_file=settings.data_dir / "tcgplayer_sales.csv",
         market_targets_file=settings.data_dir.parent / "market_prices_latest.csv",
         # The market site's bug report queue, read-only (Overview, owner home).
         bug_reports_db=settings.data_dir.parent / "processed" / "tracking.sqlite3",
@@ -963,6 +966,65 @@ def create_admin_app(settings: Settings | None = None, config: AdminConfig | Non
                     sort_url=sort_url,
                     references=supplier_profit.REFERENCES, quick=supplier_profit.quick_quote(query, a),
                     query=query)
+
+    # --- Best buys: every buy-and-sell route per box, fast sellers first (best_buys.py) -----------
+
+    def best_buys_rows(query, a):
+        quotes, _unmatched = supplier_profit.latest_quotes(config.supplier_quotes_file or Path("/nonexistent"))
+        market_rows = supplier_profit.market_targets(config.market_targets_file or Path("/nonexistent"))
+        with db() as conn:
+            store = best_buys.store_products(conn)
+        sales = best_buys.latest_sales(config.tcgplayer_sales_file or Path("/nonexistent"))
+        rows = best_buys.build(quotes, market_rows, store, sales, market.summary, a,
+                               best_buys.read_buy_assumptions(query), settings.ship_rates_cents,
+                               settings.free_shipping_over_cents)
+        return rows, store
+
+    @app.get("/supplier-best-buys", response_class=HTMLResponse)
+    def supplier_best_buys(request: Request):
+        """Where to buy each box and where to sell it, fast sellers first. A GET form for the
+        assumptions (same names as Supplier Profitability's, so they carry over)."""
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        return best_buys_page(request, cookie)
+
+    def best_buys_page(request: Request, cookie: str, status_code: int = 200, sales_error: str = "",
+                       typed_sales: dict | None = None) -> Response:
+        query = request.query_params
+        fx = fx_rate.get()
+        a = supplier_profit.read_assumptions(query, fx["rate"] if fx else None)
+        rows, store = best_buys_rows(query, a)
+        sort = str(query.get("sort") or "speed")
+        sort = sort if sort in best_buys.SORTS else "speed"
+        shown = best_buys.sort_rows(rows, sort)
+        return page(request, "supplier_best_buys.html", cookie, status_code=status_code, active="suppliers",
+                    a=a, buy=best_buys.read_buy_assumptions(query), fx=fx, rows=shown, sort=sort,
+                    sorts=best_buys.SORTS, plan=best_buys.order_plan(rows), query=query,
+                    products=sorted(((sku, p["title"]) for sku, p in store.items()), key=lambda t: t[1].lower()),
+                    sales_error=sales_error, typed_sales=typed_sales or {},
+                    done=query.get("done"), free_over=settings.free_shipping_over_cents / 100)
+
+    @app.post("/supplier-best-buys/sales")
+    def supplier_best_buys_sales(request: Request, form_token: str = Form(""), sku: str = Form(""),
+                                 sold_per_day: str = Form(""), listed: str = Form(""),
+                                 trend_3m_pct: str = Form("")):
+        """Save one box's numbers from its TCGplayer page (appended to the sales ledger)."""
+        cookie = signed_in(request)
+        if not cookie:
+            return to_login()
+        if not form_ok(cookie, form_token):
+            return expired_form()
+        with db() as conn:
+            known = set(best_buys.store_products(conn))
+        try:
+            best_buys.add_sales(config.tcgplayer_sales_file or Path("/nonexistent"), sku, sold_per_day, listed,
+                                trend_3m_pct, known)
+        except ValueError as exc:
+            return best_buys_page(request, cookie, 400, str(exc), {"sku": sku, "sold_per_day": sold_per_day,
+                                                               "listed": listed, "trend_3m_pct": trend_3m_pct})
+        log.info("Best buys: TCGplayer sales saved for %s", sku.strip().upper())
+        return RedirectResponse("/supplier-best-buys?done=sales#sales", status_code=303)
 
     # --- reports for the books (Phase 3, step 7; rules in reports.py) ----------------------------
     # GETs only: nothing here changes anything. The Stripe download asks Stripe for fees with the

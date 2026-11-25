@@ -1,0 +1,115 @@
+{#- Best buys (owner, 2026-11-25): best_buys.py works out each box's buy-and-sell routes. One GET
+    form for the assumptions and sort (bookmarkable, no script); one POST form for the TCGplayer
+    sales numbers the owner types in. -#}
+{% extends "base.html" %}
+{% macro field(name, label, value, step="0.01") -%}
+<label>{{ label }}<input type="number" name="{{ name }}" value="{{ value | num }}" step="{{ step }}" inputmode="decimal"></label>
+{%- endmacro %}
+{% macro usd(value) %}{% if value is none %}–{% elif value < 0 %}−${{ '%.2f' % -value }}{% else %}${{ '%.2f' % value }}{% endif %}{% endmacro %}
+{% macro pct(value) %}{% if value is none %}–{% else %}{{ '%+.0f' % value }}%{% endif %}{% endmacro %}
+{% macro route(r) -%}
+{% if r %}<strong class="nowrap">{{ r.source_name }} → {{ r.channel_name }}</strong><br>
+<span class="small nowrap {{ 'bad-text' if r.profit is not none and r.profit <= 0 }}">{{ usd(r.profit) }} after tax{% if r.margin_pct is not none %} · {{ r.margin_pct }}%{% endif %}</span><br>
+<span class="muted small">buy {{ usd(r.cost) }} · sell {{ usd(r.price) }}{% if r.buyer_shipping %} + {{ usd(r.buyer_shipping) }} ship{% endif %}</span>
+{%- else %}–{% endif %}
+{%- endmacro %}
+{% block title %}Best buys{% endblock %}
+{% block main %}
+{% include "_suppliers_tabs.html" %}
+<div class="page-head"><h1>Best buys</h1>
+  <span class="muted small">JPY/USD {{ a.jpy_per_usd | num }}{% if fx and fx.date %} ({{ fx.date }}){% endif %}</span></div>
+<p class="muted small">For each box: import it or buy it on TCGplayer, then sell it on your site, eBay or TCGplayer.
+  The best route is the one that leaves the most profit after fees and income tax. Fast sellers come first,
+  from the TCGplayer sales numbers you type in below. Suggested order: 4 of a fast seller, 2 of a steady one,
+  1 of a slow one, halved when the market is falling, less what's in stock, and nothing that loses money on
+  every route.</p>
+
+<form method="get" action="/supplier-best-buys" class="sp-form">
+<section class="panel">
+  <h2>Assumptions</h2>
+  <div class="sp-grid">
+    {{ field("jpy_per_usd", "JPY per USD", a.jpy_per_usd) }}
+    {{ field("order_box_count", "Boxes in the import order", a.order_box_count, "1") }}
+    {{ field("order_shipping_jpy", "Import shipping JPY (order)", a.order_shipping_jpy, "1") }}
+    {{ field("import_duty_pct", "Import duties %", a.import_duty_pct) }}
+    {{ field("tcg_buy_tax_pct", "TCGplayer sales tax %", buy.tcg_buy_tax_pct) }}
+    {{ field("tcg_buy_shipping_usd", "TCGplayer shipping per box", buy.tcg_buy_shipping_usd) }}
+    {{ field("outbound_shipping_usd", "Your label per box", a.outbound_shipping_usd) }}
+    {{ field("income_tax_pct", "Income tax %", a.income_tax_pct) }}
+    <label>Sort<select name="sort">{% for key, label in sorts.items() %}<option value="{{ key }}" {% if sort == key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+  </div>
+  <p class="actions"><button type="submit">Recalculate</button> <a class="button secondary" href="/supplier-best-buys">Back to the defaults</a>
+    <span class="muted small">Everything else (fees, clearance fee, handling) is Supplier Profitability's default.</span></p>
+</section>
+</form>
+
+<div class="tiles sp-tiles">
+  <div class="tile"><span class="label">Boxes compared</span><strong>{{ rows | length }}</strong></div>
+  {% for part in plan.values() %}
+  <div class="tile"><span class="label">Suggested: {{ part.name }}</span><strong>{{ part.boxes }} box{{ '' if part.boxes == 1 else 'es' }}</strong>
+    <span class="muted small">{{ usd(part.cost) }} · ~{{ usd(part.profit) }} profit</span></div>
+  {% endfor %}
+</div>
+{% if plan.import.boxes and plan.import.boxes != a.order_box_count | int %}
+<p class="flash small">The suggested import is {{ plan.import.boxes }} boxes, but the import costs assume an order of
+  {{ a.order_box_count | num }}. Type {{ plan.import.boxes }} in “Boxes in the import order” (and that cart's shipping) to
+  spread the shipping and clearance fee over the real order.</p>
+{% endif %}
+
+<section class="panel">
+  <h2>Boxes ({{ rows | length }})</h2>
+  {% if not rows %}
+  <p class="muted">No boxes with a supplier quote or TCGplayer sales numbers yet.</p>
+  {% else %}
+  <div class="sp-scroll">
+  <table class="sp-table">
+    <thead><tr><th>Product</th><th class="num">Order</th><th class="num" title="From TCGplayer's product page, as typed in below">TCGplayer sales</th><th class="num">Trend</th>
+      <th class="num">Import landed</th><th class="num">TCGplayer + tax</th><th>Best route</th><th title="The best route selling on eBay or TCGplayer, which sell faster than your site">Best elsewhere</th>
+</tr></thead>
+    <tbody>
+    {% for row in rows %}
+      <tr>
+        <td class="bb-product"><strong class="wrap">{{ row.short_title }}</strong><br><span class="muted small">{{ row.sku }}{% if row.stock %} · {{ row.stock }} in stock{% endif %}</span></td>
+        <td class="num bb-order"><strong>{{ row.order_qty if row.order_qty else '–' }}</strong>{% if row.order_qty and row.best %} <span class="small">from {{ row.best.source_name }}</span>{% endif %}
+          <br><span class="muted small">{{ row.order_why }}</span></td>
+        <td class="num">{% if row.sold_per_day is not none %}<span class="nowrap">{{ row.sold_per_day | num }}/day</span>
+          <br><span class="muted small nowrap">{{ row.speed }}{% if row.days_of_supply is not none %}<br>{{ row.days_of_supply }} days listed{% endif %}</span>
+          <br><span class="muted small nowrap">{{ row.sales_date }}</span>{% else %}<span class="muted small">Not entered</span>{% endif %}</td>
+        <td class="num"><span class="nowrap {{ 'bad-text' if row.falling }}" title="Market price change over 30 days">30d {{ pct(row.roc_30d) }}</span>
+          <br><span class="muted small nowrap" title="3-month trend from TCGplayer, as typed in">3m {{ pct(row.trend_3m) }}</span></td>
+        <td class="num">{{ usd(row.import_cost) }}{% if row.quote_date %}<br><span class="muted small nowrap" title="{{ row.supplier }}'s quote">{{ row.quote_date }}</span>{% endif %}</td>
+        <td class="num">{{ usd(row.tcg_cost) }}{% if row.saving is not none %}<br><span class="small nowrap {{ 'good-text' if row.saving > 0 else 'muted' }}"
+          title="TCGplayer cost minus the import's landed cost">{% if row.saving > 0 %}import saves {{ usd(row.saving) }}{% else %}{{ usd(-row.saving) }} cheaper{% endif %}</span>{% endif %}</td>
+        <td>{{ route(row.best) }}</td>
+        <td>{{ route(row.elsewhere) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="muted small">Prices: your site at the store price (the buyer pays its flat shipping, none over {{ usd(free_over) }});
+    eBay at the target price; TCGplayer at today's market price. Each route takes off that channel's fees, your label and
+    income tax (on profit only). Your site's price is usually the highest, but the sales speed is TCGplayer's,
+    not your site's: “Best elsewhere” shows what a quick marketplace sale would leave. Trend: the market's 30-day move, and the 3-month trend you typed; 15% or more down counts as falling.</p>
+  {% endif %}
+</section>
+
+<section class="panel" id="sales">
+  <h2>TCGplayer sales numbers</h2>
+  <p class="muted small">From the box's TCGplayer page: how many sell a day (or total sold ÷ days) and how many are listed.
+    The newest numbers per box count; older ones are kept in <code>data/storefront/tcgplayer_sales.csv</code>.</p>
+  {% if done == 'sales' %}<p class="flash good" role="status">Saved.</p>{% endif %}
+  {% if sales_error %}<p class="flash bad" role="alert">{{ sales_error }}</p>{% endif %}
+  <form method="post" action="/supplier-best-buys/sales" class="sp-grid">
+    <input type="hidden" name="form_token" value="{{ form_token }}">
+    <label>Product<select name="sku" required>
+      <option value="">Choose…</option>
+      {% for sku, title in products %}<option value="{{ sku }}" {% if typed_sales.sku == sku %}selected{% endif %}>{{ title }}</option>{% endfor %}
+    </select></label>
+    <label>Sold per day<input type="number" name="sold_per_day" step="0.1" min="0" required value="{{ typed_sales.sold_per_day }}"></label>
+    <label>Listed (optional)<input type="number" name="listed" step="1" min="0" value="{{ typed_sales.listed }}"></label>
+    <label>3-month trend % (optional)<input type="number" name="trend_3m_pct" step="1" value="{{ typed_sales.trend_3m_pct }}" placeholder="-24"></label>
+    <button type="submit">Save</button>
+  </form>
+</section>
+{% endblock %}

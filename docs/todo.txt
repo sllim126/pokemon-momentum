@@ -45,6 +45,13 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-25 Best buys (owner: "an accurate profit for each system, and where I should source
+  it from"): Suppliers → Best buys, http://192.168.1.240:8011/supplier-best-buys. Per box: import
+  landed vs TCGplayer + 7.45% Utah tax, sold on the own site (real buyer shipping: $10, $20
+  oversize, free over $150), eBay or TCGplayer; best route and best off the own site; fastest
+  TCGplayer sellers first; suggested order (4 fast / 2 steady / 1 slow, halved when falling, less
+  stock, never at a loss) added up per source. The owner's TCGplayer numbers for 12 boxes were
+  entered from the 2026-11-25 screenshots (data/storefront/tcgplayer_sales.csv, not committed).
 - 2026-11-25 New blog posts are announced in Discord #general-site-updates (owner): daily cron
   `scripts/utilities/announce_articles_discord.py` reads the store's sitemap and posts "New on the
   blog: <title>" plus the link, once per post, daily at 8:05 am Mountain (scheduled posts on their day).
@@ -626,14 +633,11 @@ Tunnel; the domain remains registered after the Squarespace website plan ended.
     Binder Art Maker, Collector Hub and Placeholder Library to poke6s.com (2026-11-20); Supplier
     Profitability (2026-11-21), Supplier Pricing (2026-11-22) and Bug Reports with the owner
     home, 9c (2026-11-23) into the store admin. Step 9 has 9b (one Poke6s account) left.
-  - [planned] Supplier Profitability, the profit view (owner 2026-11-25: "an accurate profit for each
-  system, and where I should source it from"): per box, both sources (import landed vs TCGplayer
-  market + Utah tax + shipping) on each channel (own site with the buyer's $10 shipping, eBay,
-  TCGplayer), the best route and runner-up, ranked by how fast the box sells first (turnover over
-  stacking, owner 2026-11-25), plus 30-day trend, supplier stock, quote age, and a
-  "TCGplayer sales" box the owner fills from TCGplayer's page (sold per day, listed quantity,
-  3-month trend, dated) giving days of supply and a stacking warning. Open: whether the owner buys
-  tax-free on TCGplayer (resale certificate); real outbound label cost per box.
+  - [watching] Best buys (built 2026-11-25): 30-day market trends show only for products with
+    TCGplayer IDs (most Japanese boxes have none: add them on the product's Details panel). Storm
+    Emeralda and 30th Celebration aren't store products, so they can't be compared until added.
+    Sales numbers go stale: re-type them from TCGplayer before each order. Open: whether the owner
+    buys tax-free on TCGplayer (resale certificate; set "TCGplayer sales tax %" to 0 if so).
 - [planned] Supplier Pricing: the other 72 MACHO TCG products have no SKU (sets the store
     doesn't sell). If the owner starts stocking one, typing its SKU once on the page remembers it.
     The page has JAN barcodes too; products have a gtin column (empty for all 95): filling it
