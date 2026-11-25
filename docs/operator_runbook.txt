@@ -24,6 +24,7 @@ crontab changes). Each job is explained further down in this file.
 | Every 5 min | Keep market.poke6s.com's A record on the current home IP (Cloudflare API; Discord note when it changes) | cron: `scripts/utilities/update_market_dns.py` | `logs/market_dns.log` |
 | Every 15 min | Copy Discord #bug-reports into the review queue | cron: `scripts/utilities/import_discord_bug_reports.py` | `logs/discord_bug_import.log` |
 | Fri 15:00 | Weekly Discord posts | cron: `scripts/utilities/post_weekly_discord.py` | `logs/discord_weekly.log` |
+| Hourly :05, 15:05-04:05 | Announce newly live blog posts in Discord #general-site-updates (reads the store's sitemap; one message per post; first run only records what's already live) | cron: `scripts/utilities/announce_articles_discord.py` | `logs/discord_articles.log` |
 | Sun 11:00 | Weekly full metadata refresh | `pokemon-momentum-weekly-refresh.timer` | journal |
 | Mon 11:00 | Weekly placeholder-name cleanup (product metadata + snapshot) | `pokemon-momentum-weekly-placeholder-refresh.timer` | journal |
 

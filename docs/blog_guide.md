@@ -4,7 +4,7 @@ How any agent (Claude Code, Codex, others) drafts a post for the owner. The mech
 articles (front matter, `[[market]]` boxes, images) are in `storefront/README.md` "Articles";
 this file covers how to write one and get it out. Topics and dates: `docs/todo.txt`, "Blog posts".
 
-Last reviewed: 2026-11-23.
+Last reviewed: 2026-11-25.
 
 ## The arrangement
 
@@ -96,5 +96,7 @@ Last reviewed: 2026-11-23.
 5. When the owner approves: set `draft: false`, keep the date, merge and deploy. A post with a
    future date is scheduled and goes live by itself on that date (Mountain time); check the page
    says "Scheduled: goes live on <date>". Move the item to Recently Completed in `docs/todo.txt`.
+   Discord #general-site-updates gets a "New on the blog" message by itself within the hour once
+   the post is live (8 am-9 pm Mountain; `scripts/utilities/announce_articles_discord.py`).
 6. Reader feedback (often pasted from Discord) is applied the same way: branch, edit, wait for
    "merge and deploy".
