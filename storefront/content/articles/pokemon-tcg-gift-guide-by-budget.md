@@ -15,13 +15,15 @@ So here's a guide by budget, using what things actually sell for right now. It's
 
 *Prices in the text are TCGplayer market prices as of November 24. The boxes with pictures show today's market price and update every day.*
 
+**If you only read one line:** for most Pokémon fans, an Elite Trainer Box from a new set (**$62 to $75**) is the safe bet. It's the classic gift: nine packs, plus sleeves, dice and a box to keep it all in.
+
 ## First, the one tip that saves the most
 
 **Buy the newer, regular sets.** Right now that's Perfect Order, Chaos Rising, Pitch Black and Delta Reign. They're in print, easy to find, and cost about **$5 to $8 a pack** whatever box they come in.
 
 The special sets (Prismatic Evolutions, Black Bolt, White Flare, Ascended Heroes) and anything with a Charizard on the front (Phantasmal Flames) cost **two to three times as much per pack**. They're great sets, but you're paying for the hype, and the person opening them gets the same number of cards.
 
-Here's what a pack costs in each kind of box, for the four newest regular sets:
+Every box on the shelf is basically packs plus extras. A pack is 10 random cards, and opening them is the fun part, so the price per pack is the easiest way to compare. Here's what a pack costs in each kind of box, for the four newest regular sets:
 
 - **Booster box** (36 packs): **$4.80 to $5.40** a pack, the cheapest way to buy packs
 - **Booster pack** on its own: **$5.60 to $6.20**
@@ -32,7 +34,7 @@ The ETB costs more per pack because you're paying for the extras. For a gift, th
 
 ## Under $10: stocking stuffers
 
-A single booster pack. Newer regular sets are about **$6**. A Phantasmal Flames pack is about $12, if they really want a shot at the Charizard.
+A single booster pack. Newer regular sets are about **$6**. A Phantasmal Flames pack is about $12, a little over budget, if they really want a shot at the Charizard.
 
 [[market 672398 684446 712099 654144]]
 
@@ -54,7 +56,7 @@ A single booster pack. Newer regular sets are about **$6**. A Phantasmal Flames 
 ## $50 to $100
 
 - **Elite Trainer Box**: the classic Pokémon gift. Perfect Order **$62**, Chaos Rising **$67**, Pitch Black **$70**, Delta Reign **$75**. Nine packs, sleeves, dice, card dividers and a sturdy box to keep it all in.
-- **A Japanese booster box** for someone who already has the English sets: 30 packs of Japanese cards (5 cards a pack, not 10) for about **$72 to $81** (Abyss Eye, Nihil Zero, Storm Emeralda, Ninja Spinner). Japanese cards look great in a binder, and the boxes are cheaper than English ones. [We carry Ninja Spinner boxes](/p/pokemon-ninja-spinner-booster-box-japanese) if you want one.
+- **A Japanese booster box** for someone who already has the English sets: 30 packs of Japanese cards (5 cards a pack, not 10) for about **$72 to $81** (Abyss Eye, Nihil Zero, Storm Emeralda, Ninja Spinner). Japanese cards look great in a binder. The box costs less than half an English one, but you also get fewer cards (150 instead of 360), so it's about the same price per card. [We carry Ninja Spinner boxes](/p/pokemon-ninja-spinner-booster-box-japanese) if you want one.
 
 [[market 672401 712102 684450 683774]]
 
@@ -62,7 +64,7 @@ A single booster pack. Newer regular sets are about **$6**. A Phantasmal Flames 
 
 - **A booster box**: Pitch Black **$172**, Perfect Order **$173**, Chaos Rising **$177**, Delta Reign **$194**. 36 packs, the cheapest price per pack, and a whole evening of opening.
 - **Prismatic Evolutions ETB**, about **$118**. The most-wanted ETB of the last two years, and down from over $200 at the end of June.
-- **Pokémon Center ETBs** (only sold by the Pokémon Center: more packs, a promo card): Perfect Order **$100**, Chaos Rising **$111**.
+- **Pokémon Center ETBs** (originally sold only on the Pokémon Center's own website: more packs than a regular ETB, plus a promo card): Perfect Order **$100**, Chaos Rising **$111**.
 
 [[market 672394 712094 593355 684452]]
 
