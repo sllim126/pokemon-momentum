@@ -2953,12 +2953,15 @@ def _shared_cookie_host_ok(request: Request) -> bool:
 
 
 def set_shared_session_cookie(response, request: Request, token: str) -> None:
+    """Set the poke6s_session cookie for every poke6s.com site, so the store sees the sign-in
+    (step 9b; storefront/app/accounts.py checks it read-only). HttpOnly and Secure."""
     if _shared_cookie_host_ok(request):
         response.set_cookie(SHARED_SESSION_COOKIE, token, max_age=SHARED_COOKIE_MAX_AGE, path="/",
                             domain=SHARED_COOKIE_DOMAIN, secure=True, httponly=True, samesite="lax")
 
 
 def clear_shared_session_cookie(response, request: Request) -> None:
+    """Remove the shared cookie, so signing out here signs out of the store too."""
     if _shared_cookie_host_ok(request):
         response.delete_cookie(SHARED_SESSION_COOKIE, path="/", domain=SHARED_COOKIE_DOMAIN,
                                secure=True, httponly=True, samesite="lax")
@@ -3030,6 +3033,7 @@ def tracking_session_status(
 @app.delete("/tracking/session")
 def tracking_session_delete(request: Request, authorization: str | None = Header(default=None),
                             shared: str | None = Cookie(default=None, alias=SHARED_SESSION_COOKIE)):
+    """Sign out: end the app's session and the shared store session, and clear the shared cookie."""
     if authorization and authorization.lower().startswith("bearer "):
         token = authorization.split(" ", 1)[1].strip()
         delete_session(token)
@@ -3274,6 +3278,7 @@ def tracking_items_resolve(payload: dict | None = None):
 
 @app.delete("/tracking/account")
 def tracking_delete_account(request: Request, payload: dict | None = None, authorization: str | None = Header(default=None)):
+    """Delete the signed-in account (tracking_store.delete_user) and clear the shared store sign-in."""
     session_user = require_tracking_user(authorization)
     delete_user(session_user.user_id)
     response = JSONResponse({"ok": True})

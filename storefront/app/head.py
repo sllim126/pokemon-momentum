@@ -16,6 +16,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 
 class HeadAsGet:
+    """ASGI middleware: run HEAD as GET and send only the status and headers (module docstring)."""
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
 

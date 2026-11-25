@@ -234,6 +234,7 @@ def unsubscribe_url(settings: Settings, token: str) -> str:
 
 def send_one(settings: Settings, message: Message, to: str, token: str, signed_up: str,
              cards: list[dict] | None = None) -> bool:
+    """Send the message to one address with its own unsubscribe link; False means it failed and was queued for retry."""
     url = unsubscribe_url(settings, token)
     body, html, pictures = render(settings, message, url, signed_up, cards)
     headers = {"Reply-To": settings.contact_email,

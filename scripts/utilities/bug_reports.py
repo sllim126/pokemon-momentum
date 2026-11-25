@@ -33,6 +33,7 @@ OPEN = ("new",)
 
 
 def where_from(page_path: str | None) -> str:
+    """Where a report came from, from its page_path (same rule as the admin Overview's _bug_source)."""
     path = (page_path or "").lower()
     if path.startswith("discord"):
         return "Discord"
@@ -42,6 +43,7 @@ def where_from(page_path: str | None) -> str:
 
 
 def list_reports(show_all: bool = False) -> list[dict]:
+    """Reports oldest first: the open ones (status in OPEN), or every report with show_all."""
     con = tracking_store.get_con()
     try:
         sql = "SELECT id, created_at, status, page_path, title FROM bug_reports"
@@ -54,6 +56,7 @@ def list_reports(show_all: bool = False) -> list[dict]:
 
 
 def get_report(report_id: int) -> dict | None:
+    """One report with every column, or None when there's no such id."""
     con = tracking_store.get_con()
     try:
         row = con.execute("SELECT * FROM bug_reports WHERE id = ?", (report_id,)).fetchone()

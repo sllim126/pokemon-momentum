@@ -36,6 +36,7 @@ ORDER_STATUSES = ("paid", "shipped", "partially_refunded", "refunded")
 
 @dataclass(frozen=True)
 class Account:
+    """A signed-in Poke6s account; the email is the key the store's orders are matched on."""
     email: str
 
 
@@ -45,14 +46,17 @@ def tracking_db(settings: Settings) -> Path:
 
 
 def sign_in_url(settings: Settings) -> str:
+    """Sign-in happens on the market site, which then sets the shared poke6s_session cookie."""
     return f"{settings.market_base_url}/account/store"
 
 
 def sign_out_url(settings: Settings) -> str:
+    """Signing out on the market clears the shared cookie, so it signs out of both sites."""
     return f"{settings.market_base_url}/account/sign-out"
 
 
 def _parse(stamp: str) -> datetime:
+    """An ISO timestamp from the market's database; one without a time zone is taken as UTC."""
     moment = datetime.fromisoformat(stamp)
     return moment if moment.tzinfo else moment.replace(tzinfo=UTC)
 

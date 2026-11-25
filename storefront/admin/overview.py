@@ -156,6 +156,7 @@ BUG_LIST_LIMIT = 5
 
 
 def _bug_source(page_path: str | None) -> str:
+    """Where a report came from (Discord, Phone app, Market site), from its page_path."""
     path = (page_path or "").lower()
     if path.startswith("discord"):
         return "Discord"
@@ -188,6 +189,7 @@ def bug_reports(db_path: Path | None) -> dict:
 
 def build(conn: sqlite3.Connection, settings: Settings, backup_dir: Path, now: datetime | None = None,
           bug_db: Path | None = None) -> dict:
+    """Everything the Overview page shows, gathered fresh on each load (bug_db: the market's tracking database)."""
     now = now or datetime.now(UTC)
     return {
         "bugs": bug_reports(bug_db),
