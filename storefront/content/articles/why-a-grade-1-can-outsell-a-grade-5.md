@@ -7,7 +7,7 @@ categories: Market Talk
 tags: Pokémon TCG, Grading, Graded Cards, TCG Market Analysis
 cover: grade-1-price-by-grade-f92629628b
 old_path: 
-draft: true
+draft: false
 ---
 You'd expect graded prices to climb with the grade: a 1 is the worst condition a grader will put in a slab, so it should be the cheapest, right? For most Pokémon cards it isn't. A Grade 1 usually sells for more than a Grade 5, and often for more than the same card ungraded.
 

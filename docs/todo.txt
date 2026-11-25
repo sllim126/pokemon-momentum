@@ -45,6 +45,10 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-25 "Why a Grade 1 Pokémon Card Can Sell for More Than a Grade 5" scheduled for Dec 1
+  (owner): the Claude and Codex drafts merged into one, Nov 25 PriceCharting prices, three charts
+  (`scripts/blog/grade1_charts.py`), collector views from five Reddit threads, and the owner's
+  "buy a Grade 4-6 for value" close.
 - 2026-11-25 New blog posts are announced in Discord #general-site-updates (owner): daily cron
   `scripts/utilities/announce_articles_discord.py` reads the store's sitemap and posts "New on the
   blog: <title>" plus the link, once per post, daily at 8:05 am Mountain (scheduled posts on their day).
@@ -328,7 +332,7 @@ High Priority
   - Posts can show live product boxes with `[[market <ids>]]` (storefront/README.md "Articles").
   - Topics: Nov 24 Delta Reign, two weeks in (see above) · Nov 26
     Is sealed cheaper on Black Friday? (Nov–Dec 2024/2025) · Nov 28 Gift guide by budget
-    ($25/$50/$100, price per pack) · Dec 1 Why a Grade 1 can outsell a Grade 5 (Claude draft on `blog/psa1-vs-psa5-claude`; Codex draft on `blog/psa1-vs-psa5-codex`, both awaiting owner comparison and proofreading) · Dec 4 Art-form post
+    ($25/$50/$100, price per pack) · Dec 1 Why a Grade 1 can outsell a Grade 5 (scheduled) · Dec 4 Art-form post
     (drafted) · Dec 8 Best booster box deal, English and Japanese · Dec 10 30th Celebration,
     three months in · Dec 12 Cards that sell for more in Japanese · Dec 15 What happens when a
     set goes out of print · Dec 17 The Pokémon tax (same rarity, different Pokémon) · Dec 19
