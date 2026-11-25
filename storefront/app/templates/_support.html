@@ -1,0 +1,35 @@
+{#- Contact page: three ways to reach us (owner, 2026-11-23; app/support.py). `support_form` holds
+    what's filled in (a signed-in email, an order number from "Get help with this order", or what
+    was typed before an error). Bugs go to Discord #bug-reports, not here (AGENTS.md). -#}
+{% set order_part = (' about ' ~ support_form.order_number) if support_form.order_number else '' %}
+<section class="support" id="support" aria-labelledby="support-h">
+  <h2 id="support-h">Get in touch{{ order_part }}</h2>
+  <div class="support-ways">
+    <a class="support-way" href="mailto:{{ settings.contact_email }}?subject={{ ('Poke6s question' ~ order_part) | urlencode }}">
+      <svg class="support-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+      <strong>Email us</strong>
+      <span class="small muted">{{ settings.contact_email }} · usually answered within one business day</span>
+    </a>
+    <a class="support-way" href="{{ discord_url }}" target="_blank" rel="noopener">
+      <svg class="support-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><path d="M8 10h8M8 13h5"/></svg>
+      <strong>Ask on Discord</strong>
+      <span class="small muted">Often the fastest way to reach us. Please don't post your address or order details there.</span>
+    </a>
+  </div>
+
+  <h3>Or send us a message</h3>
+  {% if support_sent %}<p class="flash good" role="status">Thanks, we've got your message and will reply by email.</p>{% endif %}
+  {% if support_error %}<p class="flash bad" role="alert">{{ support_error }}</p>{% endif %}
+  <form class="support-form" method="post" action="/support">
+    <label>Your name<input type="text" name="name" value="{{ support_form.name }}" maxlength="100" autocomplete="name" required></label>
+    <label>Email for our reply<input type="email" name="email" value="{{ support_form.email }}" maxlength="254" autocomplete="email" required></label>
+    <label><span>Order number <span class="muted small optional">(optional)</span></span>
+      <input type="text" name="order_number" value="{{ support_form.order_number }}" maxlength="20" placeholder="P6-2026-0012"></label>
+    <label class="wide">How can we help?<textarea name="message" rows="6" maxlength="4000" required>{{ support_form.message }}</textarea></label>
+    {#- A trap for bots: hidden from people and screen readers. -#}
+    <label class="trap" aria-hidden="true">Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+    <p class="wide"><button type="submit" class="btn primary">Send message</button>
+      <span class="small muted">We keep your message to answer it (<a href="/privacy">privacy</a>).</span></p>
+  </form>
+  <p class="small muted">Found a problem with the website? Report it on Discord's #bug-reports channel.</p>
+</section>

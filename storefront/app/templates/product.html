@@ -77,6 +77,19 @@
       <p class="small muted">TCGplayer links are affiliate links: Poke6s may earn a small commission.
         Questions? <a href="mailto:{{ settings.contact_email }}?subject={{ ('Question about ' ~ product.title) | urlencode }}">Email us</a>.</p>
       {% endif %}
+      {#- Wishlist (one Poke6s account, stage 2): a plain form, no script. Signed out, the ♡
+          goes to sign-in on the market site, which comes back to the account page. -#}
+      {% if account %}
+      <form class="wish" method="post" action="/wishlist">
+        <input type="hidden" name="product_id" value="{{ product.id }}">
+        <input type="hidden" name="action" value="{{ 'remove' if saved else 'add' }}">
+        <button type="submit" class="btn wish-btn{% if saved %} saved{% endif %}" aria-pressed="{{ 'true' if saved else 'false' }}">
+          {{ '♥ Saved to your wishlist' if saved else '♡ Save to wishlist' }}</button>
+      </form>
+      {% else %}
+      <p class="wish"><a class="btn wish-btn" href="{{ sign_in_url }}">♡ Save to wishlist</a>
+        <span class="small muted">Sign in with Google to keep a wishlist.</span></p>
+      {% endif %}
     </div>
 
     {#- Shipping and returns (owner's facts, 2026-11-19/20: packed in a box or a padded mailer,

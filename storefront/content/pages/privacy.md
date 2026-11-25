@@ -35,9 +35,17 @@ email [admin@poke6s.com](mailto:admin@poke6s.com) and we'll remove it.
 You can shop as a guest. If you sign in, it's with Google, through
 [Poke6s Market](https://market.poke6s.com/account-settings), so one account covers both sites.
 Google tells us your email address and that it's verified; we never see your Google password.
-The account keeps that email address, and your account page shows the orders placed with it.
-You can delete the account on the Market's account page at any time. Orders aren't deleted
-with it: we keep those for tax records, as above.
+The account keeps that email address and anything you save to your wishlist, and your account
+page shows the orders placed with it. You can delete the account on the Market's account page
+at any time; your wishlist goes with it. Orders aren't deleted with it: we keep those for tax
+records, as above.
+
+## Messages you send us
+
+If you use the message box on the [Contact](/contact) page, we keep your name, email address,
+order number (if you give one) and message, to answer you. Our message alert says only that a
+message arrived, never what's in it. We delete answered messages after a year. Email and
+Discord messages stay in those services.
 
 ## Cookies and visit counts
 

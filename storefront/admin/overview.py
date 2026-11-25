@@ -10,6 +10,7 @@ import sqlite3
 from datetime import UTC, date, datetime
 from pathlib import Path
 
+from ..app import support
 from ..app.settings import Settings
 
 # A paid order should ship within 1 business day (Shipping page). Older than this is flagged.
@@ -190,6 +191,8 @@ def build(conn: sqlite3.Connection, settings: Settings, backup_dir: Path, now: d
     now = now or datetime.now(UTC)
     return {
         "bugs": bug_reports(bug_db),
+        # Messages from the Contact page's box (app/support.py), unanswered, newest first.
+        "support": dict(zip(("open", "newest"), support.open_messages(conn))),
         "to_ship": to_ship(conn, now),
         "disputed": disputed(conn),
         "recent": recent_orders(conn),

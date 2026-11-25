@@ -93,6 +93,7 @@ JOBS = {
     "placeholder-sync": ("cron", DAY),
     "tcgcsv-catalogue": ("cron", DAY),
     "archive-backfill": ("cron", DAY),
+    "monthly-torrent": ("cron", 32 * DAY),   # the 2nd of each month (runs to the 5th if waiting)
     "discord-bug-import": ("cron", 15 * 60),
     "market-dns": ("cron", 5 * 60),
     "discord-weekly": ("cron", 7 * DAY),
