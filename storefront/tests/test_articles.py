@@ -304,6 +304,8 @@ def test_tcgplayer_links_use_the_affiliate_link():
     assert ('<a href="https://partner.tcgplayer.com/abc?u=https%3A%2F%2Fwww.tcgplayer.com%2Fproduct%2F672401" '
             'rel="sponsored noopener">the ETB</a>') in out
     assert '<a href="/shop">ours</a>' in out          # other links untouched
+    ours = tcgplayer_links(html, "https://partner.tcgplayer.com/abc", {"672401": "/p/perfect-order-etb"})
+    assert '<a href="/p/perfect-order-etb">the ETB</a>' in ours           # stocked: our page, no affiliate
     plain = tcgplayer_links(html, "")
     assert 'href="https://www.tcgplayer.com/product/672401" rel="sponsored noopener"' in plain
 

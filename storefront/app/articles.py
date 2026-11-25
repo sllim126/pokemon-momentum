@@ -25,7 +25,8 @@ filled in on every page view from market_reference.json (market_boxes below), so
 an old post stay current. `[[cards <id> ...]]` shows just the pictures, names and sets.
 Products missing from that file are left out.
 TCGplayer links: `[Perfect Order ETB](tcgplayer:672401)` links to that product's TCGplayer page
-through the shop's affiliate link, marked rel="sponsored" (tcgplayer_links below). A post that
+through the shop's affiliate link, marked rel="sponsored", or to our own page when we have it in
+stock (tcgplayer_links below). A post that
 uses them says so once (the "affiliate links" note).
 A finished article (draft: false) with a future date is scheduled: hidden the same way, with a
 "scheduled" note, until its date arrives (Articles.published).
@@ -307,16 +308,19 @@ def tcgplayer_url(product_id: str, affiliate_base: str) -> str:
     return f"{affiliate_base}?{urlencode({'u': target})}" if affiliate_base else target
 
 
-def tcgplayer_links(html: str, affiliate_base: str) -> str:
+def tcgplayer_links(html: str, affiliate_base: str, stocked: dict[str, str] | None = None) -> str:
     """Point each tcgplayer:<id> link at that product's TCGplayer page, wrapped in the affiliate
     link (settings.tcgplayer_affiliate_base: <base>?u=<product page>), the same way the shop's
     "Buy on TCGplayer" button does (main.tcgplayer_link). With no affiliate base, the plain
-    product page. rel="sponsored" tells search engines it's an affiliate link (owner, 2026-11-25).
+    product page. Products in `stocked` ({TCGplayer ID: /p/<slug>}) link to our page instead. rel="sponsored" tells search engines it's an affiliate link (owner, 2026-11-25).
     """
     if "tcgplayer:" not in html:
         return html
 
     def replace(match: re.Match) -> str:
+        # A product we have in stock links to our own page, like its picture does.
+        if stocked and match.group(1) in stocked:
+            return f'<a href="{html_lib.escape(stocked[match.group(1)])}">'
         href = tcgplayer_url(match.group(1), affiliate_base)
         return f'<a href="{html_lib.escape(href)}" rel="sponsored noopener">'
 
