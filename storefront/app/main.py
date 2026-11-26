@@ -351,6 +351,13 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
         return Response(seo.sitemap_xml(settings, entries, public_pages, articles.published()),
                         media_type="application/xml")
 
+    @app.get("/feeds/google.xml")
+    def google_feed():
+        """Google Merchant Center's product feed (seo.google_feed_xml), fetched by Google daily."""
+        with db() as conn:
+            products = catalog.feed_products(conn)
+        return Response(seo.google_feed_xml(settings, products), media_type="application/xml")
+
     @app.get("/media/{width}/{name}.webp")
     def media(width: str, name: str):
         # width is read as text so a non-number is a 404 page, not FastAPI's 422 JSON.

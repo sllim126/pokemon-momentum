@@ -8,6 +8,7 @@ get BlogPosting.
 from __future__ import annotations
 
 import json
+import re
 from xml.sax.saxutils import escape
 
 from .settings import Settings
@@ -153,3 +154,78 @@ def robots_txt(settings: Settings) -> str:
         # Before launch (or on a LAN copy): keep every crawler out.
         return "User-agent: *\nDisallow: /\n"
     return f"User-agent: *\nDisallow: /order/\nDisallow: /checkout\nDisallow: /cart\nDisallow: /account\n\nSitemap: {settings.base_url}/sitemap.xml\n"
+
+
+# --- Google Merchant Center feed (/feeds/google.xml; plan "Later (Phases 4-5)") ---------------
+# Free product listings in Google Shopping. Merchant Center fetches this file on a schedule the
+# owner sets up there (Products -> Add products -> Scheduled fetch). Google's product data spec:
+# https://support.google.com/merchants/answer/7052112. Account-level settings (returns policy,
+# handling time, US sales tax) live in Merchant Center, not here.
+
+GOOGLE_NS = "http://base.google.com/ns/1.0"
+MAX_ADDITIONAL_IMAGES = 10     # Google's limit for additional_image_link
+_MD_LINK = re.compile(r"!?\[([^\]]*)\]\([^)]*\)")
+_MD_MARKS = re.compile(r"[*_`#>]+")
+
+
+def plain_text(markdown_text: str, limit: int = 5000) -> str:
+    """A product description without Markdown marks, on one line, within Google's 5,000 characters."""
+    text = _MD_LINK.sub(r"\1", markdown_text or "")
+    text = _MD_MARKS.sub("", text)
+    text = re.sub(r"^\s*-\s+", "", text, flags=re.M)
+    return " ".join(text.split())[:limit]
+
+
+def feed_shipping_cents(settings: Settings, price_cents: int, ship_class: str) -> int:
+    """Shipping for one unit, as checkout charges it (orders.py): the class's flat rate, or
+    nothing at or over the free-shipping line."""
+    if settings.free_shipping_over_cents and price_cents >= settings.free_shipping_over_cents:
+        return 0
+    rates = settings.ship_rates_cents
+    return rates.get(ship_class, max(rates.values()) if rates else 0)
+
+
+def google_feed_xml(settings: Settings, products: list[dict]) -> str:
+    """The RSS 2.0 feed Merchant Center reads: one <item> per product. `products` come from
+    catalog.feed_products (visible, priced, with their photos). Products without a photo are left
+    out (Google refuses an item without image_link), and so is everything while checkout is off
+    (catalog mode: nothing can be bought here, so nothing should be advertised as for sale)."""
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+             f'<rss version="2.0" xmlns:g="{GOOGLE_NS}">', "<channel>",
+             "  <title>Poke6s</title>", f"  <link>{escape(settings.base_url)}/</link>",
+             "  <description>Pokémon TCG sealed products from Poke6s</description>"]
+
+    def tag(name: str, value) -> None:
+        lines.append(f"    <g:{name}>{escape(str(value))}</g:{name}>")
+
+    for p in products if settings.checkout_enabled else []:
+        if not p["images"]:
+            continue
+        lines.append("  <item>")
+        tag("id", p["sku"])
+        tag("title", p["title"][:150])
+        tag("description", plain_text(p["description_md"]) or p["title"])
+        tag("link", f"{settings.base_url}/p/{p['slug']}")
+        tag("image_link", image_url(settings, p["images"][0]))
+        for name in p["images"][1:1 + MAX_ADDITIONAL_IMAGES]:
+            tag("additional_image_link", image_url(settings, name))
+        tag("availability", "in_stock" if p["in_stock"] else "out_of_stock")
+        tag("price", f"{money(p['price_cents'])} USD")
+        # Bulk lots are cards pulled from packs: Google counts those as used.
+        tag("condition", "used" if p["kind"] == "bulk" else "new")
+        if p["kind"] != "accessory":   # accessories come from several makers
+            tag("brand", "Pokémon")
+        if p.get("gtin"):
+            tag("gtin", p["gtin"])
+        else:
+            # No barcode saved yet (the admin's Details panel takes one). Google lists the item
+            # anyway; adding UPC/JAN barcodes helps it match searches.
+            tag("identifier_exists", "no")
+        if p.get("product_type"):
+            tag("product_type", p["product_type"])
+        lines.append("    <g:shipping><g:country>US</g:country><g:service>Standard</g:service>"
+                     f"<g:price>{money(feed_shipping_cents(settings, p['price_cents'], p['ship_class']))} USD"
+                     "</g:price></g:shipping>")
+        lines.append("  </item>")
+    lines += ["</channel>", "</rss>"]
+    return "\n".join(lines) + "\n"
