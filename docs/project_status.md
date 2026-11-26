@@ -1,6 +1,6 @@
 # Pokemon Momentum Project Status
 
-Last reviewed: 2026-11-22
+Last reviewed: 2026-11-25
 
 This is the concise map of what exists, what is operational, and what was in progress
 when development paused. Detailed implementation and operating instructions remain in
@@ -33,7 +33,8 @@ schedule opens `docs/operator_runbook.txt`. Start with `AGENTS.md` and `docs/tod
   (Pirate Ship file out, tracking file back); Products (price, stock, visibility, details,
   photos, packed size, adding products, every change logged); Pricing (repricing with a preview);
   refunds and returns; monthly sales/Stripe/tax/TCGplayer reports; Supplier Pricing (pasted shop
-  pages or screenshots) and Supplier Profitability (`docs/storefront_plan.md` Phase 3)
+  pages or screenshots), Supplier Profitability and Best buys (where to buy each box and where to
+  sell it, fast sellers first; `docs/storefront_plan.md` Phase 3)
 - Nightly pipeline memory: snapshot scripts cap DuckDB at 10 GB and 4 threads
   (`scripts/common/duckdb_settings.py`) after an out-of-memory kill on 2026-11-02
 - Graded data: nightly PriceCharting snapshot, kept as our own history

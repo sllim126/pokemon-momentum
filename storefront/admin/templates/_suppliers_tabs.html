@@ -1,5 +1,6 @@
-{#- The two pages under the "Suppliers" tab. `request` comes with every TemplateResponse. -#}
+{#- The pages under the "Suppliers" tab. `request` comes with every TemplateResponse. -#}
 <nav class="tabs" aria-label="Supplier pages">
   <a href="/supplier-profitability" {% if request.url.path == '/supplier-profitability' %}aria-current="page"{% endif %}>Profitability</a>
+  <a href="/supplier-best-buys" {% if request.url.path == '/supplier-best-buys' %}aria-current="page"{% endif %}>Best buys</a>
   <a href="/supplier-pricing" {% if request.url.path == '/supplier-pricing' %}aria-current="page"{% endif %}>Enter a quote</a>
 </nav>

@@ -236,6 +236,9 @@ table.sp-channels input { text-align: right; }
 .sp-tiles { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .sp-scroll { overflow-x: auto; }
 table.sp-table { min-width: 1100px; }
+/* Best buys (supplier_best_buys.html): the product and the order first, the routes may wrap. */
+.bb-product { min-width: 11em; }
+.bb-order { min-width: 7em; }
 .badge.sp-buy { color: var(--good); border-color: var(--good); }
 .badge.sp-thin-margin { color: var(--warn); border-color: var(--warn); }
 .badge.sp-pass { color: var(--bad); border-color: var(--bad); }
