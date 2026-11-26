@@ -45,6 +45,10 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-26 Grandmaster title cards for all 16 Scarlet & Violet sets (owner): every printing
+  (main set, reverse holos, Poké Ball and Master Ball patterns, promos and stamps from the
+  checklists, the owner's own extras) in their Publisher layout and Agency FB, from
+  `TCG Placeholders/tools/build_title_cards.py`; offered in the store's Placeholder Library.
 - 2026-11-25 "Master Sets Have Become an Art Form" scheduled for Dec 4 (owner): owner's edits, The
   Pokémon Company's official Delta Reign binder inserts (cover and text), links to the Placeholder
   Library, the new Journey Together title cards download and Card Binder Ideas' cover gallery.
@@ -1420,14 +1424,10 @@ Learn and collector tools (owner, 2026-10-23; "nothing tonight"):
 - [planned] Release dates marked "to confirm" or "not confirmed" in mega_placeholders.csv
   (Figure, Premium and Ultra-Premium Collections set as 2026-11-06; MEP028 Celebratory Fanfare,
   a Championship reward per the owner 2026-11-20, set as 2025-10-24) need checking.
-- [in progress] Grandmaster title cards (owner, 2026-11-25): the Journey Together title-card look
-  extended to every printing of every Scarlet & Violet set, then the Mega sets.
-  `TCG Placeholders/tools/build_title_cards.py` is written (branch
-  placeholders/grandmaster-title-cards); all 16 SV sets build (183-534 cards each). Stopped at:
-  waiting for the owner's Agency FB Bold file (AGENCYB.TTF) in `TCG Placeholders/fonts/`; the
-  copy embedded in their PDF only has the letters they typed. Then: build the PDFs, owner checks
-  JTG against their sheet, add them to the Placeholder Library (store `placeholder_library.py`
-  DOWNLOADS), then `--era mega`.
+- [next] Grandmaster title cards for the Mega sets (owner, 2026-11-25: "then we'll move onto
+  Mega's"): `build_title_cards.py --era mega`, add the files to GRANDMASTER_TITLE_CARDS in the
+  store's `placeholder_library.py`. The SV sets were built 2026-11-26 (see Recently Completed);
+  the owner is checking Journey Together against their own sheet.
 - [planned] Placeholder Library follow-up: placeholders for whole sets (every card of a master
   set, from the catalog), not only promos and variants. (Prize Pack Series 9 and Delta Reign's
   promos were added 2026-11-20; title cards for whole sets: see the item above.)

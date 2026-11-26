@@ -170,8 +170,9 @@ def test_placeholder_files_are_whitelisted(art_client):
     assert md.status_code == 200 and md.headers["content-type"].startswith("text/plain")
     download = art_client.get("/placeholders/download/mega-auto-promos-csv")
     assert download.status_code == 200 and "attachment" in download.headers["content-disposition"]
-    pdf = art_client.get("/placeholders/download/jtg-title-cards")   # hand-made, not generated
-    assert pdf.status_code == 200 and pdf.headers["content-type"] == "application/pdf"
+    for title_cards in ("jtg-title-cards", "journey-together-title-cards"):   # hand-made, generated
+        pdf = art_client.get(f"/placeholders/download/{title_cards}")
+        assert pdf.status_code == 200 and pdf.headers["content-type"] == "application/pdf", title_cards
     for bad in ("/placeholders/files/nope/index.html", "/placeholders/files/print-combined/notes.py",
                 "/placeholders/files/print-combined/..%2F..%2FREADME.md", "/placeholders/files/docs/missing.md",
                 "/placeholders/download/not-real"):

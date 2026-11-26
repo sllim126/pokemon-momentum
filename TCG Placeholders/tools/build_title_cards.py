@@ -83,7 +83,9 @@ LINE_GREY = (0.62, 0.62, 0.62)
 LINE_WIDTH = 0.25
 FONT_SIZES = (24, 22, 20, 18, 16, 14)   # the owner's 24 pt, smaller only when needed
 LINE_GAP = 1.19                         # line pitch / font size in the owner's file
-TEXT_W = CELL_W - 16                    # leave a little margin inside the outline
+SMALL = "^"                             # extras: a line starting with ^ is a small heading
+SMALL_SIZE = 14                         # ("Tournament Exclusive" in the owner's sheet)
+TEXT_W = CELL_W - 10                    # the owner's widest line is ~167 pt in a 178.6 pt box
 TEXT_H = CELL_H - 24
 
 # Printing order inside one card number.
@@ -264,7 +266,7 @@ def checklist_cards(code: str, era: str, total: str) -> list[TitleCard]:
 
 def extra_cards(code: str) -> list[TitleCard]:
     """Hand-written cards for this set from title_card_extras.csv. "Lines" separates lines with
-    "|"; an empty part is a blank line. "Sort Number" places the card: a set number like
+    "|"; an empty part is a blank line, and a part starting with "^" is a small heading. "Sort Number" places the card: a set number like
     "117" sits with that card, "SVP 200" among the promos, blank goes last."""
     if not EXTRAS.exists():
         return []
@@ -341,14 +343,22 @@ def wrap(line: str, size: float, measure: Measure) -> list[str]:
     return out
 
 
-def fit(lines: list[str], measure: Measure) -> tuple[float, list[str]]:
-    """The largest size (24 pt first) at which the wrapped text fits the card."""
+def fit(lines: list[str], measure: Measure) -> list[tuple[str, float]]:
+    """(text, size) per printed line, at the largest size (24 pt first) where the wrapped text
+    fits the card. Small headings (lines starting with SMALL) stay at SMALL_SIZE."""
     for size in FONT_SIZES:
-        wrapped = [part for line in lines for part in (wrap(line, size, measure) if line else [""])]
-        widest = max(measure.width(w, size) for w in wrapped)
-        if widest <= TEXT_W and len(wrapped) * size * LINE_GAP <= TEXT_H:
-            return size, wrapped
-    return FONT_SIZES[-1], wrapped
+        out: list[tuple[str, float]] = []
+        for line in lines:
+            if line.startswith(SMALL):
+                out += [(part, SMALL_SIZE) for part in wrap(line[1:], SMALL_SIZE, measure)]
+            elif line:
+                out += [(part, size) for part in wrap(line, size, measure)]
+            else:
+                out.append(("", size))
+        widest = max(measure.width(t, s) for t, s in out)
+        if widest <= TEXT_W and sum(s for _, s in out) * LINE_GAP <= TEXT_H:
+            return out
+    return out
 
 
 def write_pdf(cards: list[TitleCard], font_path: Path, out: Path) -> Measure:
@@ -377,14 +387,16 @@ def write_pdf(cards: list[TitleCard], font_path: Path, out: Path) -> Measure:
                 y = GRID_Y + (i // COLS) * CELL_H
                 ax.add_patch(Rectangle((x, y), CELL_W, CELL_H, fill=False,
                                        edgecolor=LINE_GREY, linewidth=LINE_WIDTH))
-                size, lines = fit(card.lines, measure)
-                prop = FontProperties(fname=str(font_path), size=size)
-                pitch = size * LINE_GAP
-                top = y + CELL_H / 2 - pitch * (len(lines) - 1) / 2
-                for n, text in enumerate(lines):
+                lines = fit(card.lines, measure)
+                # Stack the lines (each as tall as its own size) and centre the block in the box.
+                cursor = y + CELL_H / 2 - sum(s for _, s in lines) * LINE_GAP / 2
+                for text, size in lines:
+                    pitch = size * LINE_GAP
                     if text:
-                        ax.text(x + CELL_W / 2, top + n * pitch, text, fontproperties=prop,
-                                ha="center", va="center", color="black")
+                        ax.text(x + CELL_W / 2, cursor + pitch / 2, text, ha="center", va="center",
+                                fontproperties=FontProperties(fname=str(font_path), size=size),
+                                color="black")
+                    cursor += pitch
             pdf.savefig(fig)
             plt.close(fig)
     return measure
@@ -396,7 +408,7 @@ def write_listing(cards: list[TitleCard], out: Path) -> None:
         w = csv.writer(fh)
         w.writerow(["Page", "Position", "Source", "Text"])
         for i, card in enumerate(cards):
-            w.writerow([i // 9 + 1, i % 9 + 1, card.source, " | ".join(card.lines)])
+            w.writerow([i // 9 + 1, i % 9 + 1, card.source, " | ".join(l.lstrip(SMALL) for l in card.lines)])
 
 
 def slug(code: str) -> str:

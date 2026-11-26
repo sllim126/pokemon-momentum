@@ -126,7 +126,10 @@ text, for checking). Agency FB is a Microsoft font, so it isn't in the repo: the
 `AGENCYB.TTF` goes in `TCG Placeholders/fonts/` (git-ignored). Run in the market container:
 `python "TCG Placeholders/tools/build_title_cards.py" --era sv` (or `--set JTG`, `--era mega`).
 Card lists come from the TCGCSV catalogue and the newest price file, so rerun after new cards
-are added to a set's checklist.)
+are added to a set's checklist. In `title_card_extras.csv`, "|" separates lines, an empty part
+is a blank line and a part starting with "^" prints as a small 14 pt heading. The store lists
+each PDF in the Placeholder Library through `GRANDMASTER_TITLE_CARDS` in
+`storefront/app/placeholder_library.py`; add a set there when its PDF is first built.)
 
 ### Print outputs
 
