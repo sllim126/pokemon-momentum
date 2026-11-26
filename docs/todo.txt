@@ -45,6 +45,9 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-26 Google Merchant Center feed (Phase 4): https://poke6s.com/feeds/google.xml lists all
+  47 visible products with price, stock, condition, brand, shipping ($10 / $20 oversize / free
+  from $150) and product type. See the [next] Merchant Center item for the owner's set-up steps.
 - 2026-11-26 Grandmaster title cards for all 16 Scarlet & Violet sets (owner): every printing
   (main set, reverse holos, Poké Ball and Master Ball patterns, promos and stamps from the
   checklists, the owner's own extras) in their Publisher layout and Agency FB, from
@@ -706,6 +709,16 @@ Tunnel; the domain remains registered after the Squarespace website plan ended.
   decisions. The branch records the detailed checklist; do not publish its demo products.
 - [planned] Some store photos are tiny (Greninja ex PC 200 px, Perfect Order box 270 px):
   replace them with larger ones (fits with the owner's listing notes).
+- [next] Merchant Center set-up (owner, about 20 minutes; free): merchants.google.com, the same
+  Google account as Search Console. 1) Business info: poke6s.com, claim the site (already verified
+  in Search Console). 2) Products -> Add products -> "Add products from a file" -> "Enter a link
+  to your file": https://poke6s.com/feeds/google.xml, daily fetch, country US, language English.
+  3) Shipping and returns: returns policy (the site's /returns page), handling time 0-1 business
+  days, transit 2-5 days (the feed carries the shipping price). 4) Sales tax: US, Utah only (we
+  collect where Stripe Tax is registered). 5) Turn on free listings ("Growth" -> "Manage
+  programs" -> Free listings). Then check Diagnostics after the first fetch and report any
+  disapprovals. Barcodes: Google matches products better with a GTIN; add the UPC/JAN on each
+  product's Details panel as you handle them (MACHO's shop page lists JAN codes).
 - [next] Owner's notes on individual store listings (owner has them, 2026-11-14): go through
   them one listing at a time.
 - Postal address for marketing emails: STOREFRONT_POSTAL_ADDRESS in .env (2026-11-20), the

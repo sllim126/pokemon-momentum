@@ -214,6 +214,25 @@ def sitemap_entries(conn: sqlite3.Connection) -> dict:
     }
 
 
+def feed_products(conn: sqlite3.Connection) -> list[dict]:
+    """Every visible, priced product for the Google Merchant feed (seo.google_feed_xml), with its
+    photo names in display order and a "Kind > Language" product type (e.g. "Booster box > Japanese")."""
+    photos: dict[int, list[str]] = {}
+    for row in conn.execute("SELECT product_id, file_name FROM product_images ORDER BY product_id, sort_order, id"):
+        photos.setdefault(row["product_id"], []).append(row["file_name"])
+    found = []
+    for row in conn.execute("""SELECT id, sku, slug, title, description_md, kind, product_type, language,
+                                      price_cents, stock, track_stock, gtin, ship_class
+                               FROM products WHERE visible = 1 AND price_cents > 0 AND kind != 'single'
+                               ORDER BY id"""):
+        kind_label = classify.PRODUCT_TYPE_LABELS.get(row["product_type"] or "", "")
+        language = classify.LANGUAGE_LABELS.get(row["language"] or "", "")
+        found.append({**dict(row), "images": photos.get(row["id"], []),
+                      "in_stock": bool(not row["track_stock"] or row["stock"] > 0),
+                      "product_type": " > ".join(x for x in (kind_label, language) if x)})
+    return found
+
+
 def product_redirect(conn: sqlite3.Connection, old_path: str) -> str | None:
     row = conn.execute(
         "SELECT p.slug, p.visible FROM product_redirects r JOIN products p ON p.id = r.product_id "

@@ -614,6 +614,7 @@ The writer for the market prices lives with the market app:
 | `/<page>` | Markdown pages from `content/pages/` |
 | `/media/<480\|1200>/<name>.webp` | Product photos, cached for a year |
 | `/sitemap.xml`, `/robots.txt`, `/healthz` | Search engines and monitoring |
+| `/feeds/google.xml` | Google Merchant Center product feed (`seo.google_feed_xml`, `catalog.feed_products`): every visible, priced product with a photo, its price, stock, condition, brand, barcode (or `identifier_exists` no) and one-unit shipping as checkout charges it. Empty while checkout is off |
 
 ## Redirects
 
