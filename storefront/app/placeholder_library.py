@@ -59,6 +59,28 @@ DOWNLOADS = {
     "jtg-title-cards": "title_cards/journey_together_promo_title_cards.pdf",
 }
 
+# Grandmaster title cards: a card for every printing in a set, made by
+# "TCG Placeholders/tools/build_title_cards.py" (run by hand; owner, 2026-11-25). Set name and
+# file stem, in release order. Download id: "<stem>-title-cards", with "_" as "-".
+GRANDMASTER_TITLE_CARDS = (
+    ("Scarlet & Violet", "scarlet_violet_base_set"), ("Paldea Evolved", "paldea_evolved"),
+    ("Obsidian Flames", "obsidian_flames"), ("151", "scarlet_violet_151"),
+    ("Paradox Rift", "paradox_rift"), ("Paldean Fates", "paldean_fates"),
+    ("Temporal Forces", "temporal_forces"), ("Twilight Masquerade", "twilight_masquerade"),
+    ("Shrouded Fable", "shrouded_fable"), ("Stellar Crown", "stellar_crown"),
+    ("Surging Sparks", "surging_sparks"), ("Prismatic Evolutions", "prismatic_evolutions"),
+    ("Journey Together", "journey_together"), ("Destined Rivals", "destined_rivals"),
+    ("Black Bolt", "black_bolt"), ("White Flare", "white_flare"),
+)
+
+
+def title_card_id(stem: str) -> str:
+    return stem.replace("_", "-") + "-title-cards"
+
+
+DOWNLOADS.update({title_card_id(stem): f"title_cards/{stem}_grandmaster_title_cards.pdf"
+                  for _, stem in GRANDMASTER_TITLE_CARDS})
+
 # What may be served, and as what. Markdown shows as plain text so it reads in the browser.
 MEDIA_TYPES = {
     ".html": "text/html; charset=utf-8",
@@ -170,10 +192,16 @@ SECTIONS = (
         Item("Scarlet & Violet checklists", "Tick-off checklists for every Scarlet & Violet set.", "Collectors",
              page="checklists-sv/index.html"),
     )),
-    Section("Title cards", "Printable cards to sit next to a card in your binder and say where it came from.", (
-        Item("Journey Together promo title cards", "A card for every Journey Together promo and the product, "
-             "event or store it came from: stamped Snorlax, premium collections, pre-release and staff cards, "
-             "tournament promos and the Japanese promos. Print, cut along the lines and sleeve.", "Collectors",
+    Section("Grandmaster title cards", "A card-sized label for every printing in a set, in binder order: "
+            "each card, its reverse holo and Poké Ball or Master Ball versions, then every stamped and promo "
+            "version with where it came from. Print on Letter paper, cut along the lines and sleeve one in "
+            "each empty slot.", tuple(
+        Item(f"{name} title cards", "Every printing of the set, its promos and stamps.", "Collectors",
+             download=title_card_id(stem))
+        for name, stem in GRANDMASTER_TITLE_CARDS
+    ) + (
+        Item("Journey Together promo title cards (original)", "The first, hand-made sheet: only the "
+             "Journey Together promos and the product, event or store each came from.", "Collectors",
              download="jtg-title-cards"),
     )),
     Section("Checklists as spreadsheets",
