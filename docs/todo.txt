@@ -367,6 +367,9 @@ High Priority
   - [next] Booster box post (`best-booster-box-deal-english-vs-japanese.md`, Dec 8): drafted
     2026-11-26 from Nov 25 prices on `blog/booster-box-deal`. Before it goes live, refresh every
     price, per-pack/per-card figure and "lowest yet" claim; the owner reads and edits it first.
+  - [next] 30th Celebration post (`30th-celebration-three-months-in.md`, Dec 10): drafted 2026-11-26
+    from Nov 25 prices on `blog/30th-celebration-three-months`. Refresh every number before it
+    goes live; owner to confirm what the three Mew "RGB" cards are.
   - Posts can show live product boxes with `[[market <ids>]]` (storefront/README.md "Articles").
   - Topics: Nov 24 Delta Reign, two weeks in (see above) · Nov 26
     Is sealed cheaper on Black Friday? (Nov–Dec 2024/2025) · Nov 28 Gift guide by budget
