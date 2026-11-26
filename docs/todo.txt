@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-23 (Dec 1 blog drafts)
+Last updated: 2026-11-26 (Phase 3 marked complete)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -611,7 +611,9 @@ Tunnel; the domain remains registered after the Squarespace website plan ended.
   - [done 2026-11-12] Order emails through Microsoft Graph from orders@poke6s.com.
   - [planned] Once real orders exist, stop re-running the Squarespace importer (it resets
     stock); the Phase 3 admin takes over stock changes (it can since 2026-11-19: Products page).
-- [in progress] Phase 3: store admin, built in 8 steps (plan "Phase 3"; Claude). Step 1
+- [done 2026-11-25] Phase 3: store admin, all 9 steps done (plan "Phase 3"; Claude). Its "done
+when" is met: a day's orders run from the admin alone, and the restore was tested 2026-11-12.
+Left for the owner: the first real Pirate Ship shipments CSV upload (below). History: Step 1
   (foundation: app on http://192.168.1.240:8011/, network walls, sign-in, Overview) built
   2026-11-14, merged to main and deployed 2026-11-18. Step 2 (Orders, with packing slips)
   built 2026-11-19 on branch storefront/admin-orders. Next:
@@ -644,7 +646,7 @@ Tunnel; the domain remains registered after the Squarespace website plan ended.
   - [idea] Delete the unused Squarespace-era scripts (scripts/squarespace_*.py,
     scripts/*squarespace_single_listing*.py, build_store_price_targets' export inputs) and their
     tests, once the owner no longer needs them for history.
-  - [planned] Step 9 (owner, 2026-11-20, all three layers approved; the store admin stays on
+  - [done 2026-11-25] Step 9 (owner, 2026-11-20, all three layers approved; the store admin stays on
     the home network): make poke6s.com, market.poke6s.com and the store admin feel like one
     site. Layers, smallest first:
     a. [done 2026-11-20] One look and navigation: the Poke6s bar (Shop / Market, and Admin in
@@ -661,7 +663,7 @@ Tunnel; the domain remains registered after the Squarespace website plan ended.
   - [done 2026-11-23] Market option B (owner chose it 2026-11-20, `docs/market_inventory.md`):
     Binder Art Maker, Collector Hub and Placeholder Library to poke6s.com (2026-11-20); Supplier
     Profitability (2026-11-21), Supplier Pricing (2026-11-22) and Bug Reports with the owner
-    home, 9c (2026-11-23) into the store admin. Step 9 has 9b (one Poke6s account) left.
+    home, 9c (2026-11-23) into the store admin. 9b (one Poke6s account) done 2026-11-23 to 2026-11-25 (sign-in, wishlist, support).
   - [watching] Best buys (built 2026-11-25): 30-day market trends show only for products with
     TCGplayer IDs (most Japanese boxes have none: add them on the product's Details panel). Storm
     Emeralda and 30th Celebration aren't store products, so they can't be compared until added.
