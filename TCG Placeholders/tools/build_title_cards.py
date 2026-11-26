@@ -38,8 +38,10 @@ Run it in the market container, which has matplotlib and pyarrow:
     docker-compose exec -T pokemon-momentum python "TCG Placeholders/tools/build_title_cards.py" --set JTG
     docker-compose exec -T pokemon-momentum python "TCG Placeholders/tools/build_title_cards.py" --era sv
 
-Output: title_cards/<set>_grandmaster_title_cards.pdf, plus title_cards/csv/<set>.csv listing
-every card's text for checking.
+Output: title_cards/<set>_grandmaster_title_cards.pdf, the printable tick-box checklist
+title_cards/checklists/<set>_checklist.pdf (checklist_pdf.py; index.json there maps set codes to
+those files for the checklist pages), and title_cards/csv/<set>.csv listing every card's text
+for checking.
 """
 
 from __future__ import annotations
@@ -51,6 +53,8 @@ import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from checklist_pdf import write_checklist
 
 PLACEHOLDERS = Path(__file__).resolve().parents[1]
 REPO = PLACEHOLDERS.parent
@@ -107,11 +111,22 @@ HOME_REGIONS = {"", "US/UK", "US", "US/Canada", "UK"}
 
 @dataclass
 class TitleCard:
-    """One label: its lines (an empty string is a blank line) and where it sorts."""
+    """One label: its lines (an empty string is a blank line) and where it sorts. The other
+    fields say the same in parts, for the printable checklist (checklist_pdf.py)."""
 
     lines: list[str]
     sort: tuple = field(default=())
-    source: str = ""   # main / checklist / extra, for the review CSV
+    source: str = ""     # main / checklist / extra, for the review CSV
+    name: str = ""
+    number: str = ""     # as printed: "034/159", "SVP 181", "MEP 074"
+    printing: str = ""   # main-set cards: "" (the card itself), "Reverse Holo", "Poké Ball Pattern"...
+    version: str = ""    # promos and specials: "GameStop Stamp", "Cosmos Holo"...
+    where: str = ""      # where it came from, without brackets
+
+    @property
+    def in_grid(self) -> bool:
+        """A main-set printing (one tick box in the set's grid), not a promo or special."""
+        return self.source == "main" and self.sort[0] == 0
 
 
 # --- data sources -------------------------------------------------------------------------------
@@ -220,7 +235,8 @@ def main_set_cards(code: str) -> tuple[list[TitleCard], str]:
             if printing:
                 lines.append(printing)
             order = PRINTING_ORDER.get(printing, 4)
-            cards.append(TitleCard(lines, sort_key(0, number_key(number), order, printing), "main"))
+            cards.append(TitleCard(lines, sort_key(0, number_key(number), order, printing), "main",
+                                   name=name, number=lines[2][1:], printing=printing))
     total = max(totals, key=totals.get) if totals else ""
     return cards, total
 
@@ -237,7 +253,7 @@ def extra_group_cards(code: str) -> list[TitleCard]:
                 name, _ = split_name(p["name"])
                 cards.append(TitleCard([name, "", f"#{number}", label],
                                        sort_key(1, (0, label, int(re.sub(r"\D", "", number.split("/")[0]) or 0)),
-                                                0, name), "main"))
+                                                0, name), "main", name=name, number=number, version=label))
     return cards
 
 
@@ -295,7 +311,9 @@ def checklist_cards(code: str, era: str, total: str) -> list[TitleCard]:
                 where = f"{where}, {region}" if where else region
             if where:
                 lines.append(f"({where})")
-            cards.append(TitleCard(lines, sort_key(section, nk, 5, variant), "checklist"))
+            cards.append(TitleCard(lines, sort_key(section, nk, 5, variant), "checklist",
+                                   name=lines[0], number=number, version=lines[3] if variant else "",
+                                   where=where))
     return cards
 
 
@@ -319,8 +337,33 @@ def extra_cards(code: str) -> list[TitleCard]:
                 section, nk = 1, (0, m.group(1), int(m.group(2)))
             else:
                 section, nk = 2, (0, "", 0)
-            cards.append(TitleCard(lines, sort_key(section, nk, 6, row["Lines"]), "extra"))
+            cards.append(TitleCard(lines, sort_key(section, nk, 6, row["Lines"]), "extra",
+                                   **extra_fields(lines)))
     return cards
+
+
+def extra_fields(lines: list[str]) -> dict:
+    """Name, number, version and source of a hand-written card, from its lines: the plain lines
+    before the first blank are the name ("Lillie's Tournament", "Collection"), a "#..." line the
+    number, a bracketed line the source, the rest (small headings first) the version."""
+    name_parts, number, version, where = [], "", [], []
+    in_name = True
+    for line in (l.strip() for l in lines):
+        if not line:
+            in_name = in_name and not name_parts
+            continue
+        if line.startswith(SMALL):
+            version.append(line[1:])
+        elif in_name:
+            name_parts.append(line)
+        elif line.startswith("#") and not number:
+            number = line[1:]
+        elif line.startswith("(") and line.endswith(")"):
+            where.append(line[1:-1])
+        else:
+            version.append(line)
+    return {"name": " ".join(name_parts), "number": number, "version": " · ".join(version),
+            "where": "; ".join(where)}
 
 
 def set_cards(code: str, era: str) -> list[TitleCard]:
@@ -412,8 +455,9 @@ def write_pdf(cards: list[TitleCard], font_path: Path, out: Path) -> Measure:
     measure = Measure(font_path)
     per_page = COLS * ROWS
     out.parent.mkdir(parents=True, exist_ok=True)
+    # No CreationDate: a rebuild with no new cards writes the same bytes (the nightly sync reruns it).
     with PdfPages(out, metadata={"Title": out.stem.replace("_", " ").title(), "Author": "Poke6s",
-                                 "Creator": "build_title_cards.py"}) as pdf:
+                                 "Creator": "build_title_cards.py", "CreationDate": None}) as pdf:
         for start in range(0, len(cards), per_page):
             fig = plt.figure(figsize=(PAGE_W / 72, PAGE_H / 72))
             ax = fig.add_axes((0, 0, 1, 1))
@@ -449,6 +493,13 @@ def write_listing(cards: list[TitleCard], out: Path) -> None:
             w.writerow([i // 9 + 1, i % 9 + 1, card.source, " | ".join(l.lstrip(SMALL) for l in card.lines)])
 
 
+def set_title(code: str) -> str:
+    """The set's name for headings: "SV09: Journey Together" -> "Journey Together"."""
+    name = re.sub(r"^[A-Z0-9]+:\s*", "", group_for(code)["name"])
+    return {"Scarlet & Violet Base Set": "Scarlet & Violet", "Mega Evolution Promo":
+            "Mega Evolution Black Star Promos"}.get(name, name)
+
+
 def slug(code: str) -> str:
     name = group_for(code)["name"]
     name = re.sub(r"^[A-Z0-9]+:\s*", "", name)
@@ -474,16 +525,25 @@ def main(argv: list[str] | None = None) -> int:
     if not jobs:
         ap.error("give --set or --era")
 
+    # Set code -> checklist PDF, for build_checklists.py's "Printable checklist" buttons.
+    index_path = args.out / "checklists" / "index.json"
+    index = json.loads(index_path.read_text()) if index_path.exists() else {}
     for code, era in jobs:
         cards = set_cards(code, era)
         name = slug(code)
         pdf = args.out / f"{name}_grandmaster_title_cards.pdf"
         measure = write_pdf(cards, args.font, pdf)
+        checklist = args.out / "checklists" / f"{name}_checklist.pdf"
+        pages = write_checklist(set_title(code), cards, checklist, args.font, PRINTING_ORDER)
+        index[code] = checklist.name
         write_listing(cards, args.out / "csv" / f"{code.lower()}.csv")
         counts = {s: sum(c.source == s for c in cards) for s in ("main", "checklist", "extra")}
         note = f"  missing glyphs: {''.join(sorted(measure.missing))}" if measure.missing else ""
         print(f"{code}: {len(cards)} cards, {-(-len(cards) // 9)} pages ({counts['main']} main set, "
-              f"{counts['checklist']} promo/special, {counts['extra']} extra) -> {pdf.name}{note}")
+              f"{counts['checklist']} promo/special, {counts['extra']} extra) -> {pdf.name}; "
+              f"checklist {pages} pages{note}")
+    index_path.parent.mkdir(parents=True, exist_ok=True)
+    index_path.write_text(json.dumps(dict(sorted(index.items())), indent=1) + "\n")
     return 0
 
 

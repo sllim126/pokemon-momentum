@@ -45,6 +45,12 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-26 Printable set checklists (owner: "someone downloading a checklist isn't wanting a
+  .csv"): a PDF per set with a box for every version of every card, then its promos and where
+  each came from, in the store's navy and blue with the title cards' font. The Placeholder
+  Library shows one row per set (Checklist and Title cards buttons); each checklist page's main
+  button is now the PDF (CSV kept for spreadsheets). The nightly placeholder sync rebuilds the
+  PDFs and title cards when the font is present.
 - 2026-11-26 Social cards per article (Phase 4): links to posts shared on Discord, Facebook or X
   show a 1200x630 Poke6s card with the category, title and cover photo (or the description when
   a post has no cover), from /cards/articles/<slug>.png.
