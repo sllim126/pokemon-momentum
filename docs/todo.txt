@@ -345,8 +345,8 @@ High Priority
     2026-11-26: Saku (@saku.vault) said yes; their Jirachi cover is in the post with a credit
     line (image cropped from their own Instagram post, not Card Binder Ideas' watermarked copy).
     Two invites still open.
-  - [next] Gift guide (`pokemon-tcg-gift-guide-by-budget.md`, Nov 28): reviewed, prices to Nov 24
-    on `blog/gift-guide-review`. On Nov 27 (owner, 2026-11-25): refresh every price, re-read the
+  - [next] Gift guide (`pokemon-tcg-gift-guide-by-budget.md`, Nov 28): reviewed, prices to Nov 24.
+    Owner's wording edits (2026-11-26) on `blog/gift-guide-edits`; do the refresh there. On Nov 27 (owner, 2026-11-25): refresh every price, re-read the
     text against the new numbers (claims, budget sections, wording), then the
     owner's OK to publish.
   - Posts can show live product boxes with `[[market <ids>]]` (storefront/README.md "Articles").
