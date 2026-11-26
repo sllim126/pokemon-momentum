@@ -1,10 +1,11 @@
 # New storefront for poke6s.com: plan
 
-Last reviewed: 2026-11-25
+Last reviewed: 2026-11-26
 **Status: live on https://poke6s.com/ since 2026-11-11**, self-hosted on the owner's server
 through a Cloudflare Tunnel (runbook "poke6s.com hosting"); Stripe Checkout has been live since
-2026-11-13. Phases 1 and 2 are live. Phase 3's LAN-only admin now covers orders, shipping,
-products, pricing, refunds, reports and supplier tools. Google Search Console is set up, and its
+2026-11-13. Phases 1 to 3 are complete: the LAN-only admin covers orders, shipping, products,
+pricing, refunds, reports and supplier tools. Phase 4's build (articles, social cards, Merchant
+Center feed, market buy button) is done; Phase 5 (binders) waits on the owner's designs. Google Search Console is set up, and its
 numbers are on Grafana's Store dashboard.
 Developer guide for the code: `storefront/README.md`. See "Progress log" at the end.
 
@@ -445,7 +446,7 @@ complete Phase 0's account and DNS work before launch.
 - *Done when:* a Stripe test order goes from cart to paid to shipped email, and stock and the
   order record match.
 
-**Phase 3: admin and operations (Claude, started 2026-11-14)**
+**Phase 3: admin and operations (Claude, 2026-11-14 to 2026-11-25; complete)**
 
 Built in steps, each merged and used before the next (owner, 2026-11-14: "go slow and do
 this properly"):
@@ -508,13 +509,13 @@ Original scope:
 **Launch (owner + Claude):** content review (policies, About), live Stripe keys, DNS to the tunnel,
 live test order, Search Console and Merchant Center, then the "After launch" steps above.
 
-**Phase 4: content and reach (Codex or Claude)**
+**Phase 4: content and reach (Claude; build done 2026-11-26, articles ongoing)**
 - Articles (the pages and the 10 old posts were brought forward and built 2026-10-31),
   social cards per article, Merchant Center feed checks. Newsletter only if the
   owner asks for it then (D9).
 - Market site buy button switched to the new store.
 
-**Phase 5: custom binders and accessories**
+**Phase 5: custom binders and accessories (waiting: owner's demo images and design decisions)**
 - Product variants, pre-order and made-to-order flags, design gallery.
 
 ## Owner decisions
