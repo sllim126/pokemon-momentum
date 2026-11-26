@@ -81,6 +81,10 @@ BUILDS = [
      "--extra-input", "prize_pack_series8.csv", "--extra-input", "prize_pack_series9.csv", "--output-dir", "output_mega"],
 ]
 
+TITLE_CARD_FONT = LIBRARY / "fonts" / "AGENCYB.TTF"
+TITLE_CARD_BUILDS = [["tools/build_title_cards.py", "--era", "sv"],
+                     ["tools/build_title_cards.py", "--era", "mega"]]
+
 
 def read_csv(path: Path) -> list[dict]:
     if not path.exists():
@@ -267,6 +271,14 @@ def sync_era(era: dict, dry_run: bool) -> dict:
 def rebuild() -> None:
     for command in BUILDS:
         subprocess.run([sys.executable, *command], cwd=LIBRARY, check=True, stdout=subprocess.DEVNULL)
+    # Grandmaster title cards and printable checklists (PDF) follow the checklists just rebuilt,
+    # so a new promo reaches them overnight. They need the owner's Agency FB file, which isn't in
+    # the repo; without it, or if they fail, the library above is still published.
+    if TITLE_CARD_FONT.exists():
+        for command in TITLE_CARD_BUILDS:
+            done = subprocess.run([sys.executable, *command], cwd=LIBRARY, stdout=subprocess.DEVNULL)
+            if done.returncode:
+                print(f"WARNING: {' '.join(command)} failed ({done.returncode}); title cards not refreshed")
 
 
 def discord_message(results: list[dict]) -> str | None:

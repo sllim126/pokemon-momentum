@@ -24,13 +24,18 @@
       <div class="lib-main">
         <strong>{{ item.title }}</strong>
         <span class="muted">{{ item.text }}</span>
-        <span class="lib-meta">{% if item.page %}Opens in a new tab{% else %}{% set f = files.download(item.download) %}{% if f %}{{ f.name }} · {{ files.size_label(item.download) }}{% else %}Not available right now{% endif %}{% endif %}</span>
+        <span class="lib-meta">{% if item.page %}Opens in a new tab{% elif item.also %}{% if files.download(item.download) %}PDF · {{ item.label }} {{ files.size_label(item.download) }}{% for text, id in item.also %}{% if files.download(id) %} · {{ text }} {{ files.size_label(id) }}{% endif %}{% endfor %}{% else %}Not available right now{% endif %}{% else %}{% set f = files.download(item.download) %}{% if f %}{{ f.name }} · {{ files.size_label(item.download) }}{% else %}Not available right now{% endif %}{% endif %}</span>
       </div>
       <span class="lib-chip">{{ item.audience }}</span>
       {% if item.page %}
       <a class="btn primary" href="{{ resource_url(item.page) }}" target="_blank" rel="noopener">Open</a>
+      {% elif item.also %}
+      <span class="lib-btns">
+        <a class="btn primary" href="{{ download_url(item.download) }}" download>{{ item.label }}</a>
+        {% for text, id in item.also %}<a class="btn" href="{{ download_url(id) }}" download>{{ text }}</a>{% endfor %}
+      </span>
       {% else %}
-      <a class="btn" href="{{ download_url(item.download) }}" download>Download</a>
+      <a class="btn" href="{{ download_url(item.download) }}" download>{{ item.label }}</a>
       {% endif %}
     </li>
     {% endfor %}

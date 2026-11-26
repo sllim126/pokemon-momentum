@@ -370,6 +370,7 @@ ul.notice { list-style: none; }
 .lib-list { list-style: none; padding: 0; margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
 .lib-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px 14px; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--line); }
 .lib-row:last-child { border-bottom: 0; }
+.lib-btns { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .lib-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .lib-main span { font-size: 0.9rem; }
 .lib-meta { color: var(--muted); font-size: 0.8rem !important; overflow-wrap: anywhere; }
@@ -377,7 +378,7 @@ ul.notice { list-style: none; }
 @media (max-width: 640px) {
   .lib-row { grid-template-columns: auto minmax(0, 1fr); }
   .lib-main { grid-column: 1 / -1; }
-  .lib-row .btn { justify-self: end; }
+  .lib-row .btn, .lib-row .lib-btns { justify-self: end; }
 }
 
 /* Your account (/account, one Poke6s account): the same column width as the order page. */

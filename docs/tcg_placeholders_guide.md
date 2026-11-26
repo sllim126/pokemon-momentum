@@ -117,12 +117,16 @@ Why it is here:
 
 (`TCG Placeholders/title_cards/` isn't written by the nightly sync. It holds the owner's
 hand-made Journey Together promo title cards and, since 2026-11-25, the "grandmaster" title
-cards from `tools/build_title_cards.py`, run by hand: one card-sized label for every printing in
+cards and printable checklists from `tools/build_title_cards.py` (rebuilt nightly by the sync
+below when the font is present, and by hand after changing it): one card-sized label for every printing in
 a set (main set, reverse holos, Poké Ball and Master Ball patterns, then every promo and stamp
 from the checklist CSVs, plus hand-written rows in `title_cards/title_card_extras.csv`), in the
 owner's Publisher layout (3 x 3 on Letter, Agency FB Bold 24 pt). Output:
-`title_cards/<set>_grandmaster_title_cards.pdf` and `title_cards/csv/<set>.csv` (every card's
-text, for checking). Agency FB is a Microsoft font, so it isn't in the repo: the owner's
+`title_cards/<set>_grandmaster_title_cards.pdf`, the printable tick-box checklist
+`title_cards/checklists/<set>_checklist.pdf` (`tools/checklist_pdf.py`: every main-set card with a
+box per version, then the promos with where each came from; `checklists/index.json` tells
+`build_checklists.py` which set pages get a "Printable checklist (PDF)" button), and
+`title_cards/csv/<set>.csv` (every card's text, for checking). Agency FB is a Microsoft font, so it isn't in the repo: the owner's
 `AGENCYB.TTF` goes in `TCG Placeholders/fonts/` (git-ignored). Run in the market container:
 `python "TCG Placeholders/tools/build_title_cards.py" --era sv` (or `--set JTG`, `--era mega`).
 The Mega era includes 30th Celebration (with its reprinted Classic Collection at the end) and
@@ -130,7 +134,7 @@ MEP, the era's Black Star promos, which the Mega checklists keep as their own li
 Card lists come from the TCGCSV catalogue and the newest price file, so rerun after new cards
 are added to a set's checklist. In `title_card_extras.csv`, "|" separates lines, an empty part
 is a blank line and a part starting with "^" prints as a small 14 pt heading. The store lists
-each PDF in the Placeholder Library through `MEGA_TITLE_CARDS` and `SV_TITLE_CARDS` in
+each set's PDFs in the Placeholder Library through `MEGA_SETS` and `SV_SETS` in
 `storefront/app/placeholder_library.py`; add a set there when its PDF is first built.)
 
 ### Print outputs

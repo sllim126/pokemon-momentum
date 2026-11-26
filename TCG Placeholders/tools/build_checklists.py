@@ -308,13 +308,30 @@ def render_sources(row: Dict[str, object]) -> str:
     return "; ".join(str(source) for source in sources)
 
 
+def printable_checklist_href(code: str) -> str:
+    """The store's download link for this set's printable checklist, if build_title_cards.py has
+    made one (title_cards/checklists/index.json). The id matches the store's
+    placeholder_library.py: "<code>-checklist"."""
+    index = Path(__file__).resolve().parents[1] / "title_cards" / "checklists" / "index.json"
+    try:
+        made = json.loads(index.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return ""
+    return f"/placeholders/download/{code.lower()}-checklist" if code.upper() in made else ""
+
+
 def render_set_page(
     code: str,
     set_info: Dict[str, str],
     rows: Sequence[Dict[str, object]],
     csv_href: str,
+    pdf_href: str = "",
 ) -> str:
     """Render one hostable checklist page with localStorage-backed progress.
+
+    `pdf_href`: the set's printable grandmaster checklist (every card, made by
+    build_title_cards.py), offered as the main download when it exists; the CSV stays for
+    spreadsheets.
 
     Expected output:
     - a standalone HTML checklist page
@@ -322,6 +339,12 @@ def render_set_page(
     - printable table and downloadable CSV companion
     """
 
+    pdf_button = (f'<a class="button primary" href="{html.escape(pdf_href)}">Printable checklist (PDF)</a>'
+                  if pdf_href else "")
+    intro = ("This page tracks the set's promos and special versions in your browser. For the whole set "
+             "on paper, every card with a box for each version, get the printable checklist."
+             if pdf_href else "Use this page to track owned cards in your browser, print a clean checklist, "
+             "or download the CSV if you want to work outside the site.")
     rows_html = []
     current_category = ""
     for row in rows:
@@ -664,7 +687,7 @@ def render_set_page(
       <div class="actions">
         <a class="button" href="/placeholders">Placeholder Library</a>
         <a class="button" href="../index.html">Index</a>
-        <a class="button primary" href="{html.escape(csv_href)}">CSV</a>
+        {pdf_button}
       </div>
     </header>
     <section class="hero">
@@ -675,7 +698,7 @@ def render_set_page(
           <span class="badge">Printable</span>
         </div>
         <h1>{html.escape(title)}</h1>
-        <p class="meta">Use this page to track owned cards in your browser, print a clean checklist, or download the CSV if you want to work outside the site.</p>
+        <p class="meta">{intro}</p>
       </div>
       <div class="hero-card">
         <div class="stat-grid">
@@ -693,7 +716,8 @@ def render_set_page(
         <p class="meta">{len(rows)} checklist rows{html.escape(f" - {release_date}" if release_date else "")}</p>
         <div class="actions">
           <a class="button" href="../index.html">Back to Set Index</a>
-          <a class="button" href="{html.escape(csv_href)}">Download CSV</a>
+          {pdf_button}
+          <a class="button" href="{html.escape(csv_href)}">CSV for spreadsheets</a>
         </div>
       </div>
       <div class="progress" aria-hidden="true"><div class="bar" id="bar"></div></div>
@@ -1760,7 +1784,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         csv_name = f"{slugify(code)}.csv"
         write_checklist_csv(csv_dir / csv_name, rows)
         (by_set_dir / html_name).write_text(
-            render_set_page(code, set_info, rows, f"../csv/{csv_name}"),
+            render_set_page(code, set_info, rows, f"../csv/{csv_name}",
+                            printable_checklist_href(code)),
             encoding="utf-8",
         )
         pages.append(
