@@ -26,8 +26,8 @@ Last reviewed: 2026-11-26.
   section heading states its question ("Question 1: Do you need the bulk, or just the secret
   rares?"), in the order the intro gave them.
 - Short lists of numbers beat long paragraphs of them. Round sensibly ($372, −17%, about 1,000).
-- No Markdown tables: the article renderer is plain CommonMark and prints them as raw `|` text.
-  Use a list, one item per row ("**Name:** $166, $4.60 a pack, 46¢ a card.").
+- Tables work (pipe tables; right-align number columns with `|---:|`) and suit side-by-side
+  comparisons. Keep them to about five short columns: on a phone a wider table scrolls sideways.
 - Say what the data is, once, in a short italic note: the source (TCGplayer market price), the
   date range, what was included. Readers trust the post more when they can see the method.
 - Link to the site's other posts where they're relevant, with the article address

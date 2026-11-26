@@ -224,6 +224,9 @@ text, and restart the container. `draft: true` keeps it off the list, the home p
 sitemap while it can still be previewed at its address. Pictures go in like product photos
 (`images.store_original`) and are referenced as `/media/1200/<name>.webp`.
 
+**Tables.** GitHub-style pipe tables work (`|---:|` right-aligns a column, for numbers). Each
+table is wrapped in a box that scrolls sideways on a narrow screen, so it never widens the page.
+
 **Market boxes.** A line holding only `[[market <id> <id> ...]]` (TCGplayer product IDs, as
 in `data/storefront/market_reference.json`) shows those products as a row of boxes: TCGplayer's
 picture, today's market price, the 30-day change and a link to the price history on
