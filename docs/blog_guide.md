@@ -4,7 +4,7 @@ How any agent (Claude Code, Codex, others) drafts a post for the owner. The mech
 articles (front matter, `[[market]]` boxes, images) are in `storefront/README.md` "Articles";
 this file covers how to write one and get it out. Topics and dates: `docs/todo.txt`, "Blog posts".
 
-Last reviewed: 2026-11-25.
+Last reviewed: 2026-11-26.
 
 ## The arrangement
 
@@ -26,6 +26,8 @@ Last reviewed: 2026-11-25.
   section heading states its question ("Question 1: Do you need the bulk, or just the secret
   rares?"), in the order the intro gave them.
 - Short lists of numbers beat long paragraphs of them. Round sensibly ($372, −17%, about 1,000).
+- No Markdown tables: the article renderer is plain CommonMark and prints them as raw `|` text.
+  Use a list, one item per row ("**Name:** $166, $4.60 a pack, 46¢ a card.").
 - Say what the data is, once, in a short italic note: the source (TCGplayer market price), the
   date range, what was included. Readers trust the post more when they can see the method.
 - Link to the site's other posts where they're relevant, with the article address

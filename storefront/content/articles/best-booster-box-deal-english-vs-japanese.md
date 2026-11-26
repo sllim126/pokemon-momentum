@@ -26,12 +26,10 @@ So a Japanese pack costs about half an English pack, but it has half the cards. 
 
 ## English: the four sets in print
 
-| Box | Price | Per pack | Per card | Since its second week |
-|---|---|---|---|---|
-| [Chaos Rising](tcgplayer:684444) | $166 | $4.60 | 46¢ | −31% |
-| [Pitch Black](tcgplayer:692939) | $171 | $4.75 | 47¢ | −9% |
-| [Perfect Order](tcgplayer:672394) | $174 | $4.83 | 48¢ | −16% |
-| [Delta Reign](tcgplayer:712094) | $191 | $5.31 | 53¢ | −1% |
+- **[Chaos Rising](tcgplayer:684444):** $166, $4.60 a pack, 46¢ a card. Down 31% since its second week.
+- **[Pitch Black](tcgplayer:692939):** $171, $4.75 a pack, 47¢ a card. Down 9% since its second week.
+- **[Perfect Order](tcgplayer:672394):** $174, $4.83 a pack, 48¢ a card. Down 16% since its second week.
+- **[Delta Reign](tcgplayer:712094):** $191, $5.31 a pack, 53¢ a card. About the same as its second week.
 
 [[market 684444 692939 672394 712094]]
 
@@ -41,13 +39,11 @@ The special sets cost a lot more. A [Phantasmal Flames](tcgplayer:654137) box is
 
 ## Japanese: the newest sets
 
-| Box | Price | Per pack | Per card | Since its second week |
-|---|---|---|---|---|
-| [Abyss Eye](tcgplayer:695112) | $71 | $2.37 | 47¢ | −46% |
-| [Nihil Zero](tcgplayer:674449) | $75 | $2.49 | 50¢ | −6% |
-| [Storm Emeralda](tcgplayer:709110) | $75 | $2.51 | 50¢ | −57% |
-| [Mega Brave](tcgplayer:647500) | $76 | $2.53 | 51¢ | −16% |
-| [Ninja Spinner](tcgplayer:683774) | $81 | $2.72 | 54¢ | −18% |
+- **[Abyss Eye](tcgplayer:695112):** $71, $2.37 a pack, 47¢ a card. Down 46% since its second week.
+- **[Nihil Zero](tcgplayer:674449):** $75, $2.49 a pack, 50¢ a card. Down 6% since its second week.
+- **[Storm Emeralda](tcgplayer:709110):** $75, $2.51 a pack, 50¢ a card. Down 57% since its second week.
+- **[Mega Brave](tcgplayer:647500):** $76, $2.53 a pack, 51¢ a card. Down 16% since its second week.
+- **[Ninja Spinner](tcgplayer:683774):** $81, $2.72 a pack, 54¢ a card. Down 18% since its second week.
 
 [[market 695112 674449 709110 683774]]
 
