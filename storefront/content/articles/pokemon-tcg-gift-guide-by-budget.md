@@ -9,7 +9,7 @@ cover:
 old_path: 
 draft: true
 ---
-If someone on your Christmas list is into Pokémon cards (and let's be honest, who isn't into Pokémon cards this year?) and you have no idea what to get, the shelf at your big box store, local game store or online stores like eBay or TCGplayer is a lot to process. Same cards, a bunch of different boxes, prices all over the place. So what do you get? What's a good deal, and when are you getting ripped off?
+If someone on your Christmas list is into Pokémon cards (and let's be honest, who isn't into Pokémon cards this year?) and you have no idea what to get, there's a lot to process: between big box stores, your local game store and sites like eBay and TCGplayer, the choices pile up fast. Same cards, a bunch of different boxes, prices all over the place. So what do you get? What's a good deal, and when are you getting ripped off?
 
 Here's a guide by budget, using what things actually sell for right now. It's also Cyber Weekend, so if you buy on TCGplayer through Monday night you get 10% back in store credit. (More on that in [the Black Friday post](/articles/is-pokemon-sealed-cheaper-on-black-friday).)
 
@@ -58,7 +58,7 @@ A single booster pack. Newer regular sets are about **$6**. A [Phantasmal Flames
 ## $50 to $100
 
 - **Elite Trainer Box**: the classic Pokémon gift. [Perfect Order](tcgplayer:672401) **$62**, [Chaos Rising](tcgplayer:684450) **$67**, [Pitch Black](tcgplayer:692947) **$70**, [Delta Reign](tcgplayer:712102) **$75**. Nine packs, sleeves, dice, card dividers and a sturdy box to keep it all in.
-- **A Japanese booster box** for someone who already has the English sets: 30 packs of Japanese cards (5 cards a pack, not 10) for about **$72 to $81** ([Abyss Eye](tcgplayer:695112), [Nihil Zero](tcgplayer:674449), [Storm Emeralda](tcgplayer:709110), Ninja Spinner). Japanese cards look great in a binder. The box costs less than half an English one, but you also get fewer cards (150 instead of 360), so it's about the same price per card. [We carry Ninja Spinner boxes](/p/pokemon-ninja-spinner-booster-box-japanese) if you want one.
+- **A Japanese booster box** for someone who already has the English sets: 30 packs of Japanese cards (5 cards a pack, not 10) for about **$72 to $81** ([Abyss Eye](tcgplayer:695112), [Nihil Zero](tcgplayer:674449), [Storm Emeralda](tcgplayer:709110), [Ninja Spinner](tcgplayer:683774)). Japanese cards look great in a binder. The box costs less than half an English one, but you also get fewer cards (150 instead of 360), so it's about the same price per card. [We carry Ninja Spinner boxes](/p/pokemon-ninja-spinner-booster-box-japanese) if you want one.
 
 [[market 672401 712102 684450 683774]]
 
