@@ -125,10 +125,12 @@ owner's Publisher layout (3 x 3 on Letter, Agency FB Bold 24 pt). Output:
 text, for checking). Agency FB is a Microsoft font, so it isn't in the repo: the owner's
 `AGENCYB.TTF` goes in `TCG Placeholders/fonts/` (git-ignored). Run in the market container:
 `python "TCG Placeholders/tools/build_title_cards.py" --era sv` (or `--set JTG`, `--era mega`).
+The Mega era includes 30th Celebration (with its reprinted Classic Collection at the end) and
+MEP, the era's Black Star promos, which the Mega checklists keep as their own list.
 Card lists come from the TCGCSV catalogue and the newest price file, so rerun after new cards
 are added to a set's checklist. In `title_card_extras.csv`, "|" separates lines, an empty part
 is a blank line and a part starting with "^" prints as a small 14 pt heading. The store lists
-each PDF in the Placeholder Library through `GRANDMASTER_TITLE_CARDS` in
+each PDF in the Placeholder Library through `MEGA_TITLE_CARDS` and `SV_TITLE_CARDS` in
 `storefront/app/placeholder_library.py`; add a set there when its PDF is first built.)
 
 ### Print outputs
