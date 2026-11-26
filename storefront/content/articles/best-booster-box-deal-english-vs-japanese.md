@@ -53,6 +53,12 @@ The special sets cost a lot more. A [Phantasmal Flames](tcgplayer:654137) box is
 
 The newest Japanese boxes drop hard after launch. Storm Emeralda sold for $177 in its second week. Four months later it's $75. Abyss Eye went from $132 to $71. [We carry Ninja Spinner boxes](/p/pokemon-ninja-spinner-booster-box-japanese) if that's the one you're after.
 
+Three more Japanese boxes cost more per card:
+
+- **[Inferno X](tcgplayer:655968)** (the Mega Charizard X set, 30 packs of 5): $117, $3.90 a pack, 78¢ a card. The same Charizard premium as Phantasmal Flames in English, just smaller.
+- **[Mega Dream ex](tcgplayer:666254)** (a high class set: 10 packs of 10 cards): $76, $7.63 a pack, 76¢ a card. Down a third since its second week and at its lowest price yet.
+- **[30th Celebration](tcgplayer:718620)** (20 packs of 6 cards): $141, $7.03 a pack, $1.17 a card. It's down from $203 in its second week, also its lowest yet, but still the most expensive per card by a long way.
+
 ## When to buy: Japanese boxes get cheaper, English ones haven't lately
 
 **Japanese boxes:** for 15 sets since December 2024, the typical box was 11% below its second-week price two months after release, and about 80% of them were cheaper by then. Most hit their lowest price somewhere between month 2 and month 6. If a new Japanese set just came out, waiting a couple of months has usually paid off.
@@ -72,4 +78,4 @@ The price data can't say why. What it does say: buying an English box now and wa
 - **For a binder:** Japanese. Plenty of collectors prefer how they look, and the box costs less than half as much up front.
 - **Waiting for a deal:** the new Japanese sets are the ones that drop. Don't count on an English box dropping much, and don't count on one tripling either.
 
-*About the data: TCGplayer market prices for booster boxes (not cases, half boxes or enhanced boxes), English from February 2024 and Japanese from December 2024. "Second week" is each box's price 14 days after its set came out. Per-card prices are the box price divided by 360 (English) or 150 (Japanese).*
+*About the data: TCGplayer market prices for booster boxes (not cases, half boxes or enhanced boxes), English from February 2024 and Japanese from December 2024. "Second week" is each box's price 14 days after its set came out. Per-card prices are the box price divided by the cards in the box: 360 for English, 150 for regular Japanese sets, 100 for Mega Dream ex and 120 for 30th Celebration.*
