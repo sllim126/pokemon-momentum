@@ -61,8 +61,15 @@ DOWNLOADS = {
 
 # Grandmaster title cards: a card for every printing in a set, made by
 # "TCG Placeholders/tools/build_title_cards.py" (run by hand; owner, 2026-11-25). Set name and
-# file stem, in release order. Download id: "<stem>-title-cards", with "_" as "-".
-GRANDMASTER_TITLE_CARDS = (
+# file stem, in release order, per era. Download id: "<stem>-title-cards", with "_" as "-".
+MEGA_TITLE_CARDS = (
+    ("Mega Evolution", "mega_evolution"), ("Phantasmal Flames", "phantasmal_flames"),
+    ("Ascended Heroes", "ascended_heroes"), ("Perfect Order", "perfect_order"),
+    ("Chaos Rising", "chaos_rising"), ("Pitch Black", "pitch_black"),
+    ("30th Celebration", "30th_celebration"), ("Delta Reign", "delta_reign"),
+    ("Mega Evolution Black Star Promos", "mega_evolution_promo"),
+)
+SV_TITLE_CARDS = (
     ("Scarlet & Violet", "scarlet_violet_base_set"), ("Paldea Evolved", "paldea_evolved"),
     ("Obsidian Flames", "obsidian_flames"), ("151", "scarlet_violet_151"),
     ("Paradox Rift", "paradox_rift"), ("Paldean Fates", "paldean_fates"),
@@ -79,7 +86,14 @@ def title_card_id(stem: str) -> str:
 
 
 DOWNLOADS.update({title_card_id(stem): f"title_cards/{stem}_grandmaster_title_cards.pdf"
-                  for _, stem in GRANDMASTER_TITLE_CARDS})
+                  for _, stem in MEGA_TITLE_CARDS + SV_TITLE_CARDS})
+
+
+def title_card_items(sets: tuple[tuple[str, str], ...]) -> tuple["Item", ...]:
+    return tuple(Item(f"{name} title cards", "Every printing of the set, its promos and stamps."
+                      if not stem.endswith("_promo") else "Every promo, staff and stamped version, with "
+                      "the product or event each came from.", "Collectors", download=title_card_id(stem))
+                 for name, stem in sets)
 
 # What may be served, and as what. Markdown shows as plain text so it reads in the browser.
 MEDIA_TYPES = {
@@ -192,14 +206,12 @@ SECTIONS = (
         Item("Scarlet & Violet checklists", "Tick-off checklists for every Scarlet & Violet set.", "Collectors",
              page="checklists-sv/index.html"),
     )),
-    Section("Grandmaster title cards", "A card-sized label for every printing in a set, in binder order: "
-            "each card, its reverse holo and Poké Ball or Master Ball versions, then every stamped and promo "
+    Section("Grandmaster title cards: Mega Evolution", "A card-sized label for every printing in a set, in "
+            "binder order: each card, its reverse holo and pattern versions, then every stamped and promo "
             "version with where it came from. Print on Letter paper, cut along the lines and sleeve one in "
-            "each empty slot.", tuple(
-        Item(f"{name} title cards", "Every printing of the set, its promos and stamps.", "Collectors",
-             download=title_card_id(stem))
-        for name, stem in GRANDMASTER_TITLE_CARDS
-    ) + (
+            "each empty slot.", title_card_items(MEGA_TITLE_CARDS)),
+    Section("Grandmaster title cards: Scarlet & Violet", "The same, for every Scarlet & Violet set. Here "
+            "each set's Black Star promos are in its own file.", title_card_items(SV_TITLE_CARDS) + (
         Item("Journey Together promo title cards (original)", "The first, hand-made sheet: only the "
              "Journey Together promos and the product, event or store each came from.", "Collectors",
              download="jtg-title-cards"),

@@ -70,9 +70,19 @@ ERAS = {
     },
     "mega": {
         "folder": "checklists_mega",
-        "sets": ["MEG", "PFL", "ASC", "POR", "CRI", "PBL", "DLR"],
+        # MEP is the era's Black Star promos: in the Mega checklists they are their own list,
+        # not filed under each set as SVP promos are in the Scarlet & Violet ones.
+        "sets": ["MEG", "PFL", "ASC", "POR", "CRI", "PBL", "30C", "DLR", "MEP"],
     },
 }
+
+# Sets that TCGplayer splits into more than one group: the extra groups' cards follow the main
+# set, labelled with the group's own name (30th Celebration's reprinted "Classic Collection").
+EXTRA_GROUPS = {"30C": ["ME: 30th Celebration Classic Collection"]}
+
+# Promo sets: the checklist is the main list (it says where each promo came from); catalogue
+# products only fill numbers the checklist doesn't have yet.
+PROMO_SETS = {"MEP"}
 
 # Page geometry in points, measured from the owner's PDF (612 x 792 = US Letter).
 PAGE_W, PAGE_H = 612.0, 792.0
@@ -115,7 +125,9 @@ def group_for(abbreviation: str) -> dict:
     """The TCGCSV group (set) with this abbreviation. Promo and energy groups share some
     abbreviations with other products, so only groups with a name prefix like "SV09:" or "SV:"
     or "ME01:" are considered first."""
-    groups = [g for g in load_json(CATALOGUE / "groups.json") if g.get("abbreviation") == abbreviation]
+    extra = EXTRA_GROUPS.get(abbreviation, [])
+    groups = [g for g in load_json(CATALOGUE / "groups.json")
+              if g.get("abbreviation") == abbreviation and g["name"] not in extra]
     if not groups:
         raise SystemExit(f"No TCGCSV group with abbreviation {abbreviation!r}")
     groups.sort(key=lambda g: (not re.match(r"^(SV|ME)\w*:", g["name"]), g["publishedOn"]))
@@ -185,7 +197,7 @@ def main_set_cards(code: str) -> tuple[list[TitleCard], str]:
     group = group_for(code)
     products = load_json(CATALOGUE / str(group["groupId"]) / "products.json")
     subtypes = latest_subtypes(group["groupId"])
-    cards: list[TitleCard] = []
+    cards = extra_group_cards(code)
     seen: set[tuple[str, str]] = set()
     totals: dict[str, int] = {}
     for p in products:
@@ -204,13 +216,29 @@ def main_set_cards(code: str) -> tuple[list[TitleCard], str]:
             if (number, printing) in seen:
                 continue
             seen.add((number, printing))
-            lines = [name, "", f"#{number}"]
+            lines = [name, "", f"#{number}" if "/" in number else f"#{code} {number}"]
             if printing:
                 lines.append(printing)
             order = PRINTING_ORDER.get(printing, 4)
             cards.append(TitleCard(lines, sort_key(0, number_key(number), order, printing), "main"))
     total = max(totals, key=totals.get) if totals else ""
     return cards, total
+
+
+def extra_group_cards(code: str) -> list[TitleCard]:
+    """Cards of the set's extra groups (EXTRA_GROUPS), after the main set in number order."""
+    cards = []
+    groups = {g["name"]: g for g in load_json(CATALOGUE / "groups.json")}
+    for gname in EXTRA_GROUPS.get(code, []):
+        label = re.sub(r"^.*?(Classic Collection)$", r"\1", gname)
+        for p in load_json(CATALOGUE / str(groups[gname]["groupId"]) / "products.json"):
+            number = ext(p, "Number")
+            if number:
+                name, _ = split_name(p["name"])
+                cards.append(TitleCard([name, "", f"#{number}", label],
+                                       sort_key(1, (0, label, int(re.sub(r"\D", "", number.split("/")[0]) or 0)),
+                                                0, name), "main"))
+    return cards
 
 
 def source_text(purchase: str) -> str:
@@ -226,6 +254,8 @@ def source_text(purchase: str) -> str:
             series.append(str(words.get(m.group(1), m.group(1))))
             continue
         product = product.replace("Pokemon", "Pokémon")
+        # The card's text is already in brackets: "Prerelease (event staff)" -> "Prerelease, event staff".
+        product = re.sub(r"\s*\(([^()]*)\)", r", \1", product)
         if product not in parts:
             parts.append(product)
     if series:
@@ -243,14 +273,19 @@ def checklist_cards(code: str, era: str, total: str) -> list[TitleCard]:
         for row in csv.DictReader(fh):
             raw = row["Card Number"].strip()
             m = re.match(r"^([A-Z]+)(\d+)$", raw)
-            if m and m.group(1) == code and total:
-                number, nk = f"{int(m.group(2)):03d}/{total}", number_key(m.group(2))
-                section = 0
+            if m and m.group(1) == code:
+                n = int(m.group(2))
+                number = f"{n:03d}/{total}" if total else f"{code} {n:03d}"
+                nk, section = number_key(m.group(2)), 0
             elif m:
                 number, nk, section = f"{m.group(1)} {m.group(2)}", (0, m.group(1), int(m.group(2))), 1
-            else:
+            elif raw:
                 number, nk, section = raw, (0, raw, 0), 1
-            lines = [row["Card Name"].strip(), "", f"#{number}" if m else number]
+            else:
+                number, nk, section = "", (0, "", 0), 2   # no number yet: after the set's cards
+            lines = [row["Card Name"].strip(), ""]
+            if number:
+                lines.append(f"#{number}" if m else number)
             variant = row["Variant"].strip()
             if variant:
                 lines.append(variant.replace("Pokemon", "Pokémon"))
@@ -291,6 +326,9 @@ def extra_cards(code: str) -> list[TitleCard]:
 def set_cards(code: str, era: str) -> list[TitleCard]:
     main, total = main_set_cards(code)
     promos = checklist_cards(code, era, total)
+    if code in PROMO_SETS:
+        listed = {c.lines[2] for c in promos if len(c.lines) > 2}
+        main = [c for c in main if c.lines[2] not in listed]
     # A special product TCGplayer lists in the main set (151's "Mew ex (151 Metal Card)") can also
     # be a checklist row ("Metal Card"): keep the checklist's card, which says where it comes from.
     promo_versions = {(c.lines[2], c.lines[3].lower()) for c in promos if len(c.lines) > 3}

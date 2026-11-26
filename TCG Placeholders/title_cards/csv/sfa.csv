@@ -1,35 +1,35 @@
 Page,Position,Source,Text
 1,1,main,Joltik |  | #001/064
-1,2,main,Basic Grass Energy |  | #1
+1,2,main,Basic Grass Energy |  | #SFA 1
 1,3,main,Joltik |  | #001/064 | Reverse Holo
-1,4,main,Basic Grass Energy |  | #1 | Reverse Holo
+1,4,main,Basic Grass Energy |  | #SFA 1 | Reverse Holo
 1,5,main,Galvantula |  | #002/064
-1,6,main,Basic Fire Energy |  | #2
+1,6,main,Basic Fire Energy |  | #SFA 2
 1,7,main,Galvantula |  | #002/064 | Reverse Holo
-1,8,main,Basic Fire Energy |  | #2 | Reverse Holo
+1,8,main,Basic Fire Energy |  | #SFA 2 | Reverse Holo
 1,9,checklist,Galvantula |  | #002/064 | Play Pokémon Stamp | (Prize Pack Series 7)
 2,1,main,Rowlet |  | #003/064
-2,2,main,Basic Water Energy |  | #3
+2,2,main,Basic Water Energy |  | #SFA 3
 2,3,main,Rowlet |  | #003/064 | Reverse Holo
-2,4,main,Basic Water Energy |  | #3 | Reverse Holo
+2,4,main,Basic Water Energy |  | #SFA 3 | Reverse Holo
 2,5,main,Dartrix |  | #004/064
-2,6,main,Basic Lightning Energy |  | #4
+2,6,main,Basic Lightning Energy |  | #SFA 4
 2,7,main,Dartrix |  | #004/064 | Reverse Holo
-2,8,main,Basic Lightning Energy |  | #4 | Reverse Holo
+2,8,main,Basic Lightning Energy |  | #SFA 4 | Reverse Holo
 2,9,main,Decidueye |  | #005/064
-3,1,main,Basic Psychic Energy |  | #5
+3,1,main,Basic Psychic Energy |  | #SFA 5
 3,2,main,Decidueye |  | #005/064 | Reverse Holo
-3,3,main,Basic Psychic Energy |  | #5 | Reverse Holo
+3,3,main,Basic Psychic Energy |  | #SFA 5 | Reverse Holo
 3,4,main,Tapu Bulu |  | #006/064
-3,5,main,Basic Fighting Energy |  | #6
+3,5,main,Basic Fighting Energy |  | #SFA 6
 3,6,main,Tapu Bulu |  | #006/064 | Reverse Holo
-3,7,main,Basic Fighting Energy |  | #6 | Reverse Holo
+3,7,main,Basic Fighting Energy |  | #SFA 6 | Reverse Holo
 3,8,main,Houndour |  | #007/064
 3,9,main,Houndour |  | #007/064 | Reverse Holo
-4,1,main,Basic Darkness Energy |  | #7 | Reverse Holo
+4,1,main,Basic Darkness Energy |  | #SFA 7 | Reverse Holo
 4,2,main,Houndoom |  | #008/064
 4,3,main,Houndoom |  | #008/064 | Reverse Holo
-4,4,main,Basic Metal Energy |  | #8 | Reverse Holo
+4,4,main,Basic Metal Energy |  | #SFA 8 | Reverse Holo
 4,5,main,Iron Moth |  | #009/064
 4,6,main,Iron Moth |  | #009/064 | Reverse Holo
 4,7,main,Horsea |  | #010/064
