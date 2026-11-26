@@ -331,6 +331,9 @@ High Priority
     to show their covers (2026-11-25; the post goes out Dec 4 either way). Card Binder Ideas' gallery is linked, but its covers belong
     to the collectors who made them, so nothing is copied without the artist's written OK; then
     store the picture (git-ignored) and credit the artist with a link to their post.
+    2026-11-26: Saku (@saku.vault) said yes; their Jirachi cover is in the post with a credit
+    line (image cropped from their own Instagram post, not Card Binder Ideas' watermarked copy).
+    Two invites still open.
   - [next] Gift guide (`pokemon-tcg-gift-guide-by-budget.md`, Nov 28): reviewed, prices to Nov 24
     on `blog/gift-guide-review`. On Nov 27 (owner, 2026-11-25): refresh every price, re-read the
     text against the new numbers (claims, budget sections, wording), then the
