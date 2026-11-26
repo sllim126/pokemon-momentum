@@ -349,6 +349,9 @@ High Priority
     Owner's wording edits (2026-11-26) on `blog/gift-guide-edits`; do the refresh there. On Nov 27 (owner, 2026-11-25): refresh every price, re-read the
     text against the new numbers (claims, budget sections, wording), then the
     owner's OK to publish.
+  - [next] Booster box post (`best-booster-box-deal-english-vs-japanese.md`, Dec 8): drafted
+    2026-11-26 from Nov 25 prices on `blog/booster-box-deal`. Before it goes live, refresh every
+    price, per-pack/per-card figure and "lowest yet" claim; the owner reads and edits it first.
   - Posts can show live product boxes with `[[market <ids>]]` (storefront/README.md "Articles").
   - Topics: Nov 24 Delta Reign, two weeks in (see above) · Nov 26
     Is sealed cheaper on Black Friday? (Nov–Dec 2024/2025) · Nov 28 Gift guide by budget
