@@ -614,6 +614,7 @@ The writer for the market prices lives with the market app:
 | `/<page>` | Markdown pages from `content/pages/` |
 | `/media/<480\|1200>/<name>.webp` | Product photos, cached for a year |
 | `/sitemap.xml`, `/robots.txt`, `/healthz` | Search engines and monitoring |
+| `/cards/articles/<slug>.png` | An article's 1200×630 share picture (`app/social_cards.py`): category, title, cover photo (or the description), logo; drawn on first request into `data/storefront/cards/` (delete the folder to redraw). Article pages link it as og:image with `?v=<key>` so a changed card gets a new URL |
 | `/feeds/google.xml` | Google Merchant Center product feed (`seo.google_feed_xml`, `catalog.feed_products`): every visible, priced product with a photo, its price, stock, condition, brand, barcode (or `identifier_exists` no) and one-unit shipping as checkout charges it. Empty while checkout is off |
 
 ## Redirects

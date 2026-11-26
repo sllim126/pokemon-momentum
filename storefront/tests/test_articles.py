@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import io
 import json
 from pathlib import Path
@@ -115,7 +116,10 @@ def test_article_pages(blog_client):
     assert page.status_code == 200
     assert '"@type": "BlogPosting"' in page.text and '"datePublished": "2025-12-15"' in page.text
     assert '<meta property="og:type" content="article">' in page.text
-    assert "/media/1200/journey-abcdef0123.webp" in page.text   # social card from the cover
+    assert "/media/1200/journey-abcdef0123.webp" in page.text   # the cover on the page
+    # The share picture is the drawn social card (social_cards.py), keyed so changes get a new URL.
+    assert re.search(r'og:image" content="https://shop\.test/cards/articles/journey-together-master-set-checklist\.png\?v=[0-9a-f]{10}"',
+                     page.text)
     assert "December 15, 2025" in page.text
 
     draft = blog_client.get("/articles/not-ready-yet")
@@ -326,3 +330,25 @@ def test_links_go_to_whichever_is_cheaper():
     market = _StubMarket({"1": {"price": 80.00}, "2": {"price": 72.00}, "3": {"price": 50.00}})
     ours = {"1": ("/p/cheap", 7699), "2": ("/p/dear", 9699), "3": ("/p/same", 5000), "4": ("/p/new", 1000)}
     assert cheaper_here(ours, market) == {"1": "/p/cheap", "3": "/p/same", "4": "/p/new"}
+
+
+def test_article_social_card(blog_client, imported):
+    from PIL import Image
+    import io
+    response = blog_client.get("/cards/articles/why-i-built-a-market-screener.png")
+    assert response.status_code == 200 and response.headers["content-type"] == "image/png"
+    assert Image.open(io.BytesIO(response.content)).size == (1200, 630)
+    cards = list((imported.data_dir / "cards").glob("*.png"))
+    assert [c.name[:-15] for c in cards] == ["why-i-built-a-market-screener"]   # kept for next time
+    assert blog_client.get("/cards/articles/no-such-post.png").status_code == 404
+
+
+def test_new_card_replaces_only_its_own_old_one(tmp_path):
+    from storefront.app import social_cards
+    folder = tmp_path / "cards"
+    folder.mkdir()
+    (folder / "master-sets-0123456789.png").write_bytes(b"old")
+    (folder / "master-sets-part-2-0123456789.png").write_bytes(b"other post")
+    path = social_cards.card_file(folder, "master-sets", "Master Sets", "Collecting", None, None, None)
+    assert sorted(p.name for p in folder.iterdir()) == sorted([path.name, "master-sets-part-2-0123456789.png"])
+    assert social_cards.card_key("A", "B", None) != social_cards.card_key("A changed", "B", None)

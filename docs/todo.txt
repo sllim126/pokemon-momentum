@@ -45,6 +45,9 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-26 Social cards per article (Phase 4): links to posts shared on Discord, Facebook or X
+  show a 1200x630 Poke6s card with the category, title and cover photo (or the description when
+  a post has no cover), from /cards/articles/<slug>.png.
 - 2026-11-26 Google Merchant Center feed (Phase 4): https://poke6s.com/feeds/google.xml lists all
   47 visible products with price, stock, condition, brand, shipping ($10 / $20 oversize / free
   from $150) and product type. See the [next] Merchant Center item for the owner's set-up steps.

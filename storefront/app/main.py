@@ -36,7 +36,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import accounts, catalog, support, wishlist, classify, collector_hub, images, notify, notify_list, orders, placeholder_library, redirects, seo, stripe_api
+from . import accounts, catalog, social_cards, support, wishlist, classify, collector_hub, images, notify, notify_list, orders, placeholder_library, redirects, seo, stripe_api
 from .articles import Articles, cheaper_here, market_boxes, tcgplayer_links, tcgplayer_url
 from .binder_art import SetLogos
 from .placeholder_library import PlaceholderFiles
@@ -479,6 +479,29 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
                     jsonld=[seo.breadcrumbs_jsonld(settings, crumbs)],
                     description="Notes on the Pokémon TCG market, sets, collecting and running a small card shop.")
 
+    def article_card_parts(found) -> tuple[str, Path | None]:
+        category = found.categories[0] if found.categories else "Article"
+        cover = settings.images_dir / "1200" / f"{found.cover}.webp" if found.cover else None
+        return category, cover
+
+    def article_card_url(found) -> str:
+        """The article's social card (social_cards.py), with its key so a changed card is a new URL."""
+        category, _cover = article_card_parts(found)
+        return (f"{settings.base_url}/cards/articles/{found.slug}.png"
+                f"?v={social_cards.card_key(found.title, category, found.cover, found.description)}")
+
+    @app.get("/cards/articles/{slug}.png")
+    def article_card(slug: str):
+        """An article's 1200x630 share picture, drawn on first request and kept in data/storefront/cards/."""
+        found = articles.get(slug)
+        if found is None:
+            raise HTTPException(404)
+        category, cover = article_card_parts(found)
+        path = social_cards.card_file(settings.data_dir / "cards", found.slug, found.title, category, cover,
+                                      found.cover, APP_DIR / "static" / "img" / "logo-email.png",
+                                      found.description)
+        return FileResponse(path, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
+
     @app.get("/articles/{slug}", response_class=HTMLResponse)
     def article(request: Request, slug: str):
         found = articles.get(slug)
@@ -505,7 +528,7 @@ def create_app(settings: Settings | None = None, articles_dir: Path | None = Non
                         body_html=tcgplayer_links(market_boxes(found.html, market, box_link),   # today's prices, per view
                                                   settings.tcgplayer_affiliate_base, stocked),
                         more=articles.more_like(found), crumbs=crumbs, og_type="article",
-                        og_image=seo.image_url(settings, found.cover), description=found.description,
+                        og_image=article_card_url(found), description=found.description,
                         jsonld=[seo.article_jsonld(settings, found), seo.breadcrumbs_jsonld(settings, crumbs)])
         response.headers["Content-Security-Policy"] = ARTICLE_CSP
         return response
