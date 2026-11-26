@@ -82,6 +82,14 @@ def test_parse_front_matter_and_cover_fallback():
     assert article.minutes == 1 and not article.draft
 
 
+def test_tables_render_in_a_scrolling_box():
+    body = "| Box | Price |\n|---|---:|\n| [Chaos Rising](tcgplayer:684444) | $166 |\n"
+    html = parse("x", NEWER.split("---\nIntro")[0] + "---\n" + body).html
+    assert '<div class="table-scroll"><table>' in html and "</table>\n</div>" in html
+    assert '<td style="text-align:right">$166</td>' in html
+    assert "| Box |" not in html
+
+
 def test_listing_order_drafts_and_filters(articles_dir):
     articles = Articles(articles_dir)
     assert [a.slug for a in articles.published()] == ["why-i-built-a-market-screener",

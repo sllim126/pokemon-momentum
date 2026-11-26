@@ -61,7 +61,8 @@ def _today() -> str:
 MEDIA_IMAGE = re.compile(r"/media/\d+/([a-z0-9-]+)\.webp")
 
 # Raw HTML stays escaped, as on the other pages. Images in an article are lazy-loaded.
-_md = MarkdownIt("commonmark", {"html": False, "linkify": False, "typographer": False})
+# Tables (GitHub-style pipe tables) are switched on; "commonmark" alone leaves them out.
+_md = MarkdownIt("commonmark", {"html": False, "linkify": False, "typographer": False}).enable("table")
 _default_image = _md.renderer.rules.get("image")
 
 
@@ -71,6 +72,20 @@ def _lazy_image(renderer, tokens, idx, options, env):
 
 
 _md.add_render_rule("image", _lazy_image)
+
+
+# Each table sits in a box that scrolls sideways, so a wide table never widens the page on a
+# phone (store.css ".table-scroll").
+def _table_open(renderer, tokens, idx, options, env):
+    return '<div class="table-scroll">' + renderer.renderToken(tokens, idx, options, env)
+
+
+def _table_close(renderer, tokens, idx, options, env):
+    return renderer.renderToken(tokens, idx, options, env) + "</div>"
+
+
+_md.add_render_rule("table_open", _table_open)
+_md.add_render_rule("table_close", _table_close)
 
 
 @dataclass(frozen=True)

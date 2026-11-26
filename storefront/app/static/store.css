@@ -239,6 +239,14 @@ main section { margin-top: 32px; }
 .article-body img { max-width: 100%; height: auto; border-radius: 10px; margin: 8px 0; }
 .article-body blockquote { margin: 16px 0; padding: 4px 16px; border-left: 3px solid var(--accent); color: var(--muted); }
 .article-body a { overflow-wrap: anywhere; }
+/* Markdown tables in articles: in a sideways-scrolling box (articles._table_open) so they never
+   widen the page on a phone. Columns marked ---: in the Markdown come out right-aligned. */
+.article-body .table-scroll { overflow-x: auto; margin: 16px 0 20px; border: 1px solid var(--line); border-radius: var(--radius); }
+.article-body table { width: 100%; border-collapse: collapse; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+.article-body th, .article-body td { padding: 9px 14px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.article-body th { color: var(--muted); font-weight: 600; font-size: 0.85rem; background: var(--panel); }
+.article-body tbody tr:last-child td { border-bottom: 0; }
+.article-body td a { overflow-wrap: normal; }
 /* Market boxes in articles (articles.market_boxes): TCGplayer picture, today's price, 30-day change. */
 .market-boxes { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; margin: 16px 0 20px; }
 .market-box { display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
