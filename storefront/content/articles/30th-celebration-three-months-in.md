@@ -82,7 +82,7 @@ Honestly? I think it's three things together: more product, easier ways to get i
 - **Pokémon is printing this to the ground.** They want anyone and everyone to have access, and there's a lot of 30th Celebration product, in a lot of different boxes. Months after release, it's still out there.
 - **Big stores are drawing names instead of racing bots.** Walmart started selling the most wanted products by random drawing at the end of August, 30th Celebration included ([Dexerto](https://www.dexerto.com/pokemon/pokemon-fans-now-need-lottery-luck-to-buy-cards-at-walmart-3404656/)), and Target has reportedly started doing the same ([Screen Rant](https://screenrant.com/pokemon-tcg-lottery-target-enter-rules/)). More boxes end up with collectors instead of resellers.
 - **The hits are easy to pull.** When opening a few packs gets you the cards you want, nobody needs to buy them on the secondary market.
-- **The hype moved on.** Everyone's attention went to Delta Reign, so there's not much resale demand left for 30th Celebration.
+- **The hype moved on, and the resellers didn't follow.** Attention went to Delta Reign, but the word from scalpers and resellers is that it "doesn't have real hits". Its most expensive card, the [Mega Rayquaza ex special illustration rare](tcgplayer:728061), is about $266. Ascended Heroes had a Mega Gengar ex and a Pikachu ex selling for over $1,400 this spring. If you can't buy up the product and double your money on the resale, it's "not worth the time". So there's not much resale demand for either set, and more of the cards end up with collectors.
 
 Put together, that makes this an easy set to complete, and patience is paying off. The launch prices were the top, not the start of a climb.
 
