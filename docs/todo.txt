@@ -45,6 +45,8 @@ Current Focus (2026-11-22)
 Recently Completed
 ------------------
 
+- 2026-11-27 Gift guide by budget scheduled for Nov 28 (prices refreshed to Nov 26 and
+  checked against the text).
 - 2026-11-26 Printable set checklists (owner: "someone downloading a checklist isn't wanting a
   .csv"): a PDF per set with a box for every version of every card, then its promos and where
   each came from, in the store's navy and blue with the title cards' font. The Placeholder
@@ -360,16 +362,13 @@ High Priority
     2026-11-26: Saku (@saku.vault) said yes; their Jirachi cover is in the post with a credit
     line (image cropped from their own Instagram post, not Card Binder Ideas' watermarked copy).
     Two invites still open.
-  - [next] Gift guide (`pokemon-tcg-gift-guide-by-budget.md`, Nov 28): prices refreshed to Nov 26
-    and checked against the text on 2026-11-27 (`blog/gift-guide-prices`); waiting for the owner's
-    "publish it".
   - [next] Booster box post (`best-booster-box-deal-english-vs-japanese.md`, Dec 8): drafted
     2026-11-26 from Nov 25 prices on `blog/booster-box-deal`. Before it goes live, refresh every
     price, per-pack/per-card figure and "lowest yet" claim; the owner reads and edits it first.
   - Posts can show live product boxes with `[[market <ids>]]` (storefront/README.md "Articles").
   - Topics: Nov 24 Delta Reign, two weeks in (see above) · Nov 26
     Is sealed cheaper on Black Friday? (Nov–Dec 2024/2025) · Nov 28 Gift guide by budget
-    ($25/$50/$100, price per pack) · Dec 1 Why a Grade 1 can outsell a Grade 5 (scheduled) · Dec 4 Art-form post
+    ($25/$50/$100, price per pack; scheduled) · Dec 1 Why a Grade 1 can outsell a Grade 5 (scheduled) · Dec 4 Art-form post
     (scheduled) · Dec 8 Best booster box deal, English and Japanese · Dec 10 30th Celebration,
     three months in · Dec 12 Cards that sell for more in Japanese · Dec 15 What happens when a
     set goes out of print · Dec 17 The Pokémon tax (same rarity, different Pokémon) · Dec 19

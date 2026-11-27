@@ -7,7 +7,7 @@ categories: Market Talk
 tags: Pokémon TCG, Gift Guide, Sealed, Elite Trainer Boxes, Booster Boxes, Holiday
 cover: 
 old_path: 
-draft: true
+draft: false
 ---
 If someone on your Christmas list is into Pokémon cards (and let's be honest, who isn't into Pokémon cards this year?) and you have no idea what to get, there's a lot to process: between big box stores, your local game store and sites like eBay and TCGplayer, the choices pile up fast. Same cards, a bunch of different boxes, prices all over the place. So what do you get? What's a good deal, and when are you getting ripped off?
 
