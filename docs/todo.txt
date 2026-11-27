@@ -360,10 +360,9 @@ High Priority
     2026-11-26: Saku (@saku.vault) said yes; their Jirachi cover is in the post with a credit
     line (image cropped from their own Instagram post, not Card Binder Ideas' watermarked copy).
     Two invites still open.
-  - [next] Gift guide (`pokemon-tcg-gift-guide-by-budget.md`, Nov 28): reviewed, prices to Nov 24.
-    Owner's wording edits (2026-11-26) on `blog/gift-guide-edits`; do the refresh there. On Nov 27 (owner, 2026-11-25): refresh every price, re-read the
-    text against the new numbers (claims, budget sections, wording), then the
-    owner's OK to publish.
+  - [next] Gift guide (`pokemon-tcg-gift-guide-by-budget.md`, Nov 28): prices refreshed to Nov 26
+    and checked against the text on 2026-11-27 (`blog/gift-guide-prices`); waiting for the owner's
+    "publish it".
   - [next] Booster box post (`best-booster-box-deal-english-vs-japanese.md`, Dec 8): drafted
     2026-11-26 from Nov 25 prices on `blog/booster-box-deal`. Before it goes live, refresh every
     price, per-pack/per-card figure and "lowest yet" claim; the owner reads and edits it first.
