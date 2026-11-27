@@ -51,7 +51,7 @@ The special illustration rares, the cards people open the set for:
 
 [[market 717605 717610 712954 717603]]
 
-At the top there are three Mew "RGB" cards (red, green and blue), selling for $3,100 to $4,300 each. The red one was $6,000 in the second week. With so few copies around, those prices rest on very few sales.
+Above all of those sit the three Mew "RGB" cards: monochrome holo Mews in red, green and blue, and incredibly rare. They're selling for $3,100 to $4,300 each, and the red one was $6,000 in the second week. With so few copies around, those prices rest on very few sales.
 
 ## The Classic Collection
 
@@ -75,7 +75,16 @@ Over the same first ten weeks, measured the same way:
 
 None of the others fell anywhere near this much. But a slow start didn't decide where they ended up. Black Bolt and White Flare sat flat for six months, then nearly doubled by their first birthday (the ETBs are $149 and $137 today). Ascended Heroes dipped in its first month, climbed to $178 by month four, and is back to $128.
 
-The price data can't say why 30th Celebration fell this hard. It does say the launch prices were the top, not the start of a climb.
+## Why it fell
+
+Honestly? I think it's three things together: more product, easier ways to get it, and high hit rates.
+
+- **Pokémon is printing this to the ground.** They want anyone and everyone to have access, and there's a lot of 30th Celebration product, in a lot of different boxes. Months after release, it's still out there.
+- **Big stores are drawing names instead of racing bots.** Walmart started selling the most wanted products by random drawing at the end of August, 30th Celebration included ([Dexerto](https://www.dexerto.com/pokemon/pokemon-fans-now-need-lottery-luck-to-buy-cards-at-walmart-3404656/)), and Target has reportedly started doing the same ([Screen Rant](https://screenrant.com/pokemon-tcg-lottery-target-enter-rules/)). More boxes end up with collectors instead of resellers.
+- **The hits are easy to pull.** When opening a few packs gets you the cards you want, nobody needs to buy them on the secondary market.
+- **The hype moved on.** Everyone's attention went to Delta Reign, so there's not much resale demand left for 30th Celebration.
+
+Put together, that makes this an easy set to complete, and patience is paying off. The launch prices were the top, not the start of a climb.
 
 ## So is it time to buy?
 
