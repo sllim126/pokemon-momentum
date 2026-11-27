@@ -737,6 +737,13 @@ Left for the owner: the first real Pirate Ship shipments CSV upload (below). His
   product's Details panel as you handle them (MACHO's shop page lists JAN codes).
 - [next] Owner's notes on individual store listings (owner has them, 2026-11-14): go through
   them one listing at a time.
+- [planned] "Sell your collection" page on poke6s.com (owner, 2026-11-27): a page inviting people
+  to sell their cards and collections to Poke6s. To decide with the owner before building: what
+  we buy (singles, sealed, graded, bulk, Japanese), local pick-up or mail-in, how sellers send
+  details (photos and a list through a form, with no on-site bug-style forms reused), how offers
+  are made and paid (cash or store credit), and where it links from (header, footer, home page).
+  Payout rates are the owner's business detail: keep them in docs/private/ or on the live page
+  only, not in the repo. Build it like the other content pages (storefront/content/pages/).
 - Postal address for marketing emails: STOREFRONT_POSTAL_ADDRESS in .env (2026-11-20), the
   business's street address (owner's choice; already on its Google Business Profile and state
   registration). It lives only in .env, never in the repo.
