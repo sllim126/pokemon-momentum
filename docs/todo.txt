@@ -1,7 +1,7 @@
 Pokemon Momentum TODO
 =====================
 
-Last updated: 2026-11-26 (Phase 3 marked complete)
+Last updated: 2026-11-27 (Black Friday listing live on TCGplayer)
 
 This is the single list of what to work on next. Whoever picks up the project (a person,
 Claude, Codex or any other coding agent) should be able to start from this file without
@@ -866,29 +866,28 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   SM5+ Ultra Force, SM7b Fairy Rise, SM8a Dark Order, SM10a GG End, SM10b Sky Legend, SM11a
   Remix Bout, SM11b Dream League; SV1a/3a/5a/6a/7a/9a believed 30. Also the retail yen per pack
   for Dark Phantasma, Pokemon GO and Battle Region (¥180 assumed). Rule: _jp_pricing_profile.
-- [in progress] Black Friday on TCGplayer (sale ~Nov 25 - Dec 1). Owner's sale list (2026-10-18
-  export, 120 lines) split into data/black_friday/ (not committed): for_sale_101826_upload.csv
-  (109 cards to list; the two delta reverse holos left for the owner to price),
-  grading_psa_101826.csv (resale cards that pay even at a PSA 9, plus Garchomp C Lv.X for
-  authentication; the owner will pull personal-collection keepers for TAG), hold_101826.csv
-  (8 falling cards kept in the binder). MassPrice plan given to the owner: three rules with
-  Price Filter on "My Current Price" (<$1 market, min $0.10; $1-49.99 market +5%, sale week
-  -5%, floor market -10%; $50+ market +5%, floor TCG Low Price Without Shipping, skip drops
-  over 25%), Update Products "My Inventory Only", old "5% Under market" rule (really +5%)
-  unscheduled. Inventory audit done 2026-10-19 (6,810 cards in stock, $1,096 at market, 94% of
-  cards under $0.25; 22 sale-list cards were already listed, moved to already_listed_101826.csv).
-  Owner hid all inventory on 2026-10-19 and holds the upload until sale week. Timeline (Black
-  Friday = 2026-11-27): owner sends the unlisted-cards spreadsheet for a gem check (list $0.50+,
-  rest to bulk lots); recheck hold/sell with full price history after the Nov 1 archive backfill;
-  ~Nov 18-19 re-price the upload file with fresh prices; ~Nov 20-22 upload it and un-hide the
-  22 already-listed cards and the $0.50+ inventory; ~Nov 25 set MassPrice Rule 2 to -10%;
-  after Cyber Monday (Dec 1) set it back to +0%. Six overpriced cards need a manual price (the
-  skip-big-drops guard blocks the rules): Pikachu TG05 LP, Mawile EX MP, Klefki, Arven MP,
-  Comfey GG14, Spewpa; three Japanese cards have no market price.
-  TCGplayer confirmed (affiliate email, 2026-11-16): "Cyber Weekend" runs 9 AM New York Nov 28 to
-  11 PM New York Dec 1 (Sat-Tue), buyers get 10% store credit on everything (13%+ for
-  subscribers). Cyber Weekend banners are in Impact (Manage > Brand Creatives > Images, "Cyber
-  Weekend 2026"). The owner said yes to a market-site note (2026-11-17): done, see below.
+- [in progress] Black Friday on TCGplayer (Cyber Weekend 9 AM New York Nov 28 to 11 PM New York
+  Dec 1; buyers get 10% store credit). Live 2026-11-27: the TCGplayer store now lists only 73
+  SKUs (76 cards, every one $1 or more), priced at market +5% with My Store Price equal to the
+  marketplace price (the Pro store channel rejects imports without it). How it got there:
+  - The owner pulled the sale cards from the binder with a checklist artifact (found, missing,
+    keep, condition, add-a-card) and added cards that weren't on the list. SKUs for new cards came
+    from a full-catalog Pricing export ("My Inventory Only" unchecked).
+  - Kept back (data/black_friday/hold_101826.csv, 28 rows): cards still climbing (Ditto Delta,
+    Vulpix EX, Haunter, Bulbasaur SM198, Mawile EX, Garchomp C LV.X, Fossil Researcher, Darkrai
+    DP52, Dedenne LT RH, Jigglypuff XY RH), cards below cost after fees (owner never sells at a
+    loss) and two unidentified Fire Energies.
+  - Everything else (2,267 SKUs, 6,800 bulk cards, English, Japanese and Magic) was set to 0 with
+    an "Add to Quantity" import. The owner is not relisting the bulk (2026-11-27); the restore
+    file data/black_friday/restore_bulk_after_sale_2026-12-02.csv exists only as a record.
+  Files (not committed): data/black_friday/black_friday_upload_2026-11-27.csv (63 rows),
+  black_friday_reprice_existing_2026-11-27.csv (10 older listings), remove_bulk_for_sale_2026-11-27.csv.
+  TCGplayer import notes: imports land in Staged, then "Move To Live"; quantity changes only
+  through "Add to Quantity" (negative removes; "Total Quantity" is ignored); a staged import
+  can stack on an earlier staged one, so check +/- Qty before moving live.
+  Next: [owner] ship orders as they come and pull sold cards from the binder; no MassPrice run
+  (Charmeleon Delta is priced by hand above market, keep it out of any rule). After Dec 1,
+  decide what to do with unsold cards and record the weekend's sales in the books.
 - [planned] After 2026-12-01: remove the Cyber Weekend note (#eventBar block and .event-bar CSS)
   from desktop_home.html and mobile_app.html. It hides itself outside 2026-11-28 14:00 UTC to
   2026-12-02 04:00 UTC, so leaving it a few days longer does no harm.
@@ -896,12 +895,9 @@ screens, 3 refine, 4 camera/OCR. Stage 1 is live; its owner checks remain below.
   2026-10-21). Fix bug reports as they come in.
   Ideas if visitors ask: upload their own logo or text; a card-back design. Japanese set logos
   aren't in images/logos yet.
-- [idea] Bulk pricing on TCGplayer (owner, 2026-10-19): the owner's bulk isn't selling. Other
-  sellers list bulk at $0.01-0.05 and make their margin on the shipping charge (shipping costs
-  them less than they charge), and buyers rarely pay for widely available bulk after the
-  shipping increases. Look into the owner's shipping settings, what bulk actually sells for
-  (sold prices, not market), and whether bulk is better sold as lots. The MassPrice under-$1
-  rule (market, min $0.10) is probably too high for this.
+- [idea] Bulk on TCGplayer (owner, 2026-10-19): bulk wasn't selling at market prices. On
+  2026-11-27 the owner took all bulk off TCGplayer and will not relist it; if it comes back, look
+  at selling it as lots rather than singles.
 
 - [planned] Nov 1, 2026: full offsite copy of TCGCSV when the price archive returns (owner,
   2026-10-19; storage is not a constraint, more can be added or a network share used).
